@@ -15,6 +15,7 @@ import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
+import { ICONS_DIRECTORY } from './paths';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -158,7 +159,7 @@ let tray;
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log("BEING RUN IN __dirnmane: ", __dirname);
-  const icon = nativeImage.createFromPath(path.join(__dirname, 'icons', '16x16.png'));
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
