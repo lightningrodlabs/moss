@@ -42,13 +42,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cargo install --version 0.3.0 lair_keystore
-          echo "installed lair-keystore"
           $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
-          echo "Set LkPath variable"
           Copy-Item $LkPath -Destination "lair-keystore-v0.3.0-x86_64-pc-windows-msvc.exe"
-          echo "Copied lair-keystore"
-          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0-x86_64-pc-windows-msvc.exe"
-          echo "Uploaded .exe file"
+
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "lair-keystore-v0.3.0-x86_64-pc-windows-msvc.exe"
 
       - name: setup binaries (macos only)
         if: matrix.platform == 'macos-11'

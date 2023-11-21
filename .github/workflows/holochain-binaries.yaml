@@ -45,7 +45,7 @@ jobs:
           $HcPath = Get-Command holochain | Select-Object -ExpandProperty Definition
           Copy-Item $HcPath -Destination holochain-v0.2.3-rc.1-x86_64-pc-windows-msvc.exe
 
-          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1-x86_64-pc-windows-msvc.exe"
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "holochain-v0.2.3-rc.1-x86_64-pc-windows-msvc.exe"
 
       - name: setup binaries (macos only)
         if: matrix.platform == 'macos-11'
