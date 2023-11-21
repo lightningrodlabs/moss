@@ -23,9 +23,8 @@ jobs:
       - name: Retrieve version (Unix)
         if: matrix.platform == 'ubuntu-20.04' || matrix.platform == 'macos-11'
         run: |
-          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$(cat package.json | grep -oE '(^"version": ")[^"]*')" >> $GITHUB_OUTPUT
         id: version
-
       - name: Retrieve version (Windows)
         if: matrix.platform == 'windows-2019'
         run: |
