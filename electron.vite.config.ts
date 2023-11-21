@@ -1,9 +1,9 @@
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
-import { resolve } from 'path'
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ['@holochain/client']})]
+    plugins: [externalizeDepsPlugin({ exclude: ['@holochain/client'] })],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
@@ -11,10 +11,10 @@ export default defineConfig({
       rollupOptions: {
         input: {
           admin: resolve(__dirname, 'src/preload/admin.ts'),
-          happs: resolve(__dirname, 'src/preload/happs.ts')
-        }
-      }
-    }
+          happs: resolve(__dirname, 'src/preload/happs.ts'),
+        },
+      },
+    },
   },
-  renderer: {}
-})
+  renderer: {},
+});

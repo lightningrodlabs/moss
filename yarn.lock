@@ -1996,7 +1996,7 @@ hasown@^2.0.0:
   dependencies:
     function-bind "^1.1.2"
 
-"hc-launcher-rust-utils@file:../../holochain/matthme/launcher-electron/rust-utils":
+"hc-launcher-rust-utils@file:./rust-utils":
   version "0.0.0"
 
 hosted-git-info@^4.1.0:
