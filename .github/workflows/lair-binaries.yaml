@@ -2,7 +2,7 @@ name: 'release-lair-binaries'
 on:
   push:
     tags:
-      - lair-binaries-v[0-9\-.a-zA-Z]*
+      - 'lair-binaries-v[0-9\-.a-zA-Z]*'
 
 jobs:
   publish-lair-binaries:
