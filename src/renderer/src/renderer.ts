@@ -31,9 +31,8 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { sharedStyles } from './sharedStyles';
 import { AppInfo } from '@holochain/client';
 
-@customElement("admin-window")
+@customElement('admin-window')
 export class AdminWindow extends LitElement {
-
   @state()
   installedApps: AppInfo[] = [];
 
@@ -52,40 +51,41 @@ export class AdminWindow extends LitElement {
       return;
     }
     console.log("VALUE === '': ", this.appIdInputField.value === '');
-    this.installDisabled = !this.appIdInputField.value
-      || this.appIdInputField.value === ''
-      || this.installedApps.map((app) => app.installed_app_id).includes(this.appIdInputField.value);
+    this.installDisabled =
+      !this.appIdInputField.value ||
+      this.appIdInputField.value === '' ||
+      this.installedApps.map((app) => app.installed_app_id).includes(this.appIdInputField.value);
     // return true;
     // return !!this.appIdInputField.value;
   }
 
   async installApp() {
-    console.log("Installing app...");
+    console.log('Installing app...');
     const file = this.selectAppInput.files![0];
-    console.log("FILE PATH: ", (file as any).path);
-    console.log("FILE WEBKIT PATH: ", file.webkitRelativePath);
-    if (file){
+    console.log('FILE PATH: ', (file as any).path);
+    console.log('FILE WEBKIT PATH: ', file.webkitRelativePath);
+    if (file) {
       await (window as any).electronAPI.installApp((file as any).path, this.appIdInputField.value);
       this.installedApps = await (window as any).electronAPI.getInstalledApps();
       this.appIdInputField.value = '';
       this.checkInstallValidity();
     } else {
-      alert("No file selected.");
+      alert('No file selected.');
     }
   }
 
   async firstUpdated() {
     const installedApps = await (window as any).electronAPI.getInstalledApps();
-    console.log("INSTALLED APPS: ", installedApps);
+    console.log('INSTALLED APPS: ', installedApps);
     this.installedApps = installedApps;
   }
 
   async openApp(appId: string) {
-    await (window as any).electronAPI.openApp(appId)
+    await (window as any).electronAPI.openApp(appId);
   }
 
   async uninstallApp(appId: string) {
-    console.log("Uninstalling app...");
+    console.log('Uninstalling app...');
     await (window as any).electronAPI.uninstallApp(appId);
     this.installedApps = await (window as any).electronAPI.getInstalledApps();
   }
@@ -98,24 +98,38 @@ export class AdminWindow extends LitElement {
         <h2>Install New App</h2>
         <div class="column">
           <input type="file" accept=".webhapp" id="select-app-input" />
-          <input type="text" placeholder="App Id" id="app-id-input-field" @input=${this.checkInstallValidity} />
-          <button id="install-app-button" .disabled=${this.installDisabled} @click=${this.installApp}>Install app</button>
+          <input
+            type="text"
+            placeholder="App Id"
+            id="app-id-input-field"
+            @input=${this.checkInstallValidity}
+          />
+          <button
+            id="install-app-button"
+            .disabled=${this.installDisabled}
+            @click=${this.installApp}
+          >
+            Install app
+          </button>
         </div>
         <h2>Installed Apps</h2>
-        ${
-          this.installedApps.map((app) => {
-            return html`
-              <div class="row app-card">
-                <div>${app.installed_app_id}</div>
-                <span style="flex: 1;"></span>
-                <button style="margin-right: 10px;" @click=${() => this.uninstallApp(app.installed_app_id)}>UNINSTALL</button>
-                <button @click=${() => this.openApp(app.installed_app_id)} >OPEN</button>
-              </div>
-            `
-          })
-        }
+        ${this.installedApps.map((app) => {
+          return html`
+            <div class="row app-card">
+              <div>${app.installed_app_id}</div>
+              <span style="flex: 1;"></span>
+              <button
+                style="margin-right: 10px;"
+                @click=${() => this.uninstallApp(app.installed_app_id)}
+              >
+                UNINSTALL
+              </button>
+              <button @click=${() => this.openApp(app.installed_app_id)}>OPEN</button>
+            </div>
+          `;
+        })}
       </div>
-    `
+    `;
   }
 
   static get styles() {
@@ -142,7 +156,6 @@ export class AdminWindow extends LitElement {
   }
 }
 
-
 // const selectAppInput = document.getElementById("select-app-input") as HTMLInputElement;
 
 // const installAppButton = document.getElementById("install-app-button");
@@ -160,5 +173,3 @@ export class AdminWindow extends LitElement {
 
 // const openAppButton = document.getElementById("open-app-button");
 // openAppButton.addEventListener("click", async () => await (window as any).electronAPI.openApp());
-
-

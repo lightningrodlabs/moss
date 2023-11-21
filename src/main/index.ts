@@ -1,11 +1,20 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, net, session, Tray, Menu, nativeImage } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  IpcMainInvokeEvent,
+  net,
+  session,
+  Tray,
+  Menu,
+  nativeImage,
+} from 'electron';
 import path from 'path';
 import * as childProcess from 'child_process';
 import url from 'url';
 import { ArgumentParser } from 'argparse';
-import { is } from '@electron-toolkit/utils'
-
+import { is } from '@electron-toolkit/utils';
 
 import { LauncherFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
@@ -22,23 +31,28 @@ const rustUtils = require('hc-launcher-rust-utils');
 
 const appName = app.getName();
 
-if (process.env.NODE_ENV === "development") {
-  console.log("APP IS RUN IN DEVELOPMENT MODE");
-  app.setName(appName + "-dev");
+if (process.env.NODE_ENV === 'development') {
+  console.log('APP IS RUN IN DEVELOPMENT MODE');
+  app.setName(appName + '-dev');
 }
 
-console.log("APP PATH: ", app.getAppPath());
-console.log("RUNNING ON PLATFORM: ", process.platform);
+console.log('APP PATH: ', app.getAppPath());
+console.log('RUNNING ON PLATFORM: ', process.platform);
 
 const parser = new ArgumentParser({
-  description: 'Holochain Launcher'
+  description: 'Holochain Launcher',
 });
-parser.add_argument('-p', '--profile', { help: 'Opens the launcher with a custom profile instead of the default profile.', type: 'string' });
+parser.add_argument('-p', '--profile', {
+  help: 'Opens the launcher with a custom profile instead of the default profile.',
+  type: 'string',
+});
 
 const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
 const args = parser.parse_args();
 if (args.profile && !allowedProfilePattern.test(args.profile)) {
-  throw new Error("The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)");
+  throw new Error(
+    'The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)',
+  );
 }
 
 const launcherFileSystem = LauncherFileSystem.connect(app, args.profile);
@@ -55,10 +69,9 @@ let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
-  if(!ZOME_CALL_SIGNER) throw Error('Lair signer is not ready');
+  if (!ZOME_CALL_SIGNER) throw Error('Lair signer is not ready');
   return ZOME_CALL_SIGNER.signZomeCall(zomeCall);
 };
-
 
 // // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // if (require('electron-squirrel-startup')) {
@@ -79,15 +92,14 @@ const createOrShowMainWindow = () => {
     },
   });
 
-  console.log("Creating main window");
-
+  console.log('Creating main window');
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
   // // and load the index.html of the app.
@@ -114,13 +126,18 @@ const createHappWindow = (appId: string) => {
   ses.protocol.handle('file', async (request) => {
     // console.log("### Got file request: ", request);
     const filePath = request.url.slice('file://'.length);
-    console.log("filePath: ", filePath);
-    if (!filePath.endsWith("index.html")) {
-      return net.fetch(url.pathToFileURL(path.join(launcherFileSystem.appUiDir(appId), filePath)).toString())
+    console.log('filePath: ', filePath);
+    if (!filePath.endsWith('index.html')) {
+      return net.fetch(
+        url.pathToFileURL(path.join(launcherFileSystem.appUiDir(appId), filePath)).toString(),
+      );
     } else {
-      const indexHtmlResponse = await net.fetch(url.pathToFileURL(filePath).toString())
+      const indexHtmlResponse = await net.fetch(url.pathToFileURL(filePath).toString());
       const content = await indexHtmlResponse.text();
-      let modifiedContent = content.replace('<head>', `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${appId}", FRAMEWORK: "electron" };</script>`);
+      let modifiedContent = content.replace(
+        '<head>',
+        `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${appId}", FRAMEWORK: "electron" };</script>`,
+      );
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
       return new Response(modifiedContent, indexHtmlResponse);
@@ -138,19 +155,19 @@ const createHappWindow = (appId: string) => {
 
   happWindow.setTitle(appId);
 
-  happWindow.on("close", () => {
+  happWindow.on('close', () => {
     console.log(`Happ window with frame id ${happWindow.id} about to be closed.`);
     // prevent closing here and hide instead in case notifications are to be received from this happ UI
   });
 
-  happWindow.on("closed", () => {
+  happWindow.on('closed', () => {
     console.log(`Happ window with frame id ${happWindow.id} closed.`);
     // remove protocol handler
     ses.protocol.unhandle('file');
     // happWindow = null;
   });
-  console.log("Loading happ window file");
-  happWindow.loadFile(path.join(launcherFileSystem.appUiDir(appId), "index.html"));
+  console.log('Loading happ window file');
+  happWindow.loadFile(path.join(launcherFileSystem.appUiDir(appId), 'index.html'));
 };
 
 let tray;
@@ -158,18 +175,26 @@ let tray;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  console.log("BEING RUN IN __dirnmane: ", __dirname);
+  console.log('BEING RUN IN __dirnmane: ', __dirname);
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click() {
-      createOrShowMainWindow();
-    }},
-    { label: 'Quit', type: 'normal', click() {
-      app.quit();
-    }},
-  ])
+    {
+      label: 'Open',
+      type: 'normal',
+      click() {
+        createOrShowMainWindow();
+      },
+    },
+    {
+      label: 'Quit',
+      type: 'normal',
+      click() {
+        app.quit();
+      },
+    },
+  ]);
 
   tray.setToolTip('Holochain Launcher');
   tray.setContextMenu(contextMenu);
@@ -178,18 +203,18 @@ app.whenReady().then(async () => {
   ipcMain.handle('open-app', async (_e, appId: string) => createHappWindow(appId));
   ipcMain.handle('install-app', async (_e, filePath: string, appId: string) => {
     await HOLOCHAIN_MANAGER!.installApp(filePath, appId);
-  })
+  });
   ipcMain.handle('uninstall-app', async (_e, appId: string) => {
     await HOLOCHAIN_MANAGER!.uninstallApp(appId);
-  })
+  });
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
 
   // Boot up lair and holochain
-  const password = "abc";
+  const password = 'abc';
   // Initialize lair if necessary
-  const lairHandleTemp = childProcess.spawnSync( lairBinary, ["--version"]);
+  const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
   if (!launcherFileSystem.keystoreInitialized()) {
     // TODO: https://github.com/holochain/launcher/issues/144
@@ -204,7 +229,7 @@ app.whenReady().then(async () => {
       launcherFileSystem.keystoreDir,
       launcherEmitter,
       password,
-    )
+    );
   }
   // launch lair keystore
   const [lairHandle, lairUrl] = await launchLairKeystore(
@@ -220,13 +245,13 @@ app.whenReady().then(async () => {
   const holochainManager = await HolochainManager.launch(
     launcherEmitter,
     launcherFileSystem,
-    holochianBinaries["holochain-0.2.3-beta-rc.1"],
-    "0.2.3-beta-rc.1",
+    holochianBinaries['holochain-0.2.3-beta-rc.1'],
+    '0.2.3-beta-rc.1',
     launcherFileSystem.holochainDir,
     launcherFileSystem.conductorConfigPath,
     lairUrl,
-    "https://bootstrap.holo.host",
-    "wss://signal.holo.host"
+    'https://bootstrap.holo.host',
+    'wss://signal.holo.host',
   );
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
@@ -256,7 +281,6 @@ app.on('activate', () => {
   }
 });
 
-
 // app.on('will-quit', (e: Event) => {
 //   // let the launcher run in the background (systray)
 //   // e.preventDefault();
@@ -269,7 +293,7 @@ app.on('quit', () => {
   if (HOLOCHAIN_MANAGER) {
     HOLOCHAIN_MANAGER.processHandle.kill();
   }
-})
+});
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

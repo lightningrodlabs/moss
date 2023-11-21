@@ -14,7 +14,6 @@ export type AdminPort = number;
 export type AppPort = number;
 
 export class HolochainManager {
-
   processHandle: childProcess.ChildProcessWithoutNullStreams;
   adminPort: AdminPort;
   appPort: AppPort;
@@ -55,7 +54,6 @@ export class HolochainManager {
     bootstrapUrl: string,
     signalingUrl: string,
   ): Promise<HolochainManager> {
-
     const adminPort = await getPort();
 
     // TODO Reuse existing config and only overwrite chosen values if necessary
@@ -66,49 +64,61 @@ export class HolochainManager {
       bootstrapUrl,
       signalingUrl,
     );
-    console.log("Writing conductor-config.yaml...");
+    console.log('Writing conductor-config.yaml...');
 
     fs.writeFileSync(configPath, conductorConfig);
 
-    const conductorHandle = childProcess.spawn(
-      binary,
-      ["-c", configPath, "-p"]
-    );
-    conductorHandle.stdin.write("abc");
+    const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p']);
+    conductorHandle.stdin.write('abc');
     conductorHandle.stdin.end();
-    conductorHandle.stdout.pipe(split()).on("data", async (line: string) => {
+    conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
       launcherEmitter.emitHolochainLog({
         version,
         data: line,
       });
     });
-    conductorHandle.stderr.pipe(split()).on("data", (line: string) => {
+    conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
       launcherEmitter.emitHolochainError({
         version,
         data: line,
-      })
+      });
     });
 
     return new Promise((resolve, reject) => {
-      conductorHandle.stdout.pipe(split()).on("data", async (line: string) => {
-        if (line.includes("FATAL PANIC PanicInfo")) {
-          reject(`Holochain version ${version} failed to start up and crashed. Check the logs for details.`);
+      conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
+        if (line.includes('FATAL PANIC PanicInfo')) {
+          reject(
+            `Holochain version ${version} failed to start up and crashed. Check the logs for details.`,
+          );
         }
-        if (line.includes("Conductor ready.")) {
-          const adminWebsocket = await AdminWebsocket.connect(new URL(`ws://localhost:${adminPort}`));
-          console.log("Connected to admin websocket.");
+        if (line.includes('Conductor ready.')) {
+          const adminWebsocket = await AdminWebsocket.connect(
+            new URL(`ws://localhost:${adminPort}`),
+          );
+          console.log('Connected to admin websocket.');
           const installedApps = await adminWebsocket.listApps({});
           const appInterfaces = await adminWebsocket.listAppInterfaces();
-          console.log("Got appInterfaces: ", appInterfaces);
+          console.log('Got appInterfaces: ', appInterfaces);
           let appPort;
           if (appInterfaces.length > 0) {
             appPort = appInterfaces[0];
           } else {
             const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({});
-            console.log("Attached app interface port: ", attachAppInterfaceResponse);
+            console.log('Attached app interface port: ', attachAppInterfaceResponse);
             appPort = attachAppInterfaceResponse.port;
           }
-          resolve(new HolochainManager(conductorHandle, launcherEmitter, launcherFileSystem, adminPort, appPort, adminWebsocket, installedApps, version));
+          resolve(
+            new HolochainManager(
+              conductorHandle,
+              launcherEmitter,
+              launcherFileSystem,
+              adminPort,
+              appPort,
+              adminWebsocket,
+              installedApps,
+              version,
+            ),
+          );
         }
       });
     });
@@ -116,34 +126,34 @@ export class HolochainManager {
 
   async installApp(filePath: string, appId: string) {
     const uiTargetDir = path.join(this.fs.uisDir, appId);
-    console.log("uiTargetDir: ", uiTargetDir);
-    console.log("Installing app...");
+    console.log('uiTargetDir: ', uiTargetDir);
+    console.log('Installing app...');
     const tempHappPath = await rustUtils.saveWebhapp(filePath, uiTargetDir);
-    console.log("Stored UI and got temp happ path: ", tempHappPath);
+    console.log('Stored UI and got temp happ path: ', tempHappPath);
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
       membrane_proofs: {},
-      path: tempHappPath
+      path: tempHappPath,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
-    console.log("Insalled app.");
+    console.log('Insalled app.');
     const installedApps = await this.adminWebsocket.listApps({});
-    console.log("Installed apps: ", installedApps);
+    console.log('Installed apps: ', installedApps);
     this.installedApps = installedApps;
     this.launcherEmitter.emitAppInstalled({
       version: this.version,
-      data: appInfo
+      data: appInfo,
     });
   }
 
   async uninstallApp(appId: string) {
     await this.adminWebsocket.uninstallApp({ installed_app_id: appId });
     fs.rmSync(this.fs.appUiDir(appId), { recursive: true });
-    console.log("Uninstalled app.");
+    console.log('Uninstalled app.');
     const installedApps = await this.adminWebsocket.listApps({});
-    console.log("Installed apps: ", installedApps);
+    console.log('Installed apps: ', installedApps);
     this.installedApps = installedApps;
   }
 }
