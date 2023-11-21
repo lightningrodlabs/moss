@@ -24,7 +24,7 @@ import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
-import { ICONS_DIRECTORY } from './paths';
+import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -245,8 +245,8 @@ app.whenReady().then(async () => {
   const holochainManager = await HolochainManager.launch(
     launcherEmitter,
     launcherFileSystem,
-    holochianBinaries['holochain-0.2.3-beta-rc.1'],
-    '0.2.3-beta-rc.1',
+    holochianBinaries['holochain-0.2.3-rc.1'],
+    '0.2.3-rc.1',
     launcherFileSystem.holochainDir,
     launcherFileSystem.conductorConfigPath,
     lairUrl,
@@ -257,6 +257,15 @@ app.whenReady().then(async () => {
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   APP_PORT = holochainManager.appPort;
   HOLOCHAIN_MANAGER = holochainManager;
+
+  // Install default apps if necessary:
+  if (
+    !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
+  ) {
+    console.log('Installing default app KanDo...');
+    await HOLOCHAIN_MANAGER.installApp(path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'), 'KanDo');
+    console.log('KanDo isntalled.');
+  }
 
   createOrShowMainWindow();
   // console.log("creating happ window");
