@@ -1,5 +1,5 @@
 appId: com.electron.vite
-productName: electron-vite
+productName: electron-vite-hc-launcher
 directories:
   buildResources: build
 files:
@@ -31,13 +31,13 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
-    - deb
+    # - snap
+    # - deb
   maintainer: electronjs.org
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+# publish:
+#   provider: generic
+#   url: https://example.com/auto-updates

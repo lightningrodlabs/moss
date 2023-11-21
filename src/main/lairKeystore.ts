@@ -53,7 +53,7 @@ export async function launchLairKeystore(
 
   return new Promise((resolve, reject) => {
     launcherEmitter.on("wrong-password", () => reject("Wrong password."));
-    launcherEmitter.on("lair-ready", (url: string) => resolve([lairHandle, url]));
+    launcherEmitter.on("lair-ready", (url) => resolve([lairHandle, url as string]));
   });
 }
 

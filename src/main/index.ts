@@ -10,7 +10,7 @@ import { is } from '@electron-toolkit/utils'
 import { LauncherFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
 import { ZomeCallSigner, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
-import { AdminWebsocket } from '@holochain/client';
+// import { AdminWebsocket } from '@holochain/client';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
@@ -25,6 +25,9 @@ if (process.env.NODE_ENV === "development") {
   console.log("APP IS RUN IN DEVELOPMENT MODE");
   app.setName(appName + "-dev");
 }
+
+console.log("APP PATH: ", app.getAppPath());
+console.log("RUNNING ON PLATFORM: ", process.platform);
 
 const parser = new ArgumentParser({
   description: 'Holochain Launcher'
@@ -43,23 +46,23 @@ const launcherEmitter = new LauncherEmitter();
 setupLogs(launcherEmitter);
 
 let ZOME_CALL_SIGNER: ZomeCallSigner | undefined;
-let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
-let ADMIN_PORT: number | undefined;
+// let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
+// let ADMIN_PORT: number | undefined;
 let APP_PORT: number | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
 
-const handleSignZomeCall = (e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
+const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if(!ZOME_CALL_SIGNER) throw Error('Lair signer is not ready');
   return ZOME_CALL_SIGNER.signZomeCall(zomeCall);
 };
 
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
+// // Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// if (require('electron-squirrel-startup')) {
+//   app.quit();
+// }
 
 const createOrShowMainWindow = () => {
   if (MAIN_WINDOW) {
@@ -116,7 +119,7 @@ const createHappWindow = (appId: string) => {
     } else {
       const indexHtmlResponse = await net.fetch(url.pathToFileURL(filePath).toString())
       const content = await indexHtmlResponse.text();
-      let modifiedContent = content.replace('<head>', `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: '${appId}', FRAMEWORK: "electron" };</script>`);
+      let modifiedContent = content.replace('<head>', `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${appId}", FRAMEWORK: "electron" };</script>`);
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
       return new Response(modifiedContent, indexHtmlResponse);
@@ -224,8 +227,8 @@ app.whenReady().then(async () => {
     "https://bootstrap.holo.host",
     "wss://signal.holo.host"
   );
-  ADMIN_PORT = holochainManager.adminPort;
-  ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
+  // ADMIN_PORT = holochainManager.adminPort;
+  // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   APP_PORT = holochainManager.appPort;
   HOLOCHAIN_MANAGER = holochainManager;
 

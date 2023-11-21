@@ -61,11 +61,13 @@ export class AdminWindow extends LitElement {
 
   async installApp() {
     console.log("Installing app...");
-    const file = this.selectAppInput.files[0];
+    const file = this.selectAppInput.files![0];
+    console.log("FILE PATH: ", (file as any).path);
+    console.log("FILE WEBKIT PATH: ", file.webkitRelativePath);
     if (file){
-      await (window as any).electronAPI.installApp(file.path, this.appIdInputField.value);
+      await (window as any).electronAPI.installApp((file as any).path, this.appIdInputField.value);
       this.installedApps = await (window as any).electronAPI.getInstalledApps();
-      this.appIdInputField.value = null;
+      this.appIdInputField.value = '';
       this.checkInstallValidity();
     } else {
       alert("No file selected.");

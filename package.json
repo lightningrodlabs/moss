@@ -13,11 +13,11 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "build": "yarn typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
-    "build:win": "npm run build && electron-builder --win --config",
-    "build:mac": "npm run build && electron-builder --mac --config",
-    "build:linux": "npm run build && electron-builder --linux --config"
+    "build:win": "yarn build && electron-builder --win --config",
+    "build:mac": "yarn build && electron-builder --mac --config",
+    "build:linux": "yarn build && electron-builder --linux --config"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
