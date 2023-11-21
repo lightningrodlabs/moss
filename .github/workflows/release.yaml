@@ -30,7 +30,7 @@ jobs:
         if: matrix.platform == 'windows-2019'
         run: |
           $Env:LC_ALL = 'en_US.utf8'
-          echo "APP_VERSION=$(cat package.json | grep -oE '(^"version": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")\[^"]*')" >> $GITHUB_OUTPUT
         id: version-windows
 
       - name: setup node
