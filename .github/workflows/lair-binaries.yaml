@@ -38,6 +38,8 @@ jobs:
 
       - name: setup binaries (Windows only)
         if: matrix.platform == 'windows-2019'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cargo install --version 0.3.0 lair_keystore
           $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
@@ -47,6 +49,8 @@ jobs:
 
       - name: setup binaries (macos only)
         if: matrix.platform == 'macos-11'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cargo install --version 0.3.0 lair_keystore
           LAIR_PATH=$(which lair-keystore)
@@ -56,6 +60,8 @@ jobs:
 
       - name: setup binaries (ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cargo install --version 0.3.0 lair_keystore
           LAIR_PATH=$(which lair-keystore)
