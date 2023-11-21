@@ -43,9 +43,9 @@ jobs:
         run: |
           cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
           $HcPath = Get-Command holochain | Select-Object -ExpandProperty Definition
-          Copy-Item $HcPath -Destination holochain-v0.2.3-rc.1.exe
+          Copy-Item $HcPath -Destination holochain-v0.2.3-rc.1-x86_64-pc-windows-msvc.exes
 
-          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1.exe"
+          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1-x86_64-pc-windows-msvc.exe"
 
       - name: setup binaries (macos only)
         if: matrix.platform == 'macos-11'
@@ -54,9 +54,9 @@ jobs:
         run: |
           cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
           HOLOCHAIN_PATH=$(which holochain)
-          cp $HOLOCHAIN_PATH holochain-v0.2.3-rc.1
+          cp $HOLOCHAIN_PATH holochain-v0.2.3-rc.1-x86_64-apple-darwin
 
-          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1"
+          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1-x86_64-apple-darwin"
 
       - name: setup binaries (ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
@@ -65,6 +65,6 @@ jobs:
         run: |
           cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
           HOLOCHAIN_PATH=$(which holochain)
-          cp $HOLOCHAIN_PATH holochain-v0.2.3-rc.1
+          cp $HOLOCHAIN_PATH holochain-v0.2.3-rc.1-unknown-linux-gnu
 
-          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1"
+          gh release upload "${GITHUB_REF#refs/tags/}" "holochain-v0.2.3-rc.1-x86_64-unknown-linux-gnu"
