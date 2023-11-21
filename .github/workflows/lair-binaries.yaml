@@ -1,0 +1,63 @@
+name: 'release-lair-binaries'
+on:
+  push:
+    tag:
+      - lair-binaries-v[0-9\-.a-zA-Z]*
+
+jobs:
+  publish-lair-binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-2019, macos-11, ubuntu-20.04]
+    permissions:
+      contents: write
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - uses: actions/checkout@v3
+
+      - id: create-release
+        uses: ncipollo/release-action@v1
+        with:
+          body: 'Lair binaries for Linux/Windows/macOS.'
+          prerelease: true
+          draft: true
+
+      - name: install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+
+      - name: install Go stable
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: setup binaries (Windows only)
+        if: matrix.platform == 'windows-2019'
+        run: |
+          cargo install --version 0.3.0 lair_keystore
+          $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
+          Copy-Item $LkPath -Destination lair-keystore-v0.3.0.exe
+
+          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0.exe"
+
+      - name: setup binaries (macos only)
+        if: matrix.platform == 'macos-11'
+        run: |
+          cargo install --version 0.3.0 lair_keystore
+          LAIR_PATH=$(which lair-keystore)
+          cp $LAIR_PATH lair-keystore-v0.3.0
+
+          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0"
+
+      - name: setup binaries (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          cargo install --version 0.3.0 lair_keystore
+          LAIR_PATH=$(which lair-keystore)
+          cp $LAIR_PATH lair-keystore-v0.3.0
+
+          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0"
