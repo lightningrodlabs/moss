@@ -24,6 +24,7 @@ jobs:
           body: 'Lair binaries for Linux/Windows/macOS.'
           prerelease: true
           draft: true
+          skipIfReleaseExists: true
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
