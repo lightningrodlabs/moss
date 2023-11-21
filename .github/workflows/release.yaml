@@ -20,23 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Retrieve version (Unix)
-        if: matrix.platform == 'ubuntu-20.04' || matrix.platform == 'macos-11'
-        run: |
-          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
-        id: version
-
-      - name: Retrieve version (Windows)
-        if: matrix.platform == 'windows-2019'
-        run: |
-          $Env:LC_ALL = 'en_US.utf8'
-          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")\[^"]*')" >> $GITHUB_OUTPUT
-        id: version-windows
-
       - name: setup node
         uses: actions/setup-node@v1
         with:
           node-version: 18
+
+      - name: Retrieve version
+        run: |
+          echo "APP_VERSION=$(node -p -e "require('./package.json').version")" >> $GITHUB_OUTPUT
+        id: version
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
@@ -145,4 +137,4 @@ jobs:
         run: |
           yarn build:win
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version-windows.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
