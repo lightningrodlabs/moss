@@ -108,7 +108,7 @@ jobs:
         if: matrix.platform == 'windows-2019'
         run: |
           echo "APP_VERSION=$(cat package.json | LC_ALL=en_US.utf8 grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
-        id: version
+        id: version-windows
 
       - id: create-release
         uses: ncipollo/release-action@v1
@@ -143,4 +143,4 @@ jobs:
         run: |
           yarn build:win
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
+          gh release upload "launcher-prototype-v${{ steps.version-windows.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
