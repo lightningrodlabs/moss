@@ -12,6 +12,7 @@ jobs:
         platform: [windows-2019, macos-11, ubuntu-20.04]
     permissions:
       contents: write
+    runs-on: ${{ matrix.platform }}
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       # Checks out a copy of your repository on the ubuntu-latest machine
