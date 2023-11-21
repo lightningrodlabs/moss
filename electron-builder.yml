@@ -1,5 +1,5 @@
-appId: com.electron.vite
-productName: electron-vite-hc-launcher
+appId: holochain.launcher.electron.prototype
+productName: Holochain Launcher Electron (Prototype)
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: electron-vite
+  executableName: holochain-launcher-electron
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

@@ -1,0 +1,126 @@
+name: 'publish'
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  publish:
+    strategy:
+      matrix:
+        platform: [windows-2019, macos-11, ubuntu-20.04]
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.13
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+
+      - name: install Go stable
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: install app dependencies
+        run: yarn
+
+      - name: build rust-utils
+        run: yarn setup
+
+      - name: setup binaries (Windows only)
+        if: matrix.platform == 'windows-2019'
+        run: |
+          mkdir resources/bins
+
+          cargo install --version 0.3.0 lair_keystore
+          $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
+          Copy-Item $LkPath -Destination resources/bins/lair-keystore-v0.3.0.exe
+
+          cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
+          $HcPath = Get-Command holochain | Select-Object -ExpandProperty Definition
+          Copy-Item $HcPath -Destination resources/bins/holochain-v0.2.3-rc.1.exe
+
+          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
+
+      - name: setup binaries (macos only)
+        if: matrix.platform == 'macos-11'
+        run: |
+          mkdir resources/bins
+
+          cargo install --version 0.3.0 lair_keystore
+          LAIR_PATH=$(which lair-keystore)
+          cp $LAIR_PATH src-tauri/bins/lair-keystore-v0.3.0
+
+          cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
+          HOLOCHAIN_PATH=$(which holochain)
+          cp $HOLOCHAIN_PATH src-tauri/bins/holochain-v0.2.3-rc.1
+
+          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
+
+      - name: setup binaries (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          mkdir resources/bins
+
+          cargo install --version 0.3.0 lair_keystore
+          LAIR_PATH=$(which lair-keystore)
+          cp $LAIR_PATH src-tauri/bins/lair-keystore-v0.3.0
+
+
+          cargo install holochain --version 0.2.3-rc.1 --locked --features sqlite-encrypted
+          HOLOCHAIN_PATH=$(which holochain)
+          cp $HOLOCHAIN_PATH src-tauri/bins/holochain-v0.2.3-rc.1
+
+          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
+
+      - name: Retrieve version
+        run: |
+          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+        id: version
+
+      - id: create-release
+        uses: ncipollo/release-action@v1
+        with:
+          body: 'See assets below to download and install this version.'
+          name: Holochain Launcher Electron (Prototype) v${{ steps.version.outputs.APP_VERSION }}
+          tag: holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}
+          prerelease: true
+          draft: true
+
+      - name: build and upload the app (macOS)
+        if: matrix.platform == 'macos-11'
+        run: |
+          yarn build:mac
+          ls dist
+          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1.dmg" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and upload the app (Linux)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          yarn build:linux
+          ls dist
+          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1.AppImage" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and upload the app (Windows)
+        if: matrix.platform == 'windows-2019'
+        run: |
+          yarn build:win
+          ls dist
+          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
