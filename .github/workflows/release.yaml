@@ -7,6 +7,7 @@ on:
 jobs:
   publish:
     strategy:
+      fail-fast: false
       matrix:
         platform: [windows-2019, macos-11, ubuntu-20.04]
     env:
@@ -19,7 +20,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 18
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
