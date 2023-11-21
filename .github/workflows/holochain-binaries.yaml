@@ -1,7 +1,7 @@
 name: 'release-holochain-binaries'
 on:
   push:
-    tag:
+    tags:
       - holochain-binaries-v[0-9\-.a-zA-Z]*
 
 jobs:
