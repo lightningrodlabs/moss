@@ -67,4 +67,4 @@ jobs:
           LAIR_PATH=$(which lair-keystore)
           cp $LAIR_PATH lair-keystore-v0.3.0-x86_64-unknown-linux-gnu
 
-          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0"
+          gh release upload "${GITHUB_REF#refs/tags/}" "lair-keystore-v0.3.0-x86_64-unknown-linux-gnu"
