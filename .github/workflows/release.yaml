@@ -98,9 +98,16 @@ jobs:
 
           # NEW_VERSION: install new holochain version and copy its binary to the tauri path
 
-      - name: Retrieve version
+      - name: Retrieve version (Unix)
+        if: matrix.platform == 'ubuntu-20.04' || matrix.platform == 'macos-11'
         run: |
           echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+        id: version
+
+      - name: Retrieve version (Windows)
+        if: matrix.platform == 'windows-2019'
+        run: |
+          echo "APP_VERSION=$(cat package.json | LC_ALL=en_US.utf8 grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
         id: version
 
       - id: create-release
@@ -108,33 +115,32 @@ jobs:
         with:
           body: 'See assets below to download and install this version.'
           name: Holochain Launcher Electron (Prototype) v${{ steps.version.outputs.APP_VERSION }}
-          tag: holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}
+          tag: launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
-          draft: true
 
       - name: build and upload the app (macOS)
         if: matrix.platform == 'macos-11'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn build:mac
           ls dist
-          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1.dmg" --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1.dmg" --clobber
 
       - name: build and upload the app (Linux)
         if: matrix.platform == 'ubuntu-20.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn build:linux
           ls dist
-          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1.AppImage" --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1.AppImage" --clobber
 
       - name: build and upload the app (Windows)
         if: matrix.platform == 'windows-2019'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn build:win
           ls dist
-          gh release upload "${holochain-launcher-electron-prototype-v${{ steps.version.outputs.APP_VERSION }}#refs/tags/}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
