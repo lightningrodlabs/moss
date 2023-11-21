@@ -555,6 +555,11 @@
   resolved "https://registry.yarnpkg.com/@msgpack/msgpack/-/msgpack-2.8.0.tgz#4210deb771ee3912964f14a15ddfb5ff877e70b9"
   integrity sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==
 
+"@napi-rs/cli@^2.16.3":
+  version "2.16.5"
+  resolved "https://registry.yarnpkg.com/@napi-rs/cli/-/cli-2.16.5.tgz#077ef3c1fea0e68843ba700456df39b6242bb0df"
+  integrity sha512-mFEzwrg4IOLngGd2/P6yeqIWgwQNn59Z08n1rndu6kLDq1gg954NH9cM1O9Da0RJuybt46p43lqgSsnAY2mxqA==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -1996,7 +2001,7 @@ hasown@^2.0.0:
   dependencies:
     function-bind "^1.1.2"
 
-"hc-launcher-rust-utils@file:./rust-utils":
+"hc-launcher-rust-utils@file:./rust-utils/dist":
   version "0.0.0"
 
 hosted-git-info@^4.1.0:
