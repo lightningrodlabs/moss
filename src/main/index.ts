@@ -24,7 +24,7 @@ import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
-import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
+import { ICONS_DIRECTORY } from './paths';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
