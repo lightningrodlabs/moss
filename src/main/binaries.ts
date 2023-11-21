@@ -8,10 +8,13 @@ const binariesDirectory = app.isPackaged
 const holochianBinaries = {
   'holochain-0.2.3-beta-rc.1': path.join(
     binariesDirectory,
-    'holochain-v0.2.3-beta-rc.1-x86_64-unknown-linux-gnu',
+    `holochain-v0.2.3-beta-rc.1${process.platform === 'win32' ? '.exe' : ''}`,
   ),
 };
 
-const lairBinary = path.join(binariesDirectory, 'lair-keystore-v0.3.0-x86_64-unknown-linux-gnu');
+const lairBinary = path.join(
+  binariesDirectory,
+  `lair-keystore-v0.3.0${process.platform === 'win32' ? '.exe' : ''}`,
+);
 
 export { holochianBinaries, lairBinary };
