@@ -1,6 +1,6 @@
-# electron-vite
+# Holochain Launcher Prototype
 
-A minimal Electron application with TypeScript
+Electron based version of the Holochain Launcher. Currently in prototype phase.
 
 ## Recommended IDE Setup
 
@@ -11,24 +11,24 @@ A minimal Electron application with TypeScript
 ### Install
 
 ```bash
-$ npm install
+$ yarn
 ```
 
 ### Development
 
 ```bash
-$ npm run dev
+$ yarn dev
 ```
 
 ### Build
 
 ```bash
 # For windows
-$ npm run build:win
+$ yarn build:win
 
 # For macOS
-$ npm run build:mac
+$ yarn build:mac
 
 # For Linux
-$ npm run build:linux
+$ yarn build:linux
 ```
