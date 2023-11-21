@@ -215,6 +215,9 @@ app.whenReady().then(async () => {
   const password = 'abc';
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
+  if (!lairHandleTemp.stdout) {
+    console.error(`Failed to run lair-keystore binary:\n${lairHandleTemp}`);
+  }
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
   if (!launcherFileSystem.keystoreInitialized()) {
     // TODO: https://github.com/holochain/launcher/issues/144
