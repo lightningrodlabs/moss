@@ -262,13 +262,13 @@ app.whenReady().then(async () => {
   HOLOCHAIN_MANAGER = holochainManager;
 
   // Install default apps if necessary:
-  if (
-    !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
-  ) {
-    console.log('Installing default app KanDo...');
-    await HOLOCHAIN_MANAGER.installApp(path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'), 'KanDo');
-    console.log('KanDo isntalled.');
-  }
+  // if (
+  //   !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
+  // ) {
+  //   console.log('Installing default app KanDo...');
+  //   await HOLOCHAIN_MANAGER.installApp(path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'), 'KanDo');
+  //   console.log('KanDo isntalled.');
+  // }
 
   createOrShowMainWindow();
   // console.log("creating happ window");
