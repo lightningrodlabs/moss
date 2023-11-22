@@ -28,6 +28,13 @@ Install dependencies
 yarn
 ```
 
+Download default app
+
+```bash
+mkdir resources/default-apps
+yarn fetch:default-apps
+```
+
 ### Development
 
 ```bash
