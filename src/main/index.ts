@@ -24,7 +24,7 @@ import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
-import { ICONS_DIRECTORY } from './paths';
+import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -178,7 +178,7 @@ const createHappWindow = (appId: string) => {
         url.pathToFileURL(path.join(launcherFileSystem.appUiDir(appId), filePath)).toString(),
       );
     } else {
-      const indexHtmlResponse = await net.fetch(url.pathToFileURL(filePath).toString());
+      const indexHtmlResponse = await net.fetch(request.url);
       const content = await indexHtmlResponse.text();
       let modifiedContent = content.replace(
         '<head>',
@@ -248,9 +248,12 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('open-app', async (_e, appId: string) => createHappWindow(appId));
-  ipcMain.handle('install-app', async (_e, filePath: string, appId: string) => {
-    await HOLOCHAIN_MANAGER!.installApp(filePath, appId);
-  });
+  ipcMain.handle(
+    'install-app',
+    async (_e, filePath: string, appId: string, networkSeed: string) => {
+      await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
+    },
+  );
   ipcMain.handle('uninstall-app', async (_e, appId: string) => {
     await HOLOCHAIN_MANAGER!.uninstallApp(appId);
   });
@@ -317,13 +320,17 @@ app.whenReady().then(async () => {
   HOLOCHAIN_MANAGER = holochainManager;
 
   // Install default apps if necessary:
-  // if (
-  //   !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
-  // ) {
-  //   console.log('Installing default app KanDo...');
-  //   await HOLOCHAIN_MANAGER.installApp(path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'), 'KanDo');
-  //   console.log('KanDo isntalled.');
-  // }
+  if (
+    !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
+  ) {
+    console.log('Installing default app KanDo...');
+    await HOLOCHAIN_MANAGER.installApp(
+      path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'),
+      'KanDo',
+      'launcher-electron-prototype',
+    );
+    console.log('KanDo isntalled.');
+  }
   splashscreenWindow.close();
   createOrShowMainWindow();
   // console.log("creating happ window");

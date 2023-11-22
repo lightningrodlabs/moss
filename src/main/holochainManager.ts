@@ -124,7 +124,7 @@ export class HolochainManager {
     });
   }
 
-  async installApp(filePath: string, appId: string) {
+  async installApp(filePath: string, appId: string, networkSeed?: string) {
     const uiTargetDir = path.join(this.fs.uisDir, appId);
     console.log('uiTargetDir: ', uiTargetDir);
     console.log('Installing app...');
@@ -136,6 +136,7 @@ export class HolochainManager {
       installed_app_id: appId,
       membrane_proofs: {},
       path: tempHappPath,
+      network_seed: networkSeed,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
     console.log('Insalled app.');

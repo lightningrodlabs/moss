@@ -45,6 +45,9 @@ export class AdminWindow extends LitElement {
   @query('#app-id-input-field')
   appIdInputField!: HTMLInputElement;
 
+  @query('#network-seed-input-field')
+  networkSeedInputField!: HTMLInputElement;
+
   checkInstallValidity() {
     if (!this.appIdInputField) {
       this.installDisabled = true;
@@ -65,9 +68,14 @@ export class AdminWindow extends LitElement {
     console.log('FILE PATH: ', (file as any).path);
     console.log('FILE WEBKIT PATH: ', file.webkitRelativePath);
     if (file) {
-      await (window as any).electronAPI.installApp((file as any).path, this.appIdInputField.value);
+      await (window as any).electronAPI.installApp(
+        (file as any).path,
+        this.appIdInputField.value,
+        this.networkSeedInputField.value,
+      );
       this.installedApps = await (window as any).electronAPI.getInstalledApps();
       this.appIdInputField.value = '';
+      this.networkSeedInputField.value = '';
       this.checkInstallValidity();
     } else {
       alert('No file selected.');
@@ -104,6 +112,7 @@ export class AdminWindow extends LitElement {
             id="app-id-input-field"
             @input=${this.checkInstallValidity}
           />
+          <input type="text" placeholder="Network Seed (optional)" id="network-seed-input-field" />
           <button
             id="install-app-button"
             .disabled=${this.installDisabled}
