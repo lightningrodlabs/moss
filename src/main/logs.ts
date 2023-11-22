@@ -21,7 +21,10 @@ export function setupLogs(
   launcherFileSystem: LauncherFileSystem,
 ) {
   const logFilePath = path.join(launcherFileSystem.appLogsDir, 'launcher.log');
-  const lairLogger = createLairLogger(logFilePath);
+  // with file rotation set maxsize. But then we require logic to garbage collect old files...
+  // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000 });
+  const logFileTransport = new transports.File({ filename: logFilePath });
+  const lairLogger = createLairLogger(logFileTransport);
 
   launcherEmitter.on(LAIR_LOG, (log) => {
     const logLine = `[LAIR] ${log}`;
@@ -34,17 +37,20 @@ export function setupLogs(
     lairLogger.log('info', logLine);
   });
   launcherEmitter.on(HOLOCHAIN_LOG, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFilePath);
+    logHolochain(holochainData as HolochainData, logFileTransport);
   });
   launcherEmitter.on(HOLOCHAIN_ERROR, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFilePath);
+    logHolochain(holochainData as HolochainData, logFileTransport);
   });
   launcherEmitter.on(WASM_LOG, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFilePath);
+    logHolochain(holochainData as HolochainData, logFileTransport);
   });
 }
 
-function logHolochain(holochainData: HolochainData, logFilePath: string) {
+function logHolochain(
+  holochainData: HolochainData,
+  logFileTransport: winston.transports.FileTransportInstance,
+) {
   const holochainVersion = (holochainData as HolochainData).version;
   const line = (holochainData as HolochainData).data;
   const logLine = `[HOLOCHAIN ${holochainVersion}]: ${line}`;
@@ -53,7 +59,7 @@ function logHolochain(holochainData: HolochainData, logFilePath: string) {
   if (logger) {
     logger.log('info', line);
   } else {
-    logger = createHolochainLogger(holochainVersion, logFilePath);
+    logger = createHolochainLogger(holochainVersion, logFileTransport);
     HOLOCHAIN_LOGGERS[holochainVersion] = logger;
     logger.log('info', line);
   }
@@ -61,10 +67,10 @@ function logHolochain(holochainData: HolochainData, logFilePath: string) {
 
 function createHolochainLogger(
   holochainVersion: HolochainVersion,
-  logFilePath: string,
+  logFileTransport: winston.transports.FileTransportInstance,
 ): winston.Logger {
   return createLogger({
-    transports: [new transports.File({ filename: logFilePath })],
+    transports: [logFileTransport],
     format: combine(
       timestamp(),
       format.printf(({ level, message, timestamp }) => {
@@ -79,9 +85,11 @@ function createHolochainLogger(
   });
 }
 
-function createLairLogger(logFilePath: string): winston.Logger {
+function createLairLogger(
+  logFileTransport: winston.transports.FileTransportInstance,
+): winston.Logger {
   return createLogger({
-    transports: [new transports.File({ filename: logFilePath })],
+    transports: [logFileTransport],
     format: combine(
       timestamp(),
       format.printf(({ level, message, timestamp }) => {
