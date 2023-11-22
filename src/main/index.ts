@@ -55,6 +55,16 @@ if (args.profile && !allowedProfilePattern.test(args.profile)) {
   );
 }
 
+const isFirstInstance = app.requestSingleInstanceLock();
+
+if (!isFirstInstance) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  createOrShowMainWindow();
+});
+
 const launcherFileSystem = LauncherFileSystem.connect(app, args.profile);
 const launcherEmitter = new LauncherEmitter();
 
