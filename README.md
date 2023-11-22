@@ -10,8 +10,22 @@ Electron based version of the Holochain Launcher. Currently in prototype phase.
 
 ### Install
 
+Build the sidecar binaries (requires Rust and Go installed):
+
 ```bash
-$ yarn
+bash ./scripts/setup-binaries.sh
+```
+
+Build the Node Rust-add-ons
+
+```bash
+yarn setup
+```
+
+Install dependencies
+
+```bash
+yarn
 ```
 
 ### Development

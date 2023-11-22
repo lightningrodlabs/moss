@@ -4,7 +4,7 @@ REQUIRED_HOLOCHAIN_VERSION="0.2.3-rc.1"
 REQUIRED_LAIR_VERSION="0.3.0"
 
 # Check that this script is being run from the right location
-if [ ! -f "package.json" ] || [ ! -f "electron-builder.yaml" ];
+if [ ! -f "package.json" ] || [ ! -f "electron-builder.yml" ];
 then
     echo "Error: You must run this script in the root directory of the launcher repository."
     exit 1
