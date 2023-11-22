@@ -9,7 +9,6 @@ import {
   Tray,
   Menu,
   nativeImage,
-  shell,
 } from 'electron';
 import path from 'path';
 import * as childProcess from 'child_process';
@@ -26,6 +25,7 @@ import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
+import { setLinkOpenHandlers } from './utils';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -69,7 +69,7 @@ app.on('second-instance', () => {
 const launcherFileSystem = LauncherFileSystem.connect(app, args.profile);
 const launcherEmitter = new LauncherEmitter();
 
-setupLogs(launcherEmitter);
+setupLogs(launcherEmitter, launcherFileSystem);
 
 let ZOME_CALL_SIGNER: ZomeCallSigner | undefined;
 // let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
@@ -161,6 +161,8 @@ const createOrShowMainWindow = () => {
   //   mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   // }
 
+  setLinkOpenHandlers(mainWindow);
+
   // once its ready to show, show
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -212,27 +214,7 @@ const createHappWindow = (appId: string) => {
 
   happWindow.setTitle(appId);
 
-  // links in happ windows should open in the system default application
-  // instead of the webview
-  happWindow.webContents.on('will-navigate', (e) => {
-    if (
-      e.url.startsWith('http://') ||
-      e.url.startsWith('https://') ||
-      e.url.startsWith('mailto://')
-    ) {
-      e.preventDefault();
-      shell.openExternal(e.url);
-    }
-  });
-
-  // Links with target=_blank should open in the system default browser and
-  // happ windows are not allowed to spawn new electron windows
-  happWindow.webContents.setWindowOpenHandler((details) => {
-    if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
-      shell.openExternal(details.url);
-    }
-    return { action: 'deny' };
-  });
+  setLinkOpenHandlers(happWindow);
 
   happWindow.on('close', () => {
     console.log(`Happ window with frame id ${happWindow.id} about to be closed.`);
