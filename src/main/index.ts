@@ -9,6 +9,7 @@ import {
   Tray,
   Menu,
   nativeImage,
+  shell,
 } from 'electron';
 import path from 'path';
 import * as childProcess from 'child_process';
@@ -210,6 +211,28 @@ const createHappWindow = (appId: string) => {
   });
 
   happWindow.setTitle(appId);
+
+  // links in happ windows should open in the system default application
+  // instead of the webview
+  happWindow.webContents.on('will-navigate', (e) => {
+    if (
+      e.url.startsWith('http://') ||
+      e.url.startsWith('https://') ||
+      e.url.startsWith('mailto://')
+    ) {
+      e.preventDefault();
+      shell.openExternal(e.url);
+    }
+  });
+
+  // Links with target=_blank should open in the system default browser and
+  // happ windows are not allowed to spawn new electron windows
+  happWindow.webContents.setWindowOpenHandler((details) => {
+    if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
+      shell.openExternal(details.url);
+    }
+    return { action: 'deny' };
+  });
 
   happWindow.on('close', () => {
     console.log(`Happ window with frame id ${happWindow.id} about to be closed.`);
