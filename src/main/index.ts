@@ -78,6 +78,47 @@ const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNa
 //   app.quit();
 // }
 
+const createSplashscreenWindow = (): BrowserWindow => {
+  // Create the browser window.
+  const splashWindow = new BrowserWindow({
+    height: 450,
+    width: 800,
+    center: true,
+    resizable: false,
+    frame: false,
+    show: false,
+    backgroundColor: '#331ead',
+    // use these settings so that the ui
+    // can listen for status change events
+    webPreferences: {
+      preload: path.resolve(__dirname, '../preload/splashscreen.js'),
+    },
+  });
+
+  // // and load the splashscreen.html of the app.
+  // if (app.isPackaged) {
+  //   splashWindow.loadFile(SPLASH_FILE);
+  // } else {
+  //   // development
+  //   splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`);
+  // }
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    splashWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/splashscreen.html`);
+  } else {
+    splashWindow.loadFile(path.join(__dirname, '../renderer/splashscreen.html'));
+  }
+
+  // once its ready to show, show
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+  });
+
+  // Open the DevTools.
+  // mainWindow.webContents.openDevTools();
+  return splashWindow;
+};
+
 const createOrShowMainWindow = () => {
   if (MAIN_WINDOW) {
     MAIN_WINDOW.show();
@@ -108,6 +149,11 @@ const createOrShowMainWindow = () => {
   // } else {
   //   mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   // }
+
+  // once its ready to show, show
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
@@ -175,6 +221,7 @@ let tray;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
+  const splashscreenWindow = createSplashscreenWindow();
   console.log('BEING RUN IN __dirnmane: ', __dirname);
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
@@ -211,6 +258,11 @@ app.whenReady().then(async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
 
+  splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
+
+  // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // await delay(5000);
+
   // Boot up lair and holochain
   const password = 'abc';
   // Initialize lair if necessary
@@ -244,6 +296,9 @@ app.whenReady().then(async () => {
   LAIR_HANDLE = lairHandle;
   // create zome call signer
   ZOME_CALL_SIGNER = await rustUtils.ZomeCallSigner.connect(lairUrl, password);
+
+  splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
+
   // launch holochain
   const holochainManager = await HolochainManager.launch(
     launcherEmitter,
@@ -269,7 +324,7 @@ app.whenReady().then(async () => {
   //   await HOLOCHAIN_MANAGER.installApp(path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'), 'KanDo');
   //   console.log('KanDo isntalled.');
   // }
-
+  splashscreenWindow.close();
   createOrShowMainWindow();
   // console.log("creating happ window");
   // createHappWindow("hc-stress-test");
