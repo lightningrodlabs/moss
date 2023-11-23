@@ -212,6 +212,8 @@ const createHappWindow = (appId: string) => {
     },
   });
 
+  happWindow.menuBarVisible = false;
+
   happWindow.setTitle(appId);
 
   setLinkOpenHandlers(happWindow);
@@ -265,6 +267,13 @@ app.whenReady().then(async () => {
   ipcMain.handle(
     'install-app',
     async (_e, filePath: string, appId: string, networkSeed: string) => {
+      if (filePath === '#####REQUESTED_KANDO_INSTALLATION#####') {
+        console.log('Got request to install KanDo.');
+        filePath = path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp');
+      }
+      if (!appId || appId === '') {
+        throw new Error('No app id provided.');
+      }
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
