@@ -125,7 +125,7 @@ jobs:
         run: |
           yarn build:mac
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1.dmg" --clobber
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2.dmg" --clobber
 
       - name: build and upload the app (Linux)
         if: matrix.platform == 'ubuntu-20.04'
@@ -134,7 +134,7 @@ jobs:
         run: |
           yarn build:linux
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1.AppImage" --clobber
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2.AppImage" --clobber
 
       - name: build and upload the app (Windows)
         if: matrix.platform == 'windows-2019'
@@ -143,4 +143,4 @@ jobs:
         run: |
           yarn build:win
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.1-setup.exe" --clobber
+          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2-setup.exe" --clobber
