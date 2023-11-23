@@ -47,6 +47,7 @@ export class HolochainManager {
     launcherEmitter: LauncherEmitter,
     launcherFileSystem: LauncherFileSystem,
     binary: string,
+    password: string,
     version: HolochainVersion,
     rootDir: string,
     configPath: string,
@@ -69,7 +70,7 @@ export class HolochainManager {
     fs.writeFileSync(configPath, conductorConfig);
 
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p']);
-    conductorHandle.stdin.write('abc');
+    conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
     conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
       launcherEmitter.emitHolochainLog({

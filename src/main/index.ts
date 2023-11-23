@@ -236,7 +236,6 @@ let tray;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  const splashscreenWindow = createSplashscreenWindow();
   console.log('BEING RUN IN __dirnmane: ', __dirname);
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
@@ -275,82 +274,86 @@ app.whenReady().then(async () => {
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
+  ipcMain.handle('lair-setup-required', async () => {
+    return !launcherFileSystem.keystoreInitialized();
+  });
 
-  splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
+  const splashscreenWindow = createSplashscreenWindow();
 
-  // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  // await delay(5000);
+  ipcMain.handle('launch', async (_e, password) => {
+    // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    // await delay(5000);
 
-  // Boot up lair and holochain
-  const password = 'abc';
-  // Initialize lair if necessary
-  const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
-  if (!lairHandleTemp.stdout) {
-    console.error(`Failed to run lair-keystore binary:\n${lairHandleTemp}`);
-  }
-  console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
-  if (!launcherFileSystem.keystoreInitialized()) {
-    // TODO: https://github.com/holochain/launcher/issues/144
-    // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: launcherFileSystem.keystoreDir });
-    // lairHandle.stdin.write(password);
-    // lairHandle.stdin.end();
-    // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
-    //   console.log("[LAIR INIT]: ", line);
-    // })
-    await initializeLairKeystore(
+    // Initialize lair if necessary
+    const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
+    if (!lairHandleTemp.stdout) {
+      console.error(`Failed to run lair-keystore binary:\n${lairHandleTemp}`);
+    }
+    console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
+    if (!launcherFileSystem.keystoreInitialized()) {
+      splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
+      // TODO: https://github.com/holochain/launcher/issues/144
+      // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: launcherFileSystem.keystoreDir });
+      // lairHandle.stdin.write(password);
+      // lairHandle.stdin.end();
+      // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
+      //   console.log("[LAIR INIT]: ", line);
+      // })
+      await initializeLairKeystore(
+        lairBinary,
+        launcherFileSystem.keystoreDir,
+        launcherEmitter,
+        password,
+      );
+    }
+    splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
+
+    // launch lair keystore
+    const [lairHandle, lairUrl] = await launchLairKeystore(
       lairBinary,
       launcherFileSystem.keystoreDir,
       launcherEmitter,
       password,
     );
-  }
-  // launch lair keystore
-  const [lairHandle, lairUrl] = await launchLairKeystore(
-    lairBinary,
-    launcherFileSystem.keystoreDir,
-    launcherEmitter,
-    password,
-  );
-  LAIR_HANDLE = lairHandle;
-  // create zome call signer
-  ZOME_CALL_SIGNER = await rustUtils.ZomeCallSigner.connect(lairUrl, password);
+    LAIR_HANDLE = lairHandle;
+    // create zome call signer
+    ZOME_CALL_SIGNER = await rustUtils.ZomeCallSigner.connect(lairUrl, password);
 
-  splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
+    splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
 
-  // launch holochain
-  const holochainManager = await HolochainManager.launch(
-    launcherEmitter,
-    launcherFileSystem,
-    holochianBinaries['holochain-0.2.3-rc.1'],
-    '0.2.3-rc.1',
-    launcherFileSystem.holochainDir,
-    launcherFileSystem.conductorConfigPath,
-    lairUrl,
-    'https://bootstrap.holo.host',
-    'wss://signal.holo.host',
-  );
-  // ADMIN_PORT = holochainManager.adminPort;
-  // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
-  APP_PORT = holochainManager.appPort;
-  HOLOCHAIN_MANAGER = holochainManager;
-
-  // Install default apps if necessary:
-  if (
-    !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
-  ) {
-    console.log('Installing default app KanDo...');
-    await HOLOCHAIN_MANAGER.installApp(
-      path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'),
-      'KanDo',
-      'launcher-electron-prototype',
+    // launch holochain
+    const holochainManager = await HolochainManager.launch(
+      launcherEmitter,
+      launcherFileSystem,
+      holochianBinaries['holochain-0.2.3-rc.1'],
+      password,
+      '0.2.3-rc.1',
+      launcherFileSystem.holochainDir,
+      launcherFileSystem.conductorConfigPath,
+      lairUrl,
+      'https://bootstrap.holo.host',
+      'wss://signal.holo.host',
     );
-    console.log('KanDo isntalled.');
-  }
-  splashscreenWindow.close();
-  createOrShowMainWindow();
-  // console.log("creating happ window");
-  // createHappWindow("hc-stress-test");
-  // console.log("happ window created");
+    // ADMIN_PORT = holochainManager.adminPort;
+    // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
+    APP_PORT = holochainManager.appPort;
+    HOLOCHAIN_MANAGER = holochainManager;
+
+    // Install default apps if necessary:
+    if (
+      !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
+    ) {
+      console.log('Installing default app KanDo...');
+      await HOLOCHAIN_MANAGER.installApp(
+        path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'),
+        'KanDo',
+        'launcher-electron-prototype',
+      );
+      console.log('KanDo isntalled.');
+    }
+    splashscreenWindow.close();
+    createOrShowMainWindow();
+  });
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
