@@ -49,6 +49,9 @@ jobs:
       - name: install app dependencies
         run: yarn
 
+      - name: install default apps
+        run: yarn fetch:default-apps
+
       - name: setup binaries (Windows only)
         if: matrix.platform == 'windows-2019'
         run: |
