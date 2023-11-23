@@ -334,9 +334,9 @@ app.whenReady().then(async () => {
     const holochainManager = await HolochainManager.launch(
       launcherEmitter,
       launcherFileSystem,
-      holochianBinaries['holochain-0.2.3-rc.1'],
+      holochianBinaries['holochain-0.2.3'],
       password,
-      '0.2.3-rc.1',
+      '0.2.3',
       launcherFileSystem.holochainDir,
       launcherFileSystem.conductorConfigPath,
       lairUrl,
