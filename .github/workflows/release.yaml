@@ -9,8 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # platform: [windows-2019, macos-11, ubuntu-20.04]
-        platform: [windows-2019, macos-11]
+        platform: [windows-2019, macos-11, ubuntu-20.04]
+        # platform: [windows-2019, macos-11]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
 
@@ -30,6 +30,7 @@ jobs:
           echo "Retrieved App version: $(node -p -e "require('./package.json').version")"
           echo "APP_VERSION=$(node -p -e "require('./package.json').version")" >> $GITHUB_OUTPUT
         id: version
+        shell: bash
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
