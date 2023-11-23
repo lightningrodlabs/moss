@@ -29,10 +29,13 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { sharedStyles } from './sharedStyles';
-import { AppInfo } from '@holochain/client';
+import { AppInfo, AppWebsocket } from '@holochain/client';
 
 @customElement('admin-window')
 export class AdminWindow extends LitElement {
+  @state()
+  appWebsocket: AppWebsocket | undefined;
+
   @state()
   installedApps: AppInfo[] = [];
 
@@ -122,6 +125,8 @@ export class AdminWindow extends LitElement {
     const installedApps = await (window as any).electronAPI.getInstalledApps();
     console.log('INSTALLED APPS: ', installedApps);
     this.installedApps = installedApps;
+    const appPort = await (window as any).electronAPI.getAppPort();
+    this.appWebsocket = await AppWebsocket.connect(new URL(`ws://127.0.0.1:${appPort}`));
   }
 
   async openApp(appId: string) {
@@ -194,6 +199,7 @@ export class AdminWindow extends LitElement {
             </div>
           </div>
           <h2>Installed Apps</h2>
+          ${this.installedApps.length === 0 ? html`No apps installed.` : ``}
           ${this.installedApps.map((app) => {
             return html`
               <div class="row app-card">

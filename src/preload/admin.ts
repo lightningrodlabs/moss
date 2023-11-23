@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   uninstallApp: (appId: string) => ipcRenderer.invoke('uninstall-app', appId),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
+  getAppPort: () => ipcRenderer.invoke('get-app-port'),
 });
 
 declare global {
