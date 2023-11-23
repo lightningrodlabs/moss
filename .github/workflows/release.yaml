@@ -50,7 +50,9 @@ jobs:
         run: yarn
 
       - name: install default apps
-        run: yarn fetch:default-apps
+        run: |
+          mkdir resources/default-apps
+          yarn fetch:default-apps
 
       - name: setup binaries (Windows only)
         if: matrix.platform == 'windows-2019'
