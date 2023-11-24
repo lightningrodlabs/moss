@@ -1,0 +1,38 @@
+{
+  "name": "@lightningrodlabs/attachments",
+  "version": "0.3.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./dist/*": "./dist/*"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch --preserveWatchOutput"
+  },
+  "type": "module",
+  "dependencies": {
+    "@holochain-open-dev/elements": "^0.7.0",
+    "@holochain-open-dev/profiles": "^0.16.1",
+    "@holochain-open-dev/stores": "^0.7.2",
+    "@holochain-open-dev/utils": "^0.16.0",
+    "@holochain/client": "^0.16.3",
+    "@lightningrodlabs/we-applet": "file:../we-applet",
+    "@lit-labs/context": "^0.2.0",
+    "@lit/localize": "^0.11.4",
+    "@material/web": "^1.0.0-pre.9",
+    "@mdi/js": "^7.2.0",
+    "@msgpack/msgpack": "^3.0.0-beta2",
+    "@shoelace-style/shoelace": "^2.3.0",
+    "lit": "^2.6.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^5.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

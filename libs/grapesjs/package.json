@@ -1,0 +1,92 @@
+{
+  "name": "grapes-editor",
+  "description": "Dropzone.js packaged as custom elements using @open-wc/scoped-elements",
+  "license": "MIT",
+  "author": "guillem.cordoba@gmail.com",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "npm run build && concurrently -k -r \"rollup -c -w\" \"wds\"",
+    "build": "rimraf dist && rollup -c",
+    "prepublish": "npm run build",
+    "lint": "eslint --ext .ts,.html . --ignore-path .gitignore && prettier \"**/*.ts\" --check --ignore-path .gitignore",
+    "format": "eslint --ext .ts,.html . --fix --ignore-path .gitignore && prettier \"**/*.ts\" --write --ignore-path .gitignore",
+    "storybook": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wds -c .storybook/server.mjs\"",
+    "storybook:build": "tsc && build-storybook"
+  },
+  "dependencies": {
+    "@rollup/plugin-replace": "^5.0.2",
+    "lit": "^2.0.0"
+  },
+  "devDependencies": {
+    "@open-wc/eslint-config": "^4.3.0",
+    "@rollup/plugin-commonjs": "^21.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "@web/dev-server": "^0.1.21",
+    "@web/dev-server-storybook": "next",
+    "concurrently": "^5.3.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "grapesjs": "^0.21.1",
+    "grapesjs-blocks-basic": "^1.0.1",
+    "grapesjs-preset-webpage": "^1.0.2",
+    "grapesjs-tabs": "^1.0.6",
+    "husky": "^4.3.8",
+    "lint-staged": "^10.5.4",
+    "prettier": "^2.3.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^4.0.2",
+    "rollup-plugin-postcss": "^4.0.1",
+    "rollup-plugin-postcss-lit": "^2.0.0",
+    "tslib": "^2.3.1",
+    "typescript": "^5.2.2"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "@open-wc",
+      "prettier"
+    ],
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "rules": {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error"
+      ],
+      "import/no-unresolved": "off",
+      "import/extensions": [
+        "error",
+        "always",
+        {
+          "ignorePackages": true
+        }
+      ]
+    }
+  },
+  "prettier": {
+    "singleQuote": true,
+    "arrowParens": "avoid"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
