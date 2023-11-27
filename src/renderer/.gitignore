@@ -1,0 +1,5 @@
+dist
+.dist
+ui.zip
+out-tsc
+*.tsbuildinfo

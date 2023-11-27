@@ -1,0 +1,52 @@
+{
+  "name": "example-applet",
+  "description": "Webcomponent lit-element following open-wc recommendations",
+  "license": "MIT",
+  "author": "lit-element",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vite --port $UI_PORT --clearScreen false demo",
+    "build": "vite build",
+    "lint": "eslint --ext .ts,.html . && prettier \"**/*.ts\" --check",
+    "format": "eslint --ext .ts,.html . --fix && prettier \"**/*.ts\" --write",
+    "package:ui": "npm run build && cd dist && bestzip ../dist.zip *",
+    "package": "npm run package:ui && cd .. && cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
+  },
+  "dependencies": {
+    "@holochain-open-dev/elements": "^0.7.0",
+    "@holochain-open-dev/profiles": "^0.16.1",
+    "@holochain-open-dev/stores": "^0.7.4",
+    "@holochain-open-dev/utils": "^0.16.0",
+    "@holochain/client": "^0.16.3",
+    "@lightningrodlabs/we-applet": "file:../../ui/libs/we-applet",
+    "@lightningrodlabs/attachments": "file:../../ui/libs/attachments",
+    "@lit-labs/context": "^0.2.0",
+    "@lit/localize": "^0.11.4",
+    "@mdi/js": "^7.2.0",
+    "@shoelace-style/shoelace": "^2.3.0",
+    "lib": "^0.1.0",
+    "lit": "^2.6.0"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.0",
+    "@lit/localize-tools": "^0.6.3",
+    "@open-wc/eslint-config": "^2.0.0",
+    "@types/lodash-es": "^4.17.5",
+    "@types/node": "14.11.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "bestzip": "^2.2.1",
+    "concurrently": "^5.1.0",
+    "deepmerge": "^3.2.0",
+    "eslint": "^7.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "prettier": "^2.0.4",
+    "rimraf": "^3.0.2",
+    "tslib": "^2.0.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.0.4",
+    "vite-plugin-checker": "^0.5.3",
+    "vite-plugin-static-copy": "^0.13.1"
+  }
+}

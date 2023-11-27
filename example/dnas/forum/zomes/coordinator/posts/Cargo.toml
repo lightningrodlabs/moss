@@ -1,0 +1,25 @@
+[package]
+name = "posts"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "posts"
+
+[dependencies]
+hdk = { workspace = true }
+
+serde = { workspace = true }
+
+posts_integrity = { workspace = true }
+
+
+[dev-dependencies]
+fixt = "*"
+futures = { version = "0.3.1", default-features = false }
+hdk = { workspace = true, features = ["encoding", "test_utils"] }
+holochain = { workspace = true, default-features = false, features = [
+  "test_utils",
+] }
+tokio = { version = "=1.33.0", features = ["full"] }

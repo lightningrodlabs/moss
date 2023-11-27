@@ -6,3 +6,11 @@ dist
 out
 *.log*
 .DS_Store
+target
+testing-applets/
+.running
+*.dna
+*.happ
+*.webhapp
+.cargo/
+.hc*

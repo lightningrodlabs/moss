@@ -1,16 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-GB">
   <head>
-    <meta charset="UTF-8" />
-    <title>Holochain Launcher</title>
+    <meta charset="utf-8" />
     <style>
+      html,
       body {
-        font-family: Arial, Helvetica, sans-serif;
+        background: #fafafa;
+        margin: 0px;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        font-family: "Aileron", "Open Sans", "Helvetica Neue", sans-serif;
+      }
+
+      body {
+        --sl-color-primary-50: rgb(249 249 252);
+        --sl-color-primary-100: rgb(234 236 245);
+        --sl-color-primary-200: rgb(219 221 238);
+        --sl-color-primary-300: rgb(201 205 230);
+        --sl-color-primary-400: rgb(179 184 220);
+        --sl-color-primary-500: rgb(149 157 206);
+        --sl-color-primary-600: rgb(118 128 191);
+        --sl-color-primary-700: rgb(90 102 179);
+        --sl-color-primary-800: rgb(68 81 168);
+        --sl-color-primary-900: rgb(42 55 138);
+        --sl-color-primary-950: rgb(26 34 85);
+
+        --sidebar-width: 74px;
       }
     </style>
+
+    <title>We - Group Collaboration</title>
   </head>
   <body>
-    <script type="module" src="/src/renderer.ts"></script>
-    <admin-window></admin-window>
+    <we-app id="app-container"></we-app>
+    <script>
+      window["__HC_LAUNCHER_ENV__"] = {};
+    </script>
+    <script type="module">
+      import "@shoelace-style/shoelace/dist/themes/light.css";
+      import "@fontsource/aileron";
+    </script>
+    <script type="module" src="./src/we-app.ts"></script>
   </body>
 </html>

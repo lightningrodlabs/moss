@@ -6,7 +6,8 @@
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
-    "utils/*"
+    "utils/*",
+    "src/renderer"
   ],
   "scripts": {
     "format": "prettier --write .",
@@ -21,6 +22,12 @@
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
     "build:utils": "yarn workspace applet-iframe install && yarn workspace applet-iframe build && yarn workspace hc-launcher-rust-utils install && yarn workspace hc-launcher-rust-utils build",
     "fetch:default-apps": "curl -L --output resources/default-apps/kando.webhapp https://drive.switch.ch/index.php/s/nSXZlwCYFAl9aRD/download",
+    "build:happ": "npm run build:zomes && hc app pack ./workdir --recursive",
+    "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace --exclude we-alpha",
+    "build:example": "npm run build:libs && npm run build:zomes && npm run package -w example-applet && rimraf testing-applets/example-applet && cp example/workdir/example-applet.webhapp testing-applets ",
+    "build:ex": "npm run package -w example-applet && cp example/workdir/example-applet.webhapp testing-applets/$NAME.webhapp ",
+    "download:devhub": "curl -L --output DevHub.webhapp https://github.com/holochain/devhub-gui/releases/download/v0.16.1/devhub.webhapp",
+    "download:appstore": "curl -L --output AppStore.webhapp https://github.com/holochain/app-store-gui/releases/download/v0.4.0/appstore.webhapp",
     "postinstall": "electron-builder install-app-deps",
     "build:win": "yarn build && electron-builder --win --config",
     "build:mac": "yarn build && electron-builder --mac --config",
@@ -29,7 +36,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain/client": "^0.16.3",
+    "@holochain/client": "0.16.6",
     "bufferutil": "4.0.8",
     "hc-launcher-rust-utils": "file:./utils/rust-utils/dist",
     "split": "1.0.1",
@@ -48,8 +55,9 @@
     "get-port": "7.0.0",
     "lit": "3.0.2",
     "prettier": "^3.0.2",
-    "typescript": "^5.1.6",
+    "typescript": "^5.2.2",
     "utf-8-validate": "^6.0.3",
-    "vite": "^4.4.9"
+    "vite": "^4.4.9",
+    "vite-plugin-static-copy": "^0.13.1"
   }
 }

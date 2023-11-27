@@ -1,5 +1,6 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import { resolve } from 'path';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   main: {
@@ -26,5 +27,19 @@ export default defineConfig({
         },
       },
     },
+    plugins: [
+      viteStaticCopy({
+        targets: [
+          {
+            src: resolve(__dirname, '../../node_modules/@shoelace-style/shoelace/dist/assets'),
+            dest: 'shoelace',
+          },
+          {
+            src: resolve(__dirname, 'we_logo.png'),
+            dest: 'dist/assets',
+          },
+        ],
+      }),
+    ],
   },
 });

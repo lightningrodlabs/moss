@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { sharedStyles } from './sharedStyles';
+import { weStyles } from './shared-styles';
 // import { ipcRenderer } from 'electron';
 
 enum SplashScreenMode {
@@ -191,7 +191,7 @@ export class SplashScreen extends LitElement {
 
   static get styles() {
     return [
-      sharedStyles,
+      weStyles,
       css`
         :host {
           flex: 1;

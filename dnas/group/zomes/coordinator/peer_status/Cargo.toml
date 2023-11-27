@@ -1,0 +1,12 @@
+[package]
+authors = ["eric@harris-braun.com"]
+edition = "2021"
+name = "peer_status_coordinator"
+version = "0.0.1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "peer_status_coordinator"
+
+[dependencies]
+hc_zome_peer_status_coordinator = { git = "https://github.com/holochain-open-dev/peer-status", branch = "holochain-0.2.3-beta-rc.1" }

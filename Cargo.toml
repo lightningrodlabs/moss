@@ -1,0 +1,37 @@
+[workspace]
+members = [
+  "dnas/*/zomes/coordinator/*",
+  "dnas/*/zomes/integrity/*",
+  "crates/*",
+  "utils/rust-utils",
+]
+resolver = "2"
+
+[profile.dev]
+opt-level = "z"
+
+[profile.release]
+incremental = false
+codegen-units = 1
+panic = "abort"
+opt-level = "s"
+lto = true
+
+
+[workspace.dependencies]
+hdi = { version = "0.3.3" }
+hdk = { version = "0.2.3" }
+holochain = { version = "0.2.3" }
+we_types = { path = "crates/types" }
+
+holochain_client = "0.4.5-rc.0"
+holochain_conductor_api = "0.2.3"
+holochain_integrity_types = "0.2.3"
+holochain_p2p = "0.2.3"
+holochain_types = "0.2.3"
+holochain_zome_types = "0.2.3"
+holo_hash = "0.2.3"
+kitsune_p2p_timestamp = "0.2.3"
+lair_keystore_api = "0.3.0"
+
+serde = "1"

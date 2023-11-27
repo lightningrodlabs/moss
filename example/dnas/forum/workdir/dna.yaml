@@ -1,0 +1,28 @@
+---
+manifest_version: "1"
+name: forum
+integrity:
+  network_seed: ~
+  properties: ~
+  origin_time: 1685537889376461
+  zomes:
+    - name: posts_integrity
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/posts_integrity.wasm"
+      dependencies: ~
+    - name: attachments_integrity
+      hash: ~
+      bundled: "../../../../target/wasm32-unknown-unknown/release/hc_zome_attachments_integrity.wasm"
+      dependencies: ~
+coordinator:
+  zomes:
+    - name: attachments
+      hash: ~
+      bundled: "../../../../target/wasm32-unknown-unknown/release/hc_zome_attachments_coordinator.wasm"
+      dependencies:
+        - name: attachments_integrity
+    - name: posts
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/posts.wasm"
+      dependencies:
+        - name: posts_integrity

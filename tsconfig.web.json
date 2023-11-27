@@ -1,9 +1,22 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
-  "include": ["src/renderer/**/*.ts", "src/preload/*.d.ts"],
+  "include": ["src/renderer/src/**/*.ts", "src/renderer/src/*.d.ts"],
   "compilerOptions": {
     "composite": true,
+    "rootDir": "./src/renderer/src",
+    "target": "es2018",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "lib": ["es2021", "dom"],
+    "strict": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "noImplicitAny": false,
+    "sourceMap": true,
     "experimentalDecorators": true,
-    "useDefineForClassFields": false
+    "inlineSources": true,
+    "skipLibCheck": true
   }
 }

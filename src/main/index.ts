@@ -296,10 +296,11 @@ app.whenReady().then(async () => {
     // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     // await delay(5000);
 
+    console.log('LAIR BINARY PATH: ', lairBinary);
     // Initialize lair if necessary
     const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
     if (!lairHandleTemp.stdout) {
-      console.error(`Failed to run lair-keystore binary:\n${lairHandleTemp}`);
+      console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
     }
     console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
     if (!launcherFileSystem.keystoreInitialized()) {

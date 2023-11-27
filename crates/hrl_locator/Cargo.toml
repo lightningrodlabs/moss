@@ -1,0 +1,14 @@
+[package]
+authors = ["guillem.cordoba@gmail.com"]
+edition = "2021"
+name = "hrl_locator"
+version = "0.0.1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "hrl_locator"
+
+[dependencies]
+hdk = { workspace = true }
+serde = { workspace = true }
+
