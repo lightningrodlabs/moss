@@ -49,9 +49,7 @@ export class AppletStore {
       view: null,
     };
 
-    const origin = `${appletOrigin(this.conductorInfo, this.appletHash)}?${renderViewToQueryString(
-      renderView,
-    )}`;
+    const origin = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
 
     iframe = document.createElement('iframe');
     iframe.id = appletHashBase64;

@@ -23,7 +23,6 @@ import {
 import { encode } from '@msgpack/msgpack';
 import { fromUint8Array } from 'js-base64';
 
-import { AppletIframeProtocol, ConductorInfo } from './tauri.js';
 import { AppletNotificationSettings } from './applets/types.js';
 import { AppletHash, AppletId } from './types.js';
 
@@ -43,14 +42,8 @@ export function isWindows(): boolean {
   return navigator.appVersion.includes('Win');
 }
 
-export function appletOrigin(conductorInfo: ConductorInfo, appletHash: AppletHash): string {
-  if (conductorInfo.applet_iframe_protocol === AppletIframeProtocol.Assets) {
-    return `applet://${encodeHashToBase64(appletHash)}`;
-  } else if (conductorInfo.applet_iframe_protocol === AppletIframeProtocol.LocalhostSubdomain) {
-    return `http://${encodeHashToBase64(appletHash)}.127.0.0.1:${conductorInfo.applets_ui_port}`;
-  } else {
-    return `http://${encodeHashToBase64(appletHash)}.localtest.me:${conductorInfo.applets_ui_port}`;
-  }
+export function appletOrigin(appletHash: AppletHash): string {
+  return `applet://${encodeHashToBase64(appletHash)}`;
 }
 
 export function findAppForDnaHash(

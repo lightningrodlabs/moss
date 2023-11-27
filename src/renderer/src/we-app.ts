@@ -2,7 +2,6 @@ import { provide } from '@lit-labs/context';
 import { state, customElement } from 'lit/decorators.js';
 import { AdminWebsocket, AppWebsocket } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
-import { invoke } from '@tauri-apps/api';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -11,14 +10,12 @@ import './password/enter-password.js';
 import './password/create-password.js';
 import './password/factory-reset.js';
 import './elements/main-dashboard.js';
-
-import { listen } from '@tauri-apps/api/event';
 import { weStyles } from './shared-styles.js';
 import { weStoreContext } from './context.js';
 import { WeStore } from './we-store.js';
-import { getConductorInfo, isKeystoreInitialized, isLaunched } from './tauri.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
+import { getConductorInfo } from './tauri.js';
 
 type State =
   | { state: 'loading' }
@@ -31,36 +28,33 @@ export class WeApp extends LitElement {
   @state()
   state: State = { state: 'loading' };
 
-  @state()
-  previousState: State = { state: 'loading' };
+  // @state()
+  // previousState: State = { state: 'loading' };
 
   @provide({ context: weStoreContext })
   @state()
   _weStore!: WeStore;
 
   async firstUpdated() {
-    await listen('clear-systray-notification-state', async () => {
-      await invoke('clear_systray_notification_state', {});
-    });
-
-    await listen('request-factory-reset', () => {
-      console.log('Received factory reset event.');
-      this.previousState = this.state;
-      this.state = { state: 'factoryReset' };
-    });
-
-    const launched = await isLaunched();
-
-    if (launched) {
-      try {
-        await this.connect();
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      const initialized = await isKeystoreInitialized();
-      this.state = { state: 'password', initialized };
+    // await listen('clear-systray-notification-state', async () => {
+    //   await invoke('clear_systray_notification_state', {});
+    // });
+    // await listen('request-factory-reset', () => {
+    //   console.log('Received factory reset event.');
+    //   this.previousState = this.state;
+    //   this.state = { state: 'factoryReset' };
+    // });
+    // const launched = await isLaunched();
+    // if (launched) {
+    try {
+      await this.connect();
+    } catch (e) {
+      console.error(e);
     }
+    // } else {
+    //   const initialized = await isKeystoreInitialized();
+    //   this.state = { state: 'password', initialized };
+    // }
   }
 
   async connect() {
@@ -80,7 +74,9 @@ export class WeApp extends LitElement {
 
     const appWebsocket = await AppWebsocket.connect(new URL(`ws://127.0.0.1:${info.app_port}`));
 
-    const appStoreClient = await initAppClient(info.appstore_app_id);
+    const appstore_app_id = info.appstore_app_id;
+
+    const appStoreClient = await initAppClient(appstore_app_id);
 
     this._weStore = new WeStore(
       adminWebsocket,
@@ -139,11 +135,12 @@ export class WeApp extends LitElement {
       case 'factoryReset':
         return html`
           <div class="column center-content" style="flex: 1">
-            <factory-reset
+            factory reset not implemented
+            <!-- <factory-reset
               @cancel-factory-reset=${() => {
-                this.state = this.previousState;
-              }}
-            ></factory-reset>
+              // this.state = this.previousState;
+            }}
+            ></factory-reset> -->
           </div>
         `;
     }

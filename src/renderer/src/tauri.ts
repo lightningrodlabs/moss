@@ -12,8 +12,21 @@ import { encode } from '@msgpack/msgpack';
 import { invoke } from '@tauri-apps/api/tauri';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
-import { isWindows } from './utils.js';
 import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
+import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
+
+declare global {
+  interface Window {
+    electronAPI: {
+      signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
+      installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
+      uninstallApp: (appId: string) => Promise<void>;
+      openApp: (appId: string) => Promise<void>;
+      getInstalledApps: () => Promise<AppInfo>;
+      getConductorInfo: () => Promise<ConductorInfo>;
+    };
+  }
+}
 
 export async function isKeystoreInitialized(): Promise<boolean> {
   return invoke('is_keystore_initialized');
@@ -35,10 +48,8 @@ export enum AppletIframeProtocol {
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
-  applets_ui_port: number;
   appstore_app_id: string;
   devhub_app_id: string;
-  applet_iframe_protocol: AppletIframeProtocol;
 }
 
 async function fetchPing(origin: string) {
@@ -101,34 +112,7 @@ export async function joinGroup(networkSeed: string): Promise<AppInfo> {
 }
 
 export async function getConductorInfo(): Promise<ConductorInfo> {
-  const conductor_info: any = await invoke('get_conductor_info');
-
-  let applet_iframe_protocol = AppletIframeProtocol.LocaltestMe;
-  if (isWindows()) {
-    try {
-      await fetchPing(`http://ping.127.0.0.1:${conductor_info.applets_ui_port}`);
-      applet_iframe_protocol = AppletIframeProtocol.LocalhostSubdomain;
-    } catch (e) {
-      applet_iframe_protocol = AppletIframeProtocol.LocaltestMe;
-    }
-  } else {
-    try {
-      await fetchPing('applet://ping');
-      applet_iframe_protocol = AppletIframeProtocol.Assets;
-    } catch (e) {
-      try {
-        await fetchPing(`http://ping.127.0.0.1:${conductor_info.applets_ui_port}`);
-        applet_iframe_protocol = AppletIframeProtocol.LocalhostSubdomain;
-      } catch (e) {
-        applet_iframe_protocol = AppletIframeProtocol.LocaltestMe;
-      }
-    }
-  }
-
-  return {
-    ...conductor_info,
-    applet_iframe_protocol,
-  };
+  return window.electronAPI.getConductorInfo();
 }
 
 export async function enterPassword(password: string): Promise<void> {

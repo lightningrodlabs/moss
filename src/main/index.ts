@@ -30,6 +30,9 @@ import { setLinkOpenHandlers } from './utils';
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
 
+const APPSTORE_APP_ID = 'AppStore';
+const DEVHUB_APP_ID = 'DevHub';
+
 const appName = app.getName();
 
 if (process.env.NODE_ENV === 'development') {
@@ -283,8 +286,13 @@ app.whenReady().then(async () => {
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
-  ipcMain.handle('get-app-port', async () => {
-    return HOLOCHAIN_MANAGER!.appPort;
+  ipcMain.handle('get-conductor-info', async () => {
+    return {
+      app_port: HOLOCHAIN_MANAGER!.appPort,
+      admin_port: HOLOCHAIN_MANAGER!.adminPort,
+      appstore_app_id: APPSTORE_APP_ID,
+      devhub_app_id: DEVHUB_APP_ID,
+    };
   });
   ipcMain.handle('lair-setup-required', async () => {
     return !launcherFileSystem.keystoreInitialized();
@@ -353,17 +361,20 @@ app.whenReady().then(async () => {
     HOLOCHAIN_MANAGER = holochainManager;
 
     // Install default apps if necessary:
-    // if (
-    //   !HOLOCHAIN_MANAGER.installedApps.map((appInfo) => appInfo.installed_app_id).includes('KanDo')
-    // ) {
-    //   console.log('Installing default app KanDo...');
-    //   await HOLOCHAIN_MANAGER.installApp(
-    //     path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp'),
-    //     'KanDo',
-    //     'launcher-electron-prototype',
-    //   );
-    //   console.log('KanDo isntalled.');
-    // }
+    if (
+      !HOLOCHAIN_MANAGER.installedApps
+        .map((appInfo) => appInfo.installed_app_id)
+        .includes(APPSTORE_APP_ID)
+    ) {
+      console.log('Installing AppStore...');
+      splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
+      await HOLOCHAIN_MANAGER.installApp(
+        path.join(DEFAULT_APPS_DIRECTORY, 'AppStore.webhapp'),
+        'AppStore',
+        'launcher-electron-prototype',
+      );
+      console.log('AppStore installed.');
+    }
     splashscreenWindow.close();
     createOrShowMainWindow();
   });

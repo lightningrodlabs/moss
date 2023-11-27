@@ -33,24 +33,14 @@ import {
   validateNotifications,
 } from '../utils.js';
 
-function getAppletIdFromOrigin(
-  appletIframeProtocol: AppletIframeProtocol,
-  origin: string,
-): AppletId {
-  if (appletIframeProtocol === AppletIframeProtocol.Assets) {
-    return origin.split('://')[1].split('?')[0].split('/')[0];
-  } else {
-    return origin.split('://')[1].split('?')[0].split('.')[0];
-  }
+function getAppletIdFromOrigin(origin: string): AppletId {
+  return origin.split('://')[1].split('?')[0].split('/')[0];
 }
 
 export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
-      const lowerCaseAppletId = getAppletIdFromOrigin(
-        weStore.conductorInfo.applet_iframe_protocol,
-        message.origin,
-      );
+      const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
       const installedApplets = await toPromise(weStore.installedApplets);
       const appletHash = installedApplets.find(
         (a) => encodeHashToBase64(a).toLowerCase() === lowerCaseAppletId,
