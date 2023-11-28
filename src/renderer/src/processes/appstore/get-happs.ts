@@ -2,6 +2,7 @@ import { AppAgentClient } from '@holochain/client';
 import { AppEntry, DevHubResponse, Entity } from './types.js';
 
 export async function getAllApps(appstoreClient: AppAgentClient): Promise<Array<Entity<AppEntry>>> {
+  console.log('CALLING ZOME TO GET ALL APPS FROM APPSTORE...');
   const allApps: DevHubResponse<Array<Entity<AppEntry>>> = await appstoreClient.callZome({
     fn_name: 'get_all_apps',
     zome_name: 'appstore_api',

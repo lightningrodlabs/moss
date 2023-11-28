@@ -15,13 +15,9 @@ import { weStoreContext } from './context.js';
 import { WeStore } from './we-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
-import { getConductorInfo } from './tauri.js';
+import { getConductorInfo } from './electron-api.js';
 
-type State =
-  | { state: 'loading' }
-  | { state: 'password'; initialized: boolean }
-  | { state: 'running' }
-  | { state: 'factoryReset' };
+type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
 @customElement('we-app')
 export class WeApp extends LitElement {
@@ -66,6 +62,7 @@ export class WeApp extends LitElement {
       APP_INTERFACE_PORT: info.app_port,
       ADMIN_INTERFACE_PORT: info.admin_port,
       INSTALLED_APP_ID: '',
+      FRAMEWORK: 'electron',
     };
 
     const adminWebsocket = await AdminWebsocket.connect(
@@ -120,16 +117,6 @@ export class WeApp extends LitElement {
         return html`<div class="column center-content" style="flex: 1;">
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
-      case 'password':
-        return html`
-          <div class="column center-content" style="flex: 1">
-            ${this.state.initialized
-              ? html` <enter-password @password-entered=${() => this.connect()}></enter-password> `
-              : html`
-                  <create-password @password-created=${() => this.connect()}></create-password>
-                `}
-          </div>
-        `;
       case 'running':
         return html`<main-dashboard></main-dashboard>`;
       case 'factoryReset':

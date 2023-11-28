@@ -16,7 +16,7 @@ import url from 'url';
 import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 
-import { LauncherFileSystem } from './filesystem';
+import { WeFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
 import { ZomeCallSigner, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
@@ -26,6 +26,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
+import { AppStatusFilter } from '@holochain/client';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -69,7 +70,7 @@ app.on('second-instance', () => {
   createOrShowMainWindow();
 });
 
-const launcherFileSystem = LauncherFileSystem.connect(app, args.profile);
+const launcherFileSystem = WeFileSystem.connect(app, args.profile);
 const launcherEmitter = new LauncherEmitter();
 
 setupLogs(launcherEmitter, launcherFileSystem);
@@ -138,6 +139,43 @@ const createOrShowMainWindow = () => {
     MAIN_WINDOW.show();
     return;
   }
+  const ses = session.defaultSession;
+  ses.protocol.handle('applet', async (request) => {
+    // console.log("### Got file request: ", request);
+    const uriWithoutProtocol = request.url.split('://')[1];
+    const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
+    const uriComponents = uriWithoutQueryString.split('/');
+    const appletId = uriComponents[0];
+
+    const installedAppId = `applet#${appletId}`;
+
+    const uiAssetsDir = launcherFileSystem.appUiAssetsDir(installedAppId);
+
+    if (!uiAssetsDir) {
+      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
+    }
+
+    if (
+      uriComponents.length === 2 &&
+      (uriComponents[1] === '' || uriComponents[1] === 'index.html')
+    ) {
+      const indexHtmlResponse = await net.fetch(
+        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
+      );
+      const content = await indexHtmlResponse.text();
+      let modifiedContent = content.replace(
+        '<head>',
+        `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${installedAppId}", FRAMEWORK: "electron" };</script>`,
+      );
+      // remove title attribute to be able to set title to app id later
+      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
+      return new Response(modifiedContent, indexHtmlResponse);
+    } else {
+      return net.fetch(
+        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
+      );
+    }
+  });
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1200,
@@ -183,16 +221,20 @@ const createOrShowMainWindow = () => {
 const createHappWindow = (appId: string) => {
   // TODO create mapping between installed-app-id's and window ids
 
+  const uiAssetsDir = launcherFileSystem.appUiAssetsDir(appId);
+  if (!uiAssetsDir) {
+    throw new Error(`No directory found for UI assets. Is it a headless app?`);
+  }
+
   const partition = `persist:${appId}`;
   const ses = session.fromPartition(partition);
+
   ses.protocol.handle('file', async (request) => {
     // console.log("### Got file request: ", request);
     const filePath = request.url.slice('file://'.length);
     console.log('filePath: ', filePath);
     if (!filePath.endsWith('index.html')) {
-      return net.fetch(
-        url.pathToFileURL(path.join(launcherFileSystem.appUiDir(appId), filePath)).toString(),
-      );
+      return net.fetch(url.pathToFileURL(path.join(uiAssetsDir, filePath)).toString());
     } else {
       const indexHtmlResponse = await net.fetch(request.url);
       const content = await indexHtmlResponse.text();
@@ -233,7 +275,7 @@ const createHappWindow = (appId: string) => {
     // happWindow = null;
   });
   console.log('Loading happ window file');
-  happWindow.loadFile(path.join(launcherFileSystem.appUiDir(appId), 'index.html'));
+  happWindow.loadFile(path.join(uiAssetsDir, 'index.html'));
 };
 
 let tray;
@@ -297,6 +339,27 @@ app.whenReady().then(async () => {
   ipcMain.handle('lair-setup-required', async () => {
     return !launcherFileSystem.keystoreInitialized();
   });
+  ipcMain.handle('is-dev-mode-enabled', async () => {
+    const enabledApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({
+      status_filter: AppStatusFilter.Enabled,
+    });
+    if (enabledApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
+      return true;
+    }
+    return false;
+  });
+  ipcMain.handle('enable-dev-mode', async () => {
+    const installedApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+    if (installedApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
+      HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: DEVHUB_APP_ID });
+    } else {
+      await HOLOCHAIN_MANAGER!.installApp(
+        path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
+        'DevHub',
+        'launcher-electron-prototype',
+      );
+    }
+  });
 
   const splashscreenWindow = createSplashscreenWindow();
 
@@ -349,7 +412,7 @@ app.whenReady().then(async () => {
       holochianBinaries['holochain-0.2.3'],
       password,
       '0.2.3',
-      launcherFileSystem.holochainDir,
+      launcherFileSystem.conductorDir,
       launcherFileSystem.conductorConfigPath,
       lairUrl,
       'https://bootstrap.holo.host',

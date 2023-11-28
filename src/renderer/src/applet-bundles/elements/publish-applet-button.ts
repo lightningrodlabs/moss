@@ -19,7 +19,7 @@ import {
   isDevModeEnabled,
   openAppStore,
   openDevhub,
-} from '../../tauri.js';
+} from '../../electron-api.js';
 
 @localized()
 @customElement('publish-applet-button')

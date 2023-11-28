@@ -22,7 +22,7 @@ import { HoloHashMap } from '@holochain-open-dev/utils';
 import { appWindow } from '@tauri-apps/api/window';
 
 import { AppOpenViews } from '../layout/types.js';
-import { AppletIframeProtocol, notifyTauri, signZomeCallTauri } from '../tauri.js';
+import { notifyElectron, signZomeCallElectron } from '../electron-api.js';
 import { WeStore } from '../we-store.js';
 import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
@@ -320,7 +320,7 @@ export async function handleAppletIframeMessage(
           // user was offline
           if (Date.now() - notification.timestamp < 300000) {
             console.log('notifying tauri');
-            await notifyTauri(
+            await notifyElectron(
               notification,
               appletNotificationSettings.showInSystray && !windowVisible,
               appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
@@ -341,7 +341,7 @@ export async function handleAppletIframeMessage(
     case 'get-global-attachment-types':
       return toPromise(weStore.allAttachmentTypes);
     case 'sign-zome-call':
-      return signZomeCallTauri(message.request);
+      return signZomeCallElectron(message.request);
     case 'create-attachment':
       host = await toPromise(
         pipe(

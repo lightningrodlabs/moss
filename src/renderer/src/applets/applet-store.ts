@@ -23,7 +23,7 @@ import {
   loadAppletNotificationStatus,
   renderViewToQueryString,
 } from '../utils.js';
-import { ConductorInfo } from '../tauri.js';
+import { ConductorInfo } from '../electron-api.js';
 import { AppletBundlesStore } from '../applet-bundles/applet-bundles-store.js';
 
 export class AppletStore {

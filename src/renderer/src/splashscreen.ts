@@ -92,10 +92,10 @@ export class SplashScreen extends LitElement {
   renderSetupLair() {
     return html`
       <div class="column center-content">
-        <h2>Setup Holochain Launcher</h2>
+        <h2>Setup We</h2>
         <div style="font-size: 17px; max-width: 500px; text-align: center;">
           Choose a password to encrypt your data and private keys. You will always need this
-          password to start Launcher.
+          password to start We.
         </div>
         <h3>Select Password:</h3>
         <input
@@ -181,7 +181,7 @@ export class SplashScreen extends LitElement {
       <div class="background">
         ${this.renderContent()}
         <div class="bottom-left">${this.progressState}</div>
-        <div class="bottom-right">Holochain Launcher (Electron Prototype)</div>
+        <div class="bottom-right">Lightningrod Labs We (Electron Prototype)</div>
         <div class="top-right errorbar row " style="${this.wrongPassword ? '' : 'display: none;'}">
           Wrong password.
         </div>

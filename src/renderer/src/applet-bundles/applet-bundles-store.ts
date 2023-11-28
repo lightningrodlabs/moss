@@ -13,7 +13,7 @@ import {
   HappReleaseEntry,
   HostAvailability,
 } from '../processes/appstore/types.js';
-import { ConductorInfo } from '../tauri.js';
+import { ConductorInfo } from '../electron-api.js';
 
 export class AppletBundlesStore {
   constructor(

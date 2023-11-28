@@ -6,7 +6,7 @@ import { HolochainVersion, LauncherEmitter } from './launcherEmitter';
 import split from 'split';
 import path from 'path';
 import { AdminWebsocket, AppInfo } from '@holochain/client';
-import { LauncherFileSystem } from './filesystem';
+import { WeFileSystem } from './filesystem';
 
 const rustUtils = require('hc-launcher-rust-utils');
 
@@ -18,7 +18,7 @@ export class HolochainManager {
   adminPort: AdminPort;
   appPort: AppPort;
   adminWebsocket: AdminWebsocket;
-  fs: LauncherFileSystem;
+  fs: WeFileSystem;
   installedApps: AppInfo[];
   launcherEmitter: LauncherEmitter;
   version: HolochainVersion;
@@ -26,7 +26,7 @@ export class HolochainManager {
   constructor(
     processHandle: childProcess.ChildProcessWithoutNullStreams,
     launcherEmitter: LauncherEmitter,
-    launcherFileSystem: LauncherFileSystem,
+    launcherFileSystem: WeFileSystem,
     adminPort: AdminPort,
     appPort: AppPort,
     adminWebsocket: AdminWebsocket,
@@ -45,7 +45,7 @@ export class HolochainManager {
 
   static async launch(
     launcherEmitter: LauncherEmitter,
-    launcherFileSystem: LauncherFileSystem,
+    launcherFileSystem: WeFileSystem,
     binary: string,
     password: string,
     version: HolochainVersion,
@@ -55,7 +55,9 @@ export class HolochainManager {
     bootstrapUrl: string,
     signalingUrl: string,
   ): Promise<HolochainManager> {
-    const adminPort = await getPort();
+    const adminPort = process.env.ADMIN_PORT
+      ? parseInt(process.env.ADMIN_PORT, 10)
+      : await getPort();
 
     // TODO Reuse existing config and only overwrite chosen values if necessary
     const conductorConfig = rustUtils.defaultConductorConfig(
@@ -126,7 +128,7 @@ export class HolochainManager {
   }
 
   async installApp(filePath: string, appId: string, networkSeed?: string) {
-    const uiTargetDir = path.join(this.fs.uisDir, appId);
+    const uiTargetDir = this.fs.appUiAssetsDir(appId);
     console.log('uiTargetDir: ', uiTargetDir);
     console.log('Installing app...');
     const tempHappPath = await rustUtils.saveWebhapp(filePath, uiTargetDir);
@@ -152,7 +154,10 @@ export class HolochainManager {
 
   async uninstallApp(appId: string) {
     await this.adminWebsocket.uninstallApp({ installed_app_id: appId });
-    fs.rmSync(this.fs.appUiDir(appId), { recursive: true });
+    const uiAssetsDir = this.fs.appUiAssetsDir(appId);
+    if (uiAssetsDir) {
+      fs.rmSync(uiAssetsDir, { recursive: true });
+    }
     console.log('Uninstalled app.');
     const installedApps = await this.adminWebsocket.listApps({});
     console.log('Installed apps: ', installedApps);

@@ -68,14 +68,14 @@ export function findAppForDnaHash(
   return undefined;
 }
 
-// IMPORTANT: If this function is changed, the same function in ui/applet-iframe/index.ts needs
+// IMPORTANT: If this function is changed, the same function in utils/applet-iframe/index.ts needs
 // to be changed accordingly
 export function appIdFromAppletHash(appletHash: AppletHash): string {
-  return `applet#${encodeHashToBase64(appletHash)}`;
+  return `applet#${encodeHashToBase64(appletHash).toLowerCase()}`;
 }
 
 export function appIdFromAppletId(appletId: AppletId): string {
-  return `applet#${appletId}`;
+  return `applet#${appletId.toLowerCase()}`;
 }
 
 export function appletHashFromAppId(installedAppId: string): AppletHash {

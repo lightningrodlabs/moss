@@ -82,26 +82,21 @@ fn get_my_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 
     let records = query(filter)?;
 
-    Ok(
-        records
-            .into_iter()
-            .filter_map(|record| record.action().entry_hash().cloned())
-            .collect()
-    )
+    Ok(records
+        .into_iter()
+        .filter_map(|record| record.action().entry_hash().cloned())
+        .collect())
 }
 
 /// Get the Applets that the calling agent has installed
 #[hdk_extern]
 fn get_my_applet(action_hash: ActionHash) -> ExternResult<Option<Record>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
-    let filter = ChainQueryFilter::new()
-        .entry_type(private_applet_entry_type);
+    let filter = ChainQueryFilter::new().entry_type(private_applet_entry_type);
     let private_applet_records = query(filter)?;
-    Ok(
-        private_applet_records
-            .into_iter()
-            .find(|record| record.action_address().to_owned() == action_hash)
-    )
+    Ok(private_applet_records
+        .into_iter()
+        .find(|record| record.action_address().to_owned() == action_hash))
 }
 
 /// Get all the Applets that have been registered in the group
@@ -135,14 +130,11 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
         .map(|link| (link.target.into_entry_hash().unwrap(), link.author))
         .collect();
 
-    Ok(
-        applet_infos
-            .into_iter()
-            .filter(|(entry_hash, _author)| !my_applets.contains(entry_hash))
-            .collect()
-    )
+    Ok(applet_infos
+        .into_iter()
+        .filter(|(entry_hash, _author)| !my_applets.contains(entry_hash))
+        .collect())
 }
-
 
 /// The person who registered the applet to the group may also archive it,
 /// meaning that it won't be discovered by default anymore by agents that have not
@@ -156,11 +148,9 @@ fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
     for link in links {
         // TODO Make this an actual validation rule
         if link.author != agent_info()?.agent_latest_pubkey {
-            return Err(wasm_error!(
-                WasmErrorInner::Guest(
-                    String::from("Applet can only be archived by the same agent that registered it to the group.")
-                )
-            ));
+            return Err(wasm_error!(WasmErrorInner::Guest(String::from(
+                "Applet can only be archived by the same agent that registered it to the group."
+            ))));
         }
         if let Some(target_applet_hash) = link.target.into_entry_hash() {
             if target_applet_hash.eq(&applet_hash) {
@@ -187,7 +177,6 @@ fn unarchive_applet(applet_hash: EntryHash) -> ExternResult<()> {
 
     Ok(())
 }
-
 
 #[hdk_extern]
 fn get_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
@@ -228,7 +217,9 @@ fn get_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 /// by installing the same applet in another group. It is only registered in the backend
 /// *that* this applet has been federated.
 #[hdk_extern]
-pub fn register_applet_federation(input: RegisterAppletFederationInput) -> ExternResult<ActionHash> {
+pub fn register_applet_federation(
+    input: RegisterAppletFederationInput,
+) -> ExternResult<ActionHash> {
     create_link(
         input.applet_hash.clone(),
         input.group_dna_hash,
@@ -241,7 +232,7 @@ pub fn register_applet_federation(input: RegisterAppletFederationInput) -> Exter
         anchor_hash,
         input.applet_hash,
         LinkTypes::AnchorToFederatedApplet,
-        ()
+        (),
     )
 }
 
@@ -251,14 +242,11 @@ pub fn register_applet_federation(input: RegisterAppletFederationInput) -> Exter
 #[hdk_extern]
 pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHash>> {
     let links = get_links(applet_hash, LinkTypes::AppletToInvitedGroup, None)?;
-    Ok(
-        links
-            .into_iter()
-            .filter_map(|link| link.target.into_entry_hash())
-            .collect::<Vec<holo_hash::EntryHash>>()
-    )
+    Ok(links
+        .into_iter()
+        .filter_map(|link| link.target.into_entry_hash())
+        .collect::<Vec<holo_hash::EntryHash>>())
 }
-
 
 /// Get Applets of this group that are knowingly federated with other groups
 #[hdk_extern]
@@ -266,10 +254,8 @@ pub fn get_federated_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_federated_applets_path();
     let anchor_hash = path.path_entry_hash()?;
     let links = get_links(anchor_hash, LinkTypes::AnchorToFederatedApplet, None)?;
-    Ok(
-        links
-            .into_iter()
-            .filter_map(|link| link.target.into_entry_hash())
-            .collect::<Vec<holo_hash::EntryHash>>()
-    )
+    Ok(links
+        .into_iter()
+        .filter_map(|link| link.target.into_entry_hash())
+        .collect::<Vec<holo_hash::EntryHash>>())
 }

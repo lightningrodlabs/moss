@@ -37,8 +37,8 @@ pub fn validate_create_link_all_custom_views(
 ) -> ExternResult<ValidateCallbackResult> {
     // Check the entry type for the given action hash
     // let action_hash = ActionHash::from(target_address);
-    let action_hash = ActionHash::try_from(target_address)
-        .map_err(|e| wasm_error!(WasmErrorInner::from(e)))?;
+    let action_hash =
+        ActionHash::try_from(target_address).map_err(|e| wasm_error!(WasmErrorInner::from(e)))?;
     let record = must_get_valid_record(action_hash)?;
     let _custom_view: crate::CustomView = record
         .entry()

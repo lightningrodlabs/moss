@@ -45,7 +45,8 @@ async fn create_and_join_applet() {
 
     consistency_10s([&alice, &bobbo]).await;
 
-    let all_group_applets: Vec<EntryHash> = conductors[1].call(&bob_zome, "get_group_applets", ()).await;
+    let all_group_applets: Vec<EntryHash> =
+        conductors[1].call(&bob_zome, "get_group_applets", ()).await;
 
     assert_eq!(all_group_applets.len(), 1);
 
@@ -54,12 +55,18 @@ async fn create_and_join_applet() {
         .call(&bob_zome, "store_joined_applet", applet)
         .await;
 
-    let bobs_installed_applets: Vec<EntryHash> = conductors[1].call(&bob_zome, "get_my_applets", ()).await;
+    let bobs_installed_applets: Vec<EntryHash> =
+        conductors[1].call(&bob_zome, "get_my_applets", ()).await;
 
     assert_eq!(bobs_installed_applets.len(), 1);
-    assert_eq!(bobs_installed_applets.first().unwrap().to_owned(), bob_applet_entry_hash);
-    assert_eq!(bobs_installed_applets.first().unwrap().to_owned(), alice_applet_entry_hash);
-
+    assert_eq!(
+        bobs_installed_applets.first().unwrap().to_owned(),
+        bob_applet_entry_hash
+    );
+    assert_eq!(
+        bobs_installed_applets.first().unwrap().to_owned(),
+        alice_applet_entry_hash
+    );
 
     // Register another applet and make sure unjoined applets returnes the right stuff
     let another_applet = Applet {
@@ -77,15 +84,26 @@ async fn create_and_join_applet() {
     };
 
     let alice_another_applet_entry_hash: EntryHash = conductors[0]
-        .call(&alice_zome, "advertise_group_applet", another_applet.clone())
+        .call(
+            &alice_zome,
+            "advertise_group_applet",
+            another_applet.clone(),
+        )
         .await;
 
     consistency_10s([&alice, &bobbo]).await;
 
-    let bobs_unjoined_applets: Vec<(EntryHash, AgentPubKey)> = conductors[1].call(&bob_zome, "get_unjoined_applets", ()).await;
+    let bobs_unjoined_applets: Vec<(EntryHash, AgentPubKey)> = conductors[1]
+        .call(&bob_zome, "get_unjoined_applets", ())
+        .await;
 
     assert_eq!(bobs_unjoined_applets.len(), 1);
-    assert_eq!(bobs_unjoined_applets.first().unwrap().to_owned().0, alice_another_applet_entry_hash);
-    assert_eq!(bobs_unjoined_applets.first().unwrap().to_owned().1, alice.agent_pubkey().clone());
-
+    assert_eq!(
+        bobs_unjoined_applets.first().unwrap().to_owned().0,
+        alice_another_applet_entry_hash
+    );
+    assert_eq!(
+        bobs_unjoined_applets.first().unwrap().to_owned().1,
+        alice.agent_pubkey().clone()
+    );
 }

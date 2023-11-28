@@ -1,87 +1,82 @@
-
-import { execSync } from "child_process";
-import fs from "fs";
-import crypto from "crypto";
-import AdmZip from "adm-zip";
-import { AdminWebsocket, AppAgentWebsocket } from "@holochain/client";
-import yaml from "js-yaml";
+import { execSync } from 'child_process';
+import fs from 'fs';
+import crypto from 'crypto';
+import AdmZip from 'adm-zip';
+import { AdminWebsocket, AppAgentWebsocket } from '@holochain/client';
+import yaml from 'js-yaml';
 
 const WE_LOGO_PATH = `${process.cwd()}/logo.svg`;
 const TESTING_APPLETS_PATH = `${process.cwd()}/testing-applets`;
 
 function getAppletsPaths() {
-  return fs
-    .readdirSync(TESTING_APPLETS_PATH)
-    .filter((p) => p.endsWith(".webhapp"));
+  return fs.readdirSync(TESTING_APPLETS_PATH).filter((p) => p.endsWith('.webhapp'));
 }
 
 async function publishApplets() {
   const adminWs = await AdminWebsocket.connect(
     new URL(`ws://127.0.0.1:${process.env.ADMIN_PORT}`),
-    100000
+    100000,
   );
 
   const apps = await adminWs.listApps({});
 
-  const devhubAppId = apps.find((app) =>
-    app.installed_app_id.includes("DevHub")
-  ).installed_app_id;
+  const devhubAppId = apps.find((app) => app.installed_app_id.includes('DevHub')).installed_app_id;
 
   const appstoreAppId = apps.find((app) =>
-    app.installed_app_id.includes("AppStore")
+    app.installed_app_id.includes('AppStore'),
   ).installed_app_id;
 
   const appPorts = await adminWs.listAppInterfaces();
   const devhubClient = await AppAgentWebsocket.connect(
     new URL(`ws://127.0.0.1:${appPorts[0]}`),
     devhubAppId,
-    100000
+    100000,
   );
   const appstoreClient = await AppAgentWebsocket.connect(
     new URL(`ws://127.0.0.1:${appPorts[0]}`),
     appstoreAppId,
-    100000
+    100000,
   );
   const devhubCells = await devhubClient.appInfo();
   for (const [role_name, [cell]] of Object.entries(devhubCells.cell_info)) {
-    await adminWs.authorizeSigningCredentials(cell["provisioned"].cell_id, {
+    await adminWs.authorizeSigningCredentials(cell['provisioned'].cell_id, {
       All: null,
     });
   }
   const appstoreCells = await appstoreClient.appInfo();
   for (const [role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
-    await adminWs.authorizeSigningCredentials(cell["provisioned"].cell_id, {
+    await adminWs.authorizeSigningCredentials(cell['provisioned'].cell_id, {
       All: null,
     });
   }
 
   const publisher = await appstoreClient.callZome({
-    role_name: "appstore",
-    zome_name: "appstore_api",
-    fn_name: "create_publisher",
+    role_name: 'appstore',
+    zome_name: 'appstore_api',
+    fn_name: 'create_publisher',
     payload: {
-      name: "holo",
+      name: 'holo',
       location: {
-        country: "es",
-        region: "Catalunya",
-        city: "Barcelona",
+        country: 'es',
+        region: 'Catalunya',
+        city: 'Barcelona',
       },
-      website: { url: "https://lightningrodlabs.org", context: "website" },
+      website: { url: 'https://lightningrodlabs.org', context: 'website' },
       icon: crypto.randomBytes(1_000),
-      email: "some@email.org",
+      email: 'some@email.org',
       editors: [],
     },
   });
 
   const allAppsOutput = await appstoreClient.callZome({
-    role_name: "appstore",
-    zome_name: "appstore_api",
-    fn_name: "get_all_apps",
+    role_name: 'appstore',
+    zome_name: 'appstore_api',
+    fn_name: 'get_all_apps',
     payload: null,
   });
   const appletsPaths = getAppletsPaths();
   for (const path of appletsPaths) {
-    const appletName = path.split(".")[0];
+    const appletName = path.split('.')[0];
     if (allAppsOutput.payload.find((app) => app.content.title === appletName)) {
       console.log(`Applet ${appletName} already published`);
       continue;
@@ -94,42 +89,40 @@ async function publishApplets() {
 
     const dnas = fs
       .readdirSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas`)
-      .filter((name) => !name.endsWith("dna"));
+      .filter((name) => !name.endsWith('dna'));
 
     for (const dna of dnas) {
       const dnaManifest = yaml.load(
-        fs.readFileSync(
-          `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/dna.yaml`
-        )
+        fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/dna.yaml`),
       );
 
       const integrityZomeEntities = [];
       const coordinatorZomeEntities = [];
       for (const izome of dnaManifest.integrity.zomes) {
         const izomeEntity = await devhubClient.callZome({
-          role_name: "dnarepo",
-          zome_name: "dna_library",
-          fn_name: "create_zome",
+          role_name: 'dnarepo',
+          zome_name: 'dna_library',
+          fn_name: 'create_zome',
           payload: {
             name: izome.name,
             zome_type: 0,
             display_name: izome.name,
-            description: "",
+            description: '',
           },
         });
         const zome_bytes = fs.readFileSync(
-          `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/zomes/integrity/${izome.name}.wasm`
+          `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/zomes/integrity/${izome.name}.wasm`,
         );
         const izomeVersionEntity = await devhubClient.callZome({
-          role_name: "dnarepo",
-          zome_name: "dna_library",
-          fn_name: "create_zome_version",
+          role_name: 'dnarepo',
+          zome_name: 'dna_library',
+          fn_name: 'create_zome_version',
           payload: {
             for_zome: izomeEntity.payload.id,
-            version: "0.1",
+            version: '0.1',
             ordering: 1,
             zome_bytes,
-            hdk_version: "v0.2.1",
+            hdk_version: 'v0.2.1',
           },
         });
 
@@ -137,52 +130,52 @@ async function publishApplets() {
       }
       for (const czome of dnaManifest.coordinator.zomes) {
         const czomeEntity = await devhubClient.callZome({
-          role_name: "dnarepo",
-          zome_name: "dna_library",
-          fn_name: "create_zome",
+          role_name: 'dnarepo',
+          zome_name: 'dna_library',
+          fn_name: 'create_zome',
           payload: {
             name: czome.name,
             zome_type: 1,
             display_name: czome.name,
-            description: "",
+            description: '',
           },
         });
         const zome_bytes = fs.readFileSync(
-          `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/zomes/coordinator/${czome.name}.wasm`
+          `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna}/zomes/coordinator/${czome.name}.wasm`,
         );
         const czomeVersionEntity = await devhubClient.callZome({
-          role_name: "dnarepo",
-          zome_name: "dna_library",
-          fn_name: "create_zome_version",
+          role_name: 'dnarepo',
+          zome_name: 'dna_library',
+          fn_name: 'create_zome_version',
           payload: {
             for_zome: czomeEntity.payload.id,
-            version: "0.1",
+            version: '0.1',
             ordering: 1,
             zome_bytes,
-            hdk_version: "v0.2.1",
+            hdk_version: 'v0.2.1',
           },
         });
         coordinatorZomeEntities.push([czomeEntity, czomeVersionEntity]);
       }
       const dnaEntity = await devhubClient.callZome({
-        role_name: "dnarepo",
-        zome_name: "dna_library",
-        fn_name: "create_dna",
+        role_name: 'dnarepo',
+        zome_name: 'dna_library',
+        fn_name: 'create_dna',
         payload: {
           name: dna,
           display_name: dna,
-          description: "",
+          description: '',
         },
       });
       const dnaVersionEntity = await devhubClient.callZome({
-        role_name: "dnarepo",
-        zome_name: "dna_library",
-        fn_name: "create_dna_version",
+        role_name: 'dnarepo',
+        zome_name: 'dna_library',
+        fn_name: 'create_dna_version',
         payload: {
           for_dna: dnaEntity.payload.id,
-          version: "0.1",
+          version: '0.1',
           ordering: 1,
-          hdk_version: "v0.2.1",
+          hdk_version: 'v0.2.1',
           integrity_zomes: integrityZomeEntities.map(([ze, zve]) => ({
             name: ze.payload.content.name,
             zome: zve.payload.content.for_zome,
@@ -200,7 +193,9 @@ async function publishApplets() {
               .find((z) => z.name === ze.payload.content.name)
               .dependencies.map((d) => d.name),
           })),
-          origin_time: dnaEntity.payload.origin_time ? dnaEntity.payload.origin_time : "2022-02-11T23:05:19.470323Z",
+          origin_time: dnaEntity.payload.origin_time
+            ? dnaEntity.payload.origin_time
+            : '2022-02-11T23:05:19.470323Z',
           properties: dnaEntity.payload.properties ? dnaEntity.payload.properties : null,
         },
       });
@@ -209,66 +204,64 @@ async function publishApplets() {
     }
 
     const happManifest = yaml.load(
-      fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/happ.yaml`)
+      fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/happ.yaml`),
     );
 
     const appEntity = await devhubClient.callZome({
-      role_name: "happs",
-      zome_name: "happ_library",
-      fn_name: "create_happ",
+      role_name: 'happs',
+      zome_name: 'happ_library',
+      fn_name: 'create_happ',
       payload: {
         title: appletName,
-        subtitle: happManifest.description || "",
-        description: "",
-        tags: ["we-applet"],
+        subtitle: happManifest.description || '',
+        description: '',
+        tags: ['we-applet'],
       },
     });
 
-    const file_bytes = fs.readFileSync(
-      `${TESTING_APPLETS_PATH}/${appletName}/ui.zip`
-    );
+    const file_bytes = fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/ui.zip`);
 
     const fileEntity = await devhubClient.callZome({
-      role_name: "web_assets",
-      zome_name: "web_assets",
-      fn_name: "create_file",
+      role_name: 'web_assets',
+      zome_name: 'web_assets',
+      fn_name: 'create_file',
       payload: {
         file_bytes,
       },
     });
     const guiEntity = await devhubClient.callZome({
-      role_name: "happs",
-      zome_name: "happ_library",
-      fn_name: "create_gui",
+      role_name: 'happs',
+      zome_name: 'happ_library',
+      fn_name: 'create_gui',
       payload: {
         name: appletName,
-        description: "",
+        description: '',
       },
     });
     const guiVersionEntity = await devhubClient.callZome({
-      role_name: "happs",
-      zome_name: "happ_library",
-      fn_name: "create_gui_release",
+      role_name: 'happs',
+      zome_name: 'happ_library',
+      fn_name: 'create_gui_release',
       payload: {
-        version: "0.1",
-        changelog: "",
+        version: '0.1',
+        changelog: '',
         for_gui: guiEntity.payload.id,
         for_happ_releases: [],
         web_asset_id: fileEntity.payload.id,
       },
     });
     const appVersionEntity = await devhubClient.callZome({
-      role_name: "happs",
-      zome_name: "happ_library",
-      fn_name: "create_happ_release",
+      role_name: 'happs',
+      zome_name: 'happ_library',
+      fn_name: 'create_happ_release',
       payload: {
-        version: "0.1",
-        description: "",
+        version: '0.1',
+        description: '',
         for_happ: appEntity.payload.id,
         ordering: 1,
         manifest: happManifest,
         official_gui: guiVersionEntity.payload.id,
-        hdk_version: "v0.1.0",
+        hdk_version: 'v0.1.0',
         dnas: dnaEntities.map(([de, dve]) => ({
           role_name: de.payload.content.name,
           dna: de.payload.id,
@@ -278,30 +271,29 @@ async function publishApplets() {
       },
     });
 
-    const happlibraryDnaHash =
-      devhubCells.cell_info["happs"][0]["provisioned"].cell_id[0];
+    const happlibraryDnaHash = devhubCells.cell_info['happs'][0]['provisioned'].cell_id[0];
 
     // check whether there is an icon in the ui.zip, otherwise take a default icon
     let iconBytes = fs.readFileSync(WE_LOGO_PATH); // default icon
-    let icon_mime_type = "image/svg+xml";
+    let icon_mime_type = 'image/svg+xml';
 
     let zip = new AdmZip(file_bytes);
     const zipEntries = zip.getEntries();
     zipEntries.forEach((entry) => {
-      if (entry.entryName === "icon.png") {
+      if (entry.entryName === 'icon.png') {
         iconBytes = entry.getData();
-        icon_mime_type = "image/png";
+        icon_mime_type = 'image/png';
       }
     });
 
     await appstoreClient.callZome({
-      role_name: "appstore",
-      zome_name: "appstore_api",
-      fn_name: "create_app",
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'create_app',
       payload: {
         title: appletName,
-        subtitle: happManifest.description || "",
-        description: "",
+        subtitle: happManifest.description || '',
+        description: '',
         icon: iconBytes,
         publisher: publisher.payload.id,
         devhub_address: {
@@ -316,7 +308,7 @@ async function publishApplets() {
       },
     });
 
-    console.log("Published applet: ", appletName);
+    console.log('Published applet: ', appletName);
   }
 }
 
@@ -343,64 +335,54 @@ async function publishApplets() {
 function unpackWebHapp(appletName) {
   if (fs.existsSync(`${TESTING_APPLETS_PATH}/${appletName}`)) return;
   execSync(
-    `hc web-app unpack ${TESTING_APPLETS_PATH}/${appletName}.webhapp -o ${TESTING_APPLETS_PATH}/${appletName}`
+    `hc web-app unpack ${TESTING_APPLETS_PATH}/${appletName}.webhapp -o ${TESTING_APPLETS_PATH}/${appletName}`,
   );
-  const webhapp = yaml.load(
-    fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/web-happ.yaml`)
-  );
+  const webhapp = yaml.load(fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/web-happ.yaml`));
 
   fs.renameSync(
     `${TESTING_APPLETS_PATH}/${appletName}/${webhapp.happ_manifest.bundled}`,
-    `${TESTING_APPLETS_PATH}/${appletName}/${appletName}.happ`
+    `${TESTING_APPLETS_PATH}/${appletName}/${appletName}.happ`,
   );
   fs.renameSync(
     `${TESTING_APPLETS_PATH}/${appletName}/${webhapp.ui.bundled}`,
-    `${TESTING_APPLETS_PATH}/${appletName}/ui.zip`
+    `${TESTING_APPLETS_PATH}/${appletName}/ui.zip`,
   );
 
   execSync(
-    `hc app unpack ${TESTING_APPLETS_PATH}/${appletName}/${appletName}.happ -o ${TESTING_APPLETS_PATH}/${appletName}/happ`
+    `hc app unpack ${TESTING_APPLETS_PATH}/${appletName}/${appletName}.happ -o ${TESTING_APPLETS_PATH}/${appletName}/happ`,
   );
   const happManifest = yaml.load(
-    fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/happ.yaml`)
+    fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/happ.yaml`),
   );
 
   fs.mkdirSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas`);
   for (const dna of happManifest.roles) {
     fs.renameSync(
       `${TESTING_APPLETS_PATH}/${appletName}/happ/${dna.dna.bundled}`,
-      `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}.dna`
+      `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}.dna`,
     );
     execSync(
-      `hc dna unpack ${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}.dna -o ${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}`
+      `hc dna unpack ${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}.dna -o ${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}`,
     );
 
     const dnaManifest = yaml.load(
-      fs.readFileSync(
-        `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/dna.yaml`
-      )
+      fs.readFileSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/dna.yaml`),
     );
-    fs.mkdirSync(
-      `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes`
-    );
-    fs.mkdirSync(
-      `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/integrity`
-    );
-    fs.mkdirSync(
-      `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/coordinator`
-    );
+    fs.mkdirSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes`);
+    fs.mkdirSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/integrity`);
+    fs.mkdirSync(`${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/coordinator`);
 
     for (const zome of dnaManifest.integrity.zomes) {
       fs.renameSync(
         `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/${zome.bundled}`,
-        `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/integrity/${zome.name}.wasm`
+        `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/integrity/${zome.name}.wasm`,
       );
     }
 
     for (const zome of dnaManifest.coordinator.zomes) {
       fs.renameSync(
         `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/${zome.bundled}`,
-        `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/coordinator/${zome.name}.wasm`
+        `${TESTING_APPLETS_PATH}/${appletName}/happ/dnas/${dna.name}/zomes/coordinator/${zome.name}.wasm`,
       );
     }
   }
@@ -410,30 +392,34 @@ async function publishAppletsRetry() {
   try {
     await publishApplets();
   } catch (e) {
-    if (e.toString().includes("could not connect to holochain conductor")) {
+    if (e.toString().includes('could not connect to holochain conductor')) {
       console.log(
-        "Couldn't publish applets yet because the conductor is still setting up, have you entered your password and enabled the developer mode? Retrying again in a few seconds..."
+        "Couldn't publish applets yet because the conductor is still setting up, have you entered your password and enabled the developer mode? Retrying again in a few seconds...",
       );
-    } else if (e.toString().includes("crypto.getRandomValues is not a function")) {
-      console.log("Failed to publish applets: Error: ", e);
-      console.log("\n\nMake sure to use a recent enough version of node (>18). Check your node version with 'node --version'.");
-    } else if (e.toString().includes("TypeError: Cannot read properties of undefined (reading 'installed_app_id')")) {
-      console.log("Failed to publish applets: Error: ", e);
+    } else if (e.toString().includes('crypto.getRandomValues is not a function')) {
+      console.log('Failed to publish applets: Error: ', e);
+      console.log(
+        "\n\nMake sure to use a recent enough version of node (>18). Check your node version with 'node --version'.",
+      );
+    } else if (
+      e
+        .toString()
+        .includes("TypeError: Cannot read properties of undefined (reading 'installed_app_id')")
+    ) {
+      console.log('Failed to publish applets: Error: ', e);
       console.log("\n\nYou probably haven't installed the DevHub yet.");
-    } else if (e.toString().includes("syntax error near unexpected token")) {
+    } else if (e.toString().includes('syntax error near unexpected token')) {
       console.log(
-        "Check the name of the webhapp file. There might be unexpected syntax in the name."
+        'Check the name of the webhapp file. There might be unexpected syntax in the name.',
       );
-    } else if (e.toString().includes("testing-applets")) {
+    } else if (e.toString().includes('testing-applets')) {
+      console.log("You probably haven't add webhapp`s file to testing-applets directory");
+    } else if (e.toString().includes('hc: command not found')) {
       console.log(
-        "You probably haven't add webhapp`s file to testing-applets directory"
-      );
-    } else if (e.toString().includes("hc: command not found")) {
-      console.log(
-        "Remember to run this script from within a nix-shell. So the hc command will be available."
+        'Remember to run this script from within a nix-shell. So the hc command will be available.',
       );
     } else {
-      console.log("Failed to publish applets. Error: ", e);
+      console.log('Failed to publish applets. Error: ', e);
     }
     setTimeout(async () => {
       await publishAppletsRetry();

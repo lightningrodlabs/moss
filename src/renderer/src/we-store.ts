@@ -35,7 +35,7 @@ import { msg } from '@lit/localize';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
-import { ConductorInfo, joinGroup } from './tauri.js';
+import { ConductorInfo, joinGroup } from './electron-api.js';
 import {
   appIdFromAppletHash,
   appletHashFromAppId,
