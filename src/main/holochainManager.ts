@@ -4,7 +4,6 @@ import fs from 'fs';
 import * as childProcess from 'child_process';
 import { HolochainVersion, LauncherEmitter } from './launcherEmitter';
 import split from 'split';
-import path from 'path';
 import { AdminWebsocket, AppInfo } from '@holochain/client';
 import { WeFileSystem } from './filesystem';
 
@@ -127,8 +126,7 @@ export class HolochainManager {
     });
   }
 
-  async installApp(filePath: string, appId: string, networkSeed?: string) {
-    const uiTargetDir = this.fs.appUiAssetsDir(appId);
+  async installApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
     console.log('uiTargetDir: ', uiTargetDir);
     console.log('Installing app...');
     const tempHappPath = await rustUtils.saveWebhapp(filePath, uiTargetDir);
@@ -152,11 +150,10 @@ export class HolochainManager {
     });
   }
 
-  async uninstallApp(appId: string) {
+  async uninstallApp(appId: string, uiDir: string) {
     await this.adminWebsocket.uninstallApp({ installed_app_id: appId });
-    const uiAssetsDir = this.fs.appUiAssetsDir(appId);
-    if (uiAssetsDir) {
-      fs.rmSync(uiAssetsDir, { recursive: true });
+    if (uiDir) {
+      fs.rmSync(uiDir, { recursive: true });
     }
     console.log('Uninstalled app.');
     const installedApps = await this.adminWebsocket.listApps({});

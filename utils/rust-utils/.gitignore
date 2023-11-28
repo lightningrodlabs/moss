@@ -1,6 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
+dist
 ### Node ###
 # Logs
 logs
@@ -121,7 +122,7 @@ dist
 .AppleDouble
 .LSOverride
 
-# Icon must end with two 
+# Icon must end with two
 Icon
 
 

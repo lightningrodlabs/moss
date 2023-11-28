@@ -1,6 +1,12 @@
 import { asyncDerived, lazyLoadAndPoll, pipe, retryUntilSuccess } from '@holochain-open-dev/stores';
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash, AdminWebsocket, AppAgentClient, encodeHashToBase64 } from '@holochain/client';
+import {
+  ActionHash,
+  ActionHashB64,
+  AdminWebsocket,
+  AppAgentClient,
+  encodeHashToBase64,
+} from '@holochain/client';
 import { invoke } from '@tauri-apps/api';
 import {
   getHappReleases,
@@ -14,6 +20,7 @@ import {
   HostAvailability,
 } from '../processes/appstore/types.js';
 import { ConductorInfo } from '../electron-api.js';
+import { fromUint8Array } from 'js-base64';
 
 export class AppletBundlesStore {
   constructor(
@@ -38,9 +45,7 @@ export class AppletBundlesStore {
       retryUntilSuccess(async () => {
         if (!appEntry) throw new Error("Can't find app bundle");
 
-        const icon: string = await invoke('fetch_icon', {
-          appActionHashB64: encodeHashToBase64(appEntry.id),
-        });
+        const icon: string = await this.fetchIcon(appEntry.id);
 
         if (!icon) throw new Error('Icon was not found');
 
@@ -75,5 +80,30 @@ export class AppletBundlesStore {
       throw new Error("This app doesn't have an official GUI.");
 
     return latestRelease;
+  }
+
+  async fetchIcon(appActionHash: ActionHash) {
+    const appEntryEntity: any = await this.appstoreClient.callZome({
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'get_app',
+      payload: {
+        id: appActionHash,
+      },
+    });
+    const appEntry = appEntryEntity.payload.content;
+    const essenceResponse = await this.appstoreClient.callZome({
+      role_name: 'appstore',
+      zome_name: 'mere_memory_api',
+      fn_name: 'retrieve_bytes',
+      payload: appEntry.icon,
+    });
+    const mimeType = appEntry.metadata.icon_mime_type;
+
+    const base64String = fromUint8Array(Uint8Array.from(essenceResponse.payload));
+
+    const iconSrc = `data:${mimeType};base64,${base64String}`;
+
+    return iconSrc;
   }
 }

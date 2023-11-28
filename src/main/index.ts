@@ -18,7 +18,7 @@ import { is } from '@electron-toolkit/utils';
 
 import { WeFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
-import { ZomeCallSigner, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
+import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
@@ -26,7 +26,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
-import { AppStatusFilter } from '@holochain/client';
+import { AppAgentWebsocket, AppStatusFilter } from '@holochain/client';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -75,17 +75,18 @@ const launcherEmitter = new LauncherEmitter();
 
 setupLogs(launcherEmitter, launcherFileSystem);
 
-let ZOME_CALL_SIGNER: ZomeCallSigner | undefined;
+let WE_RUST_HANDLER: WeRustHandler | undefined;
 // let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
 // let ADMIN_PORT: number | undefined;
 let APP_PORT: number | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
+let APPSTORE_CLIENT: AppAgentWebsocket | undefined;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
-  if (!ZOME_CALL_SIGNER) throw Error('Lair signer is not ready');
-  return ZOME_CALL_SIGNER.signZomeCall(zomeCall);
+  if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
+  return WE_RUST_HANDLER.signZomeCall(zomeCall);
 };
 
 // // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -322,9 +323,9 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
-  ipcMain.handle('uninstall-app', async (_e, appId: string) => {
-    await HOLOCHAIN_MANAGER!.uninstallApp(appId);
-  });
+  // ipcMain.handle('uninstall-app', async (_e, appId: string) => {
+  //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
+  // });
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
@@ -355,11 +356,43 @@ app.whenReady().then(async () => {
     } else {
       await HOLOCHAIN_MANAGER!.installApp(
         path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
-        'DevHub',
+        path.join(launcherFileSystem.uisDir, DEVHUB_APP_ID, 'assets'),
+        DEVHUB_APP_ID,
         'launcher-electron-prototype',
       );
     }
   });
+  // ipcMain.handle('fetch-icon', async (_e, appActionHashB64: ActionHashB64) => {
+  //   if (!APPSTORE_CLIENT) {
+  //     APPSTORE_CLIENT = await AppAgentWebsocket.connect(
+  //       new URL(`ws://127.0.0.1:${HOLOCHAIN_MANAGER!.appPort}`),
+  //       APPSTORE_APP_ID,
+  //     );
+  //   }
+  //   const appEntryEntity: any = await APPSTORE_CLIENT.callZome({
+  //     role_name: 'appstore',
+  //     zome_name: 'appstore_api',
+  //     fn_name: 'get_app',
+  //     payload: {
+  //       id: decodeHashFromBase64(appActionHashB64),
+  //     },
+  //   });
+  //   const essenceResponse = await APPSTORE_CLIENT.callZome({
+  //     role_name: 'appstore',
+  //     zome_name: 'mere_memory_api',
+  //     fn_name: 'retrieve_bytes',
+  //     payload: appEntryEntity.content.icon,
+  //   });
+  //   console.log('Got essenceResponse: ', essenceResponse);
+  //   const mimeType = appEntryEntity.content.metadata.icon_mime_type;
+  //   console.log('ICON MIME TYPE: ', mimeType);
+
+  //   const base64String = fromUint8Array(essenceResponse);
+
+  //   const iconSrc = `data:${mimeType};base64,${base64String}`;
+
+  //   return iconSrc;
+  // });
 
   const splashscreenWindow = createSplashscreenWindow();
 
@@ -401,7 +434,6 @@ app.whenReady().then(async () => {
     );
     LAIR_HANDLE = lairHandle;
     // create zome call signer
-    ZOME_CALL_SIGNER = await rustUtils.ZomeCallSigner.connect(lairUrl, password);
 
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
 
@@ -423,6 +455,13 @@ app.whenReady().then(async () => {
     APP_PORT = holochainManager.appPort;
     HOLOCHAIN_MANAGER = holochainManager;
 
+    WE_RUST_HANDLER = await rustUtils.WeRustHandler.connect(
+      lairUrl,
+      holochainManager.adminPort,
+      holochainManager.appPort,
+      password,
+    );
+
     // Install default apps if necessary:
     if (
       !HOLOCHAIN_MANAGER.installedApps
@@ -433,7 +472,8 @@ app.whenReady().then(async () => {
       splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
       await HOLOCHAIN_MANAGER.installApp(
         path.join(DEFAULT_APPS_DIRECTORY, 'AppStore.webhapp'),
-        'AppStore',
+        path.join(launcherFileSystem.uisDir, APPSTORE_APP_ID, 'assets'),
+        APPSTORE_APP_ID,
         'launcher-electron-prototype',
       );
       console.log('AppStore installed.');

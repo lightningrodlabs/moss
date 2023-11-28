@@ -1,17 +1,15 @@
 import {
   AppInfo,
   CallZomeRequestUnsigned,
-  CellType,
-  InstalledAppId,
   randomNonce,
   CallZomeRequest,
   getNonceExpiration,
   CallZomeRequestSigned,
+  ActionHashB64,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
-import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
 
 declare global {
@@ -28,6 +26,7 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
+      fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
     };
   }
 }
