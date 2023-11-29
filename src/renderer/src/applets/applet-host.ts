@@ -30,6 +30,7 @@ import {
   getAppletNotificationSettings,
   getNotificationState,
   storeAppletNotifications,
+  toLowerCaseB64,
   validateNotifications,
 } from '../utils.js';
 
@@ -43,7 +44,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
       const installedApplets = await toPromise(weStore.installedApplets);
       const appletHash = installedApplets.find(
-        (a) => encodeHashToBase64(a).toLowerCase() === lowerCaseAppletId,
+        (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
       );
 
       if (!appletHash) {

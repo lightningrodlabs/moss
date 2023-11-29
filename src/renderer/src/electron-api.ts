@@ -6,6 +6,8 @@ import {
   getNonceExpiration,
   CallZomeRequestSigned,
   ActionHashB64,
+  AgentPubKeyB64,
+  DnaHashB64,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
@@ -23,7 +25,18 @@ declare global {
       openDevHub: () => Promise<void>;
       getInstalledApps: () => Promise<AppInfo>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      installAppletBundle: (
+        devhubHost: AgentPubKeyB64,
+        appId: string,
+        networkSeed: string,
+        membraneProofs: any,
+        agentPubKey: AgentPubKeyB64,
+        devhubDnaHash: DnaHashB64,
+        happReleaseHash: ActionHashB64,
+        guiReleaseHash: ActionHashB64 | undefined,
+      ) => Promise<AppInfo>;
       isDevModeEnabled: () => Promise<boolean>;
+      joinGroup: (networkSeed: string) => Promise<AppInfo>;
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
@@ -38,9 +51,8 @@ export interface ConductorInfo {
   devhub_app_id: string;
 }
 
-export async function joinGroup(_networkSeed: string): Promise<AppInfo> {
-  throw new Error('JOINING GROUP NOT IMPLEMENTED.');
-
+export async function joinGroup(networkSeed: string): Promise<AppInfo> {
+  return window.electronAPI.joinGroup(networkSeed);
   // const appInfo: AppInfo = await invoke('join_group', {
   //   networkSeed,
   // });

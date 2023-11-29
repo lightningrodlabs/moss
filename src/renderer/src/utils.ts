@@ -12,6 +12,8 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
+  AnyDhtHashB64,
+  HoloHashB64,
 } from '@holochain/client';
 import {
   Hrl,
@@ -71,19 +73,27 @@ export function findAppForDnaHash(
 // IMPORTANT: If this function is changed, the same function in utils/applet-iframe/index.ts needs
 // to be changed accordingly
 export function appIdFromAppletHash(appletHash: AppletHash): string {
-  return `applet#${encodeHashToBase64(appletHash).toLowerCase()}`;
+  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
 }
 
 export function appIdFromAppletId(appletId: AppletId): string {
-  return `applet#${appletId.toLowerCase()}`;
+  return `applet#${toLowerCaseB64(appletId)}`;
 }
 
 export function appletHashFromAppId(installedAppId: string): AppletHash {
-  return decodeHashFromBase64(installedAppId.slice(7));
+  return decodeHashFromBase64(toOriginalCaseB64(installedAppId.slice(7)));
 }
 
 export function appletIdFromAppId(installedAppId: string): AppletId {
-  return installedAppId.slice(7);
+  return toOriginalCaseB64(installedAppId.slice(7));
+}
+
+export function toLowerCaseB64(hashb64: HoloHashB64): string {
+  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '*');
+}
+
+export function toOriginalCaseB64(input: string): HoloHashB64 {
+  return input.replace(/[a-z]\*/g, (match) => match[0].toUpperCase());
 }
 
 export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {

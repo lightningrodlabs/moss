@@ -46,9 +46,10 @@ import {
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppletHash, AppletId } from './types.js';
-import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
+import { ResourceLocatorB64, tryWithHosts } from './processes/appstore/get-happ-releases.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
+import { HappReleaseEntry } from './processes/appstore/types.js';
 
 export class WeStore {
   constructor(
@@ -248,6 +249,10 @@ export class WeStore {
     asyncReadable<AppletStore>(async (set) => {
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
       const groups = await toPromise(this.groupsForApplet.get(appletHash));
+      console.log(
+        '@appletStores: groups: ',
+        Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
+      );
 
       if (groups.size === 0) throw new Error('Applet is not installed in any of the groups');
 
@@ -311,15 +316,20 @@ export class WeStore {
       this.groupStores,
       (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
       async (appletsByGroup) => {
-        // console.log("appletsByGroup: ", Array.from(appletsByGroup.values()).map((hashes) => hashes.map((hash) => encodeHashToBase64(hash))));
+        console.log(
+          'appletsByGroup: ',
+          Array.from(appletsByGroup.values()).map((hashes) =>
+            hashes.map((hash) => encodeHashToBase64(hash)),
+          ),
+        );
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
             appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
 
-        // console.log("Requested applet hash: ", encodeHashToBase64(appletHash));
-        // console.log("groupDnaHashes: ", groupDnaHashes);
+        console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
+        console.log('groupDnaHashes: ', groupDnaHashes);
 
         // Disabling an applet here is dangerous. this.groupStores is coming from a
         // manualReloadStore(), i.e. it is not reliable to be up to date with the
@@ -328,6 +338,18 @@ export class WeStore {
         //   this.appletBundlesStore.disableApplet(appletHash);
         // }
         const groupStores = await toPromise(this.groupStores);
+
+        console.log(
+          'GROUPSTORES HASHES: ',
+          Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
+        );
+
+        console.log(
+          'Sliced group stores: ',
+          Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
+            encodeHashToBase64(hash),
+          ),
+        );
 
         return slice(groupStores, groupDnaHashes);
       },
@@ -455,19 +477,41 @@ export class WeStore {
       ),
     );
 
-  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
+  async installApplet(
+    appletHash: EntryHash,
+    applet: Applet,
+    guiReleaseHash: ActionHash | undefined,
+  ): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
+    console.log(
+      '...and guiReleaseHash: ',
+      guiReleaseHash ? encodeHashToBase64(appletHash) : undefined,
+    );
     const appId = appIdFromAppletHash(appletHash);
+    if (!applet.network_seed) {
+      throw new Error(
+        'Network Seed not defined. Undefined network seed is currently not supported.',
+      );
+    }
 
-    const appInfo: AppInfo = await invoke('install_applet_bundle_if_necessary', {
-      appId,
-      networkSeed: applet.network_seed,
-      membraneProofs: {},
-      agentPubKey: encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
-      devhubDnaHash: encodeHashToBase64(applet.devhub_dna_hash),
-      happReleaseHash: encodeHashToBase64(applet.devhub_happ_release_hash),
-      happEntryActionHash: encodeHashToBase64(applet.devhub_happ_entry_action_hash),
-    });
+    const appInfo = await tryWithHosts<AppInfo>(
+      async (host) => {
+        return window.electronAPI.installAppletBundle(
+          encodeHashToBase64(host),
+          appId,
+          applet.network_seed!,
+          {},
+          encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
+          encodeHashToBase64(applet.devhub_dna_hash),
+          encodeHashToBase64(applet.devhub_happ_release_hash),
+          guiReleaseHash ? encodeHashToBase64(guiReleaseHash) : undefined,
+        );
+      },
+      this.appletBundlesStore.appstoreClient,
+      applet.devhub_dna_hash,
+      'happ_library',
+      'get_dna_version',
+    );
 
     await this.reloadManualStores();
     return appInfo;

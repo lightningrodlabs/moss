@@ -1,6 +1,6 @@
 import winston, { createLogger, transports, format } from 'winston';
 import path from 'path';
-import { LauncherFileSystem } from './filesystem';
+import { WeFileSystem } from './filesystem';
 import {
   HOLOCHAIN_ERROR,
   HOLOCHAIN_LOG,
@@ -19,10 +19,7 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 // TODO define class LauncherLogger that can log all lair, holochain and launcher-specific stuff
 // with methods logLair, logHolochain, logLauncher, logHapp, ...
 
-export function setupLogs(
-  launcherEmitter: LauncherEmitter,
-  launcherFileSystem: LauncherFileSystem,
-) {
+export function setupLogs(launcherEmitter: LauncherEmitter, launcherFileSystem: WeFileSystem) {
   const logFilePath = path.join(launcherFileSystem.appLogsDir, 'launcher.log');
   // with file rotation set maxsize. But then we require logic to garbage collect old files...
   // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
@@ -56,8 +53,8 @@ function logHolochain(
 ) {
   const holochainVersion = (holochainData as HolochainData).version;
   const line = (holochainData as HolochainData).data;
-  const logLine = `[HOLOCHAIN ${holochainVersion}]: ${line}`;
-  console.log(logLine);
+  // const logLine = `[HOLOCHAIN ${holochainVersion}]: ${line}`;
+  // console.log(logLine);
   let logger = HOLOCHAIN_LOGGERS[holochainVersion];
   if (logger) {
     logger.log('info', line);

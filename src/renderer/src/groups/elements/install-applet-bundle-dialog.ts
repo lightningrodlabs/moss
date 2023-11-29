@@ -76,7 +76,7 @@ export class InstallAppletBundleDialog extends LitElement {
   @state()
   _showAdvanced: boolean = false;
 
-  _unlisten: UnlistenFn | undefined;
+  // _unlisten: UnlistenFn | undefined;
 
   async open(appletInfo: Entity<AppEntry>) {
     console.log('OPENING WITH APPLETINFO: ', appletInfo);
@@ -102,9 +102,9 @@ export class InstallAppletBundleDialog extends LitElement {
   }
 
   async firstUpdated() {
-    this._unlisten = await listen('applet-install-progress', (event) => {
-      this._installationProgress = event.payload as string;
-    });
+    // this._unlisten = await listen('applet-install-progress', (event) => {
+    //   this._installationProgress = event.payload as string;
+    // });
     try {
       this._peerHostsStatus = this._appletInfo
         ? await this.groupStore.weStore.appletBundlesStore.getVisibleHosts(this._appletInfo)
@@ -120,9 +120,9 @@ export class InstallAppletBundleDialog extends LitElement {
     }, 5000);
   }
 
-  disconnectedCallback(): void {
-    if (this._unlisten) this._unlisten();
-  }
+  // disconnectedCallback(): void {
+  //   if (this._unlisten) this._unlisten();
+  // }
 
   get publishDisabled() {
     return this._duplicateName;
@@ -140,6 +140,8 @@ export class InstallAppletBundleDialog extends LitElement {
       const latestRelease = await this.weStore.appletBundlesStore.getLatestVersion(
         this._appletInfo!,
       );
+
+      this._installationProgress = 'Fetching Applet from DevHub host...';
 
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._appletInfo!,

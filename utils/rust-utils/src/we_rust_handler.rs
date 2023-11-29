@@ -127,8 +127,8 @@ impl WeRustHandler {
     pub async fn fetch_and_store_ui(
         &self,
         host: String,
-        gui_release_hash: String,
         devhub_happ_library_dna_hash: String,
+        gui_release_hash: String,
         uis_storage_dir: String,
         appstore_app_id: String,
     ) -> napi::Result<()> {
@@ -217,8 +217,8 @@ impl JsWeRustHandler {
     pub async fn fetch_and_store_ui(
         &self,
         host: String,
-        gui_release_hash: String,
         devhub_dna_hash: String,
+        gui_release_hash: String,
         uis_storage_dir: String,
         appstore_app_id: String,
     ) -> Result<()> {

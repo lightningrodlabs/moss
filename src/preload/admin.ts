@@ -1,6 +1,6 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
-import { ActionHashB64 } from '@holochain/client';
+import { ActionHashB64, AgentPubKeyB64, DnaHashB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
 
@@ -14,7 +14,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDevHub: () => ipcRenderer.invoke('open-devhub'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  installAppletBundle: (
+    devhubHost: AgentPubKeyB64,
+    appId: string,
+    networkSeed: string,
+    membraneProofs: any,
+    agentPubKey: AgentPubKeyB64,
+    devhubDnaHash: DnaHashB64,
+    happReleaseHash: ActionHashB64,
+    guiReleaseHash: ActionHashB64,
+  ) =>
+    ipcRenderer.invoke(
+      'install-applet-bundle',
+      devhubHost,
+      appId,
+      networkSeed,
+      membraneProofs,
+      agentPubKey,
+      devhubDnaHash,
+      happReleaseHash,
+      guiReleaseHash,
+    ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
+  joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),
   enableDevMode: () => ipcRenderer.invoke('enable-dev-mode'),
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>

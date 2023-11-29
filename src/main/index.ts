@@ -11,8 +11,10 @@ import {
   nativeImage,
 } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import * as childProcess from 'child_process';
 import url from 'url';
+import { createHash } from 'crypto';
 import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 
@@ -26,7 +28,12 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
-import { AppAgentWebsocket, AppStatusFilter } from '@holochain/client';
+import {
+  AgentPubKeyB64,
+  AppAgentWebsocket,
+  AppStatusFilter,
+  decodeHashFromBase64,
+} from '@holochain/client';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -362,6 +369,86 @@ app.whenReady().then(async () => {
       );
     }
   });
+  ipcMain.handle('join-group', async (_e, networkSeed: string) => {
+    const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+    const hash = createHash('sha256');
+    hash.update(networkSeed);
+    const hashedSeed = hash.digest('base64');
+    const appId = `group#${hashedSeed}`;
+    console.log('Determined appId for group: ', appId);
+    if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
+      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      return;
+    }
+    const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === APPSTORE_APP_ID);
+    if (!appStoreAppInfo)
+      throw new Error('Appstore must be installed before installing the first group.');
+    const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+      path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+      installed_app_id: appId,
+      agent_key: appStoreAppInfo.agent_pub_key,
+      network_seed: networkSeed,
+      membrane_proofs: {},
+    });
+    await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+    return appInfo;
+  });
+  ipcMain.handle(
+    'install-applet-bundle',
+    async (
+      _e,
+      devhubHost,
+      appId,
+      networkSeed,
+      membraneProofs,
+      agentPubKey,
+      devhubDnaHash,
+      happReleaseHash,
+      guiReleaseHash,
+    ) => {
+      const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
+      if (alreadyInstalled) {
+        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        return;
+      }
+      // check whether .happ file is already available
+      const happFilePath = path.join(launcherFileSystem.happsDir, `${happReleaseHash}.happ`);
+      if (!fs.existsSync(happFilePath)) {
+        console.log('Fetching and storing happ...');
+        await WE_RUST_HANDLER!.fetchAndStoreHapp(
+          devhubHost,
+          devhubDnaHash,
+          happReleaseHash,
+          launcherFileSystem.happsDir,
+          APPSTORE_APP_ID,
+        );
+      }
+      const uiDir = path.join(launcherFileSystem.uisDir, guiReleaseHash);
+      console.log('\n@install-applet-bundle: uiDir: ', uiDir);
+
+      if (guiReleaseHash && !fs.existsSync(uiDir)) {
+        console.log('Fetching and storing UI...');
+        await WE_RUST_HANDLER!.fetchAndStoreUi(
+          devhubHost,
+          devhubDnaHash,
+          guiReleaseHash,
+          launcherFileSystem.uisDir,
+          APPSTORE_APP_ID,
+        );
+      }
+      const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+        path: happFilePath,
+        installed_app_id: appId,
+        agent_key: agentPubKey,
+        network_seed: networkSeed,
+        membrane_proofs: membraneProofs,
+      });
+      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      console.log('@install-applet-bundle: app installed.');
+      return appInfo;
+    },
+  );
   // ipcMain.handle('fetch-icon', async (_e, appActionHashB64: ActionHashB64) => {
   //   if (!APPSTORE_CLIENT) {
   //     APPSTORE_CLIENT = await AppAgentWebsocket.connect(

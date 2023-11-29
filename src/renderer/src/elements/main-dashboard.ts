@@ -110,27 +110,27 @@ export class MainDashboard extends LitElement {
   }
 
   async firstUpdated() {
-    this._unlisten = await listen('deep-link-received', async (e) => {
-      const deepLink = e.payload as string;
-      try {
-        const split = deepLink.split('://');
-        const split2 = split[1].split('/');
+    // this._unlisten = await listen('deep-link-received', async (e) => {
+    //   const deepLink = e.payload as string;
+    //   try {
+    //     const split = deepLink.split('://');
+    //     const split2 = split[1].split('/');
 
-        if (split2[0] === 'hrl') {
-          await this.handleOpenHrl(
-            decodeHashFromBase64(split2[1]),
-            decodeHashFromBase64(split2[2]),
-          );
-        } else if (split2[0] === 'group') {
-          await this.handleOpenGroup(split2[1]);
-        } else if (split2[0] === 'applet') {
-          await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
-        }
-      } catch (e) {
-        console.error(e);
-        notifyError(msg('Error opening the link.'));
-      }
-    });
+    //     if (split2[0] === 'hrl') {
+    //       await this.handleOpenHrl(
+    //         decodeHashFromBase64(split2[1]),
+    //         decodeHashFromBase64(split2[2]),
+    //       );
+    //     } else if (split2[0] === 'group') {
+    //       await this.handleOpenGroup(split2[1]);
+    //     } else if (split2[0] === 'applet') {
+    //       await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
+    //     }
+    //   } catch (e) {
+    //     console.error(e);
+    //     notifyError(msg('Error opening the link.'));
+    //   }
+    // });
 
     // add eventlistener for clipboard
     window.addEventListener('keydown', (zEvent) => {

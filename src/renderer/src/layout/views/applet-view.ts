@@ -58,22 +58,22 @@ export class AppletViewEl extends LitElement {
     () => [this.appletHash, this.weStore],
   );
 
-  @state()
-  _installationProgress: string | undefined;
+  // @state()
+  // _installationProgress: string | undefined;
 
-  _unlisten: UnlistenFn | undefined;
+  // _unlisten: UnlistenFn | undefined;
 
-  async firstUpdated() {
-    console.log('@applet-view: got this._applet.value: ', this._applet.value);
-    // TODO it's inefficient to have this event listener by default in the applet-view also if applet is already installed
-    this._unlisten = await listen('applet-install-progress', (event) => {
-      this._installationProgress = event.payload as string;
-    });
-  }
+  // async firstUpdated() {
+  //   console.log('@applet-view: got this._applet.value: ', this._applet.value);
+  //   // TODO it's inefficient to have this event listener by default in the applet-view also if applet is already installed
+  //   this._unlisten = await listen('applet-install-progress', (event) => {
+  //     this._installationProgress = event.payload as string;
+  //   });
+  // }
 
-  disconnectedCallback(): void {
-    if (this._unlisten) this._unlisten();
-  }
+  // disconnectedCallback(): void {
+  //   if (this._unlisten) this._unlisten();
+  // }
 
   // async regitsterApplet(groupDnaHash: DnaHash, appletStore: AppletStore) {
   //   if (this.registering) return;
@@ -107,7 +107,7 @@ export class AppletViewEl extends LitElement {
     applet: Applet,
     groupsForApplet: ReadonlyMap<DnaHash, GroupStore>,
   ): Promise<EntryHash> {
-    await this.weStore.installApplet(appletHash, applet);
+    await this.weStore.installApplet(appletHash, applet, applet.initial_devhub_gui_release_hash);
 
     try {
       await Promise.all(
@@ -284,7 +284,7 @@ export class AppletViewEl extends LitElement {
                 }}
                 >${msg('Install Applet')}
               </sl-button>
-              <div>${this._installationProgress}</div>
+              <!-- <div>${this._installationProgress}</div> -->
             </div></sl-card
           >
         </div>

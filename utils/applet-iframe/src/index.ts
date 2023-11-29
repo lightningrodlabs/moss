@@ -8,6 +8,7 @@ import {
   CallZomeRequestSigned,
   EntryHash,
   EntryHashB64,
+  HoloHashB64,
   RoleName,
   ZomeName,
   decodeHashFromBase64,
@@ -426,7 +427,11 @@ function readAppletHash(): EntryHash {
 // IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs
 // to be changed accordingly
 function appIdFromAppletHash(appletHash: EntryHash): string {
-  return `applet#${encodeHashToBase64(appletHash).toLowerCase()}`;
+  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
+}
+
+function toLowerCaseB64(hashb64: HoloHashB64): string {
+  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '*');
 }
 
 async function getRenderView(): Promise<RenderView | undefined> {

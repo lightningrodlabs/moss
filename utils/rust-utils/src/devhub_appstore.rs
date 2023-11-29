@@ -50,6 +50,10 @@ pub async fn fetch_assemble_and_store_happ(
     happ_release_hash: String,
     storage_dir: PathBuf,
 ) -> Result<(), String> {
+    let file_path = storage_dir.join(format!("{}.happ", happ_release_hash));
+    if file_path.exists() {
+        return Ok(());
+    }
     let happ_release_action_hash = ActionHash::from(
         ActionHashB64::from_b64_str(happ_release_hash.as_str()).map_err(|e| {
             format!(
@@ -193,17 +197,11 @@ pub async fn fetch_assemble_and_store_happ(
         encode_bundle(happ_bundle).map_err(|e| format!("Failed to encode happ bundle: {}", e))?;
 
     // Store to storage directory
-    let file_path = storage_dir.join(format!("{}.happ", happ_release_hash));
-    match file_path.exists() {
-        true => Ok(()),
-        false => {
-            let mut file = std::fs::File::create(file_path)
-                .map_err(|e| format!("Failed to create file at the given file path: {}", e))?;
-            file.write_all(&happ_pack_bytes)
-                .map_err(|e| format!("Failed to write happ bytes to file: {}", e))?;
-            Ok(())
-        }
-    }
+    let mut file = std::fs::File::create(file_path)
+        .map_err(|e| format!("Failed to create file at the given file path: {}", e))?;
+    file.write_all(&happ_pack_bytes)
+        .map_err(|e| format!("Failed to write happ bytes to file: {}", e))?;
+    Ok(())
 }
 
 pub async fn fetch_and_store_ui_from_host(
@@ -213,7 +211,7 @@ pub async fn fetch_and_store_ui_from_host(
     devhub_dna: DnaHash,
     uis_storage_dir: PathBuf,
 ) -> Result<(), String> {
-    let assets_dir = uis_storage_dir.join(&gui_release_hash);
+    let assets_dir = uis_storage_dir.join(&gui_release_hash).join("assets");
     if !assets_dir.exists() {
         std::fs::create_dir_all(&assets_dir)
             .map_err(|e| format!("Failed to create directory to store UI assets in: {}", e))?;

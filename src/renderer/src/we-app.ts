@@ -98,17 +98,17 @@ export class WeApp extends LitElement {
         console.log(`DevHub network seed: ${getCellNetworkSeed(cellInfo)}`),
       );
 
-    // const allApps = await adminWebsocket.listApps({});
-    // console.log("ALL APPS: ", allApps);
+    const allApps = await adminWebsocket.listApps({});
+    console.log('ALL INSTALLED APPS: ', allApps);
 
     this.state = { state: 'running' };
 
-    console.log('Fetching available UI updates');
-    try {
-      await this._weStore.fetchAvailableUiUpdates();
-    } catch (e) {
-      console.error('Failed to fetch available applet updates: ', e);
-    }
+    // try {
+    // console.log('Fetching available UI updates');
+    //   await this._weStore.fetchAvailableUiUpdates();
+    // } catch (e) {
+    //   console.error('Failed to fetch available applet updates: ', e);
+    // }
   }
 
   render() {

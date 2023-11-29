@@ -89,6 +89,10 @@ export class SplashScreen extends LitElement {
     }
   }
 
+  setupDisabled() {
+    return !this.password || this.password === '' || this.passwordsDontMatch;
+  }
+
   renderSetupLair() {
     return html`
       <div class="column center-content">
@@ -112,6 +116,13 @@ export class SplashScreen extends LitElement {
           @input=${(_e: InputEvent) => this.checkPasswords()}
           id="confirm-password-input"
           type="password"
+          @keypress=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              if (!this.setupDisabled()) {
+                this.setupAndLaunch();
+              }
+            }
+          }}
         />
         <div class="input-error ${this.passwordsDontMatch ? '' : 'color-transparent'}">
           Passwords don't match!
@@ -120,7 +131,7 @@ export class SplashScreen extends LitElement {
           @click=${() => this.setupAndLaunch()}
           tabindex="0"
           style="margin-top: 10px; margin-bottom: 30px;"
-          .disabled=${!this.password || this.password === '' || this.passwordsDontMatch}
+          .disabled=${this.setupDisabled()}
         >
           Setup and Launch
         </button>

@@ -21,6 +21,7 @@
     "setup": "cd libs/rust-utils && yarn && yarn build && cd ..",
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
+    "build:rust-utils": "yarn workspace hc-launcher-rust-utils build && rimraf node_modules/hc-launcher-rust-utils && yarn install --check-files",
     "build:utils": "yarn workspace applet-iframe install && yarn workspace applet-iframe build && yarn workspace hc-launcher-rust-utils install && yarn workspace hc-launcher-rust-utils build",
     "fetch:default-apps": "curl -L --output resources/default-apps/kando.webhapp https://drive.switch.ch/index.php/s/nSXZlwCYFAl9aRD/download",
     "build:happ": "npm run build:zomes && hc app pack ./workdir --recursive",
@@ -61,6 +62,7 @@
     "prettier": "^3.0.2",
     "typescript": "^5.2.2",
     "utf-8-validate": "^6.0.3",
+    "rimraf": "5.0.5",
     "run-singleton-cli": "^0.0.7",
     "vite": "^4.4.9",
     "vite-plugin-static-copy": "^0.13.1"

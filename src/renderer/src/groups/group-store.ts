@@ -34,7 +34,7 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { WeStore } from '../we-store.js';
 import { AppEntry, Entity, HappReleaseEntry } from '../processes/appstore/types.js';
 import { Applet } from '../applets/types.js';
-import { isAppRunning } from '../utils.js';
+import { isAppRunning, toLowerCaseB64 } from '../utils.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 15000;
 
@@ -114,7 +114,7 @@ export class GroupStore {
 
     if (!applet) throw new Error('Given applet instance hash was not found');
 
-    await this.weStore.installApplet(appletHash, applet);
+    await this.weStore.installApplet(appletHash, applet, applet.initial_devhub_gui_release_hash);
     try {
       await this.groupClient.registerApplet(applet);
     } catch (e) {
@@ -162,7 +162,9 @@ export class GroupStore {
 
     const appletHash = await this.groupClient.hashApplet(applet);
 
-    await this.weStore.installApplet(appletHash, applet);
+    await this.weStore.installApplet(appletHash, applet, happRelease.content.official_gui);
+
+    console.log('@group-store: Installed applet.');
 
     try {
       await this.groupClient.registerApplet(applet);
@@ -218,13 +220,16 @@ export class GroupStore {
       .filter((app) => isAppRunning(app))
       .map((appInfo) => appInfo.installed_app_id);
 
-    // console.log("Got runningAppIds: ", runningAppIds);
-    // console.log("Got allMyApplets: ", allMyApplets);
+    console.log('Got runningAppIds: ', runningAppIds);
+    console.log(
+      'Got allMyApplets: ',
+      allMyApplets.map((hash) => encodeHashToBase64(hash)),
+    );
 
     const output = allMyApplets.filter((appletHash) =>
-      runningAppIds.includes(`applet#${encodeHashToBase64(appletHash)}`),
+      runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
-    // console.log("Got allMyRunningApplets: ", output);
+    console.log('Got allMyRunningApplets: ', output);
     return output;
   });
 
