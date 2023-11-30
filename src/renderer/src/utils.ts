@@ -40,12 +40,8 @@ export async function initAppClient(
   return client;
 }
 
-export function isWindows(): boolean {
-  return navigator.appVersion.includes('Win');
-}
-
 export function appletOrigin(appletHash: AppletHash): string {
-  return `applet://${encodeHashToBase64(appletHash)}`;
+  return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
 }
 
 export function findAppForDnaHash(
@@ -89,11 +85,11 @@ export function appletIdFromAppId(installedAppId: string): AppletId {
 }
 
 export function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '*');
+  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
 }
 
 export function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\*/g, (match) => match[0].toUpperCase());
+  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {

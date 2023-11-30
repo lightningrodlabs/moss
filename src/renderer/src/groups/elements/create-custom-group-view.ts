@@ -51,7 +51,7 @@ export class CreateCustomGroupView extends LitElement {
           label: block.label,
           media: block.icon_src,
           category: applets.get(appletHash)?.custom_name,
-          content: `<iframe src="${appletOrigin(this.weStore.conductorInfo, appletHash)}?view=${
+          content: `<iframe src="${appletOrigin(appletHash)}?view=${
             block.view
           }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
         });

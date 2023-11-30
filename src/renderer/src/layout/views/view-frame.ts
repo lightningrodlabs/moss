@@ -28,18 +28,13 @@ export class ViewFrame extends LitElement {
   render() {
     console.log('rendering viewframe for appletHash: ', encodeHashToBase64(this.appletHash));
     console.log(
-      `Querystring: ${appletOrigin(
-        this.weStore.conductorInfo,
-        this.appletHash,
-      )}?${renderViewToQueryString(this.renderView)}`,
+      `Querystring: ${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}`,
     );
     return html`<iframe
       frameborder="0"
       title="TODO"
       id=${this.iframeId ? this.iframeId : undefined}
-      src="${appletOrigin(this.weStore.conductorInfo, this.appletHash)}?${renderViewToQueryString(
-        this.renderView,
-      )}"
+      src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
       style="flex: 1; display: block; padding: 0; margin: 0;"
     ></iframe>`;
   }

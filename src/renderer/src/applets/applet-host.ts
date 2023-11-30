@@ -41,6 +41,8 @@ function getAppletIdFromOrigin(origin: string): AppletId {
 export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
+      console.log('RECEIVED IFRAME MESSAGE with origin: ', message.origin);
+      console.log('and source: ', message.source);
       const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
       const installedApplets = await toPromise(weStore.installedApplets);
       const appletHash = installedApplets.find(
@@ -63,6 +65,8 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         console.warn("Got a message from an applet that's not installed.");
         return;
       }
+
+      console.log('ABOUT TO HANDLE IFRAME MESSAGE');
 
       const result = await handleAppletIframeMessage(
         weStore,

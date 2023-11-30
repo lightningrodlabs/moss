@@ -7,10 +7,7 @@ import {
   CallZomeRequest,
   CallZomeRequestSigned,
   EntryHash,
-  EntryHashB64,
   HoloHashB64,
-  RoleName,
-  ZomeName,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -431,7 +428,7 @@ function appIdFromAppletHash(appletHash: EntryHash): string {
 }
 
 function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '*');
+  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
 }
 
 async function getRenderView(): Promise<RenderView | undefined> {

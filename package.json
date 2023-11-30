@@ -40,6 +40,7 @@
     "@electron-toolkit/utils": "^2.0.0",
     "@holochain/client": "0.16.6",
     "bufferutil": "4.0.8",
+    "electron-context-menu": "3.6.1",
     "hc-launcher-rust-utils": "file:./utils/rust-utils/dist",
     "split": "1.0.1",
     "winston": "3.11.0"

@@ -170,76 +170,6 @@ export class AppletViewEl extends LitElement {
         </div>
       `;
 
-    // if (groupsForThisApplet.size === 0) {
-    //   // Applet was just archived by another member of the group
-    //   return html`
-    //     <div class="row center-content" style="flex: 1">
-    //       <sl-card
-    //         ><form
-    //           style="flex: 1"
-    //           ${onSubmit((f) =>
-    //             this.regitsterApplet(
-    //               decodeHashFromBase64(f.groupDnaHash),
-    //               appletStore
-    //             )
-    //           )}
-    //         >
-    //           <div class="column center-content">
-    //             <sl-icon
-    //               .src=${wrapPathInSvg(mdiAlertOutline)}
-    //               style="font-size: 64px; margin-bottom: 16px"
-    //             ></sl-icon>
-    //             <span style="margin-bottom: 4px"
-    //               >${msg(
-    //                 "This applet was just archived in all the groups that had it registered."
-    //               )}</span
-    //             >
-    //             <span style="margin-bottom: 16px"
-    //               >${msg(
-    //                 "If you want to continue to use it, you must register it in another group."
-    //               )}</span
-    //             >
-    //             <span style="margin-bottom: 16px"
-    //               >${msg(
-    //                 "You can also just close this window if you don't want to continue using it."
-    //               )}</span
-    //             >
-    //             <sl-select
-    //               .placeholder=${msg("Select Group")}
-    //               name="groupDnaHash"
-    //               @sl-hide=${(e) => e.stopPropagation()}
-    //               style="margin-bottom: 16px"
-    //               required
-    //             >
-    //               ${Array.from(allGroups.entries()).map(
-    //                 ([groupDnaHash, groupProfile]) => html`
-    //                   <sl-option .value=${encodeHashToBase64(groupDnaHash)}>
-    //                     <img
-    //                       slot="prefix"
-    //                       .src=${groupProfile?.logo_src}
-    //                       alt="${groupProfile?.name}"
-    //                       style="height: 16px; width: 16px"
-    //                     />${groupProfile?.name}</sl-option
-    //                   >
-    //                 `
-    //               )}
-    //             </sl-select>
-    //           </div>
-    //           <div class="row " style="flex: 1">
-    //             <span style="flex: 1"></span>
-    //             <sl-button
-    //               variant="primary"
-    //               .loading=${this.registering}
-    //               type="submit"
-    //               >${msg("Register Applet")}</sl-button
-    //             >
-    //           </div>
-    //         </form></sl-card
-    //       >
-    //     </div>
-    //   `;
-    // }
-
     if (!isInstalled) {
       return html`
         <div class="row center-content" style="flex: 1">
@@ -284,7 +214,7 @@ export class AppletViewEl extends LitElement {
                 }}
                 >${msg('Install Applet')}
               </sl-button>
-              <!-- <div>${this._installationProgress}</div> -->
+              <!-- installation progress here -->
             </div></sl-card
           >
         </div>

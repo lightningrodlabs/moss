@@ -17,8 +17,9 @@ import url from 'url';
 import { createHash } from 'crypto';
 import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
+import contextMenu from 'electron-context-menu';
 
-import { WeFileSystem } from './filesystem';
+import { AppAssetsInfo, WeFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
@@ -28,12 +29,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
-import {
-  AgentPubKeyB64,
-  AppAgentWebsocket,
-  AppStatusFilter,
-  decodeHashFromBase64,
-} from '@holochain/client';
+import { AppStatusFilter } from '@holochain/client';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
@@ -47,6 +43,11 @@ if (process.env.NODE_ENV === 'development') {
   console.log('APP IS RUN IN DEVELOPMENT MODE');
   app.setName(appName + '-dev');
 }
+
+contextMenu({
+  showSaveImageAs: true,
+  showSearchWithGoogle: false,
+});
 
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
@@ -80,6 +81,11 @@ app.on('second-instance', () => {
 const launcherFileSystem = WeFileSystem.connect(app, args.profile);
 const launcherEmitter = new LauncherEmitter();
 
+const APPLET_IFRAME_SCRIPT = fs.readFileSync(
+  path.resolve(__dirname, '../applet-iframe/index.mjs'),
+  'utf-8',
+);
+
 setupLogs(launcherEmitter, launcherFileSystem);
 
 let WE_RUST_HANDLER: WeRustHandler | undefined;
@@ -89,7 +95,6 @@ let APP_PORT: number | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
-let APPSTORE_CLIENT: AppAgentWebsocket | undefined;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -149,23 +154,28 @@ const createOrShowMainWindow = () => {
   }
   const ses = session.defaultSession;
   ses.protocol.handle('applet', async (request) => {
-    // console.log("### Got file request: ", request);
+    console.log('### Got applet request: ', request);
     const uriWithoutProtocol = request.url.split('://')[1];
     const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
     const uriComponents = uriWithoutQueryString.split('/');
-    const appletId = uriComponents[0];
+    const lowerCasedAppletId = uriComponents[0];
 
-    const installedAppId = `applet#${appletId}`;
+    const installedAppId = `applet#${lowerCasedAppletId}`;
 
     const uiAssetsDir = launcherFileSystem.appUiAssetsDir(installedAppId);
+
+    console.log('uiAssetsDir: ', uiAssetsDir);
+    console.log('uriWithoutProtocol: ', uriWithoutProtocol);
+    console.log('uriWithoutQueryString: ', uriWithoutQueryString);
+    console.log('uriComponents: ', uriComponents);
 
     if (!uiAssetsDir) {
       throw new Error(`Failed to find UI assets directory for requested applet assets.`);
     }
 
     if (
-      uriComponents.length === 2 &&
-      (uriComponents[1] === '' || uriComponents[1] === 'index.html')
+      uriComponents.length === 1 ||
+      (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
     ) {
       const indexHtmlResponse = await net.fetch(
         url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
@@ -173,7 +183,7 @@ const createOrShowMainWindow = () => {
       const content = await indexHtmlResponse.text();
       let modifiedContent = content.replace(
         '<head>',
-        `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${installedAppId}", FRAMEWORK: "electron" };</script>`,
+        `<head><script type="module">${APPLET_IFRAME_SCRIPT}</script>`,
       );
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
@@ -445,6 +455,29 @@ app.whenReady().then(async () => {
         membrane_proofs: membraneProofs,
       });
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      // Store app metadata
+      const appAssetsInfo: AppAssetsInfo = {
+        happ: {
+          source: {
+            devhubDnaHash,
+            happReleaseHash,
+          },
+          identifier: happReleaseHash,
+        },
+        ui: guiReleaseHash
+          ? {
+              source: {
+                devhubDnaHash,
+                guiReleaseHash,
+              },
+              identifier: guiReleaseHash,
+            }
+          : undefined,
+      };
+      fs.writeFileSync(
+        path.join(launcherFileSystem.appsDir, `${appId}.json`),
+        JSON.stringify(appAssetsInfo),
+      );
       console.log('@install-applet-bundle: app installed.');
       return appInfo;
     },

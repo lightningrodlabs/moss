@@ -9,7 +9,7 @@ export type UiIdentifier = string;
 export interface AppAssetsInfo {
   happ: {
     source: unknown; // e.g. dnahash+entry hash in the devhub
-    shasum: string; // sha256 hash of the .happ file
+    // shasum: string; // sha256 hash of the .happ file
     identifier: string; // e.g. entry hash in the devhub, must be unique to prevent accidental collisions
   };
   ui?: {
