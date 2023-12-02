@@ -164,8 +164,6 @@ export class GroupStore {
 
     await this.weStore.installApplet(appletHash, applet, happRelease.content.official_gui);
 
-    console.log('@group-store: Installed applet.');
-
     try {
       await this.groupClient.registerApplet(applet);
     } catch (e) {
@@ -220,16 +218,16 @@ export class GroupStore {
       .filter((app) => isAppRunning(app))
       .map((appInfo) => appInfo.installed_app_id);
 
-    console.log('Got runningAppIds: ', runningAppIds);
-    console.log(
-      'Got allMyApplets: ',
-      allMyApplets.map((hash) => encodeHashToBase64(hash)),
-    );
+    // console.log('Got runningAppIds: ', runningAppIds);
+    // console.log(
+    //   'Got allMyApplets: ',
+    //   allMyApplets.map((hash) => encodeHashToBase64(hash)),
+    // );
 
     const output = allMyApplets.filter((appletHash) =>
       runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
-    console.log('Got allMyRunningApplets: ', output);
+    // console.log('Got allMyRunningApplets: ', output);
     return output;
   });
 

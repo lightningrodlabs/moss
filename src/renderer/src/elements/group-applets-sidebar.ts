@@ -46,7 +46,6 @@ export class GroupAppletsSidebar extends LitElement {
   );
 
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
-    console.log('Rendering applets: ', applets);
     if (Array.from(applets.entries()).length === 0) {
       return html`
         <div

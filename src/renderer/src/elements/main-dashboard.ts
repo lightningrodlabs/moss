@@ -2,7 +2,6 @@ import { consume } from '@lit-labs/context';
 import { state, customElement, query } from 'lit/decorators.js';
 import { encodeHashToBase64, DnaHash, AnyDhtHash } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
-import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import {
   StoreSubscriber,
   asyncDeriveStore,
@@ -10,8 +9,7 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { mapValues } from '@holochain-open-dev/utils';
-import { hashState, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { decodeHashFromBase64 } from '@holochain/client';
+import { hashState, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnify } from '@mdi/js';
 import { AppletHash } from '@lightningrodlabs/we-applet';
@@ -71,7 +69,7 @@ export class MainDashboard extends LitElement {
   @state()
   hoverBrowser: boolean = false;
 
-  _unlisten: UnlistenFn | undefined;
+  // _unlisten: UnlistenFn | undefined;
 
   selectedAppletHash = new StoreSubscriber(
     this,
@@ -172,9 +170,9 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  disconnectedCallback(): void {
-    if (this._unlisten) this._unlisten();
-  }
+  // disconnectedCallback(): void {
+  //   if (this._unlisten) this._unlisten();
+  // }
 
   get dynamicLayout() {
     return this.shadowRoot?.getElementById('dynamic-layout') as DynamicLayout;

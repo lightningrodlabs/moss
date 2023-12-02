@@ -416,9 +416,10 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 }
 
 function readAppletHash(): EntryHash {
-  const urlWithoutProtocol = window.location.href.split('://')[1];
-  const appletId = urlWithoutProtocol.split('?')[0].split('.')[0];
-  return decodeHashFromBase64(appletId);
+  const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+  const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
 }
 
 // IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs
@@ -429,6 +430,10 @@ function appIdFromAppletHash(appletHash: EntryHash): string {
 
 function toLowerCaseB64(hashb64: HoloHashB64): string {
   return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
+}
+
+function toOriginalCaseB64(input: string): HoloHashB64 {
+  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 async function getRenderView(): Promise<RenderView | undefined> {

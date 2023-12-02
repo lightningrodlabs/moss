@@ -4,43 +4,39 @@ import {
   notifyError,
   sharedStyles,
   wrapPathInSvg,
-} from "@holochain-open-dev/elements";
-import { consume } from "@lit-labs/context";
-import { css, html, LitElement } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { mdiAttachmentPlus, mdiPaperclipPlus } from "@mdi/js";
-import { msg, localized } from "@lit/localize";
-import { lazyLoad, StoreSubscriber } from "@holochain-open-dev/stores";
-import { AnyDhtHash, EntryHash } from "@holochain/client";
+} from '@holochain-open-dev/elements';
+import { consume } from '@lit-labs/context';
+import { css, html, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { mdiAttachmentPlus, mdiPaperclipPlus } from '@mdi/js';
+import { msg, localized } from '@lit/localize';
+import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
+import { AnyDhtHash, EntryHash } from '@holochain/client';
 
-import "@holochain-open-dev/elements/dist/elements/display-error.js";
-import "@shoelace-style/shoelace/dist/components/button/button.js";
-import "@shoelace-style/shoelace/dist/components/skeleton/skeleton.js";
-import "@shoelace-style/shoelace/dist/components/icon/icon.js";
-import "@shoelace-style/shoelace/dist/components/dropdown/dropdown.js";
-import "@shoelace-style/shoelace/dist/components/tooltip/tooltip.js";
-import "@shoelace-style/shoelace/dist/components/alert/alert.js";
-import "@shoelace-style/shoelace/dist/components/menu/menu.js";
-import "@shoelace-style/shoelace/dist/components/menu-item/menu-item.js";
-import "@shoelace-style/shoelace/dist/components/menu-label/menu-label.js";
-import "@shoelace-style/shoelace/dist/components/divider/divider.js";
+import '@holochain-open-dev/elements/dist/elements/display-error.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+import '@shoelace-style/shoelace/dist/components/menu/menu.js';
+import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
+import '@shoelace-style/shoelace/dist/components/menu-label/menu-label.js';
+import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 
 // TODO: remove alternative menu when sl-menu includes submenus
-import "@material/web/menu/menu.js";
-import "@material/web/menu/sub-menu-item.js";
-import "@material/web/menu/menu-item.js";
+import '@material/web/menu/menu.js';
+import '@material/web/menu/menu-item.js';
 
-import {
-  weClientContext,
-  WeClient,
-} from "@lightningrodlabs/we-applet";
-import { HoloHashMap } from "@holochain-open-dev/utils";
+import { weClientContext, WeClient } from '@lightningrodlabs/we-applet';
+import { HoloHashMap } from '@holochain-open-dev/utils';
 
-import { AttachmentsStore } from "../attachments-store";
-import { attachmentsStoreContext } from "../context";
+import { AttachmentsStore } from '../attachments-store';
+import { attachmentsStoreContext } from '../context';
 
 @localized()
-@customElement("add-attachment")
+@customElement('add-attachment')
 export class AddAttachment extends LitElement {
   @consume({ context: attachmentsStoreContext, subscribe: true })
   attachmentsStore!: AttachmentsStore;
@@ -48,21 +44,18 @@ export class AddAttachment extends LitElement {
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient;
 
-  @property(hashProperty("hash"))
+  @property(hashProperty('hash'))
   hash!: AnyDhtHash;
 
   async addAttachment() {
     try {
       const hrlWithContext = await this.weClient.userSelectHrl();
       if (hrlWithContext) {
-        await this.attachmentsStore.client.addAttachment(
-          this.hash,
-          hrlWithContext
-        );
-        notify(msg("Entry attached."));
+        await this.attachmentsStore.client.addAttachment(this.hash, hrlWithContext);
+        notify(msg('Entry attached.'));
       }
     } catch (e) {
-      notifyError(msg("Error creating the attachment"));
+      notifyError(msg('Error creating the attachment'));
       console.error(e);
     }
   }
@@ -75,8 +68,8 @@ export class AddAttachment extends LitElement {
           tabindex="0"
           @click=${() => this.addAttachment()}
           @keypress=${(e: KeyboardEvent) => {
-            if (e.key === "Enter") {
-              this.addAttachment()
+            if (e.key === 'Enter') {
+              this.addAttachment();
             }
           }}
         >
@@ -86,7 +79,8 @@ export class AddAttachment extends LitElement {
     `;
   }
 
-  static styles = [sharedStyles,
+  static styles = [
+    sharedStyles,
     css`
       .btn {
         align-items: center;
@@ -98,8 +92,8 @@ export class AddAttachment extends LitElement {
       }
 
       .btn:hover {
-        background: #e4e4e4
+        background: #e4e4e4;
       }
-    `
+    `,
   ];
 }

@@ -1,4 +1,4 @@
-import { get, pipe, toPromise } from '@holochain-open-dev/stores';
+import { pipe, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
   AttachmentType,
@@ -19,46 +19,47 @@ import {
 } from '@lightningrodlabs/we-applet';
 import { DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';
-import { appWindow } from '@tauri-apps/api/window';
 
 import { AppOpenViews } from '../layout/types.js';
-import { notifyElectron, signZomeCallElectron } from '../electron-api.js';
+import { signZomeCallElectron } from '../electron-api.js';
 import { WeStore } from '../we-store.js';
-import { AppletNotificationSettings } from './types.js';
+// import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
-import {
-  getAppletNotificationSettings,
-  getNotificationState,
-  storeAppletNotifications,
-  toLowerCaseB64,
-  validateNotifications,
-} from '../utils.js';
+// import {
+//   getAppletNotificationSettings,
+//   getNotificationState,
+//   storeAppletNotifications,
+//   validateNotifications,
+// } from '../utils.js';
 
-function getAppletIdFromOrigin(origin: string): AppletId {
-  return origin.split('://')[1].split('?')[0].split('/')[0];
-}
+// function getAppletIdFromOrigin(origin: string): AppletId {
+//   return origin.split('://')[1].split('?')[0].split('/')[0];
+// }
 
 export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
       console.log('RECEIVED IFRAME MESSAGE with origin: ', message.origin);
-      console.log('and source: ', message.source);
-      const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
+      // console.log('and source: ', message.source);
+      // const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
       const installedApplets = await toPromise(weStore.installedApplets);
-      const appletHash = installedApplets.find(
-        (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
-      );
+      // const appletHash = installedApplets.find(
+      //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
+      // );
+      const appletHash: AppletHash = message.data.appletHash;
+
+      console.log('Got message from applet with hash: ', encodeHashToBase64(appletHash));
 
       if (!appletHash) {
         console.log(
           'appletHash not found. installedApplets: ',
           installedApplets.map((hash) => encodeHashToBase64(hash)),
-          'lowercaseAppletId: ',
-          lowerCaseAppletId,
+          // 'lowercaseAppletId: ',
+          // lowerCaseAppletId,
         );
         const iframeConfig: IframeConfig = {
           type: 'not-installed',
-          appletName: lowerCaseAppletId,
+          appletName: encodeHashToBase64(appletHash),
         };
         message.ports[0].postMessage({ type: 'success', result: iframeConfig });
         // throw new Error(`Requested applet is not installed`);
@@ -189,8 +190,11 @@ export async function handleAppletIframeMessage(
   switch (message.type) {
     case 'get-iframe-config':
       const isInstalled = await toPromise(weStore.isInstalled.get(appletHash));
+      console.log('&& IS INSTALLED &&');
 
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
+
+      console.log('&& got applet store &&');
 
       if (!isInstalled) {
         const iframeConfig: IframeConfig = {
@@ -282,60 +286,60 @@ export async function handleAppletIframeMessage(
       return openViews.toggleClipboard();
     case 'notify-we':
       const appletId: AppletId = encodeHashToBase64(appletHash);
+      throw new Error('Notifications not implemented.');
+    // if (!message.notifications) {
+    //   throw new Error(
+    //     `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
+    //   );
+    // }
 
-      if (!message.notifications) {
-        throw new Error(
-          `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
-        );
-      }
+    // const appletStore2 = await toPromise(weStore.appletStores.get(appletHash));
 
-      const appletStore2 = await toPromise(weStore.appletStores.get(appletHash));
+    // const mainWindowFocused = await isMainWindowFocused();
+    // const windowFocused = await appWindow.isFocused();
+    // const windowVisible = await appWindow.isVisible();
 
-      // const mainWindowFocused = await isMainWindowFocused();
-      const windowFocused = await appWindow.isFocused();
-      const windowVisible = await appWindow.isVisible();
+    // If the applet that the notification is coming from is already open, and the We main window
+    // itself is also open, don't do anything
+    // const selectedAppletHash = get(weStore.selectedAppletHash());
+    // if (
+    //   selectedAppletHash &&
+    //   selectedAppletHash.toString() === appletHash.toString() &&
+    //   windowFocused
+    // ) {
+    //   return;
+    // }
 
-      // If the applet that the notification is coming from is already open, and the We main window
-      // itself is also open, don't do anything
-      const selectedAppletHash = get(weStore.selectedAppletHash());
-      if (
-        selectedAppletHash &&
-        selectedAppletHash.toString() === appletHash.toString() &&
-        windowFocused
-      ) {
-        return;
-      }
+    // // add notifications to unread messages and store them in the persisted notifications log
+    // const notifications: Array<WeNotification> = message.notifications;
+    // validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
+    // const unreadNotifications = storeAppletNotifications(notifications, appletId);
 
-      // add notifications to unread messages and store them in the persisted notifications log
-      const notifications: Array<WeNotification> = message.notifications;
-      validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
-      const unreadNotifications = storeAppletNotifications(notifications, appletId);
+    // // update the notifications store
+    // appletStore2.setUnreadNotifications(getNotificationState(unreadNotifications));
 
-      // update the notifications store
-      appletStore2.setUnreadNotifications(getNotificationState(unreadNotifications));
+    // // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
+    // const appletNotificationSettings: AppletNotificationSettings =
+    //   getAppletNotificationSettings(appletId);
 
-      // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
-      const appletNotificationSettings: AppletNotificationSettings =
-        getAppletNotificationSettings(appletId);
-
-      await Promise.all(
-        notifications.map(async (notification) => {
-          // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
-          // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
-          // user was offline
-          if (Date.now() - notification.timestamp < 300000) {
-            console.log('notifying tauri');
-            await notifyElectron(
-              notification,
-              appletNotificationSettings.showInSystray && !windowVisible,
-              appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
-              // appletStore ? encodeHashToBase64(appletStore.applet.appstore_app_hash) : undefined,
-              appletStore ? appletStore.applet.custom_name : undefined,
-            );
-          }
-        }),
-      );
-      return;
+    // await Promise.all(
+    //   notifications.map(async (notification) => {
+    //     // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
+    //     // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
+    //     // user was offline
+    //     if (Date.now() - notification.timestamp < 300000) {
+    //       console.log('notifying tauri');
+    //       await notifyElectron(
+    //         notification,
+    //         appletNotificationSettings.showInSystray && !windowVisible,
+    //         appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
+    //         // appletStore ? encodeHashToBase64(appletStore.applet.appstore_app_hash) : undefined,
+    //         appletStore ? appletStore.applet.custom_name : undefined,
+    //       );
+    //     }
+    //   }),
+    // );
+    // return;
     case 'get-applet-info':
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':

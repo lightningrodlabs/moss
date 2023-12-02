@@ -28,7 +28,6 @@ import {
   ProfilesLocation,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
-import { invoke } from '@tauri-apps/api';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
@@ -49,7 +48,6 @@ import { AppletHash, AppletId } from './types.js';
 import { ResourceLocatorB64, tryWithHosts } from './processes/appstore/get-happ-releases.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
-import { HappReleaseEntry } from './processes/appstore/types.js';
 
 export class WeStore {
   constructor(
@@ -76,9 +74,9 @@ export class WeStore {
 
   public availableUiUpdates: Record<InstalledAppId, ResourceLocatorB64> = {};
 
-  public async fetchAvailableUiUpdates() {
-    this.availableUiUpdates = await invoke('fetch_available_ui_updates', {});
-  }
+  // public async fetchAvailableUiUpdates() {
+  //   this.availableUiUpdates = await invoke('fetch_available_ui_updates', {});
+  // }
 
   /**
    * Clones the group DNA with a new unique network seed, and creates a group info entry in that DNA
@@ -90,8 +88,6 @@ export class WeStore {
     const networkSeed = uuidv4();
 
     const appInfo = await this.joinGroup(networkSeed); // this line also updates the matrix store
-
-    console.log('Group created. AppInfo: ', appInfo);
 
     const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
 
@@ -249,10 +245,10 @@ export class WeStore {
     asyncReadable<AppletStore>(async (set) => {
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
       const groups = await toPromise(this.groupsForApplet.get(appletHash));
-      console.log(
-        '@appletStores: groups: ',
-        Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
-      );
+      // console.log(
+      //   '@appletStores: groups: ',
+      //   Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
+      // );
 
       if (groups.size === 0) throw new Error('Applet is not installed in any of the groups');
 
@@ -316,20 +312,20 @@ export class WeStore {
       this.groupStores,
       (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
       async (appletsByGroup) => {
-        console.log(
-          'appletsByGroup: ',
-          Array.from(appletsByGroup.values()).map((hashes) =>
-            hashes.map((hash) => encodeHashToBase64(hash)),
-          ),
-        );
+        // console.log(
+        //   'appletsByGroup: ',
+        //   Array.from(appletsByGroup.values()).map((hashes) =>
+        //     hashes.map((hash) => encodeHashToBase64(hash)),
+        //   ),
+        // );
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
             appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
 
-        console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
-        console.log('groupDnaHashes: ', groupDnaHashes);
+        // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
+        // console.log('groupDnaHashes: ', groupDnaHashes);
 
         // Disabling an applet here is dangerous. this.groupStores is coming from a
         // manualReloadStore(), i.e. it is not reliable to be up to date with the
@@ -339,17 +335,17 @@ export class WeStore {
         // }
         const groupStores = await toPromise(this.groupStores);
 
-        console.log(
-          'GROUPSTORES HASHES: ',
-          Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
-        );
+        // console.log(
+        //   'GROUPSTORES HASHES: ',
+        //   Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
+        // );
 
-        console.log(
-          'Sliced group stores: ',
-          Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
-            encodeHashToBase64(hash),
-          ),
-        );
+        // console.log(
+        //   'Sliced group stores: ',
+        //   Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
+        //     encodeHashToBase64(hash),
+        //   ),
+        // );
 
         return slice(groupStores, groupDnaHashes);
       },
@@ -364,7 +360,6 @@ export class WeStore {
       if (!app.appInfo.installed_app_id.startsWith('applet#'))
         throw new Error("The given dna is part of an app that's not an applet.");
 
-      console.log('@dnaLocations: found and returning app: ', app);
       return {
         appletHash: appletHashFromAppId(app.appInfo.installed_app_id),
         appInfo: app.appInfo,
@@ -376,9 +371,7 @@ export class WeStore {
   hrlLocations = new LazyHoloHashMap(
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
-        console.log('TRYING TO GET HRL LOCATION.');
         return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
-          console.log('@hrlLocations: got dnaLocation: ', dnaLocation);
           const entryDefLocation = await locateHrl(this.adminWebsocket, dnaLocation, [
             dnaHash,
             hash,
@@ -554,9 +547,7 @@ export class WeStore {
 
   async reloadManualStores() {
     await this.installedApps.reload();
-    console.log('reloading groupStores...');
     await this.groupStores.reload();
-    console.log('groupStores reloaded...');
     // The stuff below may not be necessary
     // const groupStores = await toPromise(this.groupStores);
     // await Promise.all(
@@ -604,7 +595,6 @@ export class WeStore {
   removeHrlFromClipboard(hrlB64: HrlB64WithContext) {
     const clipboardJSON = window.localStorage.getItem('clipboard');
     let clipboardContent: Array<HrlB64WithContext> = [];
-    console.log('HRL B64: ', hrlB64);
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
       const newClipboardContent = clipboardContent.filter(

@@ -10,8 +10,8 @@
     "build": "vite build",
     "lint": "eslint --ext .ts,.html . && prettier \"**/*.ts\" --check",
     "format": "eslint --ext .ts,.html . --fix && prettier \"**/*.ts\" --write",
-    "package:ui": "npm run build && cd dist && bestzip ../dist.zip *",
-    "package": "npm run package:ui && cd .. && cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
+    "package:ui": "yarn build && cd dist && bestzip ../dist.zip *",
+    "package": "yarn package:ui && cd .. && cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
   },
   "dependencies": {
     "@holochain-open-dev/elements": "^0.7.0",
@@ -19,8 +19,8 @@
     "@holochain-open-dev/stores": "^0.7.4",
     "@holochain-open-dev/utils": "^0.16.0",
     "@holochain/client": "0.16.6",
-    "@lightningrodlabs/we-applet": "file:../../ui/libs/we-applet",
-    "@lightningrodlabs/attachments": "file:../../ui/libs/attachments",
+    "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
+    "@lightningrodlabs/attachments": "file:../../libs/attachments",
     "@lit-labs/context": "^0.2.0",
     "@lit/localize": "^0.11.4",
     "@mdi/js": "^7.2.0",

@@ -135,8 +135,6 @@ export class JoinGroupDialog extends LitElement {
 function networkSeedFromInviteLink(inviteLink: string): string | undefined {
   const split = inviteLink.split('://');
   const split2 = split[2].split('/');
-  console.log('split: ', split);
-  console.log('split2: ', split2);
   if (split2[0] === 'group') {
     return split2[1];
   } else {

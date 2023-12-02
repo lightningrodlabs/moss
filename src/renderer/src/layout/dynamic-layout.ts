@@ -174,7 +174,6 @@ export class DynamicLayout extends LitElement {
   };
 
   firstUpdated() {
-    console.log('\n### Setting up message handler for dynamic layout.\n');
     setupAppletMessageHandler(this.weStore, this.openViews);
   }
 

@@ -12,7 +12,6 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
-  AnyDhtHashB64,
   HoloHashB64,
 } from '@holochain/client';
 import {
@@ -430,7 +429,6 @@ export function renderViewToQueryString(renderView: RenderView): string {
   let base = `view=${renderView.type}`;
 
   if (renderView.view) {
-    console.log('### @renderViewToQUeryString');
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
 
     if ('block' in renderView.view) {

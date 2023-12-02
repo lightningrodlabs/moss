@@ -7,7 +7,8 @@
   "workspaces": [
     "libs/*",
     "utils/*",
-    "src/renderer"
+    "src/renderer",
+    "example/ui"
   ],
   "scripts": {
     "format": "prettier --write .",
@@ -22,12 +23,13 @@
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
     "build:rust-utils": "yarn workspace hc-launcher-rust-utils build && rimraf node_modules/hc-launcher-rust-utils && yarn install --check-files",
-    "build:utils": "yarn workspace applet-iframe install && yarn workspace applet-iframe build && yarn workspace hc-launcher-rust-utils install && yarn workspace hc-launcher-rust-utils build",
+    "build:applet-iframe": "yarn workspace applet-iframe build",
+    "build:utils": "yarn workspace applet-iframe install && yarn build:applet-iframe && yarn workspace hc-launcher-rust-utils install && yarn workspace hc-launcher-rust-utils build",
     "fetch:default-apps": "curl -L --output resources/default-apps/kando.webhapp https://drive.switch.ch/index.php/s/nSXZlwCYFAl9aRD/download",
     "build:happ": "npm run build:zomes && hc app pack ./workdir --recursive",
     "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace --exclude we-alpha",
-    "build:example": "npm run build:libs && npm run build:zomes && npm run package -w example-applet && rimraf testing-applets/example-applet && cp example/workdir/example-applet.webhapp testing-applets ",
-    "build:ex": "npm run package -w example-applet && cp example/workdir/example-applet.webhapp testing-applets/$NAME.webhapp ",
+    "build:example": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package && rimraf testing-applets/example-applet && cp example/workdir/example-applet.webhapp testing-applets ",
+    "build:ex": "yarn workspace example-applet package && cp example/workdir/example-applet.webhapp testing-applets/$NAME.webhapp",
     "download:devhub": "curl -L --output DevHub.webhapp https://github.com/holochain/devhub-gui/releases/download/v0.16.1/devhub.webhapp",
     "download:appstore": "curl -L --output AppStore.webhapp https://github.com/holochain/app-store-gui/releases/download/v0.4.0/appstore.webhapp",
     "postinstall": "electron-builder install-app-deps",
@@ -42,6 +44,7 @@
     "bufferutil": "4.0.8",
     "electron-context-menu": "3.6.1",
     "hc-launcher-rust-utils": "file:./utils/rust-utils/dist",
+    "mime-types": "2.1.35",
     "split": "1.0.1",
     "winston": "3.11.0"
   },

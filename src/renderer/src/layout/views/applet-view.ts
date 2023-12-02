@@ -6,7 +6,6 @@ import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { mdiAlertOutline, mdiInformationOutline } from '@mdi/js';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';

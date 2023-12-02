@@ -86,7 +86,6 @@ export class InstallableApplets extends LitElement {
   }
 
   renderApplets(allApplets: [Array<Entity<AppEntry>>, Array<IconSrcOption>]) {
-    console.log('ALL APPLETS: ', allApplets);
     return html`
       <div style="display: flex; flex-direction: row; flex-wrap: wrap; flex: 1;">
         ${allApplets[0].length === 0

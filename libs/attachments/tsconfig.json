@@ -3,7 +3,6 @@
     "outDir": "dist",
     "declarationDir": "dist",
     "rootDir": "./src",
-    "incremental": true,
     "target": "es2018",
     "module": "esnext",
     "moduleResolution": "node",

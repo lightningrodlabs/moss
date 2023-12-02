@@ -50,18 +50,12 @@ export class AppletStore {
     };
 
     const origin = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
-    console.log('### CREATING IFRAME WITH ORIGIN: ', origin);
     iframe = document.createElement('iframe');
     iframe.id = appletHashBase64;
     iframe.src = origin;
     iframe.style.display = 'none';
-    // iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
 
     document.body.appendChild(iframe);
-
-    console.log('origin string: ', origin);
-
-    console.log('iframe.contentWindow?.location.origin: ', iframe.contentWindow?.location.origin);
 
     return new Promise<AppletHost | undefined>((resolve) => {
       const timeOut = setTimeout(() => {

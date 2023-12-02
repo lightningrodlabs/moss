@@ -1,13 +1,6 @@
 import { asyncDerived, lazyLoadAndPoll, pipe, retryUntilSuccess } from '@holochain-open-dev/stores';
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import {
-  ActionHash,
-  ActionHashB64,
-  AdminWebsocket,
-  AppAgentClient,
-  encodeHashToBase64,
-} from '@holochain/client';
-import { invoke } from '@tauri-apps/api';
+import { ActionHash, AdminWebsocket, AppAgentClient } from '@holochain/client';
 import {
   getHappReleases,
   getVisibleHostsForZomeFunction,

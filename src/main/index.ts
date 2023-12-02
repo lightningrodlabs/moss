@@ -9,6 +9,7 @@ import {
   Tray,
   Menu,
   nativeImage,
+  protocol,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -33,6 +34,8 @@ import { AppStatusFilter } from '@holochain/client';
 
 const rustUtils = require('hc-launcher-rust-utils');
 // import * as rustUtils from 'hc-launcher-rust-utils';
+
+// app.commandLine.appendSwitch('enable-logging');
 
 const APPSTORE_APP_ID = 'AppStore';
 const DEVHUB_APP_ID = 'DevHub';
@@ -87,6 +90,13 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
 );
 
 setupLogs(launcherEmitter, launcherFileSystem);
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'applet',
+    privileges: { standard: true, secure: true },
+  },
+]);
 
 let WE_RUST_HANDLER: WeRustHandler | undefined;
 // let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
@@ -152,54 +162,14 @@ const createOrShowMainWindow = () => {
     MAIN_WINDOW.show();
     return;
   }
-  const ses = session.defaultSession;
-  ses.protocol.handle('applet', async (request) => {
-    console.log('### Got applet request: ', request);
-    const uriWithoutProtocol = request.url.split('://')[1];
-    const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
-    const uriComponents = uriWithoutQueryString.split('/');
-    const lowerCasedAppletId = uriComponents[0];
-
-    const installedAppId = `applet#${lowerCasedAppletId}`;
-
-    const uiAssetsDir = launcherFileSystem.appUiAssetsDir(installedAppId);
-
-    console.log('uiAssetsDir: ', uiAssetsDir);
-    console.log('uriWithoutProtocol: ', uriWithoutProtocol);
-    console.log('uriWithoutQueryString: ', uriWithoutQueryString);
-    console.log('uriComponents: ', uriComponents);
-
-    if (!uiAssetsDir) {
-      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
-    }
-
-    if (
-      uriComponents.length === 1 ||
-      (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
-    ) {
-      const indexHtmlResponse = await net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
-      );
-      const content = await indexHtmlResponse.text();
-      let modifiedContent = content.replace(
-        '<head>',
-        `<head><script type="module">${APPLET_IFRAME_SCRIPT}</script>`,
-      );
-      // remove title attribute to be able to set title to app id later
-      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      return new Response(modifiedContent, indexHtmlResponse);
-    } else {
-      return net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
-      );
-    }
-  });
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
+      webSecurity: false,
+      allowRunningInsecureContent: true,
     },
   });
 
@@ -304,6 +274,69 @@ app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
+  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  //   if (details.url.startsWith('applet://')) {
+  //     console.log('GOT REQUEST FROM APPLET. URL: ', details.url);
+  //     callback({
+  //       responseHeaders: {
+  //         ...details.responseHeaders,
+  //         'Content-Security-Policy': "default-src 'self' ws: 'unsafe-inline' 'unsafe-eval'",
+  //       },
+  //     });
+  //   } else {
+  //     callback({ cancel: false });
+  //   }
+  // });
+  protocol.handle('applet', async (request) => {
+    // console.log('### Got applet request: ', request);
+    console.log('### Got request with url: ', request.url);
+    const uriWithoutProtocol = request.url.split('://')[1];
+    const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
+    const uriComponents = uriWithoutQueryString.split('/');
+    const lowerCasedAppletId = uriComponents[0].replaceAll('%24', '$');
+
+    const installedAppId = `applet#${lowerCasedAppletId}`;
+
+    const uiAssetsDir = launcherFileSystem.appUiAssetsDir(installedAppId);
+
+    console.log('uiAssetsDir: ', uiAssetsDir);
+    console.log('uriWithoutProtocol: ', uriWithoutProtocol);
+    console.log('uriWithoutQueryString: ', uriWithoutQueryString);
+    console.log('uriComponents: ', uriComponents);
+
+    if (!uiAssetsDir) {
+      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
+    }
+
+    if (
+      uriComponents.length === 1 ||
+      (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
+    ) {
+      const indexHtmlResponse = await net.fetch(
+        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
+      );
+      console.log('RESPONSE HEADERS: ', indexHtmlResponse.headers);
+      indexHtmlResponse.headers.append('Origin', request.url);
+      console.log('MODIFIED RESPONSE HEADERS: ', indexHtmlResponse.headers);
+      const content = await indexHtmlResponse.text();
+      let modifiedContent = content.replace(
+        '<head>',
+        `<head><script type="module">${APPLET_IFRAME_SCRIPT}</script>`,
+      );
+      // remove title attribute to be able to set title to app id later
+      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
+      const response = new Response(modifiedContent, indexHtmlResponse);
+      console.log('Constructed response with headers: ', response.headers);
+      return response;
+    } else {
+      console.log('@@@@@@@@@@@ NON INDEX.HTML REQUEST @@@@@@@@@@@@');
+      const response = net.fetch(
+        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
+      );
+      console.log('### RESPONSE: ', response);
+      return response;
+    }
+  });
 
   const contextMenu = Menu.buildFromTemplate([
     {

@@ -42,7 +42,6 @@ import './edit-custom-group-view.js';
 import '../../applet-bundles/elements/publish-applet-button.js';
 import '../../elements/tab-group.js';
 import '../../elements/loading-dialog.js';
-import { invoke } from '@tauri-apps/api';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -137,35 +136,35 @@ export class GroupHome extends LitElement {
 
   async firstUpdated() {
     const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
-    console.log('allGroupApplets: ', allGroupApplets);
   }
 
-  async updateUi(e: CustomEvent) {
-    (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
-    console.log('appletHash: ', e.detail);
-    const appId = `applet#${encodeHashToBase64(e.detail as AppletHash)}`;
-    console.log('appletId: ', appId);
+  async updateUi(_e: CustomEvent) {
+    throw new Error('Updating UI not implemented.');
+    // (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
+    // console.log('appletHash: ', e.detail);
+    // const appId = `applet#${encodeHashToBase64(e.detail as AppletHash)}`;
+    // console.log('appletId: ', appId);
 
-    try {
-      const resourceLocatorB64 = this.weStore.availableUiUpdates[appId];
-      console.log('resourceLocatorB64: ', resourceLocatorB64);
+    // try {
+    //   const resourceLocatorB64 = this.weStore.availableUiUpdates[appId];
+    //   console.log('resourceLocatorB64: ', resourceLocatorB64);
 
-      const payload = {
-        appId,
-        devhubDnaHash: resourceLocatorB64.dna_hash,
-        guiReleaseHash: resourceLocatorB64.resource_hash,
-      };
-      console.log('Updating UI with payload: ', payload);
-      await invoke('update_applet_ui', payload);
-      await this.weStore.fetchAvailableUiUpdates();
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-      notify(msg('Applet UI updated.'));
-      this.requestUpdate();
-    } catch (e) {
-      console.error(`Failed to update UI: ${e}`);
-      notifyError(msg('Failed to update the UI.'));
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-    }
+    //   const payload = {
+    //     appId,
+    //     devhubDnaHash: resourceLocatorB64.dna_hash,
+    //     guiReleaseHash: resourceLocatorB64.resource_hash,
+    //   };
+    //   console.log('Updating UI with payload: ', payload);
+    //   await invoke('update_applet_ui', payload);
+    //   await this.weStore.fetchAvailableUiUpdates();
+    //   (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    //   notify(msg('Applet UI updated.'));
+    //   this.requestUpdate();
+    // } catch (e) {
+    //   console.error(`Failed to update UI: ${e}`);
+    //   notifyError(msg('Failed to update the UI.'));
+    //   (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    // }
   }
 
   async joinNewApplet(appletHash: AppletHash) {

@@ -113,7 +113,6 @@ export class AppletDetailCard extends LitElement {
                 ?checked=${this.appInfo && isAppRunning(this.appInfo)}
                 ?disabled=${!this.appInfo}
                 @sl-change=${async () => {
-                  console.log('%%% SL-CHANGE %%%');
                   if (this.appInfo && isAppRunning(this.appInfo)) {
                     await this.weStore.disableApplet(this.appletHash);
                     notify(msg('Applet disabled.'));

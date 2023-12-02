@@ -7,7 +7,6 @@ import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-
 import { consume } from '@lit-labs/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { slice } from '@holochain-open-dev/utils';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
