@@ -21,8 +21,6 @@ declare global {
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       uninstallApp: (appId: string) => Promise<void>;
       openApp: (appId: string) => Promise<void>;
-      openAppStore: () => Promise<void>;
-      openDevHub: () => Promise<void>;
       getInstalledApps: () => Promise<AppInfo>;
       getConductorInfo: () => Promise<ConductorInfo>;
       installAppletBundle: (
@@ -87,12 +85,8 @@ export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
 }
 
-export async function openDevhub(): Promise<void> {
-  return window.electronAPI.openDevHub();
-}
-
-export async function openAppStore(): Promise<void> {
-  return window.electronAPI.openAppStore();
+export async function openApp(appId: string): Promise<void> {
+  return window.electronAPI.openApp(appId);
 }
 
 export async function isDevModeEnabled(): Promise<boolean> {
@@ -155,7 +149,6 @@ interface CallZomeRequestUnsignedElectron
 }
 
 export const signZomeCallElectron = async (request: CallZomeRequest) => {
-  console.log('Got sign zome call request.');
   const zomeCallUnsigned: CallZomeRequestUnsignedElectron = {
     provenance: Array.from(request.provenance),
     cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
@@ -168,8 +161,6 @@ export const signZomeCallElectron = async (request: CallZomeRequest) => {
 
   const signedZomeCallElectron: ZomeCallNapi =
     await window.electronAPI.signZomeCall(zomeCallUnsigned);
-
-  console.log('Zome call signed.');
 
   const signedZomeCall: CallZomeRequestSigned = {
     provenance: Uint8Array.from(signedZomeCallElectron.provenance),

@@ -5,7 +5,6 @@ import {
   ipcMain,
   IpcMainInvokeEvent,
   net,
-  session,
   Tray,
   Menu,
   nativeImage,
@@ -31,14 +30,36 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
 import { AppStatusFilter } from '@holochain/client';
+import { createHappWindow } from './windows';
+import { APPSTORE_APP_ID, DEVHUB_APP_ID } from './sharedTypes';
 
 const rustUtils = require('hc-launcher-rust-utils');
+
+// https://github.com/nodeca/argparse/issues/128
+if (app.isPackaged) {
+  process.argv.splice(1, 0, 'placeholder');
+}
+
+const parser = new ArgumentParser({
+  description: 'Lightningrodlabs We',
+});
+parser.add_argument('-p', '--profile', {
+  help: 'Opens We with a custom profile instead of the default profile.',
+  type: 'string',
+});
+
+const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
+
+const args = parser.parse_args();
+if (args.profile && !allowedProfilePattern.test(args.profile)) {
+  throw new Error(
+    'The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)',
+  );
+}
+
 // import * as rustUtils from 'hc-launcher-rust-utils';
 
 // app.commandLine.appendSwitch('enable-logging');
-
-const APPSTORE_APP_ID = 'AppStore';
-const DEVHUB_APP_ID = 'DevHub';
 
 const appName = app.getName();
 
@@ -55,33 +76,17 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
-const parser = new ArgumentParser({
-  description: 'Holochain Launcher',
-});
-parser.add_argument('-p', '--profile', {
-  help: 'Opens the launcher with a custom profile instead of the default profile.',
-  type: 'string',
-});
+// const isFirstInstance = app.requestSingleInstanceLock();
 
-const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
-const args = parser.parse_args();
-if (args.profile && !allowedProfilePattern.test(args.profile)) {
-  throw new Error(
-    'The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)',
-  );
-}
+// if (!isFirstInstance) {
+//   app.quit();
+// }
 
-const isFirstInstance = app.requestSingleInstanceLock();
+// app.on('second-instance', () => {
+//   createOrShowMainWindow();
+// });
 
-if (!isFirstInstance) {
-  app.quit();
-}
-
-app.on('second-instance', () => {
-  createOrShowMainWindow();
-});
-
-const launcherFileSystem = WeFileSystem.connect(app, args.profile);
+const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile);
 const launcherEmitter = new LauncherEmitter();
 
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
@@ -89,12 +94,12 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
   'utf-8',
 );
 
-setupLogs(launcherEmitter, launcherFileSystem);
+setupLogs(launcherEmitter, WE_FILE_SYSTEM);
 
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'applet',
-    privileges: { standard: true, secure: true },
+    privileges: { standard: true },
   },
 ]);
 
@@ -194,6 +199,7 @@ const createOrShowMainWindow = () => {
 
   // once its ready to show, show
   mainWindow.once('ready-to-show', () => {
+    mainWindow.maximize();
     mainWindow.show();
   });
 
@@ -204,66 +210,6 @@ const createOrShowMainWindow = () => {
     MAIN_WINDOW = null;
   });
   MAIN_WINDOW = mainWindow;
-};
-
-const createHappWindow = (appId: string) => {
-  // TODO create mapping between installed-app-id's and window ids
-
-  const uiAssetsDir = launcherFileSystem.appUiAssetsDir(appId);
-  if (!uiAssetsDir) {
-    throw new Error(`No directory found for UI assets. Is it a headless app?`);
-  }
-
-  const partition = `persist:${appId}`;
-  const ses = session.fromPartition(partition);
-
-  ses.protocol.handle('file', async (request) => {
-    // console.log("### Got file request: ", request);
-    const filePath = request.url.slice('file://'.length);
-    console.log('filePath: ', filePath);
-    if (!filePath.endsWith('index.html')) {
-      return net.fetch(url.pathToFileURL(path.join(uiAssetsDir, filePath)).toString());
-    } else {
-      const indexHtmlResponse = await net.fetch(request.url);
-      const content = await indexHtmlResponse.text();
-      let modifiedContent = content.replace(
-        '<head>',
-        `<head><script type="module">window.__HC_LAUNCHER_ENV__ = { APP_INTERFACE_PORT: ${APP_PORT}, INSTALLED_APP_ID: "${appId}", FRAMEWORK: "electron" };</script>`,
-      );
-      // remove title attribute to be able to set title to app id later
-      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      return new Response(modifiedContent, indexHtmlResponse);
-    }
-  });
-  // Create the browser window.
-  let happWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: path.resolve(__dirname, '../preload/happs.js'),
-      partition,
-    },
-  });
-
-  happWindow.menuBarVisible = false;
-
-  happWindow.setTitle(appId);
-
-  setLinkOpenHandlers(happWindow);
-
-  happWindow.on('close', () => {
-    console.log(`Happ window with frame id ${happWindow.id} about to be closed.`);
-    // prevent closing here and hide instead in case notifications are to be received from this happ UI
-  });
-
-  happWindow.on('closed', () => {
-    console.log(`Happ window with frame id ${happWindow.id} closed.`);
-    // remove protocol handler
-    ses.protocol.unhandle('file');
-    // happWindow = null;
-  });
-  console.log('Loading happ window file');
-  happWindow.loadFile(path.join(uiAssetsDir, 'index.html'));
 };
 
 let tray;
@@ -297,7 +243,7 @@ app.whenReady().then(async () => {
 
     const installedAppId = `applet#${lowerCasedAppletId}`;
 
-    const uiAssetsDir = launcherFileSystem.appUiAssetsDir(installedAppId);
+    const uiAssetsDir = WE_FILE_SYSTEM.appUiAssetsDir(installedAppId);
 
     console.log('uiAssetsDir: ', uiAssetsDir);
     console.log('uriWithoutProtocol: ', uriWithoutProtocol);
@@ -315,9 +261,6 @@ app.whenReady().then(async () => {
       const indexHtmlResponse = await net.fetch(
         url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
       );
-      console.log('RESPONSE HEADERS: ', indexHtmlResponse.headers);
-      indexHtmlResponse.headers.append('Origin', request.url);
-      console.log('MODIFIED RESPONSE HEADERS: ', indexHtmlResponse.headers);
       const content = await indexHtmlResponse.text();
       let modifiedContent = content.replace(
         '<head>',
@@ -326,15 +269,11 @@ app.whenReady().then(async () => {
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
       const response = new Response(modifiedContent, indexHtmlResponse);
-      console.log('Constructed response with headers: ', response.headers);
       return response;
     } else {
-      console.log('@@@@@@@@@@@ NON INDEX.HTML REQUEST @@@@@@@@@@@@');
-      const response = net.fetch(
+      return net.fetch(
         url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
       );
-      console.log('### RESPONSE: ', response);
-      return response;
     }
   });
 
@@ -359,7 +298,9 @@ app.whenReady().then(async () => {
   tray.setContextMenu(contextMenu);
 
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
-  ipcMain.handle('open-app', async (_e, appId: string) => createHappWindow(appId));
+  ipcMain.handle('open-app', async (_e, appId: string) =>
+    createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
+  );
   ipcMain.handle(
     'install-app',
     async (_e, filePath: string, appId: string, networkSeed: string) => {
@@ -388,7 +329,7 @@ app.whenReady().then(async () => {
     };
   });
   ipcMain.handle('lair-setup-required', async () => {
-    return !launcherFileSystem.keystoreInitialized();
+    return !WE_FILE_SYSTEM.keystoreInitialized();
   });
   ipcMain.handle('is-dev-mode-enabled', async () => {
     const enabledApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({
@@ -406,7 +347,7 @@ app.whenReady().then(async () => {
     } else {
       await HOLOCHAIN_MANAGER!.installApp(
         path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
-        path.join(launcherFileSystem.uisDir, DEVHUB_APP_ID, 'assets'),
+        path.join(WE_FILE_SYSTEM.uisDir, DEVHUB_APP_ID, 'assets'),
         DEVHUB_APP_ID,
         'launcher-electron-prototype',
       );
@@ -456,18 +397,18 @@ app.whenReady().then(async () => {
         return;
       }
       // check whether .happ file is already available
-      const happFilePath = path.join(launcherFileSystem.happsDir, `${happReleaseHash}.happ`);
+      const happFilePath = path.join(WE_FILE_SYSTEM.happsDir, `${happReleaseHash}.happ`);
       if (!fs.existsSync(happFilePath)) {
         console.log('Fetching and storing happ...');
         await WE_RUST_HANDLER!.fetchAndStoreHapp(
           devhubHost,
           devhubDnaHash,
           happReleaseHash,
-          launcherFileSystem.happsDir,
+          WE_FILE_SYSTEM.happsDir,
           APPSTORE_APP_ID,
         );
       }
-      const uiDir = path.join(launcherFileSystem.uisDir, guiReleaseHash);
+      const uiDir = path.join(WE_FILE_SYSTEM.uisDir, guiReleaseHash);
       console.log('\n@install-applet-bundle: uiDir: ', uiDir);
 
       if (guiReleaseHash && !fs.existsSync(uiDir)) {
@@ -476,7 +417,7 @@ app.whenReady().then(async () => {
           devhubHost,
           devhubDnaHash,
           guiReleaseHash,
-          launcherFileSystem.uisDir,
+          WE_FILE_SYSTEM.uisDir,
           APPSTORE_APP_ID,
         );
       }
@@ -508,7 +449,7 @@ app.whenReady().then(async () => {
           : undefined,
       };
       fs.writeFileSync(
-        path.join(launcherFileSystem.appsDir, `${appId}.json`),
+        path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
         JSON.stringify(appAssetsInfo),
       );
       console.log('@install-applet-bundle: app installed.');
@@ -560,10 +501,10 @@ app.whenReady().then(async () => {
       console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
     }
     console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
-    if (!launcherFileSystem.keystoreInitialized()) {
+    if (!WE_FILE_SYSTEM.keystoreInitialized()) {
       splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
       // TODO: https://github.com/holochain/launcher/issues/144
-      // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: launcherFileSystem.keystoreDir });
+      // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: WE_FILE_SYSTEM.keystoreDir });
       // lairHandle.stdin.write(password);
       // lairHandle.stdin.end();
       // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
@@ -571,7 +512,7 @@ app.whenReady().then(async () => {
       // })
       await initializeLairKeystore(
         lairBinary,
-        launcherFileSystem.keystoreDir,
+        WE_FILE_SYSTEM.keystoreDir,
         launcherEmitter,
         password,
       );
@@ -581,7 +522,7 @@ app.whenReady().then(async () => {
     // launch lair keystore
     const [lairHandle, lairUrl] = await launchLairKeystore(
       lairBinary,
-      launcherFileSystem.keystoreDir,
+      WE_FILE_SYSTEM.keystoreDir,
       launcherEmitter,
       password,
     );
@@ -593,12 +534,12 @@ app.whenReady().then(async () => {
     // launch holochain
     const holochainManager = await HolochainManager.launch(
       launcherEmitter,
-      launcherFileSystem,
+      WE_FILE_SYSTEM,
       holochianBinaries['holochain-0.2.3'],
       password,
       '0.2.3',
-      launcherFileSystem.conductorDir,
-      launcherFileSystem.conductorConfigPath,
+      WE_FILE_SYSTEM.conductorDir,
+      WE_FILE_SYSTEM.conductorConfigPath,
       lairUrl,
       'https://bootstrap.holo.host',
       'wss://signal.holo.host',
@@ -625,7 +566,7 @@ app.whenReady().then(async () => {
       splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
       await HOLOCHAIN_MANAGER.installApp(
         path.join(DEFAULT_APPS_DIRECTORY, 'AppStore.webhapp'),
-        path.join(launcherFileSystem.uisDir, APPSTORE_APP_ID, 'assets'),
+        path.join(WE_FILE_SYSTEM.uisDir, APPSTORE_APP_ID, 'assets'),
         APPSTORE_APP_ID,
         'launcher-electron-prototype',
       );

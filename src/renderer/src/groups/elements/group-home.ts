@@ -2,7 +2,7 @@ import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { ActionHash, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { ActionHash, AgentPubKey, EntryHash } from '@holochain/client';
 import {
   AsyncReadable,
   StoreSubscriber,
@@ -48,7 +48,6 @@ import { GroupStore } from '../group-store.js';
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { AppletHash } from '../../types.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../applets/types.js';
@@ -135,7 +134,7 @@ export class GroupHome extends LitElement {
   );
 
   async firstUpdated() {
-    const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
+    // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
   }
 
   async updateUi(_e: CustomEvent) {

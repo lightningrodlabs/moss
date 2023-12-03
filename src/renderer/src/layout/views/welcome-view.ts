@@ -125,8 +125,8 @@ export class WelcomeView extends LitElement {
       case WelcomePageView.Main:
         return html`
           <div
-            class="column"
-            style="align-items: center; flex: 1; overflow: scroll; padding: 24px;"
+            class="column scrollbars"
+            style="align-items: center; flex: 1; overflow: auto; padding: 24px;"
           >
             <div class="row" style="margin-top: 100px; flex-wrap: wrap;">
               <button

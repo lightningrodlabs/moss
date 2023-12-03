@@ -1744,7 +1744,7 @@
     "@holochain-open-dev/stores" "0.7.2"
     "@holochain-open-dev/utils" "0.16.0"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-5c75d40f-e5e3-48c3-aea1-4cd66cab083d-1701358008535/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-43113d25-c94f-47ab-a726-8d08e225df8c-1701618827521/node_modules/@lightningrodlabs/we-applet"
     "@lit-labs/context" "^0.2.0"
     "@lit/localize" "^0.11.4"
     "@material/web" "=1.0.0-pre.9"
@@ -2210,8 +2210,8 @@
     lodash-es "^4.17.21"
 
 "@scoped-elements/golden-layout@https://github.com/matthme/scoped-golden-layout.git#build":
-  version "0.2.8-local.1"
-  resolved "https://github.com/matthme/scoped-golden-layout.git#d9977b2a68bbe9de68e55f22e9fac03bb88a4dad"
+  version "0.2.8-local.2"
+  resolved "https://github.com/matthme/scoped-golden-layout.git#394de087ba809058f3175f75532b298ad7ecc299"
   dependencies:
     "@fontsource/aileron" "^5.0.5"
     "@lit-labs/context" "^0.2.0"

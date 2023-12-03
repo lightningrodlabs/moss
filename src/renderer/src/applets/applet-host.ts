@@ -39,7 +39,6 @@ import { AppletHash, AppletId } from '../types.js';
 export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
-      console.log('RECEIVED IFRAME MESSAGE with origin: ', message.origin);
       // console.log('and source: ', message.source);
       // const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
       const installedApplets = await toPromise(weStore.installedApplets);
@@ -47,8 +46,6 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
       // );
       const appletHash: AppletHash = message.data.appletHash;
-
-      console.log('Got message from applet with hash: ', encodeHashToBase64(appletHash));
 
       if (!appletHash) {
         console.log(
@@ -66,8 +63,6 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         console.warn("Got a message from an applet that's not installed.");
         return;
       }
-
-      console.log('ABOUT TO HANDLE IFRAME MESSAGE');
 
       const result = await handleAppletIframeMessage(
         weStore,
@@ -285,8 +280,8 @@ export async function handleAppletIframeMessage(
     case 'toggle-clipboard':
       return openViews.toggleClipboard();
     case 'notify-we':
-      const appletId: AppletId = encodeHashToBase64(appletHash);
       throw new Error('Notifications not implemented.');
+    // const appletId: AppletId = encodeHashToBase64(appletHash);
     // if (!message.notifications) {
     //   throw new Error(
     //     `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
