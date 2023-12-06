@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { encodeHashToBase64, EntryHash } from '@holochain/client';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { RenderView } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../../shared-styles.js';

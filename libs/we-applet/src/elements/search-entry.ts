@@ -1,41 +1,32 @@
-import { customElement, property, state, query } from "lit/decorators.js";
-import { css, html, LitElement } from "lit";
-import { consume } from "@lit-labs/context";
-import { localized, msg, str } from "@lit/localize";
-import {
-  AsyncStatus,
-  lazyLoad,
-  StoreSubscriber,
-} from "@holochain-open-dev/stores";
+import { customElement, property, state, query } from 'lit/decorators.js';
+import { css, html, LitElement } from 'lit';
+import { consume } from '@lit/context';
+import { localized, msg, str } from '@lit/localize';
+import { AsyncStatus, lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 import {
   FormField,
   FormFieldController,
   hashProperty,
   sharedStyles,
   wrapPathInSvg,
-} from "@holochain-open-dev/elements";
+} from '@holochain-open-dev/elements';
 
-import "@holochain-open-dev/elements/dist/elements/display-error.js";
-import "@shoelace-style/shoelace/dist/components/skeleton/skeleton.js";
-import "@shoelace-style/shoelace/dist/components/menu/menu.js";
-import "@shoelace-style/shoelace/dist/components/menu-item/menu-item.js";
-import "@shoelace-style/shoelace/dist/components/dropdown/dropdown.js";
-import "@shoelace-style/shoelace/dist/components/input/input.js";
-import SlInput from "@shoelace-style/shoelace/dist/components/input/input";
-import SlDropdown from "@shoelace-style/shoelace/dist/components/dropdown/dropdown.js";
+import '@holochain-open-dev/elements/dist/elements/display-error.js';
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
+import '@shoelace-style/shoelace/dist/components/menu/menu.js';
+import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
+import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
+import SlInput from '@shoelace-style/shoelace/dist/components/input/input';
+import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
-import {
-  AppletInfo,
-  EntryLocationAndInfo,
-  GroupProfile,
-  HrlWithContext,
-} from "../types";
-import { WeClient } from "../api";
-import { weClientContext } from "../context";
-import { EntryHash } from "@holochain/client";
-import { DnaHash } from "@holochain/client";
-import { getAppletsInfosAndGroupsProfiles } from "../utils";
-import { mdiMagnify } from "@mdi/js";
+import { AppletInfo, EntryLocationAndInfo, GroupProfile, HrlWithContext } from '../types';
+import { WeClient, WeServices } from '../api';
+import { weClientContext } from '../context';
+import { EntryHash } from '@holochain/client';
+import { DnaHash } from '@holochain/client';
+import { getAppletsInfosAndGroupsProfiles } from '../utils';
+import { mdiMagnify } from '@mdi/js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[HrlWithContext, EntryLocationAndInfo]>;
@@ -48,7 +39,7 @@ export interface SearchResult {
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
  */
 @localized()
-@customElement("search-entry")
+@customElement('search-entry')
 export class SearchEntry extends LitElement implements FormField {
   /** Form field properties */
 
@@ -62,7 +53,7 @@ export class SearchEntry extends LitElement implements FormField {
   /**
    * The default value of the field if this element is used inside a form
    */
-  @property(hashProperty("default-value"))
+  @property(hashProperty('default-value'))
   defaultValue: HrlWithContext | undefined;
 
   /**
@@ -83,22 +74,22 @@ export class SearchEntry extends LitElement implements FormField {
    * Label for the entry searching field.
    * @attr field-label
    */
-  @property({ type: String, attribute: "field-label" })
-  fieldLabel: string = "";
+  @property({ type: String, attribute: 'field-label' })
+  fieldLabel: string = '';
 
   /**
    * Label for the entry searching field.
    * @attr field-label
    */
-  @property({ type: String, attribute: "placeholder" })
-  placeholder: string = msg("Search entry");
+  @property({ type: String, attribute: 'placeholder' })
+  placeholder: string = msg('Search entry');
 
-  @property({ type: Number, attribute: "min-chars" })
+  @property({ type: Number, attribute: 'min-chars' })
   minChars: number = 3;
 
   @consume({ context: weClientContext, subscribe: true })
   @property()
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
   /**
    * @internal
@@ -130,7 +121,7 @@ export class SearchEntry extends LitElement implements FormField {
 
   reset() {
     setTimeout(() => {
-      this._textField.value = "";
+      this._textField.value = '';
       this.info = undefined;
       this.value = this.defaultValue;
     });
@@ -140,20 +131,18 @@ export class SearchEntry extends LitElement implements FormField {
    * @internal
    */
   @state()
-  private _searchEntries:
-    | StoreSubscriber<AsyncStatus<SearchResult>>
-    | undefined;
+  private _searchEntries: StoreSubscriber<AsyncStatus<SearchResult>> | undefined;
 
   /**
    * @internal
    */
-  @query("#textfield")
+  @query('#textfield')
   private _textField!: SlInput;
 
   /**
    * @internal
    */
-  @query("#dropdown")
+  @query('#dropdown')
   private dropdown!: SlDropdown;
 
   focus() {
@@ -162,11 +151,11 @@ export class SearchEntry extends LitElement implements FormField {
   }
 
   firstUpdated() {
-    this._textField.addEventListener('keydown', event => {
+    this._textField.addEventListener('keydown', (event) => {
       if (event.key === ' ') {
         event.stopPropagation();
       }
-    })
+    });
   }
 
   async search(filter: string): Promise<SearchResult> {
@@ -175,21 +164,17 @@ export class SearchEntry extends LitElement implements FormField {
     const hrlsWithInfo = await Promise.all(
       hrls.map(async (hrlWithContext) => {
         const info = await this.weClient.entryInfo(hrlWithContext.hrl);
-        return [hrlWithContext, info] as [
-          HrlWithContext,
-          EntryLocationAndInfo | undefined
-        ];
-      })
+        return [hrlWithContext, info] as [HrlWithContext, EntryLocationAndInfo | undefined];
+      }),
     );
-    const filteredHrls = hrlsWithInfo.filter(
-      ([hrl, info]) => info !== undefined
-    ) as Array<[HrlWithContext, EntryLocationAndInfo]>;
+    const filteredHrls = hrlsWithInfo.filter(([hrl, info]) => info !== undefined) as Array<
+      [HrlWithContext, EntryLocationAndInfo]
+    >;
 
-    const { appletsInfos, groupsProfiles } =
-      await getAppletsInfosAndGroupsProfiles(
-        this.weClient,
-        filteredHrls.map(([_, info]) => info.appletHash)
-      );
+    const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
+      this.weClient as WeClient,
+      filteredHrls.map(([_, info]) => info.appletHash),
+    );
 
     return { hrlsWithInfo: filteredHrls, groupsProfiles, appletsInfos };
   }
@@ -204,16 +189,20 @@ export class SearchEntry extends LitElement implements FormField {
     this.dropdown.show();
 
     const store = lazyLoad(() => this.search(filter));
-    this._searchEntries = new StoreSubscriber(this, () => store, () => []);
+    this._searchEntries = new StoreSubscriber(
+      this,
+      () => store,
+      () => [],
+    );
   }
 
   onEntrySelected(hrlWithContext: HrlWithContext, info: EntryLocationAndInfo) {
     this.dispatchEvent(
-      new CustomEvent("entry-selected", {
+      new CustomEvent('entry-selected', {
         detail: {
           hrlWithContext,
         },
-      })
+      }),
     );
     this.value = hrlWithContext;
     this.info = info;
@@ -227,7 +216,7 @@ export class SearchEntry extends LitElement implements FormField {
         >${msg(str`Enter ${this.minChars} chars to search...`)}</sl-menu-item
       >`;
     switch (this._searchEntries.value.status) {
-      case "pending":
+      case 'pending':
         return Array(3).map(
           () => html`
             <sl-menu-item>
@@ -241,23 +230,23 @@ export class SearchEntry extends LitElement implements FormField {
                 style="width: 100px; margin: 8px; border-radius: 12px"
               ></sl-skeleton>
             </sl-menu-item>
-          `
+          `,
         );
-      case "error":
+      case 'error':
         return html`
           <display-error
             style="flex: 1; display:flex"
             tooltip
-            .headline=${msg("Error searching entries")}
+            .headline=${msg('Error searching entries')}
             .error=${this._searchEntries.value.error}
           ></display-error>
         `;
-      case "complete": {
+      case 'complete': {
         const searchResult = this._searchEntries.value.value;
 
         if (searchResult.hrlsWithInfo.length === 0)
           return html`<sl-menu-item disabled>
-            ${msg("No entries match the filter")}
+            ${msg('No entries match the filter')}
           </sl-menu-item>`;
 
         return html`
@@ -271,25 +260,23 @@ export class SearchEntry extends LitElement implements FormField {
                 ></sl-icon>
                 ${info.entryInfo.name}
                 <div slot="suffix" class="row" style="align-items: center">
-                  <span class="placeholder">&nbsp;${msg("in")}&nbsp;</span>
+                  <span class="placeholder">&nbsp;${msg('in')}&nbsp;</span>
                   ${searchResult.appletsInfos
                     .get(info.appletHash)
                     ?.groupsIds.map(
                       (groupId) => html`
                         <img
-                          .src=${searchResult.groupsProfiles.get(groupId)
-                            ?.logo_src}
+                          .src=${searchResult.groupsProfiles.get(groupId)?.logo_src}
                           style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
                         />
-                      `
+                      `,
                     )}
                   <span class="placeholder">
-                    ${searchResult.appletsInfos.get(info.appletHash)
-                      ?.appletName}</span
+                    ${searchResult.appletsInfos.get(info.appletHash)?.appletName}</span
                   >
                 </div>
               </sl-menu-item>
-            `
+            `,
           )}
         `;
       }
@@ -317,17 +304,11 @@ export class SearchEntry extends LitElement implements FormField {
             .label=${this._label}
             .placeholder=${this.placeholder}
             @input=${() => this.onFilterChange()}
-            .value=${this.info ? this.info.entryInfo.name : ""}
+            .value=${this.info ? this.info.entryInfo.name : ''}
           >
             ${this.info
-              ? html`<sl-icon
-                  .src=${this.info.entryInfo.icon_src}
-                  slot="prefix"
-                ></sl-icon>`
-              : html`<sl-icon
-                  .src=${wrapPathInSvg(mdiMagnify)}
-                  slot="prefix"
-                ></sl-icon> `}
+              ? html`<sl-icon .src=${this.info.entryInfo.icon_src} slot="prefix"></sl-icon>`
+              : html`<sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon> `}
           </sl-input>
           <sl-menu
             @sl-select=${(e: CustomEvent) => {

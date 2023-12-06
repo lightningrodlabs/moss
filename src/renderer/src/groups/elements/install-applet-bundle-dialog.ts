@@ -4,7 +4,7 @@ import { ActionHashB64, encodeHashToBase64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { slice } from '@holochain-open-dev/utils';
 

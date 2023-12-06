@@ -3,47 +3,43 @@ import {
   notifyError,
   sharedStyles,
   wrapPathInSvg,
-} from "@holochain-open-dev/elements";
-import { consume } from "@lit-labs/context";
-import { html, LitElement } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { msg } from "@lit/localize";
-import { AnyDhtHash } from "@holochain/client";
-import { StoreSubscriber } from "@holochain-open-dev/stores";
-import { mdiAttachmentRemove } from "@mdi/js";
+} from '@holochain-open-dev/elements';
+import { consume } from '@lit/context';
+import { html, LitElement } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { msg } from '@lit/localize';
+import { AnyDhtHash } from '@holochain/client';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { mdiAttachmentRemove } from '@mdi/js';
 
-import "@shoelace-style/shoelace/dist/components/skeleton/skeleton.js";
-import "@shoelace-style/shoelace/dist/components/icon-button/icon-button.js";
-import "@shoelace-style/shoelace/dist/components/button/button.js";
-import "@shoelace-style/shoelace/dist/components/alert/alert.js";
-import "@shoelace-style/shoelace/dist/components/dialog/dialog.js";
-import "@holochain-open-dev/elements/dist/elements/display-error.js";
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
+import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import {
-  weClientContext,
-  WeClient,
-  HrlWithContext,
-} from "@lightningrodlabs/we-applet";
-import "@lightningrodlabs/we-applet/dist/elements/hrl-link.js";
+import { weClientContext, WeClient, HrlWithContext, WeServices } from '@lightningrodlabs/we-applet';
+import '@lightningrodlabs/we-applet/dist/elements/hrl-link.js';
 
-import { AttachmentsStore } from "../attachments-store";
-import { attachmentsStoreContext } from "../context";
+import { AttachmentsStore } from '../attachments-store';
+import { attachmentsStoreContext } from '../context';
 
-@customElement("attachments-list")
+@customElement('attachments-list')
 export class AttachmentsList extends LitElement {
   @consume({ context: attachmentsStoreContext, subscribe: true })
   attachmentsStore!: AttachmentsStore;
 
   @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
-  @property(hashProperty("hash"))
+  @property(hashProperty('hash'))
   hash!: AnyDhtHash;
 
   attachments = new StoreSubscriber(
     this,
     () => this.attachmentsStore.attachments.get(this.hash),
-    () => [this.hash]
+    () => [this.hash],
   );
 
   @state()
@@ -56,13 +52,10 @@ export class AttachmentsList extends LitElement {
     this.removing = true;
 
     try {
-      await this.attachmentsStore.client.removeAttachment(
-        this.hash,
-        attachmentToRemove
-      );
+      await this.attachmentsStore.client.removeAttachment(this.hash, attachmentToRemove);
       this._attachmentToRemove = undefined;
     } catch (e) {
-      notifyError(msg("Error removing the attachment"));
+      notifyError(msg('Error removing the attachment'));
       console.error(e);
     }
 
@@ -71,16 +64,14 @@ export class AttachmentsList extends LitElement {
 
   renderAttachments(attachments: Array<HrlWithContext>) {
     if (attachments.length === 0)
-      return html`<span class="placeholder"
-        >${msg("There are no attachments yet.")}</span
-      >`;
+      return html`<span class="placeholder">${msg('There are no attachments yet.')}</span>`;
 
     return html`
       ${this._attachmentToRemove
         ? html`
             <sl-dialog
               open
-              .label=${msg("Remove Attachment")}
+              .label=${msg('Remove Attachment')}
               @sl-hide=${() => {
                 this._attachmentToRemove = undefined;
               }}
@@ -90,14 +81,14 @@ export class AttachmentsList extends LitElement {
                 }
               }}
             >
-              <span>${msg("Do you want to remove this attachment?")}</span>
+              <span>${msg('Do you want to remove this attachment?')}</span>
 
               <sl-button
                 slot="footer"
                 @click=${() => {
                   this._attachmentToRemove = undefined;
                 }}
-                >${msg("Cancel")}</sl-button
+                >${msg('Cancel')}</sl-button
               >
 
               <sl-button
@@ -105,7 +96,7 @@ export class AttachmentsList extends LitElement {
                 variant="primary"
                 @click=${() => this.removeAttachment(this._attachmentToRemove!)}
                 .loading=${this.removing}
-                >${msg("Remove")}</sl-button
+                >${msg('Remove')}</sl-button
               >
             </sl-dialog>
           `
@@ -124,7 +115,7 @@ export class AttachmentsList extends LitElement {
                 .src=${wrapPathInSvg(mdiAttachmentRemove)}
                 @click=${() => (this._attachmentToRemove = attachment)}
               ></sl-icon-button>
-            </div>`
+            </div>`,
         )}
       </div>
     `;
@@ -132,15 +123,14 @@ export class AttachmentsList extends LitElement {
 
   render() {
     switch (this.attachments.value.status) {
-      case "pending":
+      case 'pending':
         return html`<sl-skeleton style="margin-bottom: 16px"></sl-skeleton
-          ><sl-skeleton style="margin-bottom: 16px"></sl-skeleton
-          ><sl-skeleton></sl-skeleton>`;
-      case "complete":
+          ><sl-skeleton style="margin-bottom: 16px"></sl-skeleton><sl-skeleton></sl-skeleton>`;
+      case 'complete':
         return this.renderAttachments(this.attachments.value.value);
-      case "error":
+      case 'error':
         return html`<display-error
-          .headline=${msg("Error fetching the attachments")}
+          .headline=${msg('Error fetching the attachments')}
           .error=${this.attachments.value.error}
         ></display-error>`;
     }

@@ -5,8 +5,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@holochain-open-dev/profiles": "^0.16.1",
-    "@holochain-open-dev/utils": "^0.16.0",
+    "@holochain-open-dev/profiles": "^0.17.3",
+    "@holochain-open-dev/utils": "^0.16.3",
     "@holochain/client": "0.16.6",
     "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
     "inline-module": "^0.6.1"

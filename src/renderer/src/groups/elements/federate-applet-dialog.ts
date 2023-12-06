@@ -1,6 +1,6 @@
 import { hashProperty, notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { html, LitElement } from 'lit';

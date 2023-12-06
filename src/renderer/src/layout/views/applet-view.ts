@@ -1,7 +1,7 @@
 import { hashProperty, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { AsyncReadable, joinAsync, StoreSubscriber } from '@holochain-open-dev/stores';
 import { DnaHash, EntryHash } from '@holochain/client';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';

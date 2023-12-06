@@ -1,6 +1,6 @@
 import { AppInfo, DnaHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
 import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { msg } from '@lit/localize';

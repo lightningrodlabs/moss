@@ -3,7 +3,7 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ActionHash, decodeHashFromBase64, EntryHashB64 } from '@holochain/client';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { msg, localized } from '@lit/localize';
 import { ProfilesLocation, RenderView } from '@lightningrodlabs/we-applet';
 

@@ -8,7 +8,7 @@ import {
   StoreSubscriber,
 } from '@holochain-open-dev/stores';
 import { customElement, state } from 'lit/decorators.js';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, EntryHash } from '@holochain/client';

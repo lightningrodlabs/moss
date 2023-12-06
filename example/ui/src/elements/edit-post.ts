@@ -1,10 +1,17 @@
 import { LitElement, html } from 'lit';
-import { repeat } from "lit/directives/repeat.js";
+import { repeat } from 'lit/directives/repeat.js';
 import { state, customElement, property } from 'lit/decorators.js';
 import { ActionHash, Record, EntryHash, AgentPubKey } from '@holochain/client';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { hashState, notifyError, sharedStyles, hashProperty, wrapPathInSvg, onSubmit } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import {
+  hashState,
+  notifyError,
+  sharedStyles,
+  hashProperty,
+  wrapPathInSvg,
+  onSubmit,
+} from '@holochain-open-dev/elements';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { mdiAlertCircleOutline, mdiDelete } from '@mdi/js';
 
@@ -27,7 +34,6 @@ import { Post } from '../types';
 @localized()
 @customElement('edit-post')
 export class EditPost extends LitElement {
-
   // REQUIRED. The hash of the original `Create` action for this Post
   @property(hashProperty('original-post-hash'))
   originalPostHash!: ActionHash;
@@ -48,7 +54,6 @@ export class EditPost extends LitElement {
   @state()
   committing = false;
 
-
   firstUpdated() {
     this.shadowRoot?.querySelector('form')!.reset();
   }
@@ -67,58 +72,69 @@ export class EditPost extends LitElement {
         post
       );
 
-      this.dispatchEvent(new CustomEvent('post-updated', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          originalPostHash: this.originalPostHash,
-          previousPostHash: this.currentRecord.actionHash,
-          updatedPostHash: updateRecord.actionHash
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('post-updated', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            originalPostHash: this.originalPostHash,
+            previousPostHash: this.currentRecord.actionHash,
+            updatedPostHash: updateRecord.actionHash,
+          },
+        })
+      );
     } catch (e: any) {
       console.error(e);
-      notifyError(msg("Error updating the post"));
+      notifyError(msg('Error updating the post'));
     }
 
     this.committing = false;
   }
 
   render() {
-    return html`
-      <sl-card style="flex: 1;">
-        <span slot="header">${msg("Edit Post")}</span>
+    return html` <sl-card style="flex: 1;">
+      <span slot="header">${msg('Edit Post')}</span>
 
-        <form
-          style="display: flex; flex: 1; flex-direction: column;"
-          ${onSubmit(fields => this.updatePost(fields))}
-        >
-          <div style="margin-bottom: 16px">
-        <sl-input name="title" .label=${msg("Title")}  required .defaultValue=${ this.currentRecord.entry.title }></sl-input>          </div>
+      <form
+        style="display: flex; flex: 1; flex-direction: column;"
+        ${onSubmit((fields) => this.updatePost(fields))}
+      >
+        <div style="margin-bottom: 16px">
+          <sl-input
+            name="title"
+            .label=${msg('Title')}
+            required
+            .defaultValue=${this.currentRecord.entry.title}
+          ></sl-input>
+        </div>
 
-          <div style="margin-bottom: 16px">
-        <sl-textarea name="content" .label=${msg("Content")}  required .defaultValue=${ this.currentRecord.entry.content }></sl-textarea>          </div>
+        <div style="margin-bottom: 16px">
+          <sl-textarea
+            name="content"
+            .label=${msg('Content')}
+            required
+            .defaultValue=${this.currentRecord.entry.content}
+          ></sl-textarea>
+        </div>
 
-
-
-          <div style="display: flex; flex-direction: row">
-            <sl-button
-              @click=${() => this.dispatchEvent(new CustomEvent('edit-canceled', {
-                bubbles: true,
-                composed: true
-              }))}
-              style="flex: 1;"
-            >${msg("Cancel")}</sl-button>
-            <sl-button
-              type="submit"
-              variant="primary"
-              style="flex: 1;"
-              .loading=${this.committing}
-            >${msg("Save")}</sl-button>
-
-          </div>
-        </form>
-      </sl-card>`;
+        <div style="display: flex; flex-direction: row">
+          <sl-button
+            @click=${() =>
+              this.dispatchEvent(
+                new CustomEvent('edit-canceled', {
+                  bubbles: true,
+                  composed: true,
+                })
+              )}
+            style="flex: 1;"
+            >${msg('Cancel')}</sl-button
+          >
+          <sl-button type="submit" variant="primary" style="flex: 1;" .loading=${this.committing}
+            >${msg('Save')}</sl-button
+          >
+        </div>
+      </form>
+    </sl-card>`;
   }
 
   static styles = [sharedStyles];

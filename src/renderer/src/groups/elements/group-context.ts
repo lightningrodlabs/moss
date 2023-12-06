@@ -1,5 +1,5 @@
 import { css, html, LitElement, PropertyValues } from 'lit';
-import { consume, provide } from '@lit-labs/context';
+import { consume, provide } from '@lit/context';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Unsubscriber } from '@holochain-open-dev/stores';
 import { PeerStatusStore, peerStatusStoreContext } from '@holochain-open-dev/peer-status';

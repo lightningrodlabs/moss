@@ -1,6 +1,6 @@
 import { hashProperty, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { GroupProfile } from '@lightningrodlabs/we-applet';

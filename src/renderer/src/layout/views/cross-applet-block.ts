@@ -4,7 +4,7 @@ import { ActionHash, decodeHashFromBase64, EntryHashB64 } from '@holochain/clien
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { ProfilesLocation, RenderView } from '@lightningrodlabs/we-applet';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { msg, localized } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';

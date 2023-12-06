@@ -1,4 +1,4 @@
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { state, customElement, query } from 'lit/decorators.js';
 import { encodeHashToBase64, DnaHash, AnyDhtHash } from '@holochain/client';
 import { LitElement, html, css } from 'lit';

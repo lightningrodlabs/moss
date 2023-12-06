@@ -1,4 +1,4 @@
-import { provide } from '@lit-labs/context';
+import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
 import { AdminWebsocket, AppWebsocket } from '@holochain/client';
 import { LitElement, html, css } from 'lit';

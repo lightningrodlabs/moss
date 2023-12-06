@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { state, query, customElement } from 'lit/decorators.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { notifyError, sharedStyles, onSubmit } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
@@ -25,7 +25,6 @@ import { Post } from '../types.js';
 @localized()
 @customElement('create-post')
 export class CreatePost extends LitElement {
-
   /**
    * @internal
    */
@@ -44,10 +43,8 @@ export class CreatePost extends LitElement {
   @query('#create-form')
   form!: HTMLFormElement;
 
-
   async createPost(fields: any) {
     if (this.committing) return;
-
 
     const post: Post = {
       title: fields.title,
@@ -58,46 +55,46 @@ export class CreatePost extends LitElement {
       this.committing = true;
       const record: EntryRecord<Post> = await this.postsStore.client.createPost(post);
 
-      this.dispatchEvent(new CustomEvent('post-created', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          postHash: record.actionHash
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('post-created', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            postHash: record.actionHash,
+          },
+        })
+      );
 
       this.form.reset();
     } catch (e: any) {
       console.error(e);
-      notifyError(msg("Error creating the post"));
+      notifyError(msg('Error creating the post'));
     }
     this.committing = false;
   }
 
   render() {
-    return html`
-      <sl-card style="flex: 1;">
-        <span slot="header">${msg("Create Post")}</span>
+    return html` <sl-card style="flex: 1;">
+      <span slot="header">${msg('Create Post')}</span>
 
-        <form
-          id="create-form"
-          style="display: flex; flex: 1; flex-direction: column;"
-          ${onSubmit(fields => this.createPost(fields))}
+      <form
+        id="create-form"
+        style="display: flex; flex: 1; flex-direction: column;"
+        ${onSubmit((fields) => this.createPost(fields))}
+      >
+        <div style="margin-bottom: 16px;">
+          <sl-input name="title" .label=${msg('Title')} required></sl-input>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <sl-textarea name="content" .label=${msg('Content')} required></sl-textarea>
+        </div>
+
+        <sl-button variant="primary" type="submit" .loading=${this.committing}
+          >${msg('Create Post')}</sl-button
         >
-          <div style="margin-bottom: 16px;">
-          <sl-input name="title" .label=${msg("Title")}  required></sl-input>          </div>
-
-          <div style="margin-bottom: 16px;">
-          <sl-textarea name="content" .label=${msg("Content")}  required></sl-textarea>          </div>
-
-
-          <sl-button
-            variant="primary"
-            type="submit"
-            .loading=${this.committing}
-          >${msg("Create Post")}</sl-button>
-        </form>
-      </sl-card>`;
+      </form>
+    </sl-card>`;
   }
 
   static styles = [sharedStyles];

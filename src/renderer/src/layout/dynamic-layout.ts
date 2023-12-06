@@ -5,7 +5,7 @@ import { GoldenLayout as GoldenLayoutEl } from '@scoped-elements/golden-layout';
 import { ComponentItemConfig, GoldenLayout, LayoutConfig, RootItemConfig } from 'golden-layout';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { consume, provide } from '@lit-labs/context';
+import { consume, provide } from '@lit/context';
 import { Hrl, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '../groups/elements/group-context.js';

@@ -28,10 +28,7 @@ import {
   HrlLocation,
   ParentToAppletRequest,
   AttachmentName,
-  BlockName,
   AppletHash,
-  AppletInfo,
-  EntryLocationAndInfo,
   AppletId,
   AppletServices,
 } from '@lightningrodlabs/we-applet';
@@ -271,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // get global attachment-types with setTimeout in order not to block subsequent stuff
   setTimeout(async () => {
-    console.log(`@applet-iframe setup: Getting global attachment types...`);
+    // console.log(`@applet-iframe setup: Getting global attachment types...`);
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
     console.log(
       `@applet-iframe setup: Got global attachment types: ${JSON.stringify(globalAttachmentTypes)}`,
@@ -341,7 +338,7 @@ const handleMessage = async (
       );
       const postAttachment = attachments[request.attachmentType];
       if (!postAttachment) {
-        throw new Error(`Necessary attachment type not provided by the applet.`);
+        throw new Error('Necessary attachment type not provided by the applet.');
       }
       try {
         const hrl = await postAttachment.create(request.attachToHrl);

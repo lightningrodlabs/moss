@@ -1,4 +1,4 @@
-import { createContext } from '@lit-labs/context';
+import { createContext } from '@lit/context';
 import { CustomViewsStore } from './custom-views-store.js';
 
 export const customViewsStoreContext = createContext<CustomViewsStore>(

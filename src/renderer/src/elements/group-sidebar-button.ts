@@ -1,6 +1,6 @@
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';

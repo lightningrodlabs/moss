@@ -10,7 +10,7 @@ import {
   pipe,
   toPromise,
 } from '@holochain-open-dev/stores';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { GroupProfile } from '@lightningrodlabs/we-applet';
 import { mdiArrowLeft, mdiCog, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';

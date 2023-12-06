@@ -1,10 +1,22 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "./src",
-    "declaration": false,
-    "incremental": true
+    "target": "ESNext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "lib": ["es2021", "dom"],
+    "strict": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"]
 }

@@ -1,4 +1,4 @@
-import { ProfilesClient } from "@holochain-open-dev/profiles";
+import { ProfilesClient } from '@holochain-open-dev/profiles';
 import {
   AppAgentClient,
   ActionHash,
@@ -8,15 +8,13 @@ import {
   ActionHashB64,
   DnaHashB64,
   CallZomeRequest,
-} from "@holochain/client";
-
+} from '@holochain/client';
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
 
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
-
 
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
@@ -71,7 +69,7 @@ export interface WeNotification {
    * urgency level "medium" shows up as a dot in the system tray icon
    * urgency level "high" additionally triggers an OS notification
    */
-  urgency: "low" | "medium" | "high";
+  urgency: 'low' | 'medium' | 'high';
   /**
    * Timestamp **in milliseconds** of when the event that the notification is about
    * has occured.
@@ -98,9 +96,9 @@ export interface WeNotification {
 export type NotificationId = string;
 
 export interface NotificationCount {
-  low: number,
-  medium: number,
-  high: number,
+  low: number;
+  medium: number;
+  high: number;
 }
 
 export interface OpenViews {
@@ -108,11 +106,7 @@ export interface OpenViews {
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openHrl(hrl: Hrl, context: any): void;
   openCrossAppletMain(appletBundleId: ActionHash): void;
-  openCrossAppletBlock(
-    appletBundleId: ActionHash,
-    block: string,
-    context: any
-  ): void;
+  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
 }
 
 export interface EntryLocationAndInfo {
@@ -132,10 +126,10 @@ export interface AppletClients {
 }
 
 export type AppletView =
-  | { type: "main" }
-  | { type: "block"; block: string; context: any }
+  | { type: 'main' }
+  | { type: 'block'; block: string; context: any }
   | {
-      type: "entry";
+      type: 'entry';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
@@ -145,80 +139,80 @@ export type AppletView =
 
 export type CrossAppletView =
   | {
-      type: "main";
+      type: 'main';
     }
   | {
-      type: "block";
+      type: 'block';
       block: string;
       context: any;
     };
 
-
 export interface BlockType {
   label: string;
   icon_src: string;
-  view: "applet-view" | "cross-applet-view";
+  view: 'applet-view' | 'cross-applet-view';
 }
 
 export type BlockName = string;
 
-export type RenderInfo = {
-  type: "applet-view",
-  view: AppletView,
-  appletClient: AppAgentClient,
-  profilesClient: ProfilesClient,
-  appletHash: AppletHash,
-  /**
-   * Non-exhaustive array of profiles of the groups the given applet is shared with.
-   * Note that an applet may be shared with other groups beyond the ones returned
-   * by this array if the applet has been federated with groups that the agent
-   * of the given We instance is not part of.
-   */
-  groupProfiles: GroupProfile[],
-} | {
-  type: "cross-applet-view",
-  view: CrossAppletView,
-  applets: ReadonlyMap<EntryHash, AppletClients>,
-}
+export type RenderInfo =
+  | {
+      type: 'applet-view';
+      view: AppletView;
+      appletClient: AppAgentClient;
+      profilesClient: ProfilesClient;
+      appletHash: AppletHash;
+      /**
+       * Non-exhaustive array of profiles of the groups the given applet is shared with.
+       * Note that an applet may be shared with other groups beyond the ones returned
+       * by this array if the applet has been federated with groups that the agent
+       * of the given We instance is not part of.
+       */
+      groupProfiles: GroupProfile[];
+    }
+  | {
+      type: 'cross-applet-view';
+      view: CrossAppletView;
+      applets: ReadonlyMap<EntryHash, AppletClients>;
+    };
 
 export type RenderView =
   | {
-      type: "applet-view";
+      type: 'applet-view';
       view: AppletView;
     }
   | {
-      type: "cross-applet-view";
+      type: 'cross-applet-view';
       view: CrossAppletView;
     }
   | {
-      type: "background-service";
+      type: 'background-service';
       view: null;
-  };
-
+    };
 
 export type ParentToAppletRequest =
   | {
-      type: "get-applet-entry-info";
+      type: 'get-applet-entry-info';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
       hrl: Hrl;
     }
   | {
-      type: "get-applet-attachment-types";
+      type: 'get-applet-attachment-types';
     }
   | {
-      type: "get-block-types";
+      type: 'get-block-types';
     }
   | {
-      type: "search";
+      type: 'search';
       filter: string;
     }
   | {
-      type: "create-attachment";
+      type: 'create-attachment';
       attachmentType: string;
       attachToHrl: Hrl;
-};
+    };
 
 export interface AppletToParentMessage {
   appletHash: EntryHash;
@@ -227,105 +221,103 @@ export interface AppletToParentMessage {
 
 export type AppletToParentRequest =
   | {
-      type: "ready";
+      type: 'ready';
     }
   | {
-      type: "get-iframe-config";
+      type: 'get-iframe-config';
       crossApplet: boolean;
     }
   | {
-      type: "get-hrl-location";
+      type: 'get-hrl-location';
       hrl: Hrl;
     }
   | {
-      type: "sign-zome-call";
+      type: 'sign-zome-call';
       request: CallZomeRequest;
     }
   | {
-      type: "open-view";
+      type: 'open-view';
       request: OpenViewRequest;
     }
   | {
-      type: "create-attachment";
+      type: 'create-attachment';
       request: CreateAttachmentRequest;
     }
   | {
-      type: "search";
+      type: 'search';
       filter: string;
     }
   | {
-      type: "notify-we";
+      type: 'notify-we';
       notifications: Array<WeNotification>;
-  }
+    }
   | {
-      type: "get-applet-info";
+      type: 'get-applet-info';
       appletHash: AppletHash;
     }
   | {
-      type: "get-global-attachment-types";
+      type: 'get-global-attachment-types';
     }
   | {
-      type: "get-group-profile";
+      type: 'get-group-profile';
       groupId: DnaHash;
     }
   | {
-      type: "get-global-entry-info";
+      type: 'get-global-entry-info';
       hrl: Hrl;
     }
   | {
-      type: "hrl-to-clipboard";
+      type: 'hrl-to-clipboard';
       hrl: HrlWithContext;
     }
   | {
-      type: "user-select-hrl";
+      type: 'user-select-hrl';
     }
   | {
-      type: "toggle-clipboard";
+      type: 'toggle-clipboard';
     }
   | {
-      type: "localStorage.setItem";
+      type: 'localStorage.setItem';
       key: string;
       value: string;
     }
   | {
-      type: "localStorage.removeItem";
+      type: 'localStorage.removeItem';
       key: string;
     }
   | {
-      type: "localStorage.clear";
+      type: 'localStorage.clear';
     }
   | {
-      type: "get-localStorage";
-};
-
-
+      type: 'get-localStorage';
+    };
 
 export type OpenViewRequest =
   | {
-      type: "applet-main";
+      type: 'applet-main';
       appletHash: EntryHash;
     }
   | {
-      type: "cross-applet-main";
+      type: 'cross-applet-main';
       appletBundleId: ActionHash;
     }
   | {
-      type: "applet-block";
+      type: 'applet-block';
       appletHash: EntryHash;
       block: string;
       context: any;
     }
   | {
-      type: "cross-applet-block";
+      type: 'cross-applet-block';
       appletBundleId: ActionHash;
       block: string;
       context: any;
     }
   | {
-      type: "hrl";
+      type: 'hrl';
       hrl: Hrl;
       context: any;
-};
+    };
 
 export interface CreateAttachmentRequest {
   appletHash: EntryHash;
@@ -340,21 +332,21 @@ export interface InternalAttachmentType {
 
 export type IframeConfig =
   | {
-      type: "applet";
+      type: 'applet';
       appPort: number;
       appletHash: EntryHash;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
     }
   | {
-      type: "cross-applet";
+      type: 'cross-applet';
       appPort: number;
       applets: Record<EntryHashB64, ProfilesLocation>;
     }
   | {
-      type: "not-installed";
+      type: 'not-installed';
       appletName: string;
-};
+    };
 
 export interface ProfilesLocation {
   profilesAppId: string;

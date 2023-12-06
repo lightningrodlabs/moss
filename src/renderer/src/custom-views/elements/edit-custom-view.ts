@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { notifyError, sharedStyles, onSubmit } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { BlockProperties } from 'grapesjs';
 

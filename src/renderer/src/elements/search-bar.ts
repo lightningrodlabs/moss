@@ -1,6 +1,6 @@
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg, str } from '@lit/localize';
 import { AsyncStatus, lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 import {

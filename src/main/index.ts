@@ -40,6 +40,8 @@ if (app.isPackaged) {
   process.argv.splice(1, 0, 'placeholder');
 }
 
+console.log('VERSIONS: ', process.versions);
+
 const parser = new ArgumentParser({
   description: 'Lightningrodlabs We',
 });
@@ -106,7 +108,7 @@ protocol.registerSchemesAsPrivileged([
 let WE_RUST_HANDLER: WeRustHandler | undefined;
 // let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
 // let ADMIN_PORT: number | undefined;
-let APP_PORT: number | undefined;
+// let APP_PORT: number | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
@@ -235,7 +237,7 @@ app.whenReady().then(async () => {
   // });
   protocol.handle('applet', async (request) => {
     // console.log('### Got applet request: ', request);
-    console.log('### Got request with url: ', request.url);
+    // console.log('### Got request with url: ', request.url);
     const uriWithoutProtocol = request.url.split('://')[1];
     const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
     const uriComponents = uriWithoutQueryString.split('/');
@@ -245,10 +247,10 @@ app.whenReady().then(async () => {
 
     const uiAssetsDir = WE_FILE_SYSTEM.appUiAssetsDir(installedAppId);
 
-    console.log('uiAssetsDir: ', uiAssetsDir);
-    console.log('uriWithoutProtocol: ', uriWithoutProtocol);
-    console.log('uriWithoutQueryString: ', uriWithoutQueryString);
-    console.log('uriComponents: ', uriComponents);
+    // console.log('uiAssetsDir: ', uiAssetsDir);
+    // console.log('uriWithoutProtocol: ', uriWithoutProtocol);
+    // console.log('uriWithoutQueryString: ', uriWithoutQueryString);
+    // console.log('uriComponents: ', uriComponents);
 
     if (!uiAssetsDir) {
       throw new Error(`Failed to find UI assets directory for requested applet assets.`);
@@ -261,10 +263,33 @@ app.whenReady().then(async () => {
       const indexHtmlResponse = await net.fetch(
         url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
       );
+
+      console.log('$$$$$ index.html headers: ', indexHtmlResponse.headers);
+
       const content = await indexHtmlResponse.text();
-      let modifiedContent = content.replace(
-        '<head>',
-        `<head><script type="module">${APPLET_IFRAME_SCRIPT}</script>`,
+      // console.log('APPLET_IFRAME_SCRIPT: ', APPLET_IFRAME_SCRIPT);
+      console.log(
+        'original content contains weird comination?',
+        content.includes('}<!DOCTYPE html>'),
+      );
+      console.log(
+        'APPLET_IFRAME_SCRIPT contains weird comination?',
+        APPLET_IFRAME_SCRIPT.includes('}<!DOCTYPE html>'),
+      );
+      console.log(
+        '<head><script>${APPLET_IFRAME_SCRIPT}</script> contains weird comination?',
+        `<head><script>${APPLET_IFRAME_SCRIPT}</script>`.includes('}<!DOCTYPE html>'),
+      );
+
+      // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
+      // needs to happen a bit cumbersomely
+      const htmlComponents = content.split('<head>');
+      htmlComponents.splice(1, 0, '<head>');
+      htmlComponents.splice(2, 0, `<script type="module">${APPLET_IFRAME_SCRIPT}</script>`);
+      let modifiedContent = htmlComponents.join('');
+      console.log(
+        'modifiedContent contains weird comination?',
+        modifiedContent.includes('}<!DOCTYPE html>'),
       );
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
@@ -546,7 +571,7 @@ app.whenReady().then(async () => {
     );
     // ADMIN_PORT = holochainManager.adminPort;
     // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
-    APP_PORT = holochainManager.appPort;
+    // APP_PORT = holochainManager.appPort;cd di
     HOLOCHAIN_MANAGER = holochainManager;
 
     WE_RUST_HANDLER = await rustUtils.WeRustHandler.connect(

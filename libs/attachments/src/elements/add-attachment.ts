@@ -5,13 +5,12 @@ import {
   sharedStyles,
   wrapPathInSvg,
 } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { mdiAttachmentPlus, mdiPaperclipPlus } from '@mdi/js';
+import { mdiPaperclipPlus } from '@mdi/js';
 import { msg, localized } from '@lit/localize';
-import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
-import { AnyDhtHash, EntryHash } from '@holochain/client';
+import { AnyDhtHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -29,7 +28,7 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { weClientContext, WeClient } from '@lightningrodlabs/we-applet';
+import { weClientContext, WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AttachmentsStore } from '../attachments-store';
@@ -42,7 +41,7 @@ export class AddAttachment extends LitElement {
   attachmentsStore!: AttachmentsStore;
 
   @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
   @property(hashProperty('hash'))
   hash!: AnyDhtHash;

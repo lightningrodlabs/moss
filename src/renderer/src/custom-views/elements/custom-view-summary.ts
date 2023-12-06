@@ -9,7 +9,7 @@ import {
   sharedStyles,
   wrapPathInSvg,
 } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { mdiDelete, mdiPencil } from '@mdi/js';
 

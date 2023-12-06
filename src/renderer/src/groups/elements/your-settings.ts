@@ -2,7 +2,7 @@ import { html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
 

@@ -1,11 +1,11 @@
-import { css, html, LitElement } from "lit";
-import { provide } from "@lit-labs/context";
-import { property, customElement } from "lit/decorators.js";
+import { css, html, LitElement } from 'lit';
+import { provide } from '@lit/context';
+import { property, customElement } from 'lit/decorators.js';
 
-import { postsStoreContext } from "../context.js";
-import { PostsStore } from "../posts-store.js";
+import { postsStoreContext } from '../context.js';
+import { PostsStore } from '../posts-store.js';
 
-@customElement("posts-context")
+@customElement('posts-context')
 export class PostsContext extends LitElement {
   @provide({ context: postsStoreContext })
   @property({ type: Object })

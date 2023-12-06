@@ -1,27 +1,27 @@
-import { css, html, LitElement } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { css, html, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 
-import { consume } from "@lit-labs/context";
-import { localized, msg } from "@lit/localize";
+import { consume } from '@lit/context';
+import { localized, msg } from '@lit/localize';
 
-import "@shoelace-style/shoelace/dist/components/button/button.js";
-import "@shoelace-style/shoelace/dist/components/icon/icon.js";
-import "@shoelace-style/shoelace/dist/components/skeleton/skeleton.js";
-import "@shoelace-style/shoelace/dist/components/tag/tag.js";
-import "@shoelace-style/shoelace/dist/components/tooltip/tooltip.js";
-import "@holochain-open-dev/elements/dist/elements/display-error.js";
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
+import '@shoelace-style/shoelace/dist/components/tag/tag.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { lazyLoad, StoreSubscriber } from "@holochain-open-dev/stores";
+import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
-import { weClientContext } from "../context";
-import { Hrl } from "../types";
-import { WeClient } from "../api";
-import { getAppletsInfosAndGroupsProfiles } from "../utils";
-import { sharedStyles, wrapPathInSvg } from "@holochain-open-dev/elements";
-import { mdiNotePlusOutline } from "@mdi/js";
+import { weClientContext } from '../context';
+import { Hrl } from '../types';
+import { WeClient, WeServices } from '../api';
+import { getAppletsInfosAndGroupsProfiles } from '../utils';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiNotePlusOutline } from '@mdi/js';
 
 @localized()
-@customElement("hrl-to-clipboard")
+@customElement('hrl-to-clipboard')
 export class HrlToClipboard extends LitElement {
   @property()
   hrl!: Hrl;
@@ -30,7 +30,7 @@ export class HrlToClipboard extends LitElement {
   context: any = {};
 
   @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
   async hrlToClipboard() {
     await this.weClient.hrlToClipboard({
@@ -47,10 +47,10 @@ export class HrlToClipboard extends LitElement {
           tabindex="0"
           @click=${() => this.hrlToClipboard()}
           @keypress=${(e: KeyboardEvent) => {
-            if (e.key === "Enter") {
-              this.hrlToClipboard()}
+            if (e.key === 'Enter') {
+              this.hrlToClipboard();
             }
-          }
+          }}
         >
           <sl-icon .src=${wrapPathInSvg(mdiNotePlusOutline)}></sl-icon>
         </div>
@@ -58,8 +58,8 @@ export class HrlToClipboard extends LitElement {
     `;
   }
 
-
-  static styles = [sharedStyles,
+  static styles = [
+    sharedStyles,
     css`
       /* .container {
         --bg-color: var(--bg-color);
@@ -78,6 +78,6 @@ export class HrlToClipboard extends LitElement {
       .btn:hover {
         background: var(--bg-color-hover, #e4e4e4);
       }
-    `
+    `,
   ];
 }

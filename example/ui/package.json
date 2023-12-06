@@ -14,23 +14,23 @@
     "package": "yarn package:ui && cd .. && cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
   },
   "dependencies": {
-    "@holochain-open-dev/elements": "^0.7.0",
-    "@holochain-open-dev/profiles": "^0.16.1",
-    "@holochain-open-dev/stores": "^0.7.4",
-    "@holochain-open-dev/utils": "^0.16.0",
+    "@holochain-open-dev/elements": "^0.8.4",
+    "@holochain-open-dev/profiles": "^0.17.3",
+    "@holochain-open-dev/stores": "^0.8.3",
+    "@holochain-open-dev/utils": "^0.16.3",
     "@holochain/client": "0.16.6",
     "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
     "@lightningrodlabs/attachments": "file:../../libs/attachments",
-    "@lit-labs/context": "^0.2.0",
-    "@lit/localize": "^0.11.4",
+    "@lit/context": "^1.0.1",
+    "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.0",
     "@shoelace-style/shoelace": "^2.3.0",
     "lib": "^0.1.0",
-    "lit": "^2.6.0"
+    "lit": "^3.0.2"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.0",
-    "@lit/localize-tools": "^0.6.3",
+    "@lit/localize-tools": "^0.7.1",
     "@open-wc/eslint-config": "^2.0.0",
     "@types/lodash-es": "^4.17.5",
     "@types/node": "14.11.1",

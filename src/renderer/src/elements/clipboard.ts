@@ -1,6 +1,6 @@
 import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 

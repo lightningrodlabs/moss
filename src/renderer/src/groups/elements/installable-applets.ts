@@ -1,5 +1,5 @@
 import { html, LitElement, css } from 'lit';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { asyncDeriveAndJoin, joinAsync, StoreSubscriber } from '@holochain-open-dev/stores';

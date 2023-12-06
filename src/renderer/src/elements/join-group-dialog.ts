@@ -1,7 +1,7 @@
 import { html, LitElement } from 'lit';
 import { state, query, property, customElement } from 'lit/decorators.js';
 
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { CellType } from '@holochain/client';
 

@@ -1,6 +1,6 @@
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
-import { consume } from '@lit-labs/context';
+import { consume } from '@lit/context';
 import { localized, msg, str } from '@lit/localize';
 import { AsyncStatus, lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 import {
@@ -27,6 +27,7 @@ import {
   GroupProfile,
   HrlWithContext,
   WeClient,
+  WeServices,
 } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
@@ -95,7 +96,7 @@ export class ClipboardSearch extends LitElement implements FormField {
 
   @consume({ context: weClientContext, subscribe: true })
   @property()
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
   /**
    * @internal
@@ -178,7 +179,7 @@ export class ClipboardSearch extends LitElement implements FormField {
     >;
 
     const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
-      this.weClient,
+      this.weClient as WeClient,
       filteredHrls.map(([_, info]) => info.appletHash),
     );
 
