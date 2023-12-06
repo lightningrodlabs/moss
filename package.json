@@ -1,8 +1,8 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.0.1",
+  "version": "0.7.0",
   "private": true,
-  "description": "Holochain Launcher Electron (Prototype)",
+  "description": "lightningrodlabs We (Alhpa)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",

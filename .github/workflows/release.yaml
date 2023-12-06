@@ -119,8 +119,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           body: 'See assets below to download and install this version.'
-          name: Holochain Launcher Electron (Prototype) v${{ steps.version.outputs.APP_VERSION }}
-          tag: launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}
+          name: Lightningrodlabs We (Alpha) v${{ steps.version.outputs.APP_VERSION }}
+          tag: we-alpha-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           skipIfReleaseExists: true
 
@@ -131,7 +131,7 @@ jobs:
         run: |
           yarn build:mac
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2.dmg" --clobber
+          gh release upload "Lightningrodlabs-We-Alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.dmg" --clobber
 
       - name: build and upload the app (Linux)
         if: matrix.platform == 'ubuntu-20.04'
@@ -140,7 +140,7 @@ jobs:
         run: |
           yarn build:linux
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2.AppImage" --clobber
+          gh release upload "Lightningrodlabs-We-Alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
 
       - name: build and upload the app (Windows)
         if: matrix.platform == 'windows-2019'
@@ -149,4 +149,4 @@ jobs:
         run: |
           yarn build:win
           ls dist
-          gh release upload "launcher-prototype-v${{ steps.version.outputs.APP_VERSION }}" "dist/holochain-launcher-electron-0.0.2-setup.exe" --clobber
+          gh release upload "Lightningrodlabs-We-Alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/we-alpha-electron-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
