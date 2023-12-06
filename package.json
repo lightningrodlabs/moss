@@ -19,7 +19,7 @@
     "start": "electron-vite preview",
     "dev": "ADMIN_PORT=10001 concurrently \"yarn run publish:applets\" \"electron-vite dev\"",
     "build": "yarn typecheck && electron-vite build",
-    "setup": "cd utils/rust-utils && yarn && yarn build && cd ../.. && yarn && yarn build:libs && yarn build:applet-iframe && mkdir resources/default-apps && yarn fetch:default-apps",
+    "setup": "cd utils/rust-utils && yarn && yarn build && cd ../.. && yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && mkdir resources/default-apps && yarn fetch:default-apps",
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
     "build:rust-utils": "yarn workspace hc-we-rust-utils build && rimraf node_modules/hc-we-rust-utils && yarn install --check-files",
