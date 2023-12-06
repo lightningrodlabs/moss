@@ -99,7 +99,7 @@ setupLogs(launcherEmitter, WE_FILE_SYSTEM);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'applet',
-    privileges: { standard: true },
+    privileges: { standard: true, supportFetchAPI: true },
   },
 ]);
 
