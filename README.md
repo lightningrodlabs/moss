@@ -22,6 +22,12 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 
 **Note:** The following steps require Rust and Go installed.
 
+0. Enter nix shell to get the holochain dev environment (follow [holochain's setup instructions](https://developer.holochain.org/get-started/) if you don't have nix installed yet)
+
+```bash
+nix develop
+```
+
 1. Build the Node Rust-add-ons, install all dependencies and download default apps:
 
 ```bash
