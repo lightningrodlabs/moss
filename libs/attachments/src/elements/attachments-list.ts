@@ -19,7 +19,8 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { weClientContext, WeClient, HrlWithContext, WeServices } from '@lightningrodlabs/we-applet';
+import { WeClient, HrlWithContext, WeServices } from '@lightningrodlabs/we-applet';
+import { weClientContext } from '@lightningrodlabs/we-elements';
 import '@lightningrodlabs/we-applet/dist/elements/hrl-link.js';
 
 import { AttachmentsStore } from '../attachments-store';

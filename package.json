@@ -21,7 +21,7 @@
     "build": "yarn typecheck && electron-vite build",
     "setup": "cd libs/rust-utils && yarn && yarn build && cd ..",
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
-    "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
+    "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
     "build:rust-utils": "yarn workspace hc-launcher-rust-utils build && rimraf node_modules/hc-launcher-rust-utils && yarn install --check-files",
     "build:applet-iframe": "yarn workspace applet-iframe build",
     "build:utils": "yarn workspace applet-iframe install && yarn build:applet-iframe && yarn workspace hc-launcher-rust-utils install && yarn workspace hc-launcher-rust-utils build",

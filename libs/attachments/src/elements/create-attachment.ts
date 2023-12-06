@@ -29,13 +29,8 @@ import '@material/web/menu/menu.js';
 import '@material/web/menu/sub-menu-item.js';
 import '@material/web/menu/menu-item.js';
 
-import {
-  weClientContext,
-  WeClient,
-  AttachmentType,
-  getAppletsInfosAndGroupsProfiles,
-  WeServices,
-} from '@lightningrodlabs/we-applet';
+import { WeClient, AttachmentType, WeServices } from '@lightningrodlabs/we-applet';
+import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AttachmentsStore } from '../attachments-store';
@@ -119,7 +114,7 @@ export class CreateAttachment extends LitElement {
                 ${Array.from(attachmentTypesByApplet.entries()).map(
                   ([appletHash, attachmentType]) => html`
                     <md-menu-item
-                      .headline=${appletsInfos.get(appletHash)?.appletName}
+                      .headline?=${appletsInfos.get(appletHash)?.appletName}
                       @click=${() => this.createAttachment(attachmentType)}
                     >
                       ${appletsInfos
@@ -128,7 +123,7 @@ export class CreateAttachment extends LitElement {
                           (groupId) => html`
                             <img
                               slot="start"
-                              .src=${groupsProfiles.get(groupId)?.logo_src}
+                              .src?=${groupsProfiles.get(groupId)?.logo_src}
                               style="height: 32px; width: 32px; border-radius: 50%; margin-right: 4px; margin-left: 16px"
                             />
                           `,

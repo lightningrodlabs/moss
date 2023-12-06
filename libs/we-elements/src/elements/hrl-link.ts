@@ -14,8 +14,8 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
 import { weClientContext } from '../context';
-import { Hrl } from '../types';
-import { WeClient, WeServices } from '../api';
+import { Hrl } from '@lightningrodlabs/we-applet';
+import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { sharedStyles } from '@holochain-open-dev/elements';
 

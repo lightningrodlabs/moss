@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import { localized } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -11,12 +11,9 @@ import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
-
 import { weClientContext } from '../context';
-import { Hrl } from '../types';
-import { WeClient, WeServices } from '../api';
-import { getAppletsInfosAndGroupsProfiles } from '../utils';
+import { Hrl } from '@lightningrodlabs/we-applet';
+import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiNotePlusOutline } from '@mdi/js';
 

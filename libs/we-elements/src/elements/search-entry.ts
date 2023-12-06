@@ -20,8 +20,13 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
-import { AppletInfo, EntryLocationAndInfo, GroupProfile, HrlWithContext } from '../types';
-import { WeClient, WeServices } from '../api';
+import {
+  AppletInfo,
+  EntryLocationAndInfo,
+  GroupProfile,
+  HrlWithContext,
+} from '@lightningrodlabs/we-applet';
+import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '../context';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';

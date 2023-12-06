@@ -1,12 +1,12 @@
-import { HoloHashMap } from "@holochain-open-dev/utils";
-import { EntryHash, decodeHashFromBase64 } from "@holochain/client";
-import { DnaHash } from "@holochain/client";
-import { AppletInfo, GroupProfile, Hrl } from "./types";
-import { WeClient } from "./api";
+import { HoloHashMap } from '@holochain-open-dev/utils';
+import { EntryHash } from '@holochain/client';
+import { DnaHash } from '@holochain/client';
+import { AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
+import { WeClient } from '@lightningrodlabs/we-applet';
 
 export async function getAppletsInfosAndGroupsProfiles(
   weClient: WeClient,
-  appletsHashes: EntryHash[]
+  appletsHashes: EntryHash[],
 ): Promise<{
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;

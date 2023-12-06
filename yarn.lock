@@ -1735,27 +1735,31 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-c3e2af3b-d9c8-4d07-8cc4-5675f0ddedcf-1701860500521/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-c7bf0f9e-bf41-49e9-9974-2e5d1bcf0e37-1701871943494/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
     "@mdi/js" "^7.2.0"
-    "@msgpack/msgpack" "^3.0.0-beta2"
     "@shoelace-style/shoelace" "^2.3.0"
     lit "^3.0.2"
 
 "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.11.0"
+  version "0.12.0"
+  dependencies:
+    "@holochain/client" "0.16.6"
+
+"@lightningrodlabs/we-elements@file:libs/we-elements", "@lightningrodlabs/we-elemets@file:libs/we-elements":
+  version "0.1.0"
   dependencies:
     "@holochain-open-dev/elements" "^0.8.4"
     "@holochain-open-dev/profiles" "^0.17.3"
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.0-f8a25f8e-73c4-4510-b30e-5099458d798b-1701871943491/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
-    "@msgpack/msgpack" "^3.0.0-beta2"
     "@shoelace-style/shoelace" "^2.3.0"
     js-base64 "^3.7.5"
     lit "^3.0.2"
@@ -1959,11 +1963,6 @@
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/@msgpack/msgpack/-/msgpack-2.8.0.tgz#4210deb771ee3912964f14a15ddfb5ff877e70b9"
   integrity sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==
-
-"@msgpack/msgpack@^3.0.0-beta2":
-  version "3.0.0-beta2"
-  resolved "https://registry.yarnpkg.com/@msgpack/msgpack/-/msgpack-3.0.0-beta2.tgz#5bccee30f84df220b33905e3d8249ba96deca0b7"
-  integrity sha512-y+l1PNV0XDyY8sM3YtuMLK5vE3/hkfId+Do8pLo/OPxfxuFAUwcGz3oiiUuV46/aBpwTzZ+mRWVMtlSKbradhw==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"

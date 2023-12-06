@@ -30,9 +30,9 @@ import {
   GroupProfile,
   HrlWithContext,
   WeClient,
-  getAppletsInfosAndGroupsProfiles,
-  weClientContext,
+  WeServices,
 } from '@lightningrodlabs/we-applet';
+import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[HrlWithContext, EntryLocationAndInfo]>;
@@ -95,7 +95,7 @@ export class SearchBar extends LitElement implements FormField {
 
   @consume({ context: weClientContext, subscribe: true })
   @property()
-  weClient!: WeClient;
+  weClient!: WeClient | WeServices;
 
   /**
    * @internal
@@ -173,7 +173,7 @@ export class SearchBar extends LitElement implements FormField {
     >;
 
     const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
-      this.weClient,
+      this.weClient as WeClient,
       filteredHrls.map(([_, info]) => info.appletHash),
     );
 

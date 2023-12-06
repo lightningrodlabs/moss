@@ -1,16 +1,11 @@
 import { LitElement, css, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { customElement, property } from 'lit/decorators.js';
+import { localized } from '@lit/localize';
 
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
-import {
-  getAppletsInfosAndGroupsProfiles,
-  WeClient,
-  weClientContext,
-  type AppletClients,
-  WeServices,
-} from '@lightningrodlabs/we-applet';
+import { WeClient, type AppletClients, WeServices } from '@lightningrodlabs/we-applet';
+import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
 import { consume } from '@lit/context';
 import { EntryHash } from '@holochain/client';
 

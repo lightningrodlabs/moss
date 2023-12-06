@@ -29,10 +29,9 @@ import {
   WeClient,
   WeServices,
 } from '@lightningrodlabs/we-applet';
-import { weClientContext } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { getAppletsInfosAndGroupsProfiles } from '@lightningrodlabs/we-applet';
+import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
 import { mdiMagnify } from '@mdi/js';
 
 export interface SearchResult {

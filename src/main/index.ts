@@ -40,8 +40,6 @@ if (app.isPackaged) {
   process.argv.splice(1, 0, 'placeholder');
 }
 
-console.log('VERSIONS: ', process.versions);
-
 const parser = new ArgumentParser({
   description: 'Lightningrodlabs We',
 });

@@ -28,8 +28,8 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { weClientContext, WeClient, WeServices } from '@lightningrodlabs/we-applet';
-import { HoloHashMap } from '@holochain-open-dev/utils';
+import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { weClientContext } from '@lightningrodlabs/we-elements';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';

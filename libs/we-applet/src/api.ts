@@ -1,12 +1,31 @@
-import { ActionHash, AppAgentClient, EntryHash, RoleName, ZomeName, decodeHashFromBase64, encodeHashToBase64, } from "@holochain/client";
-import { BlockType, AttachmentType, EntryInfo, Hrl, HrlWithContext, WeNotification, RenderInfo, AttachmentName, BlockName, AppletHash, AppletInfo, EntryLocationAndInfo,  } from "./types";
-
+import {
+  ActionHash,
+  AppAgentClient,
+  EntryHash,
+  RoleName,
+  ZomeName,
+  encodeHashToBase64,
+} from '@holochain/client';
+import {
+  BlockType,
+  AttachmentType,
+  EntryInfo,
+  Hrl,
+  HrlWithContext,
+  WeNotification,
+  RenderInfo,
+  AttachmentName,
+  BlockName,
+  AppletHash,
+  AppletInfo,
+  EntryLocationAndInfo,
+} from './types';
 
 declare global {
   interface Window {
-    __WE_API__: WeServices,
-    __WE_APPLET_SERVICES__: AppletServices,
-    __WE_RENDER_INFO__: RenderInfo,
+    __WE_API__: WeServices;
+    __WE_APPLET_SERVICES__: AppletServices;
+    __WE_RENDER_INFO__: RenderInfo;
   }
 }
 
@@ -14,7 +33,7 @@ declare global {
  *
  * @returns bool: Returns whether this function is being called in a We context.
  */
-export const isWeContext = () => window.location.protocol === "applet:";
+export const isWeContext = () => window.location.protocol === 'applet:';
 
 /**
  *
@@ -23,32 +42,31 @@ export const isWeContext = () => window.location.protocol === "applet:";
  * @returns
  */
 export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) => {
-  let link: string = "";
+  let link: string = '';
   if (webPrefix) {
-    link = "https://lightningrodlabs.org/we?"
+    link = 'https://lightningrodlabs.org/we?';
   }
   link = link + `we://applet/${encodeHashToBase64(appletHash)}`;
-  return link
-}
+  return link;
+};
 
 export class AppletServices {
   constructor() {
-    this.attachmentTypes = async (_appletClient,_appletHash, _weServices) => ({}),
-    this.blockTypes = {},
-    this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => [],
-    this.getEntryInfo = async (
-      _appletClient,
-      _roleName,
-      _integrityZomeName,
-      _entryType,
-      _hrl
-    ) => undefined
+    (this.attachmentTypes = async (_appletClient, _appletHash, _weServices) => ({})),
+      (this.blockTypes = {}),
+      (this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => []),
+      (this.getEntryInfo = async (_appletClient, _roleName, _integrityZomeName, _entryType, _hrl) =>
+        undefined);
   }
 
   /**
    * Attachment types that this Applet offers for other Applets to attach
    */
-  attachmentTypes: (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices) => Promise<Record<AttachmentName, AttachmentType>>;
+  attachmentTypes: (
+    appletClient: AppAgentClient,
+    appletHash: AppletHash,
+    weServices: WeServices,
+  ) => Promise<Record<AttachmentName, AttachmentType>>;
   /**
    * Render block types that this Applet offers
    */
@@ -66,7 +84,12 @@ export class AppletServices {
   /**
    * Search in this Applet
    */
-  search: (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string) => Promise<Array<HrlWithContext>>;
+  search: (
+    appletClient: AppAgentClient,
+    appletHash: AppletHash,
+    weServices: WeServices,
+    searchFilter: string,
+  ) => Promise<Array<HrlWithContext>>;
 }
 
 export interface WeServices {
@@ -156,15 +179,13 @@ export interface WeServices {
   notifyWe: (notifications: Array<WeNotification>) => Promise<any>;
 }
 
-
 export class WeClient implements WeServices {
-
   get renderInfo(): RenderInfo {
     return window.__WE_RENDER_INFO__;
-  };
+  }
   get attachmentTypes(): ReadonlyMap<AppletHash, Record<AttachmentName, AttachmentType>> {
     return window.__WE_API__.attachmentTypes;
-  };
+  }
 
   private constructor() {}
 
@@ -177,19 +198,17 @@ export class WeClient implements WeServices {
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
-          document.removeEventListener("applet-iframe-ready", listener);
+          document.removeEventListener('applet-iframe-ready', listener);
           resolve(null);
         };
-        document.addEventListener("applet-iframe-ready", listener);
-        }
-      );
+        document.addEventListener('applet-iframe-ready', listener);
+      });
       if (appletServices) {
         window.__WE_APPLET_SERVICES__ = appletServices;
       }
       return new WeClient();
     }
   }
-
 
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
     window.__WE_API__.openAppletMain(appletHash);
@@ -203,26 +222,19 @@ export class WeClient implements WeServices {
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
     window.__WE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openHrl = (hrl: Hrl, context: any): Promise<void> =>
-    window.__WE_API__.openHrl(hrl, context);
+  openHrl = (hrl: Hrl, context: any): Promise<void> => window.__WE_API__.openHrl(hrl, context);
 
-  groupProfile = (groupId) =>
-    window.__WE_API__.groupProfile(groupId);
+  groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
 
-  appletInfo = (appletHash) =>
-    window.__WE_API__.appletInfo(appletHash);
+  appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
 
   entryInfo = (hrl: Hrl) => window.__WE_API__.entryInfo(hrl);
 
-  hrlToClipboard = (hrl: HrlWithContext) =>
-    window.__WE_API__.hrlToClipboard(hrl);
+  hrlToClipboard = (hrl: HrlWithContext) => window.__WE_API__.hrlToClipboard(hrl);
 
-  search = (filter: string) =>
-    window.__WE_API__.search(filter);
+  search = (filter: string) => window.__WE_API__.search(filter);
 
-  userSelectHrl = () =>
-    window.__WE_API__.userSelectHrl();
+  userSelectHrl = () => window.__WE_API__.userSelectHrl();
 
-  notifyWe = (notifications: Array<WeNotification>) =>
-    window.__WE_API__.notifyWe(notifications);
+  notifyWe = (notifications: Array<WeNotification>) => window.__WE_API__.notifyWe(notifications);
 }

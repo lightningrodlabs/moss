@@ -1,8 +1,6 @@
-import { Post } from './types';
-
-import { lazyLoadAndPoll, AsyncReadable } from "@holochain-open-dev/stores";
-import { EntryRecord, LazyHoloHashMap } from "@holochain-open-dev/utils";
-import { NewEntryAction, Record, ActionHash, EntryHash, AgentPubKey } from '@holochain/client';
+import { lazyLoadAndPoll } from '@holochain-open-dev/stores';
+import { LazyHoloHashMap } from '@holochain-open-dev/utils';
+import { ActionHash } from '@holochain/client';
 
 import { PostsClient } from './posts-client.js';
 
