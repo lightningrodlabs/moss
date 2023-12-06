@@ -1,10 +1,10 @@
 {
-  "name": "hc-launcher-rust-utils",
-  "version": "0.0.0",
+  "name": "hc-we-rust-utils",
+  "version": "0.0.1",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "hc-launcher-rust-utils",
+    "name": "hc-we-rust-utils",
     "triples": {}
   },
   "license": "MIT",
@@ -21,7 +21,7 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release && rimraf dist && mkdir dist && cp package.json dist/ && cp index.js dist/ && cp index.d.ts dist/ && cp hc-launcher-rust-utils* dist/",
+    "build": "napi build --platform --release && rimraf dist && mkdir dist && cp package.json dist/ && cp index.js dist/ && cp index.d.ts dist/ && cp hc-we-rust-utils* dist/",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",

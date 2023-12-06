@@ -1,12 +1,12 @@
-import { css, html, LitElement } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
-import grapesjs, { BlockProperties, Editor } from "grapesjs";
-import plugin from "grapesjs-preset-webpage";
-import blocksBasic from "grapesjs-blocks-basic";
+import { css, html, LitElement } from 'lit';
+import { customElement, property, query } from 'lit/decorators.js';
+import grapesjs, { BlockProperties, Editor } from 'grapesjs';
+import plugin from 'grapesjs-preset-webpage';
+import blocksBasic from 'grapesjs-blocks-basic';
 // @ts-ignore
-import tabs from "grapesjs-tabs";
+import tabs from 'grapesjs-tabs';
 // @ts-ignore
-import grapesCss from "grapesjs/dist/css/grapes.min.css";
+import grapesCss from 'grapesjs/dist/css/grapes.min.css';
 
 export interface RenderTemplate {
   html: string;
@@ -14,7 +14,7 @@ export interface RenderTemplate {
   css: string;
 }
 
-@customElement("grapes-editor")
+@customElement('grapes-editor')
 export class GrapesEditor extends LitElement {
   @property()
   template: RenderTemplate | undefined;
@@ -22,42 +22,42 @@ export class GrapesEditor extends LitElement {
   @property()
   blocks: Array<BlockProperties> = [];
 
-  @query("#editor")
+  @query('#editor')
   editorEl!: HTMLElement;
 
   editor!: Editor;
 
   firstUpdated() {
-    const s = document.createElement("style");
-    s.innerHTML = ".gjs-bdrag {display: none! important;}";
+    const s = document.createElement('style');
+    s.innerHTML = '.gjs-bdrag {display: none! important;}';
     document.body.appendChild(s);
 
-    this.addEventListener("dragend", (e) => {
+    this.addEventListener('dragend', e => {
       e.stopPropagation();
     });
-    this.addEventListener("dragenter", (e) => {
+    this.addEventListener('dragenter', e => {
       e.stopPropagation();
     });
-    this.addEventListener("dragleave", (e) => {
+    this.addEventListener('dragleave', e => {
       e.stopPropagation();
     });
-    this.addEventListener("dragover", (e) => {
+    this.addEventListener('dragover', e => {
       e.stopPropagation();
     });
-    this.addEventListener("dragstart", (e) => {
+    this.addEventListener('dragstart', e => {
       e.stopPropagation();
     });
-    this.addEventListener("drop", (e) => {
+    this.addEventListener('drop', e => {
       e.stopPropagation();
     });
-    this.addEventListener("drag", (e) => {
+    this.addEventListener('drag', e => {
       e.stopPropagation();
     });
     this.editor = grapesjs.init({
       container: this.editorEl,
       components: this.template ? this.template.html : `<h1>Edit me!</h1>`,
       style: this.template?.css,
-      height: "auto",
+      height: 'auto',
       jsInHtml: false,
       nativeDnD: false,
       storageManager: false,
@@ -68,12 +68,12 @@ export class GrapesEditor extends LitElement {
         },
         blocksBasic: {
           blocks: [
-            "column1",
-            "column2",
-            "column3",
-            "column3-7",
-            "text",
-            "image",
+            'column1',
+            'column2',
+            'column3',
+            'column3-7',
+            'text',
+            'image',
           ],
           // flexGrid: true,
         },

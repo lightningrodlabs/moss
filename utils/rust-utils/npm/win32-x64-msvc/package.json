@@ -1,5 +1,5 @@
 {
-  "name": "hc-launcher-rust-utils-win32-x64-msvc",
+  "name": "hc-we-rust-utils-win32-x64-msvc",
   "version": "0.0.0",
   "os": [
     "win32"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "hc-launcher-rust-utils.win32-x64-msvc.node",
+  "main": "hc-we-rust-utils.win32-x64-msvc.node",
   "files": [
-    "hc-launcher-rust-utils.win32-x64-msvc.node"
+    "hc-we-rust-utils.win32-x64-msvc.node"
   ],
   "license": "MIT",
   "engines": {

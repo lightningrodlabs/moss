@@ -10,7 +10,7 @@ import './add-attachment.js';
 import { consume } from '@lit/context';
 import { AttachmentsStore } from '../attachments-store.js';
 import { attachmentsStoreContext } from '../context.js';
-import { weClientContext } from '../../../we-applet/dist/context.js';
+import { weClientContext } from '@lightningrodlabs/we-elements';
 import { HrlWithContext, WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 

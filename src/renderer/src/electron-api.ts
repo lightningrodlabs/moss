@@ -12,7 +12,7 @@ import {
 import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
-import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
+import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 
 declare global {
   interface Window {

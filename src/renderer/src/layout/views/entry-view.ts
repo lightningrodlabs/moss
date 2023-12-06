@@ -8,9 +8,9 @@ import { mdiHomeImportOutline } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@lightningrodlabs/we-applet/dist/elements/hrl-to-clipboard.js';
-import '@lightningrodlabs/we-applet/dist/elements/share-hrl.js';
-import '@lightningrodlabs/we-applet/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
+import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
+import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
 import { Hrl } from '@lightningrodlabs/we-applet';
 

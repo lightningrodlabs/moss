@@ -2,7 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { ActionHashB64, AgentPubKeyB64, DnaHashB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
+import { ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),

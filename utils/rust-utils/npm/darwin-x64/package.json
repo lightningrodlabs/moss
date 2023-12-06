@@ -1,5 +1,5 @@
 {
-  "name": "hc-launcher-rust-utils-darwin-x64",
+  "name": "hc-we-rust-utils-darwin-x64",
   "version": "0.0.0",
   "os": [
     "darwin"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "hc-launcher-rust-utils.darwin-x64.node",
+  "main": "hc-we-rust-utils.darwin-x64.node",
   "files": [
-    "hc-launcher-rust-utils.darwin-x64.node"
+    "hc-we-rust-utils.darwin-x64.node"
   ],
   "license": "MIT",
   "engines": {

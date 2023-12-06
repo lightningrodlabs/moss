@@ -7,7 +7,7 @@ import split from 'split';
 import { AdminWebsocket, AppInfo } from '@holochain/client';
 import { WeFileSystem } from './filesystem';
 
-const rustUtils = require('hc-launcher-rust-utils');
+const rustUtils = require('hc-we-rust-utils');
 
 export type AdminPort = number;
 export type AppPort = number;

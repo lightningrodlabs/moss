@@ -1,5 +1,5 @@
 {
-  "name": "hc-launcher-rust-utils-linux-x64-gnu",
+  "name": "hc-we-rust-utils-linux-x64-gnu",
   "version": "0.0.0",
   "os": [
     "linux"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "hc-launcher-rust-utils.linux-x64-gnu.node",
+  "main": "hc-we-rust-utils.linux-x64-gnu.node",
   "files": [
-    "hc-launcher-rust-utils.linux-x64-gnu.node"
+    "hc-we-rust-utils.linux-x64-gnu.node"
   ],
   "license": "MIT",
   "engines": {

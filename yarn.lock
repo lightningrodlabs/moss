@@ -1735,7 +1735,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-c7bf0f9e-bf41-49e9-9974-2e5d1bcf0e37-1701871943494/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-e5664cc3-a6d7-424d-9eac-c242aa02c103-1701877197759/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-e5664cc3-a6d7-424d-9eac-c242aa02c103-1701877197759/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1749,14 +1750,14 @@
     "@holochain/client" "0.16.6"
 
 "@lightningrodlabs/we-elements@file:libs/we-elements", "@lightningrodlabs/we-elemets@file:libs/we-elements":
-  version "0.1.0"
+  version "0.1.1"
   dependencies:
     "@holochain-open-dev/elements" "^0.8.4"
     "@holochain-open-dev/profiles" "^0.17.3"
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.0-f8a25f8e-73c4-4510-b30e-5099458d798b-1701871943491/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-cd7f14c5-ea5a-4193-bbc8-173762afccb5-1701877197757/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -6159,8 +6160,8 @@ hastscript@^6.0.0:
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
 
-"hc-launcher-rust-utils@file:./utils/rust-utils/dist":
-  version "0.0.0"
+"hc-we-rust-utils@file:./utils/rust-utils/dist":
+  version "0.0.1"
 
 he@^1.2.0:
   version "1.2.0"

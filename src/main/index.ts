@@ -21,7 +21,7 @@ import contextMenu from 'electron-context-menu';
 
 import { AppAssetsInfo, WeFileSystem } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
-import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-launcher-rust-utils';
+import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
@@ -33,7 +33,7 @@ import { AppStatusFilter } from '@holochain/client';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, DEVHUB_APP_ID } from './sharedTypes';
 
-const rustUtils = require('hc-launcher-rust-utils');
+const rustUtils = require('hc-we-rust-utils');
 
 // https://github.com/nodeca/argparse/issues/128
 if (app.isPackaged) {
@@ -57,7 +57,7 @@ if (args.profile && !allowedProfilePattern.test(args.profile)) {
   );
 }
 
-// import * as rustUtils from 'hc-launcher-rust-utils';
+// import * as rustUtils from 'hc-we-rust-utils';
 
 // app.commandLine.appendSwitch('enable-logging');
 

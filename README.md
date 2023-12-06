@@ -20,29 +20,44 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 
 ### Install
 
-Build the sidecar binaries (requires Rust and Go installed):
+**Note:** The following steps require Rust and Go installed.
 
-```bash
-bash ./scripts/setup-binaries.sh
-```
-
-Build the Node Rust-add-ons
+1. Build the Node Rust-add-ons, install all dependencies and download default apps:
 
 ```bash
 yarn setup
 ```
 
-Install dependencies
+2. Fetch the holochain or lair binaries for your platform:
 
 ```bash
-yarn
+# Linux
+mkdir resources/bins
+yarn fetch-binaries:linux
+chmod +x resources/bins/* # give permission to run the binaries
+
+# macOS
+mkdir resources/bins
+yarn fetch-binaries:macos
+chmod +x resources/bins/* # give permission to run the binaries
+
+# Windows
+mkdir resources/bins
+yarn fetch-binaries:windows
 ```
 
-Download default app
+OR
+
+Build the sidecar binaries locally:
 
 ```bash
-mkdir resources/default-apps
-yarn fetch:default-apps
+bash ./scripts/setup-binaries.sh
+```
+
+3. Build the We group happ
+
+```
+yarn build:happ
 ```
 
 ### Development

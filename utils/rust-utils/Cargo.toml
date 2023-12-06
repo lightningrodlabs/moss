@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "hc-launcher-rust-utils"
+name = "hc-we-rust-utils"
 version = "0.0.0"
 
 [workspace]

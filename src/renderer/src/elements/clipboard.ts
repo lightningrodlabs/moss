@@ -5,7 +5,7 @@ import { localized, msg } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-applet/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
