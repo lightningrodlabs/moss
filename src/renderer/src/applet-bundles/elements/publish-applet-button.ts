@@ -14,7 +14,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { weStyles } from '../../shared-styles.js';
 import { disableDevMode, enableDevMode, isDevModeEnabled, openApp } from '../../electron-api.js';
-import { APPSTORE_APP_ID, DEVHUB_APP_ID } from '../../../../main/sharedTypes.js';
+import { APPSTORE_APP_ID } from '../../../../main/sharedTypes.js';
 
 @localized()
 @customElement('publish-applet-button')
@@ -127,9 +127,6 @@ export class PublishAppletButton extends LitElement {
                       await this.devModeEnabled.reload();
                     }}
                     >${msg('Disable Dev Mode')}</sl-button
-                  >
-                  <sl-button slot="footer" @click=${() => openApp(DEVHUB_APP_ID)}
-                    >${msg('Open DevHub')}</sl-button
                   >
                   <sl-button slot="footer" @click=${() => openApp(APPSTORE_APP_ID)}
                     >${msg('Open AppStore')}</sl-button

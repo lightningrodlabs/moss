@@ -62,7 +62,7 @@
     "electron": "^25.6.0",
     "electron-builder": "^24.6.3",
     "electron-squirrel-startup": "^1.0.0",
-    "electron-vite": "^1.0.27",
+    "electron-vite": "git:github.com/mifi/electron-vite#patch-1",
     "eslint": "^8.47.0",
     "get-port": "7.0.0",
     "js-yaml": "^4.1.0",

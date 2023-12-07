@@ -46,7 +46,6 @@ export interface ConductorInfo {
   app_port: number;
   admin_port: number;
   appstore_app_id: string;
-  devhub_app_id: string;
 }
 
 export async function joinGroup(networkSeed: string): Promise<AppInfo> {

@@ -161,11 +161,11 @@ export class WelcomeView extends LitElement {
               <button
                 class="btn"
                 @click=${() => {
-                  this.view = WelcomePageView.AppLibrary;
+                  this.dispatchEvent(new CustomEvent('open-appstore'));
                 }}
                 @keypress=${(e: KeyboardEvent) => {
                   if (e.key === 'Enter') {
-                    this.view = WelcomePageView.AppLibrary;
+                    this.dispatchEvent(new CustomEvent('open-appstore'));
                   }
                 }}
               >

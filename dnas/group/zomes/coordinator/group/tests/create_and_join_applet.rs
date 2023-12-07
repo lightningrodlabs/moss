@@ -29,12 +29,6 @@ async fn create_and_join_applet() {
         custom_name: String::from("custom name"),
         description: String::from("description"),
         appstore_app_hash: fixt!(ActionHash),
-
-        devhub_dna_hash: fixt!(DnaHash),
-        devhub_happ_entry_action_hash: fixt!(ActionHash),
-        devhub_happ_release_hash: fixt!(ActionHash),
-        initial_devhub_gui_release_hash: Some(fixt!(ActionHash)),
-
         network_seed: None,
         properties: BTreeMap::new(), // Segmented by RoleId
     };
@@ -73,12 +67,6 @@ async fn create_and_join_applet() {
         custom_name: String::from("another custom name"),
         description: String::from("another description"),
         appstore_app_hash: fixt!(ActionHash),
-
-        devhub_dna_hash: fixt!(DnaHash),
-        devhub_happ_entry_action_hash: fixt!(ActionHash),
-        devhub_happ_release_hash: fixt!(ActionHash),
-        initial_devhub_gui_release_hash: Some(fixt!(ActionHash)),
-
         network_seed: None,
         properties: BTreeMap::new(), // Segmented by RoleId
     };

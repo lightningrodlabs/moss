@@ -126,7 +126,7 @@ export class HolochainManager {
     });
   }
 
-  async installApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
+  async installWebApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
     console.log('uiTargetDir: ', uiTargetDir);
     console.log('Installing app...');
     const tempHappPath = await rustUtils.saveWebhapp(filePath, uiTargetDir);
@@ -137,6 +137,27 @@ export class HolochainManager {
       installed_app_id: appId,
       membrane_proofs: {},
       path: tempHappPath,
+      network_seed: networkSeed,
+    });
+    await this.adminWebsocket.enableApp({ installed_app_id: appId });
+    console.log('Insalled app.');
+    const installedApps = await this.adminWebsocket.listApps({});
+    console.log('Installed apps: ', installedApps);
+    this.installedApps = installedApps;
+    this.launcherEmitter.emitAppInstalled({
+      version: this.version,
+      data: appInfo,
+    });
+  }
+
+  async installApp(filePath: string, appId: string, networkSeed?: string) {
+    console.log('Installing happ...');
+    const pubKey = await this.adminWebsocket.generateAgentPubKey();
+    const appInfo = await this.adminWebsocket.installApp({
+      agent_key: pubKey,
+      installed_app_id: appId,
+      membrane_proofs: {},
+      path: filePath,
       network_seed: networkSeed,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });

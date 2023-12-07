@@ -31,7 +31,7 @@ import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
 import { AppStatusFilter } from '@holochain/client';
 import { createHappWindow } from './windows';
-import { APPSTORE_APP_ID, DEVHUB_APP_ID } from './sharedTypes';
+import { APPSTORE_APP_ID } from './sharedTypes';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -348,34 +348,33 @@ app.whenReady().then(async () => {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
       appstore_app_id: APPSTORE_APP_ID,
-      devhub_app_id: DEVHUB_APP_ID,
     };
   });
   ipcMain.handle('lair-setup-required', async () => {
     return !WE_FILE_SYSTEM.keystoreInitialized();
   });
-  ipcMain.handle('is-dev-mode-enabled', async () => {
-    const enabledApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({
-      status_filter: AppStatusFilter.Enabled,
-    });
-    if (enabledApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
-      return true;
-    }
-    return false;
-  });
-  ipcMain.handle('enable-dev-mode', async () => {
-    const installedApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-    if (installedApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
-      HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: DEVHUB_APP_ID });
-    } else {
-      await HOLOCHAIN_MANAGER!.installApp(
-        path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
-        path.join(WE_FILE_SYSTEM.uisDir, DEVHUB_APP_ID, 'assets'),
-        DEVHUB_APP_ID,
-        'launcher-electron-prototype',
-      );
-    }
-  });
+  // ipcMain.handle('is-dev-mode-enabled', async () => {
+  //   const enabledApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({
+  //     status_filter: AppStatusFilter.Enabled,
+  //   });
+  //   if (enabledApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
+  //     return true;
+  //   }
+  //   return false;
+  // });
+  // ipcMain.handle('enable-dev-mode', async () => {
+  //   const installedApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+  //   if (installedApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
+  //     HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: DEVHUB_APP_ID });
+  //   } else {
+  //     await HOLOCHAIN_MANAGER!.installApp(
+  //       path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
+  //       path.join(WE_FILE_SYSTEM.uisDir, DEVHUB_APP_ID, 'assets'),
+  //       DEVHUB_APP_ID,
+  //       'launcher-electron-prototype',
+  //     );
+  //   }
+  // });
   ipcMain.handle('join-group', async (_e, networkSeed: string) => {
     const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
     const hash = createHash('sha256');
@@ -588,12 +587,11 @@ app.whenReady().then(async () => {
       console.log('Installing AppStore...');
       splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
       await HOLOCHAIN_MANAGER.installApp(
-        path.join(DEFAULT_APPS_DIRECTORY, 'AppStore.webhapp'),
-        path.join(WE_FILE_SYSTEM.uisDir, APPSTORE_APP_ID, 'assets'),
+        path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
         APPSTORE_APP_ID,
-        'launcher-electron-prototype',
+        'lightningrodlabs-we-electron',
       );
-      console.log('AppStore installed.');
+      console.log('AppstoreLight installed.');
     }
     splashscreenWindow.close();
     createOrShowMainWindow();
