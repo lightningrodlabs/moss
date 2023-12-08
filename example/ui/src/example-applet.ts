@@ -12,7 +12,7 @@ import './elements/posts-context.js';
 import { WeClient, weLinkFromAppletHash } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
 
-import '@lightningrodlabs/we-applet/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 import '@lightningrodlabs/attachments/dist/elements/attachments-context.js';
 
 import './applet-main.js';

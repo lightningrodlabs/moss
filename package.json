@@ -47,6 +47,7 @@
     "electron-context-menu": "3.6.1",
     "hc-we-rust-utils": "file:./utils/rust-utils/dist",
     "mime-types": "2.1.35",
+    "nanoid": "5.0.4",
     "split": "1.0.1",
     "winston": "3.11.0"
   },
@@ -54,6 +55,7 @@
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
     "@electron-toolkit/eslint-config-ts": "^1.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/nanoid": "3.0.0",
     "@types/node": "^18.17.5",
     "@types/mime-types": "2.1.4",
     "adm-zip": "^0.5.10",
