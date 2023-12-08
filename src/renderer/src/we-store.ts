@@ -485,7 +485,7 @@ export class WeStore {
 
     const source: WebHappSource = JSON.parse(appEntry.content.source);
     if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-    if (!source.url.startsWith('https://'))
+    if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
       throw new Error(`Invalid applet source URL '${source.url}'`);
 
     const appInfo = await window.electronAPI.installAppletBundle(

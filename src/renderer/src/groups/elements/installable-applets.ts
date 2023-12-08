@@ -87,7 +87,9 @@ export class InstallableApplets extends LitElement {
 
   renderApplets(allApplets: [Array<Entity<AppEntry>>, Array<IconSrcOption>]) {
     return html`
-      <div style="display: flex; flex-direction: row; flex-wrap: wrap; flex: 1;">
+      <div
+        style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
+      >
         ${allApplets[0].length === 0
           ? html`
               <div class="column center-content" style="flex: 1;">

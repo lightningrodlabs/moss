@@ -424,7 +424,6 @@ export class PublishingView extends LitElement {
               required
               .placeholder=${msg('URL to webhapp release asset (Github, Gitlab, ...)')}
               @input=${(e) => {
-                console.log('HELLOOOOO');
                 if (!e.target.value || e.target.value === '') {
                   e.target.setCustomValidity('URL to webhapp asset is required.');
                 } else if (!e.target.value.startsWith('https://')) {

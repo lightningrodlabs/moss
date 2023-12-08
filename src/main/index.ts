@@ -262,22 +262,7 @@ app.whenReady().then(async () => {
         url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
       );
 
-      console.log('$$$$$ index.html headers: ', indexHtmlResponse.headers);
-
       const content = await indexHtmlResponse.text();
-      // console.log('APPLET_IFRAME_SCRIPT: ', APPLET_IFRAME_SCRIPT);
-      console.log(
-        'original content contains weird comination?',
-        content.includes('}<!DOCTYPE html>'),
-      );
-      console.log(
-        'APPLET_IFRAME_SCRIPT contains weird comination?',
-        APPLET_IFRAME_SCRIPT.includes('}<!DOCTYPE html>'),
-      );
-      console.log(
-        '<head><script>${APPLET_IFRAME_SCRIPT}</script> contains weird comination?',
-        `<head><script>${APPLET_IFRAME_SCRIPT}</script>`.includes('}<!DOCTYPE html>'),
-      );
 
       // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
       // needs to happen a bit cumbersomely
@@ -285,10 +270,7 @@ app.whenReady().then(async () => {
       htmlComponents.splice(1, 0, '<head>');
       htmlComponents.splice(2, 0, `<script type="module">${APPLET_IFRAME_SCRIPT}</script>`);
       let modifiedContent = htmlComponents.join('');
-      console.log(
-        'modifiedContent contains weird comination?',
-        modifiedContent.includes('}<!DOCTYPE html>'),
-      );
+
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
       const response = new Response(modifiedContent, indexHtmlResponse);
@@ -401,7 +383,14 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle(
     'install-applet-bundle',
-    async (_e, appId, networkSeed, membraneProofs, agentPubKey, webHappUrl) => {
+    async (
+      _e,
+      appId: string,
+      networkSeed: string,
+      membraneProofs,
+      agentPubKey,
+      webHappUrl: string,
+    ) => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
@@ -409,7 +398,8 @@ app.whenReady().then(async () => {
         return;
       }
       // fetch webhapp from URL
-      const response = await fetch(webHappUrl);
+      console.log('Fetching webhapp from URL: ', webHappUrl);
+      const response = await net.fetch(webHappUrl);
       const buffer = await response.arrayBuffer();
       const tmpDir = path.join(os.tmpdir(), fs.mkdtempSync('we-applet'));
       fs.mkdirSync(tmpDir, { recursive: true });
