@@ -20,6 +20,7 @@ import {
   AppletInfo,
   EntryLocationAndInfo,
 } from './types';
+import { postMessage } from './utils';
 
 declare global {
   interface Window {
@@ -50,6 +51,17 @@ export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) =
   }
   link = link + `we://applet/${encodeHashToBase64(appletHash)}`;
   return link;
+};
+
+export const initializeHotReload = async () => {
+  // read applet hash from
+  console.log('INITIALIZING HOT RELOAD');
+  const appletIframeScript = await postMessage<string>({
+    type: 'get-applet-iframe-script',
+  });
+  console.log('GOT APPLET IFRAME SCRIPT: ', appletIframeScript);
+  eval(appletIframeScript);
+  console.log('EVALUATED APPLET IFRAME SCRIPT');
 };
 
 export class AppletServices {

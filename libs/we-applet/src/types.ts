@@ -215,8 +215,8 @@ export type ParentToAppletRequest =
     };
 
 export interface AppletToParentMessage {
-  appletHash: EntryHash;
   request: AppletToParentRequest;
+  appletHash?: EntryHash; // Only required in dev mode when iframe origin is localhost
 }
 
 export type AppletToParentRequest =
@@ -290,6 +290,9 @@ export type AppletToParentRequest =
     }
   | {
       type: 'get-localStorage';
+    }
+  | {
+      type: 'get-applet-iframe-script';
     };
 
 export type OpenViewRequest =

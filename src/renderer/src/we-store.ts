@@ -56,6 +56,7 @@ export class WeStore {
     public appWebsocket: AppWebsocket,
     public conductorInfo: ConductorInfo,
     public appletBundlesStore: AppletBundlesStore,
+    public isAppletDev: boolean,
   ) {}
 
   private _selectedAppletHash: Writable<AppletHash | undefined> = writable(undefined);

@@ -8,10 +8,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
+  isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   // uninstallApp: (appId: string) => ipcRenderer.invoke('uninstall-app', appId),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openDevHub: () => ipcRenderer.invoke('open-devhub'),
+  getAppletDevPort: (lowerCaseAppletIdB64: string) =>
+    ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
+  getAppletIframeScript: () => ipcRenderer.invoke('get-applet-iframe-script'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
   installAppletBundle: (

@@ -18,8 +18,11 @@ declare global {
     electronAPI: {
       signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
+      isAppletDev: () => Promise<boolean>;
       uninstallApp: (appId: string) => Promise<void>;
       openApp: (appId: string) => Promise<void>;
+      getAppletDevPort: (appId: string) => Promise<number>;
+      getAppletIframeScript: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo>;
       getConductorInfo: () => Promise<ConductorInfo>;
       installAppletBundle: (
@@ -76,6 +79,14 @@ export async function joinGroup(networkSeed: string): Promise<AppInfo> {
   // return appInfo;
 }
 
+export async function getAppletDevPort(appId: string): Promise<number> {
+  return window.electronAPI.getAppletDevPort(appId);
+}
+
+export async function getAppletIframeScript(): Promise<string> {
+  return window.electronAPI.getAppletIframeScript();
+}
+
 export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
 }
@@ -86,6 +97,10 @@ export async function openApp(appId: string): Promise<void> {
 
 export async function isDevModeEnabled(): Promise<boolean> {
   return window.electronAPI.isDevModeEnabled();
+}
+
+export async function isAppletDev(): Promise<boolean> {
+  return window.electronAPI.isAppletDev();
 }
 
 export async function enableDevMode(): Promise<void> {

@@ -10,8 +10,13 @@ pub async fn save_webhapp(
     happs_dir: String,
 ) -> napi::Result<String> {
     let webhapp_bytes = fs::read(web_happ_path)?;
+
     let web_app_bundle = WebAppBundle::decode(&webhapp_bytes)
         .map_err(|e| napi::Error::from_reason(format!("Failed to decode WebAppBundle: {}", e)))?;
+
+    let mut hasher = Sha256::new();
+    hasher.update(webhapp_bytes);
+    let web_happ_hash = hex::encode(hasher.finalize());
 
     // extracting happ bundle
     let app_bundle = web_app_bundle.happ_bundle().await.map_err(|e| {
@@ -70,7 +75,13 @@ pub async fn save_webhapp(
 
     let happ_path_string = happ_path.as_os_str().to_str();
     match happ_path_string {
-        Some(str) => Ok(format!("{}${}${}", str.to_string(), happ_hash, ui_hash)),
+        Some(str) => Ok(format!(
+            "{}${}${}${}",
+            str.to_string(),
+            web_happ_hash,
+            happ_hash,
+            ui_hash
+        )),
         None => Err(napi::Error::from_reason(
             "Failed to convert happ path to string.",
         )),

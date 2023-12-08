@@ -15,7 +15,7 @@ import { weStoreContext } from './context.js';
 import { WeStore } from './we-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
-import { getConductorInfo } from './electron-api.js';
+import { getConductorInfo, isAppletDev } from './electron-api.js';
 
 type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
@@ -75,11 +75,14 @@ export class WeApp extends LitElement {
 
     const appStoreClient = await initAppClient(appstore_app_id);
 
+    const isAppletDevMode = await isAppletDev();
+
     this._weStore = new WeStore(
       adminWebsocket,
       appWebsocket,
       info,
       new AppletBundlesStore(appStoreClient, adminWebsocket, info),
+      isAppletDevMode,
     );
 
     const appStoreAppInfo = await appWebsocket.appInfo({

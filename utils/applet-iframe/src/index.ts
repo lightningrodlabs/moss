@@ -38,6 +38,7 @@ declare global {
     __WE_API__: WeServices;
     __WE_APPLET_SERVICES__: AppletServices;
     __WE_RENDER_INFO__: RenderInfo;
+    __WE_APPLET_HASH__: AppletHash;
   }
 }
 
@@ -140,6 +141,8 @@ const weApi: WeServices = {
 };
 
 (async () => {
+  console.log('@@@ HELLO FROM THE APPLET IFRAME SCRIPT.');
+  window.__WE_APPLET_HASH__ = readAppletHash();
   window.__WE_API__ = weApi;
   window.__WE_APPLET_SERVICES__ = new AppletServices();
 
@@ -174,7 +177,7 @@ const weApi: WeServices = {
   if (view.type === 'background-service') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
-    const appletHash = readAppletHash();
+    const appletHash = window.__WE_APPLET_HASH__;
 
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(
@@ -222,7 +225,7 @@ const weApi: WeServices = {
       setupAppletClient(iframeConfig.appPort, iframeConfig.appletHash),
     ]);
 
-    const appletHash = readAppletHash();
+    const appletHash = window.__WE_APPLET_HASH__;
 
     window.__WE_RENDER_INFO__ = {
       type: 'applet-view',
@@ -280,6 +283,7 @@ const weApi: WeServices = {
       )}`,
     );
   });
+  console.log('@@@@ APPLET IFRAME SCRIPT RAN TO COMPLETION.');
 })();
 
 async function fetchLocalStorage() {
@@ -363,7 +367,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletHash: readAppletHash(),
+      appletHash: window.__WE_APPLET_HASH__,
     };
 
     // eslint-disable-next-line no-restricted-globals
@@ -413,9 +417,16 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 }
 
 function readAppletHash(): EntryHash {
-  const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
-  const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+  if (window.origin.startsWith('applet://')) {
+    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+    return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+  }
+  // In dev mode, the applet hash will be appended at the end
+  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  console.log('@@@@ READ APPLET HASH IN DEV MODE: ', toOriginalCaseB64(lowercaseB64Id));
   return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
 }
 
@@ -473,7 +484,7 @@ async function getGlobalAttachmentTypes() {
   return attachmentTypes;
 }
 
-export async function queryStringToRenderView(s: string): Promise<RenderView> {
+async function queryStringToRenderView(s: string): Promise<RenderView> {
   const args = s.split('&');
 
   const view = args[0].split('=')[1] as 'applet-view' | 'cross-applet-view' | 'background-service';

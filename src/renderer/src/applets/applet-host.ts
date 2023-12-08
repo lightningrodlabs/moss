@@ -17,14 +17,15 @@ import {
   GroupProfile,
   AttachmentName,
 } from '@lightningrodlabs/we-applet';
-import { DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
+import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AppOpenViews } from '../layout/types.js';
-import { signZomeCallElectron } from '../electron-api.js';
+import { getAppletIframeScript, signZomeCallElectron } from '../electron-api.js';
 import { WeStore } from '../we-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
+import { toOriginalCaseB64 } from '../utils.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -32,20 +33,36 @@ import { AppletHash, AppletId } from '../types.js';
 //   validateNotifications,
 // } from '../utils.js';
 
-// function getAppletIdFromOrigin(origin: string): AppletId {
-//   return origin.split('://')[1].split('?')[0].split('/')[0];
-// }
+function getAppletIdFromOrigin(origin: string): AppletId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
+}
 
 export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
       // console.log('and source: ', message.source);
-      // const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
+      let appletHash: AppletHash | undefined;
+      // if origin.startswith(applet://) then get it from the origin
+      // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.weStore.isAppletDev) {
+
+      // }
+      if (origin.startsWith('applet://')) {
+        const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
+        // const appletHash = installedApplets.find(
+        //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
+        // );
+        appletHash = decodeHashFromBase64(lowerCaseAppletId);
+      } else if (
+        (origin.startsWith('http:127.0.0.1') || origin.startsWith('http://localhost')) &&
+        weStore.isAppletDev
+      ) {
+        // in dev mode trust the applet about what it claims
+        appletHash = message.data.appletHash;
+      }
+
       const installedApplets = await toPromise(weStore.installedApplets);
-      // const appletHash = installedApplets.find(
-      //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
-      // );
-      const appletHash: AppletHash = message.data.appletHash;
 
       if (!appletHash) {
         console.log(
@@ -386,6 +403,9 @@ export async function handleAppletIframeMessage(
       break;
     case 'get-localStorage':
       return window.localStorage.getItem(appletLocalStorageKey);
+    case 'get-applet-iframe-script':
+      console.log('RECEIVED get-applet-iframe-script REQUEST.');
+      return getAppletIframeScript();
   }
 }
 

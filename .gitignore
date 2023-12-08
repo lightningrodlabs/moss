@@ -7,7 +7,7 @@ out
 *.log*
 .DS_Store
 target
-testing-applets/
+testing-applets*
 .running
 *.dna
 *.happ

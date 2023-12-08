@@ -118,9 +118,9 @@ let MAIN_WINDOW: BrowserWindow | undefined | null;
 const APPSTORE_NETWORK_SEED = args.network_seed
   ? args.network_seed
   : `lightningrodlabs-we-electron-${breakingAppVersion(app)}`;
-console.log('APPSTORE_NETWORK_SEED: ', APPSTORE_NETWORK_SEED);
-console.log('profile: ', args.profile);
-console.log('ALL args: ', args);
+const IS_APPLET_DEV = !!process.env.APPLET_DEV;
+
+console.log('IS_APPLET_DEV: ', IS_APPLET_DEV);
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -330,9 +330,23 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
+  ipcMain.handle('is-applet-dev', (_e) => IS_APPLET_DEV);
   // ipcMain.handle('uninstall-app', async (_e, appId: string) => {
   //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
   // });
+  ipcMain.handle('get-applet-dev-port', (_e, appId: string) => {
+    console.log('@@@@ APPLET DEV PORT REQUESTED.');
+    const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+    if (appAssetsInfo.type === 'webhapp' && appAssetsInfo.ui.location.type === 'localhost') {
+      console.log('@@@@ APPLET DEV PORT: ', appAssetsInfo.ui.location.port);
+      return appAssetsInfo.ui.location.port;
+    }
+    return undefined;
+  });
+  ipcMain.handle('get-applet-iframe-script', () => {
+    console.log('@@@@ APPLET IFRAME SCRIPT REQUESTED.');
+    return APPLET_IFRAME_SCRIPT;
+  });
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
@@ -423,7 +437,7 @@ app.whenReady().then(async () => {
       const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
       const result: string = await rustUtils.saveWebhapp(webHappPath, uisDir, happsDir);
-      const [happFilePath, happHash, uiHash] = result.split('$');
+      const [happFilePath, webHappHash, happHash, uiHash] = result.split('$');
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
         path: happFilePath,
@@ -437,12 +451,20 @@ app.whenReady().then(async () => {
       // Store app metadata
       const appAssetsInfo: AppAssetsInfo = {
         type: 'webhapp',
+        sha256: webHappHash,
         source: {
           type: 'https',
           url: webHappUrl,
         },
-        happIdentifier: happHash,
-        uiIdentifier: uiHash,
+        happ: {
+          sha256: happHash,
+        },
+        ui: {
+          location: {
+            type: 'filesystem',
+            sha256: uiHash,
+          },
+        },
       };
       fs.writeFileSync(
         path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
