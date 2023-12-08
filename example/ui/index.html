@@ -19,8 +19,8 @@
       import '@shoelace-style/shoelace/dist/themes/light.css';
       // import './src/example-applet.ts';
       import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
-      import { WeClient } from "@lightningrodlabs/we-applet";
-      import "@lightningrodlabs/we-applet/dist/elements/we-client-context.js"
+      import { WeClient, isWeContext } from "@lightningrodlabs/we-applet";
+      import "@lightningrodlabs/we-elements/dist/elements/we-client-context.js"
       import { AttachmentsClient, AttachmentsStore } from "@lightningrodlabs/attachments";
       import { CellType, encodeHashToBase64 } from "@holochain/client";
       import { wrapPathInSvg } from "@holochain-open-dev/elements";
@@ -29,6 +29,11 @@
       import { ExampleApplet } from "./src/example-applet.ts";
       import { PostsClient } from "./src/posts-client.ts";
       import { PostsStore } from "./src/posts-store.ts";
+
+      console.log("window.__isWe__: ", window.__isWe__);
+      console.log("window.__WE_API__: ", window.__WE_API__);
+
+      console.log("isWeContext: ", isWeContext());
 
 
       setBasePath('shoelace');

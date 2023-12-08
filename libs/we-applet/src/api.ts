@@ -26,6 +26,7 @@ declare global {
     __WE_API__: WeServices;
     __WE_APPLET_SERVICES__: AppletServices;
     __WE_RENDER_INFO__: RenderInfo;
+    __isWe__: boolean | undefined;
   }
 }
 
@@ -33,7 +34,8 @@ declare global {
  *
  * @returns bool: Returns whether this function is being called in a We context.
  */
-export const isWeContext = () => window.location.protocol === 'applet:';
+export const isWeContext = () =>
+  window.location.protocol === 'applet:' || window.__WE_API__ || window.__isWe__;
 
 /**
  *

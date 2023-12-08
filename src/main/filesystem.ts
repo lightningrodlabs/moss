@@ -6,18 +6,25 @@ import { InstalledAppId } from '@holochain/client';
 export type Profile = string;
 export type UiIdentifier = string;
 
-export interface AppAssetsInfo {
-  happ: {
-    source: unknown; // e.g. dnahash+entry hash in the devhub
-    // shasum: string; // sha256 hash of the .happ file
-    identifier: string; // e.g. entry hash in the devhub, must be unique to prevent accidental collisions
-  };
-  ui?: {
-    source: unknown;
-    // shasum: string; // not quite clear what the shasum would be taken from
-    identifier: string;
-  };
-}
+export type AppAssetsInfo =
+  | {
+      type: 'happ';
+      source: WebHappSource; // e.g. dnahash+entry hash in the devhub
+      // shasum: string; // sha256 hash of the .happ file
+      identifier: string; // e.g. entry hash in the devhub, must be unique to prevent accidental collisions
+    }
+  | {
+      type: 'webhapp';
+      source: WebHappSource;
+      happIdentifier: string;
+      // shasum: string; // not quite clear what the shasum would be taken from
+      uiIdentifier: string;
+    };
+
+export type WebHappSource = {
+  type: 'https';
+  url: string;
+};
 
 export class WeFileSystem {
   public appDataDir: string;
@@ -98,9 +105,8 @@ export class WeFileSystem {
 
   appUiDir(appId: string): string | undefined {
     const appAssetsInfo = this.readAppAssetsInfo(appId);
-    const uiIdentifier = appAssetsInfo.ui?.identifier;
-    if (uiIdentifier) {
-      return path.join(this.uisDir, uiIdentifier);
+    if (appAssetsInfo.type === 'webhapp') {
+      return path.join(this.uisDir, appAssetsInfo.uiIdentifier);
     }
     return undefined;
   }

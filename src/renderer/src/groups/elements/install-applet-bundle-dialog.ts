@@ -67,12 +67,6 @@ export class InstallAppletBundleDialog extends LitElement {
   _appletInfo: Entity<AppEntry> | undefined;
 
   @state()
-  _peerHostsStatus: HostAvailability | undefined;
-
-  @state()
-  _pollInterval: number | null = null;
-
-  @state()
   _showAdvanced: boolean = false;
 
   // _unlisten: UnlistenFn | undefined;
@@ -100,25 +94,6 @@ export class InstallAppletBundleDialog extends LitElement {
     );
   }
 
-  async firstUpdated() {
-    // this._unlisten = await listen('applet-install-progress', (event) => {
-    //   this._installationProgress = event.payload as string;
-    // });
-    try {
-      this._peerHostsStatus = this._appletInfo
-        ? await this.groupStore.weStore.appletBundlesStore.getVisibleHosts(this._appletInfo)
-        : undefined;
-    } catch (e) {
-      console.error(`Failed to get peer host statuses: ${JSON.stringify(e)}`);
-    }
-
-    this._pollInterval = window.setInterval(async () => {
-      this._peerHostsStatus = this._appletInfo
-        ? await this.groupStore.weStore.appletBundlesStore.getVisibleHosts(this._appletInfo)
-        : undefined;
-    }, 5000);
-  }
-
   // disconnectedCallback(): void {
   //   if (this._unlisten) this._unlisten();
   // }
@@ -135,17 +110,10 @@ export class InstallAppletBundleDialog extends LitElement {
       this._installationProgress = 'Fetching app icon...';
       await toPromise(this.weStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
 
-      this._installationProgress = 'Searching latest release...';
-      const latestRelease = await this.weStore.appletBundlesStore.getLatestVersion(
-        this._appletInfo!,
-      );
-
-      this._installationProgress = 'Fetching Applet from DevHub host...';
-
+      this._installationProgress = 'Downloading and installing Applet...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._appletInfo!,
         fields.custom_name,
-        latestRelease,
         fields.network_seed ? fields.network_seed : undefined,
       );
 
@@ -264,33 +232,6 @@ export class InstallAppletBundleDialog extends LitElement {
           }
         }}
       >
-        <div
-          class="row"
-          style="justify-content: flex-end; align-items: center; color: #3d3d3d; font-size: 15px;"
-          title=${this._peerHostsStatus && this._peerHostsStatus.responded.length > 0
-            ? this._peerHostsStatus.responded
-                .map((key) => encodeHashToBase64(key))
-                .toString()
-                .replaceAll(',', '\n')
-            : undefined}
-        >
-          <span
-            class="online-dot ${this._peerHostsStatus && this._peerHostsStatus.responded.length > 0
-              ? 'online'
-              : 'offline'}"
-          ></span>
-          ${this._peerHostsStatus
-            ? html`
-                <span
-                  >${this._peerHostsStatus.responded.length > 0
-                    ? this._peerHostsStatus.responded.length
-                    : 0}
-                  available peer
-                  host${this._peerHostsStatus.responded.length === 1 ? '' : 's'}</span
-                >
-              `
-            : html`<span>pinging peer hosts...</span>`}
-        </div>
         <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
       </sl-dialog>
     `;

@@ -139,7 +139,7 @@ const weApi: WeServices = {
     }),
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+(async () => {
   window.__WE_API__ = weApi;
   window.__WE_APPLET_SERVICES__ = new AppletServices();
 
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       )}`,
     );
   });
-});
+})();
 
 async function fetchLocalStorage() {
   // override localStorage methods and fetch localStorage for this applet from main window

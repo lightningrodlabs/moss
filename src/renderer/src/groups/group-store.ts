@@ -114,7 +114,7 @@ export class GroupStore {
 
     if (!applet) throw new Error('Given applet instance hash was not found');
 
-    await this.weStore.installApplet(appletHash, applet, applet.initial_devhub_gui_release_hash);
+    await this.weStore.installApplet(appletHash, applet);
     try {
       await this.groupClient.registerApplet(applet);
     } catch (e) {
@@ -139,7 +139,6 @@ export class GroupStore {
   async installAndAdvertiseApplet(
     appEntry: Entity<AppEntry>,
     customName: string,
-    happRelease: Entity<HappReleaseEntry>,
     networkSeed?: string,
   ): Promise<EntryHash> {
     if (!networkSeed) {
@@ -149,20 +148,14 @@ export class GroupStore {
     const applet: Applet = {
       custom_name: customName,
       description: appEntry.content.description,
-
       appstore_app_hash: appEntry.id,
-
-      devhub_dna_hash: appEntry.content.devhub_address.dna,
-      devhub_happ_entry_action_hash: appEntry.content.devhub_address.happ,
-      devhub_happ_release_hash: happRelease.id,
-      initial_devhub_gui_release_hash: happRelease.content.official_gui,
       network_seed: networkSeed,
       properties: {},
     };
 
     const appletHash = await this.groupClient.hashApplet(applet);
 
-    await this.weStore.installApplet(appletHash, applet, happRelease.content.official_gui);
+    await this.weStore.installApplet(appletHash, applet);
 
     try {
       await this.groupClient.registerApplet(applet);

@@ -20,20 +20,24 @@ export interface DevHubResponse<T> {
 }
 
 export type EntityId = ActionHash;
-
 export interface AppEntry {
   title: string;
   subtitle: string;
   description: string;
-  icon: EntryHash;
+  icon_src: string;
   publisher: ActionHash; // alias EntityId
-  devhub_address: WebHappConfig;
+  source: string;
+  hashes: string;
+  metadata: string;
   editors: Array<AgentPubKey>;
 
   author: AgentPubKey;
   published_at: number;
   last_updated: number;
-  metadata: any;
+  deprecation?: {
+    message: string;
+    recommended_alternatives: any;
+  };
 }
 
 export interface HostEntry {
@@ -49,7 +53,7 @@ export interface PublisherEntry {
   name: string;
   location: LocationTriplet;
   website: WebAddress;
-  icon: EntryHash;
+  icon_src: String;
   editors: Array<AgentPubKey>;
 
   // common fields

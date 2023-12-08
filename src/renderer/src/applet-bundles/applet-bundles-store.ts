@@ -5,15 +5,16 @@ import {
   getHappReleases,
   getVisibleHostsForZomeFunction,
 } from '../processes/appstore/get-happ-releases.js';
-import { getAllApps } from '../processes/appstore/get-happs.js';
 import {
   AppEntry,
+  DevHubResponse,
   Entity,
   HappReleaseEntry,
   HostAvailability,
 } from '../processes/appstore/types.js';
 import { ConductorInfo } from '../electron-api.js';
 import { fromUint8Array } from 'js-base64';
+import { getAllApps } from '../processes/appstore/appstore-light.js';
 
 export class AppletBundlesStore {
   constructor(
@@ -47,36 +48,8 @@ export class AppletBundlesStore {
     ),
   );
 
-  async getVisibleHosts(appEntry: Entity<AppEntry>): Promise<HostAvailability> {
-    return getVisibleHostsForZomeFunction(
-      this.appstoreClient,
-      appEntry.content.devhub_address.dna,
-      'happ_library',
-      'get_webhapp_package', // TODO change to 'get_webasset_file' once fetching in chunks is implemented
-      4000,
-    );
-  }
-
-  async getLatestVersion(appEntry: Entity<AppEntry>): Promise<Entity<HappReleaseEntry>> {
-    const appReleases = await getHappReleases(this.appstoreClient, {
-      dna_hash: appEntry.content.devhub_address.dna,
-      resource_hash: appEntry.content.devhub_address.happ,
-    });
-
-    if (appReleases.length === 0) throw new Error("This app doesn't have any releases yet.");
-
-    const latestRelease = appReleases.sort(
-      (happRelease1, happRelease2) => happRelease2.content.ordering - happRelease1.content.ordering,
-    )[0];
-
-    if (!latestRelease.content.official_gui)
-      throw new Error("This app doesn't have an official GUI.");
-
-    return latestRelease;
-  }
-
-  async fetchIcon(appActionHash: ActionHash) {
-    const appEntryEntity: any = await this.appstoreClient.callZome({
+  async getAppEntry(appActionHash: ActionHash) {
+    const appEntryEntity: DevHubResponse<Entity<AppEntry>> = await this.appstoreClient.callZome({
       role_name: 'appstore',
       zome_name: 'appstore_api',
       fn_name: 'get_app',
@@ -84,19 +57,12 @@ export class AppletBundlesStore {
         id: appActionHash,
       },
     });
-    const appEntry = appEntryEntity.payload.content;
-    const essenceResponse = await this.appstoreClient.callZome({
-      role_name: 'appstore',
-      zome_name: 'mere_memory_api',
-      fn_name: 'retrieve_bytes',
-      payload: appEntry.icon,
-    });
-    const mimeType = appEntry.metadata.icon_mime_type;
+    return appEntryEntity.payload;
+  }
 
-    const base64String = fromUint8Array(Uint8Array.from(essenceResponse.payload));
-
-    const iconSrc = `data:${mimeType};base64,${base64String}`;
-
-    return iconSrc;
+  async fetchIcon(appActionHash: ActionHash) {
+    const appEntryEntity = await this.getAppEntry(appActionHash);
+    const appEntry = appEntryEntity.content;
+    return appEntry.icon_src;
   }
 }

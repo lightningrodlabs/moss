@@ -20,6 +20,8 @@ import '../applet-bundles/elements/applet-bundle-title.js';
 import './views/cross-applet-main.js';
 import './views/cross-applet-block.js';
 import './views/welcome-view.js';
+import './views/appstore-view.js';
+import './views/publishing-view.js';
 import './views/applet-block.js';
 import './views/applet-main.js';
 import './views/entry-view.js';
@@ -191,6 +193,24 @@ export class DynamicLayout extends LitElement {
     }
   }
 
+  openAppStore() {
+    this.openTab({
+      id: 'AppStore',
+      type: 'component',
+      componentType: 'appstore',
+      title: 'Applet Library',
+    });
+  }
+
+  openPublishingView() {
+    this.openTab({
+      id: 'PublishingView',
+      type: 'component',
+      componentType: 'publishing-view',
+      title: 'Publish Applet',
+    });
+  }
+
   get goldenLayout(): GoldenLayout {
     const el = this.shadowRoot?.getElementById('golden-layout') as GoldenLayoutEl;
     return el.goldenLayout as any;
@@ -202,9 +222,29 @@ export class DynamicLayout extends LitElement {
       .layoutConfig=${this.layoutConfig}
       style="flex: 1; display: flex; min-width: 0;"
     >
-      <golden-layout-register component-type="welcome">
+      <golden-layout-register
+        component-type="welcome"
+        .template=${() => html`
+          <welcome-view
+            @open-appstore=${() => this.openAppStore()}
+            style="z-index: 1"
+          ></welcome-view>
+        `}
+      >
+      </golden-layout-register>
+      <golden-layout-register
+        component-type="appstore"
+        .template=${() => html`
+          <appstore-view
+            @open-publishing-view=${() => this.openPublishingView()}
+            style="z-index: 1"
+          ></appstore-view>
+        `}
+      >
+      </golden-layout-register>
+      <golden-layout-register component-type="publishing-view">
         <template>
-          <welcome-view style="z-index: 1"></welcome-view>
+          <publishing-view style="z-index: 1"></publishing-view>
         </template>
       </golden-layout-register>
       <golden-layout-register

@@ -85,18 +85,11 @@ export class WeApp extends LitElement {
     const appStoreAppInfo = await appWebsocket.appInfo({
       installed_app_id: info.appstore_app_id,
     });
-    const devhubAppInfo = await appWebsocket.appInfo({
-      installed_app_id: info.devhub_app_id,
-    });
     // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
 
     getProvisionedCells(appStoreAppInfo).map(([_roleName, cellInfo]) =>
       console.log(`Appstore network seed: ${getCellNetworkSeed(cellInfo)}`),
     );
-    if (devhubAppInfo)
-      getProvisionedCells(devhubAppInfo).map(([_roleName, cellInfo]) =>
-        console.log(`DevHub network seed: ${getCellNetworkSeed(cellInfo)}`),
-      );
 
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);

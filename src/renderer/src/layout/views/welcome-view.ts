@@ -14,7 +14,6 @@ import '../../elements/select-group-dialog.js';
 
 enum WelcomePageView {
   Main,
-  AppLibrary,
 }
 @localized()
 @customElement('welcome-view')
@@ -24,40 +23,6 @@ export class WelcomeView extends LitElement {
 
   resetView() {
     this.view = WelcomePageView.Main;
-  }
-
-  renderAppLibrary() {
-    return html`
-      <div class="column" style="margin: 16px; flex: 1">
-        <div class="row" style="margin-bottom: 16px; align-items: center">
-          <sl-icon-button
-            .src=${wrapPathInSvg(mdiArrowLeft)}
-            @click=${() => {
-              this.view = WelcomePageView.Main;
-            }}
-            style="margin-right: 16px"
-          ></sl-icon-button>
-          <span class="title" style="flex: 1">${msg('Applets Library')}</span>
-          <publish-applet-button></publish-applet-button>
-        </div>
-
-        <installable-applets
-          style="display: flex; flex: 1; overflow-y: auto;"
-          @applet-installed=${(_e) => {
-            // console.log("@group-home: GOT APPLET INSTALLED EVENT.");
-            this.view = WelcomePageView.Main;
-            // re-dispatch event since for some reason it doesn't bubble further
-            // this.dispatchEvent(
-            //   new CustomEvent("applet-installed", {
-            //     detail: e.detail,
-            //     composed: true,
-            //     bubbles: true,
-            //   })
-            // );
-          }}
-        ></installable-applets>
-      </div>
-    `;
   }
 
   renderExplanationCard() {
@@ -161,11 +126,11 @@ export class WelcomeView extends LitElement {
               <button
                 class="btn"
                 @click=${() => {
-                  this.view = WelcomePageView.AppLibrary;
+                  this.dispatchEvent(new CustomEvent('open-appstore'));
                 }}
                 @keypress=${(e: KeyboardEvent) => {
                   if (e.key === 'Enter') {
-                    this.view = WelcomePageView.AppLibrary;
+                    this.dispatchEvent(new CustomEvent('open-appstore'));
                   }
                 }}
               >
@@ -212,8 +177,6 @@ export class WelcomeView extends LitElement {
             </div>
           </div>
         `;
-      case WelcomePageView.AppLibrary:
-        return this.renderAppLibrary();
     }
   }
 
