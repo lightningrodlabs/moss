@@ -198,7 +198,7 @@ export class DynamicLayout extends LitElement {
       id: 'AppStore',
       type: 'component',
       componentType: 'appstore',
-      title: 'Applet Store',
+      title: 'Applet Library',
     });
   }
 

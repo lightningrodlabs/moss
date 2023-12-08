@@ -20,17 +20,11 @@ export interface DevHubResponse<T> {
 }
 
 export type EntityId = ActionHash;
-
-export type IconAddress = {
-  bytes: EntryHash;
-  mime_type: string;
-};
-
 export interface AppEntry {
   title: string;
   subtitle: string;
   description: string;
-  icon: IconAddress;
+  icon_src: string;
   publisher: ActionHash; // alias EntityId
   source: string;
   hashes: string;
@@ -59,7 +53,7 @@ export interface PublisherEntry {
   name: string;
   location: LocationTriplet;
   website: WebAddress;
-  icon: EntryHash;
+  icon_src: String;
   editors: Array<AgentPubKey>;
 
   // common fields

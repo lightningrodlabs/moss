@@ -27,7 +27,7 @@ export class AppStoreView extends LitElement {
     return html`
       <div class="column" style="margin: 16px; flex: 1">
         <div class="row" style="margin-bottom: 16px; align-items: center">
-          <span class="title" style="flex: 1">${msg('Applets Library')}</span>
+          <span class="title" style="flex: 1">${msg('Applet Library')}</span>
           <sl-button
             @click=${() => {
               this.dispatchEvent(new CustomEvent('open-publishing-view'));

@@ -92,10 +92,7 @@ export interface CreateAppInput {
   title: string;
   subtitle: string;
   description: string;
-  icon: {
-    bytes: Uint8Array;
-    mime_type: string;
-  };
+  icon_src: string;
   publisher: ActionHash;
   /**
    * JSON string
@@ -122,10 +119,7 @@ export interface PublisherInput {
     url: string;
     context?: any;
   };
-  icon: {
-    bytes: Uint8Array;
-    mime_type: string;
-  };
+  icon_src: string;
   description?: string;
   email?: string;
   editors?: AgentPubKey[];

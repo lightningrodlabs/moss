@@ -1,5 +1,5 @@
 import { html, LitElement, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { hashProperty, notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 
@@ -26,6 +26,7 @@ import {
   getMyPublishers,
 } from '../../processes/appstore/appstore-light.js';
 import { ActionHash } from '@holochain/client';
+import { resizeAndExport } from '../../utils.js';
 
 enum PageView {
   Loading,
@@ -51,7 +52,19 @@ export class PublishingView extends LitElement {
   _myApps: Entity<AppEntry>[] | undefined;
 
   @state()
+  _appletIconSrc: string | undefined;
+
+  @state()
+  _publisherIconSrc: string | undefined;
+
+  @state()
   _creatingPublisher = false;
+
+  @query('#applet-icon-file-picker')
+  private _appletIconFilePicker!: HTMLInputElement;
+
+  @query('#publisher-icon-file-picker')
+  private _publisherIconFilePicker!: HTMLInputElement;
 
   resetView() {
     this.view = PageView.Main;
@@ -73,7 +86,43 @@ export class PublishingView extends LitElement {
     this.view = PageView.Main;
   }
 
+  onAppletIconUploaded() {
+    if (this._appletIconFilePicker.files && this._appletIconFilePicker.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          this._appletIconSrc = resizeAndExport(img);
+          this._appletIconFilePicker.value = '';
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(this._appletIconFilePicker.files[0]);
+    }
+  }
+
+  onPublisherIconUploaded() {
+    if (this._publisherIconFilePicker.files && this._publisherIconFilePicker.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          this._publisherIconSrc = resizeAndExport(img);
+          this._publisherIconFilePicker.value = '';
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(this._publisherIconFilePicker.files[0]);
+    }
+  }
+
   async createPublisher(fields: { publisher_name: string; publisher_website: string }) {
+    if (!this._publisherIconSrc) {
+      notifyError('No Icon provided.');
+      throw new Error('Icon is required.');
+    }
     this._creatingPublisher = true;
     const appAgentClient = this.weStore.appletBundlesStore.appstoreClient;
     const payload: PublisherInput = {
@@ -86,11 +135,9 @@ export class PublishingView extends LitElement {
       website: {
         url: fields.publisher_website,
       },
-      icon: {
-        bytes: new Uint8Array(),
-        mime_type: 'image/png',
-      },
+      icon_src: this._publisherIconSrc,
     };
+    this._publisherIconSrc = undefined;
     const publisherEntry = await createPublisher(appAgentClient, payload);
     this._myPublisher = publisherEntry;
     this._creatingPublisher = false;
@@ -101,10 +148,13 @@ export class PublishingView extends LitElement {
     title: string;
     subtitle: string;
     description: string;
-    icon: { bytes: Uint8Array; mime_type: string };
     webhapp_url: string;
   }) {
     console.log('TRYING TO PUBLISH APPLETS...');
+    if (!this._appletIconSrc) {
+      notifyError('No Icon provided.');
+      throw new Error('Icon is required.');
+    }
     const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
     if (!this._myPublisher) throw new Error('No publisher registered yet.');
     const source: WebHappSource = {
@@ -121,10 +171,7 @@ export class PublishingView extends LitElement {
       title: fields.title,
       subtitle: fields.subtitle,
       description: fields.description,
-      icon: {
-        bytes: randomImageBytes,
-        mime_type: 'image/svg+xml',
-      },
+      icon_src: this._appletIconSrc,
       publisher: this._myPublisher!.action,
       source: JSON.stringify(source),
       hashes: 'not defined yet',
@@ -133,6 +180,7 @@ export class PublishingView extends LitElement {
     console.log('got payload: ', payload);
     await createApp(appStoreClient, payload);
     const myAppsEntities = await getMyApps(appStoreClient);
+    this._appletIconSrc = undefined;
     this._myApps = myAppsEntities;
     this.view = PageView.Main;
   }
@@ -157,6 +205,39 @@ export class PublishingView extends LitElement {
         </div>
         <form id="form" ${onSubmit((fields) => this.createPublisher(fields))}>
           <div class="column" style="align-items: center">
+            <input
+              type="file"
+              id="publisher-icon-file-picker"
+              style="display: none"
+              accept="image/*"
+              @change=${this.onPublisherIconUploaded}
+            />
+            ${this._publisherIconSrc
+              ? html`<img
+                  tabindex="0"
+                  @click=${() => this._publisherIconFilePicker.click()}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      this._publisherIconFilePicker.click();
+                    }
+                  }}
+                  src=${this._publisherIconSrc}
+                  alt="Applet Icon"
+                  class="icon-picker"
+                />`
+              : html`<div
+                  tabindex="0"
+                  @click=${() => this._publisherIconFilePicker.click()}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      this._publisherIconFilePicker.click();
+                    }
+                  }}
+                  class="column center-content icon-picker picker-btn"
+                  style="font-size: 34px;height: 200px; width: 200px; border-radius: 40px;"
+                >
+                  + Add Icon
+                </div>`}
             <sl-input
               name="publisher_name"
               required
@@ -191,7 +272,13 @@ export class PublishingView extends LitElement {
         <div
           style="position: absolute; top: 20px; right: 20px; font-size: 20px; font-weight: bold;"
         >
-          ${this._myPublisher?.content.name}
+          <div class="row" style="align-items: center;">
+            ${this._myPublisher?.content.name}
+            <img
+              src=${this._myPublisher?.content.icon_src}
+              style="width: 40px; height: 40px; border-radius: 10px; margin-left: 10px;"
+            />
+          </div>
         </div>
         <div class="title" style="margin-bottom: 40px; margin-top: 30px;">
           ${msg('Your Applets')}
@@ -253,6 +340,42 @@ export class PublishingView extends LitElement {
         </div>
         <form id="form" ${onSubmit((fields) => this.publishApplet(fields))}>
           <div class="column" style="align-items: center; min-width: 600px;">
+            <input
+              type="file"
+              id="applet-icon-file-picker"
+              style="display: none"
+              accept="image/*"
+              @change=${this.onAppletIconUploaded}
+            />
+            ${
+              this._appletIconSrc
+                ? html`<img
+                    tabindex="0"
+                    @click=${() => this._appletIconFilePicker.click()}
+                    @keypress=${(e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        this._appletIconFilePicker.click();
+                      }
+                    }}
+                    src=${this._appletIconSrc}
+                    alt="Applet Icon"
+                    class="icon-picker"
+                  />`
+                : html`<div
+                    tabindex="0"
+                    @click=${() => this._appletIconFilePicker.click()}
+                    @keypress=${(e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        this._appletIconFilePicker.click();
+                      }
+                    }}
+                    class="column center-content icon-picker picker-btn"
+                    style="font-size: 34px;height: 200px; width: 200px; border-radius: 40px;"
+                  >
+                    + Add Icon
+                  </div>`
+            }
+            </div>
             <sl-input
               name="title"
               required
@@ -312,7 +435,7 @@ export class PublishingView extends LitElement {
               }}
               style="margin-bottom: 10px; width: 600px;"
             ></sl-input>
-            <div class="row" style="margin-top: 40px;">
+            <div class="row" style="margin-top: 40px; justify-content: center;">
               <sl-button
                 variant="danger"
                 type="submit"
@@ -403,6 +526,28 @@ export class PublishingView extends LitElement {
 
       .btn:active {
         background: var(--sl-color-primary-600);
+      }
+
+      .icon-picker {
+        height: 200px;
+        width: 200px;
+        border-radius: 40px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+
+      .icon-picker:hover {
+        opacity: 0.7;
+      }
+
+      .picker-btn {
+        border: 2px solid #7e7e7e;
+        color: #7e7e7e;
+        background: #f9f9f9;
+      }
+      .picker-btn:hover {
+        color: black;
+        border: 2px solid black;
       }
     `,
   ];

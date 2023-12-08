@@ -63,18 +63,6 @@ export class AppletBundlesStore {
   async fetchIcon(appActionHash: ActionHash) {
     const appEntryEntity = await this.getAppEntry(appActionHash);
     const appEntry = appEntryEntity.content;
-    const essenceResponse = await this.appstoreClient.callZome({
-      role_name: 'appstore',
-      zome_name: 'mere_memory_api',
-      fn_name: 'retrieve_bytes',
-      payload: appEntry.icon.bytes,
-    });
-    const mimeType = appEntry.icon.mime_type;
-
-    const base64String = fromUint8Array(Uint8Array.from(essenceResponse.payload));
-
-    const iconSrc = `data:${mimeType};base64,${base64String}`;
-
-    return iconSrc;
+    return appEntry.icon_src;
   }
 }
