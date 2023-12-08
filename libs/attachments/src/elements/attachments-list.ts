@@ -21,7 +21,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { WeClient, HrlWithContext, WeServices } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
-import '@lightningrodlabs/we-applet/dist/elements/hrl-link.js';
+import '@lightningrodlabs/we-elements/dist/elements/hrl-link.js';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';
