@@ -32,6 +32,7 @@ import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID } from './sharedTypes';
+import { nanoid } from 'nanoid';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -411,7 +412,7 @@ app.whenReady().then(async () => {
       console.log('Fetching webhapp from URL: ', webHappUrl);
       const response = await net.fetch(webHappUrl);
       const buffer = await response.arrayBuffer();
-      const tmpDir = path.join(os.tmpdir(), fs.mkdtempSync('we-applet'));
+      const tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
       console.log('webhapp path: ', webHappPath);
