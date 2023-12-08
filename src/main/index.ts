@@ -20,7 +20,7 @@ import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
-import { AppAssetsInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, WeFileSystem, breakingAppVersion } from './filesystem';
 import { holochianBinaries, lairBinary } from './binaries';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
@@ -45,11 +45,11 @@ const parser = new ArgumentParser({
 });
 parser.add_argument('-p', '--profile', {
   help: 'Opens We with a custom profile instead of the default profile.',
-  type: 'string',
+  type: 'str',
 });
 parser.add_argument('-n', '--network-seed', {
   help: 'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
-  type: 'string',
+  type: 'str',
 });
 
 const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
@@ -114,8 +114,12 @@ let WE_RUST_HANDLER: WeRustHandler | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
-const APPSTORE_NETWORK_SEED = args.networkSeed ? args.networkSeed : undefined;
+const APPSTORE_NETWORK_SEED = args.network_seed
+  ? args.network_seed
+  : `lightningrodlabs-we-electron-${breakingAppVersion(app)}`;
 console.log('APPSTORE_NETWORK_SEED: ', APPSTORE_NETWORK_SEED);
+console.log('profile: ', args.profile);
+console.log('ALL args: ', args);
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -560,7 +564,7 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER.installApp(
         path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
         APPSTORE_APP_ID,
-        'lightningrodlabs-we-electron',
+        APPSTORE_NETWORK_SEED,
       );
       console.log('AppstoreLight installed.');
     }
