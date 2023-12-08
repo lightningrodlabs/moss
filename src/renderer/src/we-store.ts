@@ -48,6 +48,7 @@ import { AppletHash, AppletId } from './types.js';
 import { ResourceLocatorB64, tryWithHosts } from './processes/appstore/get-happ-releases.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
+import { WebHappSource } from './processes/appstore/appstore-light.js';
 
 export class WeStore {
   constructor(
@@ -470,16 +471,8 @@ export class WeStore {
       ),
     );
 
-  async installApplet(
-    appletHash: EntryHash,
-    applet: Applet,
-    guiReleaseHash: ActionHash | undefined,
-  ): Promise<AppInfo> {
+  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
-    console.log(
-      '...and guiReleaseHash: ',
-      guiReleaseHash ? encodeHashToBase64(appletHash) : undefined,
-    );
     const appId = appIdFromAppletHash(appletHash);
     if (!applet.network_seed) {
       throw new Error(
@@ -487,23 +480,20 @@ export class WeStore {
       );
     }
 
-    const appInfo = await tryWithHosts<AppInfo>(
-      async (host) => {
-        return window.electronAPI.installAppletBundle(
-          encodeHashToBase64(host),
-          appId,
-          applet.network_seed!,
-          {},
-          encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
-          encodeHashToBase64(applet.devhub_dna_hash),
-          encodeHashToBase64(applet.devhub_happ_release_hash),
-          guiReleaseHash ? encodeHashToBase64(guiReleaseHash) : undefined,
-        );
-      },
-      this.appletBundlesStore.appstoreClient,
-      applet.devhub_dna_hash,
-      'happ_library',
-      'get_dna_version',
+    const appEntry = await this.appletBundlesStore.getAppEntry(applet.appstore_app_hash);
+    if (!appEntry) throw new Error('AppEntry not found in AppStore');
+
+    const source: WebHappSource = JSON.parse(appEntry.content.source);
+    if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
+    if (!source.url.startsWith('https://'))
+      throw new Error(`Invalid applet source URL '${source.url}'`);
+
+    const appInfo = await window.electronAPI.installAppletBundle(
+      appId,
+      applet.network_seed!,
+      {},
+      encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
+      source.url,
     );
 
     await this.reloadManualStores();

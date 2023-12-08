@@ -24,14 +24,11 @@ declare global {
       getInstalledApps: () => Promise<AppInfo>;
       getConductorInfo: () => Promise<ConductorInfo>;
       installAppletBundle: (
-        devhubHost: AgentPubKeyB64,
         appId: string,
         networkSeed: string,
         membraneProofs: any,
         agentPubKey: AgentPubKeyB64,
-        devhubDnaHash: DnaHashB64,
-        happReleaseHash: ActionHashB64,
-        guiReleaseHash: ActionHashB64 | undefined,
+        webHappUrl: string,
       ) => Promise<AppInfo>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string) => Promise<AppInfo>;

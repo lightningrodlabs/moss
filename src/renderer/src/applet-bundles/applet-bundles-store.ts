@@ -48,7 +48,7 @@ export class AppletBundlesStore {
     ),
   );
 
-  async fetchIcon(appActionHash: ActionHash) {
+  async getAppEntry(appActionHash: ActionHash) {
     const appEntryEntity: DevHubResponse<Entity<AppEntry>> = await this.appstoreClient.callZome({
       role_name: 'appstore',
       zome_name: 'appstore_api',
@@ -57,7 +57,12 @@ export class AppletBundlesStore {
         id: appActionHash,
       },
     });
-    const appEntry = appEntryEntity.payload.content;
+    return appEntryEntity.payload;
+  }
+
+  async fetchIcon(appActionHash: ActionHash) {
+    const appEntryEntity = await this.getAppEntry(appActionHash);
+    const appEntry = appEntryEntity.content;
     const essenceResponse = await this.appstoreClient.callZome({
       role_name: 'appstore',
       zome_name: 'mere_memory_api',

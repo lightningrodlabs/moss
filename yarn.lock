@@ -1735,8 +1735,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-e5664cc3-a6d7-424d-9eac-c242aa02c103-1701877197759/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-e5664cc3-a6d7-424d-9eac-c242aa02c103-1701877197759/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-a5ec2e55-4431-4317-884b-8b1370ccda52-1701991391721/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.0-a5ec2e55-4431-4317-884b-8b1370ccda52-1701991391721/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1749,7 +1749,7 @@
   dependencies:
     "@holochain/client" "0.16.6"
 
-"@lightningrodlabs/we-elements@file:libs/we-elements", "@lightningrodlabs/we-elemets@file:libs/we-elements":
+"@lightningrodlabs/we-elements@file:libs/we-elements":
   version "0.1.1"
   dependencies:
     "@holochain-open-dev/elements" "^0.8.4"
@@ -1757,7 +1757,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-cd7f14c5-ea5a-4193-bbc8-173762afccb5-1701877197757/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-92a0a06d-e329-40a3-a265-13fbb277d1d3-1701991391720/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -4750,7 +4750,7 @@ electron-to-chromium@^1.4.535:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.589.tgz#3fc83c284ed8f1f58e0cb3c664c8ebcb4d0b42fb"
   integrity sha512-zF6y5v/YfoFIgwf2dDfAqVlPPsyQeWNpEWXbAlDUS8Ax4Z2VoiiZpAPC0Jm9hXEkJm2vIZpwB6rc4KnLTQffbQ==
 
-electron-vite@^1.0.27:
+electron-vite@1.0.29:
   version "1.0.29"
   resolved "https://registry.yarnpkg.com/electron-vite/-/electron-vite-1.0.29.tgz#3dfe8c5ab87a9bd44e80c56e6675b431e787c34c"
   integrity sha512-BDTmVTLIri8W4Lz1tn5RAV1slSTinBBb6G77+qKcjkF0vEwdiUp2ntSU6FDqwP9pmy1t96U1CZqIYIStF8H6Jw==

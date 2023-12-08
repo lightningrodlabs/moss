@@ -1,10 +1,15 @@
 use holochain_types::web_app::WebAppBundle;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
 
 #[napi]
-pub async fn save_webhapp(path: String, ui_target_dir: String) -> napi::Result<String> {
-    let webhapp_bytes = fs::read(path)?;
+pub async fn save_webhapp(
+    web_happ_path: String,
+    uis_dir: String,
+    happs_dir: String,
+) -> napi::Result<String> {
+    let webhapp_bytes = fs::read(web_happ_path)?;
     let web_app_bundle = WebAppBundle::decode(&webhapp_bytes)
         .map_err(|e| napi::Error::from_reason(format!("Failed to decode WebAppBundle: {}", e)))?;
 
@@ -22,10 +27,12 @@ pub async fn save_webhapp(path: String, ui_target_dir: String) -> napi::Result<S
         .await
         .map_err(|e| napi::Error::from_reason(format!("Failed to extract ui zip bytes: {}", e)))?;
 
-    let uid = nanoid::nanoid!(13);
-    let happ_path = std::env::temp_dir().join(format!("launcher_app_to_install_{}.happ", uid));
+    let mut hasher = Sha256::new();
+    hasher.update(web_ui_zip_bytes.clone().into_owned().into_inner());
+    let ui_hash = hex::encode(hasher.finalize());
 
-    if !path_exists(&PathBuf::from(ui_target_dir.clone())) {
+    let ui_target_dir = PathBuf::from(uis_dir).join(ui_hash.clone()).join("assets");
+    if !path_exists(&ui_target_dir) {
         fs::create_dir_all(&ui_target_dir)?;
     }
 
@@ -48,16 +55,24 @@ pub async fn save_webhapp(path: String, ui_target_dir: String) -> napi::Result<S
         napi::Error::from_reason(format!("Failed to remove ui.zip after unzipping: {}", e))
     })?;
 
+    let mut hasher = Sha256::new();
+    let app_bundle_bytes = app_bundle
+        .encode()
+        .map_err(|e| napi::Error::from_reason(format!("Failed to encode happ to bytes: {}", e)))?;
+    hasher.update(app_bundle_bytes);
+    let happ_hash = hex::encode(hasher.finalize());
+    let happ_path = PathBuf::from(happs_dir).join(format!("{}.happ", happ_hash));
+
     app_bundle
         .write_to_file(&happ_path)
         .await
         .map_err(|e| napi::Error::from_reason(format!("Failed to write .happ file: {}", e)))?;
 
-    let temp_folder_path_string = happ_path.as_os_str().to_str();
-    match temp_folder_path_string {
-        Some(str) => Ok(str.to_string()),
+    let happ_path_string = happ_path.as_os_str().to_str();
+    match happ_path_string {
+        Some(str) => Ok(format!("{}${}${}", str.to_string(), happ_hash, ui_hash)),
         None => Err(napi::Error::from_reason(
-            "Failed to convert temp folder path to string.",
+            "Failed to convert happ path to string.",
         )),
     }
 }

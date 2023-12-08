@@ -12,6 +12,7 @@ import {
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import * as childProcess from 'child_process';
 import url from 'url';
 import { createHash } from 'crypto';
@@ -29,7 +30,6 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
-import { AppStatusFilter } from '@holochain/client';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID } from './sharedTypes';
 
@@ -401,48 +401,29 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle(
     'install-applet-bundle',
-    async (
-      _e,
-      devhubHost,
-      appId,
-      networkSeed,
-      membraneProofs,
-      agentPubKey,
-      devhubDnaHash,
-      happReleaseHash,
-      guiReleaseHash,
-    ) => {
+    async (_e, appId, networkSeed, membraneProofs, agentPubKey, webHappUrl) => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
         return;
       }
-      // check whether .happ file is already available
-      const happFilePath = path.join(WE_FILE_SYSTEM.happsDir, `${happReleaseHash}.happ`);
-      if (!fs.existsSync(happFilePath)) {
-        console.log('Fetching and storing happ...');
-        await WE_RUST_HANDLER!.fetchAndStoreHapp(
-          devhubHost,
-          devhubDnaHash,
-          happReleaseHash,
-          WE_FILE_SYSTEM.happsDir,
-          APPSTORE_APP_ID,
-        );
-      }
-      const uiDir = path.join(WE_FILE_SYSTEM.uisDir, guiReleaseHash);
-      console.log('\n@install-applet-bundle: uiDir: ', uiDir);
+      // fetch webhapp from URL
+      const response = await fetch(webHappUrl);
+      const buffer = await response.arrayBuffer();
+      const tmpDir = path.join(os.tmpdir(), fs.mkdtempSync('we-applet'));
+      fs.mkdirSync(tmpDir, { recursive: true });
+      const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+      console.log('webhapp path: ', webHappPath);
+      fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+      console.log('webhapp path exists: ', fs.existsSync(webHappPath));
 
-      if (guiReleaseHash && !fs.existsSync(uiDir)) {
-        console.log('Fetching and storing UI...');
-        await WE_RUST_HANDLER!.fetchAndStoreUi(
-          devhubHost,
-          devhubDnaHash,
-          guiReleaseHash,
-          WE_FILE_SYSTEM.uisDir,
-          APPSTORE_APP_ID,
-        );
-      }
+      const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
+      const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
+
+      const result: string = await rustUtils.saveWebhapp(webHappPath, uisDir, happsDir);
+      const [happFilePath, happHash, uiHash] = result.split('$');
+
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
         path: happFilePath,
         installed_app_id: appId,
@@ -451,29 +432,23 @@ app.whenReady().then(async () => {
         membrane_proofs: membraneProofs,
       });
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      // TODO Store more app metadata
       // Store app metadata
       const appAssetsInfo: AppAssetsInfo = {
-        happ: {
-          source: {
-            devhubDnaHash,
-            happReleaseHash,
-          },
-          identifier: happReleaseHash,
+        type: 'webhapp',
+        source: {
+          type: 'https',
+          url: webHappUrl,
         },
-        ui: guiReleaseHash
-          ? {
-              source: {
-                devhubDnaHash,
-                guiReleaseHash,
-              },
-              identifier: guiReleaseHash,
-            }
-          : undefined,
+        happIdentifier: happHash,
+        uiIdentifier: uiHash,
       };
       fs.writeFileSync(
         path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
-        JSON.stringify(appAssetsInfo),
+        JSON.stringify(appAssetsInfo, undefined, 4),
       );
+      // remove temp dir again
+      fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log('@install-applet-bundle: app installed.');
       return appInfo;
     },
