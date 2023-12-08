@@ -1,19 +1,8 @@
 import { asyncDerived, lazyLoadAndPoll, pipe, retryUntilSuccess } from '@holochain-open-dev/stores';
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import { ActionHash, AdminWebsocket, AppAgentClient } from '@holochain/client';
-import {
-  getHappReleases,
-  getVisibleHostsForZomeFunction,
-} from '../processes/appstore/get-happ-releases.js';
-import {
-  AppEntry,
-  DevHubResponse,
-  Entity,
-  HappReleaseEntry,
-  HostAvailability,
-} from '../processes/appstore/types.js';
+import { AppEntry, DevHubResponse, Entity } from '../processes/appstore/types.js';
 import { ConductorInfo } from '../electron-api.js';
-import { fromUint8Array } from 'js-base64';
 import { getAllApps } from '../processes/appstore/appstore-light.js';
 
 export class AppletBundlesStore {

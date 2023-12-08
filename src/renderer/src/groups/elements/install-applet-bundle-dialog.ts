@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHashB64, encodeHashToBase64 } from '@holochain/client';
+import { ActionHashB64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
@@ -17,7 +17,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
-import { AppEntry, Entity, HostAvailability } from '../../processes/appstore/types.js';
+import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { weStoreContext } from '../../context.js';
 import { WeStore } from '../../we-store.js';
 

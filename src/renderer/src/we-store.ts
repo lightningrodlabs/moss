@@ -45,7 +45,7 @@ import {
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppletHash, AppletId } from './types.js';
-import { ResourceLocatorB64, tryWithHosts } from './processes/appstore/get-happ-releases.js';
+import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';

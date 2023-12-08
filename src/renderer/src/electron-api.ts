@@ -7,7 +7,6 @@ import {
   CallZomeRequestSigned,
   ActionHashB64,
   AgentPubKeyB64,
-  DnaHashB64,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';

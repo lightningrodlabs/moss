@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiArrowLeft, mdiViewGridPlus } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiViewGridPlus } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';

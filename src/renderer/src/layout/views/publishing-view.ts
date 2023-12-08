@@ -1,7 +1,7 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
+import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';

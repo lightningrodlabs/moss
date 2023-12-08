@@ -1,6 +1,6 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
-import { ActionHashB64, AgentPubKeyB64, DnaHashB64 } from '@holochain/client';
+import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 

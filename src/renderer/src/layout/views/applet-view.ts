@@ -106,7 +106,7 @@ export class AppletViewEl extends LitElement {
     applet: Applet,
     groupsForApplet: ReadonlyMap<DnaHash, GroupStore>,
   ): Promise<EntryHash> {
-    await this.weStore.installApplet(appletHash, applet, applet.initial_devhub_gui_release_hash);
+    await this.weStore.installApplet(appletHash, applet);
 
     try {
       await Promise.all(

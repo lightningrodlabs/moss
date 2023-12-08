@@ -47,6 +47,10 @@ parser.add_argument('-p', '--profile', {
   help: 'Opens We with a custom profile instead of the default profile.',
   type: 'string',
 });
+parser.add_argument('-n', '--network-seed', {
+  help: 'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
+  type: 'string',
+});
 
 const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
 
@@ -110,6 +114,8 @@ let WE_RUST_HANDLER: WeRustHandler | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
+const APPSTORE_NETWORK_SEED = args.networkSeed ? args.networkSeed : undefined;
+console.log('APPSTORE_NETWORK_SEED: ', APPSTORE_NETWORK_SEED);
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');

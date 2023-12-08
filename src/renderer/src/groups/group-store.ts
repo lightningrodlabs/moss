@@ -32,7 +32,7 @@ import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { WeStore } from '../we-store.js';
-import { AppEntry, Entity, HappReleaseEntry } from '../processes/appstore/types.js';
+import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet } from '../applets/types.js';
 import { isAppRunning, toLowerCaseB64 } from '../utils.js';
 

@@ -14,8 +14,8 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { weStyles } from '../../shared-styles.js';
 import { disableDevMode, enableDevMode, isDevModeEnabled, openApp } from '../../electron-api.js';
-import { APPSTORE_APP_ID } from '../../../../main/sharedTypes.js';
 
+const APPSTORE_APP_ID = 'AppstoreLight';
 @localized()
 @customElement('publish-applet-button')
 export class PublishAppletButton extends LitElement {
