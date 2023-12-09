@@ -381,8 +381,6 @@ async function publishApplet(
         ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
         : undefined,
   };
-  console.log('@publishApplet: payload: ', payload);
-  console.log('@publishApplet: appletConfig.source: ', appletConfig.source);
 
   return appstoreClient.callZome({
     role_name: 'appstore',

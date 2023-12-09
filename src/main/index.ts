@@ -20,11 +20,9 @@ import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
-import { AppAssetsInfo, WeFileSystem, breakingAppVersion } from './filesystem';
-import { holochianBinaries, lairBinary } from './binaries';
+import { AppAssetsInfo, WeFileSystem } from './filesystem';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
-import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
@@ -33,8 +31,8 @@ import { setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID } from './sharedTypes';
 import { nanoid } from 'nanoid';
-import { devSetup } from './devSetup';
 import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
+import { launch } from './launch';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -76,7 +74,7 @@ parser.add_argument('--force-production-urls', {
 
 const args = parser.parse_args();
 
-const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
+export const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
   validateArgs(args, app);
 
 // import * as rustUtils from 'hc-we-rust-utils';
@@ -146,6 +144,7 @@ let WE_RUST_HANDLER: WeRustHandler | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
+let SPLASH_SCREEN_WINDOW: BrowserWindow | undefined;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -496,96 +495,31 @@ app.whenReady().then(async () => {
       return appInfo;
     },
   );
-
-  const splashscreenWindow = createSplashscreenWindow();
-
   ipcMain.handle('launch', async (_e, password) => {
     // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     // await delay(5000);
-
-    console.log('LAIR BINARY PATH: ', lairBinary);
-    // Initialize lair if necessary
-    const lairHandleTemp = childProcess.spawnSync(lairBinary, ['--version']);
-    if (!lairHandleTemp.stdout) {
-      console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
-    }
-    console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
-    if (!WE_FILE_SYSTEM.keystoreInitialized()) {
-      splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
-      // TODO: https://github.com/holochain/launcher/issues/144
-      // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: WE_FILE_SYSTEM.keystoreDir });
-      // lairHandle.stdin.write(password);
-      // lairHandle.stdin.end();
-      // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
-      //   console.log("[LAIR INIT]: ", line);
-      // })
-      await initializeLairKeystore(
-        lairBinary,
-        WE_FILE_SYSTEM.keystoreDir,
-        launcherEmitter,
-        password,
-      );
-    }
-    splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
-
-    // launch lair keystore
-    const [lairHandle, lairUrl] = await launchLairKeystore(
-      lairBinary,
-      WE_FILE_SYSTEM.keystoreDir,
-      launcherEmitter,
-      password,
-    );
-    LAIR_HANDLE = lairHandle;
-    // create zome call signer
-
-    splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
-
-    // launch holochain
-    const holochainManager = await HolochainManager.launch(
-      launcherEmitter,
+    [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
       WE_FILE_SYSTEM,
-      holochianBinaries['holochain-0.2.3'],
-      password,
-      '0.2.3',
-      WE_FILE_SYSTEM.conductorDir,
-      WE_FILE_SYSTEM.conductorConfigPath,
-      lairUrl,
-      BOOTSTRAP_URL,
-      SIGNALING_URL,
-    );
-    // ADMIN_PORT = holochainManager.adminPort;
-    // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
-    // APP_PORT = holochainManager.appPort;cd di
-    HOLOCHAIN_MANAGER = holochainManager;
-
-    WE_RUST_HANDLER = await rustUtils.WeRustHandler.connect(
-      lairUrl,
-      holochainManager.adminPort,
-      holochainManager.appPort,
+      launcherEmitter,
+      SPLASH_SCREEN_WINDOW,
       password,
     );
 
-    // Install default apps if necessary:
-    if (
-      !HOLOCHAIN_MANAGER.installedApps
-        .map((appInfo) => appInfo.installed_app_id)
-        .includes(APPSTORE_APP_ID)
-    ) {
-      console.log('Installing AppStore...');
-      splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
-      await HOLOCHAIN_MANAGER.installApp(
-        path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
-        APPSTORE_APP_ID,
-        APPSTORE_NETWORK_SEED,
-      );
-      console.log('AppstoreLight installed.');
-    }
-    if (WE_APPLET_DEV_INFO) {
-      await devSetup(WE_APPLET_DEV_INFO, HOLOCHAIN_MANAGER, WE_FILE_SYSTEM);
-    }
-    splashscreenWindow.close();
+    if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
     createOrShowMainWindow();
   });
+
+  if (WE_APPLET_DEV_INFO) {
+    [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
+      WE_FILE_SYSTEM,
+      launcherEmitter,
+      undefined,
+      'dummy-dev-password :)',
+    );
+    createOrShowMainWindow();
+  } else {
+    SPLASH_SCREEN_WINDOW = createSplashscreenWindow();
+  }
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
