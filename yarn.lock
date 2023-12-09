@@ -1875,8 +1875,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-54dcb507-468f-4eab-825f-c1ccc5a6b9db-1702077895507/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-54dcb507-468f-4eab-825f-c1ccc5a6b9db-1702077895507/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-8f6a37fd-6d30-417d-a536-9f66406fdacd-1702118866220/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-8f6a37fd-6d30-417d-a536-9f66406fdacd-1702118866220/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1897,7 +1897,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-de754a16-5817-4db1-9906-6ddb988a296f-1702077895506/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-876ad33f-8bb9-4429-ace5-7eecda3b6199-1702118866222/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -2412,6 +2412,11 @@
   integrity sha512-Pay9fq2lM2wXPWbteBsRAGiWH2hig4ZE2asK+mm7kUzlxRTfL961rj89I6zV/E3PcIkDqyuBEcMxFT7rccugeQ==
   dependencies:
     "@types/node" "*"
+
+"@types/argparse@2.0.14":
+  version "2.0.14"
+  resolved "https://registry.yarnpkg.com/@types/argparse/-/argparse-2.0.14.tgz#a4395eb7bcb9bebefb4988ece567d85881b43b0c"
+  integrity sha512-jJ6NMs9rXQ0rsqNt3TL4Elcwhd6wygo3lJOVoiHzURD34vsCcAlw443uGu4PXTtEmMF7sYKoadTCLXNmuJuQGw==
 
 "@types/backbone@^1.4.15":
   version "1.4.18"

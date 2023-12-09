@@ -15,168 +15,222 @@ import {
   EntryHash,
   HoloHashB64,
   encodeHashToBase64,
-  fakeActionHash,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { AppAssetsInfo, WeFileSystem } from './filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
+import { WeAppletDevInfo } from './cli';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 const rustUtils = require('hc-we-rust-utils');
 
 export async function devSetup(
-  config: WeDevConfig,
+  config: WeAppletDevInfo,
   holochainManager: HolochainManager,
   weFileSystem: WeFileSystem,
 ): Promise<void> {
-  // Create groups
-  const groupInstallations = config.groups.map((group) => async () => {
-    console.log(`Installing group '${group.name}'...`);
-    const icon_src = group.icon ? readIcon(group.icon) : 'undefined';
-    const appPort = holochainManager.appPort;
-    // Install group cell
-    const groupAppInfo = await createGroup(holochainManager);
-    const groupWebsocket = await AppAgentWebsocket.connect(
-      new URL(`ws://127.0.0.1:${appPort}`),
-      groupAppInfo.installed_app_id,
-    );
-    const groupCells = await groupWebsocket.appInfo();
-    for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-      await holochainManager.adminWebsocket.authorizeSigningCredentials(
-        cell['provisioned'].cell_id,
-        {
-          All: null,
-        },
-      );
-    }
-    await groupWebsocket.callZome({
-      role_name: 'group',
-      zome_name: 'group',
-      fn_name: 'set_group_profile',
-      payload: {
-        name: group.name,
-        logo_src: icon_src,
-      },
+  const publishedApplets: Record<string, Entity<AppEntry>> = {};
+
+  const appstoreClient = await AppAgentWebsocket.connect(
+    new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
+    APPSTORE_APP_ID,
+    4000,
+  );
+  const appstoreCells = await appstoreClient.appInfo();
+  for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
+      All: null,
     });
-
-    const avatarSrc = readIcon(group.agentProfile.avatar);
-
-    await groupWebsocket.callZome({
-      role_name: 'group',
-      zome_name: 'profiles',
-      fn_name: 'create_profile',
-      payload: {
-        nickname: group.agentProfile.nickname,
-        fields: { avatar: avatarSrc },
-      },
-    });
-
-    // install all applets
-    const appletInstallations = group.applets.map((appletConfig) => async () => {
-      console.log(
-        `Publishing and installing applet '${appletConfig.name}' of group '${group.name}'...`,
-      );
-
-      const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-        await fetchHappOrWebHappIfNecessary(weFileSystem, appletConfig.source);
-      // Install and register applets. Write correct AppletAssetsConfig
-      const appletEntryResponse = await publishApplet(
-        holochainManager,
-        appletConfig,
-        maybeWebHappPath ? maybeWebHappPath : happPath,
-      );
-
-      const networkSeed = randomUUID();
-      const applet = {
-        custom_name: appletConfig.name,
-        description: appletConfig.description,
-        appstore_app_hash: appletEntryResponse.payload.action,
-        network_seed: networkSeed,
-        properties: {},
-      };
-      const appletHash = await groupWebsocket.callZome({
-        role_name: 'group',
-        zome_name: 'group',
-        fn_name: 'hash_applet',
-        payload: applet,
-      });
-
-      const appId = appIdFromAppletHash(appletHash);
-
-      await installHapp(holochainManager, appId, networkSeed, groupWebsocket.myPubKey, happPath);
-
-      // TODO Store more app metadata
-      // Store app metadata
-      const appAssetsInfo: AppAssetsInfo =
-        appletConfig.source.type === 'localhost'
-          ? {
-              type: 'webhapp',
-              source: {
-                type: 'https',
-                url: `file://${happPath}`,
-              },
-              happ: {
-                sha256: happHash,
-              },
-              ui: {
-                location: {
-                  type: 'localhost',
-                  port: appletConfig.source.uiPort,
-                },
-              },
-            }
-          : maybeWebHappHash
-            ? {
-                type: 'webhapp',
-                sha256: maybeWebHappHash,
-                source: {
-                  type: 'https',
-                  url: `file://${maybeWebHappPath}`,
-                },
-                happ: {
-                  sha256: happHash,
-                },
-                ui: {
-                  location: {
-                    type: 'filesystem',
-                    sha256: maybeUiHash!,
-                  },
-                },
-              }
-            : {
-                type: 'happ',
-                sha256: happHash,
-                source: {
-                  type: 'https',
-                  url: `file://${happPath}`,
-                },
-              };
-      fs.writeFileSync(
-        path.join(weFileSystem.appsDir, `${appId}.json`),
-        JSON.stringify(appAssetsInfo, undefined, 4),
-      );
-
-      console.log('STORED APPASSETSINFO: ', appAssetsInfo);
-
-      // register applet
-      await groupWebsocket.callZome({
-        role_name: 'group',
-        zome_name: 'group',
-        fn_name: 'register_applet',
-        payload: applet,
-      });
-    });
-
-    // Install sequentially to omit source chain head moved error
-    for (const appletInstallation of appletInstallations) {
-      await appletInstallation();
-    }
-  });
-
-  // Install sequentially to omit source chain head moved error
-  for (const groupInstallation of groupInstallations) {
-    await groupInstallation();
   }
+
+  for (const group of config.config.groups) {
+    // If the running agent is supposed to create the group
+    const isCreatingAgent = group.creatingAgent.agentNum === config.agentNum;
+    const isJoiningAgent = group.joiningAgents
+      .map((info) => info.agentNum)
+      .includes(config.agentNum);
+
+    const agentProfile = isCreatingAgent
+      ? group.creatingAgent.agentProfile
+      : isJoiningAgent
+        ? group.joiningAgents.find((agent) => agent.agentNum === config.agentNum)?.agentProfile
+        : undefined;
+
+    if (agentProfile) {
+      const groupWebsocket = await joinGroup(holochainManager, group, agentProfile);
+      if (isCreatingAgent) {
+        const icon_src = readIcon(group.icon);
+        await groupWebsocket.callZome({
+          role_name: 'group',
+          zome_name: 'group',
+          fn_name: 'set_group_profile',
+          payload: {
+            name: group.name,
+            logo_src: icon_src,
+          },
+        });
+      }
+
+      for (const applet of group.applets) {
+        const isRegisteringAgent = applet.registeringAgent === config.agentNum;
+        const isJoiningAgent = applet.joiningAgents.includes(config.agentNum);
+
+        const appletConfig = config.config.applets.find(
+          (appStoreApplet) => appStoreApplet.name === applet.name,
+        );
+        if (!appletConfig)
+          throw new Error(
+            "Could not find AppletConfig for the applet that's supposed to be installed.",
+          );
+
+        const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+          await fetchHappOrWebHappIfNecessary(weFileSystem, appletConfig.source);
+
+        if (isRegisteringAgent) {
+          // Check whether applet is already published to the appstore - if not publish it
+          if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
+            const appletEntryResponse = await publishApplet(
+              appstoreClient,
+              appletConfig,
+              maybeWebHappPath ? maybeWebHappPath : happPath,
+            );
+            publishedApplets[appletConfig.name] = appletEntryResponse.payload;
+          }
+
+          const networkSeed = randomUUID();
+          const applet = {
+            custom_name: appletConfig.name,
+            description: appletConfig.description,
+            appstore_app_hash: publishedApplets[appletConfig.name].action,
+            network_seed: networkSeed,
+            properties: {},
+          };
+          const appletHash = await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'hash_applet',
+            payload: applet,
+          });
+
+          const appId = appIdFromAppletHash(appletHash);
+
+          await installHapp(
+            holochainManager,
+            appId,
+            networkSeed,
+            groupWebsocket.myPubKey,
+            happPath,
+          );
+          storeAppAssetsInfo(
+            appletConfig,
+            appId,
+            weFileSystem,
+            happPath,
+            happHash,
+            maybeWebHappHash,
+            maybeWebHappHash,
+            maybeUiHash,
+          );
+          await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'register_applet',
+            payload: applet,
+          });
+        } else if (isJoiningAgent) {
+          // Get unjoined applets and join them.
+
+          const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'get_unjoined_applets',
+            payload: null,
+          });
+          // This is best effort. If applets have not been gossiped over yet, the agent won't be able to join them
+          // automatically
+          for (const unjoinedApplet of unjoinedApplets) {
+            const appletHash = unjoinedApplet[0];
+            const appletRecord = await groupWebsocket.callZome({
+              role_name: 'group',
+              zome_name: 'group',
+              fn_name: 'get_applet',
+              payload: appletHash,
+            });
+            if (!appletRecord) {
+              console.warn(
+                `@group-client: @getApplet: No applet found for hash: ${encodeHashToBase64(
+                  appletHash,
+                )}`,
+              );
+              return undefined;
+            }
+            const entryRecord = new EntryRecord<Applet>(appletRecord).entry;
+
+            const appId = appIdFromAppletHash(appletHash);
+
+            await installHapp(
+              holochainManager,
+              appId,
+              entryRecord.network_seed!,
+              groupWebsocket.myPubKey,
+              happPath,
+            );
+            storeAppAssetsInfo(
+              appletConfig,
+              appId,
+              weFileSystem,
+              happPath,
+              happHash,
+              maybeWebHappHash,
+              maybeWebHappHash,
+              maybeUiHash,
+            );
+            await groupWebsocket.callZome({
+              role_name: 'group',
+              zome_name: 'group',
+              fn_name: 'register_applet',
+              payload: applet,
+            });
+          }
+        }
+      }
+    }
+    // If the running agent is supposed to join the existing group
+  }
+}
+
+async function joinGroup(
+  holochainManager: HolochainManager,
+  group: GroupConfig,
+  agentProfile: AgentProfile,
+): Promise<AppAgentWebsocket> {
+  // Create the group
+  console.log(`Installing group '${group.name}'...`);
+  const appPort = holochainManager.appPort;
+  // Install group cell
+  const groupAppInfo = await installGroup(holochainManager, group.newtorkSeed);
+  const groupWebsocket = await AppAgentWebsocket.connect(
+    new URL(`ws://127.0.0.1:${appPort}`),
+    groupAppInfo.installed_app_id,
+  );
+  const groupCells = await groupWebsocket.appInfo();
+  for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
+      All: null,
+    });
+  }
+  const avatarSrc = agentProfile.avatar ? readIcon(agentProfile.avatar) : undefined;
+  await groupWebsocket.callZome({
+    role_name: 'group',
+    zome_name: 'profiles',
+    fn_name: 'create_profile',
+    payload: {
+      nickname: agentProfile.nickname,
+      fields: avatarSrc ? { avatar: avatarSrc } : undefined,
+    },
+  });
+  return groupWebsocket;
 }
 
 function appIdFromAppletHash(appletHash: AppletHash): string {
@@ -193,9 +247,11 @@ function readIcon(path: string) {
   return `data:${mimeType};base64,${data.toString('base64')}`;
 }
 
-async function createGroup(holochainManager: HolochainManager): Promise<AppInfo> {
+async function installGroup(
+  holochainManager: HolochainManager,
+  networkSeed: string,
+): Promise<AppInfo> {
   const apps = await holochainManager.adminWebsocket.listApps({});
-  const networkSeed = randomUUID();
   const hash = createHash('sha256');
   hash.update(networkSeed);
   const hashedSeed = hash.digest('base64');
@@ -283,22 +339,10 @@ async function installHapp(
 }
 
 async function publishApplet(
-  holochainManager: HolochainManager,
+  appstoreClient: AppAgentWebsocket,
   appletConfig: AppletConfig,
   happOrWebHappPath: string,
-): Promise<DevHubResponse<Entity<PublisherEntry>>> {
-  const appstoreClient = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
-    APPSTORE_APP_ID,
-    4000,
-  );
-  const appstoreCells = await appstoreClient.appInfo();
-  for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
-      All: null,
-    });
-  }
-
+): Promise<DevHubResponse<Entity<AppEntry>>> {
   const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome({
     role_name: 'appstore',
     zome_name: 'appstore_api',
@@ -348,28 +392,113 @@ async function publishApplet(
   });
 }
 
-export interface WeDevConfig {
-  groups: GroupConfig[];
+function storeAppAssetsInfo(
+  appletConfig: AppletConfig,
+  appId: string,
+  weFileSystem: WeFileSystem,
+  happPath: string,
+  happHash: string,
+  maybeWebHappPath?: string,
+  maybeWebHappHash?: string,
+  maybeUiHash?: string,
+) {
+  // TODO Store more app metadata
+  // Store app metadata
+  const appAssetsInfo: AppAssetsInfo =
+    appletConfig.source.type === 'localhost'
+      ? {
+          type: 'webhapp',
+          source: {
+            type: 'https',
+            url: `file://${happPath}`,
+          },
+          happ: {
+            sha256: happHash,
+          },
+          ui: {
+            location: {
+              type: 'localhost',
+              port: appletConfig.source.uiPort,
+            },
+          },
+        }
+      : maybeWebHappHash
+        ? {
+            type: 'webhapp',
+            sha256: maybeWebHappHash,
+            source: {
+              type: 'https',
+              url: `file://${maybeWebHappPath}`,
+            },
+            happ: {
+              sha256: happHash,
+            },
+            ui: {
+              location: {
+                type: 'filesystem',
+                sha256: maybeUiHash!,
+              },
+            },
+          }
+        : {
+            type: 'happ',
+            sha256: happHash,
+            source: {
+              type: 'https',
+              url: `file://${happPath}`,
+            },
+          };
+  fs.writeFileSync(
+    path.join(weFileSystem.appsDir, `${appId}.json`),
+    JSON.stringify(appAssetsInfo, undefined, 4),
+  );
 }
 
-interface GroupConfig {
-  name: string;
-  icon: string; // path to icon
-  agentProfile: {
-    nickname: string;
-    avatar: string; // path to icon
-  };
+export interface WeDevConfig {
+  groups: GroupConfig[];
   applets: AppletConfig[];
 }
 
-interface AppletConfig {
+export interface GroupConfig {
   name: string;
+  newtorkSeed: string;
+  icon: string; // path to icon
+  creatingAgent: AgentSpecifier;
+  /**
+   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
+   */
+  joiningAgents: AgentSpecifier[];
+  applets: AppletInstallConfig[];
+}
+
+export interface AgentSpecifier {
+  agentNum: number;
+  agentProfile: AgentProfile;
+}
+
+export interface AgentProfile {
+  nickname: string;
+  avatar?: string; // path to icon
+}
+
+export interface AppletInstallConfig {
+  name: string;
+  instanceName: string;
+  registeringAgent: number;
+  /**
+   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
+   */
+  joiningAgents: number[];
+}
+export interface AppletConfig {
+  name: string;
+  subtitle: string;
   description: string;
   icon: string;
   source: WebHappLocation;
 }
 
-type WebHappLocation =
+export type WebHappLocation =
   | {
       type: 'filesystem';
       path: string;
@@ -415,6 +544,34 @@ export interface PublisherEntry {
   description: string | undefined;
   email: string | undefined;
   deprecation: any;
+}
+
+export interface AppEntry {
+  title: string;
+  subtitle: string;
+  description: string;
+  icon_src: string;
+  publisher: ActionHash; // alias EntityId
+  source: string;
+  hashes: string;
+  metadata: string;
+  editors: Array<AgentPubKey>;
+
+  author: AgentPubKey;
+  published_at: number;
+  last_updated: number;
+  deprecation?: {
+    message: string;
+    recommended_alternatives: any;
+  };
+}
+
+export interface Applet {
+  custom_name: string; // name of the applet instance as chosen by the person adding it to the group,
+  description: string;
+  appstore_app_hash: ActionHash;
+  network_seed: string | undefined;
+  properties: Record<string, Uint8Array>; // Segmented by RoleId
 }
 
 export interface WebAddress {

@@ -17,7 +17,6 @@ import * as childProcess from 'child_process';
 import url from 'url';
 import { createHash } from 'crypto';
 import { ArgumentParser } from 'argparse';
-import { rimrafSync } from 'rimraf';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
@@ -34,7 +33,8 @@ import { setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID } from './sharedTypes';
 import { nanoid } from 'nanoid';
-import { WeDevConfig, devSetup } from './devSetup';
+import { devSetup } from './devSetup';
+import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -54,15 +54,31 @@ parser.add_argument('-n', '--network-seed', {
   help: 'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
   type: 'str',
 });
-
-const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
+parser.add_argument('-c', '--dev-config', {
+  help: 'Pass the path to the dev config file to run We in applet dev mode according to the config file.',
+  type: 'str',
+});
+parser.add_argument('--agent-num', {
+  help: 'Agent number (related to the dev config file).',
+  type: 'number',
+});
+parser.add_argument('-b', '--bootstrap-url', {
+  help: 'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
+  type: 'number',
+});
+parser.add_argument('-s', '--signaling-url', {
+  help: 'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
+  type: 'str',
+});
+parser.add_argument('--force-production-urls', {
+  help: 'Allow to use production URLs of bootstrap and singaling servers during applet development. It is recommended to use hc-local-services tp spin up a local bootstrap and signaling server during development instead.',
+  type: 'str',
+});
 
 const args = parser.parse_args();
-if (args.profile && !allowedProfilePattern.test(args.profile)) {
-  throw new Error(
-    'The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)',
-  );
-}
+
+const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
+  validateArgs(args, app);
 
 // import * as rustUtils from 'hc-we-rust-utils';
 
@@ -95,24 +111,22 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 
 const IS_APPLET_DEV = !!process.env.APPLET_DEV;
 
-let WE_DEV_CONFIG: WeDevConfig | undefined;
 let DEV_TMP_DIR: string | undefined;
 
-if (IS_APPLET_DEV) {
-  console.log('Reading we.dev.config.json');
-  const configString = fs.readFileSync(path.join(process.cwd(), 'we.dev.config.json'), 'utf-8');
-  WE_DEV_CONFIG = JSON.parse(configString);
-  DEV_TMP_DIR = path.join(os.tmpdir(), `lightningrodlabs-we-dev-${nanoid(8)}`);
-  console.log('DEV_TMP_DIR', DEV_TMP_DIR);
+if (WE_APPLET_DEV_INFO) {
   // garbage collect previously used folders
   const files = fs.readdirSync(os.tmpdir());
-  const foldersToDelete = files.filter((file) => file.startsWith('lightningrodlabs-we-dev'));
+  const foldersToDelete = files.filter((file) => file.startsWith(APPLET_DEV_TMP_FOLDER_PREFIX));
   for (const folder of foldersToDelete) {
     fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
   }
 }
 
-const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile, DEV_TMP_DIR);
+const WE_FILE_SYSTEM = WeFileSystem.connect(
+  app,
+  PROFILE,
+  WE_APPLET_DEV_INFO ? WE_APPLET_DEV_INFO.tempDir : undefined,
+);
 
 const launcherEmitter = new LauncherEmitter();
 
@@ -137,9 +151,6 @@ let WE_RUST_HANDLER: WeRustHandler | undefined;
 let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
-const APPSTORE_NETWORK_SEED = args.network_seed
-  ? args.network_seed
-  : `lightningrodlabs-we-electron-${breakingAppVersion(app)}`;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -561,8 +572,8 @@ app.whenReady().then(async () => {
       WE_FILE_SYSTEM.conductorDir,
       WE_FILE_SYSTEM.conductorConfigPath,
       lairUrl,
-      'https://bootstrap.holo.host',
-      'wss://signal.holo.host',
+      BOOTSTRAP_URL,
+      SIGNALING_URL,
     );
     // ADMIN_PORT = holochainManager.adminPort;
     // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
@@ -591,8 +602,8 @@ app.whenReady().then(async () => {
       );
       console.log('AppstoreLight installed.');
     }
-    if (WE_DEV_CONFIG) {
-      await devSetup(WE_DEV_CONFIG, HOLOCHAIN_MANAGER, WE_FILE_SYSTEM);
+    if (WE_APPLET_DEV_INFO) {
+      await devSetup(WE_APPLET_DEV_INFO, HOLOCHAIN_MANAGER, WE_FILE_SYSTEM);
     }
     splashscreenWindow.close();
     createOrShowMainWindow();
