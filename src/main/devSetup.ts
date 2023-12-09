@@ -209,7 +209,7 @@ async function joinGroup(
   console.log(`Installing group '${group.name}'...`);
   const appPort = holochainManager.appPort;
   // Install group cell
-  const groupAppInfo = await installGroup(holochainManager, group.newtorkSeed);
+  const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
   const groupWebsocket = await AppAgentWebsocket.connect(
     new URL(`ws://127.0.0.1:${appPort}`),
     groupAppInfo.installed_app_id,
@@ -461,7 +461,7 @@ export interface WeDevConfig {
 
 export interface GroupConfig {
   name: string;
-  newtorkSeed: string;
+  networkSeed: string;
   icon: string; // path to icon
   creatingAgent: AgentSpecifier;
   /**

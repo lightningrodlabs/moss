@@ -60,19 +60,18 @@ parser.add_argument('-c', '--dev-config', {
 });
 parser.add_argument('--agent-num', {
   help: 'Agent number (related to the dev config file).',
-  type: 'number',
+  type: 'int',
 });
 parser.add_argument('-b', '--bootstrap-url', {
   help: 'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  type: 'number',
+  type: 'string',
 });
 parser.add_argument('-s', '--signaling-url', {
   help: 'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  type: 'str',
+  type: 'string',
 });
 parser.add_argument('--force-production-urls', {
   help: 'Allow to use production URLs of bootstrap and singaling servers during applet development. It is recommended to use hc-local-services tp spin up a local bootstrap and signaling server during development instead.',
-  type: 'str',
 });
 
 const args = parser.parse_args();
@@ -108,10 +107,6 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 // app.on('second-instance', () => {
 //   createOrShowMainWindow();
 // });
-
-const IS_APPLET_DEV = !!process.env.APPLET_DEV;
-
-let DEV_TMP_DIR: string | undefined;
 
 if (WE_APPLET_DEV_INFO) {
   // garbage collect previously used folders
@@ -261,19 +256,7 @@ app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
-  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  //   if (details.url.startsWith('applet://')) {
-  //     console.log('GOT REQUEST FROM APPLET. URL: ', details.url);
-  //     callback({
-  //       responseHeaders: {
-  //         ...details.responseHeaders,
-  //         'Content-Security-Policy': "default-src 'self' ws: 'unsafe-inline' 'unsafe-eval'",
-  //       },
-  //     });
-  //   } else {
-  //     callback({ cancel: false });
-  //   }
-  // });
+
   protocol.handle('applet', async (request) => {
     // console.log('### Got applet request: ', request);
     // console.log('### Got request with url: ', request.url);
@@ -285,11 +268,6 @@ app.whenReady().then(async () => {
     const installedAppId = `applet#${lowerCasedAppletId}`;
 
     const uiAssetsDir = WE_FILE_SYSTEM.appUiAssetsDir(installedAppId);
-
-    // console.log('uiAssetsDir: ', uiAssetsDir);
-    // console.log('uriWithoutProtocol: ', uriWithoutProtocol);
-    // console.log('uriWithoutQueryString: ', uriWithoutQueryString);
-    // console.log('uriComponents: ', uriComponents);
 
     if (!uiAssetsDir) {
       throw new Error(`Failed to find UI assets directory for requested applet assets.`);
@@ -360,7 +338,7 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
-  ipcMain.handle('is-applet-dev', (_e) => IS_APPLET_DEV);
+  ipcMain.handle('is-applet-dev', (_e) => !!WE_APPLET_DEV_INFO);
   // ipcMain.handle('uninstall-app', async (_e, appId: string) => {
   //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
   // });

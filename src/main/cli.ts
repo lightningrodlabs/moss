@@ -41,22 +41,22 @@ export function validateArgs(
       'The --agent-num argument is only valid if a dev config file is passed as well via the --dev-config argument',
     );
   }
-  if (args.agent_num && !(typeof args.agent_num !== 'number'))
+  if (args.agent_num && typeof args.agent_num !== 'number')
     throw new Error('--agent-num argument must be of type number.');
   if (args.dev_config && !args.agent_num)
     console.warn('[WARNING]: --agent-num was argument not explicitly provided. Defaulting to "1".');
   if (args.dev_config) {
     if (!args.bootstrap_url || !args.signaling_url)
       throw new Error(
-        'When running with the --dev-config argument, the --bootstrap-url and --signaling-url arguments need to be provided as well.',
+        'When running with the --dev-config argument: The --bootstrap-url and --signaling-url arguments need to be provided as well.',
       );
-    if (PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrap_url))
+    if (PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrap_url) && !args.force_production_urls)
       throw new Error(
-        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc-run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
-    if (PRODUCTION_SIGNALING_URLS.includes(args.signaling_url))
+    if (PRODUCTION_SIGNALING_URLS.includes(args.signaling_url) && !args.force_production_urls)
       throw new Error(
-        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc-run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
   }
 
@@ -109,8 +109,9 @@ function readAndValidateDevConfig(
 
   // validate groups field
   groups.forEach((group) => {
+    console.log('Got group config: ', group);
     if (!group.name) throw new Error('Invalid We dev config: Contains a group without name.');
-    if (!group.newtorkSeed)
+    if (!group.networkSeed)
       throw new Error(
         `Invalid We dev config: Group with name '${group.name}' is missing the "networkSeed" property of type string.`,
       );
@@ -197,7 +198,7 @@ function readAndValidateDevConfig(
     }
   });
 
-  const allGroupNetworkSeeds = groups.map((group) => group.newtorkSeed);
+  const allGroupNetworkSeeds = groups.map((group) => group.networkSeed);
   const uniqueGroupNetworkSeeds = new Set(allGroupNetworkSeeds);
   if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length)
     throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
@@ -206,23 +207,23 @@ function readAndValidateDevConfig(
   applets.forEach((applet) => {
     if (!applet.name || typeof applet.name !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field in the we dev config must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.`,
+        `Invalid We dev config: Applets in the "applets" field must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.`,
       );
     if (!applet.subtitle || typeof applet.subtitle !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field in the we dev config must have a "subtitle" property of type string. The "subtitle" property refers to the subtitle that the applet will have in the appstore.`,
+        `Invalid We dev config: Applets in the "applets" field must have a "subtitle" property of type string. The "subtitle" property refers to the subtitle that the applet will have in the appstore.`,
       );
     if (!applet.description || typeof applet.description !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field in the we dev config must have a "description" property of type string. The "description" property refers to the description that the applet will have in the appstore.`,
+        `Invalid We dev config: Applets in the "applets" field must have a "description" property of type string. The "description" property refers to the description that the applet will have in the appstore.`,
       );
     if (!applet.icon || typeof applet.icon !== 'string')
       throw new Error(
-        `Invalid We dev config: The applet with name '${applet.name}' has no icon path specified in the we dev config file or it is not of type string.`,
+        `Invalid We dev config: The applet with name '${applet.name}' has no icon path specified or it is not of type string.`,
       );
     if (!fs.existsSync(applet.icon))
       throw new Error(
-        `Invalid We dev config: The icon path provided for applet ${applet.name} in the we dev config does not exist.`,
+        `Invalid We dev config: The icon path provided for applet ${applet.name} does not exist.`,
       );
     if (!applet.source)
       throw new Error(

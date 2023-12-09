@@ -1875,8 +1875,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-8f6a37fd-6d30-417d-a536-9f66406fdacd-1702118866220/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-8f6a37fd-6d30-417d-a536-9f66406fdacd-1702118866220/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-811a2d8f-7a58-4438-88c7-c73afb4c4e2a-1702136442946/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-811a2d8f-7a58-4438-88c7-c73afb4c4e2a-1702136442946/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1897,7 +1897,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-876ad33f-8bb9-4429-ace5-7eecda3b6199-1702118866222/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-55970ed7-bfe0-4b3e-9b4d-fd943f4981ef-1702136442944/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -7950,6 +7950,18 @@ negotiator@0.6.3:
   version "0.6.3"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.3.tgz#58e323a72fedc0d6f9cd4d31fe49f51479590ccd"
   integrity sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==
+
+new-port-cli@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/new-port-cli/-/new-port-cli-1.0.0.tgz#ad32261be1057ffe545863c02d04183e994ffbf6"
+  integrity sha512-9uMPTw2loJJ5423n4GT2uW7y12IeqiLiuUsNaXHZb3pBWNQ/pCnSi8nJ/EHBEBO58FQszvH2YCMDoCh7pnXN4Q==
+  dependencies:
+    new-port "^1.0.0"
+
+new-port@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/new-port/-/new-port-1.0.0.tgz#65b34b6ba6cc0f548e3cf1f1523bf1594006e658"
+  integrity sha512-2rEL1cZj78LekYSfYHDGP7lIhrCauYbPy92QvEyfJcNzrXIuDjEMWlpxrgGic2BNM7S+viHn8ajuYx0b9UlJJQ==
 
 nice-try@^1.0.4:
   version "1.0.5"
