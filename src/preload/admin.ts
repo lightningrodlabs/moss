@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       membraneProofs,
       agentPubKey,
       happOrWebHappUrl,
+      metadata,
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),

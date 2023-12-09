@@ -72,7 +72,7 @@ export class WeFileSystem {
     createDirIfNotExists(this.iconsDir);
   }
 
-  static connect(app: Electron.App, profile?: Profile, temp: boolean = false) {
+  static connect(app: Electron.App, profile?: Profile, tempDir?: string) {
     profile = profile ? profile : 'default';
     const versionString = breakingAppVersion(app);
 
@@ -84,9 +84,7 @@ export class WeFileSystem {
     // check whether userData path has already been modified, otherwise, set paths to point
     // to the profile-specific paths
     if (!defaultUserDataPath.endsWith(profile)) {
-      const rootDir = temp
-        ? path.join(os.tmpdir(), `lightningrodlabs-we-dev-${nanoid(8)}`)
-        : defaultUserDataPath;
+      const rootDir = tempDir ? tempDir : defaultUserDataPath;
 
       app.setPath('logs', path.join(rootDir, versionString, profile, 'logs'));
       app.setAppLogsPath(path.join(rootDir, versionString, profile, 'logs'));

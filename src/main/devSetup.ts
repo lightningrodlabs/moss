@@ -58,6 +58,19 @@ export async function devSetup(
         logo_src: icon_src,
       },
     });
+
+    const avatarSrc = readIcon(group.agentProfile.avatar);
+
+    await groupWebsocket.callZome({
+      role_name: 'group',
+      zome_name: 'profiles',
+      fn_name: 'create_profile',
+      payload: {
+        nickname: group.agentProfile.nickname,
+        fields: { avatar: avatarSrc },
+      },
+    });
+
     // install all applets
     const appletInstallations = group.applets.map((appletConfig) => async () => {
       console.log(
@@ -142,6 +155,8 @@ export async function devSetup(
         path.join(weFileSystem.appsDir, `${appId}.json`),
         JSON.stringify(appAssetsInfo, undefined, 4),
       );
+
+      console.log('STORED APPASSETSINFO: ', appAssetsInfo);
 
       // register applet
       await groupWebsocket.callZome({
@@ -309,23 +324,27 @@ async function publishApplet(
 
   const appletIcon = readIcon(appletConfig.icon);
 
+  const payload = {
+    title: appletConfig.name,
+    subtitle: appletConfig.name,
+    description: appletConfig.description,
+    icon_src: appletIcon,
+    publisher: publisher.payload.id,
+    source,
+    hashes: 'undefined',
+    metadata:
+      appletConfig.source.type === 'localhost'
+        ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
+        : undefined,
+  };
+  console.log('@publishApplet: payload: ', payload);
+  console.log('@publishApplet: appletConfig.source: ', appletConfig.source);
+
   return appstoreClient.callZome({
     role_name: 'appstore',
     zome_name: 'appstore_api',
     fn_name: 'create_app',
-    payload: {
-      title: appletConfig.name,
-      subtitle: appletConfig.name,
-      description: appletConfig.description,
-      icon_src: appletIcon,
-      publisher: publisher.payload.id,
-      source,
-      hashes: 'undefined',
-      metadata:
-        appletConfig.source.type === 'localhost'
-          ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
-          : undefined,
-    },
+    payload,
   });
 }
 

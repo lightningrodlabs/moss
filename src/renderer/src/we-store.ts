@@ -482,6 +482,8 @@ export class WeStore {
     }
 
     const appEntry = await this.appletBundlesStore.getAppEntry(applet.appstore_app_hash);
+
+    console.log('@installApplet: got AppEntry: ', appEntry.content);
     if (!appEntry) throw new Error('AppEntry not found in AppStore');
 
     const source: WebHappSource = JSON.parse(appEntry.content.source);

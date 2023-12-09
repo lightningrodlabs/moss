@@ -17,6 +17,7 @@ import * as childProcess from 'child_process';
 import url from 'url';
 import { createHash } from 'crypto';
 import { ArgumentParser } from 'argparse';
+import { rimrafSync } from 'rimraf';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
@@ -95,14 +96,24 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 const IS_APPLET_DEV = !!process.env.APPLET_DEV;
 
 let WE_DEV_CONFIG: WeDevConfig | undefined;
+let DEV_TMP_DIR: string | undefined;
 
 if (IS_APPLET_DEV) {
   console.log('Reading we.dev.config.json');
   const configString = fs.readFileSync(path.join(process.cwd(), 'we.dev.config.json'), 'utf-8');
   WE_DEV_CONFIG = JSON.parse(configString);
+  DEV_TMP_DIR = path.join(os.tmpdir(), `lightningrodlabs-we-dev-${nanoid(8)}`);
+  console.log('DEV_TMP_DIR', DEV_TMP_DIR);
+  // garbage collect previously used folders
+  const files = fs.readdirSync(os.tmpdir());
+  const foldersToDelete = files.filter((file) => file.startsWith('lightningrodlabs-we-dev'));
+  for (const folder of foldersToDelete) {
+    fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
+  }
 }
 
-const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile, IS_APPLET_DEV);
+const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile, DEV_TMP_DIR);
+
 const launcherEmitter = new LauncherEmitter();
 
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
@@ -365,28 +376,6 @@ app.whenReady().then(async () => {
   ipcMain.handle('lair-setup-required', async () => {
     return !WE_FILE_SYSTEM.keystoreInitialized();
   });
-  // ipcMain.handle('is-dev-mode-enabled', async () => {
-  //   const enabledApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({
-  //     status_filter: AppStatusFilter.Enabled,
-  //   });
-  //   if (enabledApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
-  //     return true;
-  //   }
-  //   return false;
-  // });
-  // ipcMain.handle('enable-dev-mode', async () => {
-  //   const installedApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-  //   if (installedApps.map((appInfo) => appInfo.installed_app_id).includes(DEVHUB_APP_ID)) {
-  //     HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: DEVHUB_APP_ID });
-  //   } else {
-  //     await HOLOCHAIN_MANAGER!.installApp(
-  //       path.join(DEFAULT_APPS_DIRECTORY, 'DevHub.webhapp'),
-  //       path.join(WE_FILE_SYSTEM.uisDir, DEVHUB_APP_ID, 'assets'),
-  //       DEVHUB_APP_ID,
-  //       'launcher-electron-prototype',
-  //     );
-  //   }
-  // });
   ipcMain.handle('join-group', async (_e, networkSeed: string) => {
     const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
     const hash = createHash('sha256');
@@ -422,6 +411,7 @@ app.whenReady().then(async () => {
       happOrWebHappUrl: string,
       metadata?: string,
     ) => {
+      console.log('INSTALLING APPLET BUNDLE. metadata: ', metadata);
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
@@ -510,6 +500,7 @@ app.whenReady().then(async () => {
         path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
         JSON.stringify(appAssetsInfo, undefined, 4),
       );
+      console.log('@ipcHandler: stored AppAssetsInfo: ', appAssetsInfo);
       // remove temp dir again
       fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log('@install-applet-bundle: app installed.');
@@ -624,11 +615,6 @@ app.on('activate', () => {
     createOrShowMainWindow();
   }
 });
-
-// app.on('will-quit', (e: Event) => {
-//   // let the launcher run in the background (systray)
-//   // e.preventDefault();
-// })
 
 app.on('quit', () => {
   if (LAIR_HANDLE) {
