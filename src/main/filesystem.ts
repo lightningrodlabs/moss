@@ -1,7 +1,9 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import semver from 'semver';
 import { InstalledAppId } from '@holochain/client';
+import { nanoid } from 'nanoid';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -16,7 +18,7 @@ export type AppAssetsInfo =
   | {
       type: 'webhapp';
       source: WebHappSource;
-      sha256: string;
+      sha256?: string;
       happ: {
         sha256: string;
       };
@@ -70,7 +72,7 @@ export class WeFileSystem {
     createDirIfNotExists(this.iconsDir);
   }
 
-  static connect(app: Electron.App, profile?: Profile) {
+  static connect(app: Electron.App, profile?: Profile, temp: boolean = false) {
     profile = profile ? profile : 'default';
     const versionString = breakingAppVersion(app);
 
@@ -82,13 +84,14 @@ export class WeFileSystem {
     // check whether userData path has already been modified, otherwise, set paths to point
     // to the profile-specific paths
     if (!defaultUserDataPath.endsWith(profile)) {
-      app.setPath('logs', path.join(defaultUserDataPath, versionString, profile, 'logs'));
-      app.setAppLogsPath(path.join(defaultUserDataPath, versionString, profile, 'logs'));
-      app.setPath('userData', path.join(defaultUserDataPath, versionString, profile));
-      app.setPath(
-        'sessionData',
-        path.join(defaultUserDataPath, versionString, profile, 'chromium'),
-      );
+      const rootDir = temp
+        ? path.join(os.tmpdir(), `lightningrodlabs-we-dev-${nanoid(8)}`)
+        : defaultUserDataPath;
+
+      app.setPath('logs', path.join(rootDir, versionString, profile, 'logs'));
+      app.setAppLogsPath(path.join(rootDir, versionString, profile, 'logs'));
+      app.setPath('userData', path.join(rootDir, versionString, profile));
+      app.setPath('sessionData', path.join(rootDir, versionString, profile, 'chromium'));
       fs.rmdirSync(defaultLogsPath);
     }
 

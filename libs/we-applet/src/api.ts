@@ -54,14 +54,10 @@ export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) =
 };
 
 export const initializeHotReload = async () => {
-  // read applet hash from
-  console.log('INITIALIZING HOT RELOAD');
   const appletIframeScript = await postMessage<string>({
     type: 'get-applet-iframe-script',
   });
-  console.log('GOT APPLET IFRAME SCRIPT: ', appletIframeScript);
   eval(appletIframeScript);
-  console.log('EVALUATED APPLET IFRAME SCRIPT');
 };
 
 export class AppletServices {

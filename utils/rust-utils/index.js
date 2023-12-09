@@ -252,9 +252,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { defaultConductorConfig, saveWebhapp, WeRustHandler, ZomeCallSigner } = nativeBinding
+const { defaultConductorConfig, saveHappOrWebhapp, WeRustHandler, ZomeCallSigner } = nativeBinding
 
 module.exports.defaultConductorConfig = defaultConductorConfig
-module.exports.saveWebhapp = saveWebhapp
+module.exports.saveHappOrWebhapp = saveHappOrWebhapp
 module.exports.WeRustHandler = WeRustHandler
 module.exports.ZomeCallSigner = ZomeCallSigner

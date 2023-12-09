@@ -30,7 +30,8 @@ declare global {
         networkSeed: string,
         membraneProofs: any,
         agentPubKey: AgentPubKeyB64,
-        webHappUrl: string,
+        happOrWebHappUrl: string,
+        metadata?: string,
       ) => Promise<AppInfo>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string) => Promise<AppInfo>;

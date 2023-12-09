@@ -33,6 +33,7 @@ import { setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID } from './sharedTypes';
 import { nanoid } from 'nanoid';
+import { WeDevConfig, devSetup } from './devSetup';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -91,7 +92,17 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 //   createOrShowMainWindow();
 // });
 
-const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile);
+const IS_APPLET_DEV = !!process.env.APPLET_DEV;
+
+let WE_DEV_CONFIG: WeDevConfig | undefined;
+
+if (IS_APPLET_DEV) {
+  console.log('Reading we.dev.config.json');
+  const configString = fs.readFileSync(path.join(process.cwd(), 'we.dev.config.json'), 'utf-8');
+  WE_DEV_CONFIG = JSON.parse(configString);
+}
+
+const WE_FILE_SYSTEM = WeFileSystem.connect(app, args.profile, IS_APPLET_DEV);
 const launcherEmitter = new LauncherEmitter();
 
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
@@ -118,9 +129,6 @@ let MAIN_WINDOW: BrowserWindow | undefined | null;
 const APPSTORE_NETWORK_SEED = args.network_seed
   ? args.network_seed
   : `lightningrodlabs-we-electron-${breakingAppVersion(app)}`;
-const IS_APPLET_DEV = !!process.env.APPLET_DEV;
-
-console.log('IS_APPLET_DEV: ', IS_APPLET_DEV);
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -335,16 +343,13 @@ app.whenReady().then(async () => {
   //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
   // });
   ipcMain.handle('get-applet-dev-port', (_e, appId: string) => {
-    console.log('@@@@ APPLET DEV PORT REQUESTED.');
     const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
     if (appAssetsInfo.type === 'webhapp' && appAssetsInfo.ui.location.type === 'localhost') {
-      console.log('@@@@ APPLET DEV PORT: ', appAssetsInfo.ui.location.port);
       return appAssetsInfo.ui.location.port;
     }
     return undefined;
   });
   ipcMain.handle('get-applet-iframe-script', () => {
-    console.log('@@@@ APPLET IFRAME SCRIPT REQUESTED.');
     return APPLET_IFRAME_SCRIPT;
   });
   ipcMain.handle('get-installed-apps', async () => {
@@ -414,7 +419,8 @@ app.whenReady().then(async () => {
       networkSeed: string,
       membraneProofs,
       agentPubKey,
-      webHappUrl: string,
+      happOrWebHappUrl: string,
+      metadata?: string,
     ) => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -423,21 +429,20 @@ app.whenReady().then(async () => {
         return;
       }
       // fetch webhapp from URL
-      console.log('Fetching webhapp from URL: ', webHappUrl);
-      const response = await net.fetch(webHappUrl);
+      console.log('Fetching happ/webhapp from URL: ', happOrWebHappUrl);
+      const response = await net.fetch(happOrWebHappUrl);
       const buffer = await response.arrayBuffer();
       const tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
-      console.log('webhapp path: ', webHappPath);
       fs.writeFileSync(webHappPath, new Uint8Array(buffer));
-      console.log('webhapp path exists: ', fs.existsSync(webHappPath));
 
       const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
       const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
-      const result: string = await rustUtils.saveWebhapp(webHappPath, uisDir, happsDir);
-      const [happFilePath, webHappHash, happHash, uiHash] = result.split('$');
+      const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+
+      const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
         path: happFilePath,
@@ -449,23 +454,58 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       // TODO Store more app metadata
       // Store app metadata
-      const appAssetsInfo: AppAssetsInfo = {
-        type: 'webhapp',
-        sha256: webHappHash,
-        source: {
-          type: 'https',
-          url: webHappUrl,
-        },
-        happ: {
-          sha256: happHash,
-        },
-        ui: {
-          location: {
-            type: 'filesystem',
-            sha256: uiHash,
-          },
-        },
-      };
+      let uiPort: number | undefined;
+      if (metadata) {
+        try {
+          const metadataObject = JSON.parse(metadata);
+          if (metadataObject.uiPort) {
+            uiPort = metadataObject.uiPort;
+          }
+        } catch (e) {}
+      }
+      const appAssetsInfo: AppAssetsInfo = webHappHash
+        ? {
+            type: 'webhapp',
+            sha256: webHappHash,
+            source: {
+              type: 'https',
+              url: happOrWebHappUrl,
+            },
+            happ: {
+              sha256: happHash,
+            },
+            ui: {
+              location: {
+                type: 'filesystem',
+                sha256: uiHash,
+              },
+            },
+          }
+        : uiPort
+          ? {
+              type: 'webhapp',
+              source: {
+                type: 'https',
+                url: happOrWebHappUrl,
+              },
+              happ: {
+                sha256: happHash,
+              },
+              ui: {
+                location: {
+                  type: 'localhost',
+                  port: uiPort,
+                },
+              },
+            }
+          : {
+              type: 'happ',
+              sha256: happHash,
+              source: {
+                type: 'https',
+                url: happOrWebHappUrl,
+              },
+            };
       fs.writeFileSync(
         path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
         JSON.stringify(appAssetsInfo, undefined, 4),
@@ -476,37 +516,6 @@ app.whenReady().then(async () => {
       return appInfo;
     },
   );
-  // ipcMain.handle('fetch-icon', async (_e, appActionHashB64: ActionHashB64) => {
-  //   if (!APPSTORE_CLIENT) {
-  //     APPSTORE_CLIENT = await AppAgentWebsocket.connect(
-  //       new URL(`ws://127.0.0.1:${HOLOCHAIN_MANAGER!.appPort}`),
-  //       APPSTORE_APP_ID,
-  //     );
-  //   }
-  //   const appEntryEntity: any = await APPSTORE_CLIENT.callZome({
-  //     role_name: 'appstore',
-  //     zome_name: 'appstore_api',
-  //     fn_name: 'get_app',
-  //     payload: {
-  //       id: decodeHashFromBase64(appActionHashB64),
-  //     },
-  //   });
-  //   const essenceResponse = await APPSTORE_CLIENT.callZome({
-  //     role_name: 'appstore',
-  //     zome_name: 'mere_memory_api',
-  //     fn_name: 'retrieve_bytes',
-  //     payload: appEntryEntity.content.icon,
-  //   });
-  //   console.log('Got essenceResponse: ', essenceResponse);
-  //   const mimeType = appEntryEntity.content.metadata.icon_mime_type;
-  //   console.log('ICON MIME TYPE: ', mimeType);
-
-  //   const base64String = fromUint8Array(essenceResponse);
-
-  //   const iconSrc = `data:${mimeType};base64,${base64String}`;
-
-  //   return iconSrc;
-  // });
 
   const splashscreenWindow = createSplashscreenWindow();
 
@@ -590,6 +599,9 @@ app.whenReady().then(async () => {
         APPSTORE_NETWORK_SEED,
       );
       console.log('AppstoreLight installed.');
+    }
+    if (WE_DEV_CONFIG) {
+      await devSetup(WE_DEV_CONFIG, HOLOCHAIN_MANAGER, WE_FILE_SYSTEM);
     }
     splashscreenWindow.close();
     createOrShowMainWindow();

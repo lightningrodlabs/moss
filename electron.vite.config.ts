@@ -4,7 +4,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ['@holochain/client', 'nanoid'] })],
+    plugins: [externalizeDepsPlugin({ exclude: ['@holochain/client', 'nanoid', 'mime'] })],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

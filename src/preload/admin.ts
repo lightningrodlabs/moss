@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     networkSeed: string,
     membraneProofs: any,
     agentPubKey: AgentPubKeyB64,
-    webHappUrl: string,
+    happOrWebHappUrl: string,
+    metadata?: string,
   ) =>
     ipcRenderer.invoke(
       'install-applet-bundle',
@@ -31,7 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       networkSeed,
       membraneProofs,
       agentPubKey,
-      webHappUrl,
+      happOrWebHappUrl,
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),

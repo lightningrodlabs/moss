@@ -495,6 +495,7 @@ export class WeStore {
       {},
       encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
       source.url,
+      appEntry.content.metadata,
     );
 
     await this.reloadManualStores();

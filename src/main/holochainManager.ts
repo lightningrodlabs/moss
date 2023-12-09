@@ -129,7 +129,7 @@ export class HolochainManager {
   async installWebApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
     console.log('uiTargetDir: ', uiTargetDir);
     console.log('Installing app...');
-    const tempHappPath = await rustUtils.saveWebhapp(filePath, uiTargetDir);
+    const tempHappPath = await rustUtils.saveHappOrWebhapp(filePath, uiTargetDir);
     console.log('Stored UI and got temp happ path: ', tempHappPath);
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
     const appInfo = await this.adminWebsocket.installApp({

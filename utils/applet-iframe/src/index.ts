@@ -141,7 +141,6 @@ const weApi: WeServices = {
 };
 
 (async () => {
-  console.log('@@@ HELLO FROM THE APPLET IFRAME SCRIPT.');
   window.__WE_APPLET_HASH__ = readAppletHash();
   window.__WE_API__ = weApi;
   window.__WE_APPLET_SERVICES__ = new AppletServices();
@@ -273,17 +272,8 @@ const weApi: WeServices = {
   setTimeout(async () => {
     // console.log(`@applet-iframe setup: Getting global attachment types...`);
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    console.log(
-      `@applet-iframe setup: Got global attachment types: ${JSON.stringify(globalAttachmentTypes)}`,
-    );
     window.__WE_API__.attachmentTypes = globalAttachmentTypes;
-    console.log(
-      `@applet-iframe setup: reading window.__WE_APPLET_SERVICES__: ${JSON.stringify(
-        window.__WE_APPLET_SERVICES__,
-      )}`,
-    );
   });
-  console.log('@@@@ APPLET IFRAME SCRIPT RAN TO COMPLETION.');
 })();
 
 async function fetchLocalStorage() {
