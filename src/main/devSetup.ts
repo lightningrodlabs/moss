@@ -72,12 +72,12 @@ export async function devSetup(
         });
       }
 
-      for (const applet of group.applets) {
-        const isRegisteringAgent = applet.registeringAgent === config.agentNum;
-        const isJoiningAgent = applet.joiningAgents.includes(config.agentNum);
+      for (const appletInstallConfig of group.applets) {
+        const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentNum;
+        const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentNum);
 
         const appletConfig = config.config.applets.find(
-          (appStoreApplet) => appStoreApplet.name === applet.name,
+          (appStoreApplet) => appStoreApplet.name === appletInstallConfig.name,
         );
         if (!appletConfig)
           throw new Error(
@@ -165,14 +165,14 @@ export async function devSetup(
               );
               return undefined;
             }
-            const entryRecord = new EntryRecord<Applet>(appletRecord).entry;
+            const applet = new EntryRecord<Applet>(appletRecord).entry;
 
             const appId = appIdFromAppletHash(appletHash);
 
             await installHapp(
               holochainManager,
               appId,
-              entryRecord.network_seed!,
+              applet.network_seed!,
               groupWebsocket.myPubKey,
               happPath,
             );

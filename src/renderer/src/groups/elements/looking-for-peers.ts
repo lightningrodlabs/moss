@@ -15,6 +15,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
+import { encodeHashToBase64 } from '@holochain/client';
 
 @localized()
 @customElement('looking-for-peers')
@@ -94,6 +95,11 @@ export class LookingForPeers extends LitElement {
           >${msg(
             "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch We so that you can synchronize with them.",
           )}</span
+        >
+        <span style="max-width: 600px; text-align: center; margin-top: 40px;"
+          >${msg("The group's DNA hash is: ")}<pre></pre>${encodeHashToBase64(
+            this.groupStore.groupDnaHash,
+          )}</pre></span
         >
       </div>
     `;
