@@ -17,3 +17,7 @@ testing-applets*
 *.tsbuildinfo
 we.dev.config*
 !we.dev.config.example.json
+*.AppImage
+*.dmg
+*.exe
+*.deb
