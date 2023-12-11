@@ -28,7 +28,7 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 nix develop
 ```
 
-1. Build the Node Rust-add-ons, install all dependencies and download default apps:
+1. Build the Node Rust-add-ons, install and build all dependencies and download default apps:
 
 ```bash
 yarn setup
@@ -68,19 +68,14 @@ yarn build:happ
 
 ### Development
 
+The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.json` file.
+
 ```bash
-$ yarn dev
+$ yarn build:example-applet
+$ yarn applet-dev
 ```
 
-### Testing with applets
-
-If you already have applets webhapps to test with, add them in the `testing-applets` folder and run `yarn dev`.
-
-The `scripts/publish-applets.js` is going to be executed when running `yern dev`, which will publish the applets `.webhapp` files that it finds in the `testing-applets` folder.
-
-Note that you need to enter the password and enable dev mode in the App Library within We before the publishing can begin.
-
-To check whether this has finished, look in the terminal for the log: `Published applet: [name of your Applet]`
+We will start up 2 agents each with the same group and 3 applets installed. One of the applets will be in hot-reloading mode, i.e. you can modify the code in the `example/ui/` directory and should see the changes immediately. You should also see changes applied to the `src/renderer/src` directory immediately reflected.
 
 ### Build
 
