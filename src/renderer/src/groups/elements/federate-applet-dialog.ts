@@ -113,7 +113,7 @@ export class FederateAppletDialog extends LitElement {
         const groups = Array.from(this._groups.value.value.entries());
 
         return html`
-
+          <form
             id="form"
             ${onSubmit((f) => this.federateApplet(decodeHashFromBase64(f.groupDnaHash)))}
           >
