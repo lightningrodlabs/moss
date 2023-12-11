@@ -84,7 +84,11 @@ export class MainDashboard extends LitElement {
   }
 
   displayGroupHome() {
-    return !this.selectedAppletHash.value && this.dashboardMode === 'groupView';
+    return (
+      this.selectedGroupDnaHash &&
+      !this.selectedAppletHash.value &&
+      this.dashboardMode === 'groupView'
+    );
   }
 
   async handleOpenGroup(networkSeed: string) {
@@ -211,53 +215,57 @@ export class MainDashboard extends LitElement {
           style="flex: 1; ${this.displayApplet(appletId) ? '' : 'display: none'}"
         ></applet-main>`;
       })}
-      <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
-        <group-home
-          style="flex: 1; ${this.displayGroupHome() ? '' : 'display: none'}"
-          @group-left=${() => {
-            this.selectedGroupDnaHash = undefined;
-            this.dashboardMode = 'browserView';
-            this._weStore.selectAppletHash(undefined);
-          }}
-          @applet-selected=${(e: CustomEvent) => {
-            // this.openViews.openAppletMain(e.detail.appletHash);
-            this._weStore.selectAppletHash(e.detail.appletHash);
-          }}
-          @applet-selected-open-tab=${(e: CustomEvent) => {
-            this.dashboardMode = 'browserView';
-            this.selectedGroupDnaHash = undefined;
-            this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
-          }}
-          @custom-view-selected=${(e) => {
-            this.dashboardMode = 'browserView';
-            this.dynamicLayout.openTab({
-              id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                e.detail.customViewHash,
-              )}`,
-              type: 'component',
-              componentType: 'custom-view',
-              componentState: {
-                groupDnaHash: this.selectedGroupDnaHash,
-                customViewHash: encodeHashToBase64(e.detail.customViewHash),
-              },
-            });
-          }}
-          @custom-view-created=${(e) => {
-            this.dashboardMode = 'browserView';
-            this.dynamicLayout.openTab({
-              id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                e.detail.customViewHash,
-              )}`,
-              type: 'component',
-              componentType: 'custom-view',
-              componentState: {
-                groupDnaHash: this.selectedGroupDnaHash,
-                customViewHash: encodeHashToBase64(e.detail.customViewHash),
-              },
-            });
-          }}
-        ></group-home>
-      </group-context>
+      ${this.displayGroupHome()
+        ? html`
+            <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
+              <group-home
+                style="flex: 1; ${this.displayGroupHome() ? '' : 'display: none'}"
+                @group-left=${() => {
+                  this.selectedGroupDnaHash = undefined;
+                  this.dashboardMode = 'browserView';
+                  this._weStore.selectAppletHash(undefined);
+                }}
+                @applet-selected=${(e: CustomEvent) => {
+                  // this.openViews.openAppletMain(e.detail.appletHash);
+                  this._weStore.selectAppletHash(e.detail.appletHash);
+                }}
+                @applet-selected-open-tab=${(e: CustomEvent) => {
+                  this.dashboardMode = 'browserView';
+                  this.selectedGroupDnaHash = undefined;
+                  this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
+                }}
+                @custom-view-selected=${(e) => {
+                  this.dashboardMode = 'browserView';
+                  this.dynamicLayout.openTab({
+                    id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
+                      e.detail.customViewHash,
+                    )}`,
+                    type: 'component',
+                    componentType: 'custom-view',
+                    componentState: {
+                      groupDnaHash: this.selectedGroupDnaHash,
+                      customViewHash: encodeHashToBase64(e.detail.customViewHash),
+                    },
+                  });
+                }}
+                @custom-view-created=${(e) => {
+                  this.dashboardMode = 'browserView';
+                  this.dynamicLayout.openTab({
+                    id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
+                      e.detail.customViewHash,
+                    )}`,
+                    type: 'component',
+                    componentType: 'custom-view',
+                    componentState: {
+                      groupDnaHash: this.selectedGroupDnaHash,
+                      customViewHash: encodeHashToBase64(e.detail.customViewHash),
+                    },
+                  });
+                }}
+              ></group-home>
+            </group-context>
+          `
+        : html``}
     `;
   }
 
@@ -339,6 +347,10 @@ export class MainDashboard extends LitElement {
             (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
           @applet-installed=${(e: CustomEvent) => {
             // console.log("GOT APPLET INSTALLED EVENT");
+            const appletId = encodeHashToBase64(e.detail.appletEntryHash);
+            if (!this._openApplets.includes(appletId)) {
+              this._openApplets.push(appletId);
+            }
             this._weStore.selectAppletHash(e.detail.appletEntryHash);
             this.selectedGroupDnaHash = e.detail.groupDnaHash;
             this.dashboardMode = 'groupView';
