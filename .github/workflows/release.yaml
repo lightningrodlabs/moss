@@ -131,7 +131,7 @@ jobs:
         run: |
           yarn build:mac
           ls dist
-          gh release upload "we-aplha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.dmg" --clobber
+          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.dmg" --clobber
 
       - name: build and upload the app (Linux)
         if: matrix.platform == 'ubuntu-20.04'
@@ -140,7 +140,7 @@ jobs:
         run: |
           yarn build:linux
           ls dist
-          gh release upload "we-aplha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
+          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
 
       - name: build and upload the app (Windows)
         if: matrix.platform == 'windows-2019'
@@ -149,4 +149,4 @@ jobs:
         run: |
           yarn build:win
           ls dist
-          gh release upload "we-aplha-v${{ steps.version.outputs.APP_VERSION }}" "dist/we-alpha-electron-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/we-alpha-electron-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
