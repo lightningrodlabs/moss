@@ -18,7 +18,9 @@ The details on how to create a _we applet_ can be found [here](docs/How-to-creat
 
 Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and download the latest release for your Operating System.
 
-### Install
+## For Developers
+
+### Environment Setup
 
 **Note:** The following steps require Rust and Go installed.
 
