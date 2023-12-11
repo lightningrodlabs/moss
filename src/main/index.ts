@@ -106,14 +106,16 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 //   createOrShowMainWindow();
 // });
 
-// if (WE_APPLET_DEV_INFO) {
-//   // garbage collect previously used folders
-//   const files = fs.readdirSync(os.tmpdir());
-//   const foldersToDelete = files.filter((file) => file.startsWith(APPLET_DEV_TMP_FOLDER_PREFIX));
-//   for (const folder of foldersToDelete) {
-//     fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
-//   }
-// }
+if (WE_APPLET_DEV_INFO) {
+  // garbage collect previously used folders
+  const files = fs.readdirSync(os.tmpdir());
+  const foldersToDelete = files.filter((file) =>
+    file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${WE_APPLET_DEV_INFO.agentNum}`),
+  );
+  for (const folder of foldersToDelete) {
+    fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
+  }
+}
 
 const WE_FILE_SYSTEM = WeFileSystem.connect(
   app,

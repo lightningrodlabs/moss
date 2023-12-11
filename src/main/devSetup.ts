@@ -33,6 +33,23 @@ export async function devSetup(
   const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentNum}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentNum}.`);
   const publishedApplets: Record<string, Entity<AppEntry>> = {};
+  const installableApplets: Record<
+    string,
+    [string, string, string | undefined, string | undefined, string | undefined]
+  > = {};
+
+  const appletToCustomNameMapping: Record<string, Record<string, string>> = {}; // custom name to applet type name by group
+
+  for (const installableApplet of config.config.applets) {
+    logDevSetup(
+      `Fetching applet '${installableApplet.name}' from source specified in the config file...`,
+    );
+
+    installableApplets[installableApplet.name] = await fetchHappOrWebHappIfNecessary(
+      weFileSystem,
+      installableApplet.source,
+    );
+  }
 
   const appstoreClient = await AppAgentWebsocket.connect(
     new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
@@ -88,13 +105,14 @@ export async function devSetup(
             "Could not find AppletConfig for the applet that's supposed to be installed.",
           );
 
-        logDevSetup(
-          `Fetching applet '${appletInstallConfig.name}' from source specified in the config file...`,
-        );
-        const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-          await fetchHappOrWebHappIfNecessary(weFileSystem, appletConfig.source);
-
         if (isRegisteringAgent) {
+          const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+            installableApplets[appletInstallConfig.name];
+
+          if (!appletToCustomNameMapping[group.name]) appletToCustomNameMapping[group.name] = {};
+          appletToCustomNameMapping[group.name][appletInstallConfig.instanceName] =
+            appletInstallConfig.name;
+
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
             logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
@@ -136,7 +154,7 @@ export async function devSetup(
             weFileSystem,
             happPath,
             happHash,
-            maybeWebHappHash,
+            maybeWebHappPath,
             maybeWebHappHash,
             maybeUiHash,
           );
@@ -157,10 +175,26 @@ export async function devSetup(
             fn_name: 'get_unjoined_applets',
             payload: null,
           });
+          if (unjoinedApplets.length === 0) {
+            logDevSetup(
+              'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
+            );
+          }
+          logDevSetup(
+            `Found applets to join:\n${unjoinedApplets.map(
+              ([eh, ak]) => `[
+              ${encodeHashToBase64(eh)},
+              ${encodeHashToBase64(ak)},
+            ]\n`,
+            )}`,
+          );
           // This is best effort. If applets have not been gossiped over yet, the agent won't be able to join them
           // automatically
           for (const unjoinedApplet of unjoinedApplets) {
             const appletHash = unjoinedApplet[0];
+            logDevSetup(
+              `Trying to join applet with entry hash ${encodeHashToBase64(appletHash)} ...`,
+            );
             const appletRecord = await groupWebsocket.callZome({
               role_name: 'group',
               zome_name: 'group',
@@ -168,16 +202,20 @@ export async function devSetup(
               payload: appletHash,
             });
             if (!appletRecord) {
-              console.warn(
-                `@group-client: @getApplet: No applet found for hash: ${encodeHashToBase64(
+              logDevSetup(
+                `Applet with entryhash ${encodeHashToBase64(
                   appletHash,
-                )}`,
+                )} not found in group DHT yet. Skipping...`,
               );
               return undefined;
             }
             const applet = new EntryRecord<Applet>(appletRecord).entry;
 
-            logDevSetup(`Joining applet isntance '${applet.custom_name}'...`);
+            const appletTypeName = appletToCustomNameMapping[group.name][applet.custom_name];
+            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+              installableApplets[appletTypeName];
+
+            logDevSetup(`Joining applet instance '${applet.custom_name}'...`);
 
             const appId = appIdFromAppletHash(appletHash);
 
@@ -194,7 +232,7 @@ export async function devSetup(
               weFileSystem,
               happPath,
               happHash,
-              maybeWebHappHash,
+              maybeWebHappPath,
               maybeWebHappHash,
               maybeUiHash,
             );

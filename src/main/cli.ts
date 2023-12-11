@@ -4,6 +4,7 @@ import os from 'os';
 import { WeDevConfig, GroupConfig, AppletConfig } from './devSetup';
 import { nanoid } from 'nanoid';
 import { breakingAppVersion } from './filesystem';
+import { config } from 'process';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
@@ -67,10 +68,14 @@ export function validateArgs(
   );
 
   if (devConfig) {
+    const agentNum = args.agent_num ? args.agent_num : 1;
     devInfo = {
       config: devConfig,
-      tempDir: path.join(os.tmpdir(), `${APPLET_DEV_TMP_FOLDER_PREFIX}-${nanoid(8)}`),
-      agentNum: args.agent_num ? args.agent_num : 1,
+      tempDir: path.join(
+        os.tmpdir(),
+        `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentNum}-${nanoid(8)}`,
+      ),
+      agentNum,
     };
   }
 

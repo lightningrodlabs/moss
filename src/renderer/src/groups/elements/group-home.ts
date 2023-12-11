@@ -11,7 +11,7 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import { mdiArrowLeft, mdiCog, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
@@ -78,6 +78,9 @@ export class GroupHome extends LitElement {
     () => [this.weStore, this.groupStore],
   );
 
+  @state()
+  _recentlyJoined: Array<AppletId> = [];
+
   _unjoinedApplets = new StoreSubscriber(
     this,
     () =>
@@ -118,7 +121,7 @@ export class GroupHome extends LitElement {
   view: View = { view: 'main' };
 
   @state()
-  _joiningNewApplet: boolean = false;
+  _joiningNewApplet: string | undefined;
 
   groupProfile = new StoreSubscriber(
     this,
@@ -167,7 +170,7 @@ export class GroupHome extends LitElement {
   }
 
   async joinNewApplet(appletHash: AppletHash) {
-    this._joiningNewApplet = true;
+    this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
       console.log('Trying to join applet.');
       await this.groupStore.installApplet(appletHash);
@@ -176,7 +179,8 @@ export class GroupHome extends LitElement {
       notifyError(`Failed to join Applet (See console for details).`);
       console.error(e);
     }
-    this._joiningNewApplet = false;
+    this._recentlyJoined.push(encodeHashToBase64(appletHash));
+    this._joiningNewApplet = undefined;
   }
 
   renderNewApplets() {
@@ -188,8 +192,12 @@ export class GroupHome extends LitElement {
           <sl-divider style="--color: grey"></sl-divider>
 
           <div class="row" style="flex-wrap: wrap;">
-            ${this._unjoinedApplets.value.value.map(
-              ([appletHash, appletEntry, appEntry, logo, agentKey]) => html`
+            ${this._unjoinedApplets.value.value
+              .filter(
+                ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
+              )
+              .map(
+                ([appletHash, appletEntry, appEntry, logo, agentKey]) => html`
                 <sl-card class="applet-card">
                   <div class="column" style="flex: 1;">
                     <div class="row" style="align-items: center; margin-bottom: 10px;">
@@ -209,12 +217,14 @@ export class GroupHome extends LitElement {
                       <span><b>added by:</b></span>
                       <profile-detail style="margin-left: 5px;" .agentPubKey=${agentKey}></profile-detail>
                     </div>
-                    <sl-button .loading=${this._joiningNewApplet} variant="primary" @click=${() =>
+                    <sl-button .loading=${
+                      this._joiningNewApplet === encodeHashToBase64(appletHash)
+                    } variant="primary" @click=${() =>
                       this.joinNewApplet(appletHash)}>Join</sl-button>
                   <div>
                 </sl-card>
               `,
-            )}
+              )}
           </div>
         `;
       default:
