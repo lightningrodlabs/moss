@@ -1,6 +1,6 @@
 import { consume } from '@lit/context';
 import { state, customElement, query } from 'lit/decorators.js';
-import { encodeHashToBase64, DnaHash, AnyDhtHash } from '@holochain/client';
+import { encodeHashToBase64, DnaHash, AnyDhtHash, decodeHashFromBase64 } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 import {
   StoreSubscriber,
@@ -12,7 +12,7 @@ import { mapValues } from '@holochain-open-dev/utils';
 import { hashState, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnify } from '@mdi/js';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -60,8 +60,8 @@ export class MainDashboard extends LitElement {
   @state(hashState())
   selectedGroupDnaHash: DnaHash | undefined;
 
-  // @state(hashState())
-  // selectedAppletHash: EntryHash | undefined;
+  @state()
+  _openApplets: Array<AppletId> = [];
 
   @state()
   dashboardMode: 'groupView' | 'browserView' = 'browserView';
@@ -76,6 +76,16 @@ export class MainDashboard extends LitElement {
     () => this._weStore.selectedAppletHash(),
     () => [this._weStore],
   );
+
+  displayApplet(appletId: AppletId) {
+    return this.selectedAppletHash.value
+      ? appletId === encodeHashToBase64(this.selectedAppletHash.value)
+      : false;
+  }
+
+  displayGroupHome() {
+    return !this.selectedAppletHash.value && this.dashboardMode === 'groupView';
+  }
 
   async handleOpenGroup(networkSeed: string) {
     const groups = await toPromise(
@@ -193,68 +203,62 @@ export class MainDashboard extends LitElement {
   }
 
   renderDashboard() {
-    switch (this.dashboardMode) {
-      case 'browserView':
-        return html``;
-
-      case 'groupView':
-        return this.selectedAppletHash.value
-          ? html`
-              <applet-main
-                .appletHash=${this.selectedAppletHash.value}
-                style="flex: 1;"
-              ></applet-main>
-            `
-          : html`
-              <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
-                <group-home
-                  style="flex: 1"
-                  @group-left=${() => {
-                    this.selectedGroupDnaHash = undefined;
-                    this.dashboardMode = 'browserView';
-                    this._weStore.selectAppletHash(undefined);
-                  }}
-                  @applet-selected=${(e: CustomEvent) => {
-                    // this.openViews.openAppletMain(e.detail.appletHash);
-                    this._weStore.selectAppletHash(e.detail.appletHash);
-                  }}
-                  @applet-selected-open-tab=${(e: CustomEvent) => {
-                    this.dashboardMode = 'browserView';
-                    this.selectedGroupDnaHash = undefined;
-                    this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
-                  }}
-                  @custom-view-selected=${(e) => {
-                    this.dashboardMode = 'browserView';
-                    this.dynamicLayout.openTab({
-                      id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                        e.detail.customViewHash,
-                      )}`,
-                      type: 'component',
-                      componentType: 'custom-view',
-                      componentState: {
-                        groupDnaHash: this.selectedGroupDnaHash,
-                        customViewHash: encodeHashToBase64(e.detail.customViewHash),
-                      },
-                    });
-                  }}
-                  @custom-view-created=${(e) => {
-                    this.dashboardMode = 'browserView';
-                    this.dynamicLayout.openTab({
-                      id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                        e.detail.customViewHash,
-                      )}`,
-                      type: 'component',
-                      componentType: 'custom-view',
-                      componentState: {
-                        groupDnaHash: this.selectedGroupDnaHash,
-                        customViewHash: encodeHashToBase64(e.detail.customViewHash),
-                      },
-                    });
-                  }}
-                ></group-home>
-              </group-context>
-            `;
-    }
+    return html`
+      ${this._openApplets.map((appletId) => {
+        const appletHash = decodeHashFromBase64(appletId);
+        return html`<applet-main
+          .appletHash=${appletHash}
+          style="flex: 1; ${this.displayApplet(appletId) ? '' : 'display: none'}"
+        ></applet-main>`;
+      })}
+      <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
+        <group-home
+          style="flex: 1; ${this.displayGroupHome() ? '' : 'display: none'}"
+          @group-left=${() => {
+            this.selectedGroupDnaHash = undefined;
+            this.dashboardMode = 'browserView';
+            this._weStore.selectAppletHash(undefined);
+          }}
+          @applet-selected=${(e: CustomEvent) => {
+            // this.openViews.openAppletMain(e.detail.appletHash);
+            this._weStore.selectAppletHash(e.detail.appletHash);
+          }}
+          @applet-selected-open-tab=${(e: CustomEvent) => {
+            this.dashboardMode = 'browserView';
+            this.selectedGroupDnaHash = undefined;
+            this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
+          }}
+          @custom-view-selected=${(e) => {
+            this.dashboardMode = 'browserView';
+            this.dynamicLayout.openTab({
+              id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
+                e.detail.customViewHash,
+              )}`,
+              type: 'component',
+              componentType: 'custom-view',
+              componentState: {
+                groupDnaHash: this.selectedGroupDnaHash,
+                customViewHash: encodeHashToBase64(e.detail.customViewHash),
+              },
+            });
+          }}
+          @custom-view-created=${(e) => {
+            this.dashboardMode = 'browserView';
+            this.dynamicLayout.openTab({
+              id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
+                e.detail.customViewHash,
+              )}`,
+              type: 'component',
+              componentType: 'custom-view',
+              componentState: {
+                groupDnaHash: this.selectedGroupDnaHash,
+                customViewHash: encodeHashToBase64(e.detail.customViewHash),
+              },
+            });
+          }}
+        ></group-home>
+      </group-context>
+    `;
   }
 
   openTab(_arg0: {
@@ -361,15 +365,13 @@ export class MainDashboard extends LitElement {
         ></dynamic-layout>
       </div>
 
-      ${this.dashboardMode === 'groupView'
-        ? html`
-            <div
-              style="display: flex; flex: 1; position: fixed; top: 74px; left: 74px; bottom: 0; right: 0;"
-            >
-              ${this.renderDashboard()}
-            </div>
-          `
-        : html``}
+      <div
+        style="${this.dashboardMode === 'groupView'
+          ? 'display: flex;'
+          : 'display: none;'} flex: 1; position: fixed; top: 74px; left: 74px; bottom: 0; right: 0;"
+      >
+        ${this.renderDashboard()}
+      </div>
 
       <!-- left sidebar -->
       <div
@@ -439,6 +441,10 @@ export class MainDashboard extends LitElement {
                 <group-applets-sidebar
                   .selectedAppletHash=${this.selectedAppletHash.value}
                   @applet-selected=${(e: CustomEvent) => {
+                    const appletId = encodeHashToBase64(e.detail.appletHash);
+                    if (!this._openApplets.includes(appletId)) {
+                      this._openApplets.push(appletId);
+                    }
                     this.dashboardMode = 'groupView';
                     // this.dashboardMode = "browserView";
                     this._weStore.selectAppletHash(e.detail.appletHash);
