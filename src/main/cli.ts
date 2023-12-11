@@ -4,7 +4,6 @@ import os from 'os';
 import { WeDevConfig, GroupConfig, AppletConfig } from './devSetup';
 import { nanoid } from 'nanoid';
 import { breakingAppVersion } from './filesystem';
-import { config } from 'process';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
@@ -119,13 +118,9 @@ function readAndValidateDevConfig(
       throw new Error(
         `Invalid We dev config: Group with name '${group.name}' is missing the "networkSeed" property of type string.`,
       );
-    if (!group.icon || typeof group.icon !== 'string')
+    if (!group.icon)
       throw new Error(
-        `Invalid We dev config: The group with name '${group.name}' has no icon path or is not of type string.`,
-      );
-    if (!fs.existsSync(group.icon))
-      throw new Error(
-        `Invalid We dev config: The icon path provided for group '${group.name}' does not exist.`,
+        `Invalid We dev config: The group with name '${group.name}' has no icon provided.`,
       );
     if (!group.creatingAgent)
       throw new Error(
@@ -221,13 +216,9 @@ function readAndValidateDevConfig(
       throw new Error(
         `Invalid We dev config: Applets in the "applets" field must have a "description" property of type string. The "description" property refers to the description that the applet will have in the appstore.`,
       );
-    if (!applet.icon || typeof applet.icon !== 'string')
+    if (!applet.icon)
       throw new Error(
-        `Invalid We dev config: The applet with name '${applet.name}' has no icon path specified or it is not of type string.`,
-      );
-    if (!fs.existsSync(applet.icon))
-      throw new Error(
-        `Invalid We dev config: The icon path provided for applet ${applet.name} does not exist.`,
+        `Invalid We dev config: The applet with name '${applet.name}' has no icon provided.`,
       );
     if (!applet.source)
       throw new Error(

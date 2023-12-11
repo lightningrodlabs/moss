@@ -140,7 +140,7 @@ export class HolochainManager {
       network_seed: networkSeed,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
-    console.log(`Insalled app '${appId}'.`);
+    console.log(`Installed app '${appId}'.`);
     const installedApps = await this.adminWebsocket.listApps({});
     this.installedApps = installedApps;
     this.launcherEmitter.emitAppInstalled({
@@ -160,7 +160,6 @@ export class HolochainManager {
       network_seed: networkSeed,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
-    console.log('Insalled app.');
     const installedApps = await this.adminWebsocket.listApps({});
     this.installedApps = installedApps;
     this.launcherEmitter.emitAppInstalled({

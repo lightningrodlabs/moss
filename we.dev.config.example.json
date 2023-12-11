@@ -8,7 +8,10 @@
         "agentNum": 1,
         "agentProfile": {
           "nickname": "Alice",
-          "avatar": "/home/gaston/Pictures/alice.png"
+          "avatar": {
+            "type": "filesystem",
+            "path": "/home/gaston/Pictures/alice.png"
+          }
         }
       },
       "joiningAgents": [
@@ -16,7 +19,10 @@
           "agentNum": 2,
           "agentProfile": {
             "nickname": "Bob",
-            "avatar": "/home/gaston/Pictures/bob.jpeg"
+            "avatar": {
+              "type": "filesystem",
+              "path": "/home/gaston/Pictures/bob.jpeg"
+            }
           }
         }
       ],
@@ -47,7 +53,10 @@
       "name": "Example Applet",
       "subtitle": "Just an Example",
       "description": "Just an example applet to show the various affordances of We",
-      "icon": "/home/gaston/Pictures/example.png",
+      "icon": {
+        "type": "filesystem",
+        "path": "/home/gaston/Pictures/exmaple.png"
+      },
       "source": {
         "type": "filesystem",
         "path": "/home/gaston/code/holochain/lightningrodlabs/applets/example/workdir/example.webhapp"
@@ -57,7 +66,10 @@
       "name": "Example Applet Hot Reload",
       "subtitle": "Just an Example",
       "description": "Just an example applet to show the various affordances of We",
-      "icon": "/home/gaston/Pictures/exmaple.png",
+      "icon": {
+        "type": "filesystem",
+        "path": "/home/gaston/Pictures/exmaple.png"
+      },
       "source": {
         "type": "localhost",
         "happPath": "/home/gaston/code/holochain/lightningrodlabs/applets/example/workdir/example-applet.happ",
@@ -68,7 +80,10 @@
       "name": "notebooks",
       "subtitle": "Collaborative note taking",
       "description": "Real-time notetaking based on syn",
-      "icon": "/home/gaston/Pictures/notebooks.png",
+      "icon": {
+        "type": "https",
+        "url": "https://lightningrodlabs.org/projects/notebooks.png"
+      },
       "source": {
         "type": "https",
         "url": "https://github.com/lightningrodlabs/notebooks/releases/download/v0.0.7/notebooks.webhapp"

@@ -38,8 +38,6 @@ export async function devSetup(
     [string, string, string | undefined, string | undefined, string | undefined]
   > = {};
 
-  const appletToCustomNameMapping: Record<string, Record<string, string>> = {}; // custom name to applet type name by group
-
   for (const installableApplet of config.config.applets) {
     logDevSetup(
       `Fetching applet '${installableApplet.name}' from source specified in the config file...`,
@@ -81,7 +79,7 @@ export async function devSetup(
       const groupWebsocket = await joinGroup(holochainManager, group, agentProfile);
       if (isCreatingAgent) {
         logDevSetup(`Creating group profile for group '${group.name}'...`);
-        const icon_src = readIcon(group.icon);
+        const icon_src = await readIcon(group.icon);
         await groupWebsocket.callZome({
           role_name: 'group',
           zome_name: 'group',
@@ -108,10 +106,6 @@ export async function devSetup(
         if (isRegisteringAgent) {
           const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
             installableApplets[appletInstallConfig.name];
-
-          if (!appletToCustomNameMapping[group.name]) appletToCustomNameMapping[group.name] = {};
-          appletToCustomNameMapping[group.name][appletInstallConfig.instanceName] =
-            appletInstallConfig.name;
 
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
@@ -211,9 +205,11 @@ export async function devSetup(
             }
             const applet = new EntryRecord<Applet>(appletRecord).entry;
 
-            const appletTypeName = appletToCustomNameMapping[group.name][applet.custom_name];
+            const associatedAppletInstallConfig = group.applets.find(
+              (installConfig) => installConfig.instanceName === applet.custom_name,
+            );
             const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-              installableApplets[appletTypeName];
+              installableApplets[associatedAppletInstallConfig!.name];
 
             logDevSetup(`Joining applet instance '${applet.custom_name}'...`);
 
@@ -256,7 +252,6 @@ async function joinGroup(
   agentProfile: AgentProfile,
 ): Promise<AppAgentWebsocket> {
   // Create the group
-  console.log(`Installing group '${group.name}'...`);
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
@@ -270,7 +265,7 @@ async function joinGroup(
       All: null,
     });
   }
-  const avatarSrc = agentProfile.avatar ? readIcon(agentProfile.avatar) : undefined;
+  const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   await groupWebsocket.callZome({
     role_name: 'group',
     zome_name: 'profiles',
@@ -291,10 +286,25 @@ function toLowerCaseB64(hashb64: HoloHashB64): string {
   return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
 }
 
-function readIcon(path: string) {
-  const data = fs.readFileSync(path);
-  const mimeType = mime.getType(path);
-  return `data:${mimeType};base64,${data.toString('base64')}`;
+async function readIcon(location: ResourceLocation) {
+  switch (location.type) {
+    case 'filesystem': {
+      const data = fs.readFileSync(location.path);
+      const mimeType = mime.getType(location.path);
+      return `data:${mimeType};base64,${data.toString('base64')}`;
+    }
+    case 'https': {
+      const response = await net.fetch(location.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const mimeType = mime.getType(location.url);
+      return `data:${mimeType};base64,${_arrayBufferToBase64(arrayBuffer)}`;
+    }
+
+    default:
+      throw new Error(
+        `Fetching icon from source type ${location.type} is not implemented. Got icon source: ${location}.`,
+      );
+  }
 }
 
 async function installGroup(
@@ -322,7 +332,7 @@ async function installGroup(
 
 async function fetchHappOrWebHappIfNecessary(
   weFileSystem: WeFileSystem,
-  source: WebHappLocation,
+  source: ResourceLocation,
 ): Promise<[string, string, string | undefined, string | undefined, string | undefined]> {
   switch (source.type) {
     case 'https': {
@@ -416,7 +426,7 @@ async function publishApplet(
     url: `file://${happOrWebHappPath}`,
   });
 
-  const appletIcon = readIcon(appletConfig.icon);
+  const appletIcon = await readIcon(appletConfig.icon);
 
   const payload = {
     title: appletConfig.name,
@@ -502,6 +512,16 @@ function storeAppAssetsInfo(
   );
 }
 
+function _arrayBufferToBase64(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 export interface WeDevConfig {
   groups: GroupConfig[];
   applets: AppletConfig[];
@@ -510,7 +530,7 @@ export interface WeDevConfig {
 export interface GroupConfig {
   name: string;
   networkSeed: string;
-  icon: string; // path to icon
+  icon: ResourceLocation; // path to icon
   creatingAgent: AgentSpecifier;
   /**
    * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
@@ -526,7 +546,7 @@ export interface AgentSpecifier {
 
 export interface AgentProfile {
   nickname: string;
-  avatar?: string; // path to icon
+  avatar?: ResourceLocation; // path to icon
 }
 
 export interface AppletInstallConfig {
@@ -542,11 +562,11 @@ export interface AppletConfig {
   name: string;
   subtitle: string;
   description: string;
-  icon: string;
-  source: WebHappLocation;
+  icon: ResourceLocation;
+  source: ResourceLocation;
 }
 
-export type WebHappLocation =
+export type ResourceLocation =
   | {
       type: 'filesystem';
       path: string;
