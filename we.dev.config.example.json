@@ -1,16 +1,19 @@
 {
   "groups": [
     {
-      "name": "Lightningrod Labs",
+      "name": "Tennis Club",
       "networkSeed": "098rc1m-09384u-crm-29384u-cmkj",
-      "icon": "/home/gaston/Pictures/lightningrodlabs_logo.png",
+      "icon": {
+        "type": "filesystem",
+        "path": "./example/ui/tennis_club.png"
+      },
       "creatingAgent": {
         "agentNum": 1,
         "agentProfile": {
-          "nickname": "Alice",
+          "nickname": "Gaston",
           "avatar": {
             "type": "filesystem",
-            "path": "/home/gaston/Pictures/alice.png"
+            "path": "./example/ui/gaston.jpeg"
           }
         }
       },
@@ -18,10 +21,10 @@
         {
           "agentNum": 2,
           "agentProfile": {
-            "nickname": "Bob",
+            "nickname": "Marsupilami",
             "avatar": {
               "type": "filesystem",
-              "path": "/home/gaston/Pictures/bob.jpeg"
+              "path": "./example/ui/marsupilami.jpeg"
             }
           }
         }
@@ -34,14 +37,14 @@
           "joiningAgents": [2]
         },
         {
-          "name": "Example Applet Web Source",
-          "instanceName": "Example Applet Web Source",
+          "name": "Example Applet Hot Reload",
+          "instanceName": "Example Applet Hot Reload",
           "registeringAgent": 1,
           "joiningAgents": [2]
         },
         {
-          "name": "Example Applet Hot Reload",
-          "instanceName": "Example Applet Hot Reload",
+          "name": "notebooks",
+          "instanceName": "notebooks",
           "registeringAgent": 1,
           "joiningAgents": [2]
         }
@@ -55,11 +58,11 @@
       "description": "Just an example applet to show the various affordances of We",
       "icon": {
         "type": "filesystem",
-        "path": "/home/gaston/Pictures/exmaple.png"
+        "path": "./example/ui/icon.png"
       },
       "source": {
         "type": "filesystem",
-        "path": "/home/gaston/code/holochain/lightningrodlabs/applets/example/workdir/example.webhapp"
+        "path": "./example/workdir/example-applet.webhapp"
       }
     },
     {
@@ -68,11 +71,11 @@
       "description": "Just an example applet to show the various affordances of We",
       "icon": {
         "type": "filesystem",
-        "path": "/home/gaston/Pictures/exmaple.png"
+        "path": "./example/ui/icon.png"
       },
       "source": {
         "type": "localhost",
-        "happPath": "/home/gaston/code/holochain/lightningrodlabs/applets/example/workdir/example-applet.happ",
+        "happPath": "./example/workdir/example-applet.happ",
         "uiPort": 8888
       }
     },

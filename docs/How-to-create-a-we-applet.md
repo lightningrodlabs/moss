@@ -1,18 +1,19 @@
 # We Applet
 
-A *we* applet is a Holochain application and associated UI that's only intended to be used inside the `We` environment. This means that the UI, instead of rendering a full blown web application, only renders the appropriate elements that the `We` framework requests.
+A _we_ applet is a Holochain application and associated UI that's only intended to be used inside the `We` environment. This means that the UI, instead of rendering a full blown web application, only renders the appropriate elements that the `We` framework requests.
 
 At the technical level, a we applet is just a normal `.webhapp`, with 2 main differences from any other web happ:
 
 - UI code:
+
   - Your UI code may offer different rendering modes or UI widgets as well as offer AppletServices like search, attachments and more that We or other Applets can make use of
 
 - hApp code:
   - You don't need the profiles zome or any other zome that deals with profiles, as they will be managed by the we group DNA.
 
-##  How to create a we applet
+## How to create a we applet
 
-Check out the [README](../ui/libs/we-applet/README.md) of the @lightningrodlabs/we-applet package to see how to modify your hApp UI in order to become We compatible.
+Check out the [README](../libs/we-applet/README.md) of the @lightningrodlabs/we-applet package to see how to modify your hApp UI in order to become We compatible.
 
 ### [⚠️ Currently Outdated ⚠️] Scaffolding
 

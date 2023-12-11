@@ -94,6 +94,7 @@ export class SidebarButton extends LitElement {
           width: var(--size, 48px);
           height: var(--size, 48px);
           border-radius: var(--border-radius, 50%);
+          background: white;
           /* object-fit: cover; */
         }
         /* .icon:hover {

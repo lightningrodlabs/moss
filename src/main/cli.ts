@@ -167,7 +167,7 @@ function readAndValidateDevConfig(
         // make sure that the applet has an applet config
         if (!applets.map((appletConfig) => appletConfig.name).includes(applet.name))
           throw new Error(
-            'Invalid We dev config: Can only add applets to groups that are also defined in the roo level "applets" field.',
+            'Invalid We dev config: Can only add applets to groups that are also defined in the root level "applets" field.',
           );
         if (!applet.instanceName || typeof applet.instanceName !== 'string')
           throw new Error(
@@ -234,10 +234,14 @@ function readAndValidateDevConfig(
           throw new Error(
             `Invalid We dev config: No "path" field provided in the "source" field of type "filesystem" for applet '${applet.name}' or it is not of type string.`,
           );
-        if (!fs.existsSync(applet.source.path))
+        if (!fs.existsSync(applet.source.path)) {
+          console.log('applet.source.path: ', applet.source.path);
+          console.log('__dirname: ', __dirname);
+          console.log('cwd: ', process.cwd());
           throw new Error(
             `Invalid We dev config: The "path" provided in the "source" field of applet '${applet.name}' does not exist.`,
           );
+        }
         break;
       case 'https':
         if (
