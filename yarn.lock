@@ -1687,8 +1687,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-20a43b40-0d2d-47f0-9a4d-970d16ddd4c7-1702304193874/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-20a43b40-0d2d-47f0-9a4d-970d16ddd4c7-1702304193874/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-72f900e2-12c6-4592-b440-5a6320e50518-1702305984539/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-72f900e2-12c6-4592-b440-5a6320e50518-1702305984539/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1697,7 +1697,7 @@
     lit "^3.0.2"
 
 "@lightningrodlabs/we-applet@file:./libs/we-applet", "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.12.0"
+  version "0.12.1"
   dependencies:
     "@holochain/client" "0.16.6"
 
@@ -1709,7 +1709,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-732672a1-b5fc-4e6c-a479-ba0a0c96988e-1702304193872/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-1b003e1d-d8b0-42f7-bbc8-bb1bdbe51dd3-1702305984538/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"

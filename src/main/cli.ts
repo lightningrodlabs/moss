@@ -84,7 +84,7 @@ export function validateArgs(
   // If provided take the one provided, otherwise check whether it's applet dev mode
   const appstoreNetworkSeed = args.network_seed
     ? args.network_seed
-    : devConfig
+    : devConfig || !app.isPackaged
       ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
       : `lightningrodlabs-we-${breakingAppVersion(app)}`;
 
