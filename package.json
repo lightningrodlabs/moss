@@ -31,7 +31,7 @@
     "prepare:default-apps": "yarn build:happ && cp ./workdir/we.happ resources/default-apps/ && yarn fetch:default-apps",
     "fetch:default-apps": "yarn download:appstore",
     "build:happ": "yarn build:zomes && hc app pack ./workdir --recursive",
-    "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace --exclude we-alpha",
+    "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "download:appstore": "curl -L --output resources/default-apps/AppstoreLight.happ https://github.com/matthme/appstore-light/releases/download/appstore-light-0.0.1/AppstoreLight.happ",
     "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we-electron/releases/download/untagged-ea2224502bafec82db51/we.happ",
