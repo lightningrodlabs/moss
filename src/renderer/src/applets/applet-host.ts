@@ -43,7 +43,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
   window.addEventListener('message', async (message) => {
     try {
       // console.log('and source: ', message.source);
-      let appletHash: AppletHash | undefined;
+      let receivedAppletHash: AppletHash;
       // if origin.startswith(applet://) then get it from the origin
       // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.weStore.isAppletDev) {
 
@@ -53,18 +53,24 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         // const appletHash = installedApplets.find(
         //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
         // );
-        appletHash = decodeHashFromBase64(lowerCaseAppletId);
+        receivedAppletHash = decodeHashFromBase64(lowerCaseAppletId);
       } else if (
         (origin.startsWith('http:127.0.0.1') || origin.startsWith('http://localhost')) &&
         weStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
-        appletHash = message.data.appletHash;
+        receivedAppletHash = message.data.appletHash;
+      } else {
+        throw new Error('Received message from applet with invalid origin.');
       }
 
       const installedApplets = await toPromise(weStore.installedApplets);
 
-      if (!appletHash) {
+      const installedAppletHash = installedApplets.find(
+        (hash) => encodeHashToBase64(hash) === encodeHashToBase64(receivedAppletHash),
+      );
+
+      if (!installedAppletHash) {
         console.log(
           'appletHash not found. installedApplets: ',
           installedApplets.map((hash) => encodeHashToBase64(hash)),
@@ -73,7 +79,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         );
         const iframeConfig: IframeConfig = {
           type: 'not-installed',
-          appletName: encodeHashToBase64(appletHash),
+          appletName: encodeHashToBase64(receivedAppletHash),
         };
         message.ports[0].postMessage({ type: 'success', result: iframeConfig });
         // throw new Error(`Requested applet is not installed`);
@@ -84,7 +90,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       const result = await handleAppletIframeMessage(
         weStore,
         openViews,
-        appletHash,
+        receivedAppletHash,
         message.data.request,
       );
       message.ports[0].postMessage({ type: 'success', result });

@@ -1,9 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
 import semver from 'semver';
 import { InstalledAppId } from '@holochain/client';
-import { nanoid } from 'nanoid';
 
 export type Profile = string;
 export type UiIdentifier = string;
