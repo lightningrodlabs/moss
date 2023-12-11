@@ -128,7 +128,7 @@ export class HolochainManager {
 
   async installWebApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
     console.log('uiTargetDir: ', uiTargetDir);
-    console.log('Installing app...');
+    console.log(`Installing app '${appId}'...`);
     const tempHappPath = await rustUtils.saveHappOrWebhapp(filePath, uiTargetDir);
     console.log('Stored UI and got temp happ path: ', tempHappPath);
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
@@ -140,9 +140,8 @@ export class HolochainManager {
       network_seed: networkSeed,
     });
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
-    console.log('Insalled app.');
+    console.log(`Insalled app '${appId}'.`);
     const installedApps = await this.adminWebsocket.listApps({});
-    console.log('Installed apps: ', installedApps);
     this.installedApps = installedApps;
     this.launcherEmitter.emitAppInstalled({
       version: this.version,
@@ -151,7 +150,7 @@ export class HolochainManager {
   }
 
   async installApp(filePath: string, appId: string, networkSeed?: string) {
-    console.log('Installing happ...');
+    console.log(`Installing headless app'${appId}'`);
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
@@ -163,7 +162,6 @@ export class HolochainManager {
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
     console.log('Insalled app.');
     const installedApps = await this.adminWebsocket.listApps({});
-    console.log('Installed apps: ', installedApps);
     this.installedApps = installedApps;
     this.launcherEmitter.emitAppInstalled({
       version: this.version,
@@ -176,9 +174,8 @@ export class HolochainManager {
     if (uiDir) {
       fs.rmSync(uiDir, { recursive: true });
     }
-    console.log('Uninstalled app.');
+    console.log(`Uninstalled app '${appId}'.`);
     const installedApps = await this.adminWebsocket.listApps({});
-    console.log('Installed apps: ', installedApps);
     this.installedApps = installedApps;
   }
 }

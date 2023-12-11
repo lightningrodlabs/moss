@@ -30,6 +30,8 @@ export async function devSetup(
   holochainManager: HolochainManager,
   weFileSystem: WeFileSystem,
 ): Promise<void> {
+  const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentNum}]: ${msg}`);
+  logDevSetup(`Setting up agent ${config.agentNum}.`);
   const publishedApplets: Record<string, Entity<AppEntry>> = {};
 
   const appstoreClient = await AppAgentWebsocket.connect(
@@ -58,8 +60,10 @@ export async function devSetup(
         : undefined;
 
     if (agentProfile) {
+      logDevSetup(`Installing group '${group.name}'...`);
       const groupWebsocket = await joinGroup(holochainManager, group, agentProfile);
       if (isCreatingAgent) {
+        logDevSetup(`Creating group profile for group '${group.name}'...`);
         const icon_src = readIcon(group.icon);
         await groupWebsocket.callZome({
           role_name: 'group',
@@ -84,12 +88,16 @@ export async function devSetup(
             "Could not find AppletConfig for the applet that's supposed to be installed.",
           );
 
+        logDevSetup(
+          `Fetching applet '${appletInstallConfig.name}' from source specified in the config file...`,
+        );
         const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
           await fetchHappOrWebHappIfNecessary(weFileSystem, appletConfig.source);
 
         if (isRegisteringAgent) {
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
+            logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
             const appletEntryResponse = await publishApplet(
               appstoreClient,
               appletConfig,
@@ -114,7 +122,7 @@ export async function devSetup(
           });
 
           const appId = appIdFromAppletHash(appletHash);
-
+          logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
           await installHapp(
             holochainManager,
             appId,
@@ -132,6 +140,7 @@ export async function devSetup(
             maybeWebHappHash,
             maybeUiHash,
           );
+          logDevSetup(`Registering applet instance '${appletInstallConfig.instanceName}'...`);
           await groupWebsocket.callZome({
             role_name: 'group',
             zome_name: 'group',
@@ -140,6 +149,7 @@ export async function devSetup(
           });
         } else if (isJoiningAgent) {
           // Get unjoined applets and join them.
+          logDevSetup(`Fetching applets to join for group '${group.name}'...`);
 
           const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
             role_name: 'group',
@@ -166,6 +176,8 @@ export async function devSetup(
               return undefined;
             }
             const applet = new EntryRecord<Applet>(appletRecord).entry;
+
+            logDevSetup(`Joining applet isntance '${applet.custom_name}'...`);
 
             const appId = appIdFromAppletHash(appletHash);
 
