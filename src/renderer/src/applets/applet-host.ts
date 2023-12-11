@@ -48,20 +48,20 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.weStore.isAppletDev) {
 
       // }
-      if (origin.startsWith('applet://')) {
+      if (message.origin.startsWith('applet://')) {
         const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
         // const appletHash = installedApplets.find(
         //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
         // );
         receivedAppletHash = decodeHashFromBase64(lowerCaseAppletId);
       } else if (
-        (origin.startsWith('http:127.0.0.1') || origin.startsWith('http://localhost')) &&
+        (message.origin.startsWith('http://127.0.0.1') || origin.startsWith('http://localhost')) &&
         weStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
         receivedAppletHash = message.data.appletHash;
       } else {
-        throw new Error('Received message from applet with invalid origin.');
+        throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
       }
 
       const installedApplets = await toPromise(weStore.installedApplets);
