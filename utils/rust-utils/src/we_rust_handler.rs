@@ -1,15 +1,13 @@
 #![deny(clippy::all)]
 
-use std::{ops::Deref, path::PathBuf};
-
-use holo_hash::{AgentPubKey, AgentPubKeyB64, DnaHash, DnaHashB64};
 use holochain_client::AdminWebsocket;
 use holochain_zome_types::{Signature, ZomeCallUnsigned};
 use lair_keystore_api::{dependencies::url::Url, ipc_keystore::ipc_keystore_connect, LairClient};
 use napi::Result;
 use sodoken::BufRead;
+use std::ops::Deref;
 
-use crate::{types::*, websockets::AppAgentWebsocket};
+use crate::types::*;
 
 struct WeRustHandler {
     lair_client: LairClient,
@@ -78,96 +76,6 @@ impl WeRustHandler {
 
         Ok(signed_zome_call)
     }
-
-    pub async fn fetch_and_store_happ(
-        &self,
-        host: String, // Agent public key
-        devhub_happ_library_dna_hash: String,
-        happ_release_hash: String,
-        storage_dir: String,
-        appstore_app_id: String,
-    ) -> napi::Result<()> {
-        let storage_dir = PathBuf::from(storage_dir);
-        let host = AgentPubKey::from(
-            AgentPubKeyB64::from_b64_str(host.as_str())
-                .map_err(|e| {
-                    format!(
-                        "Failed to convert agent public key string to AgentPubKeyb64: {}",
-                        e
-                    )
-                })
-                .map_err(|e| napi::Error::from_reason(e))?,
-        );
-        let devhub_dna_hash = DnaHash::from(
-            DnaHashB64::from_b64_str(devhub_happ_library_dna_hash.as_str())
-                .map_err(|e| format!("Failed to convert dna hash string to DnaHashB64: {}", e))
-                .map_err(|e| napi::Error::from_reason(e))?,
-        );
-        let mut app_agent_websocket = AppAgentWebsocket::connect(
-            format!("ws://127.0.0.1:{}", self.app_port),
-            appstore_app_id,
-            self.lair_client.clone(),
-        )
-        .await
-        .map_err(|e| napi::Error::from_reason(e))?;
-
-        crate::devhub_appstore::fetch_assemble_and_store_happ(
-            &mut app_agent_websocket,
-            host,
-            devhub_dna_hash,
-            happ_release_hash,
-            storage_dir,
-        )
-        .await
-        .map_err(|e| napi::Error::from_reason(e))?;
-
-        Ok(())
-    }
-
-    pub async fn fetch_and_store_ui(
-        &self,
-        host: String,
-        devhub_happ_library_dna_hash: String,
-        gui_release_hash: String,
-        uis_storage_dir: String,
-        appstore_app_id: String,
-    ) -> napi::Result<()> {
-        let uis_storage_dir = PathBuf::from(uis_storage_dir);
-        let host = AgentPubKey::from(
-            AgentPubKeyB64::from_b64_str(host.as_str())
-                .map_err(|e| {
-                    format!(
-                        "Failed to convert agent public key string to AgentPubKeyb64: {}",
-                        e
-                    )
-                })
-                .map_err(|e| napi::Error::from_reason(e))?,
-        );
-        let devhub_dna_hash = DnaHash::from(
-            DnaHashB64::from_b64_str(devhub_happ_library_dna_hash.as_str())
-                .map_err(|e| format!("Failed to convert dna hash string to DnaHashB64: {}", e))
-                .map_err(|e| napi::Error::from_reason(e))?,
-        );
-        let mut app_agent_websocket = AppAgentWebsocket::connect(
-            format!("ws://127.0.0.1:{}", self.app_port),
-            appstore_app_id,
-            self.lair_client.clone(),
-        )
-        .await
-        .map_err(|e| napi::Error::from_reason(e))?;
-
-        crate::devhub_appstore::fetch_and_store_ui_from_host(
-            &mut app_agent_websocket,
-            host,
-            gui_release_hash,
-            devhub_dna_hash,
-            uis_storage_dir,
-        )
-        .await
-        .map_err(|e| napi::Error::from_reason(e))?;
-
-        Ok(())
-    }
 }
 
 #[napi(js_name = "WeRustHandler")]
@@ -211,55 +119,5 @@ impl JsWeRustHandler {
             )))?
             .sign_zome_call(zome_call_unsigned_js)
             .await
-    }
-
-    #[napi]
-    pub async fn fetch_and_store_ui(
-        &self,
-        host: String,
-        devhub_dna_hash: String,
-        gui_release_hash: String,
-        uis_storage_dir: String,
-        appstore_app_id: String,
-    ) -> Result<()> {
-        self.we_rust_handler
-            .as_ref()
-            .ok_or(napi::Error::from_reason(format!(
-                "Failed to get rust handler reference"
-            )))?
-            .fetch_and_store_ui(
-                host,
-                devhub_dna_hash,
-                gui_release_hash,
-                uis_storage_dir,
-                appstore_app_id,
-            )
-            .await?;
-        Ok(())
-    }
-
-    #[napi]
-    pub async fn fetch_and_store_happ(
-        &self,
-        host: String, // Agent public key
-        devhub_dna_hash: String,
-        happ_release_hash: String,
-        storage_dir: String,
-        appstore_app_id: String,
-    ) -> Result<()> {
-        self.we_rust_handler
-            .as_ref()
-            .ok_or(napi::Error::from_reason(format!(
-                "Failed to get rust handler reference"
-            )))?
-            .fetch_and_store_happ(
-                host,
-                devhub_dna_hash,
-                happ_release_hash,
-                storage_dir,
-                appstore_app_id,
-            )
-            .await?;
-        Ok(())
     }
 }

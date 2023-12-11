@@ -28,8 +28,6 @@ hc_crud_caps = { git = "https://github.com/matthme/rust-hc-crud-caps", branch = 
 devhub_types = { git = "https://github.com/matthme/devhub-dnas", branch = "holochain-0.2.3-beta-rc.1" }
 appstore_types = { git = "https://github.com/matthme/app-store-dnas", branch = "holochain-0.2.3-beta-rc.1" }
 appstore = { git = "https://github.com/matthme/app-store-dnas", branch = "holochain-0.2.3-beta-rc.1" }
-hc_portal_types = { git = "https://github.com/matthme/portal-dna", branch = "holochain-0.2.3-beta-rc.1" }
-mere_memory_types = { git = "https://github.com/matthme/hc-zome-mere-memory", branch = "holochain-0.2.3-beta-rc.1" }
 
 
 essence_payloads = "0.1"

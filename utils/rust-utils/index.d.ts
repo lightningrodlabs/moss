@@ -31,8 +31,6 @@ export class WeRustHandler {
   constructor()
   static connect(keystoreUrl: string, adminPort: number, appPort: number, passphrase: string): Promise<WeRustHandler>
   signZomeCall(zomeCallUnsignedJs: ZomeCallUnsignedNapi): Promise<ZomeCallNapi>
-  fetchAndStoreUi(host: string, devhubDnaHash: string, guiReleaseHash: string, uisStorageDir: string, appstoreAppId: string): Promise<void>
-  fetchAndStoreHapp(host: string, devhubDnaHash: string, happReleaseHash: string, storageDir: string, appstoreAppId: string): Promise<void>
 }
 export type JsZomeCallSigner = ZomeCallSigner
 export class ZomeCallSigner {
