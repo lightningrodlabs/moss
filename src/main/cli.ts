@@ -114,7 +114,6 @@ function readAndValidateDevConfig(
 
   // validate groups field
   groups.forEach((group) => {
-    console.log('Got group config: ', group);
     if (!group.name) throw new Error('Invalid We dev config: Contains a group without name.');
     if (!group.networkSeed)
       throw new Error(
