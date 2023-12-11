@@ -100,7 +100,7 @@ function readAndValidateDevConfig(
   if (!fs.existsSync(configPath)) {
     throw new Error('No dev config found at the given path.');
   }
-  const configString = fs.readFileSync(path.join(process.cwd(), configPath), 'utf-8');
+  const configString = fs.readFileSync(path.join(configPath), 'utf-8');
   let configObject: WeDevConfig | undefined;
   try {
     const parseResult: WeDevConfig = JSON.parse(configString);
