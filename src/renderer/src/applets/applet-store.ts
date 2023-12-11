@@ -18,22 +18,28 @@ import {
 import { AppletHost } from './applet-host.js';
 import { Applet } from './types.js';
 import {
+  appIdFromAppletHash,
   appletOrigin,
   clearAppletNotificationStatus,
   loadAppletNotificationStatus,
   renderViewToQueryString,
+  urlFromAppletHash,
 } from '../utils.js';
-import { ConductorInfo } from '../electron-api.js';
+import { ConductorInfo, getAppletDevPort } from '../electron-api.js';
 import { AppletBundlesStore } from '../applet-bundles/applet-bundles-store.js';
 
 export class AppletStore {
+  isAppletDev: boolean;
+
   constructor(
     public appletHash: EntryHash,
     public applet: Applet,
     public conductorInfo: ConductorInfo,
     public appletBundlesStore: AppletBundlesStore,
+    isAppletDev: boolean,
   ) {
     this._unreadNotifications.set(loadAppletNotificationStatus(encodeHashToBase64(appletHash)));
+    this.isAppletDev = isAppletDev;
   }
 
   host: AsyncReadable<AppletHost | undefined> = lazyLoad(async () => {
@@ -49,10 +55,21 @@ export class AppletStore {
       view: null,
     };
 
-    const origin = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
+    let iframeSrc: string;
+
+    if (this.isAppletDev) {
+      const appId = appIdFromAppletHash(this.appletHash);
+      const appletDevPort = await getAppletDevPort(appId);
+      iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
+        renderView,
+      )}#${urlFromAppletHash(this.appletHash)}`;
+    } else {
+      iframeSrc = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
+    }
+
     iframe = document.createElement('iframe');
     iframe.id = appletHashBase64;
-    iframe.src = origin;
+    iframe.src = iframeSrc;
     iframe.style.display = 'none';
 
     document.body.appendChild(iframe);

@@ -262,7 +262,15 @@ export class WeStore {
 
       if (!applet) throw new Error('Applet not found yet');
 
-      set(new AppletStore(appletHash, applet, this.conductorInfo, this.appletBundlesStore));
+      set(
+        new AppletStore(
+          appletHash,
+          applet,
+          this.conductorInfo,
+          this.appletBundlesStore,
+          this.isAppletDev,
+        ),
+      );
     }),
   );
 

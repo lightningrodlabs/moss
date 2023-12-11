@@ -111,9 +111,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
 
       try {
         const location = await toPromise(weStore.hrlLocations.get(dnaHash).get(hrl[1]));
-
         if (!location) return undefined;
-
         const entryInfo = await toPromise(weStore.entryInfo.get(hrl[0]).get(hrl[1]));
 
         if (!entryInfo) return undefined;
@@ -126,7 +124,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         return entryAndAppletInfo;
       } catch (e) {
         console.warn(
-          `Failed to get entryInfo for hrl ${hrl.map((hash) => encodeHashToBase64(hash))}.`,
+          `Failed to get entryInfo for hrl ${hrl.map((hash) => encodeHashToBase64(hash))}: ${e}`,
         );
         return undefined;
       }
@@ -153,7 +151,10 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async search(filter: string) {
       console.log('%%%%%% @headlessWeClient: searching...');
       const hosts = await toPromise(weStore.allAppletsHosts);
-      console.log('%%%%%% @headlessWeClient: got hosts.');
+      console.log(
+        '%%%%%% @headlessWeClient: got hosts: ',
+        Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
+      );
 
       const promises: Array<Promise<Array<HrlWithContext>>> = [];
 

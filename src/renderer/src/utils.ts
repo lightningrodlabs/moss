@@ -478,3 +478,9 @@ export function resizeAndExport(img: HTMLImageElement) {
   // return the .toDataURL of the temp canvas
   return canvas.toDataURL();
 }
+
+export function urlFromAppletHash(appletHash: AppletHash): string {
+  const appletHashB64 = encodeHashToBase64(appletHash);
+  const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
+  return lowerCaseAppletId.replaceAll('$', '%24');
+}

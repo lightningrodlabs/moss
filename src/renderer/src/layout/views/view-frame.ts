@@ -11,6 +11,7 @@ import {
   appletOrigin,
   renderViewToQueryString,
   toLowerCaseB64,
+  urlFromAppletHash,
 } from '../../utils.js';
 import { weStoreContext } from '../../context.js';
 import { WeStore } from '../../we-store.js';
@@ -82,10 +83,4 @@ export class ViewFrame extends LitElement {
     `,
     weStyles,
   ];
-}
-
-function urlFromAppletHash(appletHash: AppletHash): string {
-  const appletHashB64 = encodeHashToBase64(appletHash);
-  const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
-  return lowerCaseAppletId.replaceAll('$', '%24');
 }
