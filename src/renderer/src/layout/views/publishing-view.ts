@@ -1,7 +1,7 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { notifyError, onSubmit } from '@holochain-open-dev/elements';
+import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -27,6 +27,8 @@ import {
 } from '../../processes/appstore/appstore-light.js';
 import { ActionHash } from '@holochain/client';
 import { resizeAndExport } from '../../utils.js';
+import { AppHashes } from '../../types.js';
+import { validateHappOrWebhapp } from '../../electron-api.js';
 
 enum PageView {
   Loading,
@@ -59,6 +61,9 @@ export class PublishingView extends LitElement {
 
   @state()
   _creatingPublisher = false;
+
+  @state()
+  _publishing: string | undefined = undefined;
 
   @query('#applet-icon-file-picker')
   private _appletIconFilePicker!: HTMLInputElement;
@@ -150,11 +155,35 @@ export class PublishingView extends LitElement {
     description: string;
     webhapp_url: string;
   }) {
+    this._publishing = 'Fetching resource for validation...';
     console.log('TRYING TO PUBLISH APPLETS...');
     if (!this._appletIconSrc) {
       notifyError('No Icon provided.');
       throw new Error('Icon is required.');
     }
+    // try to fetch (web)happ from source to verify link
+    let byteArray: number[];
+    try {
+      const response = await fetch(fields.webhapp_url);
+      byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+    } catch (e) {
+      this._publishing = undefined;
+      notifyError('Failed fetch resource at the specified URL');
+      throw new Error(`Failed resource at the specified URL: ${e}`);
+    }
+    // verify that resource is of the right format (happ or webhapp) and compute the hashes
+    let hashes: AppHashes;
+    try {
+      this._publishing = 'Validating resource format and computing hashes...';
+      hashes = await validateHappOrWebhapp(byteArray);
+    } catch (e) {
+      this._publishing = undefined;
+      notifyError(
+        `Asset format validation failed. Make sure the URL points to a valid .webhapp or .happ file.`,
+      );
+      throw new Error(`Asset format validation failed: ${e}`);
+    }
+
     const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
     if (!this._myPublisher) throw new Error('No publisher registered yet.');
     const source: WebHappSource = {
@@ -174,7 +203,7 @@ export class PublishingView extends LitElement {
       icon_src: this._appletIconSrc,
       publisher: this._myPublisher!.action,
       source: JSON.stringify(source),
-      hashes: 'not defined yet',
+      hashes: JSON.stringify(hashes),
     };
 
     console.log('got payload: ', payload);
@@ -183,6 +212,8 @@ export class PublishingView extends LitElement {
     this._appletIconSrc = undefined;
     this._myApps = myAppsEntities;
     this.view = PageView.Main;
+    this._publishing = undefined;
+    notify('Applet published.');
   }
 
   async deprecateApplet(actionHash: ActionHash) {
@@ -434,6 +465,7 @@ export class PublishingView extends LitElement {
               }}
               style="margin-bottom: 10px; width: 600px;"
             ></sl-input>
+            <div>${this._publishing}</div>
             <div class="row" style="margin-top: 40px; justify-content: center;">
               <sl-button
                 variant="danger"
@@ -449,7 +481,9 @@ export class PublishingView extends LitElement {
                 }}
                 >${msg('Cancel')}
               </sl-button>
-              <sl-button variant="primary" type="submit">${msg('Publish')} </sl-button>
+              <sl-button .loading=${!!this._publishing} variant="primary" type="submit">${msg(
+                'Publish',
+              )} </sl-button>
             </div>
           </div>
         </form>

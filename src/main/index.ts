@@ -29,7 +29,7 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
 import { launch } from './launch';
@@ -389,6 +389,27 @@ app.whenReady().then(async () => {
     });
     await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
     return appInfo;
+  });
+  ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
+    const hashResult = await rustUtils.validateHappOrWebhapp(bytes);
+    const [happHash, uiHash, webHappHash] = hashResult.split('$');
+    if (uiHash) {
+      return {
+        type: 'webhapp',
+        sha256: webHappHash,
+        happ: {
+          sha256: happHash,
+        },
+        ui: {
+          sha256: uiHash,
+        },
+      };
+    } else {
+      return {
+        type: 'happ',
+        sha256: happHash,
+      };
+    }
   });
   ipcMain.handle(
     'install-applet-bundle',

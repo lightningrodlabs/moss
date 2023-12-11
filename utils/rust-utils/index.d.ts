@@ -5,6 +5,8 @@
 
 export function defaultConductorConfig(adminPort: number, conductorEnvironmentPath: string, keystoreConnectionUrl: string, bootstrapServerUrl: string, signalingServerUrl: string): string
 export function saveHappOrWebhapp(happOrWebHappPath: string, uisDir: string, happsDir: string): Promise<string>
+/** Checks that the happ or webhapp is of the correct format */
+export function validateHappOrWebhapp(happOrWebhappBytes: Array<number>): Promise<string>
 export interface ZomeCallUnsignedNapi {
   cellId: Array<Array<number>>
   zomeName: string

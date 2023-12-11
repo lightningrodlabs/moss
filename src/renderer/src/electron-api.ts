@@ -12,6 +12,7 @@ import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { AppHashes } from './types';
 
 declare global {
   interface Window {
@@ -38,6 +39,7 @@ declare global {
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
+      validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
   }
 }
@@ -110,6 +112,10 @@ export async function enableDevMode(): Promise<void> {
 
 export async function disableDevMode(): Promise<void> {
   return window.electronAPI.disableDevMode();
+}
+
+export async function validateHappOrWebhapp(bytes: number[]) {
+  return window.electronAPI.validateHappOrWebhapp(bytes);
 }
 
 // export async function fetchAvailableUiUpdates(): Promise<

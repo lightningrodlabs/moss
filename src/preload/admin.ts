@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
+  validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
 });
 
 declare global {

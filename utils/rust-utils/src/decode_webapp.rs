@@ -103,6 +103,57 @@ pub async fn save_happ_or_webhapp(
     }
 }
 
+/// Checks that the happ or webhapp is of the correct format
+#[napi]
+pub async fn validate_happ_or_webhapp(happ_or_webhapp_bytes: Vec<u8>) -> napi::Result<String> {
+    let (app_bundle, maybe_ui_and_webhapp_hash) = match WebAppBundle::decode(&happ_or_webhapp_bytes)
+    {
+        Ok(web_app_bundle) => {
+            let mut hasher = Sha256::new();
+            hasher.update(happ_or_webhapp_bytes);
+            let web_happ_hash = hex::encode(hasher.finalize());
+            // extracting ui.zip bytes
+            let web_ui_zip_bytes = web_app_bundle.web_ui_zip_bytes().await.map_err(|e| {
+                napi::Error::from_reason(format!("Failed to extract ui zip bytes: {}", e))
+            })?;
+
+            let mut hasher = Sha256::new();
+            hasher.update(web_ui_zip_bytes.clone().into_owned().into_inner());
+            let ui_hash = hex::encode(hasher.finalize());
+
+            // extracting happ bundle
+            let app_bundle = web_app_bundle.happ_bundle().await.map_err(|e| {
+                napi::Error::from_reason(format!(
+                    "Failed to get happ bundle from webapp bundle bytes: {}",
+                    e
+                ))
+            })?;
+
+            (app_bundle, Some((ui_hash, web_happ_hash)))
+        }
+        Err(_) => {
+            let app_bundle = AppBundle::decode(&happ_or_webhapp_bytes).map_err(|e| {
+                napi::Error::from_reason(format!("Failed to decode happ file: {}", e))
+            })?;
+            (app_bundle, None)
+        }
+    };
+
+    let mut hasher = Sha256::new();
+    let app_bundle_bytes = app_bundle
+        .encode()
+        .map_err(|e| napi::Error::from_reason(format!("Failed to encode happ to bytes: {}", e)))?;
+    hasher.update(app_bundle_bytes);
+    let happ_hash = hex::encode(hasher.finalize());
+
+    match maybe_ui_and_webhapp_hash {
+        Some((ui_hash, web_happ_hash)) => {
+            Ok(format!("{}${}${}", happ_hash, ui_hash, web_happ_hash))
+        }
+        None => Ok(format!("{}", happ_hash)),
+    }
+}
+
 pub fn path_exists(path: &PathBuf) -> bool {
     std::path::Path::new(path).exists()
 }
