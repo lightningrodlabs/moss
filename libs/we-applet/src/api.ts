@@ -54,10 +54,16 @@ export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) =
 };
 
 export const initializeHotReload = async () => {
-  const appletIframeScript = await postMessage<string>({
-    type: 'get-applet-iframe-script',
-  });
-  eval(appletIframeScript);
+  try {
+    const appletIframeScript = await postMessage<string>({
+      type: 'get-applet-iframe-script',
+    });
+    eval(appletIframeScript);
+  } catch (e) {
+    throw new Error(
+      `Failed to initialize applet hot-reloading: ${e}.\n\nIf the applet is running in production mode (.webhapp) 'initializeHotReload()' needs to be removed.`,
+    );
+  }
 };
 
 export class AppletServices {
