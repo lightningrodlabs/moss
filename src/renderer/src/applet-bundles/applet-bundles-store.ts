@@ -1,9 +1,14 @@
 import { asyncDerived, lazyLoadAndPoll, pipe, retryUntilSuccess } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash, AdminWebsocket, AppAgentClient } from '@holochain/client';
-import { AppEntry, DevHubResponse, Entity } from '../processes/appstore/types.js';
+import { EntryRecord, LazyHoloHashMap } from '@holochain-open-dev/utils';
+import {
+  ActionHash,
+  AdminWebsocket,
+  AppAgentClient,
+  Record as HolochainRecord,
+} from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
 import { getAllApps } from '../processes/appstore/appstore-light.js';
+import { AppEntry } from '../processes/appstore/types.js';
 
 export class AppletBundlesStore {
   constructor(
@@ -12,10 +17,10 @@ export class AppletBundlesStore {
     public conductorInfo: ConductorInfo,
   ) {}
 
-  allAppletBundles = lazyLoadAndPoll(async () => getAllApps(this.appstoreClient), 30000);
+  installableAppletBundles = lazyLoadAndPoll(async () => getAllApps(this.appstoreClient), 30000);
 
   appletBundles = new LazyHoloHashMap((appletBundleHash: ActionHash) =>
-    asyncDerived(this.allAppletBundles, async (appletBundles) => {
+    asyncDerived(this.installableAppletBundles, async (appletBundles) => {
       const appletBundle = appletBundles.find(
         (app) => app.id.toString() === appletBundleHash.toString(),
       );
@@ -37,21 +42,20 @@ export class AppletBundlesStore {
     ),
   );
 
-  async getAppEntry(appActionHash: ActionHash) {
-    const appEntryEntity: DevHubResponse<Entity<AppEntry>> = await this.appstoreClient.callZome({
+  async getAppEntry(appActionHash: ActionHash): Promise<EntryRecord<AppEntry>> {
+    const record: HolochainRecord | undefined = await this.appstoreClient.callZome({
       role_name: 'appstore',
       zome_name: 'appstore_api',
-      fn_name: 'get_app',
-      payload: {
-        id: appActionHash,
-      },
+      fn_name: 'get_record',
+      payload: appActionHash,
     });
-    return appEntryEntity.payload;
+    if (!record) throw new Error('Record not found for acion hash.');
+    return new EntryRecord(record);
   }
 
   async fetchIcon(appActionHash: ActionHash) {
-    const appEntryEntity = await this.getAppEntry(appActionHash);
-    const appEntry = appEntryEntity.content;
+    const appEntryRecord = await this.getAppEntry(appActionHash);
+    const appEntry = appEntryRecord.entry;
     return appEntry.icon_src;
   }
 }

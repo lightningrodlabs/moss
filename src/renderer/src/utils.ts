@@ -13,6 +13,7 @@ import {
   DnaHashB64,
   decodeHashFromBase64,
   HoloHashB64,
+  ActionHash,
 } from '@holochain/client';
 import {
   Hrl,
@@ -25,7 +26,8 @@ import { encode } from '@msgpack/msgpack';
 import { fromUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings } from './applets/types.js';
-import { AppletHash, AppletId } from './types.js';
+import { AppletHash, AppletId, DistributionInfo } from './types.js';
+import { notifyError } from '@holochain-open-dev/elements';
 
 export async function initAppClient(
   appId: string,
@@ -483,4 +485,16 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   const appletHashB64 = encodeHashToBase64(appletHash);
   const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
   return lowerCaseAppletId.replaceAll('$', '%24');
+}
+
+export function appEntryActionHashFromDistInfo(distributionInfoString: string): ActionHash {
+  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
+  if (distributionInfo.type !== 'appstore-light')
+    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
+  return decodeHashFromBase64(distributionInfo.info.appEntryActionHash);
+}
+
+export function notifyAndThrow(message: string) {
+  notifyError(message);
+  throw new Error(message);
 }

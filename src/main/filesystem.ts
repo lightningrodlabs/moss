@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import semver from 'semver';
-import { InstalledAppId } from '@holochain/client';
+import { ActionHashB64, DnaHashB64, EntryHashB64, InstalledAppId } from '@holochain/client';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -9,22 +9,24 @@ export type UiIdentifier = string;
 export type AppAssetsInfo =
   | {
       type: 'happ';
-      source: WebHappSource; // e.g. dnahash+entry hash in the devhub
-      // shasum: string; // sha256 hash of the .happ file
-      sha256: string; // e.g. entry hash in the devhub, must be unique to prevent accidental collisions
+      assetSource: AssetSource; // Source of the actual asset bytes
+      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
+      sha256: string; // sha256 hash of the .happ file
     }
   | {
       type: 'webhapp';
-      source: WebHappSource;
-      sha256?: string;
+      assetSource: AssetSource;
+      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
+      sha256?: string; // sha256 hash of the .webhapp file
       happ: {
-        sha256: string;
+        sha256: string; // sha256 hash of the .happ file. Will also define the name of the .happ file
+        dnas?: any; // sha256 hashes of dnas and zomes
       };
       ui: {
         location:
           | {
               type: 'filesystem';
-              sha256: string;
+              sha256: string; // Also defines the foldername where the unzipped assets are stored
             }
           | {
               type: 'localhost';
@@ -33,10 +35,32 @@ export type AppAssetsInfo =
       };
     };
 
-export type WebHappSource = {
-  type: 'https';
-  url: string;
-};
+export type AssetSource =
+  | {
+      type: 'https';
+      url: string;
+    }
+  | {
+      type: 'filesystem'; // Installed from filesystem
+    };
+
+/**
+ * Info about the distribution channel of said app
+ */
+export type DistributionInfo =
+  | {
+      type: 'appstore-light';
+      info: {
+        appstoreDnaHash: DnaHashB64;
+        // according to https://docs.rs/hc_crud_caps/0.10.3/hc_crud/struct.Entity.html
+        appEntryId: ActionHashB64;
+        appEntryActionHash: ActionHashB64;
+        appEntryEntryHash: EntryHashB64;
+      };
+    }
+  | {
+      type: 'filesystem'; // Installed from filesystem
+    };
 
 export class WeFileSystem {
   public appDataDir: string;

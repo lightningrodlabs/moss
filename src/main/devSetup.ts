@@ -5,19 +5,20 @@ import mime from 'mime';
 
 import { HolochainManager } from './holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import {
   ActionHash,
   AgentPubKey,
   AppAgentWebsocket,
   AppInfo,
+  DnaHashB64,
   EntryHash,
   HoloHashB64,
   encodeHashToBase64,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
-import { AppAssetsInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
@@ -55,11 +56,15 @@ export async function devSetup(
     4000,
   );
   const appstoreCells = await appstoreClient.appInfo();
+  let appstoreDnaHash: DnaHashB64 | undefined = undefined;
   for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
     await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
       All: null,
     });
+    appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
   }
+
+  if (!appstoreDnaHash) throw new Error('Failed to determine appstore DNA hash.');
 
   for (const group of config.config.groups) {
     // If the running agent is supposed to create the group
@@ -107,6 +112,23 @@ export async function devSetup(
           const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
             installableApplets[appletInstallConfig.name];
 
+          const appHashes: AppHashes =
+            maybeUiHash && maybeWebHappHash
+              ? {
+                  type: 'webhapp',
+                  sha256: maybeWebHappHash,
+                  happ: {
+                    sha256: happHash,
+                  },
+                  ui: {
+                    sha256: maybeUiHash,
+                  },
+                }
+              : {
+                  type: 'happ',
+                  sha256: happHash,
+                };
+
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
             logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
@@ -114,15 +136,31 @@ export async function devSetup(
               appstoreClient,
               appletConfig,
               maybeWebHappPath ? maybeWebHappPath : happPath,
+              appHashes,
             );
             publishedApplets[appletConfig.name] = appletEntryResponse.payload;
           }
 
+          const appEntryEntity = publishedApplets[appletConfig.name];
+
+          const distributionInfo: DistributionInfo = {
+            type: 'appstore-light',
+            info: {
+              appstoreDnaHash,
+              appEntryId: encodeHashToBase64(appEntryEntity.id),
+              appEntryActionHash: encodeHashToBase64(appEntryEntity.action),
+              appEntryEntryHash: encodeHashToBase64(appEntryEntity.address),
+            },
+          };
+
           const networkSeed = randomUUID();
-          const applet = {
+          const applet: Applet = {
             custom_name: appletConfig.name,
             description: appletConfig.description,
-            appstore_app_hash: publishedApplets[appletConfig.name].action,
+            sha256_happ: happHash,
+            sha256_webhapp: maybeWebHappHash,
+            distribution_info: JSON.stringify(distributionInfo),
+            meta_data: undefined,
             network_seed: networkSeed,
             properties: {},
           };
@@ -146,6 +184,7 @@ export async function devSetup(
             appletConfig,
             appId,
             weFileSystem,
+            distributionInfo,
             happPath,
             happHash,
             maybeWebHappPath,
@@ -226,6 +265,7 @@ export async function devSetup(
               appletConfig,
               appId,
               weFileSystem,
+              JSON.parse(applet.distribution_info),
               happPath,
               happHash,
               maybeWebHappPath,
@@ -402,6 +442,7 @@ async function publishApplet(
   appstoreClient: AppAgentWebsocket,
   appletConfig: AppletConfig,
   happOrWebHappPath: string,
+  appHashes: AppHashes,
 ): Promise<DevHubResponse<Entity<AppEntry>>> {
   const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome({
     role_name: 'appstore',
@@ -421,6 +462,8 @@ async function publishApplet(
     },
   });
 
+  // TODO: Potentially change this to be taken from the original source or a local cache
+  // Instead of pointing to local temp files
   const source = JSON.stringify({
     type: 'https',
     url: `file://${happOrWebHappPath}`,
@@ -435,7 +478,7 @@ async function publishApplet(
     icon_src: appletIcon,
     publisher: publisher.payload.id,
     source,
-    hashes: 'undefined',
+    hashes: JSON.stringify(appHashes),
     metadata:
       appletConfig.source.type === 'localhost'
         ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
@@ -454,22 +497,25 @@ function storeAppAssetsInfo(
   appletConfig: AppletConfig,
   appId: string,
   weFileSystem: WeFileSystem,
+  distributionInfo: DistributionInfo,
   happPath: string,
   happHash: string,
   maybeWebHappPath?: string,
   maybeWebHappHash?: string,
   maybeUiHash?: string,
 ) {
-  // TODO Store more app metadata
+  // TODO potentially add distribution info from AppEntry that's being published earlier
+  // to be able to simulate UI updates
   // Store app metadata
   const appAssetsInfo: AppAssetsInfo =
     appletConfig.source.type === 'localhost'
       ? {
           type: 'webhapp',
-          source: {
+          assetSource: {
             type: 'https',
             url: `file://${happPath}`,
           },
+          distributionInfo,
           happ: {
             sha256: happHash,
           },
@@ -484,10 +530,11 @@ function storeAppAssetsInfo(
         ? {
             type: 'webhapp',
             sha256: maybeWebHappHash,
-            source: {
+            assetSource: {
               type: 'https',
               url: `file://${maybeWebHappPath}`,
             },
+            distributionInfo,
             happ: {
               sha256: happHash,
             },
@@ -501,10 +548,11 @@ function storeAppAssetsInfo(
         : {
             type: 'happ',
             sha256: happHash,
-            source: {
+            assetSource: {
               type: 'https',
               url: `file://${happPath}`,
             },
+            distributionInfo,
           };
   fs.writeFileSync(
     path.join(weFileSystem.appsDir, `${appId}.json`),
@@ -637,9 +685,12 @@ export interface AppEntry {
 export interface Applet {
   custom_name: string; // name of the applet instance as chosen by the person adding it to the group,
   description: string;
-  appstore_app_hash: ActionHash;
+  sha256_happ: string;
+  sha256_webhapp: string | undefined;
+  distribution_info: string;
   network_seed: string | undefined;
   properties: Record<string, Uint8Array>; // Segmented by RoleId
+  meta_data?: string;
 }
 
 export interface WebAddress {

@@ -1,8 +1,10 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+// IPC_CHANGE_HERE
 import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { DistributionInfo } from '../main/filesystem';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
@@ -24,6 +26,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     membraneProofs: any,
     agentPubKey: AgentPubKeyB64,
     happOrWebHappUrl: string,
+    distributionInfo: DistributionInfo,
+    sha256Happ: string,
+    sha256Webhapp?: string,
     metadata?: string,
   ) =>
     ipcRenderer.invoke(
@@ -33,6 +38,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       membraneProofs,
       agentPubKey,
       happOrWebHappUrl,
+      distributionInfo,
+      sha256Happ,
+      sha256Webhapp,
       metadata,
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),

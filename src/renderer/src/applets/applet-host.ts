@@ -25,7 +25,7 @@ import { getAppletIframeScript, signZomeCallElectron } from '../electron-api.js'
 import { WeStore } from '../we-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
-import { toOriginalCaseB64 } from '../utils.js';
+import { appEntryActionHashFromDistInfo, toOriginalCaseB64 } from '../utils.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -143,7 +143,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
 
       return {
-        appletBundleId: applet.applet.appstore_app_hash,
+        appletBundleId: appEntryActionHashFromDistInfo(applet.applet.distribution_info),
         appletName: applet.applet.custom_name,
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
@@ -163,6 +163,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           (async () => {
             try {
               const results = host ? await host.search(filter) : [];
+              console.log(`Got results: ${JSON.stringify(results)}`);
               return results;
             } catch (e) {
               console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
@@ -226,7 +227,9 @@ export async function handleAppletIframeMessage(
       const crossApplet = message.crossApplet;
       if (crossApplet) {
         const applets = await toPromise(
-          weStore.appletsForBundleHash.get(appletStore.applet.appstore_app_hash),
+          weStore.appletsForBundleHash.get(
+            appEntryActionHashFromDistInfo(appletStore.applet.distribution_info),
+          ),
         );
         const config: IframeConfig = {
           type: 'cross-applet',

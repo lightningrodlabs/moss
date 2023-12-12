@@ -52,6 +52,19 @@ export async function createApp(
   return responseToPromise(response, 'createApp');
 }
 
+export async function updateApp(
+  appstoreClient: AppAgentClient,
+  payload: UpdateEntityInput<UpdateAppInput>,
+): Promise<DevHubResponse<Entity<AppEntry>>> {
+  const response = await appstoreClient.callZome({
+    role_name: 'appstore',
+    zome_name: 'appstore_api',
+    fn_name: 'update_app',
+    payload,
+  });
+  return responseToPromise(response, 'updateApp');
+}
+
 // updateApp --> check that URL is different but integrity hashes are the same
 
 export async function getMyApps(appstoreClient: AppAgentClient): Promise<Entity<AppEntry>[]> {
@@ -106,6 +119,24 @@ export interface CreateAppInput {
   editors?: AgentPubKey[];
   published_at?: number;
   last_updated?: number;
+}
+
+export interface UpdateAppInput {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  icon_src?: string | null;
+  source?: string;
+  hashes?: string | null;
+  metadata?: string;
+  editors?: AgentPubKey[];
+  published_at?: number;
+  last_updated?: number;
+}
+
+export interface UpdateEntityInput<T> {
+  base: ActionHash;
+  properties: T;
 }
 
 export interface PublisherInput {

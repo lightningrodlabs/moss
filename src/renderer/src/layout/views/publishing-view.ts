@@ -18,15 +18,18 @@ import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types
 import {
   CreateAppInput,
   PublisherInput,
+  UpdateAppInput,
+  UpdateEntityInput,
   WebHappSource,
   createApp,
   createPublisher,
   deprecateApp,
   getMyApps,
   getMyPublishers,
+  updateApp,
 } from '../../processes/appstore/appstore-light.js';
 import { ActionHash } from '@holochain/client';
-import { resizeAndExport } from '../../utils.js';
+import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';
 
@@ -36,7 +39,7 @@ enum PageView {
   CreatePublisher,
   PublishApplet,
   AddApp,
-  AppDetail,
+  UpdateApp,
 }
 @localized()
 @customElement('publishing-view')
@@ -54,7 +57,25 @@ export class PublishingView extends LitElement {
   _myApps: Entity<AppEntry>[] | undefined;
 
   @state()
+  _selectedApp: Entity<AppEntry> | undefined;
+
+  @state()
   _appletIconSrc: string | undefined;
+
+  @state()
+  _updatedFields: {
+    icon_src: string | undefined;
+    title: string | undefined;
+    subtitle: string | undefined;
+    description: string | undefined;
+    webhapp_url: string | undefined;
+  } = {
+    icon_src: undefined,
+    title: undefined,
+    subtitle: undefined,
+    description: undefined,
+    webhapp_url: undefined,
+  };
 
   @state()
   _publisherIconSrc: string | undefined;
@@ -65,8 +86,14 @@ export class PublishingView extends LitElement {
   @state()
   _publishing: string | undefined = undefined;
 
+  @state()
+  _updating: string | undefined = undefined;
+
   @query('#applet-icon-file-picker')
   private _appletIconFilePicker!: HTMLInputElement;
+
+  @query('#update-applet-icon-file-picker')
+  private _udpateAppletIconFilePicker!: HTMLInputElement;
 
   @query('#publisher-icon-file-picker')
   private _publisherIconFilePicker!: HTMLInputElement;
@@ -104,6 +131,22 @@ export class PublishingView extends LitElement {
         img.src = e.target?.result as string;
       };
       reader.readAsDataURL(this._appletIconFilePicker.files[0]);
+    }
+  }
+
+  onUpdateAppletIconUploaded() {
+    if (this._udpateAppletIconFilePicker.files && this._udpateAppletIconFilePicker.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          this._updatedFields = { ...this._updatedFields, icon_src: resizeAndExport(img) };
+          this._udpateAppletIconFilePicker.value = '';
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(this._udpateAppletIconFilePicker.files[0]);
     }
   }
 
@@ -168,8 +211,8 @@ export class PublishingView extends LitElement {
       byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
     } catch (e) {
       this._publishing = undefined;
-      notifyError('Failed fetch resource at the specified URL');
-      throw new Error(`Failed resource at the specified URL: ${e}`);
+      notifyError('Failed to fetch resource at the specified URL');
+      throw new Error(`Failed to fetch resource at the specified URL: ${e}`);
     }
     // verify that resource is of the right format (happ or webhapp) and compute the hashes
     let hashes: AppHashes;
@@ -193,9 +236,6 @@ export class PublishingView extends LitElement {
 
     // TODO try to fetch webhapp, check that it's a valid webhapp and compute hashes
 
-    const randomImageBytes = new Uint8Array();
-    window.crypto.getRandomValues(randomImageBytes);
-
     const payload: CreateAppInput = {
       title: fields.title,
       subtitle: fields.subtitle,
@@ -213,6 +253,106 @@ export class PublishingView extends LitElement {
     this._myApps = myAppsEntities;
     this.view = PageView.Main;
     this._publishing = undefined;
+    notify('Applet published.');
+  }
+
+  async updateApplet(fields: {
+    title: string;
+    subtitle: string;
+    description: string;
+    webhapp_url: string;
+  }) {
+    console.log('IM BEING CALLED:');
+    console.log('Requested applet update with fields: ', fields);
+
+    const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
+    if (!this._myPublisher) throw new Error('No publisher registered yet.');
+
+    // 1. Fetch app from new source and check happ hash agains previous happ hash.
+    const currentSource: WebHappSource = JSON.parse(this._selectedApp!.content.source);
+    const currentHashes: AppHashes = JSON.parse(this._selectedApp!.content.hashes);
+    console.log('CURRENT HASHES: ', currentHashes);
+
+    let newHashes: AppHashes | undefined;
+    let newSource: WebHappSource | undefined;
+
+    if (fields.webhapp_url !== currentSource.url) {
+      newSource = {
+        type: 'https',
+        url: fields.webhapp_url,
+      };
+      this._updating = 'Fetching new resource for validation...';
+      // try to fetch (web)happ from new source to verify link
+      let byteArray: number[];
+      try {
+        const response = await fetch(fields.webhapp_url);
+        byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+      } catch (e) {
+        this._updating = undefined;
+        notifyError('Failed to fetch new resource at the specified URL');
+        throw new Error(`Failed to fetch new resource at the specified URL: ${e}`);
+      }
+      // verify that new resource is of the right format (happ or webhapp) and compute the new hashes
+      try {
+        this._updating = 'Validating resource format and computing hashes...';
+        newHashes = await validateHappOrWebhapp(byteArray);
+      } catch (e) {
+        this._updating = undefined;
+        notifyError(`Failed to validate resources: ${e}`);
+        throw new Error(`Asset format validation failed: ${e}`);
+      }
+      this._updating = 'Comparing hashes with previous app version...';
+      if (currentHashes.type === 'happ') {
+        notifyAndThrow('Updating .happ files of headless applets is currently not supported.');
+      } else if (currentHashes.type === 'webhapp') {
+        if (newHashes.type !== 'webhapp') {
+          this._updating = undefined;
+          notifyAndThrow("Previous applet version was of type 'webhapp' but got type 'happ' now.");
+          return;
+        }
+        if (currentHashes.happ.sha256 !== newHashes.happ.sha256) {
+          this._updating = undefined;
+          notifyAndThrow(
+            'happ file hash does not match with the previous version. If you want to upload an applet with a new .happ file you need to create a new App entry.',
+          );
+          return;
+        }
+      } else {
+        this._updating = undefined;
+        notifyAndThrow(`Got invalid app type '${(currentHashes as any).type}'`);
+        return;
+      }
+    }
+
+    this._updating = 'Publishing updated app entry...';
+
+    const updateInput: UpdateAppInput = {};
+    Object.keys(fields).forEach((key) => {
+      if (fields[key]) {
+        updateInput[key] = fields[key];
+      }
+    });
+
+    if (newHashes) {
+      updateInput.hashes = JSON.stringify(newHashes);
+    }
+
+    if (newSource) {
+      updateInput.source = JSON.stringify(newSource);
+    }
+
+    const updateEntityInput: UpdateEntityInput<UpdateAppInput> = {
+      base: this._selectedApp?.action!,
+      properties: updateInput,
+    };
+
+    console.log('got updateInput: ', updateEntityInput);
+    await updateApp(appStoreClient, updateEntityInput);
+    const myAppsEntities = await getMyApps(appStoreClient);
+    this._selectedApp = undefined;
+    this._myApps = myAppsEntities;
+    this.view = PageView.Main;
+    this._updating = undefined;
     notify('Applet published.');
   }
 
@@ -336,7 +476,39 @@ export class PublishingView extends LitElement {
                         }}
                         >Deprecate</sl-button
                       >
-                      <sl-button variant="primary">Details</sl-button>
+                      <sl-button
+                        @click=${() => {
+                          console.log('appEntity.content.source: ', appEntity.content.source);
+                          const currentSource: WebHappSource = JSON.parse(appEntity.content.source);
+                          this._selectedApp = appEntity;
+                          this._updatedFields = {
+                            icon_src: appEntity.content.icon_src,
+                            title: appEntity.content.title,
+                            subtitle: appEntity.content.subtitle,
+                            description: appEntity.content.description,
+                            webhapp_url: currentSource.url,
+                          };
+                          this.view = PageView.UpdateApp;
+                        }}
+                        @keypress=${(e: KeyboardEvent) => {
+                          if (e.key === 'Enter') {
+                            const currentSource: WebHappSource = JSON.parse(
+                              this._selectedApp!.content.source,
+                            );
+                            this._selectedApp = appEntity;
+                            this._updatedFields = {
+                              icon_src: appEntity.content.icon_src,
+                              title: appEntity.content.title,
+                              subtitle: appEntity.content.subtitle,
+                              description: appEntity.content.description,
+                              webhapp_url: currentSource.url,
+                            };
+                            this.view = PageView.UpdateApp;
+                          }
+                        }}
+                        variant="primary"
+                        >Update
+                      </sl-button>
                     </div>
                   </sl-card>`,
               )}`
@@ -354,6 +526,126 @@ export class PublishingView extends LitElement {
           }}
           >${msg('+ Publish New Applet')}</sl-button
         >
+      </div>
+    `;
+  }
+
+  renderUpdateApp() {
+    return html`
+      <div class="column" style="align-items: center;">
+        <div
+          style="position: absolute; top: 20px; right: 20px; font-size: 20px; font-weight: bold;"
+        >
+          ${this._myPublisher?.content.name}
+        </div>
+        <div class="title" style="margin-bottom: 40px; margin-top: 30px;">
+          ${msg('Update Applet')}
+        </div>
+        <form id="form" ${onSubmit((fields) => this.updateApplet(fields))}>
+          <div class="column" style="align-items: center; min-width: 600px;">
+            <input
+              type="file"
+              id="update-applet-icon-file-picker"
+              style="display: none"
+              accept="image/*"
+              @change=${this.onUpdateAppletIconUploaded}
+            />
+            ${html` <img
+              tabindex="0"
+              @click=${() => this._udpateAppletIconFilePicker.click()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this._udpateAppletIconFilePicker.click();
+                }
+              }}
+              src=${this._updatedFields.icon_src}
+              alt="Applet Icon"
+              class="icon-picker"
+            />`}
+            </div>
+            <sl-input
+              name="title"
+              .value=${this._updatedFields.title}
+              required
+              .placeholder=${msg('Title')}
+              @input=${(e) => {
+                if (!e.target.value || e.target.value.length < 1) {
+                  e.target.setCustomValidity('Applet title must not be empty.');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
+              style="margin-bottom: 10px; width: 600px;"
+            ></sl-input>
+            <sl-input
+              name="subtitle"
+              .value=${this._updatedFields.subtitle}
+              required
+              .placeholder=${msg('Subtitle')}
+              @input=${(e) => {
+                if (!e.target.value || e.target.value.length < 1) {
+                  e.target.setCustomValidity('Applet subtitle must not be empty.');
+                } else if (e.target.value.length > 80) {
+                  e.target.setCustomValidity('Subtitle is too long.');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
+              style="margin-bottom: 10px; width: 600px;"
+            ></sl-input>
+            <sl-textarea
+              name="description"
+              .value=${this._updatedFields.description}
+              required
+              .placeholder=${msg('Description')}
+              @input=${(e) => {
+                if (!e.target.value || e.target.value.length < 1) {
+                  e.target.setCustomValidity('Applet description must not be empty.');
+                } else if (e.target.value.length > 5000) {
+                  e.target.setCustomValidity('Description is too long.');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
+              style="margin-bottom: 10px; width: 600px;"
+            ></sl-textarea>
+            <sl-input
+              name="webhapp_url"
+              .value=${this._updatedFields.webhapp_url}
+              required
+              .placeholder=${msg('URL to webhapp release asset (Github, Gitlab, ...)')}
+              @input=${(e) => {
+                if (!e.target.value || e.target.value === '') {
+                  e.target.setCustomValidity('URL to webhapp asset is required.');
+                } else if (!e.target.value.startsWith('https://')) {
+                  e.target.setCustomValidity('URL must start with https://');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
+              style="margin-bottom: 10px; width: 600px;"
+            ></sl-input>
+            <div>${this._updating}</div>
+            <div class="row" style="margin-top: 40px; justify-content: center;">
+              <sl-button
+                variant="danger"
+                style="margin-right: 10px;"
+                @click=${() => {
+                  this.view = PageView.Main;
+                }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this.view = PageView.Main;
+                  }
+                }}
+                >${msg('Cancel')}
+              </sl-button>
+              <sl-button .loading=${!!this._updating} variant="primary" type="submit">${msg(
+                'Update',
+              )} </sl-button>
+            </div>
+          </div>
+        </form>
       </div>
     `;
   }
@@ -469,7 +761,6 @@ export class PublishingView extends LitElement {
             <div class="row" style="margin-top: 40px; justify-content: center;">
               <sl-button
                 variant="danger"
-                type="submit"
                 style="margin-right: 10px;"
                 @click=${() => {
                   this.view = PageView.Main;
@@ -502,6 +793,8 @@ export class PublishingView extends LitElement {
         return this.renderPublishApplet();
       case PageView.Main:
         return this.renderMain();
+      case PageView.UpdateApp:
+        return this.renderUpdateApp();
       default:
         return html`<div class="column center-content" style="flex: 1;">Error</div>`;
     }
@@ -528,7 +821,7 @@ export class PublishingView extends LitElement {
         border: 1px solid black;
         min-height: 90px;
         width: 600px;
-        margin: 5px 0;
+        margin: 0;
         padding: 10px;
         --border-radius: 15px;
         cursor: pointer;
