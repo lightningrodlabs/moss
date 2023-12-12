@@ -1,5 +1,5 @@
-appId: holochain.launcher.electron.prototype
-productName: Holochain Launcher Electron (Prototype)
+appId: org.lightningrodlabs.we-alpha-electron
+productName: Lightningrod Labs We
 directories:
   buildResources: build
 files:
@@ -8,7 +8,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: holochain-launcher-electron
+  executableName: lightningrodlabs-we
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
