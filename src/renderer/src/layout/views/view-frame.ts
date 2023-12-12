@@ -1,16 +1,15 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { hashProperty } from '@holochain-open-dev/elements';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { EntryHash } from '@holochain/client';
 import { consume } from '@lit/context';
-import { AppletHash, RenderView } from '@lightningrodlabs/we-applet';
+import { RenderView } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../../shared-styles.js';
 import {
   appIdFromAppletHash,
   appletOrigin,
   renderViewToQueryString,
-  toLowerCaseB64,
   urlFromAppletHash,
 } from '../../utils.js';
 import { weStoreContext } from '../../context.js';
