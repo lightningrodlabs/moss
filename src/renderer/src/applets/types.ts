@@ -7,9 +7,9 @@ export interface Applet {
   sha256_happ: string;
   sha256_webhapp: string | undefined;
   distribution_info: string;
-  meta_data: string | undefined;
   network_seed: string | undefined;
   properties: Record<string, Uint8Array>; // Segmented by RoleId
+  meta_data?: string;
 }
 
 export type NotificationTimestamp = number;

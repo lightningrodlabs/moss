@@ -20,6 +20,7 @@ import {
   AppAgentWebsocket,
   CellType,
   DnaHash,
+  DnaHashB64,
   EntryHash,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -35,6 +36,7 @@ import { WeStore } from '../we-store.js';
 import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet } from '../applets/types.js';
 import { isAppRunning, toLowerCaseB64 } from '../utils.js';
+import { AppHashes, DistributionInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 15000;
 
@@ -145,10 +147,31 @@ export class GroupStore {
       networkSeed = uuidv4();
     }
 
+    const appHashes: AppHashes = JSON.parse(appEntry.content.hashes);
+    const appStoreAppInfo = await this.weStore.appletBundlesStore.appstoreClient.appInfo();
+    let appstoreDnaHash: DnaHashB64 | undefined = undefined;
+    for (const [_role_name, [cell]] of Object.entries(appStoreAppInfo.cell_info)) {
+      appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+    }
+    if (!appstoreDnaHash)
+      throw new Error('Failed to install applet: Failed to get appstore DNA hash.');
+
+    const distributionInfo: DistributionInfo = {
+      type: 'appstore-light',
+      info: {
+        appstoreDnaHash,
+        appEntryId: encodeHashToBase64(appEntry.id),
+        appEntryActionHash: encodeHashToBase64(appEntry.action),
+        appEntryEntryHash: encodeHashToBase64(appEntry.address),
+      },
+    };
+
     const applet: Applet = {
       custom_name: customName,
       description: appEntry.content.description,
-      appstore_app_hash: appEntry.id,
+      sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
+      sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
+      distribution_info: JSON.stringify(distributionInfo),
       network_seed: networkSeed,
       properties: {},
     };

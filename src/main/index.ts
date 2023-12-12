@@ -20,7 +20,7 @@ import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
-import { AppAssetsInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { LauncherEmitter } from './launcherEmitter';
@@ -420,6 +420,9 @@ app.whenReady().then(async () => {
       membraneProofs,
       agentPubKey,
       happOrWebHappUrl: string,
+      distributionInfo: DistributionInfo,
+      sha256Happ: string,
+      sha256Webhapp?: string,
       metadata?: string,
     ) => {
       console.log('INSTALLING APPLET BUNDLE. metadata: ', metadata);
@@ -445,6 +448,15 @@ app.whenReady().then(async () => {
 
       const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
 
+      if (happHash !== sha256Happ)
+        throw new Error(
+          'The downloaded resource has an invalid hash. The source may be corrupted.',
+        );
+      if (webHappHash && webHappHash !== sha256Webhapp)
+        throw new Error(
+          'The downloaded resource has an invalid hash. The source may be corrupted.',
+        );
+
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
         path: happFilePath,
         installed_app_id: appId,
@@ -468,10 +480,11 @@ app.whenReady().then(async () => {
         ? {
             type: 'webhapp',
             sha256: webHappHash,
-            source: {
+            assetSource: {
               type: 'https',
               url: happOrWebHappUrl,
             },
+            distributionInfo,
             happ: {
               sha256: happHash,
             },
@@ -485,10 +498,11 @@ app.whenReady().then(async () => {
         : uiPort
           ? {
               type: 'webhapp',
-              source: {
+              assetSource: {
                 type: 'https',
                 url: happOrWebHappUrl,
               },
+              distributionInfo,
               happ: {
                 sha256: happHash,
               },
@@ -502,10 +516,11 @@ app.whenReady().then(async () => {
           : {
               type: 'happ',
               sha256: happHash,
-              source: {
+              assetSource: {
                 type: 'https',
                 url: happOrWebHappUrl,
               },
+              distributionInfo,
             };
       fs.writeFileSync(
         path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),

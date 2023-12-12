@@ -12,7 +12,9 @@ import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
-import { AppHashes } from './types';
+import { AppHashes, DistributionInfo } from './types';
+
+// IPC_CHANGE_HERE
 
 declare global {
   interface Window {
@@ -32,6 +34,9 @@ declare global {
         membraneProofs: any,
         agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
+        distributionInfo: DistributionInfo,
+        sha256Happ: string,
+        sha256Webhapp?: string,
         metadata?: string,
       ) => Promise<AppInfo>;
       isDevModeEnabled: () => Promise<boolean>;

@@ -5,7 +5,7 @@ import mime from 'mime';
 
 import { HolochainManager } from './holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import {
   ActionHash,
@@ -112,6 +112,23 @@ export async function devSetup(
           const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
             installableApplets[appletInstallConfig.name];
 
+          const appHashes: AppHashes =
+            maybeUiHash && maybeWebHappHash
+              ? {
+                  type: 'webhapp',
+                  sha256: maybeWebHappHash,
+                  happ: {
+                    sha256: happHash,
+                  },
+                  ui: {
+                    sha256: maybeUiHash,
+                  },
+                }
+              : {
+                  type: 'happ',
+                  sha256: happHash,
+                };
+
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
             logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
@@ -119,6 +136,7 @@ export async function devSetup(
               appstoreClient,
               appletConfig,
               maybeWebHappPath ? maybeWebHappPath : happPath,
+              appHashes,
             );
             publishedApplets[appletConfig.name] = appletEntryResponse.payload;
           }
@@ -424,6 +442,7 @@ async function publishApplet(
   appstoreClient: AppAgentWebsocket,
   appletConfig: AppletConfig,
   happOrWebHappPath: string,
+  appHashes: AppHashes,
 ): Promise<DevHubResponse<Entity<AppEntry>>> {
   const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome({
     role_name: 'appstore',
@@ -443,6 +462,8 @@ async function publishApplet(
     },
   });
 
+  // TODO: Potentially change this to be taken from the original source or a local cache
+  // Instead of pointing to local temp files
   const source = JSON.stringify({
     type: 'https',
     url: `file://${happOrWebHappPath}`,
@@ -457,7 +478,7 @@ async function publishApplet(
     icon_src: appletIcon,
     publisher: publisher.payload.id,
     source,
-    hashes: 'undefined',
+    hashes: JSON.stringify(appHashes),
     metadata:
       appletConfig.source.type === 'localhost'
         ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
@@ -667,9 +688,9 @@ export interface Applet {
   sha256_happ: string;
   sha256_webhapp: string | undefined;
   distribution_info: string;
-  meta_data: string | undefined;
   network_seed: string | undefined;
   properties: Record<string, Uint8Array>; // Segmented by RoleId
+  meta_data?: string;
 }
 
 export interface WebAddress {

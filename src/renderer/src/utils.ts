@@ -27,6 +27,7 @@ import { fromUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings } from './applets/types.js';
 import { AppletHash, AppletId, DistributionInfo } from './types.js';
+import { notifyError } from '@holochain-open-dev/elements';
 
 export async function initAppClient(
   appId: string,
@@ -491,4 +492,9 @@ export function appEntryActionHashFromDistInfo(distributionInfoString: string): 
   if (distributionInfo.type !== 'appstore-light')
     throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
   return decodeHashFromBase64(distributionInfo.info.appEntryActionHash);
+}
+
+export function notifyAndThrow(message: string) {
+  notifyError(message);
+  throw new Error(message);
 }

@@ -45,7 +45,7 @@ import {
   isAppRunning,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppletHash, AppletId } from './types.js';
+import { AppletHash, AppletId, DistributionInfo } from './types.js';
 import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
@@ -503,12 +503,17 @@ export class WeStore {
     if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
       throw new Error(`Invalid applet source URL '${source.url}'`);
 
+    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
       {},
       encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
       source.url,
+      distributionInfo,
+      applet.sha256_happ,
+      applet.sha256_webhapp,
       appEntry.entry.metadata,
     );
 
