@@ -36,6 +36,7 @@ import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, joinGroup } from './electron-api.js';
 import {
+  appEntryActionHashFromDistInfo,
   appIdFromAppletHash,
   appletHashFromAppId,
   findAppForDnaHash,
@@ -432,7 +433,8 @@ export class WeStore {
             pickBy(
               runningApplets,
               (appletStore) =>
-                appletStore.applet.appstore_app_hash.toString() === appletBundleHash.toString(),
+                appEntryActionHashFromDistInfo(appletStore.applet.distribution_info).toString() ===
+                appletBundleHash.toString(),
             ),
           ),
         (appletsForThisBundleHash) =>
@@ -489,12 +491,14 @@ export class WeStore {
       );
     }
 
-    const appEntry = await this.appletBundlesStore.getAppEntry(applet.appstore_app_hash);
+    const appEntry = await this.appletBundlesStore.getAppEntry(
+      appEntryActionHashFromDistInfo(applet.distribution_info),
+    );
 
-    console.log('@installApplet: got AppEntry: ', appEntry.content);
+    console.log('@installApplet: got AppEntry: ', appEntry.entry);
     if (!appEntry) throw new Error('AppEntry not found in AppStore');
 
-    const source: WebHappSource = JSON.parse(appEntry.content.source);
+    const source: WebHappSource = JSON.parse(appEntry.entry.source);
     if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
     if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
       throw new Error(`Invalid applet source URL '${source.url}'`);
@@ -505,7 +509,7 @@ export class WeStore {
       {},
       encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
       source.url,
-      appEntry.content.metadata,
+      appEntry.entry.metadata,
     );
 
     await this.reloadManualStores();

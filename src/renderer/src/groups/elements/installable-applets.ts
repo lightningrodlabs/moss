@@ -31,10 +31,14 @@ export class InstallableApplets extends LitElement {
   _installableApplets = new StoreSubscriber(
     this,
     () =>
-      asyncDeriveAndJoin(this.weStore.appletBundlesStore.allAppletBundles, (allAppletBundles) =>
-        joinAsync(
-          allAppletBundles.map((b) => this.weStore.appletBundlesStore.appletBundleLogo.get(b.id)),
-        ),
+      asyncDeriveAndJoin(
+        this.weStore.appletBundlesStore.installableAppletBundles,
+        (installableAppletBundles) =>
+          joinAsync(
+            installableAppletBundles.map((b) =>
+              this.weStore.appletBundlesStore.appletBundleLogo.get(b.id),
+            ),
+          ),
       ),
     () => [],
   );

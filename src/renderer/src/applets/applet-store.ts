@@ -18,6 +18,7 @@ import {
 import { AppletHost } from './applet-host.js';
 import { Applet } from './types.js';
 import {
+  appEntryActionHashFromDistInfo,
   appIdFromAppletHash,
   appletOrigin,
   clearAppletNotificationStatus,
@@ -110,7 +111,9 @@ export class AppletStore {
     lazyLoadAndPoll(() => (host ? host.getBlocks() : Promise.resolve({})), 10000),
   );
 
-  logo = this.appletBundlesStore.appletBundleLogo.get(this.applet.appstore_app_hash);
+  logo = this.appletBundlesStore.appletBundleLogo.get(
+    appEntryActionHashFromDistInfo(this.applet.distribution_info),
+  );
 
   _unreadNotifications: Writable<[string | undefined, number | undefined]> = writable([
     undefined,
