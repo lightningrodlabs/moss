@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import split from 'split';
-import { LauncherEmitter, WRONG_PASSWORD } from './launcherEmitter';
+import { LAIR_ERROR, LauncherEmitter, WRONG_PASSWORD } from './launcherEmitter';
 import { nanoid } from 'nanoid';
 
 export async function initializeLairKeystore(
@@ -68,6 +68,8 @@ export async function launchLairKeystore(
     launcherEmitter.emitLairError(line);
     if (line.includes('InternalSodium')) {
       launcherEmitter.emit(WRONG_PASSWORD);
+    } else {
+      launcherEmitter.emit(LAIR_ERROR, line);
     }
   });
   lairHandle.stdout.pipe(split()).on('data', (line: string) => {
@@ -80,6 +82,7 @@ export async function launchLairKeystore(
 
   return new Promise((resolve, reject) => {
     launcherEmitter.on('wrong-password', () => reject('Wrong password.'));
+    launcherEmitter.on('lair-error', (line) => reject(line));
     launcherEmitter.on('lair-ready', (url) => resolve([lairHandle, url as string]));
   });
 }

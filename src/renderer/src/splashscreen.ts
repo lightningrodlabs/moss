@@ -23,7 +23,7 @@ export class SplashScreen extends LitElement {
   password: string | undefined;
 
   @state()
-  wrongPassword = false;
+  launchError: string | undefined;
 
   @query('#password-input')
   passwordInput!: HTMLInputElement | undefined;
@@ -71,10 +71,15 @@ export class SplashScreen extends LitElement {
       console.error('Failed to launch: ', e);
       if (e.toString().includes('Wrong password.')) {
         this.password = undefined;
-        this.wrongPassword = true;
+        this.launchError = 'Wrong password.';
         setTimeout(() => {
-          this.wrongPassword = false;
+          this.launchError = undefined;
         }, 3000);
+      } else {
+        this.launchError = e;
+        setTimeout(() => {
+          this.launchError = undefined;
+        }, 6000);
       }
       this.view = SplashScreenMode.EnterPassword;
     }
@@ -193,8 +198,8 @@ export class SplashScreen extends LitElement {
         ${this.renderContent()}
         <div class="bottom-left">${this.progressState}</div>
         <div class="bottom-right">Lightningrod Labs We</div>
-        <div class="top-right errorbar row " style="${this.wrongPassword ? '' : 'display: none;'}">
-          Wrong password.
+        <div class="top-right errorbar row " style="${this.launchError ? '' : 'display: none;'}">
+          ${this.launchError}
         </div>
       </div>
     `;
