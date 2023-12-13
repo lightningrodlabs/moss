@@ -33,7 +33,7 @@ export function validateArgs(
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
   if (args.profile && !allowedProfilePattern.test(args.profile)) {
     throw new Error(
-      'The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-)',
+      `The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-) but got '${args.profile}'`,
     );
   }
   if (args.agent_num && !args.dev_config) {

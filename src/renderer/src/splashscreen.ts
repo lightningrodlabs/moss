@@ -192,7 +192,7 @@ export class SplashScreen extends LitElement {
       <div class="background">
         ${this.renderContent()}
         <div class="bottom-left">${this.progressState}</div>
-        <div class="bottom-right">Lightningrod Labs We (Electron Prototype)</div>
+        <div class="bottom-right">Lightningrod Labs We</div>
         <div class="top-right errorbar row " style="${this.wrongPassword ? '' : 'display: none;'}">
           Wrong password.
         </div>
@@ -303,7 +303,6 @@ export class SplashScreen extends LitElement {
           background-color: #331ead;
           background-size: cover;
           background-position: center center;
-          background-image: url(/img/Holochain_Halo_complete_transparent.svg);
         }
       `,
     ];

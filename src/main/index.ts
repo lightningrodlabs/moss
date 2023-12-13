@@ -40,7 +40,7 @@ const rustUtils = require('hc-we-rust-utils');
 
 // https://github.com/nodeca/argparse/issues/128
 if (app.isPackaged) {
-  process.argv.splice(1, 0, 'placeholder');
+  process.argv.splice(1, 0, '.');
 }
 
 const parser = new ArgumentParser({
