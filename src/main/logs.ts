@@ -20,7 +20,7 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 // with methods logLair, logHolochain, logLauncher, logHapp, ...
 
 export function setupLogs(launcherEmitter: LauncherEmitter, launcherFileSystem: WeFileSystem) {
-  const logFilePath = path.join(launcherFileSystem.appLogsDir, 'launcher.log');
+  const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
   // with file rotation set maxsize. But then we require logic to garbage collect old files...
   // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
   const logFileTransport = new transports.File({ filename: logFilePath });

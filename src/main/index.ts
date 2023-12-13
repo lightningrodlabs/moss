@@ -610,7 +610,6 @@ app.whenReady().then(async () => {
         uiPort,
       );
       WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
-      console.log('@ipcHandler: stored AppAssetsInfo: ', appAssetsInfo);
       // remove temp dir again
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log('@install-applet-bundle: app installed.');

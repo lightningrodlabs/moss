@@ -269,7 +269,12 @@ export class GroupStore {
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
     const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
-    console.log('Got unjoined applets: ', unjoinedApplets);
+    // console.log('Got unjoined applets: ', unjoinedApplets);
+    // const allGroupApplets = await this.groupClient.getGroupApplets();
+    // console.log(
+    //   'allGroupApplets: ',
+    //   allGroupApplets.map((hash) => encodeHashToBase64(hash)),
+    // );
     return unjoinedApplets;
   }, NEW_APPLETS_POLLING_FREQUENCY);
 
