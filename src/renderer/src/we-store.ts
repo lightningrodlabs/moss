@@ -16,7 +16,7 @@ import {
   asyncReadable,
 } from '@holochain-open-dev/stores';
 import { DnaHashMap, HoloHashMap, LazyHoloHashMap, pickBy, slice } from '@holochain-open-dev/utils';
-import { AppInfo, AppWebsocket, InstalledAppId, ProvisionedCell } from '@holochain/client';
+import { AppInfo, AppWebsocket, ProvisionedCell } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';

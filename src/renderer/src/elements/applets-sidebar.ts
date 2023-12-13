@@ -19,6 +19,7 @@ import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
+import { appEntryActionHashFromDistInfo } from '../utils.js';
 
 @localized()
 @customElement('applets-sidebar')
@@ -36,8 +37,15 @@ export class AppletsSidebar extends LitElement {
     const appletsByBundleHash: HoloHashMap<ActionHash, AppletStore> = new HoloHashMap();
 
     for (const [_appletHash, appletStore] of Array.from(applets.entries())) {
-      if (!appletsByBundleHash.has(appletStore.applet.appstore_app_hash)) {
-        appletsByBundleHash.set(appletStore.applet.appstore_app_hash, appletStore);
+      if (
+        !appletsByBundleHash.has(
+          appEntryActionHashFromDistInfo(appletStore.applet.distribution_info),
+        )
+      ) {
+        appletsByBundleHash.set(
+          appEntryActionHashFromDistInfo(appletStore.applet.distribution_info),
+          appletStore,
+        );
       }
     }
 
@@ -54,7 +62,9 @@ export class AppletsSidebar extends LitElement {
                     this.dispatchEvent(
                       new CustomEvent('applet-selected', {
                         detail: {
-                          appletBundleHash: appletStore.applet.appstore_app_hash,
+                          appletBundleHash: appEntryActionHashFromDistInfo(
+                            appletStore.applet.distribution_info,
+                          ),
                         },
                         bubbles: true,
                         composed: true,
