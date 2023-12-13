@@ -175,6 +175,16 @@ export class WeFileSystem {
     }
   }
 
+  backupAppAssetsInfo(installedAppId: InstalledAppId) {
+    const fileToBackup = path.join(this.appsDir, `${installedAppId}.json`);
+    const backupPath = path.join(this.appsDir, `${installedAppId}.json.previous`);
+    try {
+      fs.copyFileSync(fileToBackup, backupPath);
+    } catch (e) {
+      throw new Error(`Failed to backup app assets info for app Id ''${installedAppId}: ${e}`);
+    }
+  }
+
   readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
     const filePath = path.join(this.appsDir, `${installedAppId}.json`);
     let appAssetsInfoJson: string | undefined;
@@ -196,6 +206,62 @@ function createDirIfNotExists(path: fs.PathLike) {
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path, { recursive: true });
   }
+}
+
+export function deriveAppAssetsInfo(
+  distributionInfo: DistributionInfo,
+  happOrWebHappUrl: string,
+  sha256Happ: string,
+  sha256Webhapp?: string,
+  sha256Ui?: string,
+  uiPort?: number,
+): AppAssetsInfo {
+  return sha256Webhapp
+    ? {
+        type: 'webhapp',
+        sha256: sha256Webhapp,
+        assetSource: {
+          type: 'https',
+          url: happOrWebHappUrl,
+        },
+        distributionInfo,
+        happ: {
+          sha256: sha256Happ,
+        },
+        ui: {
+          location: {
+            type: 'filesystem',
+            sha256: sha256Ui!,
+          },
+        },
+      }
+    : uiPort
+      ? {
+          type: 'webhapp',
+          assetSource: {
+            type: 'https',
+            url: happOrWebHappUrl,
+          },
+          distributionInfo,
+          happ: {
+            sha256: sha256Happ,
+          },
+          ui: {
+            location: {
+              type: 'localhost',
+              port: uiPort,
+            },
+          },
+        }
+      : {
+          type: 'happ',
+          sha256: sha256Happ,
+          assetSource: {
+            type: 'https',
+            url: happOrWebHappUrl,
+          },
+          distributionInfo,
+        };
 }
 
 export function breakingAppVersion(app: Electron.App): string {

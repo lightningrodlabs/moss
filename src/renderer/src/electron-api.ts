@@ -7,12 +7,13 @@ import {
   CallZomeRequestSigned,
   ActionHashB64,
   AgentPubKeyB64,
+  InstalledAppId,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
-import { AppHashes, DistributionInfo } from './types';
+import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -24,6 +25,7 @@ declare global {
       isAppletDev: () => Promise<boolean>;
       uninstallApp: (appId: string) => Promise<void>;
       openApp: (appId: string) => Promise<void>;
+      getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo>;
@@ -36,6 +38,7 @@ declare global {
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         sha256Happ: string,
+        sha256Ui?: string,
         sha256Webhapp?: string,
         metadata?: string,
       ) => Promise<AppInfo>;
@@ -44,6 +47,14 @@ declare global {
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
+      updateAppletUi: (
+        appId: string,
+        happOrWebHappUrl: string,
+        distributionInfo: DistributionInfo,
+        sha256Happ: string,
+        sha256Ui: string,
+        sha256Webhapp: string,
+      ) => Promise<void>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
   }
@@ -85,6 +96,10 @@ export async function joinGroup(networkSeed: string): Promise<AppInfo> {
   // }
 
   // return appInfo;
+}
+
+export async function getAllAppAssetsInfos(): Promise<Record<InstalledAppId, AppAssetsInfo>> {
+  return window.electronAPI.getAllAppAssetsInfos();
 }
 
 export async function getAppletDevPort(appId: string): Promise<number> {

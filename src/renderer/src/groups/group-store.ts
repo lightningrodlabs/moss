@@ -6,6 +6,7 @@ import {
   AsyncStatus,
   completed,
   derived,
+  get,
   joinMap,
   lazyLoad,
   lazyLoadAndPoll,
@@ -20,7 +21,6 @@ import {
   AppAgentWebsocket,
   CellType,
   DnaHash,
-  DnaHashB64,
   EntryHash,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -113,7 +113,7 @@ export class GroupStore {
   // Installs an applet instance that already exists in this group into this conductor
   async installApplet(appletHash: EntryHash) {
     const applet = await this.groupClient.getApplet(appletHash);
-
+    console.log('@groupstore: @installApplet: Got applet: ', applet);
     if (!applet) throw new Error('Given applet instance hash was not found');
 
     await this.weStore.installApplet(appletHash, applet);
@@ -148,13 +148,7 @@ export class GroupStore {
     }
 
     const appHashes: AppHashes = JSON.parse(appEntry.content.hashes);
-    const appStoreAppInfo = await this.weStore.appletBundlesStore.appstoreClient.appInfo();
-    let appstoreDnaHash: DnaHashB64 | undefined = undefined;
-    for (const [_role_name, [cell]] of Object.entries(appStoreAppInfo.cell_info)) {
-      appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
-    }
-    if (!appstoreDnaHash)
-      throw new Error('Failed to install applet: Failed to get appstore DNA hash.');
+    const appstoreDnaHash = await this.weStore.appletBundlesStore.appstoreDnaHash();
 
     const distributionInfo: DistributionInfo = {
       type: 'appstore-light',
@@ -171,6 +165,7 @@ export class GroupStore {
       description: appEntry.content.description,
       sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
       sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
+      sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,
       distribution_info: JSON.stringify(distributionInfo),
       network_seed: networkSeed,
       properties: {},
@@ -342,16 +337,6 @@ export class GroupStore {
       return completed([undefined, undefined] as [string | undefined, number | undefined]);
     },
   );
-
-  appletUiUpdatesAvailable = asyncDerived(this.allMyRunningApplets, (myApplets) => {
-    let updatesAvailable = false;
-    myApplets.forEach((appletHash) => {
-      if (this.weStore.availableUiUpdates[`applet#${encodeHashToBase64(appletHash)}`]) {
-        updatesAvailable = true;
-      }
-    });
-    return updatesAvailable;
-  });
 }
 
 async function retryUntilResolved<T>(

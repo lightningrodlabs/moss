@@ -45,3 +45,41 @@ export type DistributionInfo =
   | {
       type: 'filesystem'; // Installed from filesystem
     };
+
+export type AppAssetsInfo =
+  | {
+      type: 'happ';
+      assetSource: AssetSource; // Source of the actual asset bytes
+      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
+      sha256: string; // sha256 hash of the .happ file
+    }
+  | {
+      type: 'webhapp';
+      assetSource: AssetSource;
+      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
+      sha256?: string; // sha256 hash of the .webhapp file
+      happ: {
+        sha256: string; // sha256 hash of the .happ file. Will also define the name of the .happ file
+        dnas?: any; // sha256 hashes of dnas and zomes
+      };
+      ui: {
+        location:
+          | {
+              type: 'filesystem';
+              sha256: string; // Also defines the foldername where the unzipped assets are stored
+            }
+          | {
+              type: 'localhost';
+              port: number;
+            };
+      };
+    };
+
+export type AssetSource =
+  | {
+      type: 'https';
+      url: string;
+    }
+  | {
+      type: 'filesystem'; // Installed from filesystem
+    };

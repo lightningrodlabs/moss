@@ -24,6 +24,9 @@ export class WeApp extends LitElement {
   @state()
   state: State = { state: 'loading' };
 
+  @state()
+  _appletUiUpdateCheckInterval: number | undefined;
+
   // @state()
   // previousState: State = { state: 'loading' };
 
@@ -47,10 +50,23 @@ export class WeApp extends LitElement {
     } catch (e) {
       console.error(e);
     }
+
+    // Check for UI updates
+    this._appletUiUpdateCheckInterval = window.setInterval(
+      async () => await this._weStore.checkForUiUpdates(),
+      10000,
+    );
+
     // } else {
     //   const initialized = await isKeystoreInitialized();
     //   this.state = { state: 'password', initialized };
     // }
+  }
+
+  disconnectedCallback(): void {
+    if (this._appletUiUpdateCheckInterval) {
+      window.clearInterval(this._appletUiUpdateCheckInterval);
+    }
   }
 
   async connect() {

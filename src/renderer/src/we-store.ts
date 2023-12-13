@@ -34,22 +34,23 @@ import { msg } from '@lit/localize';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
-import { ConductorInfo, joinGroup } from './electron-api.js';
+import { ConductorInfo, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
   appEntryActionHashFromDistInfo,
   appIdFromAppletHash,
   appletHashFromAppId,
+  appletIdFromAppId,
   findAppForDnaHash,
   hrlWithContextToB64,
   initAppClient,
   isAppRunning,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppletHash, AppletId, DistributionInfo } from './types.js';
-import { ResourceLocatorB64 } from './processes/appstore/get-happ-releases.js';
+import { AppHashes, AppletHash, AppletId, DistributionInfo } from './types.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';
+import { AppEntry, Entity } from './processes/appstore/types.js';
 
 export class WeStore {
   constructor(
@@ -62,9 +63,68 @@ export class WeStore {
 
   private _selectedAppletHash: Writable<AppletHash | undefined> = writable(undefined);
 
+  private _updatableApplets: Writable<Record<AppletId, Entity<AppEntry>>> = writable({});
+  private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
+
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);
     return groupStores.get(groupDnaHash);
+  }
+
+  async checkForUiUpdates() {
+    // 1. Get all AppAssetsInfos
+    const updatableApplets: Record<AppletId, Entity<AppEntry>> = {}; // AppEntry with the new assets by AppletId
+    const appAssetsInfos = await getAllAppAssetsInfos();
+    console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
+    const allAppEntries = await toPromise(this.appletBundlesStore.installableAppletBundles);
+    console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
+
+    Object.entries(appAssetsInfos).forEach(([appId, appAssetInfo]) => {
+      if (
+        appAssetInfo.distributionInfo.type === 'appstore-light' &&
+        appAssetInfo.type === 'webhapp' &&
+        appAssetInfo.sha256
+      ) {
+        // TODO potentially fetch current AppEntry here and check last_updated field and compare
+        const currentAppEntryId = appAssetInfo.distributionInfo.info.appEntryId;
+        const maybeRelevantAppEntry = allAppEntries.find(
+          (appEntryEntity) => encodeHashToBase64(appEntryEntity.id) === currentAppEntryId,
+        );
+        if (maybeRelevantAppEntry) {
+          const appHashes: AppHashes = JSON.parse(maybeRelevantAppEntry.content.hashes);
+          // Check that happ hash is the same but webhapp hash is different
+          if (appHashes.type === 'webhapp') {
+            if (
+              appHashes.happ.sha256 === appAssetInfo.happ.sha256 &&
+              appHashes.sha256 !== appAssetInfo.sha256
+            ) {
+              const appletId = appletIdFromAppId(appId);
+              updatableApplets[appletId] = maybeRelevantAppEntry;
+            }
+          }
+        }
+      }
+    });
+
+    console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
+    this._updatableApplets.set(updatableApplets);
+
+    const updatesAvailableByGroup = new DnaHashMap<boolean>();
+    const groupStores = await toPromise(this.groupStores);
+    await Promise.all(
+      Array.from(groupStores.entries()).map(async ([dnaHash, groupStore]) => {
+        const runningGroupApplets = await toPromise(groupStore.allMyRunningApplets);
+        const runningGroupAppletsB64 = runningGroupApplets.map((hash) => encodeHashToBase64(hash));
+        let updateAvailable = false;
+        Object.keys(updatableApplets).forEach((appletId) => {
+          if (runningGroupAppletsB64.includes(appletId)) {
+            updateAvailable = true;
+          }
+        });
+        updatesAvailableByGroup.set(dnaHash, updateAvailable);
+      }),
+    );
+    this._updatesAvailableByGroup.set(updatesAvailableByGroup);
   }
 
   selectedAppletHash(): Readable<AppletHash | undefined> {
@@ -75,11 +135,19 @@ export class WeStore {
     this._selectedAppletHash.update((_) => hash);
   }
 
-  public availableUiUpdates: Record<InstalledAppId, ResourceLocatorB64> = {};
+  updatableApplets(): Readable<Record<AppletId, Entity<AppEntry>>> {
+    return derived(this._updatableApplets, (store) => store);
+  }
 
-  // public async fetchAvailableUiUpdates() {
-  //   this.availableUiUpdates = await invoke('fetch_available_ui_updates', {});
-  // }
+  updatesAvailableForGroup(groupDnaHash: DnaHash): Readable<boolean> {
+    return derived(this._updatesAvailableByGroup, (store) => store.get(groupDnaHash));
+  }
+
+  appletUpdatable(appletHash: AppletHash): Readable<boolean> {
+    return derived(this._updatableApplets, (store) =>
+      Object.keys(store).includes(encodeHashToBase64(appletHash)),
+    );
+  }
 
   /**
    * Clones the group DNA with a new unique network seed, and creates a group info entry in that DNA
@@ -496,6 +564,8 @@ export class WeStore {
     );
 
     console.log('@installApplet: got AppEntry: ', appEntry.entry);
+    console.log('@installApplet: got Applet: ', applet);
+
     if (!appEntry) throw new Error('AppEntry not found in AppStore');
 
     const source: WebHappSource = JSON.parse(appEntry.entry.source);
@@ -513,6 +583,7 @@ export class WeStore {
       source.url,
       distributionInfo,
       applet.sha256_happ,
+      applet.sha256_ui,
       applet.sha256_webhapp,
       appEntry.entry.metadata,
     );

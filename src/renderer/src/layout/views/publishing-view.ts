@@ -198,9 +198,11 @@ export class PublishingView extends LitElement {
     description: string;
     webhapp_url: string;
   }) {
+    if (!this._myPublisher) throw new Error('No publisher registered yet.');
     this._publishing = 'Fetching resource for validation...';
     console.log('TRYING TO PUBLISH APPLETS...');
     if (!this._appletIconSrc) {
+      this._publishing = undefined;
       notifyError('No Icon provided.');
       throw new Error('Icon is required.');
     }
@@ -228,7 +230,7 @@ export class PublishingView extends LitElement {
     }
 
     const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
-    if (!this._myPublisher) throw new Error('No publisher registered yet.');
+
     const source: WebHappSource = {
       type: 'https',
       url: fields.webhapp_url,
@@ -346,7 +348,6 @@ export class PublishingView extends LitElement {
       properties: updateInput,
     };
 
-    console.log('got updateInput: ', updateEntityInput);
     await updateApp(appStoreClient, updateEntityInput);
     const myAppsEntities = await getMyApps(appStoreClient);
     this._selectedApp = undefined;

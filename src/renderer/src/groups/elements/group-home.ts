@@ -2,10 +2,17 @@ import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { ActionHash, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import {
+  ActionHash,
+  AgentPubKey,
+  EntryHash,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+} from '@holochain/client';
 import {
   AsyncReadable,
   StoreSubscriber,
+  get,
   joinAsync,
   pipe,
   toPromise,
@@ -48,9 +55,11 @@ import { GroupStore } from '../group-store.js';
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppletHash } from '../../types.js';
+import { AppHashes, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../applets/types.js';
+import { LoadingDialog } from '../../elements/loading-dialog.js';
+import { appIdFromAppletHash } from '../../utils.js';
 
 type View =
   | {
@@ -74,7 +83,7 @@ export class GroupHome extends LitElement {
 
   updatesAvailable = new StoreSubscriber(
     this,
-    () => this.groupStore.appletUiUpdatesAvailable,
+    () => this.weStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
     () => [this.weStore, this.groupStore],
   );
 
@@ -91,11 +100,17 @@ export class GroupHome extends LitElement {
             let appstoreAppEntry: Entity<AppEntry> | undefined;
             let appletLogo: string | undefined;
             if (appletEntry) {
+              const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
+              if (distributionInfo.type !== 'appstore-light')
+                throw new Error(
+                  "Cannot get unjoined applets from distribution types other than appstore-light'",
+                );
+              const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
               appstoreAppEntry = await toPromise(
-                this.weStore.appletBundlesStore.appletBundles.get(appletEntry.appstore_app_hash),
+                this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
               );
               appletLogo = await toPromise(
-                this.weStore.appletBundlesStore.appletBundleLogo.get(appletEntry.appstore_app_hash),
+                this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
               );
             }
             return [
@@ -140,33 +155,51 @@ export class GroupHome extends LitElement {
     // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
   }
 
-  async updateUi(_e: CustomEvent) {
-    throw new Error('Updating UI not implemented.');
-    // (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
-    // console.log('appletHash: ', e.detail);
-    // const appId = `applet#${encodeHashToBase64(e.detail as AppletHash)}`;
-    // console.log('appletId: ', appId);
+  async updateUi(e: CustomEvent) {
+    (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
+    console.log('appletHash: ', e.detail);
+    const appId = appIdFromAppletHash(e.detail);
+    console.log('appletId: ', appId);
 
-    // try {
-    //   const resourceLocatorB64 = this.weStore.availableUiUpdates[appId];
-    //   console.log('resourceLocatorB64: ', resourceLocatorB64);
+    try {
+      const appEntryEntity = get(this.weStore.updatableApplets())[encodeHashToBase64(e.detail)];
+      if (!appEntryEntity)
+        throw new Error('No AppEntry found in We Store for the requested UI update.');
 
-    //   const payload = {
-    //     appId,
-    //     devhubDnaHash: resourceLocatorB64.dna_hash,
-    //     guiReleaseHash: resourceLocatorB64.resource_hash,
-    //   };
-    //   console.log('Updating UI with payload: ', payload);
-    //   await invoke('update_applet_ui', payload);
-    //   await this.weStore.fetchAvailableUiUpdates();
-    //   (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-    //   notify(msg('Applet UI updated.'));
-    //   this.requestUpdate();
-    // } catch (e) {
-    //   console.error(`Failed to update UI: ${e}`);
-    //   notifyError(msg('Failed to update the UI.'));
-    //   (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-    // }
+      const assetsSource: AssetSource = JSON.parse(appEntryEntity.content.source);
+      if (assetsSource.type !== 'https')
+        throw new Error("Updating of applets is only implemented for sources of type 'http'");
+      const appstoreDnaHash = await this.weStore.appletBundlesStore.appstoreDnaHash();
+      const distributionInfo: DistributionInfo = {
+        type: 'appstore-light',
+        info: {
+          appstoreDnaHash,
+          appEntryId: encodeHashToBase64(appEntryEntity.id),
+          appEntryActionHash: encodeHashToBase64(appEntryEntity.action),
+          appEntryEntryHash: encodeHashToBase64(appEntryEntity.address),
+        },
+      };
+      const appHashes: AppHashes = JSON.parse(appEntryEntity.content.hashes);
+      if (appHashes.type !== 'webhapp')
+        throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+
+      await window.electronAPI.updateAppletUi(
+        appId,
+        assetsSource.url,
+        distributionInfo,
+        appHashes.happ.sha256,
+        appHashes.ui.sha256,
+        appHashes.sha256,
+      );
+      await this.weStore.checkForUiUpdates();
+      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+      notify(msg('Applet UI updated.'));
+      this.requestUpdate();
+    } catch (e) {
+      console.error(`Failed to update UI: ${e}`);
+      notifyError(msg('Failed to update the UI.'));
+      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    }
   }
 
   async joinNewApplet(appletHash: AppletHash) {
@@ -252,18 +285,14 @@ export class GroupHome extends LitElement {
             </div>
 
             <div style="position: relative;">
-              ${this.updatesAvailable.value.status === 'complete' &&
-              this.updatesAvailable.value.value
+              ${!!this.updatesAvailable.value
                 ? html`<div
                     style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
                   ></div>`
                 : html``}
               <sl-icon-button
                 .src=${wrapPathInSvg(mdiCog)}
-                title=${this.updatesAvailable.value.status === 'complete' &&
-                this.updatesAvailable.value.value
-                  ? 'Applet Updates available'
-                  : ''}
+                title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
                 @click=${() => {
                   this.view = { view: 'settings' };
                 }}

@@ -158,6 +158,7 @@ export async function devSetup(
             custom_name: appletConfig.name,
             description: appletConfig.description,
             sha256_happ: happHash,
+            sha256_ui: maybeUiHash,
             sha256_webhapp: maybeWebHappHash,
             distribution_info: JSON.stringify(distributionInfo),
             meta_data: undefined,
@@ -192,6 +193,13 @@ export async function devSetup(
             maybeUiHash,
           );
           logDevSetup(`Registering applet instance '${appletInstallConfig.instanceName}'...`);
+          logDevSetup(
+            `$$$$$$$$$ REGISTERING APPLET OF TYPE ${appletConfig.name}: ${JSON.stringify(
+              applet,
+              undefined,
+              4,
+            )}`,
+          );
           await groupWebsocket.callZome({
             role_name: 'group',
             zome_name: 'group',
@@ -414,7 +422,7 @@ async function fetchHappOrWebHappIfNecessary(
       const happBytes = fs.readFileSync(source.happPath);
       const hash = createHash('sha256');
       hash.update(happBytes);
-      const happHash = hash.digest('base64');
+      const happHash = hash.digest('hex');
       return [source.happPath, happHash, undefined, undefined, undefined];
     default:
       throw new Error(`Got invalid applet source: ${source}`);
@@ -504,6 +512,9 @@ function storeAppAssetsInfo(
   maybeWebHappHash?: string,
   maybeUiHash?: string,
 ) {
+  console.log(
+    `STORING APP ASSETSINFO FOR APPLET ${appletConfig.name}. Got uiHash: ${maybeUiHash}. Got webhapp hash: ${maybeWebHappHash}`,
+  );
   // TODO potentially add distribution info from AppEntry that's being published earlier
   // to be able to simulate UI updates
   // Store app metadata
@@ -671,6 +682,7 @@ export interface AppEntry {
   source: string;
   hashes: string;
   metadata: string;
+  changelog: string | undefined;
   editors: Array<AgentPubKey>;
 
   author: AgentPubKey;
@@ -686,6 +698,7 @@ export interface Applet {
   custom_name: string; // name of the applet instance as chosen by the person adding it to the group,
   description: string;
   sha256_happ: string;
+  sha256_ui: string | undefined;
   sha256_webhapp: string | undefined;
   distribution_info: string;
   network_seed: string | undefined;

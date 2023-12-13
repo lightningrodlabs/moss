@@ -29,11 +29,18 @@ import {
   getProvisionedCells,
   isAppRunning,
 } from '../../utils.js';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @customElement('applet-detail-card')
 export class AppletDetailCard extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
   weStore!: WeStore;
+
+  appletUpdatable = new StoreSubscriber(
+    this,
+    () => this.weStore.appletUpdatable(this.appletHash),
+    () => [this.weStore],
+  );
 
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
@@ -72,7 +79,7 @@ export class AppletDetailCard extends LitElement {
             <span style="flex: 1; font-size: 23px; font-weight: 600;"
               >${this.applet.custom_name}</span
             >
-            ${this.weStore.availableUiUpdates[`applet#${encodeHashToBase64(this.appletHash)}`]
+            ${!!this.appletUpdatable.value
               ? html`<sl-button
                   variant="success"
                   @click=${() => this.updateUi()}

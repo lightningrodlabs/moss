@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openDevHub: () => ipcRenderer.invoke('open-devhub'),
+  getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
   getAppletIframeScript: () => ipcRenderer.invoke('get-applet-iframe-script'),
@@ -28,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     sha256Happ: string,
+    sha256Ui?: string,
     sha256Webhapp?: string,
     metadata?: string,
   ) =>
@@ -40,6 +42,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       happOrWebHappUrl,
       distributionInfo,
       sha256Happ,
+      sha256Ui,
       sha256Webhapp,
       metadata,
     ),
@@ -49,6 +52,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
+  updateAppletUi: (
+    appId: string,
+    happOrWebHappUrl: string,
+    distributionInfo: DistributionInfo,
+    sha256Happ: string,
+    sha256Ui: string,
+    sha256Webhapp: string,
+  ) =>
+    ipcRenderer.invoke(
+      'update-applet-ui',
+      appId,
+      happOrWebHappUrl,
+      distributionInfo,
+      sha256Happ,
+      sha256Ui,
+      sha256Webhapp,
+    ),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
 });
 

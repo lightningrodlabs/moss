@@ -28,6 +28,7 @@ export interface AppEntry {
   publisher: ActionHash; // alias EntityId
   source: string;
   hashes: string;
+  changelog: string | undefined;
   metadata: string;
   editors: Array<AgentPubKey>;
 

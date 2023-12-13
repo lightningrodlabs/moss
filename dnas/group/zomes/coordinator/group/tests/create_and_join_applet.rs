@@ -1,9 +1,7 @@
-use ::fixt::prelude::fixt;
 use std::collections::BTreeMap;
 
 use group_integrity::Applet;
 use hdk::prelude::holo_hash::*;
-use hdk::prelude::*;
 use holochain::test_utils::consistency_10s;
 use holochain::{conductor::config::ConductorConfig, sweettest::*};
 
@@ -28,9 +26,27 @@ async fn create_and_join_applet() {
     let applet = Applet {
         custom_name: String::from("custom name"),
         description: String::from("description"),
-        appstore_app_hash: fixt!(ActionHash),
+        distribution_info: String::from(
+            "\"type\": \"appstore-light\",
+            \"info\": {
+                \"appstoreDnaHash\": \"uhC0kSYZ2EzJD-lfMU7fIGeG0TTaEHfp_MzLynCdKMB1saA-WQGbx\",
+                \"appEntryId\": \"uhCkkkI4uY-a8vldReWpwkm-lx8_9yMBj_GW1OELlWqGdQ6_q-msE\",
+                \"appEntryActionHash\": \"uhCkkkI4uY-a8vldReWpwkm-lx8_9yMBj_GW1OELlWqGdQ6_q-msE\",
+                \"appEntryEntryHash\": \"uhCEkOOnoE0PguBRCH7R7hTFOKfpMGuZ9WOY0z3BhyIUXy736QBmf\"
+        }",
+        ),
+        sha256_happ: String::from(
+            "bfc88f5cf93485146b7175eacb7df0bac42b2ec9455c76bb4c4b4f8c0ccb3db4",
+        ),
+        sha256_ui: Some(String::from(
+            "d87af80f42ad547aae7e38545ccc7e5e0fe5c618326ede42dddb33430c12da1f",
+        )),
+        sha256_webhapp: Some(String::from(
+            "e15e296e0df775222065cef4f476f66fcf6f681a07d40e4795fc5ae2f28c58bd",
+        )),
         network_seed: None,
         properties: BTreeMap::new(), // Segmented by RoleId
+        meta_data: None,
     };
 
     let alice_applet_entry_hash: EntryHash = conductors[0]
@@ -66,9 +82,27 @@ async fn create_and_join_applet() {
     let another_applet = Applet {
         custom_name: String::from("another custom name"),
         description: String::from("another description"),
-        appstore_app_hash: fixt!(ActionHash),
+        distribution_info: String::from(
+            "\"type\": \"appstore-light\",
+            \"info\": {
+                \"appstoreDnaHash\": \"uhC0kSYZ2EzJD-lfMU7fIGeG0TTaEHfp_MzLynCdKMB1saA-WQGbx\",
+                \"appEntryId\": \"uhCkkkI4uY-a8vldReWpwkm-lx8_9yMBj_GW1OELlWqGdQ6_q-msE\",
+                \"appEntryActionHash\": \"uhCkkkI4uY-a8vldReWpwkm-lx8_9yMBj_GW1OELlWqGdQ6_q-msE\",
+                \"appEntryEntryHash\": \"uhCEkOOnoE0PguBRCH7R7hTFOKfpMGuZ9WOY0z3BhyIUXy736QBmf\"
+        }",
+        ),
+        sha256_happ: String::from(
+            "bfc88f5cf93485146b7175eacb7df0bac42b2ec9455c76bb4c4b4f8c0ccb3db4",
+        ),
+        sha256_ui: Some(String::from(
+            "d87af80f42ad547aae7e38545ccc7e5e0fe5c618326ede42dddb33430c12da1f",
+        )),
+        sha256_webhapp: Some(String::from(
+            "e15e296e0df775222065cef4f476f66fcf6f681a07d40e4795fc5ae2f28c58bd",
+        )),
         network_seed: None,
         properties: BTreeMap::new(), // Segmented by RoleId
+        meta_data: None,
     };
 
     let alice_another_applet_entry_hash: EntryHash = conductors[0]

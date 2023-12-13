@@ -4,7 +4,9 @@ import {
   ActionHash,
   AdminWebsocket,
   AppAgentClient,
+  DnaHashB64,
   Record as HolochainRecord,
+  encodeHashToBase64,
 } from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
 import { getAllApps } from '../processes/appstore/appstore-light.js';
@@ -57,5 +59,16 @@ export class AppletBundlesStore {
     const appEntryRecord = await this.getAppEntry(appActionHash);
     const appEntry = appEntryRecord.entry;
     return appEntry.icon_src;
+  }
+
+  async appstoreDnaHash(): Promise<DnaHashB64> {
+    const appStoreAppInfo = await this.appstoreClient.appInfo();
+    let appstoreDnaHash: DnaHashB64 | undefined = undefined;
+    for (const [_role_name, [cell]] of Object.entries(appStoreAppInfo.cell_info)) {
+      appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+    }
+    if (!appstoreDnaHash)
+      throw new Error('Failed to install applet: Failed to get appstore DNA hash.');
+    return appstoreDnaHash;
   }
 }

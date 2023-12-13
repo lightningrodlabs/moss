@@ -20,7 +20,7 @@ import { ArgumentParser } from 'argparse';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
-import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { LauncherEmitter } from './launcherEmitter';
@@ -33,6 +33,7 @@ import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
 import { launch } from './launch';
+import { InstalledAppId } from '@holochain/client';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -343,6 +344,29 @@ app.whenReady().then(async () => {
   // ipcMain.handle('uninstall-app', async (_e, appId: string) => {
   //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
   // });
+  ipcMain.handle(
+    'get-all-app-assets-infos',
+    async (): Promise<Record<InstalledAppId, AppAssetsInfo>> => {
+      const allAppAssetsInfos: Record<InstalledAppId, AppAssetsInfo> = {};
+      // Get all applets
+      const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      const allApplets = allApps.filter((appInfo) =>
+        appInfo.installed_app_id.startsWith('applet#'),
+      );
+      // For each applet, read app assets info and add to record
+      allApplets.forEach((appInfo) => {
+        try {
+          const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appInfo.installed_app_id);
+          allAppAssetsInfos[appInfo.installed_app_id] = appAssetsInfo;
+        } catch (e) {
+          console.warn(
+            `Failed to read AppAssetsInfo for applet with app id ${appInfo.installed_app_id}`,
+          );
+        }
+      });
+      return allAppAssetsInfos;
+    },
+  );
   ipcMain.handle('get-applet-dev-port', (_e, appId: string) => {
     const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
     if (appAssetsInfo.type === 'webhapp' && appAssetsInfo.ui.location.type === 'localhost') {
@@ -412,6 +436,72 @@ app.whenReady().then(async () => {
     }
   });
   ipcMain.handle(
+    'update-applet-ui',
+    async (
+      _e,
+      appId: string,
+      happOrWebHappUrl: string,
+      distributionInfo: DistributionInfo,
+      sha256Happ: string,
+      sha256Ui: string,
+      sha256Webhapp: string,
+    ) => {
+      // Check if UI assets need to be downloaded at all
+      const uiAlreadyInstalled = fs.existsSync(
+        path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'),
+      );
+      let tmpDir: string | undefined;
+      if (!uiAlreadyInstalled) {
+        // fetch webhapp from URL
+        console.log('Fetching webhapp from URL: ', happOrWebHappUrl);
+        const response = await net.fetch(happOrWebHappUrl);
+        const buffer = await response.arrayBuffer();
+        const assetBytes = Array.from(new Uint8Array(buffer));
+        const result: string = await rustUtils.validateHappOrWebhapp(assetBytes);
+        const [happHash, uiHash, webHappHash] = result.split('$');
+
+        if (happHash !== sha256Happ)
+          throw new Error(
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHash}' but expected hash ${sha256Happ}`,
+          );
+        if (webHappHash && webHappHash !== sha256Webhapp)
+          throw new Error(
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHash}' but expected hash ${sha256Webhapp}`,
+          );
+        if (uiHash && uiHash !== sha256Ui)
+          throw new Error(
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHash}' but expected hash ${sha256Ui}`,
+          );
+        if (sha256Webhapp && !sha256Ui)
+          throw new Error('Got applet with a webhapp hash but no UI hash.');
+
+        tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
+        fs.mkdirSync(tmpDir, { recursive: true });
+        const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+        fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+        const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
+        const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
+        // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
+        await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+      } else {
+        console.log(
+          '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
+        );
+      }
+      // That the happ hash is the same as with the previous installation needs to be checked in the frontend
+      const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
+        distributionInfo,
+        happOrWebHappUrl,
+        sha256Happ,
+        sha256Webhapp,
+        sha256Ui,
+      );
+      WE_FILE_SYSTEM.backupAppAssetsInfo(appId);
+      WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+    },
+  );
+  ipcMain.handle(
     'install-applet-bundle',
     async (
       _e,
@@ -422,6 +512,7 @@ app.whenReady().then(async () => {
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,
       sha256Happ: string,
+      sha256Ui?: string,
       sha256Webhapp?: string,
       metadata?: string,
     ) => {
@@ -432,33 +523,59 @@ app.whenReady().then(async () => {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
         return;
       }
-      // fetch webhapp from URL
-      console.log('Fetching happ/webhapp from URL: ', happOrWebHappUrl);
-      const response = await net.fetch(happOrWebHappUrl);
-      const buffer = await response.arrayBuffer();
-      const tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
-      fs.mkdirSync(tmpDir, { recursive: true });
-      const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
-      fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+      // Check if .happ and ui assets are already installed on the filesystem and don't need to get fetched from the source
+      let happAlreadyInstalledPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
+      const happAlreadyInstalled = fs.existsSync(happAlreadyInstalledPath);
+      const uiAlreadyInstalled =
+        !!sha256Ui && fs.existsSync(path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'));
 
-      const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
-      const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
+      let happToBeInstalledPath: string | undefined;
+      let tmpDir: string | undefined;
 
-      const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+      if (!happAlreadyInstalled || !uiAlreadyInstalled) {
+        // fetch webhapp from URL
+        console.log('Fetching happ/webhapp from URL: ', happOrWebHappUrl);
+        const response = await net.fetch(happOrWebHappUrl);
+        const buffer = await response.arrayBuffer();
 
-      const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
+        const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
+        const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
-      if (happHash !== sha256Happ)
-        throw new Error(
-          'The downloaded resource has an invalid hash. The source may be corrupted.',
+        const assetBytes = Array.from(new Uint8Array(buffer));
+        const validationResult: string = await rustUtils.validateHappOrWebhapp(assetBytes);
+        const [happHashVal, uiHashVal, webHappHashVal] = validationResult.split('$');
+
+        if (happHashVal !== sha256Happ)
+          throw new Error(
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHashVal}' but expected hash ${sha256Happ}`,
+          );
+        if (webHappHashVal && webHappHashVal !== sha256Webhapp)
+          throw new Error(
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHashVal}' but expected hash ${sha256Webhapp}`,
+          );
+        if (uiHashVal && uiHashVal !== sha256Ui)
+          throw new Error(
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHashVal}' but expected hash ${sha256Ui}`,
+          );
+        if (sha256Webhapp && !sha256Ui)
+          throw new Error('Got applet with a webhapp hash but no UI hash.');
+
+        tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
+        fs.mkdirSync(tmpDir, { recursive: true });
+        const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+        fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+        // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
+        const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        const [happFilePath, _] = result.split('$');
+        happToBeInstalledPath = happFilePath;
+      } else {
+        console.log(
+          '@install-applet-bundle: happ and UI already on the filesystem. Skipping download from remote source.',
         );
-      if (webHappHash && webHappHash !== sha256Webhapp)
-        throw new Error(
-          'The downloaded resource has an invalid hash. The source may be corrupted.',
-        );
+      }
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: happFilePath,
+        path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyInstalledPath,
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
@@ -476,59 +593,18 @@ app.whenReady().then(async () => {
           }
         } catch (e) {}
       }
-      const appAssetsInfo: AppAssetsInfo = webHappHash
-        ? {
-            type: 'webhapp',
-            sha256: webHappHash,
-            assetSource: {
-              type: 'https',
-              url: happOrWebHappUrl,
-            },
-            distributionInfo,
-            happ: {
-              sha256: happHash,
-            },
-            ui: {
-              location: {
-                type: 'filesystem',
-                sha256: uiHash,
-              },
-            },
-          }
-        : uiPort
-          ? {
-              type: 'webhapp',
-              assetSource: {
-                type: 'https',
-                url: happOrWebHappUrl,
-              },
-              distributionInfo,
-              happ: {
-                sha256: happHash,
-              },
-              ui: {
-                location: {
-                  type: 'localhost',
-                  port: uiPort,
-                },
-              },
-            }
-          : {
-              type: 'happ',
-              sha256: happHash,
-              assetSource: {
-                type: 'https',
-                url: happOrWebHappUrl,
-              },
-              distributionInfo,
-            };
-      fs.writeFileSync(
-        path.join(WE_FILE_SYSTEM.appsDir, `${appId}.json`),
-        JSON.stringify(appAssetsInfo, undefined, 4),
+      const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
+        distributionInfo,
+        happOrWebHappUrl,
+        sha256Happ,
+        sha256Webhapp,
+        sha256Ui,
+        uiPort,
       );
+      WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
       console.log('@ipcHandler: stored AppAssetsInfo: ', appAssetsInfo);
       // remove temp dir again
-      fs.rmSync(tmpDir, { recursive: true, force: true });
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log('@install-applet-bundle: app installed.');
       return appInfo;
     },
