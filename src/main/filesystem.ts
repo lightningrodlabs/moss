@@ -169,7 +169,7 @@ export class WeFileSystem {
   storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
     const filePath = path.join(this.appsDir, `${installedAppId}.json`);
     try {
-      fs.writeFileSync(filePath, JSON.stringify(info), 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
     } catch (e) {
       throw new Error(`Failed to write app assets info to json file: ${e}`);
     }

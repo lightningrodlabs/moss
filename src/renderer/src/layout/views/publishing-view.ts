@@ -354,7 +354,7 @@ export class PublishingView extends LitElement {
     this._myApps = myAppsEntities;
     this.view = PageView.Main;
     this._updating = undefined;
-    notify('Applet published.');
+    notify('Applet updated.');
   }
 
   async deprecateApplet(actionHash: ActionHash) {

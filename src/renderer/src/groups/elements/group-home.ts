@@ -60,6 +60,7 @@ import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../applets/types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
+import { dialogMessagebox } from '../../electron-api.js';
 
 type View =
   | {
@@ -156,6 +157,13 @@ export class GroupHome extends LitElement {
   }
 
   async updateUi(e: CustomEvent) {
+    const confirmation = await dialogMessagebox({
+      message:
+        'Updating an Applet UI will refresh the full We window. If you have unsaved changes in one of your applets, save them first.',
+      type: 'warning',
+      buttons: ['Cancel', 'Continue'],
+    });
+    if (confirmation.response === 0) return;
     (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
     console.log('appletHash: ', e.detail);
     const appId = appIdFromAppletHash(e.detail);
@@ -194,7 +202,7 @@ export class GroupHome extends LitElement {
       await this.weStore.checkForUiUpdates();
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
       notify(msg('Applet UI updated.'));
-      this.requestUpdate();
+      window.location.reload();
     } catch (e) {
       console.error(`Failed to update UI: ${e}`);
       notifyError(msg('Failed to update the UI.'));

@@ -21,6 +21,9 @@ declare global {
   interface Window {
     electronAPI: {
       signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
+      dialogMessagebox: (
+        options: Electron.MessageBoxOptions,
+      ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       uninstallApp: (appId: string) => Promise<void>;
@@ -68,34 +71,12 @@ export interface ConductorInfo {
 
 export async function joinGroup(networkSeed: string): Promise<AppInfo> {
   return window.electronAPI.joinGroup(networkSeed);
-  // const appInfo: AppInfo = await invoke('join_group', {
-  //   networkSeed,
-  // });
+}
 
-  // for (const [_role, cells] of Object.entries(appInfo.cell_info)) {
-  //   for (const cell of cells) {
-  //     if (CellType.Provisioned in cell) {
-  //       cell[CellType.Provisioned].cell_id = [
-  //         new Uint8Array(cell[CellType.Provisioned].cell_id[0]),
-  //         new Uint8Array(cell[CellType.Provisioned].cell_id[1]),
-  //       ];
-  //     }
-  //     if (CellType.Cloned in cell) {
-  //       cell[CellType.Cloned].cell_id = [
-  //         new Uint8Array(cell[CellType.Cloned].cell_id[0]),
-  //         new Uint8Array(cell[CellType.Cloned].cell_id[1]),
-  //       ];
-  //     }
-  //     // if (CellType.Stem in cell) {
-  //     //   cell[CellType.Stem].cell_id = [
-  //     //     new Uint8Array(cell[CellType.Stem].cell_id[0]),
-  //     //     new Uint8Array(cell[CellType.Stem].cell_id[1]),
-  //     //   ];
-  //     // }
-  //   }
-  // }
-
-  // return appInfo;
+export async function dialogMessagebox(
+  options: Electron.MessageBoxOptions,
+): Promise<Electron.MessageBoxReturnValue> {
+  return window.electronAPI.dialogMessagebox(options);
 }
 
 export async function getAllAppAssetsInfos(): Promise<Record<InstalledAppId, AppAssetsInfo>> {

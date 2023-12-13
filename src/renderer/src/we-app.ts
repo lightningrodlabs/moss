@@ -51,16 +51,11 @@ export class WeApp extends LitElement {
       console.error(e);
     }
 
-    // Check for UI updates
+    await this._weStore.checkForUiUpdates();
     this._appletUiUpdateCheckInterval = window.setInterval(
       async () => await this._weStore.checkForUiUpdates(),
-      10000,
+      30000,
     );
-
-    // } else {
-    //   const initialized = await isKeystoreInitialized();
-    //   this.state = { state: 'password', initialized };
-    // }
   }
 
   disconnectedCallback(): void {

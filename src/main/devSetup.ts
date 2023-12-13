@@ -193,13 +193,6 @@ export async function devSetup(
             maybeUiHash,
           );
           logDevSetup(`Registering applet instance '${appletInstallConfig.instanceName}'...`);
-          logDevSetup(
-            `$$$$$$$$$ REGISTERING APPLET OF TYPE ${appletConfig.name}: ${JSON.stringify(
-              applet,
-              undefined,
-              4,
-            )}`,
-          );
           await groupWebsocket.callZome({
             role_name: 'group',
             zome_name: 'group',

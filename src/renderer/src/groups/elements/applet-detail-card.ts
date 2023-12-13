@@ -84,7 +84,7 @@ export class AppletDetailCard extends LitElement {
                   variant="success"
                   @click=${() => this.updateUi()}
                   title="Update Applet"
-                  >Update</sl-button
+                  >Install Update</sl-button
                 >`
               : html``}
             <sl-tooltip .content=${msg('Federate')}>

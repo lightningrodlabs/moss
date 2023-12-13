@@ -9,6 +9,7 @@ import {
   Menu,
   nativeImage,
   protocol,
+  dialog,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -323,6 +324,13 @@ app.whenReady().then(async () => {
   tray.setToolTip('Holochain Launcher');
   tray.setContextMenu(contextMenu);
 
+  ipcMain.handle('dialog-messagebox', async (_e, options: Electron.MessageBoxOptions) => {
+    if (MAIN_WINDOW) {
+      return dialog.showMessageBox(MAIN_WINDOW, options);
+    } else {
+      return Promise.reject('Main window does not exist.');
+    }
+  });
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('open-app', async (_e, appId: string) =>
     createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),

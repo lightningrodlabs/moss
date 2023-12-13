@@ -1,12 +1,10 @@
 import { PeerStatusClient, PeerStatusStore } from '@holochain-open-dev/peer-status';
 import { ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
 import {
-  asyncDerived,
   AsyncReadable,
   AsyncStatus,
   completed,
   derived,
-  get,
   joinMap,
   lazyLoad,
   lazyLoadAndPoll,
@@ -38,7 +36,7 @@ import { Applet } from '../applets/types.js';
 import { isAppRunning, toLowerCaseB64 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '../types.js';
 
-export const NEW_APPLETS_POLLING_FREQUENCY = 15000;
+export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -269,10 +267,11 @@ export class GroupStore {
   // Applets that have been registered in the group by someone else but have never been installed
   // in the local conductor yet (provided that storing the Applet entry to the local source chain has
   // succeeded for every Applet that has been installed into the conductor)
-  unjoinedApplets = lazyLoadAndPoll(
-    async () => this.groupClient.getUnjoinedApplets(),
-    NEW_APPLETS_POLLING_FREQUENCY,
-  );
+  unjoinedApplets = lazyLoadAndPoll(async () => {
+    const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
+    console.log('Got unjoined applets: ', unjoinedApplets);
+    return unjoinedApplets;
+  }, NEW_APPLETS_POLLING_FREQUENCY);
 
   // Currently unused
   // Would be nice to show archived applets also if explicitly desired by the user but should not be polling constantly
