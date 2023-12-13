@@ -24,13 +24,6 @@ holochain = "=0.2.3-beta-rc.1"
 kitsune_p2p_timestamp = "=0.2.3-beta-rc.0"
 lair_keystore_api = "0.3.0"
 
-hc_crud_caps = { git = "https://github.com/matthme/rust-hc-crud-caps", branch = "holochain-0.2.3-beta-rc.1" }
-devhub_types = { git = "https://github.com/matthme/devhub-dnas", branch = "holochain-0.2.3-beta-rc.1" }
-appstore_types = { git = "https://github.com/matthme/app-store-dnas", branch = "holochain-0.2.3-beta-rc.1" }
-appstore = { git = "https://github.com/matthme/app-store-dnas", branch = "holochain-0.2.3-beta-rc.1" }
-
-
-essence_payloads = "0.1"
 hex = "0.4.3"
 futures = "0.3"
 nanoid = "0.4.0"

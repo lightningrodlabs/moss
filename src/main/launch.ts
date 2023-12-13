@@ -50,16 +50,21 @@ export async function launch(
     password,
   );
 
+  const holochainVersion = 'holochain-v0.2.4-rc.0';
+
   if (splashscreenWindow)
-    splashscreenWindow.webContents.send('loading-progress-update', 'Starting Holochain...');
+    splashscreenWindow.webContents.send(
+      'loading-progress-update',
+      `Starting ${holochainVersion}...`,
+    );
 
   // launch holochain
   const holochainManager = await HolochainManager.launch(
     launcherEmitter,
     weFileSystem,
-    HOLOCHAIN_BINARIES['holochain-0.2.3'],
+    HOLOCHAIN_BINARIES[holochainVersion],
     password,
-    '0.2.3',
+    holochainVersion,
     weFileSystem.conductorDir,
     weFileSystem.conductorConfigPath,
     lairUrl,
