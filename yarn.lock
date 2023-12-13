@@ -1687,8 +1687,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-72f900e2-12c6-4592-b440-5a6320e50518-1702305984539/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-72f900e2-12c6-4592-b440-5a6320e50518-1702305984539/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-ebb30103-7e9b-4d80-811b-128997090c15-1702498792444/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-ebb30103-7e9b-4d80-811b-128997090c15-1702498792444/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1697,7 +1697,7 @@
     lit "^3.0.2"
 
 "@lightningrodlabs/we-applet@file:./libs/we-applet", "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.12.1"
+  version "0.12.2"
   dependencies:
     "@holochain/client" "0.16.6"
 
@@ -1709,7 +1709,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-1b003e1d-d8b0-42f7-bbc8-bb1bdbe51dd3-1702305984538/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-a5477533-a3b3-4d9d-9a8f-1acf18823f67-1702498792441/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -2230,11 +2230,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/argparse@2.0.14":
-  version "2.0.14"
-  resolved "https://registry.yarnpkg.com/@types/argparse/-/argparse-2.0.14.tgz#a4395eb7bcb9bebefb4988ece567d85881b43b0c"
-  integrity sha512-jJ6NMs9rXQ0rsqNt3TL4Elcwhd6wygo3lJOVoiHzURD34vsCcAlw443uGu4PXTtEmMF7sYKoadTCLXNmuJuQGw==
-
 "@types/backbone@^1.4.15":
   version "1.4.18"
   resolved "https://registry.yarnpkg.com/@types/backbone/-/backbone-1.4.18.tgz#654ce79d8a343b12c0d5b6a2ce3dd8423996c767"
@@ -2265,6 +2260,13 @@
   version "5.2.3"
   resolved "https://registry.yarnpkg.com/@types/command-line-args/-/command-line-args-5.2.3.tgz#553ce2fd5acf160b448d307649b38ffc60d39639"
   integrity sha512-uv0aG6R0Y8WHZLTamZwtfsDLVRnOa+n+n5rEvFWL5Na5gZ8V2Teab/duDPFzIIIhs9qizDpcavCusCLJZu62Kw==
+
+"@types/commander@2.12.2":
+  version "2.12.2"
+  resolved "https://registry.yarnpkg.com/@types/commander/-/commander-2.12.2.tgz#183041a23842d4281478fa5d23c5ca78e6fd08ae"
+  integrity sha512-0QEFiR8ljcHp9bAbWxecjVRuAMr16ivPiGOw6KFQBVrVd0RQIcM3xKdRisH2EDWgVWujiYtHwhSkSUoAAGzH7Q==
+  dependencies:
+    commander "*"
 
 "@types/connect@*":
   version "3.4.38"
@@ -3919,6 +3921,11 @@ command-line-usage@^7.0.0, command-line-usage@^7.0.1:
     chalk-template "^0.4.0"
     table-layout "^3.0.0"
     typical "^7.1.1"
+
+commander@*, commander@11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-11.1.0.tgz#62fdce76006a68e5c1ab3314dc92e800eb83d906"
+  integrity sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==
 
 commander@^10.0.0:
   version "10.0.1"

@@ -18,12 +18,12 @@ export interface WeAppletDevInfo {
 
 export interface CliArgs {
   profile?: string;
-  dev_config?: string | undefined;
-  agent_num?: number | undefined;
-  network_seed?: string | undefined;
-  bootstrap_url?: string;
-  signaling_url?: string;
-  force_production_urls?: boolean;
+  devConfig?: string | undefined;
+  agentNum?: number | undefined;
+  networkSeed?: string | undefined;
+  bootstrapUrl?: string;
+  signalingUrl?: string;
+  forceProductionUrls?: boolean;
 }
 
 export function validateArgs(
@@ -36,25 +36,28 @@ export function validateArgs(
       `The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-) but got '${args.profile}'`,
     );
   }
-  if (args.agent_num && !args.dev_config) {
+  if (args.agentNum && !args.devConfig) {
     throw new Error(
       'The --agent-num argument is only valid if a dev config file is passed as well via the --dev-config argument',
     );
   }
-  if (args.agent_num && typeof args.agent_num !== 'number')
+  if (
+    typeof args.agentNum !== 'undefined' &&
+    (typeof args.agentNum !== 'number' || isNaN(args.agentNum))
+  )
     throw new Error('--agent-num argument must be of type number.');
-  if (args.dev_config && !args.agent_num)
+  if (args.devConfig && !args.agentNum)
     console.warn('[WARNING]: --agent-num was argument not explicitly provided. Defaulting to "1".');
-  if (args.dev_config) {
-    if (!args.bootstrap_url || !args.signaling_url)
+  if (args.devConfig) {
+    if (!args.bootstrapUrl || !args.signalingUrl)
       throw new Error(
         'When running with the --dev-config argument: The --bootstrap-url and --signaling-url arguments need to be provided as well.',
       );
-    if (PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrap_url) && !args.force_production_urls)
+    if (PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrapUrl) && !args.forceProductionUrls)
       throw new Error(
         'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
-    if (PRODUCTION_SIGNALING_URLS.includes(args.signaling_url) && !args.force_production_urls)
+    if (PRODUCTION_SIGNALING_URLS.includes(args.signalingUrl) && !args.forceProductionUrls)
       throw new Error(
         'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
@@ -62,12 +65,12 @@ export function validateArgs(
 
   let devInfo: WeAppletDevInfo | undefined;
   const devConfig: WeDevConfig | undefined = readAndValidateDevConfig(
-    args.dev_config,
-    args.agent_num,
+    args.devConfig,
+    args.agentNum,
   );
 
   if (devConfig) {
-    const agentNum = args.agent_num ? args.agent_num : 1;
+    const agentNum = args.agentNum ? args.agentNum : 1;
     devInfo = {
       config: devConfig,
       tempDir: path.join(
@@ -79,11 +82,11 @@ export function validateArgs(
   }
 
   const profile = args.profile ? args.profile : undefined;
-  const bootstrapUrl = args.bootstrap_url ? args.bootstrap_url : PRODUCTION_BOOTSTRAP_URLS[0];
-  const singalingUrl = args.signaling_url ? args.signaling_url : PRODUCTION_SIGNALING_URLS[0];
+  const bootstrapUrl = args.bootstrapUrl ? args.bootstrapUrl : PRODUCTION_BOOTSTRAP_URLS[0];
+  const singalingUrl = args.signalingUrl ? args.signalingUrl : PRODUCTION_SIGNALING_URLS[0];
   // If provided take the one provided, otherwise check whether it's applet dev mode
-  const appstoreNetworkSeed = args.network_seed
-    ? args.network_seed
+  const appstoreNetworkSeed = args.networkSeed
+    ? args.networkSeed
     : devConfig || !app.isPackaged
       ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
       : `lightningrodlabs-we-${breakingAppVersion(app)}`;

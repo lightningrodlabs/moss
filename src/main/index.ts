@@ -17,7 +17,7 @@ import os from 'os';
 import * as childProcess from 'child_process';
 import url from 'url';
 import { createHash } from 'crypto';
-import { ArgumentParser } from 'argparse';
+import { Command, Option } from 'commander';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
@@ -39,45 +39,53 @@ import { InstalledAppId } from '@holochain/client';
 const rustUtils = require('hc-we-rust-utils');
 
 // https://github.com/nodeca/argparse/issues/128
-if (app.isPackaged) {
-  process.argv.splice(1, 0, '.');
-}
+// if (app.isPackaged) {
+//   process.argv.splice(1, 0, '.');
+// }
 
-const parser = new ArgumentParser({
-  description: 'Lightningrodlabs We',
-});
-parser.add_argument('-p', '--profile', {
-  help: 'Opens We with a custom profile instead of the default profile.',
-  type: 'str',
-});
-parser.add_argument('-n', '--network-seed', {
-  help: 'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
-  type: 'str',
-});
-parser.add_argument('-c', '--dev-config', {
-  help: 'Pass the path to the dev config file to run We in applet dev mode according to the config file.',
-  type: 'str',
-});
-parser.add_argument('--agent-num', {
-  help: 'Agent number (related to the dev config file).',
-  type: 'int',
-});
-parser.add_argument('-b', '--bootstrap-url', {
-  help: 'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  type: 'string',
-});
-parser.add_argument('-s', '--signaling-url', {
-  help: 'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  type: 'string',
-});
-parser.add_argument('--force-production-urls', {
-  help: 'Allow to use production URLs of bootstrap and singaling servers during applet development. It is recommended to use hc-local-services tp spin up a local bootstrap and signaling server during development instead.',
-});
+const weCli = new Command();
 
-const args = parser.parse_args();
+weCli
+  .name('Lightningrod Labs We')
+  .description('Running We via the command line.')
+  .version(app.getVersion())
+  .option(
+    '-p, --profile <string>',
+    'Runs We with a custom profile with its own dedicated data store.',
+  )
+  .option(
+    '-n, --network-seed <string>',
+    'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
+  )
+  .option(
+    '-c, --dev-config <path>',
+    'Runs We in applet developer mode based on the configuration file at the specified path.',
+  )
+  .addOption(
+    new Option(
+      '--agent-num <number>',
+      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
+    ).argParser(parseInt),
+  )
+  .option(
+    '-b, --bootstrap-url <url>',
+    'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
+  )
+  .option(
+    '-s, --signaling-url <url>',
+    'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
+  )
+  .option(
+    '--force-production-urls',
+    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+  );
+
+weCli.parse();
+
+console.log('GOT WECLI OPTIONS: ', weCli.opts());
 
 export const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
-  validateArgs(args, app);
+  validateArgs(weCli.opts(), app);
 
 // import * as rustUtils from 'hc-we-rust-utils';
 
