@@ -60,12 +60,6 @@ Build the sidecar binaries locally:
 bash ./scripts/setup-binaries.sh
 ```
 
-3. Build the We group happ
-
-```
-yarn build:happ
-```
-
 ### Development
 
 The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.json` file.
