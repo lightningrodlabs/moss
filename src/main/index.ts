@@ -265,7 +265,7 @@ let tray;
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
-  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32.png'));
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
   protocol.handle('applet', async (request) => {
