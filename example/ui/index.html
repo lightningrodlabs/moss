@@ -12,7 +12,6 @@
   </head>
 
   <body>
-    UPDATE #0
     <we-client-context id="provider">
       <example-applet id="example-applet"></example-applet>
     </we-client-context>
@@ -34,7 +33,13 @@
 
       console.log("@example-applet: calling initializeHotReload");
       console.log("@example-applet: initializeHotReload function: ", JSON.stringify(initializeHotReload));
-      (async () => await initializeHotReload())();
+      if (import.meta.env.DEV) {
+        try {
+          await initializeHotReload();
+        } catch (e) {
+          console.warn("Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.")
+        }
+      }
       console.log("Hot reload initialized.");
 
       console.log("window.__WE_API__: ", window.__WE_API__);

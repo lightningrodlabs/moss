@@ -55,7 +55,8 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         // );
         receivedAppletHash = decodeHashFromBase64(lowerCaseAppletId);
       } else if (
-        (message.origin.startsWith('http://127.0.0.1') || origin.startsWith('http://localhost')) &&
+        (message.origin.startsWith('http://127.0.0.1') ||
+          message.origin.startsWith('http://localhost')) &&
         weStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
