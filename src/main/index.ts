@@ -43,6 +43,8 @@ const rustUtils = require('hc-we-rust-utils');
 //   process.argv.splice(1, 0, '.');
 // }
 
+console.log('process.argv: ', process.argv);
+
 const weCli = new Command();
 
 weCli
