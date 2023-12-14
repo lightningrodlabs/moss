@@ -61,9 +61,15 @@ export class AppletStore {
     if (this.isAppletDev) {
       const appId = appIdFromAppletHash(this.appletHash);
       const appletDevPort = await getAppletDevPort(appId);
-      iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
-        renderView,
-      )}#${urlFromAppletHash(this.appletHash)}`;
+      if (appletDevPort) {
+        // UI running on localhost
+        iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
+          renderView,
+        )}#${urlFromAppletHash(this.appletHash)}`;
+      } else {
+        // UI from filesystem
+        iframeSrc = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
+      }
     } else {
       iframeSrc = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
     }

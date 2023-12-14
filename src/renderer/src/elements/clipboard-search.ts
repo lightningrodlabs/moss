@@ -167,19 +167,32 @@ export class ClipboardSearch extends LitElement implements FormField {
   async search(filter: string): Promise<SearchResult> {
     const hrls = await this.weClient.search(filter);
 
+    // console.log('@clipboard-search: Got search results: ', hrls);
+
     const hrlsWithInfo = await Promise.all(
       hrls.map(async (hrlWithContext) => {
         const info = await this.weClient.entryInfo(hrlWithContext.hrl);
         return [hrlWithContext, info] as [HrlWithContext, EntryLocationAndInfo | undefined];
       }),
     );
+
+    // console.log('@clipboard-search: Got hrlsWithInfo: ', hrlsWithInfo);
+
     const filteredHrls = hrlsWithInfo.filter(([_hrl, info]) => info !== undefined) as Array<
       [HrlWithContext, EntryLocationAndInfo]
     >;
 
+    // console.log('@clipboard-search: Got filteredHrls: ', filteredHrls);
+
     const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
       this.weClient as WeClient,
       filteredHrls.map(([_, info]) => info.appletHash),
+    );
+
+    console.log(
+      '@clipboard-search: Got appletsInfos, groupsProfiles: ',
+      appletsInfos,
+      groupsProfiles,
     );
 
     return { hrlsWithInfo: filteredHrls, groupsProfiles, appletsInfos };

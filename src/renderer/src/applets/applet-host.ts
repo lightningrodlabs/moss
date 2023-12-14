@@ -159,12 +159,14 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
 
       const promises: Array<Promise<Array<HrlWithContext>>> = [];
 
+      // TODO fix case where background-service applet host failed to initialize
       for (const host of Array.from(hosts.values())) {
         promises.push(
           (async () => {
             try {
+              // console.log(`searching for host ${host?.appletId}...`);
               const results = host ? await host.search(filter) : [];
-              console.log(`Got results: ${JSON.stringify(results)}`);
+              // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
               return results;
             } catch (e) {
               console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
@@ -175,6 +177,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       }
 
       const hrlsWithApplets = await Promise.all(promises);
+      // console.log('%%%%%% @headlessWeClient: got hosts with applets: ', hrlsWithApplets);
       const hrls = ([] as Array<HrlWithContext>)
         .concat(...(hrlsWithApplets.filter((h) => !!h) as Array<Array<HrlWithContext>>))
         .filter((h) => !!h);
