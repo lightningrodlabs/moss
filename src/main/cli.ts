@@ -143,61 +143,67 @@ function readAndValidateDevConfig(
       );
     if (!group.creatingAgent.agentProfile.nickname)
       throw new Error(
-        `Invalid We dev config: No "nickname" field provided in the "creatingAgent.agentProfile" field of group ${group.name} in the we dev config file.`,
+        `Invalid We dev config: No "nickname" field provided in the "creatingAgent.agentProfile" field of group '${group.name}'.`,
       );
-    if (group.joiningAgents) {
-      group.joiningAgents.forEach((agent) => {
-        if (!agent.agentNum)
-          throw new Error(
-            `Invalid We dev config: Must provide an "agentNum" field when specifying a "joiningAgent" for group ${group.name}`,
-          );
-        if (typeof agent.agentNum !== 'number')
-          throw new Error(
-            `Invalid We dev config: "agentNum" fields provided for "joiningAgents" in group ${group.name} in the we dev config file must be of type 'number'.`,
-          );
-        if (agent.agentNum <= group.creatingAgent.agentNum)
-          throw new Error(
-            `Invalid We dev config: "agentNum" fields for agents in the "joiningAgent" must be strictly greater than the "agentNum" field in "creatingAgent". Error occured for group ${group.name} in the we dev config.`,
-          );
-      });
-    }
-    if (group.applets) {
-      group.applets.forEach((applet) => {
-        if (!applet.name || typeof applet.name !== 'string')
-          throw new Error(
-            `Invalid We dev config: Applets in the "groups.applets" field must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.  The error occurred in group ${group.name}`,
-          );
-        // make sure that the applet has an applet config
-        if (!applets.map((appletConfig) => appletConfig.name).includes(applet.name))
-          throw new Error(
-            'Invalid We dev config: Can only add applets to groups that are also defined in the root level "applets" field.',
-          );
-        if (!applet.instanceName || typeof applet.instanceName !== 'string')
-          throw new Error(
-            `Invalid We dev config: Applets in the "groups.applets" field must have an "instanceName" property of type string. The "instanceName" property defines the custom name of this applet instance used for installation. The error occurred in group ${group.name}`,
-          );
-        if (!applet.registeringAgent || typeof applet.registeringAgent !== 'number')
-          throw new Error(
-            `Invalid We dev config: Applets in the "groups.applets" field must have a "registeringAgent" property of type number. The error occurred in group ${group.name}`,
-          );
-        const joiningAgents = applet.joiningAgents ? applet.joiningAgents : [];
-        joiningAgents.forEach((agent) => {
-          if (typeof agent !== 'number')
-            throw new Error('The "joiningAgents" field expects an array of numbers.');
-          if (agent <= applet.registeringAgent)
-            throw new Error(
-              `Invalid We dev config: Every joining agent in the "joiningAgents" array must be strictly greater than the "registeringAgent". The error occurred in group ${group.name}`,
-            );
-        });
-      });
-      // Check that applet names are unique
-      const appletInstanceNames = group.applets.map((applet) => applet.instanceName);
-      const uniqueAppletInstanceNames = new Set(appletInstanceNames);
-      if (uniqueAppletInstanceNames.size !== appletInstanceNames.length)
+    if (!group.joiningAgents)
+      throw new Error(
+        `Invalid We dev config: no "joiningAgents" field of type array provided for group '${group.name}'. Add at least an empty array [].`,
+      );
+    group.joiningAgents.forEach((agent) => {
+      if (!agent.agentNum)
         throw new Error(
-          `Invalid We dev config: The "instanceName" fields of applets in the "groups.applets" field in the we dev config must be unique per group. The error occurred in group ${group.name}`,
+          `Invalid We dev config: Must provide an "agentNum" field when specifying a "joiningAgent" for group ${group.name}`,
         );
-    }
+      if (typeof agent.agentNum !== 'number')
+        throw new Error(
+          `Invalid We dev config: "agentNum" fields provided for "joiningAgents" in group ${group.name} in the we dev config file must be of type 'number'.`,
+        );
+      if (agent.agentNum <= group.creatingAgent.agentNum)
+        throw new Error(
+          `Invalid We dev config: "agentNum" fields for agents in the "joiningAgent" must be strictly greater than the "agentNum" field in "creatingAgent". Error occured for group ${group.name} in the we dev config.`,
+        );
+    });
+
+    if (!group.applets)
+      throw new Error(
+        `Invalid We dev config: no "applets" field of type array provided for group '${group.name}'. Add at least an empty array [].`,
+      );
+
+    group.applets.forEach((applet) => {
+      if (!applet.name || typeof applet.name !== 'string')
+        throw new Error(
+          `Invalid We dev config: Applets in the "groups.applets" field must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.  The error occurred in group ${group.name}`,
+        );
+      // make sure that the applet has an applet config
+      if (!applets.map((appletConfig) => appletConfig.name).includes(applet.name))
+        throw new Error(
+          'Invalid We dev config: Can only add applets to groups that are also defined in the root level "applets" field.',
+        );
+      if (!applet.instanceName || typeof applet.instanceName !== 'string')
+        throw new Error(
+          `Invalid We dev config: Applets in the "groups.applets" field must have an "instanceName" property of type string. The "instanceName" property defines the custom name of this applet instance used for installation. The error occurred in group ${group.name}`,
+        );
+      if (!applet.registeringAgent || typeof applet.registeringAgent !== 'number')
+        throw new Error(
+          `Invalid We dev config: Applets in the "groups.applets" field must have a "registeringAgent" property of type number. The error occurred in group ${group.name}`,
+        );
+      const joiningAgents = applet.joiningAgents ? applet.joiningAgents : [];
+      joiningAgents.forEach((agent) => {
+        if (typeof agent !== 'number')
+          throw new Error('The "joiningAgents" field expects an array of numbers.');
+        if (agent <= applet.registeringAgent)
+          throw new Error(
+            `Invalid We dev config: Every joining agent in the "joiningAgents" array must be strictly greater than the "registeringAgent". The error occurred in group ${group.name}`,
+          );
+      });
+    });
+    // Check that applet names are unique
+    const appletInstanceNames = group.applets.map((applet) => applet.instanceName);
+    const uniqueAppletInstanceNames = new Set(appletInstanceNames);
+    if (uniqueAppletInstanceNames.size !== appletInstanceNames.length)
+      throw new Error(
+        `Invalid We dev config: The "instanceName" fields of applets in the "groups.applets" field in the we dev config must be unique per group. The error occurred in group ${group.name}`,
+      );
   });
 
   const allGroupNetworkSeeds = groups.map((group) => group.networkSeed);

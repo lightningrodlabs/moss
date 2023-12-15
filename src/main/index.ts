@@ -147,7 +147,7 @@ setupLogs(launcherEmitter, WE_FILE_SYSTEM);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'applet',
-    privileges: { standard: true, supportFetchAPI: true, secure: true },
+    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
 ]);
 
@@ -253,7 +253,9 @@ const createOrShowMainWindow = () => {
   });
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  if (!app.isPackaged || (app.isPackaged && !!WE_APPLET_DEV_INFO)) {
+    mainWindow.webContents.openDevTools();
+  }
   mainWindow.on('closed', () => {
     // mainWindow = null;
     MAIN_WINDOW = null;
