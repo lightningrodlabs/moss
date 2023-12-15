@@ -95,7 +95,7 @@ jobs:
           # NEW_VERSION: install new holochain version and copy its binary to the tauri path
 
       - name: setup binaries (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+        if: matrix.platform == 'ubuntu-20.04' || matrix.platform == 'ubuntu-22.04'
         run: |
           mkdir resources/bins
 
