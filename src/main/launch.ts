@@ -95,17 +95,12 @@ export async function launch(
     console.log('Installing AppStore...');
     if (splashscreenWindow)
       splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
-    try {
-      await holochainManager.installApp(
-        path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
-        APPSTORE_APP_ID,
-        appstoreNetworkSeed,
-      );
-    } catch (e) {
-      throw new Error(
-        `Failed to enable appstore: ${e}.\nIf you encounter this in dev mode your local bootstrap server may not be running or at a different port than the one specified.`,
-      );
-    }
+    await holochainManager.installApp(
+      path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
+      APPSTORE_APP_ID,
+      appstoreNetworkSeed,
+    );
+
     console.log('AppstoreLight installed.');
   }
   if (weAppletDevInfo) {

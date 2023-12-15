@@ -159,13 +159,19 @@ export class HolochainManager {
       path: filePath,
       network_seed: networkSeed,
     });
-    await this.adminWebsocket.enableApp({ installed_app_id: appId });
-    const installedApps = await this.adminWebsocket.listApps({});
-    this.installedApps = installedApps;
-    this.launcherEmitter.emitAppInstalled({
-      version: this.version,
-      data: appInfo,
-    });
+    try {
+      await this.adminWebsocket.enableApp({ installed_app_id: appId });
+      const installedApps = await this.adminWebsocket.listApps({});
+      this.installedApps = installedApps;
+      this.launcherEmitter.emitAppInstalled({
+        version: this.version,
+        data: appInfo,
+      });
+    } catch (e) {
+      throw new Error(
+        `Failed to enable appstore: ${e}.\nIf you encounter this in dev mode your local bootstrap server may not be running or at a different port than the one specified.`,
+      );
+    }
   }
 
   async uninstallApp(appId: string, uiDir: string) {
