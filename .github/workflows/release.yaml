@@ -149,7 +149,7 @@ jobs:
         run: |
           yarn build:linux
           ls dist
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-UBUNTU-22.04-${{ steps.version.outputs.APP_VERSION }}.AppImage%#%org.lightningrodlabs.we-electron-alpha-UBUNTU-22.04-${{ steps.version.outputs.APP_VERSION }}" --clobber
+          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
 
       - name: build and upload the app (Windows)
         if: matrix.platform == 'windows-2019'
