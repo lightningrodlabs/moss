@@ -6,11 +6,11 @@ import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { APPSTORE_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
-import { APPSTORE_NETWORK_SEED, BOOTSTRAP_URL, SIGNALING_URL, WE_APPLET_DEV_INFO } from '.';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './devSetup';
 import { WeRustHandler } from 'hc-we-rust-utils';
+import { WeAppletDevInfo } from './cli';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -19,6 +19,10 @@ export async function launch(
   launcherEmitter: LauncherEmitter,
   splashscreenWindow: BrowserWindow | undefined,
   password: string,
+  bootstrapUrl: string,
+  singalingUrl: string,
+  appstoreNetworkSeed: string,
+  weAppletDevInfo: WeAppletDevInfo | undefined,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   // Initialize lair if necessary
@@ -68,8 +72,8 @@ export async function launch(
     weFileSystem.conductorDir,
     weFileSystem.conductorConfigPath,
     lairUrl,
-    BOOTSTRAP_URL,
-    SIGNALING_URL,
+    bootstrapUrl,
+    singalingUrl,
   );
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
@@ -94,12 +98,12 @@ export async function launch(
     await holochainManager.installApp(
       path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
       APPSTORE_APP_ID,
-      APPSTORE_NETWORK_SEED,
+      appstoreNetworkSeed,
     );
     console.log('AppstoreLight installed.');
   }
-  if (WE_APPLET_DEV_INFO) {
-    await devSetup(WE_APPLET_DEV_INFO, holochainManager, weFileSystem);
+  if (weAppletDevInfo) {
+    await devSetup(weAppletDevInfo, holochainManager, weFileSystem);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

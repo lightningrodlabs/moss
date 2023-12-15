@@ -63,12 +63,6 @@ weCli
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
-  .addOption(
-    new Option(
-      '--agent-num <number>',
-      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
-    ).argParser(parseInt),
-  )
   .option(
     '-b, --bootstrap-url <url>',
     'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
@@ -80,13 +74,19 @@ weCli
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+  )
+  .addOption(
+    new Option(
+      '--agent-num <number>',
+      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
+    ).argParser(parseInt),
   );
 
 weCli.parse();
 
 console.log('GOT WECLI OPTIONS: ', weCli.opts());
 
-export const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
+const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
   validateArgs(weCli.opts(), app);
 
 // import * as rustUtils from 'hc-we-rust-utils';
@@ -634,6 +634,10 @@ app.whenReady().then(async () => {
       launcherEmitter,
       SPLASH_SCREEN_WINDOW,
       password,
+      BOOTSTRAP_URL,
+      SIGNALING_URL,
+      APPSTORE_NETWORK_SEED,
+      WE_APPLET_DEV_INFO,
     );
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
@@ -646,6 +650,10 @@ app.whenReady().then(async () => {
       launcherEmitter,
       undefined,
       'dummy-dev-password :)',
+      BOOTSTRAP_URL,
+      SIGNALING_URL,
+      APPSTORE_NETWORK_SEED,
+      WE_APPLET_DEV_INFO,
     );
     createOrShowMainWindow();
   } else {
