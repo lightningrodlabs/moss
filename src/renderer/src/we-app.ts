@@ -123,7 +123,10 @@ export class WeApp extends LitElement {
 
   renderFeedbackBoard() {
     return html`
-      <div class="feedback-board-container">
+      <div
+        class="feedback-board-container"
+        style="${this._showFeedbackBoard ? '' : 'pointer-events: none;'}"
+      >
         <div
           class="feedback-button"
           tabindex="0"
@@ -141,7 +144,7 @@ export class WeApp extends LitElement {
           ${this._showFeedbackBoard ? 'x close' : 'Feedback'}
         </div>
         <div class="feedback-top-bar" style="${this._showFeedbackBoard ? '' : 'display: none;'}">
-          <span>Thank you for your feedback!</span>
+          <span>Thank you for your feedback :)</span>
           <span
             class="close-btn"
             tabindex="0"
@@ -222,6 +225,9 @@ export class WeApp extends LitElement {
           left: 0;
           bottom: 80px;
           padding: 20px 12px;
+          min-height: 90px;
+          justify-content: center;
+          display: flex;
           color: white;
           font-weight: bold;
           font-size: 18px;
@@ -230,6 +236,7 @@ export class WeApp extends LitElement {
           text-orientation: mixed;
           background: #27c60b;
           border-radius: 10px 0 0 10px;
+          pointer-events: auto;
           cursor: pointer;
         }
 
