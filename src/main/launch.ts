@@ -1,7 +1,8 @@
 import * as childProcess from 'child_process';
 import path from 'path';
-import { BrowserWindow } from 'electron';
-import { WeFileSystem } from './filesystem';
+import os from 'os';
+import { app, BrowserWindow } from 'electron';
+import { DistributionInfo, WeFileSystem, breakingAppVersion } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { LauncherEmitter } from './launcherEmitter';
 import { APPSTORE_APP_ID } from './sharedTypes';
@@ -13,6 +14,10 @@ import { WeRustHandler } from 'hc-we-rust-utils';
 import { WeAppletDevInfo } from './cli';
 
 const rustUtils = require('hc-we-rust-utils');
+
+const DEFAULT_APPS = {
+  'feedback-board': 'kando.webhapp',
+};
 
 export async function launch(
   weFileSystem: WeFileSystem,
@@ -86,7 +91,7 @@ export async function launch(
     password,
   );
 
-  // Install default apps if necessary:
+  // Install default appstore if necessary:
   if (
     !holochainManager.installedApps
       .map((appInfo) => appInfo.installed_app_id)
@@ -103,6 +108,39 @@ export async function launch(
 
     console.log('AppstoreLight installed.');
   }
+  // Install other default apps if necessary (not in applet-dev mode)
+  await Promise.all(
+    Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
+      const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
+      if (
+        !holochainManager.installedApps
+          .map((appInfo) => appInfo.installed_app_id)
+          .includes(appId) &&
+        !weAppletDevInfo
+      ) {
+        console.log(`Installing default app ${appName}`);
+        if (splashscreenWindow)
+          splashscreenWindow.webContents.send(
+            `loading-progress-update', 'Installing default app ${appName}...`,
+          );
+        const networkSeed = !app.isPackaged
+          ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
+          : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+
+        const distributionInfo: DistributionInfo = {
+          type: 'default-app',
+        };
+        console.log('networkSeed: ', networkSeed);
+        await holochainManager.installWebApp(
+          path.join(DEFAULT_APPS_DIRECTORY, fileName),
+          appId,
+          distributionInfo,
+          networkSeed,
+        );
+        console.log(`Default app ${appName} installed.`);
+      }
+    }),
+  );
   if (weAppletDevInfo) {
     await devSetup(weAppletDevInfo, holochainManager, weFileSystem);
   }

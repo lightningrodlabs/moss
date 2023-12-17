@@ -27,6 +27,9 @@ export class WeApp extends LitElement {
   @state()
   _appletUiUpdateCheckInterval: number | undefined;
 
+  @state()
+  _showFeedbackBoard = false;
+
   // @state()
   // previousState: State = { state: 'loading' };
 
@@ -118,6 +121,53 @@ export class WeApp extends LitElement {
     // }
   }
 
+  renderFeedbackBoard() {
+    return html`
+      <div class="feedback-board-container">
+        <div
+          class="feedback-button"
+          tabindex="0"
+          @click=${() => {
+            this._showFeedbackBoard = !this._showFeedbackBoard;
+          }}
+          @keypress=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              () => {
+                this._showFeedbackBoard = !this._showFeedbackBoard;
+              };
+            }
+          }}
+        >
+          ${this._showFeedbackBoard ? 'x close' : 'Feedback'}
+        </div>
+        <div class="feedback-top-bar" style="${this._showFeedbackBoard ? '' : 'display: none;'}">
+          <span>Thank you for your feedback!</span>
+          <span
+            class="close-btn"
+            tabindex="0"
+            @click=${() => {
+              this._showFeedbackBoard = !this._showFeedbackBoard;
+            }}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                () => {
+                  this._showFeedbackBoard = !this._showFeedbackBoard;
+                };
+              }
+            }}
+            >x close</span
+          >
+        </div>
+        <iframe
+          frameborder="0"
+          src="default-app://feedback-board"
+          class="feedback-iframe"
+          style="${this._showFeedbackBoard ? '' : 'display: none;'}"
+        ></iframe>
+      </div>
+    `;
+  }
+
   render() {
     switch (this.state.state) {
       case 'loading':
@@ -125,7 +175,10 @@ export class WeApp extends LitElement {
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'running':
-        return html`<main-dashboard></main-dashboard>`;
+        return html`
+          ${this.renderFeedbackBoard()}
+          <main-dashboard></main-dashboard>
+        `;
       case 'factoryReset':
         return html`
           <div class="column center-content" style="flex: 1">
@@ -147,6 +200,65 @@ export class WeApp extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+        .feedback-board-container {
+          position: fixed;
+          display: flex;
+          height: 100vh;
+          width: 100vw;
+          margin: 0;
+          z-index: 1;
+        }
+
+        .feedback-iframe {
+          display: flex;
+          flex: 1;
+          box-sizing: border-box;
+          border: 6px solid #27c60b;
+        }
+
+        .feedback-button {
+          position: fixed;
+          left: 0;
+          bottom: 80px;
+          padding: 20px 12px;
+          color: white;
+          font-weight: bold;
+          font-size: 18px;
+          writing-mode: vertical-rl;
+          transform: rotate(-180deg);
+          text-orientation: mixed;
+          background: #27c60b;
+          border-radius: 10px 0 0 10px;
+          cursor: pointer;
+        }
+
+        .feedback-button:hover {
+          background: #ecffe8;
+          color: #27c60b;
+        }
+
+        .feedback-top-bar {
+          position: fixed;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          color: white;
+          top: 0;
+          width: 100%;
+          height: 70px;
+          background: #27c60b;
+        }
+
+        .close-btn {
+          position: absolute;
+          right: 20px;
+          cursor: pointer;
+        }
+
+        .close-btn:hover {
+          color: black;
         }
       `,
     ];

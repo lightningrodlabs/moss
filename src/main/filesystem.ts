@@ -42,6 +42,9 @@ export type AssetSource =
     }
   | {
       type: 'filesystem'; // Installed from filesystem
+    }
+  | {
+      type: 'default-app'; // Shipped with the We executable by default
     };
 
 /**
@@ -60,6 +63,9 @@ export type DistributionInfo =
     }
   | {
       type: 'filesystem'; // Installed from filesystem
+    }
+  | {
+      type: 'default-app'; // Shipped with the We executable by default
     };
 
 export class WeFileSystem {
