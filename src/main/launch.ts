@@ -1,4 +1,5 @@
 import * as childProcess from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { app, BrowserWindow } from 'electron';
@@ -138,6 +139,38 @@ export async function launch(
           networkSeed,
         );
         console.log(`Default app ${appName} installed.`);
+      } else {
+        // Check whether the UI got an update
+        const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+        if (
+          currentAppAssetsInfo.type === 'webhapp' &&
+          currentAppAssetsInfo.ui.location.type === 'filesystem'
+        ) {
+          const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
+          const webHappBytes = fs.readFileSync(webHappPath);
+          const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
+          const [happHash, uiHash, webHappHash] = hashResult.split('$');
+          console.log('READ uiHash: ', uiHash);
+          if (happHash !== currentAppAssetsInfo.happ.sha256) {
+            console.warn(
+              'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+            );
+            return;
+          }
+          if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
+            const newAppAssetsInfo = currentAppAssetsInfo;
+            newAppAssetsInfo.sha256 = webHappHash;
+            (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
+              uiHash;
+            await rustUtils.saveHappOrWebhapp(
+              webHappPath,
+              weFileSystem.uisDir,
+              weFileSystem.happsDir,
+            );
+            weFileSystem.backupAppAssetsInfo(appId);
+            weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+          }
+        }
       }
     }),
   );
