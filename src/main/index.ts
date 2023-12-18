@@ -35,6 +35,7 @@ import { nanoid } from 'nanoid';
 import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
+import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -135,18 +136,25 @@ const WE_FILE_SYSTEM = WeFileSystem.connect(
   WE_APPLET_DEV_INFO ? WE_APPLET_DEV_INFO.tempDir : undefined,
 );
 
-const launcherEmitter = new LauncherEmitter();
-
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
   path.resolve(__dirname, '../applet-iframe/index.mjs'),
   'utf-8',
 );
+
+const launcherEmitter = new LauncherEmitter();
 
 setupLogs(launcherEmitter, WE_FILE_SYSTEM);
 
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'applet',
+    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+  },
+]);
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'default-app',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
 ]);
@@ -272,49 +280,7 @@ app.whenReady().then(async () => {
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
-  protocol.handle('applet', async (request) => {
-    // console.log('### Got applet request: ', request);
-    // console.log('### Got request with url: ', request.url);
-    const uriWithoutProtocol = request.url.split('://')[1];
-    const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
-    const uriComponents = uriWithoutQueryString.split('/');
-    const lowerCasedAppletId = uriComponents[0].replaceAll('%24', '$');
-
-    const installedAppId = `applet#${lowerCasedAppletId}`;
-
-    const uiAssetsDir = WE_FILE_SYSTEM.appUiAssetsDir(installedAppId);
-
-    if (!uiAssetsDir) {
-      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
-    }
-
-    if (
-      uriComponents.length === 1 ||
-      (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
-    ) {
-      const indexHtmlResponse = await net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
-      );
-
-      const content = await indexHtmlResponse.text();
-
-      // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
-      // needs to happen a bit cumbersomely
-      const htmlComponents = content.split('<head>');
-      htmlComponents.splice(1, 0, '<head>');
-      htmlComponents.splice(2, 0, `<script type="module">${APPLET_IFRAME_SCRIPT}</script>`);
-      let modifiedContent = htmlComponents.join('');
-
-      // remove title attribute to be able to set title to app id later
-      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      const response = new Response(modifiedContent, indexHtmlResponse);
-      return response;
-    } else {
-      return net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
-      );
-    }
-  });
+  handleAppletProtocol(WE_FILE_SYSTEM);
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -641,6 +607,8 @@ app.whenReady().then(async () => {
       APPSTORE_NETWORK_SEED,
       WE_APPLET_DEV_INFO,
     );
+
+    handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
     createOrShowMainWindow();

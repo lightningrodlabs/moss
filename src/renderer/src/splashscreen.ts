@@ -217,6 +217,10 @@ export class SplashScreen extends LitElement {
           color: #e6e3fc;
         }
 
+        h1 {
+          color: #ffffff;
+        }
+
         .errorbar {
           background: #990606;
           color: #e6e3fc;
@@ -245,19 +249,19 @@ export class SplashScreen extends LitElement {
         button {
           all: unset;
           cursor: pointer;
-          background: #ffffff;
-          color: #331ead;
+          background: #9b7429;
+          color: #ffffff;
           padding: 10px;
           border-radius: 10px;
           font-weight: bold;
         }
 
         button:disabled {
-          opacity: 0.5;
+          opacity: 0.7;
         }
 
-        button:hover {
-          background: #c7bfff;
+        button:hover:not(:disabled) {
+          background: #b7962b;
         }
 
         button:focus {
@@ -280,15 +284,15 @@ export class SplashScreen extends LitElement {
           position: absolute;
           bottom: 5px;
           left: 5px;
-          color: #e6e3fc;
+          color: #ffffff;
           font-size: 15px;
         }
 
         .bottom-right {
           position: absolute;
           bottom: 5px;
-          right: 5px;
-          color: #e6e3fc;
+          right: 10px;
+          color: #ffffff;
           font-size: 15px;
         }
 
@@ -305,9 +309,10 @@ export class SplashScreen extends LitElement {
           justify-content: center;
           align-items: center;
           height: 100vh;
-          background-color: #331ead;
+          /* background-color: #331ead;
           background-size: cover;
           background-position: center center;
+          background-image: url(moss_mushrooms.jpg); */
         }
       `,
     ];

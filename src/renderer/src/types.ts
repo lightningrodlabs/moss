@@ -82,4 +82,7 @@ export type AssetSource =
     }
   | {
       type: 'filesystem'; // Installed from filesystem
+    }
+  | {
+      type: 'default-app'; // Shipped with the We executable by default
     };

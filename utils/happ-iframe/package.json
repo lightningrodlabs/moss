@@ -1,0 +1,13 @@
+{
+  "name": "happ-iframe",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tslib": "^2.3.1",
+    "typescript": "^5.2.2",
+    "vite": "^4.0.4"
+  }
+}

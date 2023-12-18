@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import getPort from 'get-port';
 import fs from 'fs';
+import path from 'path';
 import * as childProcess from 'child_process';
 import { HolochainVersion, LauncherEmitter } from './launcherEmitter';
 import split from 'split';
 import { AdminWebsocket, AppInfo } from '@holochain/client';
-import { WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -126,20 +127,63 @@ export class HolochainManager {
     });
   }
 
-  async installWebApp(filePath: string, uiTargetDir: string, appId: string, networkSeed?: string) {
-    console.log('uiTargetDir: ', uiTargetDir);
-    console.log(`Installing app '${appId}'...`);
-    const tempHappPath = await rustUtils.saveHappOrWebhapp(filePath, uiTargetDir);
-    console.log('Stored UI and got temp happ path: ', tempHappPath);
+  async installWebApp(
+    filePath: string,
+    appId: string,
+    distributionInfo: DistributionInfo,
+    networkSeed?: string,
+  ) {
+    console.log(`Installing webhapp '${appId}'...`);
+    const uisDir = this.fs.uisDir;
+    const happsDir = this.fs.happsDir;
+    const result: string = await rustUtils.saveHappOrWebhapp(filePath, uisDir, happsDir);
+    // webHappHash should only be returned if it is actually a webhapp
+    const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
+
+    if (!webHappHash) throw new Error('Got no webhapp hash.');
+    if (!happHash) throw new Error('Got no happ hash.');
+    if (!uiHash) throw new Error('Got no UI hash.');
+
+    console.log(
+      `Saved webhapp and got hashes:\nhapp: ${happHash}\nui:${uiHash}\nwebhapp: ${webHappHash}`,
+    );
+
+    // Use dedicated agent public keys for webhapps (i.e. not Applets)
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
       membrane_proofs: {},
-      path: tempHappPath,
+      path: happFilePath,
       network_seed: networkSeed,
     });
+
+    // Store app assets info
+    const appAssetsInfo: AppAssetsInfo = {
+      type: 'webhapp',
+      sha256: webHappHash,
+      assetSource: {
+        type: 'default-app',
+      },
+      distributionInfo,
+      happ: {
+        sha256: happHash,
+      },
+      ui: {
+        location: {
+          type: 'filesystem',
+          sha256: uiHash,
+        },
+      },
+    };
+
+    fs.writeFileSync(
+      path.join(this.fs.appsDir, `${appId}.json`),
+      JSON.stringify(appAssetsInfo, undefined, 4),
+    );
+
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
+
     console.log(`Installed app '${appId}'.`);
     const installedApps = await this.adminWebsocket.listApps({});
     this.installedApps = installedApps;
@@ -150,7 +194,7 @@ export class HolochainManager {
   }
 
   async installApp(filePath: string, appId: string, networkSeed?: string) {
-    console.log(`Installing headless app'${appId}'`);
+    console.log(`Installing headless app '${appId}'`);
     const pubKey = await this.adminWebsocket.generateAgentPubKey();
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
