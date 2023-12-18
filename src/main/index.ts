@@ -263,6 +263,19 @@ const createOrShowMainWindow = () => {
   if (!app.isPackaged || (app.isPackaged && !!WE_APPLET_DEV_INFO)) {
     mainWindow.webContents.openDevTools();
   }
+  mainWindow.on('close', (e) => {
+    // TODO add better UX around keeping it running in the background.
+    // primarily important on Windows since the systray icon is hidden by default.
+    // const choice = dialog.showMessageBox({
+    //   title: "Remain Connected?",
+    //   message:
+    //     'Do you want to keep We running in the background to remain connected to your peers? You can re-open We via the system tray icon.',
+    //   type: 'info',
+    //   buttons: ['No', 'Yes'],
+    // })
+    e.preventDefault();
+    mainWindow.hide();
+  });
   mainWindow.on('closed', () => {
     // mainWindow = null;
     MAIN_WINDOW = null;
@@ -293,7 +306,7 @@ app.whenReady().then(async () => {
       label: 'Quit',
       type: 'normal',
       click() {
-        app.quit();
+        app.exit(0);
       },
     },
   ]);

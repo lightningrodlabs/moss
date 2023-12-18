@@ -10,7 +10,6 @@ declare global {
 
 window.electronAPI = {
   signZomeCall: async (zomeCall: ZomeCallUnsignedNapi) => {
-    console.log('@happ iframe: got signZomeCallRequest: ', zomeCall);
     return postMessage({
       type: 'sign-zome-call',
       payload: zomeCall,
