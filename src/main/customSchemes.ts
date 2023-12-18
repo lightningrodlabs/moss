@@ -10,6 +10,11 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
   'utf-8',
 );
 
+const HAPP_IFRAME_SCRIPT = fs.readFileSync(
+  path.resolve(__dirname, '../happ-iframe/index.mjs'),
+  'utf-8',
+);
+
 export async function handleAppletProtocol(weFileSystem: WeFileSystem) {
   protocol.handle('applet', async (request) => {
     // console.log('### Got applet request: ', request);
@@ -91,7 +96,7 @@ export async function handleDefaultAppsProtocol(
       htmlComponents.splice(
         2,
         0,
-        `<script type="module">window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, FRAMEWORK: "electron" }</script>`,
+        `<script type="module">${HAPP_IFRAME_SCRIPT};window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, FRAMEWORK: "electron" }</script>`,
       );
       let modifiedContent = htmlComponents.join('');
 

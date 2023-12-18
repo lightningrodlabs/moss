@@ -61,6 +61,9 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       ) {
         // in dev mode trust the applet about what it claims
         receivedAppletHash = message.data.appletHash;
+      } else if (message.origin.startsWith('default-app://')) {
+        // There is another message handler for those messages in we-app.ts.
+        return;
       } else {
         throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
       }

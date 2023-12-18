@@ -54,6 +54,8 @@ export class WeApp extends LitElement {
       console.error(e);
     }
 
+    window.addEventListener('message', async (message) => handleHappMessage(message));
+
     await this._weStore.checkForUiUpdates();
     this._appletUiUpdateCheckInterval = window.setInterval(
       async () => await this._weStore.checkForUiUpdates(),
@@ -65,6 +67,7 @@ export class WeApp extends LitElement {
     if (this._appletUiUpdateCheckInterval) {
       window.clearInterval(this._appletUiUpdateCheckInterval);
     }
+    window.removeEventListener('message', handleHappMessage);
   }
 
   async connect() {
@@ -274,3 +277,16 @@ export class WeApp extends LitElement {
     ];
   }
 }
+
+const handleHappMessage = async (message: MessageEvent<any>) => {
+  if (!message.origin.startsWith('default-app://')) return null;
+  if (message.data.type === 'sign-zome-call') {
+    try {
+      const signedZomeCall = await window.electronAPI.signZomeCall(message.data.payload);
+      message.ports[0].postMessage({ type: 'success', result: signedZomeCall });
+    } catch (e) {
+      return Promise.reject(`Failed to sign zome call: ${e}`);
+    }
+  }
+  return null;
+};
