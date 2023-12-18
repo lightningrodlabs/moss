@@ -73,6 +73,9 @@ export class SplashScreen extends LitElement {
         this.password = undefined;
         this.launchError = 'Wrong password.';
         setTimeout(() => {
+          if (this.passwordInput) this.passwordInput!.focus();
+        });
+        setTimeout(() => {
           this.launchError = undefined;
         }, 3000);
       } else {

@@ -65,7 +65,6 @@ export async function launchLairKeystore(
   lairHandle.stdin.end();
   // Wait for connection url or internal sodium error and return error or EventEmitter
   lairHandle.stderr.pipe(split()).on('data', (line: string) => {
-    launcherEmitter.emitLairError(line);
     if (line.includes('InternalSodium')) {
       launcherEmitter.emit(WRONG_PASSWORD);
     } else {
