@@ -30,6 +30,8 @@ export class WeApp extends LitElement {
   @state()
   _showFeedbackBoard = false;
 
+  @state()
+  _showFeedbackButton = false;
   // @state()
   // previousState: State = { state: 'loading' };
 
@@ -56,10 +58,20 @@ export class WeApp extends LitElement {
 
     window.addEventListener('message', async (message) => handleHappMessage(message));
 
+    // Wait 20 seconds with showing the feedback button to give it time to load kando in the background
+    if (!window.sessionStorage.getItem('feedbackTimeout')) {
+      setTimeout(() => {
+        window.sessionStorage.setItem('feedbackTimeout', 'true');
+        this._showFeedbackButton = true;
+      }, 30000);
+    } else {
+      this._showFeedbackButton = true;
+    }
+
     await this._weStore.checkForUiUpdates();
     this._appletUiUpdateCheckInterval = window.setInterval(
       async () => await this._weStore.checkForUiUpdates(),
-      30000,
+      20000,
     );
   }
 
@@ -132,6 +144,7 @@ export class WeApp extends LitElement {
       >
         <div
           class="feedback-button"
+          style="${this._showFeedbackButton ? '' : 'display: none;'}"
           tabindex="0"
           @click=${() => {
             this._showFeedbackBoard = !this._showFeedbackBoard;
