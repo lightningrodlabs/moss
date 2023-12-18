@@ -318,6 +318,9 @@ app.whenReady().then(async () => {
   tray.setToolTip('Holochain Launcher');
   tray.setContextMenu(contextMenu);
 
+  ipcMain.handle('exit', () => {
+    app.exit(0);
+  });
   ipcMain.handle('dialog-messagebox', async (_e, options: Electron.MessageBoxOptions) => {
     if (MAIN_WINDOW) {
       return dialog.showMessageBox(MAIN_WINDOW, options);

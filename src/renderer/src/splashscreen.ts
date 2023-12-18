@@ -1,6 +1,9 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiExitRun } from '@mdi/js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 // import { ipcRenderer } from 'electron';
 
 enum SplashScreenMode {
@@ -59,6 +62,7 @@ export class SplashScreen extends LitElement {
       await (window as any).electronAPI.launch(this.password);
     } catch (e) {
       console.error('Failed to launch: ', e);
+      this.progressState = '';
       this.view = SplashScreenMode.SetupLair;
     }
   }
@@ -69,6 +73,7 @@ export class SplashScreen extends LitElement {
       await (window as any).electronAPI.launch(this.password);
     } catch (e: any) {
       console.error('Failed to launch: ', e);
+      this.progressState = '';
       if (e.toString().includes('Wrong password.')) {
         this.password = undefined;
         this.launchError = 'Wrong password.';
@@ -195,10 +200,29 @@ export class SplashScreen extends LitElement {
     return html` <h1>Starting up...</h1> `;
   }
 
+  renderExitButton() {
+    return html`
+      <div class="bottom-left row" style="align-items: center;">
+        <sl-icon
+          tabindex="0"
+          @click=${() => (window as any).electronAPI.exit()}
+          @keypress=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              (window as any).electronAPI.exit();
+            }
+          }}
+          title="Exit"
+          class="exit-icon"
+          .src=${wrapPathInSvg(mdiExitRun)}
+        ></sl-icon>
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <div class="background">
-        ${this.renderContent()}
+        ${this.renderContent()} ${this.progressState === '' ? this.renderExitButton() : html``}
         <div class="bottom-left">${this.progressState}</div>
         <div class="bottom-right">Lightningrod Labs We</div>
         <div class="top-right errorbar row " style="${this.launchError ? '' : 'display: none;'}">
@@ -278,6 +302,16 @@ export class SplashScreen extends LitElement {
           border-radius: 8px;
         }
 
+        .exit-icon {
+          font-size: 24px;
+          color: white;
+          cursor: pointer;
+        }
+
+        .exit-icon:hover {
+          color: #1cb717;
+        }
+
         .loader {
           color: #e6e3fc;
           font-size: 35px;
@@ -301,8 +335,9 @@ export class SplashScreen extends LitElement {
 
         .top-right {
           position: absolute;
-          top: 8px;
-          right: 8px;
+          top: 5px;
+          right: 10px;
+          color: #ffffff;
         }
 
         .background {

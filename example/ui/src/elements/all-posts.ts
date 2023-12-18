@@ -1,10 +1,9 @@
 import { LitElement, html } from 'lit';
-import { state, customElement, property } from 'lit/decorators.js';
-import { AgentPubKey, EntryHash, ActionHash, Record } from '@holochain/client';
+import { customElement } from 'lit/decorators.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiInformationOutline } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
