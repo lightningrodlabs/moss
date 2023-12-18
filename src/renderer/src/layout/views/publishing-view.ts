@@ -28,7 +28,7 @@ import {
   getMyPublishers,
   updateApp,
 } from '../../processes/appstore/appstore-light.js';
-import { ActionHash, encodeHashToBase64 } from '@holochain/client';
+import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';

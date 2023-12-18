@@ -166,6 +166,7 @@ let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
 let SPLASH_SCREEN_WINDOW: BrowserWindow | undefined;
+let isAppQuitting = false;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -273,8 +274,11 @@ const createOrShowMainWindow = () => {
     //   type: 'info',
     //   buttons: ['No', 'Yes'],
     // })
-    e.preventDefault();
-    mainWindow.hide();
+    console.log('Got close event: ', e);
+    if (!isAppQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
   });
   mainWindow.on('closed', () => {
     // mainWindow = null;
@@ -658,6 +662,10 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createOrShowMainWindow();
   }
+});
+
+app.on('before-quit', () => {
+  isAppQuitting = true;
 });
 
 app.on('quit', () => {

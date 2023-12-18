@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHashB64, encodeHashToBase64 } from '@holochain/client';
+import { ActionHashB64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';

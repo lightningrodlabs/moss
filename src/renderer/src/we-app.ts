@@ -147,7 +147,7 @@ export class WeApp extends LitElement {
           ${this._showFeedbackBoard ? 'x close' : 'Feedback'}
         </div>
         <div class="feedback-top-bar" style="${this._showFeedbackBoard ? '' : 'display: none;'}">
-          <span>Thank you for your feedback :)</span>
+          <span>Thank you for your feedback!</span>
           <span
             class="close-btn"
             tabindex="0"
