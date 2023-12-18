@@ -143,7 +143,10 @@ export class WeApp extends LitElement {
         >
           ${this._showFeedbackBoard ? 'x close' : 'Feedback'}
         </div>
-        <div class="feedback-top-bar" style="${this._showFeedbackBoard ? '' : 'display: none;'}">
+        <div
+          class="feedback-top-bar"
+          style="${this._showFeedbackBoard ? 'display:none;' : 'display: none;'}"
+        >
           <span>Thank you for your feedback :)</span>
           <span
             class="close-btn"
@@ -223,7 +226,7 @@ export class WeApp extends LitElement {
         .feedback-button {
           position: fixed;
           left: 0;
-          bottom: 80px;
+          bottom: 60px;
           padding: 20px 12px;
           min-height: 90px;
           justify-content: center;

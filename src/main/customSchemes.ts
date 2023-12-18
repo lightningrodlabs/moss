@@ -91,7 +91,7 @@ export async function handleDefaultAppsProtocol(
       htmlComponents.splice(
         2,
         0,
-        `<script type="module">window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort} }</script>`,
+        `<script type="module">window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, FRAMEWORK: "electron" }</script>`,
       );
       let modifiedContent = htmlComponents.join('');
 

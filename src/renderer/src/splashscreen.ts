@@ -218,7 +218,7 @@ export class SplashScreen extends LitElement {
         }
 
         h1 {
-          color: #be9c2b;
+          color: #ffffff;
         }
 
         .errorbar {
@@ -284,7 +284,7 @@ export class SplashScreen extends LitElement {
           position: absolute;
           bottom: 5px;
           left: 5px;
-          color: #dbba4c;
+          color: #ffffff;
           font-size: 15px;
         }
 
@@ -292,7 +292,7 @@ export class SplashScreen extends LitElement {
           position: absolute;
           bottom: 5px;
           right: 10px;
-          color: #dbba4c;
+          color: #ffffff;
           font-size: 15px;
         }
 
