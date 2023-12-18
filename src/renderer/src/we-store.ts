@@ -37,6 +37,7 @@ import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
   appEntryActionHashFromDistInfo,
+  appEntryIdFromDistInfo,
   appIdFromAppletHash,
   appletHashFromAppId,
   appletIdFromAppId,
@@ -501,7 +502,7 @@ export class WeStore {
             pickBy(
               runningApplets,
               (appletStore) =>
-                appEntryActionHashFromDistInfo(appletStore.applet.distribution_info).toString() ===
+                appEntryIdFromDistInfo(appletStore.applet.distribution_info).toString() ===
                 appletBundleHash.toString(),
             ),
           ),

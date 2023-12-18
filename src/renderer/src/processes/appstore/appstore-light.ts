@@ -55,7 +55,7 @@ export async function createApp(
 export async function updateApp(
   appstoreClient: AppAgentClient,
   payload: UpdateEntityInput<UpdateAppInput>,
-): Promise<DevHubResponse<Entity<AppEntry>>> {
+): Promise<Entity<AppEntry>> {
   const response = await appstoreClient.callZome({
     role_name: 'appstore',
     zome_name: 'appstore_api',

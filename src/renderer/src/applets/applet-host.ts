@@ -25,7 +25,7 @@ import { getAppletIframeScript, signZomeCallElectron } from '../electron-api.js'
 import { WeStore } from '../we-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
-import { appEntryActionHashFromDistInfo, toOriginalCaseB64 } from '../utils.js';
+import { appEntryIdFromDistInfo, toOriginalCaseB64 } from '../utils.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -147,7 +147,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
 
       return {
-        appletBundleId: appEntryActionHashFromDistInfo(applet.applet.distribution_info),
+        appletBundleId: appEntryIdFromDistInfo(applet.applet.distribution_info),
         appletName: applet.applet.custom_name,
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
@@ -235,7 +235,7 @@ export async function handleAppletIframeMessage(
       if (crossApplet) {
         const applets = await toPromise(
           weStore.appletsForBundleHash.get(
-            appEntryActionHashFromDistInfo(appletStore.applet.distribution_info),
+            appEntryIdFromDistInfo(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {

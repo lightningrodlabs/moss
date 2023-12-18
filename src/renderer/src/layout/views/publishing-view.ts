@@ -28,7 +28,7 @@ import {
   getMyPublishers,
   updateApp,
 } from '../../processes/appstore/appstore-light.js';
-import { ActionHash } from '@holochain/client';
+import { ActionHash, encodeHashToBase64 } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';
@@ -343,12 +343,21 @@ export class PublishingView extends LitElement {
       updateInput.source = JSON.stringify(newSource);
     }
 
+    if (this._updatedFields.icon_src) {
+      updateInput.icon_src = this._updatedFields.icon_src;
+    }
+
     const updateEntityInput: UpdateEntityInput<UpdateAppInput> = {
       base: this._selectedApp?.action!,
       properties: updateInput,
     };
+    try {
+      await updateApp(appStoreClient, updateEntityInput);
+    } catch (e) {
+      notifyError('Failed to update app (see Console for details).');
+      throw e;
+    }
 
-    await updateApp(appStoreClient, updateEntityInput);
     const myAppsEntities = await getMyApps(appStoreClient);
     this._selectedApp = undefined;
     this._myApps = myAppsEntities;

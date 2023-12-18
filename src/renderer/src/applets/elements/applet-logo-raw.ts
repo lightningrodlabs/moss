@@ -76,6 +76,7 @@ export class AppletLogo extends LitElement {
       case 'complete':
         return this.renderLogo(this.appletLogo.value.value);
       case 'error':
+        console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the applet logo')}

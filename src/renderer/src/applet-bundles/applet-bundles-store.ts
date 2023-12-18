@@ -22,20 +22,20 @@ export class AppletBundlesStore {
   installableAppletBundles = lazyLoadAndPoll(async () => getAllApps(this.appstoreClient), 30000);
 
   appletBundles = new LazyHoloHashMap((appletBundleHash: ActionHash) =>
-    asyncDerived(this.installableAppletBundles, async (appletBundles) => {
-      const appletBundle = appletBundles.find(
-        (app) => app.id.toString() === appletBundleHash.toString(),
-      );
-      return appletBundle;
-    }),
+    asyncDerived(this.installableAppletBundles, async (appletBundles) =>
+      appletBundles.find((app) => app.id.toString() === appletBundleHash.toString()),
+    ),
   );
 
   appletBundleLogo = new LazyHoloHashMap((appletBundleHash: ActionHash) =>
     pipe(this.appletBundles.get(appletBundleHash), (appEntry) =>
       retryUntilSuccess(async () => {
-        if (!appEntry) throw new Error("Can't find app bundle");
+        if (!appEntry)
+          throw new Error(
+            `Can't find app bundle for hash: ${encodeHashToBase64(appletBundleHash)}`,
+          );
 
-        const icon: string = await this.fetchIcon(appEntry.id);
+        const icon: string = await this.fetchIcon(appEntry.action);
 
         if (!icon) throw new Error('Icon was not found');
 

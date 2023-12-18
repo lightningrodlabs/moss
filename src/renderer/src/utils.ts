@@ -494,6 +494,13 @@ export function appEntryActionHashFromDistInfo(distributionInfoString: string): 
   return decodeHashFromBase64(distributionInfo.info.appEntryActionHash);
 }
 
+export function appEntryIdFromDistInfo(distributionInfoString: string): ActionHash {
+  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
+  if (distributionInfo.type !== 'appstore-light')
+    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
+  return decodeHashFromBase64(distributionInfo.info.appEntryId);
+}
+
 export function notifyAndThrow(message: string) {
   notifyError(message);
   throw new Error(message);

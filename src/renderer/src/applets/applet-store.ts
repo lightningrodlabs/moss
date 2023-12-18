@@ -18,7 +18,7 @@ import {
 import { AppletHost } from './applet-host.js';
 import { Applet } from './types.js';
 import {
-  appEntryActionHashFromDistInfo,
+  appEntryIdFromDistInfo,
   appIdFromAppletHash,
   appletOrigin,
   clearAppletNotificationStatus,
@@ -118,7 +118,7 @@ export class AppletStore {
   );
 
   logo = this.appletBundlesStore.appletBundleLogo.get(
-    appEntryActionHashFromDistInfo(this.applet.distribution_info),
+    appEntryIdFromDistInfo(this.applet.distribution_info),
   );
 
   _unreadNotifications: Writable<[string | undefined, number | undefined]> = writable([
