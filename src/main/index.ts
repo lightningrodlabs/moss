@@ -15,7 +15,6 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import * as childProcess from 'child_process';
-import url from 'url';
 import { createHash } from 'crypto';
 import { Command, Option } from 'commander';
 import { is } from '@electron-toolkit/utils';
