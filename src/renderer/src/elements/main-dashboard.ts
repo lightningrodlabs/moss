@@ -355,6 +355,7 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     };
+    this._showTabView = false;
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
     //   type: "component",
@@ -403,8 +404,17 @@ export class MainDashboard extends LitElement {
     const allOpenTabs = Object.values(this._openTabs);
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
-        <h1>Entry Viewer</h1>
-        <div>You have no open tabs.</div>
+        <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px;">Entry Viewer</div>
+        <div style="font-size: 20px; max-width: 800px; text-align: center;">
+          This is where attachments and other entries are displayed. Opening an attachment in one of
+          your applets will create a new tab here.<br /><br />
+          Click on the
+          <sl-icon
+            .src=${wrapPathInSvg(mdiTableRow)}
+            style="font-size: 34px; margin-bottom: -10px;"
+          ></sl-icon>
+          icon or on any group or applet to close the Entry Viewer again.
+        </div>
       </div>`;
     }
     return allOpenTabs.map((tab) => {
@@ -781,8 +791,8 @@ export class MainDashboard extends LitElement {
           background: white;
           box-shadow: 0 0 2px 1px #000000;
           border-radius: 20px 0 0 0;
-          border-top: 4px solid var(--sl-color-primary-200);
-          border-left: 4px solid var(--sl-color-primary-200);
+          border-top: 4px solid var(--sl-color-primary-400);
+          border-left: 4px solid var(--sl-color-primary-400);
         }
 
         .group-viewer {
