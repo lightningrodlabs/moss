@@ -94,9 +94,6 @@ export class MainDashboard extends LitElement {
   _selectedTab: TabInfo | undefined;
 
   @state()
-  _showEntryViewBar = false;
-
-  @state()
   _showTabView = false;
 
   @state()
@@ -249,7 +246,6 @@ export class MainDashboard extends LitElement {
         groupHash: decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]),
       };
     }
-    this._showEntryViewBar = true;
     this._showTabView = true;
     this._selectedTab = tabInfo;
   }
@@ -477,7 +473,7 @@ export class MainDashboard extends LitElement {
 
   renderEntryTabBar() {
     const openTabs = Object.values(this._openTabs);
-    if (openTabs.length === 0 && this._showEntryViewBar) {
+    if (openTabs.length === 0) {
       return html`<span style="margin-left: 10px; font-size: 20px;">No open tabs...</span>`;
     }
     return openTabs.map((tabInfo) => {
@@ -590,27 +586,25 @@ export class MainDashboard extends LitElement {
         }}
       ></create-group-dialog>
 
-      <!-- PERSONAL VIEW -->
-
-      ${this.dashboardState.viewType === 'personal'
-        ? html` <div
-            style="flex: 1; position: fixed; top: 74px; ${this._showEntryViewBar
-              ? 'bottom: 50px;'
-              : 'bottom: 0;'}; left: 74px; right: 0;"
-          >
-            <welcome-view @open-appstore=${() => this.openAppStore()}></welcome-view>
-          </div>`
-        : html``}
-
-      <!-- GROUP VIEW -->
       <div
-        style="${this.dashboardState.viewType === 'group'
-          ? 'display: flex;'
-          : 'display: none;'} flex: 1; position: fixed; top: 74px; ${this._showEntryViewBar
-          ? 'bottom: 50px;'
-          : 'bottom: 0;'}; left: 74px;right: 0;"
+        class="group-viewer invisible-scrollbars"
+        style="${this._showTabView ? 'display: none;' : ''}"
       >
-        ${this.renderDashboard()}
+        <!-- PERSONAL VIEW -->
+        ${this.dashboardState.viewType === 'personal'
+          ? html` <div>
+              <welcome-view @open-appstore=${() => this.openAppStore()}></welcome-view>
+            </div>`
+          : html``}
+
+        <!-- GROUP VIEW -->
+        <div
+          style="${this.dashboardState.viewType === 'group'
+            ? 'display: flex; flex: 1;'
+            : 'display: none;'}"
+        >
+          ${this.renderDashboard()}
+        </div>
       </div>
 
       <!-- TABS VIEW -->
@@ -669,16 +663,14 @@ export class MainDashboard extends LitElement {
 
         <!-- TAB BAR BUTTON -->
         <div
-          class="entry-tab-bar-button ${this._showEntryViewBar ? 'btn-selected' : ''}"
+          class="entry-tab-bar-button ${this._showTabView ? 'btn-selected' : ''}"
           tabindex="0"
           @click=${() => {
             this._showTabView = !this._showTabView;
-            this._showEntryViewBar = !this._showEntryViewBar;
           }}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
               this._showTabView = !this._showTabView;
-              this._showEntryViewBar = !this._showEntryViewBar;
             }
           }}
         >
@@ -722,10 +714,10 @@ export class MainDashboard extends LitElement {
           : html`<div style="font-size: 28px; margin-left: 20px;">Home</div>`}
       </div>
 
-      <!-- TAB BAR -->
+      <!-- BOTTOM BAR -->
       <div
         class="entry-view-bar"
-        style="${this._showEntryViewBar
+        style="${this._showTabView
           ? ''
           : 'display: none;'} position: fixed; bottom: 0; left: 74px; right: 0;"
       >
@@ -788,9 +780,26 @@ export class MainDashboard extends LitElement {
           right: 0;
           background: white;
           box-shadow: 0 0 2px 1px #000000;
-          z-index: 1;
           border-radius: 20px 0 0 0;
-          border: 4px solid var(--sl-color-primary-200);
+          border-top: 4px solid var(--sl-color-primary-200);
+          border-left: 4px solid var(--sl-color-primary-200);
+        }
+
+        .group-viewer {
+          display: flex;
+          flex: 1;
+          position: fixed;
+          top: 74px;
+          bottom: 0;
+          left: 74px;
+          right: 0;
+          background: white;
+          box-shadow: 0 0 2px 1px #000000;
+          z-index: 1;
+          border-radius: 0 0 20px 0;
+          border-right: 4px solid var(--sl-color-primary-800);
+          border-bottom: 4px solid var(--sl-color-primary-800);
+          overflow-y: auto;
         }
 
         .invisible-scrollbars {
