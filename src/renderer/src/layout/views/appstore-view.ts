@@ -70,6 +70,7 @@ export class AppStoreView extends LitElement {
         display: flex;
         flex: 1;
         background: white;
+        overflow: auto;
       }
 
       .btn {

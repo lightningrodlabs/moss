@@ -58,7 +58,7 @@ type OpenTab =
       icon?: string;
     };
 
-type TabInfo = {
+export type TabInfo = {
   id: string;
   tab: OpenTab;
 };
@@ -466,6 +466,7 @@ export class MainDashboard extends LitElement {
         @click=${async () => {
           const openTabs = Object.values(this._openTabs);
           const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
+          console.log('nextOpenTab: ', nextOpenTab);
           if (nextOpenTab) {
             this._selectedTab = nextOpenTab;
           } else {
@@ -609,9 +610,15 @@ export class MainDashboard extends LitElement {
       <div class="group-viewer invisible-scrollbars">
         <!-- PERSONAL VIEW -->
         ${this.dashboardState.viewType === 'personal'
-          ? html` <div>
-              <welcome-view @open-appstore=${() => this.openAppStore()}></welcome-view>
-            </div>`
+          ? html` <welcome-view
+              style="display: flex; flex: 1;"
+              @open-appstore=${() => this.openAppStore()}
+              @request-create-group=${() =>
+                (
+                  this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
+                ).open()}
+              @request-join-group=${(_e) => this.joinGroupDialog.open()}
+            ></welcome-view>`
           : html``}
 
         <!-- GROUP VIEW -->
@@ -809,8 +816,8 @@ export class MainDashboard extends LitElement {
           flex: 1;
           position: fixed;
           top: 74px;
-          bottom: 0;
           left: 74px;
+          bottom: 0;
           right: 0;
           background: white;
           overflow-y: auto;
