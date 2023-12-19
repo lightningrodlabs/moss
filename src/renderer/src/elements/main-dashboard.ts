@@ -436,7 +436,10 @@ export class MainDashboard extends LitElement {
     switch (info.tab.type) {
       case 'hrl':
         return html`<entry-view
-          @jump-to-applet=${(e) => this.openViews.openAppletMain(e.detail)}
+          @jump-to-applet=${(e) => {
+            this.openViews.openAppletMain(e.detail);
+            this._showTabView = false;
+          }}
           .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
           .context=${info.tab.hrl.context}
           style="display: flex; flex: 1;"
@@ -596,10 +599,7 @@ export class MainDashboard extends LitElement {
         }}
       ></create-group-dialog>
 
-      <div
-        class="group-viewer invisible-scrollbars"
-        style="${this._showTabView ? 'display: none;' : ''}"
-      >
+      <div class="group-viewer invisible-scrollbars">
         <!-- PERSONAL VIEW -->
         ${this.dashboardState.viewType === 'personal'
           ? html` <div>
@@ -618,7 +618,9 @@ export class MainDashboard extends LitElement {
       </div>
 
       <!-- TABS VIEW -->
-      <div class="entry-viewer" style="${this._showTabView ? '' : 'display: none;'}">
+      <div
+        class="entry-viewer slide-in-right slide-out-right ${this._showTabView ? 'show' : 'hide'}"
+      >
         ${this.renderOpenTabs()}
       </div>
 
@@ -784,8 +786,8 @@ export class MainDashboard extends LitElement {
           display: flex;
           flex: 1;
           position: fixed;
-          top: 74px;
-          left: 74px;
+          top: 79px;
+          left: 79px;
           bottom: 50px;
           right: 0;
           background: white;
@@ -804,11 +806,6 @@ export class MainDashboard extends LitElement {
           left: 74px;
           right: 0;
           background: white;
-          box-shadow: 0 0 2px 1px #000000;
-          z-index: 1;
-          border-radius: 0 0 20px 0;
-          border-right: 4px solid var(--sl-color-primary-800);
-          border-bottom: 4px solid var(--sl-color-primary-800);
           overflow-y: auto;
         }
 
@@ -942,6 +939,28 @@ export class MainDashboard extends LitElement {
 
         .top-bar::-webkit-scrollbar {
           display: none;
+        }
+
+        .slide-in-right {
+          transform: translateX(100%);
+          transition:
+            opacity 0.15s ease-out,
+            transform 0.15s ease-out;
+        }
+
+        .slide-in-right.show {
+          transform: translateX(0);
+        }
+
+        .slide-out-right {
+          transform: translateX(0);
+          transition:
+            opacity 0.15s ease-out,
+            transform 0.15s ease-out;
+        }
+
+        .slide-out-right.hide {
+          transform: translateX(100%);
         }
       `,
     ];

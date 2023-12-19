@@ -139,7 +139,7 @@ export class EntryView extends LitElement {
 
       .toolbar {
         position: fixed;
-        bottom: 60px;
+        bottom: 30px;
         right: 0;
         background: red;
         padding: 10px;
