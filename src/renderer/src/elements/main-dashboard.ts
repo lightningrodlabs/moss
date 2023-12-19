@@ -404,7 +404,14 @@ export class MainDashboard extends LitElement {
   }
 
   renderOpenTabs() {
-    return Object.values(this._openTabs).map((tab) => {
+    const allOpenTabs = Object.values(this._openTabs);
+    if (allOpenTabs.length === 0) {
+      return html`<div class="column center-content" style="display: flex; flex: 1;">
+        <h1>Entry Viewer</h1>
+        <div>You have no open tabs.</div>
+      </div>`;
+    }
+    return allOpenTabs.map((tab) => {
       return html`
         <div
           class="column"
@@ -470,8 +477,8 @@ export class MainDashboard extends LitElement {
 
   renderEntryTabBar() {
     const openTabs = Object.values(this._openTabs);
-    if (openTabs.length === 0) {
-      return html`<span style="margin-left: 10px; font-size: 16px;">No open tabs...</span>`;
+    if (openTabs.length === 0 && this._showEntryViewBar) {
+      return html`<span style="margin-left: 10px; font-size: 20px;">No open tabs...</span>`;
     }
     return openTabs.map((tabInfo) => {
       switch (tabInfo.tab.type) {
@@ -583,39 +590,35 @@ export class MainDashboard extends LitElement {
         }}
       ></create-group-dialog>
 
-      <!-- dashboard -->
-      <!-- golden-layout (display: none if not in browserView) -->
-      <!-- Contains the applet message handler -->
+      <!-- PERSONAL VIEW -->
 
       ${this.dashboardState.viewType === 'personal'
         ? html` <div
-            style="flex: 1; position: fixed; top: ${this._showEntryViewBar
-              ? '124px'
-              : '74px'}; left: 74px; bottom: 0; right: 0;"
+            style="flex: 1; position: fixed; top: 74px; ${this._showEntryViewBar
+              ? 'bottom: 50px;'
+              : 'bottom: 0;'}; left: 74px; right: 0;"
           >
             <welcome-view @open-appstore=${() => this.openAppStore()}></welcome-view>
           </div>`
         : html``}
 
+      <!-- GROUP VIEW -->
       <div
         style="${this.dashboardState.viewType === 'group'
           ? 'display: flex;'
-          : 'display: none;'} flex: 1; position: fixed; top: ${this._showEntryViewBar
-          ? '124px'
-          : '74px'}; left: 74px; bottom: 0; right: 0;"
+          : 'display: none;'} flex: 1; position: fixed; top: 74px; ${this._showEntryViewBar
+          ? 'bottom: 50px;'
+          : 'bottom: 0;'}; left: 74px;right: 0;"
       >
         ${this.renderDashboard()}
       </div>
-      <div
-        style="display: flex; flex: 1; position: fixed; top: 124px; left: 74px; bottom: 0; right: 0; background: white; ${this
-          ._showTabView
-          ? ''
-          : 'display: none;'}"
-      >
+
+      <!-- TABS VIEW -->
+      <div class="entry-viewer" style="${this._showTabView ? '' : 'display: none;'}">
         ${this.renderOpenTabs()}
       </div>
 
-      <!-- left sidebar -->
+      <!-- LEFT SIDEBAR -->
       <div
         class="column"
         style="position: fixed; left: 0; top: 0; bottom: 0; background: var(--sl-color-primary-900);"
@@ -635,42 +638,14 @@ export class MainDashboard extends LitElement {
             @click=${() => {
               this.dashboardState = { viewType: 'personal' };
               this._showTabView = false;
-              this._selectedTab = undefined;
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter') {
                 this.dashboardState = { viewType: 'personal' };
                 this._showTabView = false;
-                this._selectedTab = undefined;
               }
             }}
           ></sidebar-button>
-        </div>
-
-        <div
-          class="entry-tab-bar-button ${this._showEntryViewBar ? 'btn-selected' : ''} ${this
-            ._showTabView
-            ? 'tab-bar-active'
-            : ''}"
-          tabindex="0"
-          @click=${() => {
-            if (this._showEntryViewBar && this._showTabView) {
-              this._showTabView = false;
-              this._selectedTab = undefined;
-            }
-            this._showEntryViewBar = !this._showEntryViewBar;
-          }}
-          @keypress=${(e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              if (this._showEntryViewBar && this._showTabView) {
-                this._showTabView = false;
-                this._selectedTab = undefined;
-              }
-              this._showEntryViewBar = !this._showEntryViewBar;
-            }
-          }}
-        >
-          <sl-icon .src=${wrapPathInSvg(mdiTableRow)} style="font-size: 34px;"></sl-icon>
         </div>
 
         <groups-sidebar
@@ -689,15 +664,32 @@ export class MainDashboard extends LitElement {
           @request-create-group=${() =>
             (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
         ></groups-sidebar>
+
+        <span style="display: flex; flex: 1;"></span>
+
+        <!-- TAB BAR BUTTON -->
+        <div
+          class="entry-tab-bar-button ${this._showEntryViewBar ? 'btn-selected' : ''}"
+          tabindex="0"
+          @click=${() => {
+            this._showTabView = !this._showTabView;
+            this._showEntryViewBar = !this._showEntryViewBar;
+          }}
+          @keypress=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              this._showTabView = !this._showTabView;
+              this._showEntryViewBar = !this._showEntryViewBar;
+            }
+          }}
+        >
+          <sl-icon .src=${wrapPathInSvg(mdiTableRow)} style="font-size: 34px;"></sl-icon>
+        </div>
       </div>
 
-      <!-- top bar -->
+      <!-- TOP BAR -->
       <div
         class="top-bar row"
-        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0; ${this
-          .dashboardState.viewType === 'group'
-          ? ''
-          : 'background-color: var(--sl-color-primary-400);'}"
+        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
       >
         ${this.dashboardState.viewType === 'group'
           ? html`
@@ -722,21 +714,20 @@ export class MainDashboard extends LitElement {
                       appletHash: e.detail.appletHash,
                     };
                     this._showTabView = false;
-                    this._selectedTab = undefined;
                   }}
                   style="margin-left: 12px; flex: 1; overflow-x: sroll;"
                 ></group-applets-sidebar>
               </group-context>
             `
-          : html``}
+          : html`<div style="font-size: 28px; margin-left: 20px;">Home</div>`}
       </div>
 
       <!-- TAB BAR -->
       <div
-        class="entry-view-bar ${this._showTabView ? 'tab-bar-active' : ''}"
+        class="entry-view-bar"
         style="${this._showEntryViewBar
           ? ''
-          : 'display: none;'} position: fixed; top: 74px; left: 74px; right: 0;"
+          : 'display: none;'} position: fixed; bottom: 0; left: 74px; right: 0;"
       >
         ${this.renderEntryTabBar()}
       </div>
@@ -774,7 +765,7 @@ export class MainDashboard extends LitElement {
 
         .top-left-corner:hover {
           border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-400);
+          background: var(--sl-color-primary-600);
         }
 
         .hover-browser {
@@ -785,6 +776,21 @@ export class MainDashboard extends LitElement {
           right: 0;
           background: var(--sl-color-primary-200);
           height: var(--sidebar-width);
+        }
+
+        .entry-viewer {
+          display: flex;
+          flex: 1;
+          position: fixed;
+          top: 74px;
+          left: 74px;
+          bottom: 50px;
+          right: 0;
+          background: white;
+          box-shadow: 0 0 2px 1px #000000;
+          z-index: 1;
+          border-radius: 20px 0 0 0;
+          border: 4px solid var(--sl-color-primary-200);
         }
 
         .invisible-scrollbars {
@@ -798,7 +804,7 @@ export class MainDashboard extends LitElement {
 
         .selected {
           border-radius: 25px 0 0 25px;
-          background-color: var(--sl-color-primary-400);
+          background-color: var(--sl-color-primary-600);
         }
 
         .close-tab-button {
