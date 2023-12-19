@@ -41,6 +41,9 @@ export class SidebarButton extends LitElement {
   @property()
   selected = false;
 
+  @property()
+  indicated = false;
+
   @query('#tooltip')
   _tooltip!: SlTooltip;
 
@@ -79,6 +82,7 @@ export class SidebarButton extends LitElement {
               ></sl-icon>
             </div>`
           : html` <img class="icon" src=${this.logoSrc} alt=${this.tooltipText} /> `}
+        ${this.indicated ? html`<div class="indicator"></div>` : html``}
       </div>
     </sl-tooltip>`;
   }
@@ -101,6 +105,14 @@ export class SidebarButton extends LitElement {
         box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-200));
         background: var(--hover-color, var(--sl-color-primary-200));
       } */
+        .indicator {
+          position: absolute;
+          right: 0;
+          height: 32px;
+          border-radius: 7px 0 0 7px;
+          width: 7px;
+          background: #f9502e;
+        }
 
         .icon-container {
           cursor: pointer;

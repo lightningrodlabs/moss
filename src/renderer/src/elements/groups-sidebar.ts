@@ -35,7 +35,10 @@ export class GroupsSidebar extends LitElement {
   );
 
   @property()
-  selectedGroupDnaHashes!: DnaHashB64[];
+  selectedGroupDnaHash?: DnaHash;
+
+  @property()
+  indicatedGroupDnaHashes: DnaHashB64[] = [];
 
   renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>) {
     const knownGroups = Array.from(groups.entries()).filter(
@@ -54,7 +57,11 @@ export class GroupsSidebar extends LitElement {
             <group-context .groupDnaHash=${groupDnaHash} .debug=${true}>
               <group-sidebar-button
                 style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-                .selected=${this.selectedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
+                .selected=${this.selectedGroupDnaHash &&
+                groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+                .indicated=${this.indicatedGroupDnaHashes.includes(
+                  encodeHashToBase64(groupDnaHash),
+                )}
                 .logoSrc=${groupProfile.logo_src}
                 .tooltipText=${groupProfile.name}
                 @click=${() => {
@@ -76,7 +83,9 @@ export class GroupsSidebar extends LitElement {
         ([groupDnaHash]) => html`
           <sidebar-button
             style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-            .selected=${this.selectedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
+            .selected=${this.selectedGroupDnaHash &&
+            groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+            .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
             .logoSrc=${wrapPathInSvg(mdiTimerSand)}
             .slIcon=${true}
             .tooltipText=${msg('Waiting for peers...')}

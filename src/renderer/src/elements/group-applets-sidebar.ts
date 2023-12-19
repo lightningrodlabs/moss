@@ -20,7 +20,7 @@ import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { GroupStore } from '../groups/group-store.js';
 import { groupStoreContext } from '../groups/context.js';
-import { AppletId } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -33,7 +33,10 @@ export class GroupAppletsSidebar extends LitElement {
   _groupStore!: GroupStore;
 
   @property()
-  selectedAppletHashes!: AppletId[];
+  selectedAppletHash?: AppletHash;
+
+  @property()
+  indicatedAppletHashes: AppletId[] = [];
 
   // All the Applets that are running and part of this Group
   _groupApplets = new StoreSubscriber(
@@ -66,7 +69,9 @@ export class GroupAppletsSidebar extends LitElement {
               <applet-topbar-button
                 title="double-click to open in tab"
                 .appletStore=${appletStore}
-                .selected=${this.selectedAppletHashes.includes(
+                .selected=${this.selectedAppletHash &&
+                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+                .indicated=${this.indicatedAppletHashes.includes(
                   encodeHashToBase64(appletStore.appletHash),
                 )}
                 .tooltipText=${appletStore.applet.custom_name}
