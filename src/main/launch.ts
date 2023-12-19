@@ -110,71 +110,69 @@ export async function launch(
     console.log('AppstoreLight installed.');
   }
   // Install other default apps if necessary (not in applet-dev mode)
-  await Promise.all(
-    Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
-      const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
-      if (
-        !holochainManager.installedApps
-          .map((appInfo) => appInfo.installed_app_id)
-          .includes(appId) &&
-        !weAppletDevInfo
-      ) {
-        console.log(`Installing default app ${appName}`);
-        if (splashscreenWindow)
-          splashscreenWindow.webContents.send(
-            `loading-progress-update', 'Installing default app ${appName}...`,
-          );
-        const networkSeed = !app.isPackaged
-          ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-          : `lightningrodlabs-we-${breakingAppVersion(app)}`;
-
-        const distributionInfo: DistributionInfo = {
-          type: 'default-app',
-        };
-        console.log('networkSeed: ', networkSeed);
-        await holochainManager.installWebApp(
-          path.join(DEFAULT_APPS_DIRECTORY, fileName),
-          appId,
-          distributionInfo,
-          networkSeed,
-        );
-        console.log(`Default app ${appName} installed.`);
-      } else {
-        // Check whether the UI got an update
-        const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+  if (!weAppletDevInfo) {
+    await Promise.all(
+      Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
+        const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
         if (
-          currentAppAssetsInfo.type === 'webhapp' &&
-          currentAppAssetsInfo.ui.location.type === 'filesystem'
+          !holochainManager.installedApps.map((appInfo) => appInfo.installed_app_id).includes(appId)
         ) {
-          const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
-          const webHappBytes = fs.readFileSync(webHappPath);
-          const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
-          const [happHash, uiHash, webHappHash] = hashResult.split('$');
-          console.log('READ uiHash: ', uiHash);
-          if (happHash !== currentAppAssetsInfo.happ.sha256) {
-            console.warn(
-              'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+          console.log(`Installing default app ${appName}`);
+          if (splashscreenWindow)
+            splashscreenWindow.webContents.send(
+              `loading-progress-update', 'Installing default app ${appName}...`,
             );
-            return;
-          }
-          if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
-            const newAppAssetsInfo = currentAppAssetsInfo;
-            newAppAssetsInfo.sha256 = webHappHash;
-            (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
-              uiHash;
-            await rustUtils.saveHappOrWebhapp(
-              webHappPath,
-              weFileSystem.uisDir,
-              weFileSystem.happsDir,
-            );
-            weFileSystem.backupAppAssetsInfo(appId);
-            weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+          const networkSeed = !app.isPackaged
+            ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
+            : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+
+          const distributionInfo: DistributionInfo = {
+            type: 'default-app',
+          };
+          console.log('networkSeed: ', networkSeed);
+          await holochainManager.installWebApp(
+            path.join(DEFAULT_APPS_DIRECTORY, fileName),
+            appId,
+            distributionInfo,
+            networkSeed,
+          );
+          console.log(`Default app ${appName} installed.`);
+        } else {
+          // Check whether the UI got an update
+          const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+          if (
+            currentAppAssetsInfo.type === 'webhapp' &&
+            currentAppAssetsInfo.ui.location.type === 'filesystem'
+          ) {
+            const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
+            const webHappBytes = fs.readFileSync(webHappPath);
+            const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
+            const [happHash, uiHash, webHappHash] = hashResult.split('$');
+            console.log('READ uiHash: ', uiHash);
+            if (happHash !== currentAppAssetsInfo.happ.sha256) {
+              console.warn(
+                'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+              );
+              return;
+            }
+            if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
+              const newAppAssetsInfo = currentAppAssetsInfo;
+              newAppAssetsInfo.sha256 = webHappHash;
+              (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
+                uiHash;
+              await rustUtils.saveHappOrWebhapp(
+                webHappPath,
+                weFileSystem.uisDir,
+                weFileSystem.happsDir,
+              );
+              weFileSystem.backupAppAssetsInfo(appId);
+              weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+            }
           }
         }
-      }
-    }),
-  );
-  if (weAppletDevInfo) {
+      }),
+    );
+  } else {
     await devSetup(weAppletDevInfo, holochainManager, weFileSystem);
   }
   return [lairHandle, holochainManager, weRustHandler];
