@@ -402,7 +402,7 @@ export class MainDashboard extends LitElement {
 
   renderOpenTabs() {
     const allOpenTabs = Object.values(this._openTabs);
-    if (allOpenTabs.length === 0 || !this._selectedTab) {
+    if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px;">Entry Viewer</div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
@@ -463,27 +463,30 @@ export class MainDashboard extends LitElement {
       <div
         class="close-tab-button"
         tabindex="0"
-        @click=${async () => {
+        @click=${async (e) => {
+          e.stopPropagation();
           const openTabs = Object.values(this._openTabs);
           const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
-          console.log('nextOpenTab: ', nextOpenTab);
+          delete this._openTabs[tabId];
           if (nextOpenTab) {
             this._selectedTab = nextOpenTab;
+            this._showTabView = true;
           } else {
             this._showTabView = false;
           }
-          delete this._openTabs[tabId];
         }}
         @keypress=${async (e: KeyboardEvent) => {
           if (e.key === 'Enter') {
+            e.stopPropagation();
             const openTabs = Object.values(this._openTabs);
             const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
+            delete this._openTabs[tabId];
             if (nextOpenTab) {
               this._selectedTab = nextOpenTab;
+              this._showTabView = true;
             } else {
               this._showTabView = false;
             }
-            delete this._openTabs[tabId];
           }
         }}
       >
@@ -507,12 +510,14 @@ export class MainDashboard extends LitElement {
                 : ''}"
               style="align-items: center; padding-left: 8px;"
               tabindex="0"
-              @click=${async () => {
+              @click=${async (e) => {
+                e.stopPropagation();
                 this._selectedTab = tabInfo;
                 this._showTabView = true;
               }}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
+                  e.stopPropagation();
                   this._selectedTab = tabInfo;
                   this._showTabView = true;
                 }
@@ -530,11 +535,13 @@ export class MainDashboard extends LitElement {
                 : ''}"
               style="align-items: center; padding-left: 8px;"
               tabindex="0"
-              @click=${async () => {
+              @click=${async (e) => {
+                e.stopPropagation();
                 this._selectedTab = tabInfo;
               }}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
+                  e.stopPropagation();
                   this._selectedTab = tabInfo;
                 }
               }}

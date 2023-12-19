@@ -74,9 +74,9 @@ export class WeStore {
     // 1. Get all AppAssetsInfos
     const updatableApplets: Record<AppletId, Entity<AppEntry>> = {}; // AppEntry with the new assets by AppletId
     const appAssetsInfos = await getAllAppAssetsInfos();
-    console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
+    // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
     const allAppEntries = await toPromise(this.appletBundlesStore.installableAppletBundles);
-    console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
+    // console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
 
     Object.entries(appAssetsInfos).forEach(([appId, appAssetInfo]) => {
       if (
@@ -105,7 +105,7 @@ export class WeStore {
       }
     });
 
-    console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
+    // console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
     this._updatableApplets.set(updatableApplets);
 
     const updatesAvailableByGroup = new DnaHashMap<boolean>();
