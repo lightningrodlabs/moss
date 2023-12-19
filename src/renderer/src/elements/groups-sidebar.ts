@@ -5,7 +5,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { GroupProfile } from '@lightningrodlabs/we-applet';
 import { localized, msg } from '@lit/localize';
-import { DnaHash } from '@holochain/client';
+import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { mdiAccountMultiplePlus, mdiTimerSand } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -34,8 +34,8 @@ export class GroupsSidebar extends LitElement {
     () => [this._weStore],
   );
 
-  @property(hashProperty('group-dna-hash'))
-  selectedGroupDnaHash!: DnaHash;
+  @property()
+  selectedGroupDnaHashes!: DnaHashB64[];
 
   renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>) {
     const knownGroups = Array.from(groups.entries()).filter(
@@ -54,8 +54,7 @@ export class GroupsSidebar extends LitElement {
             <group-context .groupDnaHash=${groupDnaHash} .debug=${true}>
               <group-sidebar-button
                 style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-                .selected=${JSON.stringify(this.selectedGroupDnaHash) ===
-                JSON.stringify(groupDnaHash)}
+                .selected=${this.selectedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
                 .logoSrc=${groupProfile.logo_src}
                 .tooltipText=${groupProfile.name}
                 @click=${() => {
@@ -77,7 +76,7 @@ export class GroupsSidebar extends LitElement {
         ([groupDnaHash]) => html`
           <sidebar-button
             style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-            .selected=${JSON.stringify(this.selectedGroupDnaHash) === JSON.stringify(groupDnaHash)}
+            .selected=${this.selectedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
             .logoSrc=${wrapPathInSvg(mdiTimerSand)}
             .slIcon=${true}
             .tooltipText=${msg('Waiting for peers...')}

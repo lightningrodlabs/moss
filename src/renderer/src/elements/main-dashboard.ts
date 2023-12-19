@@ -1,6 +1,6 @@
-import { consume } from '@lit/context';
-import { state, customElement, query } from 'lit/decorators.js';
-import { encodeHashToBase64, DnaHash, AnyDhtHash, decodeHashFromBase64 } from '@holochain/client';
+import { consume, provide } from '@lit/context';
+import { state, customElement, query, property } from 'lit/decorators.js';
+import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -8,10 +8,10 @@ import {
   joinAsyncMap,
   toPromise,
 } from '@holochain-open-dev/stores';
-import { mapValues } from '@holochain-open-dev/utils';
+import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { hashState, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnify } from '@mdi/js';
+import { mdiMagnify, mdiTableRow } from '@mdi/js';
 import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -24,14 +24,17 @@ import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/search-entry.js';
 import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
 
+import '../layout/views/welcome-view.js';
 import '../groups/elements/entry-title.js';
 import './groups-sidebar.js';
 import './group-applets-sidebar.js';
 import './join-group-dialog.js';
 import './search-bar.js';
-import '../layout/dynamic-layout.js';
 import '../layout/views/applet-main.js';
-import { DynamicLayout } from '../layout/dynamic-layout.js';
+import '../layout/views/appstore-view.js';
+import '../layout/views/publishing-view.js';
+import '../layout/views/entry-view.js';
+import '../groups/elements/group-home.js';
 
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
@@ -42,7 +45,9 @@ import { CreateGroupDialog } from './create-group-dialog.js';
 
 import './clipboard.js';
 import { WeClipboard } from './clipboard.js';
-import { nanoid } from 'nanoid';
+import { setupAppletMessageHandler } from '../applets/applet-host.js';
+import { openViewsContext } from '../layout/context.js';
+import { AppOpenViews } from '../layout/types.js';
 
 type OpenTab =
   | {
@@ -61,6 +66,18 @@ type TabInfo = {
   tab: OpenTab;
 };
 
+type DashboardState =
+  | {
+      viewType: 'personal';
+    }
+  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash }
+  | {
+      viewType: 'tab';
+      tabId: string;
+      groupHashes: DnaHashB64[];
+      appletHashes: AppletId[];
+    };
+
 @customElement('main-dashboard')
 export class MainDashboard extends LitElement {
   @consume({ context: weStoreContext })
@@ -76,56 +93,177 @@ export class MainDashboard extends LitElement {
   @state()
   showClipboard: boolean = false;
 
-  @state(hashState())
-  selectedGroupDnaHash: DnaHash | undefined;
-
   @state()
   _openApplets: Array<AppletId> = [];
 
   @state()
-  _selectedTab: string | undefined = undefined; // id of the currently selected tab
-
-  @state()
-  _openTabs: Record<string, TabInfo> = {
-    test123: {
-      id: 'test123',
-      tab: {
-        type: 'html',
-        template: html`This is tab conent`,
-        title: 'Title',
-      },
-    },
-  }; // open tabs by id
+  _openTabs: Record<string, TabInfo> = {}; // open tabs by id
 
   @state()
   _showEntryViewBar = false;
 
   @state()
-  dashboardMode: 'groupView' | 'browserView' = 'browserView';
-
-  @state()
-  hoverBrowser: boolean = false;
+  dashboardState: DashboardState = {
+    viewType: 'personal',
+  };
 
   // _unlisten: UnlistenFn | undefined;
 
-  selectedAppletHash = new StoreSubscriber(
-    this,
-    () => this._weStore.selectedAppletHash(),
-    () => [this._weStore],
-  );
+  @provide({ context: openViewsContext })
+  @property()
+  openViews: AppOpenViews = {
+    openAppletMain: async (appletHash) => {
+      const groupsForApplet = await toPromise(this._weStore.groupsForApplet.get(appletHash));
+      const groupDnaHashes = Array.from(groupsForApplet.keys());
+      if (groupDnaHashes.length === 0) throw new Error('Applet not found in any of the groups.');
+      // pick an arbitrary group this applet is installed in
+      const groupDnaHash = groupDnaHashes[0];
+      const appletId = encodeHashToBase64(appletHash);
+      if (!this._openApplets.includes(appletId)) {
+        this._openApplets.push(appletId);
+      }
+      this.dashboardState = {
+        viewType: 'group',
+        groupHash: groupDnaHash,
+        appletHash,
+      };
+    },
+    openAppletBlock: (_appletHash, _block, _context) => {
+      throw new Error('Opening applet blocks is currently not implemented.');
+    },
+    openCrossAppletMain: (_appletBundleHash) => {
+      throw new Error('Opening cross-applet main views is currently not implemented.');
+    },
+    openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
+      throw new Error('Opening cross-applet blocks is currently not implemented.');
+    },
+    openHrl: async (hrl: Hrl, context: any) => {
+      const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
+      const tabInfo: TabInfo = {
+        id: tabId,
+        tab: {
+          type: 'hrl',
+          hrl: {
+            hrl,
+            context,
+          },
+        },
+      };
+      this.openTab(tabInfo);
+    },
+    userSelectHrl: async () => {
+      this.dispatchEvent(
+        new CustomEvent('select-hrl-request', {
+          bubbles: true,
+          detail: 'select-hrl',
+        }),
+      );
+
+      return new Promise((resolve) => {
+        const listener = (e) => {
+          switch (e.type) {
+            case 'cancel-select-hrl':
+              this.removeEventListener('cancel-select-hrl', listener);
+              return resolve(undefined);
+            case 'hrl-selected':
+              const hrlWithContext: HrlWithContext = e.detail.hrlWithContext;
+              this.removeEventListener('hrl-selected', listener);
+              return resolve(hrlWithContext);
+          }
+        };
+        this.addEventListener('hrl-selected', listener);
+        this.addEventListener('cancel-select-hrl', listener);
+      });
+    },
+    toggleClipboard: () => this.toggleClipboard(),
+  };
 
   displayApplet(appletId: AppletId) {
-    return this.selectedAppletHash.value
-      ? appletId === encodeHashToBase64(this.selectedAppletHash.value)
-      : false;
+    return (
+      this.dashboardState.viewType === 'group' &&
+      this.dashboardState.appletHash &&
+      encodeHashToBase64(this.dashboardState.appletHash) === appletId
+    );
   }
 
-  displayGroupHome() {
-    return (
-      this.selectedGroupDnaHash &&
-      !this.selectedAppletHash.value &&
-      this.dashboardMode === 'groupView'
+  openPublishingView() {
+    const tabId = 'publishing-view';
+    const tabInfo: TabInfo = {
+      id: tabId,
+      tab: {
+        type: 'html',
+        title: 'Publish Applet',
+        template: html` <publishing-view></publishing-view> `,
+      },
+    };
+    this.openTab(tabInfo);
+  }
+
+  openAppStore() {
+    const tabId = 'app-library';
+    const tabInfo: TabInfo = {
+      id: tabId,
+      tab: {
+        type: 'html',
+        title: 'App Library',
+        template: html`
+          <appstore-view
+            style="display: flex; flex: 1;"
+            @open-publishing-view=${() => this.openPublishingView()}
+          ></appstore-view>
+        `,
+      },
+    };
+    this.openTab(tabInfo);
+  }
+
+  async deriveDashboardState(tabInfo: TabInfo): Promise<DashboardState> {
+    if (tabInfo.tab.type === 'html') {
+      return {
+        viewType: 'tab',
+        tabId: tabInfo.id,
+        groupHashes: [],
+        appletHashes: [],
+      };
+    } else if (tabInfo.tab.type === 'hrl') {
+      const hrlWithContext = tabInfo.tab.hrl;
+      const location = await toPromise(
+        this._weStore.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),
+      );
+      if (location) {
+        const appletContextHashes = [encodeHashToBase64(location.dnaLocation.appletHash)];
+        const groupsForApplet = await toPromise(
+          this._weStore.groupsForApplet.get(location.dnaLocation.appletHash),
+        );
+        const groupDnaHashes = Array.from(groupsForApplet.keys());
+        const groupContextHashesB64 = groupDnaHashes.map((hash) => encodeHashToBase64(hash));
+        return {
+          viewType: 'tab',
+          tabId: tabInfo.id,
+          groupHashes: groupContextHashesB64,
+          appletHashes: appletContextHashes,
+        };
+      } else {
+        return {
+          viewType: 'tab',
+          tabId: tabInfo.id,
+          groupHashes: [],
+          appletHashes: [],
+        };
+      }
+    }
+    throw new Error(`Unknown tab type: ${(tabInfo as any).tab.type}`);
+  }
+
+  async openTab(tabInfo: TabInfo) {
+    const alreadyOpen = Object.values(this._openTabs).find(
+      (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
     );
+    if (!alreadyOpen) {
+      this._openTabs[tabInfo.id] = tabInfo;
+    }
+    this.dashboardState = await this.deriveDashboardState(tabInfo);
+    this._showEntryViewBar = true;
   }
 
   async handleOpenGroup(networkSeed: string) {
@@ -146,19 +284,18 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async handleOpenHrl(dnaHash: DnaHash, hash: AnyDhtHash) {
-    this.selectedGroupDnaHash = undefined;
-    this.dashboardMode = 'browserView';
-    this.dynamicLayout.openViews.openHrl([dnaHash, hash], {});
-  }
+  // async handleOpenHrl(dnaHash: DnaHash, hash: AnyDhtHash) {
+  //   this.selectedGroupDnaHash = undefined;
+  // }
 
-  async handleOpenAppletMain(appletHash: AppletHash) {
-    this.selectedGroupDnaHash = undefined;
-    this.dashboardMode = 'browserView';
-    this.dynamicLayout.openViews.openAppletMain(appletHash);
-  }
+  // async handleOpenAppletMain(appletHash: AppletHash) {
+  //   this.selectedGroupDnaHash = undefined;
+  //   this.dashboardMode = 'groupView';
+  //   // this.dynamicLayout.openViews.openAppletMain(appletHash);
+  // }
 
   async firstUpdated() {
+    setupAppletMessageHandler(this._weStore, this.openViews);
     // this._unlisten = await listen('deep-link-received', async (e) => {
     //   const deepLink = e.payload as string;
     //   try {
@@ -225,14 +362,15 @@ export class MainDashboard extends LitElement {
   //   if (this._unlisten) this._unlisten();
   // }
 
-  get dynamicLayout() {
-    return this.shadowRoot?.getElementById('dynamic-layout') as DynamicLayout;
+  displayGroupHome() {
+    return this.dashboardState.viewType === 'group' && !this.dashboardState.appletHash;
   }
 
   async openGroup(groupDnaHash: DnaHash) {
-    this._weStore.selectAppletHash(undefined);
-    this.selectedGroupDnaHash = groupDnaHash;
-    this.dashboardMode = 'groupView';
+    this.dashboardState = {
+      viewType: 'group',
+      groupHash: groupDnaHash,
+    };
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
     //   type: "component",
@@ -252,52 +390,22 @@ export class MainDashboard extends LitElement {
           style="flex: 1; ${this.displayApplet(appletId) ? '' : 'display: none'}"
         ></applet-main>`;
       })}
-      ${this.displayGroupHome()
+      ${this.dashboardState.viewType === 'group' && !this.dashboardState.appletHash
         ? html`
-            <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
+            <group-context .groupDnaHash=${this.dashboardState.groupHash}>
               <group-home
                 style="flex: 1; ${this.displayGroupHome() ? '' : 'display: none'}"
                 @group-left=${() => {
-                  this.selectedGroupDnaHash = undefined;
-                  this.dashboardMode = 'browserView';
-                  this._weStore.selectAppletHash(undefined);
+                  this.dashboardState = { viewType: 'personal' };
                 }}
                 @applet-selected=${(e: CustomEvent) => {
-                  // this.openViews.openAppletMain(e.detail.appletHash);
-                  this._weStore.selectAppletHash(e.detail.appletHash);
-                }}
-                @applet-selected-open-tab=${(e: CustomEvent) => {
-                  this.dashboardMode = 'browserView';
-                  this.selectedGroupDnaHash = undefined;
-                  this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
+                  this.openViews.openAppletMain(e.detail.appletHash);
                 }}
                 @custom-view-selected=${(e) => {
-                  this.dashboardMode = 'browserView';
-                  this.dynamicLayout.openTab({
-                    id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                      e.detail.customViewHash,
-                    )}`,
-                    type: 'component',
-                    componentType: 'custom-view',
-                    componentState: {
-                      groupDnaHash: this.selectedGroupDnaHash,
-                      customViewHash: encodeHashToBase64(e.detail.customViewHash),
-                    },
-                  });
+                  throw new Error('Displaying custom views is currently not implemented.');
                 }}
                 @custom-view-created=${(e) => {
-                  this.dashboardMode = 'browserView';
-                  this.dynamicLayout.openTab({
-                    id: `custom-view-${this.selectedGroupDnaHash}-${encodeHashToBase64(
-                      e.detail.customViewHash,
-                    )}`,
-                    type: 'component',
-                    componentType: 'custom-view',
-                    componentState: {
-                      groupDnaHash: this.selectedGroupDnaHash,
-                      customViewHash: encodeHashToBase64(e.detail.customViewHash),
-                    },
-                  });
+                  throw new Error('Displaying custom views is currently not implemented.');
                 }}
               ></group-home>
             </group-context>
@@ -312,7 +420,7 @@ export class MainDashboard extends LitElement {
         <div
           class="column"
           style="display: flex; flex: 1; align-items: center; justify-content: center; ${this
-            ._selectedTab === tab.id
+            .dashboardState.viewType === 'tab' && this.dashboardState.tabId === tab.id
             ? ''
             : 'display: none;'}"
         >
@@ -326,9 +434,10 @@ export class MainDashboard extends LitElement {
     switch (info.tab.type) {
       case 'hrl':
         return html`<entry-view
+          @jump-to-applet=${(e) => this.openViews.openAppletMain(e.detail)}
           .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
           .context=${info.tab.hrl.context}
-          style="flex: 1"
+          style="display: flex; flex: 1;"
         ></entry-view>`;
       case 'html':
         return info.tab.template;
@@ -342,22 +451,26 @@ export class MainDashboard extends LitElement {
       <div
         class="close-tab-button"
         tabindex="0"
-        @click=${() => {
+        @click=${async () => {
           const openTabs = Object.values(this._openTabs);
-          this._selectedTab = openTabs.length > 0 ? openTabs[openTabs.length - 1].id : undefined;
-          delete this._openTabs[tabId];
-          if (openTabs.length === 1) {
-            this._showEntryViewBar = false;
+          const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
+          if (nextOpenTab) {
+            this.dashboardState = await this.deriveDashboardState(nextOpenTab);
+          } else {
+            this.dashboardState = { viewType: 'personal' };
           }
+          delete this._openTabs[tabId];
         }}
-        @keypress=${(e: KeyboardEvent) => {
+        @keypress=${async (e: KeyboardEvent) => {
           if (e.key === 'Enter') {
             const openTabs = Object.values(this._openTabs);
-            this._selectedTab = openTabs.length > 0 ? openTabs[openTabs.length - 1].id : undefined;
-            delete this._openTabs[tabId];
-            if (openTabs.length === 1) {
-              this._showEntryViewBar = false;
+            const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
+            if (nextOpenTab) {
+              this.dashboardState = await this.deriveDashboardState(nextOpenTab);
+            } else {
+              this.dashboardState = { viewType: 'personal' };
             }
+            delete this._openTabs[tabId];
           }
         }}
       >
@@ -376,23 +489,18 @@ export class MainDashboard extends LitElement {
         case 'hrl':
           return html`
             <div
-              class="entry-tab row ${this._selectedTab === tabInfo.id ? 'tab-selected' : ''}"
-              style="align-items: center;"
+              class="entry-tab row ${this.dashboardState.viewType === 'tab' &&
+              this.dashboardState.tabId === tabInfo.id
+                ? 'tab-selected'
+                : ''}"
+              style="align-items: center; padding-left: 8px;"
               tabindex="0"
-              @click=${() => {
-                if (this._selectedTab === tabInfo.id) {
-                  this._selectedTab = undefined;
-                } else {
-                  this._selectedTab = tabInfo.id;
-                }
+              @click=${async () => {
+                this.dashboardState = await this.deriveDashboardState(tabInfo);
               }}
-              @keypress=${(e: KeyboardEvent) => {
+              @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  if (this._selectedTab === tabInfo.id) {
-                    this._selectedTab = undefined;
-                  } else {
-                    this._selectedTab = tabInfo.id;
-                  }
+                  this.dashboardState = await this.deriveDashboardState(tabInfo);
                 }
               }}
             >
@@ -403,22 +511,27 @@ export class MainDashboard extends LitElement {
         case 'html':
           return html`
             <div
-              class="entry-tab row ${this._selectedTab === tabInfo.id ? 'tab-selected' : ''}"
-              style="align-items: center;"
+              class="entry-tab row ${this.dashboardState.viewType === 'tab' &&
+              this.dashboardState.tabId === tabInfo.id
+                ? 'tab-selected'
+                : ''}"
+              style="align-items: center; padding-left: 8px;"
               tabindex="0"
-              @click=${() => {
-                if (this._selectedTab === tabInfo.id) {
-                  this._selectedTab = undefined;
-                } else {
-                  this._selectedTab = tabInfo.id;
+              @click=${async () => {
+                if (
+                  this.dashboardState.viewType === 'tab' &&
+                  this.dashboardState.tabId !== tabInfo.id
+                ) {
+                  this.dashboardState = await this.deriveDashboardState(tabInfo);
                 }
               }}
-              @keypress=${(e: KeyboardEvent) => {
+              @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  if (this._selectedTab === tabInfo.id) {
-                    this._selectedTab = undefined;
-                  } else {
-                    this._selectedTab = tabInfo.id;
+                  if (
+                    this.dashboardState.viewType === 'tab' &&
+                    this.dashboardState.tabId !== tabInfo.id
+                  ) {
+                    this.dashboardState = await this.deriveDashboardState(tabInfo);
                   }
                 }
               }}
@@ -431,21 +544,11 @@ export class MainDashboard extends LitElement {
     });
   }
 
-  // openTab(_arg0: {
-  //   id: string;
-  //   type: string;
-  //   componentType: string;
-  //   componentState: { groupDnaHash: any; customViewHash: string };
-  // }) {
-  //   throw new Error('Method not implemented.');
-  // }
-
   render() {
     return html`
       <we-clipboard
         id="clipboard"
         @open-hrl=${(e) => {
-          console.log('GOT OPEN HRL REQUEST.');
           const hrlWithContext = e.detail.hrlWithContext;
           const alreadyOpen = Object.values(this._openTabs).find(
             (tabInfo) =>
@@ -453,12 +556,12 @@ export class MainDashboard extends LitElement {
               JSON.stringify(tabInfo.tab.hrl) === JSON.stringify(hrlWithContext),
           );
           if (alreadyOpen) {
-            console.log('ALREADY OPEN');
-            this._selectedTab = alreadyOpen.id;
-            this._showEntryViewBar = true;
+            this.openTab(alreadyOpen);
             return;
           }
-          const tabId = nanoid(8);
+          const tabId = `hrl://${encodeHashToBase64(hrlWithContext.hrl[0])}/${encodeHashToBase64(
+            hrlWithContext.hrl[1],
+          )}`;
           const tabInfo: TabInfo = {
             id: tabId,
             tab: {
@@ -466,18 +569,10 @@ export class MainDashboard extends LitElement {
               hrl: hrlWithContext,
             },
           };
-          this._openTabs[tabId] = tabInfo;
-          this._selectedTab = tabId;
-          this._showEntryViewBar = true;
-          // this.selectedGroupDnaHash = undefined;
-          // this.dashboardMode = 'browserView';
-          // this.dynamicLayout.openViews.openHrl(
-          //   e.detail.hrlWithContext.hrl,
-          //   e.detail.hrlWithContext.context,
-          // );
+          this.openTab(tabInfo);
         }}
         @hrl-selected=${(e) => {
-          this.dynamicLayout.dispatchEvent(
+          this.dispatchEvent(
             new CustomEvent('hrl-selected', {
               detail: e.detail,
               bubbles: false,
@@ -486,7 +581,7 @@ export class MainDashboard extends LitElement {
           );
         }}
         @sl-hide=${() => {
-          this.dynamicLayout.dispatchEvent(
+          this.dispatchEvent(
             new CustomEvent('cancel-select-hrl', {
               bubbles: false,
               composed: false,
@@ -509,72 +604,19 @@ export class MainDashboard extends LitElement {
       <!-- dashboard -->
       <!-- golden-layout (display: none if not in browserView) -->
       <!-- Contains the applet message handler -->
-      <div
-        class="row hover-browser invisible-scrollbars"
-        style="${this.dashboardMode === 'browserView' ? '' : 'display: none;'}"
-      ></div>
+
+      ${this.dashboardState.viewType === 'personal'
+        ? html` <div
+            style="flex: 1; position: fixed; top: ${this._showEntryViewBar
+              ? '124px'
+              : '74px'}; left: 74px; bottom: 0; right: 0;"
+          >
+            <welcome-view @open-appstore=${() => this.openAppStore()}></welcome-view>
+          </div>`
+        : html``}
 
       <div
-        class="entry-view-bar"
-        style="${this._showEntryViewBar
-          ? ''
-          : 'display: none;'} position: fixed; top: 74px; left: 74px; right: 0; z-index: 1;"
-      >
-        ${this.renderEntryTabBar()}
-      </div>
-
-      <div
-        style="${this.dashboardMode === 'browserView'
-          ? ''
-          : 'display: none'}; position: fixed; top: 24px; left: 74px; bottom: 0px; right: 0px;"
-      >
-        <dynamic-layout
-          id="dynamic-layout"
-          style="flex: 1; min-width: 0; height: 100%;"
-          @open-tab-request=${() => {
-            this.selectedGroupDnaHash = undefined;
-            this.dashboardMode = 'browserView';
-          }}
-          @select-hrl-request=${() => {
-            this._clipboard.show('select');
-          }}
-          @toggle-clipboard=${() => this.toggleClipboard()}
-          @request-create-group=${() =>
-            (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
-          @applet-installed=${(e: CustomEvent) => {
-            // console.log("GOT APPLET INSTALLED EVENT");
-            const appletId = encodeHashToBase64(e.detail.appletEntryHash);
-            if (!this._openApplets.includes(appletId)) {
-              this._openApplets.push(appletId);
-            }
-            this._weStore.selectAppletHash(e.detail.appletEntryHash);
-            this.selectedGroupDnaHash = e.detail.groupDnaHash;
-            this.dashboardMode = 'groupView';
-          }}
-          @jump-to-applet=${(e: CustomEvent) => {
-            this.dashboardMode = 'browserView';
-            this.selectedGroupDnaHash = undefined;
-            this.dynamicLayout.openViews.openAppletMain(e.detail);
-          }}
-          .rootItemConfig=${{
-            type: 'row',
-            content: [
-              {
-                id: 'welcome',
-                type: 'component',
-                title: 'Welcome',
-                isClosable: false,
-                componentType: 'welcome',
-              },
-            ],
-          }}
-          @open-group=${(e) => this.handleOpenGroup(e.detail.networkSeed)}
-          @request-join-group=${(_e) => this.joinGroupDialog.open()}
-        ></dynamic-layout>
-      </div>
-
-      <div
-        style="${this.dashboardMode === 'groupView'
+        style="${this.dashboardState.viewType === 'group'
           ? 'display: flex;'
           : 'display: none;'} flex: 1; position: fixed; top: ${this._showEntryViewBar
           ? '124px'
@@ -583,8 +625,8 @@ export class MainDashboard extends LitElement {
         ${this.renderDashboard()}
       </div>
       <div
-        style="display: flex; flex: 1; position: fixed; top: 124px; left: 74px; bottom: 0; right: 0; background: #1b75a692; ${this
-          ._selectedTab && Object.values(this._openTabs).length > 0
+        style="display: flex; flex: 1; position: fixed; top: 124px; left: 74px; bottom: 0; right: 0; background: white; ${this
+          .dashboardState.viewType === 'tab' && Object.values(this._openTabs).length > 0
           ? ''
           : 'display: none;'}"
       >
@@ -594,62 +636,47 @@ export class MainDashboard extends LitElement {
       <!-- left sidebar -->
       <div
         class="column"
-        style="position: fixed; left: 0; top: 0; bottom: 0; ${this.dashboardMode ===
-          'browserView' || this.hoverBrowser
-          ? 'background: var(--sl-color-primary-900);'
-          : 'background: var(--sl-color-primary-600);'}"
+        style="position: fixed; left: 0; top: 0; bottom: 0; background: var(--sl-color-primary-900);"
       >
         <div
-          class="column top-left-corner ${this.selectedGroupDnaHash ? '' : 'selected'}"
-          @mouseenter=${() => {
-            this.hoverBrowser = true;
-          }}
-          @mouseleave=${() => {
-            this.hoverBrowser = false;
-          }}
+          class="column top-left-corner ${this.dashboardState.viewType === 'personal'
+            ? 'selected'
+            : ''}"
         >
           <sidebar-button
             style="--size: 58px; --border-radius: 20px; --hover-color: transparent;"
-            .selected=${this.selectedGroupDnaHash === undefined}
+            .selected=${false}
             .logoSrc=${weLogoIcon}
             .tooltipText=${msg('Browser View')}
             placement="bottom"
+            tabindex="0"
             @click=${() => {
-              this.hoverBrowser = false;
-              this.dashboardMode = 'browserView';
-              this._weStore.selectAppletHash(undefined);
-              this.selectedGroupDnaHash = undefined;
-              this.dynamicLayout.openTab({
-                id: 'welcome',
-                type: 'component',
-                componentType: 'welcome',
-                title: msg('Welcome'),
-              });
+              this.dashboardState = { viewType: 'personal' };
             }}
           ></sidebar-button>
         </div>
 
         <div
-          class="entry-tab-bar-button"
+          class="entry-tab-bar-button ${this._showEntryViewBar ? 'btn-selected' : ''}"
+          style=""
           @click=${() => {
-            if (this._showEntryViewBar) {
-              this._selectedTab = undefined;
+            if (this._showEntryViewBar && this.dashboardState.viewType === 'tab') {
+              return;
             }
             this._showEntryViewBar = !this._showEntryViewBar;
           }}
-        ></div>
+        >
+          <sl-icon .src=${wrapPathInSvg(mdiTableRow)} style="font-size: 34px;"></sl-icon>
+        </div>
 
         <groups-sidebar
           class="left-sidebar"
-          .selectedGroupDnaHash=${this.selectedGroupDnaHash}
-          @home-selected=${() => {
-            this.dynamicLayout.openTab({
-              type: 'component',
-              componentType: 'welcome',
-            });
-          }}
+          .selectedGroupDnaHashes=${this.dashboardState.viewType === 'group'
+            ? [encodeHashToBase64(this.dashboardState.groupHash)]
+            : this.dashboardState.viewType === 'personal'
+              ? []
+              : this.dashboardState.groupHashes}
           @group-selected=${(e: CustomEvent) => {
-            this._selectedTab = undefined;
             this.openGroup(e.detail.groupDnaHash);
           }}
           @request-create-group=${() =>
@@ -660,32 +687,37 @@ export class MainDashboard extends LitElement {
       <!-- top bar -->
       <div
         class="top-bar row"
-        style="${this.selectedGroupDnaHash
+        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0; ${this
+          .dashboardState.viewType === 'group'
           ? ''
-          : 'display: none;'} flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
+          : 'background-color: var(--sl-color-primary-400);'}"
       >
-        ${this.selectedGroupDnaHash
+        ${this.dashboardState.viewType === 'group' ||
+        (this.dashboardState.viewType === 'tab' && this.dashboardState.groupHashes.length > 0)
           ? html`
-              <group-context .groupDnaHash=${this.selectedGroupDnaHash}>
+              <group-context
+                .groupDnaHash=${this.dashboardState.viewType === 'group'
+                  ? this.dashboardState.groupHash
+                  : decodeHashFromBase64(this.dashboardState.groupHashes[0])}
+              >
                 <group-applets-sidebar
-                  .selectedAppletHash=${this.selectedAppletHash.value}
-                  @applet-selected=${(e: CustomEvent) => {
+                  .selectedAppletHashes=${this.dashboardState.viewType === 'tab'
+                    ? this.dashboardState.appletHashes
+                    : this.dashboardState.appletHash
+                      ? [encodeHashToBase64(this.dashboardState.appletHash)]
+                      : []}
+                  @applet-selected=${(e: {
+                    detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+                  }) => {
                     const appletId = encodeHashToBase64(e.detail.appletHash);
                     if (!this._openApplets.includes(appletId)) {
                       this._openApplets.push(appletId);
                     }
-                    this._selectedTab = undefined;
-                    this.dashboardMode = 'groupView';
-                    // this.dashboardMode = "browserView";
-                    this._weStore.selectAppletHash(e.detail.appletHash);
-                    // this.dynamicLayout.openViews.openAppletMain(
-                    //   e.detail.appletHash
-                    // );
-                  }}
-                  @applet-selected-open-tab=${(e: CustomEvent) => {
-                    this.selectedGroupDnaHash = undefined;
-                    this.dashboardMode = 'browserView';
-                    this.dynamicLayout.openViews.openAppletMain(e.detail.appletHash);
+                    this.dashboardState = {
+                      viewType: 'group',
+                      groupHash: e.detail.groupDnaHash,
+                      appletHash: e.detail.appletHash,
+                    };
                   }}
                   style="margin-left: 12px; flex: 1; overflow-x: sroll;"
                 ></group-applets-sidebar>
@@ -694,13 +726,14 @@ export class MainDashboard extends LitElement {
           : html``}
       </div>
 
+      <!-- TAB BAR -->
       <div
-        class="row hover-browser"
-        style="${this.hoverBrowser && this.dashboardMode !== 'browserView'
+        class="entry-view-bar"
+        style="${this._showEntryViewBar
           ? ''
-          : 'display: none;'} align-items: center; font-size: 20px; padding-left: 20px; font-weight: 500;"
+          : 'display: none;'} position: fixed; top: 74px; left: 74px; right: 0;"
       >
-        <span>Switch to browser view...</span>
+        ${this.renderEntryTabBar()}
       </div>
 
       <sl-button
@@ -736,7 +769,7 @@ export class MainDashboard extends LitElement {
 
         .top-left-corner:hover {
           border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-200);
+          background: var(--sl-color-primary-400);
         }
 
         .hover-browser {
@@ -760,7 +793,7 @@ export class MainDashboard extends LitElement {
 
         .selected {
           border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-200);
+          background-color: var(--sl-color-primary-400);
         }
 
         .close-tab-button {
@@ -810,14 +843,28 @@ export class MainDashboard extends LitElement {
         }
 
         .entry-tab-bar-button {
-          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: row;
+          color: black;
           background: var(--sl-color-primary-200);
           cursor: pointer;
-          border-radius: 5px 0 0 5px;
+          margin: 5px;
+          border-radius: 5px;
+          height: 40px;
         }
 
         .entry-tab-bar-button:hover {
-          background: var(--sl-color-primary-400);
+          margin: 0;
+          border-radius: 5px 0 0 5px;
+          height: 50px;
+        }
+
+        .btn-selected {
+          margin: 0;
+          border-radius: 5px 0 0 5px;
+          height: 50px;
         }
 
         .open-tab-btn {
