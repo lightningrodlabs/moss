@@ -12,7 +12,7 @@ import { mapValues } from '@holochain-open-dev/utils';
 import { hashState, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnify } from '@mdi/js';
-import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -62,6 +62,12 @@ export class MainDashboard extends LitElement {
 
   @state()
   _openApplets: Array<AppletId> = [];
+
+  @state()
+  _openHrls: Array<HrlWithContext> = [];
+
+  @state()
+  _showEntryViewBar = false;
 
   @state()
   dashboardMode: 'groupView' | 'browserView' = 'browserView';
@@ -327,6 +333,16 @@ export class MainDashboard extends LitElement {
         class="row hover-browser invisible-scrollbars"
         style="${this.dashboardMode === 'browserView' ? '' : 'display: none;'}"
       ></div>
+
+      <div
+        class="entry-view-bar"
+        style="${this._showEntryViewBar
+          ? ''
+          : 'display: none;'} position: fixed; top: 74px; left: 74px; right: 0; z-index: 1;"
+      >
+        hello again
+      </div>
+
       <div
         style="${this.dashboardMode === 'browserView'
           ? ''
@@ -380,7 +396,9 @@ export class MainDashboard extends LitElement {
       <div
         style="${this.dashboardMode === 'groupView'
           ? 'display: flex;'
-          : 'display: none;'} flex: 1; position: fixed; top: 74px; left: 74px; bottom: 0; right: 0;"
+          : 'display: none;'} flex: 1; position: fixed; top: ${this._showEntryViewBar
+          ? '124px'
+          : '74px'}; left: 74px; bottom: 0; right: 0;"
       >
         ${this.renderDashboard()}
       </div>
@@ -421,6 +439,15 @@ export class MainDashboard extends LitElement {
               });
             }}
           ></sidebar-button>
+        </div>
+
+        <div
+          class="entry-tab-bar-button"
+          @click=${() => {
+            this._showEntryViewBar = !this._showEntryViewBar;
+          }}
+        >
+          hello
         </div>
 
         <groups-sidebar
@@ -543,6 +570,21 @@ export class MainDashboard extends LitElement {
         .selected {
           border-radius: 25px 0 0 25px;
           background: var(--sl-color-primary-200);
+        }
+
+        .entry-view-bar {
+          height: 50px;
+          background: var(--sl-color-primary-200);
+        }
+
+        .entry-tab-bar-button {
+          height: 50px;
+          background: var(--sl-color-primary-200);
+          cursor: pointer;
+        }
+
+        .entry-tab-bar-button:hover {
+          background: var(--sl-color-primary-400);
         }
 
         .open-tab-btn {
