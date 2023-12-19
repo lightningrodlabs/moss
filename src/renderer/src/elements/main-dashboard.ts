@@ -1,7 +1,7 @@
 import { consume } from '@lit/context';
 import { state, customElement, query } from 'lit/decorators.js';
 import { encodeHashToBase64, DnaHash, AnyDhtHash, decodeHashFromBase64 } from '@holochain/client';
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
   asyncDeriveStore,
@@ -24,6 +24,7 @@ import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/search-entry.js';
 import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
 
+import '../groups/elements/entry-title.js';
 import './groups-sidebar.js';
 import './group-applets-sidebar.js';
 import './join-group-dialog.js';
@@ -41,6 +42,24 @@ import { CreateGroupDialog } from './create-group-dialog.js';
 
 import './clipboard.js';
 import { WeClipboard } from './clipboard.js';
+import { nanoid } from 'nanoid';
+
+type OpenTab =
+  | {
+      type: 'hrl';
+      hrl: HrlWithContext;
+    }
+  | {
+      type: 'html';
+      template: TemplateResult;
+      title: string;
+      icon?: string;
+    };
+
+type TabInfo = {
+  id: string;
+  tab: OpenTab;
+};
 
 @customElement('main-dashboard')
 export class MainDashboard extends LitElement {
@@ -64,7 +83,19 @@ export class MainDashboard extends LitElement {
   _openApplets: Array<AppletId> = [];
 
   @state()
-  _openHrls: Array<HrlWithContext> = [];
+  _selectedTab: string | undefined = undefined; // id of the currently selected tab
+
+  @state()
+  _openTabs: Record<string, TabInfo> = {
+    test123: {
+      id: 'test123',
+      tab: {
+        type: 'html',
+        template: html`This is tab conent`,
+        title: 'Title',
+      },
+    },
+  }; // open tabs by id
 
   @state()
   _showEntryViewBar = false;
@@ -275,26 +306,175 @@ export class MainDashboard extends LitElement {
     `;
   }
 
-  openTab(_arg0: {
-    id: string;
-    type: string;
-    componentType: string;
-    componentState: { groupDnaHash: any; customViewHash: string };
-  }) {
-    throw new Error('Method not implemented.');
+  renderOpenTabs() {
+    return Object.values(this._openTabs).map((tab) => {
+      return html`
+        <div
+          class="column"
+          style="display: flex; flex: 1; align-items: center; justify-content: center; ${this
+            ._selectedTab === tab.id
+            ? ''
+            : 'display: none;'}"
+        >
+          ${this.renderTabContent(tab)}
+        </div>
+      `;
+    });
   }
+
+  renderTabContent(info: TabInfo) {
+    switch (info.tab.type) {
+      case 'hrl':
+        return html`<entry-view
+          .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
+          .context=${info.tab.hrl.context}
+          style="flex: 1"
+        ></entry-view>`;
+      case 'html':
+        return info.tab.template;
+      default:
+        return html`Invalid tab type.`;
+    }
+  }
+
+  renderCloseTab(tabId: string) {
+    return html`
+      <div
+        class="close-tab-button"
+        tabindex="0"
+        @click=${() => {
+          const openTabs = Object.values(this._openTabs);
+          this._selectedTab = openTabs.length > 0 ? openTabs[openTabs.length - 1].id : undefined;
+          delete this._openTabs[tabId];
+          if (openTabs.length === 1) {
+            this._showEntryViewBar = false;
+          }
+        }}
+        @keypress=${(e: KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            const openTabs = Object.values(this._openTabs);
+            this._selectedTab = openTabs.length > 0 ? openTabs[openTabs.length - 1].id : undefined;
+            delete this._openTabs[tabId];
+            if (openTabs.length === 1) {
+              this._showEntryViewBar = false;
+            }
+          }
+        }}
+      >
+        ×
+      </div>
+    `;
+  }
+
+  renderEntryTabBar() {
+    const openTabs = Object.values(this._openTabs);
+    if (openTabs.length === 0) {
+      return html`<span style="margin-left: 10px; font-size: 16px;">No open tabs...</span>`;
+    }
+    return openTabs.map((tabInfo) => {
+      switch (tabInfo.tab.type) {
+        case 'hrl':
+          return html`
+            <div
+              class="entry-tab row ${this._selectedTab === tabInfo.id ? 'tab-selected' : ''}"
+              style="align-items: center;"
+              tabindex="0"
+              @click=${() => {
+                if (this._selectedTab === tabInfo.id) {
+                  this._selectedTab = undefined;
+                } else {
+                  this._selectedTab = tabInfo.id;
+                }
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  if (this._selectedTab === tabInfo.id) {
+                    this._selectedTab = undefined;
+                  } else {
+                    this._selectedTab = tabInfo.id;
+                  }
+                }
+              }}
+            >
+              ${this.renderCloseTab(tabInfo.id)}
+              <entry-title .hrl=${[tabInfo.tab.hrl.hrl[0], tabInfo.tab.hrl.hrl[1]]}></entry-title>
+            </div>
+          `;
+        case 'html':
+          return html`
+            <div
+              class="entry-tab row ${this._selectedTab === tabInfo.id ? 'tab-selected' : ''}"
+              style="align-items: center;"
+              tabindex="0"
+              @click=${() => {
+                if (this._selectedTab === tabInfo.id) {
+                  this._selectedTab = undefined;
+                } else {
+                  this._selectedTab = tabInfo.id;
+                }
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  if (this._selectedTab === tabInfo.id) {
+                    this._selectedTab = undefined;
+                  } else {
+                    this._selectedTab = tabInfo.id;
+                  }
+                }
+              }}
+            >
+              ${this.renderCloseTab(tabInfo.id)}
+              <span>${tabInfo.tab.title}</span>
+            </div>
+          `;
+      }
+    });
+  }
+
+  // openTab(_arg0: {
+  //   id: string;
+  //   type: string;
+  //   componentType: string;
+  //   componentState: { groupDnaHash: any; customViewHash: string };
+  // }) {
+  //   throw new Error('Method not implemented.');
+  // }
 
   render() {
     return html`
       <we-clipboard
         id="clipboard"
         @open-hrl=${(e) => {
-          this.selectedGroupDnaHash = undefined;
-          this.dashboardMode = 'browserView';
-          this.dynamicLayout.openViews.openHrl(
-            e.detail.hrlWithContext.hrl,
-            e.detail.hrlWithContext.context,
+          console.log('GOT OPEN HRL REQUEST.');
+          const hrlWithContext = e.detail.hrlWithContext;
+          const alreadyOpen = Object.values(this._openTabs).find(
+            (tabInfo) =>
+              tabInfo.tab.type === 'hrl' &&
+              JSON.stringify(tabInfo.tab.hrl) === JSON.stringify(hrlWithContext),
           );
+          if (alreadyOpen) {
+            console.log('ALREADY OPEN');
+            this._selectedTab = alreadyOpen.id;
+            this._showEntryViewBar = true;
+            return;
+          }
+          const tabId = nanoid(8);
+          const tabInfo: TabInfo = {
+            id: tabId,
+            tab: {
+              type: 'hrl',
+              hrl: hrlWithContext,
+            },
+          };
+          this._openTabs[tabId] = tabInfo;
+          this._selectedTab = tabId;
+          this._showEntryViewBar = true;
+          // this.selectedGroupDnaHash = undefined;
+          // this.dashboardMode = 'browserView';
+          // this.dynamicLayout.openViews.openHrl(
+          //   e.detail.hrlWithContext.hrl,
+          //   e.detail.hrlWithContext.context,
+          // );
         }}
         @hrl-selected=${(e) => {
           this.dynamicLayout.dispatchEvent(
@@ -340,7 +520,7 @@ export class MainDashboard extends LitElement {
           ? ''
           : 'display: none;'} position: fixed; top: 74px; left: 74px; right: 0; z-index: 1;"
       >
-        hello again
+        ${this.renderEntryTabBar()}
       </div>
 
       <div
@@ -402,6 +582,14 @@ export class MainDashboard extends LitElement {
       >
         ${this.renderDashboard()}
       </div>
+      <div
+        style="display: flex; flex: 1; position: fixed; top: 124px; left: 74px; bottom: 0; right: 0; background: #1b75a692; ${this
+          ._selectedTab && Object.values(this._openTabs).length > 0
+          ? ''
+          : 'display: none;'}"
+      >
+        ${this.renderOpenTabs()}
+      </div>
 
       <!-- left sidebar -->
       <div
@@ -444,11 +632,12 @@ export class MainDashboard extends LitElement {
         <div
           class="entry-tab-bar-button"
           @click=${() => {
+            if (this._showEntryViewBar) {
+              this._selectedTab = undefined;
+            }
             this._showEntryViewBar = !this._showEntryViewBar;
           }}
-        >
-          hello
-        </div>
+        ></div>
 
         <groups-sidebar
           class="left-sidebar"
@@ -460,6 +649,7 @@ export class MainDashboard extends LitElement {
             });
           }}
           @group-selected=${(e: CustomEvent) => {
+            this._selectedTab = undefined;
             this.openGroup(e.detail.groupDnaHash);
           }}
           @request-create-group=${() =>
@@ -484,6 +674,7 @@ export class MainDashboard extends LitElement {
                     if (!this._openApplets.includes(appletId)) {
                       this._openApplets.push(appletId);
                     }
+                    this._selectedTab = undefined;
                     this.dashboardMode = 'groupView';
                     // this.dashboardMode = "browserView";
                     this._weStore.selectAppletHash(e.detail.appletHash);
@@ -572,15 +763,57 @@ export class MainDashboard extends LitElement {
           background: var(--sl-color-primary-200);
         }
 
+        .close-tab-button {
+          font-size: 26px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: row;
+          height: 20px;
+          width: 20px;
+          position: absolute;
+          right: 5px;
+          border-radius: 3px;
+        }
+
+        .close-tab-button:hover {
+          background: var(--sl-color-primary-800);
+          color: var(--sl-color-primary-50);
+        }
+
         .entry-view-bar {
+          display: flex;
+          align-items: center;
+          padding-left: 5px;
           height: 50px;
           background: var(--sl-color-primary-200);
+        }
+
+        .entry-tab {
+          height: 40px;
+          width: 200px;
+          background: var(--sl-color-primary-400);
+          border-radius: 4px;
+          margin-right: 5px;
+          padding-left: 4px;
+          cursor: default;
+          position: relative;
+        }
+
+        .entry-tab:hover {
+          background: var(--sl-color-primary-50);
+        }
+
+        .tab-selected {
+          background: var(--sl-color-primary-50);
+          box-shadow: 0 0 3px #808080;
         }
 
         .entry-tab-bar-button {
           height: 50px;
           background: var(--sl-color-primary-200);
           cursor: pointer;
+          border-radius: 5px 0 0 5px;
         }
 
         .entry-tab-bar-button:hover {
