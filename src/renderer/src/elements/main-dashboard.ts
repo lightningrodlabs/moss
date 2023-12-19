@@ -402,7 +402,7 @@ export class MainDashboard extends LitElement {
 
   renderOpenTabs() {
     const allOpenTabs = Object.values(this._openTabs);
-    if (allOpenTabs.length === 0) {
+    if (allOpenTabs.length === 0 || !this._selectedTab) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px;">Entry Viewer</div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
@@ -413,7 +413,14 @@ export class MainDashboard extends LitElement {
             .src=${wrapPathInSvg(mdiTableRow)}
             style="font-size: 34px; margin-bottom: -10px;"
           ></sl-icon>
-          icon or on any group or applet to close the Entry Viewer again.
+          icon or on any group or applet to close the Entry Viewer again.<br /><br />
+          If you are looking an attachment, red indicators show you the group(s) and applet(s) this
+          specific attachment belongs to:
+        </div>
+        <div class="column" style="margin-top: 20px;">
+          <div
+            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #f9502e;"
+          ></div>
         </div>
       </div>`;
     }
