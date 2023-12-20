@@ -121,7 +121,7 @@ export async function launch(
           if (splashscreenWindow)
             splashscreenWindow.webContents.send(
               'loading-progress-update',
-              'Installing default app ${appName}...',
+              `Installing default app ${appName}...`,
             );
           const networkSeed = !app.isPackaged
             ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
