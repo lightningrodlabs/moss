@@ -623,6 +623,7 @@ export class MainDashboard extends LitElement {
         <!-- PERSONAL VIEW -->
         ${this.dashboardState.viewType === 'personal'
           ? html` <welcome-view
+              @click=${(e) => e.stopPropagation()}
               style="display: flex; flex: 1;"
               @open-appstore=${() => this.openAppStore()}
               @request-create-group=${() =>
