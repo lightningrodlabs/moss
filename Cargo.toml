@@ -1,5 +1,5 @@
 [workspace]
-members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*", "crates/*"]
+members = ["dnas/*/zomes/coordinator/group", "dnas/*/zomes/integrity/group"]
 resolver = "2"
 
 

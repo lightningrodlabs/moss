@@ -1,17 +1,13 @@
 ---
-manifest_version: "1"
+manifest_version: '1'
 name: group
 integrity:
   network_seed: 00000000-0000-0000-0000-000000000000
   properties: ~
   origin_time: 2022-07-25T13:55:49.200Z
   zomes:
-  - name: group_integrity
-    bundled: ../../../target/wasm32-unknown-unknown/release/group_integrity.wasm
-  - name: custom_views_integrity
-    bundled: ../../../target/wasm32-unknown-unknown/release/custom_views_integrity.wasm
-  - name: profiles_integrity
-    bundled: ../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm
+    - name: group_integrity
+      bundled: ../../../target/wasm32-unknown-unknown/release/group_integrity.wasm
 
 coordinator:
   zomes:
@@ -19,13 +15,3 @@ coordinator:
       bundled: ../../../target/wasm32-unknown-unknown/release/group_coordinator.wasm
       dependencies:
         - name: group_integrity
-    - name: custom_views
-      bundled: ../../../target/wasm32-unknown-unknown/release/custom_views.wasm
-      dependencies:
-        - name: custom_views_integrity
-    - name: profiles
-      bundled: ../../../target/wasm32-unknown-unknown/release/profiles_coordinator.wasm
-      dependencies:
-        - name: profiles_integrity
-    - name: peer_status
-      bundled: ../../../target/wasm32-unknown-unknown/release/peer_status_coordinator.wasm

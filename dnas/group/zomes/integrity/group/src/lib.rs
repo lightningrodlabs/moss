@@ -36,3 +36,8 @@ pub struct RegisterAppletFederationInput {
     pub applet_hash: EntryHash,
     pub group_dna_hash: EntryHash,
 }
+
+#[hdk_extern]
+fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
+    Ok(ValidateCallbackResult::Valid)
+}
