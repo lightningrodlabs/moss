@@ -143,8 +143,7 @@ export class WeApp extends LitElement {
         style="${this._showFeedbackBoard ? '' : 'pointer-events: none;'}"
       >
         <div
-          class="feedback-button"
-          style="${this._feedbackBoardReady ? '' : 'opacity: 0.5;'}"
+          class="feedback-button ${this._feedbackBoardReady ? '' : 'loading'}"
           tabindex="0"
           @click=${() => {
             if (this._feedbackBoardReady) {
@@ -262,7 +261,7 @@ export class WeApp extends LitElement {
           cursor: pointer;
         }
 
-        .feedback-button:hover {
+        .feedback-button:hover:not(.loading) {
           background: #ecffe8;
           color: #27c60b;
         }
@@ -278,6 +277,11 @@ export class WeApp extends LitElement {
           width: 100%;
           height: 57px;
           background: #27c60b;
+        }
+
+        .loading {
+          opacity: 0.5;
+          cursor: default;
         }
 
         .close-btn {
