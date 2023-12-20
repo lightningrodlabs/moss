@@ -104,7 +104,14 @@ fn get_my_applet(action_hash: ActionHash) -> ExternResult<Option<Record>> {
 fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(path.path_entry_hash()?),
+        link_type: LinkTypes::AnchorToApplet.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
 
     let entry_hashes = links
         .into_iter()
@@ -122,7 +129,14 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
     let my_applets = get_my_applets(())?;
 
     let path = get_group_applets_path();
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(path.path_entry_hash()?),
+        link_type: LinkTypes::AnchorToApplet.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
 
     let applet_infos: Vec<(EntryHash, AgentPubKey)> = links
         .into_iter()
@@ -143,7 +157,14 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
 fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(path.path_entry_hash()?),
+        link_type: LinkTypes::AnchorToApplet.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
 
     for link in links {
         // TODO Make this an actual validation rule
@@ -241,7 +262,16 @@ pub fn register_applet_federation(
 /// not know about ("viral federation").
 #[hdk_extern]
 pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHash>> {
-    let links = get_links(applet_hash, LinkTypes::AppletToInvitedGroup, None)?;
+    // let links = get_links(applet_hash, LinkTypes::AppletToInvitedGroup, None)?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(applet_hash),
+        link_type: LinkTypes::AppletToInvitedGroup.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())
@@ -253,7 +283,15 @@ pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHas
 pub fn get_federated_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_federated_applets_path();
     let anchor_hash = path.path_entry_hash()?;
-    let links = get_links(anchor_hash, LinkTypes::AnchorToFederatedApplet, None)?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(anchor_hash),
+        link_type: LinkTypes::AnchorToFederatedApplet.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())

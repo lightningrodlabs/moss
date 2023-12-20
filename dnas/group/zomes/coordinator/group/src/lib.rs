@@ -13,11 +13,14 @@ pub fn group_info_path() -> ExternResult<TypedPath> {
 pub fn get_group_profile(_: ()) -> ExternResult<Option<Record>> {
     let path = group_info_path()?;
 
-    let links = get_links(
-        path.path_entry_hash()?,
-        LinkTypes::AnchorToGroupProfile,
-        None,
-    )?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(path.path_entry_hash()?),
+        link_type: LinkTypes::AnchorToGroupProfile.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
 
     let latest_group_info_link = links
         .into_iter()

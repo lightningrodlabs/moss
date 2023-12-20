@@ -10,11 +10,14 @@ pub fn related_groups_path() -> Path {
 pub fn get_related_groups(_: ()) -> ExternResult<Vec<Record>> {
     let path = related_groups_path();
 
-    let links = get_links(
-        path.path_entry_hash()?,
-        LinkTypes::AnchorToRelatedGroup,
-        None,
-    )?;
+    let links = get_links(GetLinksInput {
+        base_address: AnyLinkableHash::from(path.path_entry_hash()?),
+        link_type: LinkTypes::AnchorToRelatedGroup.try_into_filter()?,
+        tag_prefix: None,
+        after: None,
+        before: None,
+        author: None,
+    })?;
 
     let get_input: Vec<GetInput> = links
         .into_iter()
