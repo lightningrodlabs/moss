@@ -25,7 +25,13 @@ import { getAppletIframeScript, signZomeCallElectron } from '../electron-api.js'
 import { WeStore } from '../we-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
-import { appEntryIdFromDistInfo, toOriginalCaseB64 } from '../utils.js';
+import {
+  appEntryIdFromDistInfo,
+  getNotificationState,
+  storeAppletNotifications,
+  toOriginalCaseB64,
+  validateNotifications,
+} from '../utils.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -307,62 +313,62 @@ export async function handleAppletIframeMessage(
       return openViews.userSelectHrl();
     case 'toggle-clipboard':
       return openViews.toggleClipboard();
-    case 'notify-we':
-      throw new Error('Notifications not implemented.');
-    // const appletId: AppletId = encodeHashToBase64(appletHash);
-    // if (!message.notifications) {
-    //   throw new Error(
-    //     `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
-    //   );
-    // }
+    case 'notify-we': {
+      const appletId: AppletId = encodeHashToBase64(appletHash);
+      if (!message.notifications) {
+        throw new Error(
+          `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
+        );
+      }
+      const appletStore = await toPromise(weStore.appletStores.get(appletHash));
 
-    // const appletStore2 = await toPromise(weStore.appletStores.get(appletHash));
+      // const mainWindowFocused = await isMainWindowFocused();
+      // const windowFocused = await appWindow.isFocused();
+      // const windowVisible = await appWindow.isVisible();
 
-    // const mainWindowFocused = await isMainWindowFocused();
-    // const windowFocused = await appWindow.isFocused();
-    // const windowVisible = await appWindow.isVisible();
+      // If the applet that the notification is coming from is already open, and the We main window
+      // itself is also open, don't do anything
+      // const selectedAppletHash = get(weStore.selectedAppletHash());
+      // if (
+      //   selectedAppletHash &&
+      //   selectedAppletHash.toString() === appletHash.toString() &&
+      //   windowFocused
+      // ) {
+      //   return;
+      // }
 
-    // If the applet that the notification is coming from is already open, and the We main window
-    // itself is also open, don't do anything
-    // const selectedAppletHash = get(weStore.selectedAppletHash());
-    // if (
-    //   selectedAppletHash &&
-    //   selectedAppletHash.toString() === appletHash.toString() &&
-    //   windowFocused
-    // ) {
-    //   return;
-    // }
+      // add notifications to unread messages and store them in the persisted notifications log
+      const notifications: Array<WeNotification> = message.notifications;
+      validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
+      const unreadNotifications = storeAppletNotifications(notifications, appletId);
 
-    // // add notifications to unread messages and store them in the persisted notifications log
-    // const notifications: Array<WeNotification> = message.notifications;
-    // validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
-    // const unreadNotifications = storeAppletNotifications(notifications, appletId);
+      // update the notifications store
+      appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
 
-    // // update the notifications store
-    // appletStore2.setUnreadNotifications(getNotificationState(unreadNotifications));
+      // // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
+      // const appletNotificationSettings: AppletNotificationSettings =
+      //   getAppletNotificationSettings(appletId);
 
-    // // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
-    // const appletNotificationSettings: AppletNotificationSettings =
-    //   getAppletNotificationSettings(appletId);
+      // await Promise.all(
+      //   notifications.map(async (notification) => {
+      //     // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
+      //     // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
+      //     // user was offline
+      //     if (Date.now() - notification.timestamp < 300000) {
+      //       console.log('notifying electron main process');
+      //       await notifyElectron(
+      //         notification,
+      //         appletNotificationSettings.showInSystray && !windowVisible,
+      //         appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
+      //         // appletStore ? encodeHashToBase64(appletStore.applet.appstore_app_hash) : undefined,
+      //         appletStore ? appletStore.applet.custom_name : undefined,
+      //       );
+      //     }
+      //   }),
+      // );
+      return;
+    }
 
-    // await Promise.all(
-    //   notifications.map(async (notification) => {
-    //     // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
-    //     // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
-    //     // user was offline
-    //     if (Date.now() - notification.timestamp < 300000) {
-    //       console.log('notifying tauri');
-    //       await notifyElectron(
-    //         notification,
-    //         appletNotificationSettings.showInSystray && !windowVisible,
-    //         appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
-    //         // appletStore ? encodeHashToBase64(appletStore.applet.appstore_app_hash) : undefined,
-    //         appletStore ? appletStore.applet.custom_name : undefined,
-    //       );
-    //     }
-    //   }),
-    // );
-    // return;
     case 'get-applet-info':
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':

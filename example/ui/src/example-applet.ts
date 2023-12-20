@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeClient, weLinkFromAppletHash } from '@lightningrodlabs/we-applet';
+import { WeClient, WeNotification, weLinkFromAppletHash } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
 
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
@@ -43,6 +43,10 @@ export class ExampleApplet extends LitElement {
     }
   }
 
+  async notifyWe(notifications: WeNotification[]) {
+    this.weClient.notifyWe(notifications);
+  }
+
   render() {
     if (!this.weClient.renderInfo) return html`loading...`;
     switch (this.weClient.renderInfo.type) {
@@ -56,6 +60,7 @@ export class ExampleApplet extends LitElement {
                   <applet-main
                     .client=${this.weClient.renderInfo.appletClient}
                     .weClient=${this.weClient}
+                    @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
                       const appInfo = await client.appInfo();
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]

@@ -155,7 +155,7 @@ export async function devSetup(
 
           const networkSeed = randomUUID();
           const applet: Applet = {
-            custom_name: appletConfig.name,
+            custom_name: appletInstallConfig.instanceName,
             description: appletConfig.description,
             sha256_happ: happHash,
             sha256_ui: maybeUiHash,
