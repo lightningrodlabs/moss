@@ -217,14 +217,4 @@ export class HolochainManager {
       );
     }
   }
-
-  async uninstallApp(appId: string, uiDir: string) {
-    await this.adminWebsocket.uninstallApp({ installed_app_id: appId });
-    if (uiDir) {
-      fs.rmSync(uiDir, { recursive: true });
-    }
-    console.log(`Uninstalled app '${appId}'.`);
-    const installedApps = await this.adminWebsocket.listApps({});
-    this.installedApps = installedApps;
-  }
 }

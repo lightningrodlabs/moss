@@ -315,7 +315,7 @@ app.whenReady().then(async () => {
     },
   ]);
 
-  tray.setToolTip('Holochain Launcher');
+  tray.setToolTip('Lightningrodlabs We');
   tray.setContextMenu(contextMenu);
 
   ipcMain.handle('exit', () => {

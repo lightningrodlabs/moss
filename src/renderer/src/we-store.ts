@@ -62,8 +62,6 @@ export class WeStore {
     public isAppletDev: boolean,
   ) {}
 
-  private _selectedAppletHash: Writable<AppletHash | undefined> = writable(undefined);
-
   private _updatableApplets: Writable<Record<AppletId, Entity<AppEntry>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
 
@@ -76,9 +74,9 @@ export class WeStore {
     // 1. Get all AppAssetsInfos
     const updatableApplets: Record<AppletId, Entity<AppEntry>> = {}; // AppEntry with the new assets by AppletId
     const appAssetsInfos = await getAllAppAssetsInfos();
-    console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
+    // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
     const allAppEntries = await toPromise(this.appletBundlesStore.installableAppletBundles);
-    console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
+    // console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
 
     Object.entries(appAssetsInfos).forEach(([appId, appAssetInfo]) => {
       if (
@@ -107,7 +105,7 @@ export class WeStore {
       }
     });
 
-    console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
+    // console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
     this._updatableApplets.set(updatableApplets);
 
     const updatesAvailableByGroup = new DnaHashMap<boolean>();
@@ -126,14 +124,6 @@ export class WeStore {
       }),
     );
     this._updatesAvailableByGroup.set(updatesAvailableByGroup);
-  }
-
-  selectedAppletHash(): Readable<AppletHash | undefined> {
-    return derived(this._selectedAppletHash, (hash) => hash);
-  }
-
-  selectAppletHash(hash: AppletHash | undefined) {
-    this._selectedAppletHash.update((_) => hash);
   }
 
   updatableApplets(): Readable<Record<AppletId, Entity<AppEntry>>> {

@@ -3,8 +3,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { EntryHash } from '@holochain/client';
-import { hashProperty } from '@holochain-open-dev/elements';
+import { encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -21,6 +20,7 @@ import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { GroupStore } from '../groups/group-store.js';
 import { groupStoreContext } from '../groups/context.js';
+import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -32,8 +32,11 @@ export class GroupAppletsSidebar extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
 
-  @property(hashProperty('applet-hash'))
-  selectedAppletHash!: EntryHash;
+  @property()
+  selectedAppletHash?: AppletHash;
+
+  @property()
+  indicatedAppletHashes: AppletId[] = [];
 
   // All the Applets that are running and part of this Group
   _groupApplets = new StoreSubscriber(
@@ -66,14 +69,18 @@ export class GroupAppletsSidebar extends LitElement {
               <applet-topbar-button
                 title="double-click to open in tab"
                 .appletStore=${appletStore}
-                .selected=${JSON.stringify(this.selectedAppletHash) ===
-                JSON.stringify(appletStore.appletHash)}
+                .selected=${this.selectedAppletHash &&
+                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+                .indicated=${this.indicatedAppletHashes.includes(
+                  encodeHashToBase64(appletStore.appletHash),
+                )}
                 .tooltipText=${appletStore.applet.custom_name}
                 placement="bottom"
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('applet-selected', {
                       detail: {
+                        groupDnaHash: this._groupStore.groupDnaHash,
                         appletHash: appletStore.appletHash,
                       },
                       bubbles: true,
@@ -81,17 +88,6 @@ export class GroupAppletsSidebar extends LitElement {
                     }),
                   );
                   appletStore.clearNotificationStatus();
-                }}
-                @dblclick=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('applet-selected-open-tab', {
-                      detail: {
-                        appletHash: appletStore.appletHash,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
                 }}
               >
               </applet-topbar-button>

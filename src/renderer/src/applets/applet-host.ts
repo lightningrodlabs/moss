@@ -217,12 +217,7 @@ export async function handleAppletIframeMessage(
   switch (message.type) {
     case 'get-iframe-config':
       const isInstalled = await toPromise(weStore.isInstalled.get(appletHash));
-      console.log('&& IS INSTALLED &&');
-
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
-
-      console.log('&& got applet store &&');
-
       if (!isInstalled) {
         const iframeConfig: IframeConfig = {
           type: 'not-installed',
@@ -280,7 +275,6 @@ export async function handleAppletIframeMessage(
         integrityZomeName: location0.entryDefLocation.integrity_zome,
         entryType: location0.entryDefLocation.entry_def,
       };
-      console.log('Got HrlLocation: ', hrlLocation);
       return hrlLocation;
     case 'open-view':
       switch (message.request.type) {
@@ -421,7 +415,6 @@ export async function handleAppletIframeMessage(
     case 'get-localStorage':
       return window.localStorage.getItem(appletLocalStorageKey);
     case 'get-applet-iframe-script':
-      console.log('RECEIVED get-applet-iframe-script REQUEST.');
       return getAppletIframeScript();
   }
 }

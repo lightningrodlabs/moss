@@ -3,6 +3,6 @@
   "include": ["electron.vite.config.*", "src/main/*", "src/preload/*"],
   "compilerOptions": {
     "composite": true,
-    "types": ["./node_modules/electron-vite/node"]
+    "types": ["./node_modules/electron-vite/node.d.ts"]
   }
 }

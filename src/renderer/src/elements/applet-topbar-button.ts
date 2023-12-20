@@ -42,11 +42,15 @@ export class AppletTopBarButton extends LitElement {
   @property()
   selected = false;
 
+  @property()
+  indicated = false;
+
   render() {
     return html`
       <topbar-button
         style="margin-left: -4px;"
         .selected=${this.selected}
+        .indicated=${this.indicated}
         .tooltipText=${this.tooltipText}
         placement=${this.placement}
       >

@@ -100,7 +100,7 @@ export async function launch(
   ) {
     console.log('Installing AppStore...');
     if (splashscreenWindow)
-      splashscreenWindow.webContents.send('loading-progress-update', 'Installing AppStore...');
+      splashscreenWindow.webContents.send('loading-progress-update', 'Installing App Library...');
     await holochainManager.installApp(
       path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
       APPSTORE_APP_ID,
@@ -110,71 +110,107 @@ export async function launch(
     console.log('AppstoreLight installed.');
   }
   // Install other default apps if necessary (not in applet-dev mode)
-  await Promise.all(
-    Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
-      const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
-      if (
-        !holochainManager.installedApps
-          .map((appInfo) => appInfo.installed_app_id)
-          .includes(appId) &&
-        !weAppletDevInfo
-      ) {
-        console.log(`Installing default app ${appName}`);
-        if (splashscreenWindow)
-          splashscreenWindow.webContents.send(
-            `loading-progress-update', 'Installing default app ${appName}...`,
-          );
-        const networkSeed = !app.isPackaged
-          ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-          : `lightningrodlabs-we-${breakingAppVersion(app)}`;
-
-        const distributionInfo: DistributionInfo = {
-          type: 'default-app',
-        };
-        console.log('networkSeed: ', networkSeed);
-        await holochainManager.installWebApp(
-          path.join(DEFAULT_APPS_DIRECTORY, fileName),
-          appId,
-          distributionInfo,
-          networkSeed,
-        );
-        console.log(`Default app ${appName} installed.`);
-      } else {
-        // Check whether the UI got an update
-        const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+  if (!weAppletDevInfo) {
+    await Promise.all(
+      Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
+        const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
         if (
-          currentAppAssetsInfo.type === 'webhapp' &&
-          currentAppAssetsInfo.ui.location.type === 'filesystem'
+          !holochainManager.installedApps.map((appInfo) => appInfo.installed_app_id).includes(appId)
         ) {
-          const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
-          const webHappBytes = fs.readFileSync(webHappPath);
-          const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
-          const [happHash, uiHash, webHappHash] = hashResult.split('$');
-          console.log('READ uiHash: ', uiHash);
-          if (happHash !== currentAppAssetsInfo.happ.sha256) {
-            console.warn(
-              'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+          console.log(`Installing default app ${appName}`);
+          if (splashscreenWindow)
+            splashscreenWindow.webContents.send(
+              'loading-progress-update',
+              `Installing default app ${appName}...`,
             );
-            return;
-          }
-          if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
-            const newAppAssetsInfo = currentAppAssetsInfo;
-            newAppAssetsInfo.sha256 = webHappHash;
-            (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
-              uiHash;
-            await rustUtils.saveHappOrWebhapp(
-              webHappPath,
-              weFileSystem.uisDir,
-              weFileSystem.happsDir,
-            );
-            weFileSystem.backupAppAssetsInfo(appId);
-            weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+          const networkSeed = !app.isPackaged
+            ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
+            : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+
+          const distributionInfo: DistributionInfo = {
+            type: 'default-app',
+          };
+          console.log('networkSeed: ', networkSeed);
+          await holochainManager.installWebApp(
+            path.join(DEFAULT_APPS_DIRECTORY, fileName),
+            appId,
+            distributionInfo,
+            networkSeed,
+          );
+          console.log(`Default app ${appName} installed.`);
+        } else {
+          // Compare the hashes to check whether happ and/or UI got an update
+          const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+          if (
+            currentAppAssetsInfo.type === 'webhapp' &&
+            currentAppAssetsInfo.ui.location.type === 'filesystem'
+          ) {
+            const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
+            const webHappBytes = fs.readFileSync(webHappPath);
+            const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
+            const [happHash, uiHash, webHappHash] = hashResult.split('$');
+            console.log('READ uiHash: ', uiHash);
+            if (happHash !== currentAppAssetsInfo.happ.sha256) {
+              // In case that the previous happ sha256 is the one of KanDo 0.6.3, replace it fully
+              const sha256Happ064 =
+                '3c0ed7810919f0fb755116e37d27e995517e87f89225385ed797f22d8ca221d2';
+              if (currentAppAssetsInfo.happ.sha256 === sha256Happ064) {
+                console.warn(
+                  'Found KanDo feedback board version 0.6.x. Uninstalling it and replacing it with 0.7.x.',
+                );
+                console.log(
+                  `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
+                );
+                if (splashscreenWindow)
+                  splashscreenWindow.webContents.send(
+                    'loading-progress-update',
+                    'Replacing feedback board with new version...',
+                  );
+                await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
+                // back up previous assets info
+                weFileSystem.backupAppAssetsInfo(appId);
+                const networkSeed = !app.isPackaged
+                  ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
+                  : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+
+                const distributionInfo: DistributionInfo = {
+                  type: 'default-app',
+                };
+                // Install new app
+                await holochainManager.installWebApp(
+                  path.join(DEFAULT_APPS_DIRECTORY, fileName),
+                  appId,
+                  distributionInfo,
+                  networkSeed,
+                );
+                return;
+              } else {
+                console.warn(
+                  'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+                );
+                return;
+              }
+            }
+            if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
+              // TODO emit this to the logs
+              console.log(`Found new UI for default app '${appId}'. Installing.`);
+              const newAppAssetsInfo = currentAppAssetsInfo;
+              newAppAssetsInfo.sha256 = webHappHash;
+              (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
+                uiHash;
+              await rustUtils.saveHappOrWebhapp(
+                webHappPath,
+                weFileSystem.uisDir,
+                weFileSystem.happsDir,
+              );
+              weFileSystem.backupAppAssetsInfo(appId);
+              weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+            }
           }
         }
-      }
-    }),
-  );
-  if (weAppletDevInfo) {
+      }),
+    );
+  } else {
     await devSetup(weAppletDevInfo, holochainManager, weFileSystem);
   }
   return [lairHandle, holochainManager, weRustHandler];

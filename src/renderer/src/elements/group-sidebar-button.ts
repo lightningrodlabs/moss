@@ -76,6 +76,9 @@ export class GroupSidebarButton extends LitElement {
   @property()
   selected = false;
 
+  @property()
+  indicated = false;
+
   render() {
     // switch notification count, if complete, show with
     switch (this.groupNotificationCount.value.status) {
@@ -83,6 +86,7 @@ export class GroupSidebarButton extends LitElement {
         return html`
           <sidebar-button
             .selected=${this.selected}
+            .indicated=${this.indicated}
             .logoSrc=${this.logoSrc}
             .tooltipText=${this.tooltipText}
             .placement=${this.placement}
@@ -92,6 +96,7 @@ export class GroupSidebarButton extends LitElement {
         return html`
           <sidebar-button
             .selected=${this.selected}
+            .indicated=${this.indicated}
             .logoSrc=${this.logoSrc}
             .tooltipText=${this.tooltipText}
             .placement=${this.placement}
@@ -101,6 +106,7 @@ export class GroupSidebarButton extends LitElement {
         return html`
           <sidebar-button
             .selected=${this.selected}
+            .indicated=${this.indicated}
             .logoSrc=${this.logoSrc}
             .tooltipText=${this.tooltipText}
             .placement=${this.placement}

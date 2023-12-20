@@ -31,7 +31,7 @@ export class WeApp extends LitElement {
   _showFeedbackBoard = false;
 
   @state()
-  _showFeedbackButton = false;
+  _feedbackBoardReady = false;
   // @state()
   // previousState: State = { state: 'loading' };
 
@@ -62,10 +62,10 @@ export class WeApp extends LitElement {
     if (!window.sessionStorage.getItem('feedbackTimeout')) {
       setTimeout(() => {
         window.sessionStorage.setItem('feedbackTimeout', 'true');
-        this._showFeedbackButton = true;
+        this._feedbackBoardReady = true;
       }, 30000);
     } else {
-      this._showFeedbackButton = true;
+      this._feedbackBoardReady = true;
     }
 
     await this._weStore.checkForUiUpdates();
@@ -143,21 +143,26 @@ export class WeApp extends LitElement {
         style="${this._showFeedbackBoard ? '' : 'pointer-events: none;'}"
       >
         <div
-          class="feedback-button"
-          style="${this._showFeedbackButton ? '' : 'display: none;'}"
+          class="feedback-button ${this._feedbackBoardReady ? '' : 'loading'}"
           tabindex="0"
           @click=${() => {
-            this._showFeedbackBoard = !this._showFeedbackBoard;
+            if (this._feedbackBoardReady) {
+              this._showFeedbackBoard = !this._showFeedbackBoard;
+            }
           }}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-              () => {
+              if (this._feedbackBoardReady) {
                 this._showFeedbackBoard = !this._showFeedbackBoard;
-              };
+              }
             }
           }}
         >
-          ${this._showFeedbackBoard ? 'x close' : 'Feedback'}
+          ${this._showFeedbackBoard
+            ? 'x close'
+            : this._feedbackBoardReady
+              ? 'Feedback'
+              : 'loading...'}
         </div>
         <div class="feedback-top-bar" style="${this._showFeedbackBoard ? '' : 'display: none;'}">
           <span>Thank you for your feedback!</span>
@@ -239,7 +244,7 @@ export class WeApp extends LitElement {
         .feedback-button {
           position: fixed;
           left: 0;
-          bottom: 60px;
+          bottom: 100px;
           padding: 20px 12px;
           min-height: 90px;
           justify-content: center;
@@ -256,7 +261,7 @@ export class WeApp extends LitElement {
           cursor: pointer;
         }
 
-        .feedback-button:hover {
+        .feedback-button:hover:not(.loading) {
           background: #ecffe8;
           color: #27c60b;
         }
@@ -272,6 +277,11 @@ export class WeApp extends LitElement {
           width: 100%;
           height: 57px;
           background: #27c60b;
+        }
+
+        .loading {
+          opacity: 0.5;
+          cursor: default;
         }
 
         .close-btn {

@@ -28,6 +28,9 @@ export class TopBarButton extends LitElement {
   @property()
   selected = false;
 
+  @property()
+  indicated = false;
+
   @query('#tooltip')
   _tooltip!: SlTooltip;
 
@@ -43,10 +46,12 @@ export class TopBarButton extends LitElement {
       .content=${this.tooltipText}
     >
       <div
-        class="icon-container column ${this.selected ? 'selected' : ''}"
+        class="icon-container column ${this.selected ? 'selected' : ''}
+          : ''}"
         @click=${this.handleClick}
       >
         <slot></slot>
+        ${this.indicated ? html`<div class="indicator"></div>` : html``}
       </div>
     </sl-tooltip>`;
   }
@@ -57,6 +62,15 @@ export class TopBarButton extends LitElement {
       css`
         :host {
           display: flex;
+        }
+
+        .indicator {
+          position: absolute;
+          bottom: 0;
+          height: 7px;
+          border-radius: 7px 7px 0 0;
+          width: 32px;
+          background: #f9502e;
         }
 
         .icon-container {
