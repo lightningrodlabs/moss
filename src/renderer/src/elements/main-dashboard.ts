@@ -433,8 +433,7 @@ export class MainDashboard extends LitElement {
       return html`
         <div
           class="column"
-          style="display: flex; flex: 1; align-items: center; justify-content: center; ${this
-            ._selectedTab && this._selectedTab.id === tab.id
+          style="display: flex; flex: 1; ${this._selectedTab && this._selectedTab.id === tab.id
             ? ''
             : 'display: none;'}"
         >
@@ -818,6 +817,7 @@ export class MainDashboard extends LitElement {
         }
 
         .entry-viewer {
+          overflow: hidden;
           display: flex;
           flex: 1;
           position: fixed;
@@ -825,11 +825,11 @@ export class MainDashboard extends LitElement {
           left: 79px;
           bottom: 50px;
           right: 0;
-          background: white;
-          box-shadow: 0 0 2px 1px #000000;
+          background: var(--sl-color-primary-100);
+          box-shadow: 0 0 4px 1px #08044c;
           border-radius: 20px 0 0 0;
-          border-top: 4px solid var(--sl-color-primary-400);
-          border-left: 4px solid var(--sl-color-primary-400);
+          border-top: 1px solid var(--sl-color-primary-800);
+          border-left: 1px solid var(--sl-color-primary-800);
         }
 
         .group-viewer {
