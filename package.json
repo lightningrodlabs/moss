@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "private": true,
   "description": "lightningrodlabs We (Alhpa)",
   "main": "./out/main/index.js",

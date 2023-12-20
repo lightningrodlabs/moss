@@ -6,7 +6,7 @@ import { asyncDeriveStore, joinAsyncMap, toPromise } from '@holochain-open-dev/s
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnify, mdiTableRow } from '@mdi/js';
+import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
 import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -236,6 +236,9 @@ export class MainDashboard extends LitElement {
     if (!alreadyOpen) {
       this._openTabs[tabInfo.id] = tabInfo;
     }
+    // In order to be able to show the indicators about which applet
+    // this HRL belongs to, the applets bar needs to actually be there,
+    // i.e. we need to switch to group view if we haven't yet
     if (
       this.dashboardState.viewType === 'personal' &&
       tabInfo.tab.type === 'hrl' &&
@@ -301,6 +304,13 @@ export class MainDashboard extends LitElement {
     //     notifyError(msg('Error opening the link.'));
     //   }
     // });
+
+    // add event listener to close entry viewer when clicking outside of it
+    document.addEventListener('click', () => {
+      if (this._showTabView) {
+        this._showTabView = false;
+      }
+    });
 
     // add eventlistener for clipboard
     window.addEventListener('keydown', (zEvent) => {
@@ -387,10 +397,10 @@ export class MainDashboard extends LitElement {
                   this.openViews.openAppletMain(e.detail.appletHash);
                   this._showTabView = false;
                 }}
-                @custom-view-selected=${(e) => {
+                @custom-view-selected=${(_e) => {
                   throw new Error('Displaying custom views is currently not implemented.');
                 }}
-                @custom-view-created=${(e) => {
+                @custom-view-created=${(_e) => {
                   throw new Error('Displaying custom views is currently not implemented.');
                 }}
               ></group-home>
@@ -408,14 +418,9 @@ export class MainDashboard extends LitElement {
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
           This is where attachments and other entries are displayed. Opening an attachment in one of
           your applets will create a new tab here.<br /><br />
-          Click on the
-          <sl-icon
-            .src=${wrapPathInSvg(mdiTableRow)}
-            style="font-size: 34px; margin-bottom: -10px;"
-          ></sl-icon>
-          icon or on any group or applet to close the Entry Viewer again.<br /><br />
-          If you are looking an attachment, red indicators show you the group(s) and applet(s) this
-          specific attachment belongs to:
+          Click anywhere outside of the Entry Viewer to close the Entry Viewer again.<br /><br />
+          If you are looking at an attachment, red indicators show you the group(s) and applet(s)
+          this specific attachment belongs to:
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
@@ -498,7 +503,7 @@ export class MainDashboard extends LitElement {
   renderEntryTabBar() {
     const openTabs = Object.values(this._openTabs);
     if (openTabs.length === 0) {
-      return html`<span style="margin-left: 10px; font-size: 20px;">No open tabs...</span>`;
+      return html`<span style="margin-left: 10px; font-size: 20px;">No open entries...</span>`;
     }
     return openTabs.map((tabInfo) => {
       switch (tabInfo.tab.type) {
@@ -558,6 +563,7 @@ export class MainDashboard extends LitElement {
     return html`
       <we-clipboard
         id="clipboard"
+        @click=${(e) => e.stopPropagation()}
         @open-hrl=${async (e) => {
           const hrlWithContext = e.detail.hrlWithContext;
           const hrl = hrlWithContext.hrl;
@@ -640,7 +646,13 @@ export class MainDashboard extends LitElement {
 
       <!-- TABS VIEW -->
       <div
+        id="entry-view-container"
         class="entry-viewer slide-in-right slide-out-right ${this._showTabView ? 'show' : 'hide'}"
+        @click=${(e) => {
+          // Prevent propagation such hat only clicks outside of this container bubble up and we
+          // can close the entry-view-container on side-click
+          e.stopPropagation();
+        }}
       >
         ${this.renderOpenTabs()}
       </div>
@@ -696,9 +708,11 @@ export class MainDashboard extends LitElement {
 
         <!-- TAB BAR BUTTON -->
         <div
+          id="tab-bar-button"
           class="entry-tab-bar-button ${this._showTabView ? 'btn-selected' : ''}"
           tabindex="0"
-          @click=${() => {
+          @click=${(e) => {
+            e.stopPropagation();
             this._showTabView = !this._showTabView;
           }}
           @keypress=${(e: KeyboardEvent) => {
@@ -707,7 +721,7 @@ export class MainDashboard extends LitElement {
             }
           }}
         >
-          <sl-icon .src=${wrapPathInSvg(mdiTableRow)} style="font-size: 34px;"></sl-icon>
+          <sl-icon .src=${wrapPathInSvg(mdiViewGalleryOutline)} style="font-size: 34px;"></sl-icon>
         </div>
       </div>
 
