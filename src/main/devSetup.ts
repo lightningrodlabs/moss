@@ -209,6 +209,22 @@ export async function devSetup(
             fn_name: 'get_unjoined_applets',
             payload: null,
           });
+          // setInterval(async () => {
+          //   const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
+          //     role_name: 'group',
+          //     zome_name: 'group',
+          //     fn_name: 'get_unjoined_applets',
+          //     payload: null,
+          //   });
+          //   logDevSetup(
+          //     `Polled unjoined_applets:\n${unjoinedApplets.map(
+          //       ([eh, ak]) => `[
+          //       ${encodeHashToBase64(eh)},
+          //       ${encodeHashToBase64(ak)},
+          //     ]\n`,
+          //     )}`,
+          //   );
+          // }, 5000);
           if (unjoinedApplets.length === 0) {
             logDevSetup(
               'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
