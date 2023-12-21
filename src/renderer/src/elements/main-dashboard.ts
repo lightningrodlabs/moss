@@ -207,6 +207,24 @@ export class MainDashboard extends LitElement {
           <appstore-view
             style="display: flex; flex: 1;"
             @open-publishing-view=${() => this.openPublishingView()}
+            @applet-installed=${(e: {
+              detail: {
+                appletEntryHash: AppletHash;
+                groupDnaHash: DnaHash;
+              };
+            }) => {
+              const appletId = encodeHashToBase64(e.detail.appletEntryHash);
+              if (!this._openApplets.includes(appletId)) {
+                this._openApplets.push(appletId);
+              }
+              this._showTabView = false;
+              this.dashboardState = {
+                viewType: 'group',
+                groupHash: e.detail.groupDnaHash,
+                appletHash: e.detail.appletEntryHash,
+              };
+              this._showTabView = false;
+            }}
           ></appstore-view>
         `,
       },
@@ -395,6 +413,23 @@ export class MainDashboard extends LitElement {
                 }}
                 @applet-selected=${(e: CustomEvent) => {
                   this.openViews.openAppletMain(e.detail.appletHash);
+                  this._showTabView = false;
+                }}
+                @applet-installed=${(e: {
+                  detail: {
+                    appletEntryHash: AppletHash;
+                    groupDnaHash: DnaHash;
+                  };
+                }) => {
+                  const appletId = encodeHashToBase64(e.detail.appletEntryHash);
+                  if (!this._openApplets.includes(appletId)) {
+                    this._openApplets.push(appletId);
+                  }
+                  this.dashboardState = {
+                    viewType: 'group',
+                    groupHash: e.detail.groupDnaHash,
+                    appletHash: e.detail.appletEntryHash,
+                  };
                   this._showTabView = false;
                 }}
                 @custom-view-selected=${(_e) => {
@@ -978,7 +1013,7 @@ export class MainDashboard extends LitElement {
         }
 
         .slide-in-right {
-          transform: translateX(100%);
+          transform: translateX(102%);
           transition:
             opacity 0.15s ease-out,
             transform 0.15s ease-out;
@@ -996,7 +1031,7 @@ export class MainDashboard extends LitElement {
         }
 
         .slide-out-right.hide {
-          transform: translateX(100%);
+          transform: translateX(102%);
         }
       `,
     ];

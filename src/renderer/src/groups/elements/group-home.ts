@@ -215,6 +215,17 @@ export class GroupHome extends LitElement {
     try {
       console.log('Trying to join applet.');
       await this.groupStore.installApplet(appletHash);
+      this.dispatchEvent(
+        new CustomEvent('applet-installed', {
+          detail: {
+            appletEntryHash: appletHash,
+            groupDnaHash: this.groupStore.groupDnaHash,
+          },
+          composed: true,
+          bubbles: true,
+        }),
+      );
+      notify('Applet installed.');
       console.log('Successfully installed applet.');
     } catch (e) {
       notifyError(`Failed to join Applet (See console for details).`);

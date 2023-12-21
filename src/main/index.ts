@@ -146,14 +146,14 @@ setupLogs(launcherEmitter, WE_FILE_SYSTEM);
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'applet',
+    scheme: 'default-app',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
 ]);
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'default-app',
+    scheme: 'applet',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
 ]);

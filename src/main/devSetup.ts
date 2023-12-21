@@ -22,7 +22,6 @@ import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
-import { EntryRecord } from '@holochain-open-dev/utils';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -520,9 +519,6 @@ function storeAppAssetsInfo(
   maybeWebHappHash?: string,
   maybeUiHash?: string,
 ) {
-  console.log(
-    `STORING APP ASSETSINFO FOR APPLET ${appletConfig.name}. Got uiHash: ${maybeUiHash}. Got webhapp hash: ${maybeWebHappHash}`,
-  );
   // TODO potentially add distribution info from AppEntry that's being published earlier
   // to be able to simulate UI updates
   // Store app metadata
