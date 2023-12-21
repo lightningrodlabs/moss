@@ -15,21 +15,41 @@ lto = true
 
 
 [workspace.dependencies]
-hdi = { version = "0.4.0-beta-dev.19" }
-hdk = { version = "0.3.0-beta-dev.23" }
-holochain = { version = "0.3.0-beta-dev.28" }
+# hdi = { version = "0.4.0-beta-dev.19" }
+hdi = { path = "../../holochain/holochain/crates/hdi" }
+# hdk = { version = "0.3.0-beta-dev.23" }
+hdk = { path = "../../holochain/holochain/crates/hdk" }
+# holochain = { version = "0.3.0-beta-dev.28" }
+holochain = { path = "../../holochain/holochain/crates/holochain" }
 we_types = { path = "crates/types" }
 
 holochain_client = "0.5.0-dev.25"
-holochain_conductor_api = "0.3.0-beta-dev.28"
-holochain_integrity_types = "0.3.0-beta-dev.18"
-holochain_p2p = "0.3.0-beta-dev.27"
-holochain_state = "0.3.0-beta-dev.27"
-holochain_types = "0.3.0-beta-dev.25"
-holochain_websocket = "0.3.0-beta-dev.5"
-holochain_zome_types = "0.3.0-beta-dev.19"
-holo_hash = "0.3.0-beta-dev.15"
-kitsune_p2p_timestamp = "0.3.0-beta-dev.5"
+# holochain_conductor_api = "0.3.0-beta-dev.28"
+holochain_conductor_api = { path = "../../holochain/holochain/crates/holochain_conductor_api" }
+# holochain_integrity_types = "0.3.0-beta-dev.18"
+holochain_integrity_types = { path = "../../holochain/holochain/crates/holochain_integrity_types" }
+
+# holochain_p2p = "0.3.0-beta-dev.27"
+holochain_p2p = { path = "../../holochain/holochain/crates/holochain_p2p" }
+
+# holochain_state = "0.3.0-beta-dev.27"
+holochain_state = { path = "../../holochain/holochain/crates/holochain_state" }
+
+# holochain_types = "0.3.0-beta-dev.25"
+holochain_types = { path = "../../holochain/holochain/crates/holochain_types" }
+
+# holochain_websocket = "0.3.0-beta-dev.5"
+holochain_websocket = { path = "../../holochain/holochain/crates/holochain_websocket" }
+
+# holochain_zome_types = "0.3.0-beta-dev.19"
+holochain_zome_types = { path = "../../holochain/holochain/crates/holochain_zome_types" }
+
+# holo_hash = "0.3.0-beta-dev.15"
+holo_hash = { path = "../../holochain/holochain/crates/holo_hash" }
+
+# kitsune_p2p_timestamp = "0.3.0-beta-dev.5"
+kitsune_p2p_timestamp = { path = "../../holochain/holochain/crates/kitsune_p2p_timestamp" }
+
 lair_keystore_api = "0.3.0"
 
 serde = "1"

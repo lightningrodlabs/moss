@@ -32,20 +32,32 @@ fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
     match get(applet_hash.clone(), GetOptions::default()) {
         Ok(Some(_record)) => (),
         _ => {
-            create_entry(EntryTypes::Applet(applet.clone()))?;
-
+            let applet_public_action_hash = create_entry(EntryTypes::Applet(applet.clone()))?;
+            debug!(
+                "\n#######\n#######\n#######\napplet_public_action_hash: {}\n#######\n#######\n#######",
+                applet_public_action_hash
+            );
             let path = get_group_applets_path();
             let anchor_hash = path.path_entry_hash()?;
-            create_link(
+            let link_to_public_applet_link_hash = create_link(
                 anchor_hash,
                 applet_hash.clone(),
                 LinkTypes::AnchorToApplet,
                 (),
             )?;
+            debug!(
+                "\n#######\n#######\n#######\nlink_to_public_applet_link_hash: {}\n#######\n#######\n#######",
+                link_to_public_applet_link_hash
+            );
         }
     }
 
-    create_entry(EntryTypes::AppletPrivate(applet))?;
+    let private_entry_action_hash = create_entry(EntryTypes::AppletPrivate(applet))?;
+    debug!(
+        "\n#######\n#######\n#######\nprivate_entry_action_hash: {}\n#######\n#######\n#######",
+        private_entry_action_hash
+    );
+
     Ok(applet_hash)
 }
 
@@ -112,6 +124,11 @@ fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
         before: None,
         author: None,
     })?;
+
+    debug!(
+        "\n#######\n#######\n#######\nGot links: {:?}\n#######\n#######\n#######",
+        links
+    );
 
     let entry_hashes = links
         .into_iter()

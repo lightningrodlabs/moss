@@ -3,11 +3,13 @@ use std::collections::BTreeMap;
 use group_integrity::Applet;
 use hdk::prelude::holo_hash::*;
 use hdk::prelude::Record;
+use holochain::prelude::dependencies::kitsune_p2p_types::dependencies::holochain_trace;
 use holochain::test_utils::consistency_10s;
 use holochain::{conductor::config::ConductorConfig, sweettest::*};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn create_and_join_applet() {
+    holochain_trace::test_run().ok();
     // Use prebuilt DNA file
     let dna_path = std::env::current_dir()
         .unwrap()
@@ -56,12 +58,15 @@ async fn create_and_join_applet() {
         .call(&alice_zome, "register_applet", applet.clone())
         .await;
 
-    consistency_10s([&alice, &bobbo]).await;
+    consistency_60s([&alice, &bobbo]).await;
 
     println!("getting group applets...");
 
     let all_group_applets: Vec<EntryHash> =
         conductors[1].call(&bob_zome, "get_group_applets", ()).await;
+
+    println!("Called get_group_applets...");
+    consistency_60s([&alice, &bobbo]).await;
 
     assert_eq!(all_group_applets.len(), 1);
 
@@ -70,6 +75,9 @@ async fn create_and_join_applet() {
     let bobs_unjoined_applets: Vec<(EntryHash, AgentPubKey)> = conductors[1]
         .call(&bob_zome, "get_unjoined_applets", ())
         .await;
+
+    println!("Called get_unjoined_applets...");
+    consistency_60s([&alice, &bobbo]).await;
 
     assert_eq!(bobs_unjoined_applets.len(), 1);
 
@@ -82,6 +90,9 @@ async fn create_and_join_applet() {
         )
         .await;
 
+    println!("Called get_applet...");
+    consistency_60s([&alice, &bobbo]).await;
+
     let bobs_unjoined_applet_record = bobs_maybe_unjoined_applet_record.unwrap();
     let bobs_unjoined_applet = bobs_unjoined_applet_record
         .entry
@@ -93,10 +104,16 @@ async fn create_and_join_applet() {
         .call(&bob_zome, "register_applet", bobs_unjoined_applet)
         .await;
 
+    println!("Called register_applet...");
+    consistency_60s([&alice, &bobbo]).await;
+
     assert_eq!(bob_applet_entry_hash, alice_applet_entry_hash);
 
     let bobs_installed_applets: Vec<EntryHash> =
         conductors[1].call(&bob_zome, "get_my_applets", ()).await;
+
+    println!("Called get_my_applets...");
+    consistency_60s([&alice, &bobbo]).await;
 
     assert_eq!(bobs_installed_applets.len(), 1);
     assert_eq!(
