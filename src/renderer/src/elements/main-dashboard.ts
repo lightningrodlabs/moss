@@ -96,6 +96,9 @@ export class MainDashboard extends LitElement {
   _openTabs: Record<string, TabInfo> = {}; // open tabs by id
 
   @state()
+  _openGroups: DnaHash[] = [];
+
+  @state()
   _selectedTab: TabInfo | undefined;
 
   @state()
@@ -394,6 +397,13 @@ export class MainDashboard extends LitElement {
   }
 
   async openGroup(groupDnaHash: DnaHash) {
+    if (
+      !this._openGroups
+        .map((hash) => encodeHashToBase64(hash))
+        .includes(encodeHashToBase64(groupDnaHash))
+    ) {
+      this._openGroups.push(groupDnaHash);
+    }
     this.dashboardState = {
       viewType: 'group',
       groupHash: groupDnaHash,
@@ -418,47 +428,45 @@ export class MainDashboard extends LitElement {
           style="flex: 1; ${this.displayApplet(appletId) ? '' : 'display: none'}"
         ></applet-main>`;
       })}
-      ${this._allGroupHashes.value.status === 'complete'
-        ? this._allGroupHashes.value.value.map(
-            (groupHash) => html`
-              <group-context .groupDnaHash=${groupHash}>
-                <group-home
-                  style="flex: 1; ${this.displayGroupHome(groupHash) ? '' : 'display: none'}"
-                  @group-left=${() => {
-                    this.dashboardState = { viewType: 'personal' };
-                  }}
-                  @applet-selected=${(e: CustomEvent) => {
-                    this.openViews.openAppletMain(e.detail.appletHash);
-                    this._showTabView = false;
-                  }}
-                  @applet-installed=${(e: {
-                    detail: {
-                      appletEntryHash: AppletHash;
-                      groupDnaHash: DnaHash;
-                    };
-                  }) => {
-                    const appletId = encodeHashToBase64(e.detail.appletEntryHash);
-                    if (!this._openApplets.includes(appletId)) {
-                      this._openApplets.push(appletId);
-                    }
-                    this.dashboardState = {
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletEntryHash,
-                    };
-                    this._showTabView = false;
-                  }}
-                  @custom-view-selected=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                  @custom-view-created=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                ></group-home>
-              </group-context>
-            `,
-          )
-        : html``}
+      ${this._openGroups.map(
+        (groupHash) => html`
+          <group-context .groupDnaHash=${groupHash}>
+            <group-home
+              style="flex: 1; ${this.displayGroupHome(groupHash) ? '' : 'display: none'}"
+              @group-left=${() => {
+                this.dashboardState = { viewType: 'personal' };
+              }}
+              @applet-selected=${(e: CustomEvent) => {
+                this.openViews.openAppletMain(e.detail.appletHash);
+                this._showTabView = false;
+              }}
+              @applet-installed=${(e: {
+                detail: {
+                  appletEntryHash: AppletHash;
+                  groupDnaHash: DnaHash;
+                };
+              }) => {
+                const appletId = encodeHashToBase64(e.detail.appletEntryHash);
+                if (!this._openApplets.includes(appletId)) {
+                  this._openApplets.push(appletId);
+                }
+                this.dashboardState = {
+                  viewType: 'group',
+                  groupHash: e.detail.groupDnaHash,
+                  appletHash: e.detail.appletEntryHash,
+                };
+                this._showTabView = false;
+              }}
+              @custom-view-selected=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+              @custom-view-created=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+            ></group-home>
+          </group-context>
+        `,
+      )}
     `;
   }
 
