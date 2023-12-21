@@ -605,6 +605,12 @@ export class WeStore {
     await this.adminWebsocket.disableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
+    // remove background-services iframe from DOM
+    const appletHashBase64 = encodeHashToBase64(appletHash);
+    const backgroundIframe = document.getElementById(appletHashBase64);
+    if (backgroundIframe) {
+      backgroundIframe.remove();
+    }
     await this.reloadManualStores();
   }
 
