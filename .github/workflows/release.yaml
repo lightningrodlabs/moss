@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir resources/default-apps
           yarn setup:release
-          curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we-electron/releases/download/we-alpha-happ-v0.8.0/we.happ
+          curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we-electron/releases/download/we-alpha-happ-v0.9.0/we.happ
 
       - name: Build zomes
         run: |

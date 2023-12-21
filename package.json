@@ -39,7 +39,7 @@
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "download:kando": "curl -L --output resources/default-apps/kando.webhapp https://github.com/holochain-apps/kando/releases/download/v0.7.0/kando.webhapp",
     "download:appstore": "curl -L --output resources/default-apps/AppstoreLight.happ https://github.com/matthme/appstore-light/releases/download/appstore-light-0.0.2/AppstoreLight.happ",
-    "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we-electron/releases/download/we-alpha-happ-v0.8.0/we.happ",
+    "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we-electron/releases/download/we-alpha-happ-v0.9.0/we.happ",
     "postinstall": "electron-builder install-app-deps",
     "fetch-binaries:linux": "curl -L --output resources/bins/lair-keystore-v0.3.0 https://github.com/matthme/launcher-electron/releases/download/lair-binaries-v0.3.0/lair-keystore-v0.3.0-x86_64-unknown-linux-gnu && curl -L --output resources/bins/holochain-v0.2.4 https://github.com/matthme/launcher-electron/releases/download/holochain-binaries-v0.2.4/holochain-v0.2.4-x86_64-unknown-linux-gnu",
     "fetch-binaries:macos": "curl -L --output resources/bins/lair-keystore-v0.3.0 https://github.com/matthme/launcher-electron/releases/download/lair-binaries-v0.3.0/lair-keystore-v0.3.0-x86_64-apple-darwin && curl -L --output resources/bins/holochain-v0.2.4 https://github.com/matthme/launcher-electron/releases/download/holochain-binaries-v0.2.4/holochain-v0.2.4-x86_64-apple-darwin",
