@@ -18,6 +18,14 @@ pub struct Applet {
     pub properties: BTreeMap<String, SerializedBytes>, // Segmented by RoleName
 }
 
+/// A copy of an applet instance to store on the local source chain
+#[hdk_entry_helper]
+#[derive(Clone)]
+pub struct AppletCopy {
+    pub public_entry_hash: EntryHash,
+    pub applet: Applet,
+}
+
 #[hdk_entry_helper]
 #[derive(Clone)]
 pub struct GroupProfile {

@@ -245,13 +245,13 @@ export async function devSetup(
             logDevSetup(
               `Trying to join applet with entry hash ${encodeHashToBase64(appletHash)} ...`,
             );
-            const appletRecord = await groupWebsocket.callZome({
+            const applet = await groupWebsocket.callZome({
               role_name: 'group',
               zome_name: 'group',
               fn_name: 'get_applet',
               payload: appletHash,
             });
-            if (!appletRecord) {
+            if (!applet) {
               logDevSetup(
                 `Applet with entryhash ${encodeHashToBase64(
                   appletHash,
@@ -259,7 +259,6 @@ export async function devSetup(
               );
               return undefined;
             }
-            const applet = new EntryRecord<Applet>(appletRecord).entry;
 
             const associatedAppletInstallConfig = group.applets.find(
               (installConfig) => installConfig.instanceName === applet.custom_name,

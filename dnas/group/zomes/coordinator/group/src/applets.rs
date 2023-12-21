@@ -17,8 +17,25 @@ fn hash_applet(applet: Applet) -> ExternResult<EntryHash> {
 }
 
 #[hdk_extern]
-fn get_applet(applet_hash: EntryHash) -> ExternResult<Option<Record>> {
-    get(applet_hash, GetOptions::default())
+fn get_applet(applet_hash: EntryHash) -> ExternResult<Option<Applet>> {
+    // First try getting it from the source chain
+    match get_private_applet_copy(applet_hash.clone()) {
+        Ok(Some(applet_copy)) => Ok(Some(applet_copy.applet)),
+        // Otherwise try getting it from the network
+        Ok(None) => {
+            let maybe_applet_record = get(applet_hash, GetOptions::default())?;
+            match maybe_applet_record {
+                Some(record) => record.entry.to_app_option::<Applet>().map_err(|e| {
+                    wasm_error!(WasmErrorInner::Guest(format!(
+                        "Failed to deserialize Applet from record: {}",
+                        e
+                    )))
+                }),
+                None => Ok(None),
+            }
+        }
+        Err(e) => Err(e),
+    }
 }
 
 /// First checks whether the same Applet has already been added to the group by someone
@@ -45,7 +62,11 @@ fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
         }
     }
 
-    create_entry(EntryTypes::AppletPrivate(applet))?;
+    // Store a local copy of the Applet struct to the source chain as a private entry
+    create_entry(EntryTypes::AppletPrivate(AppletCopy {
+        public_entry_hash: applet_hash.clone(),
+        applet: applet,
+    }))?;
     Ok(applet_hash)
 }
 
@@ -54,22 +75,40 @@ fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
 /// Supposed to be called by everyone that installs an Applet that has already
 /// been added to the group by someone else. Ensures that the applet entry is
 /// on their own source chain and therefore retreivable without network call
+// #[hdk_extern]
+// fn delete_joined_applet(action_hash: ActionHash) -> ExternResult<ActionHash> {
+//     let maybe_record = get_my_applet_copy(action_hash.clone())?;
+//     match maybe_record {
+//         Some(_record) => {
+//             delete_entry(action_hash)
+//         },
+//         None => Err(wasm_error!(WasmErrorInner::Guest(String::from("Failed to delete private Applet Record: No existing private Applet entry found for this action hash."))))
+//     }
+// }
+
 #[hdk_extern]
-fn delete_joined_applet(action_hash: ActionHash) -> ExternResult<ActionHash> {
-    let maybe_record = get_my_applet(action_hash.clone())?;
-    match maybe_record {
-        Some(_record) => {
-            delete_entry(action_hash)
-        },
-        None => Err(wasm_error!(WasmErrorInner::Guest(String::from("Failed to delete private Applet Record: No existing private Applet entry found for this action hash."))))
-    }
+fn get_public_applet(applet_hash: EntryHash) -> ExternResult<Option<Record>> {
+    get(applet_hash, GetOptions::default())
 }
 
-/// Should always be retrievable from the local source chain as it
-/// should have been added there by calling 'register_joined_applet'
+/// Gets the private entry copy for the given public Applet entry.
 #[hdk_extern]
-fn get_group_applet(applet_hash: EntryHash) -> ExternResult<Option<Record>> {
-    get(applet_hash, GetOptions::default())
+fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<AppletCopy>> {
+    let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
+    let filter = ChainQueryFilter::new()
+        .entry_type(private_applet_entry_type)
+        .include_entries(true);
+
+    let records = query(filter)?;
+    let applet_copies = records
+        .into_iter()
+        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .filter_map(|ac| ac)
+        .filter_map(|ac| ac)
+        .collect::<Vec<AppletCopy>>();
+    Ok(applet_copies
+        .into_iter()
+        .find(|copy| copy.public_entry_hash == applet_hash))
 }
 
 /// Get the Applets that the calling agent has installed
@@ -84,19 +123,28 @@ fn get_my_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 
     Ok(records
         .into_iter()
-        .filter_map(|record| record.action().entry_hash().cloned())
+        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .filter_map(|ac| ac)
+        .filter_map(|ac| ac)
+        .map(|applet_copy| applet_copy.public_entry_hash)
         .collect())
 }
 
 /// Get the Applets that the calling agent has installed
 #[hdk_extern]
-fn get_my_applet(action_hash: ActionHash) -> ExternResult<Option<Record>> {
+fn get_my_applet_copies(_: ()) -> ExternResult<Vec<AppletCopy>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
-    let filter = ChainQueryFilter::new().entry_type(private_applet_entry_type);
-    let private_applet_records = query(filter)?;
-    Ok(private_applet_records
+    let filter = ChainQueryFilter::new()
+        .entry_type(private_applet_entry_type)
+        .include_entries(true);
+
+    let records = query(filter)?;
+    Ok(records
         .into_iter()
-        .find(|record| record.action_address().to_owned() == action_hash))
+        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .filter_map(|ac| ac)
+        .filter_map(|ac| ac)
+        .collect::<Vec<AppletCopy>>())
 }
 
 /// Get all the Applets that have been registered in the group
@@ -119,7 +167,11 @@ fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 /// the applet to the group
 #[hdk_extern]
 fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
-    let my_applets = get_my_applets(())?;
+    let my_applet_copies = get_my_applet_copies(())?;
+    let my_applet_copies_public_hashes = my_applet_copies
+        .into_iter()
+        .map(|ac| ac.public_entry_hash)
+        .collect::<Vec<EntryHash>>();
 
     let path = get_group_applets_path();
     let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
@@ -132,7 +184,7 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
 
     Ok(applet_infos
         .into_iter()
-        .filter(|(entry_hash, _author)| !my_applets.contains(entry_hash))
+        .filter(|(entry_hash, _author)| !my_applet_copies_public_hashes.contains(entry_hash))
         .collect())
 }
 

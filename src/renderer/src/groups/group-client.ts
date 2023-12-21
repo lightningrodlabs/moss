@@ -72,14 +72,14 @@ export class GroupClient {
   }
 
   async getApplet(appletHash: EntryHash): Promise<Applet | undefined> {
-    const record = await this.callZome('get_applet', appletHash);
-    if (!record) {
+    const maybeApplet = await this.callZome('get_applet', appletHash);
+    if (!maybeApplet) {
       console.warn(
         `@group-client: @getApplet: No applet found for hash: ${encodeHashToBase64(appletHash)}`,
       );
       return undefined;
     }
-    return new EntryRecord<Applet>(record).entry;
+    return maybeApplet;
   }
 
   /**
