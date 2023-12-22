@@ -163,12 +163,7 @@ export class MainDashboard extends LitElement {
       this.openTab(tabInfo);
     },
     userSelectHrl: async () => {
-      this.dispatchEvent(
-        new CustomEvent('select-hrl-request', {
-          bubbles: true,
-          detail: 'select-hrl',
-        }),
-      );
+      this._clipboard.show('select');
 
       return new Promise((resolve) => {
         const listener = (e) => {
