@@ -1008,7 +1008,6 @@ export class MainDashboard extends LitElement {
           background-color: var(--sl-color-primary-900);
           width: var(--sidebar-width);
           display: flex;
-          flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
           -ms-overflow-style: none; /* IE and Edge */
