@@ -2,22 +2,18 @@
 
 This package contains the interfaces and contracts that a Holochain app UI needs to implement in order to become a We Applet.
 
-
-
 The differences between a We Applet and a normal Holochain App are:
 
-* A We Applet can make use of the profiles zome provided by We instead of using its own profiles module
-* A We Applet can provide more than just the default "main" UI. It can additionally provide:
-  * UI elements to display single DHT entries
-  * UI widgets/blocks of any kind
-  * UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
-* A We Applet can provide `AppletServices` for We or other Applets to use, including:
-  * search: Searching in the Applet that returns Holochain Resource Locators (HRLs) pointing to DHT content
-  * attachmentTypes: Entry types that can be attached by other Applets, alongside with a `create()` method that creates a new entry type to be attached ad hoc.
-  * getEntryInfo(): A function that returns info for the entry associated to the HRL if it exists in the Applet and the method is implemented.
-  * blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
-
-
+- A We Applet can make use of the profiles zome provided by We instead of using its own profiles module
+- A We Applet can provide more than just the default "main" UI. It can additionally provide:
+  - UI elements to display single DHT entries
+  - UI widgets/blocks of any kind
+  - UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
+- A We Applet can provide `AppletServices` for We or other Applets to use, including:
+  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) pointing to DHT content
+  - attachmentTypes: Entry types that can be attached by other Applets, alongside with a `create()` method that creates a new entry type to be attached ad hoc.
+  - getEntryInfo(): A function that returns info for the entry associated to the HRL if it exists in the Applet and the method is implemented.
+  - blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
 
 ### Implementing a most basic applet UI
 
@@ -31,8 +27,8 @@ if (!isWeContext) {
 const weClient = await WeClient.connect();
 
 if (
-  !(weClient.renderInfo.type === "applet-view")
-  && !(weClient.renderInfo.view.type === "main")
+  (weClient.renderInfo.type !== "applet-view")
+  || (weClient.renderInfo.view.type !== "main")
 ) throw new Error("This Applet only implements the applet main view.");
 
 const appAgentClient = weClient.renderInfo.appletClient;
@@ -43,7 +39,6 @@ const profilesClient = weClient.renderInfo.profilesClient;
 ```
 
 ### Implementing an (almost) full-fletched We Applet
-
 
 ```typescript=
 import { WeClient, AppletServices, HrlWithContext, EntryInfo } from '@lightningrodlabs/we-applet';
@@ -183,7 +178,3 @@ switch (weClient.renderInfo.type) {
 
 
 ```
-
-
-
-

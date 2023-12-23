@@ -39,14 +39,21 @@ export async function devSetup(
   > = {};
 
   for (const installableApplet of config.config.applets) {
-    logDevSetup(
-      `Fetching applet '${installableApplet.name}' from source specified in the config file...`,
-    );
+    if (
+      config.config.groups
+        .map((group) => group.applets.map((applet) => applet.name))
+        .flat()
+        .includes(installableApplet.name)
+    ) {
+      logDevSetup(
+        `Fetching applet '${installableApplet.name}' from source specified in the config file...`,
+      );
 
-    installableApplets[installableApplet.name] = await fetchHappOrWebHappIfNecessary(
-      weFileSystem,
-      installableApplet.source,
-    );
+      installableApplets[installableApplet.name] = await fetchHappOrWebHappIfNecessary(
+        weFileSystem,
+        installableApplet.source,
+      );
+    }
   }
 
   const appstoreClient = await AppAgentWebsocket.connect(
