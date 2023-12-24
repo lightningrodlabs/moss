@@ -230,8 +230,6 @@ const createOrShowMainWindow = () => {
     height: 800,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
-      webSecurity: false,
-      allowRunningInsecureContent: true,
     },
   });
 
