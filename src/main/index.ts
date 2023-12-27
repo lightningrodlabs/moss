@@ -10,6 +10,7 @@ import {
   nativeImage,
   protocol,
   dialog,
+  session,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -230,6 +231,7 @@ const createOrShowMainWindow = () => {
     height: 800,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
+      // autoplayPolicy: 'user-gesture-required',
     },
   });
 
@@ -291,6 +293,24 @@ let tray;
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
+  session.defaultSession.setPermissionRequestHandler(async (_webContents, permission, callback) => {
+    if (permission === 'media') {
+      const response = await dialog.showMessageBox(MAIN_WINDOW!, {
+        type: 'question',
+        buttons: ['Deny', 'Allow'],
+        defaultId: 0,
+        cancelId: 0,
+        message: 'UNKOWN wants to access your camera and microphone.',
+      });
+      if (response.response === 1) {
+        callback(true);
+      }
+    }
+    if (permission === 'clipboard-sanitized-write') {
+      callback(true);
+    }
+    callback(false);
+  });
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
