@@ -300,7 +300,7 @@ app.whenReady().then(async () => {
         buttons: ['Deny', 'Allow'],
         defaultId: 0,
         cancelId: 0,
-        message: 'UNKOWN wants to access your camera and microphone.',
+        message: 'An Applet wants to access your camera and microphone.',
       });
       if (response.response === 1) {
         callback(true);

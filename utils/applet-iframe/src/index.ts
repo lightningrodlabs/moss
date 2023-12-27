@@ -416,7 +416,6 @@ function readAppletHash(): EntryHash {
   // In dev mode, the applet hash will be appended at the end
   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  console.log('@@@@ READ APPLET HASH IN DEV MODE: ', toOriginalCaseB64(lowercaseB64Id));
   return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
 }
 
