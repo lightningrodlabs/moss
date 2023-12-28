@@ -1687,8 +1687,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-b48e06bb-2888-4e1e-b8ee-dfaf34c57b0a-1703433621814/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-b48e06bb-2888-4e1e-b8ee-dfaf34c57b0a-1703433621814/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-f1936289-f054-4d97-9497-62f13fefbb23-1703717638104/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-f1936289-f054-4d97-9497-62f13fefbb23-1703717638104/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1709,7 +1709,7 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-df6324dc-e4d2-4ef9-aa05-fb4309462be7-1703433621813/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-040f4bfc-a4aa-4557-8338-765a6a06a197-1703717638103/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -4731,6 +4731,15 @@ electron@^25.6.0:
   version "25.9.8"
   resolved "https://registry.yarnpkg.com/electron/-/electron-25.9.8.tgz#7c125ccbddad02861736275b0d4a387c59a91469"
   integrity sha512-PGgp6PH46QVENHuAHc2NT1Su8Q1qov7qIl2jI5tsDpTibwV2zD8539AeWBQySeBU4dhbj9onIl7+1bXQ0wefBg==
+  dependencies:
+    "@electron/get" "^2.0.0"
+    "@types/node" "^18.11.18"
+    extract-zip "^2.0.1"
+
+electron@^28.1.0:
+  version "28.1.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-28.1.0.tgz#9de1ecdaafcb0ec5753827f14dfb199e6c84545e"
+  integrity sha512-82Y7o4PSWPn1o/aVwYPsgmBw6Gyf2lVHpaBu3Ef8LrLWXxytg7ZRZr/RtDqEMOzQp3+mcuy3huH84MyjdmP50Q==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"

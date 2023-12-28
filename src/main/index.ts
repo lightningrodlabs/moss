@@ -11,6 +11,7 @@ import {
   protocol,
   dialog,
   session,
+  desktopCapturer,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -293,24 +294,43 @@ let tray;
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
-  session.defaultSession.setPermissionRequestHandler(async (_webContents, permission, callback) => {
-    if (permission === 'media') {
-      const response = await dialog.showMessageBox(MAIN_WINDOW!, {
-        type: 'question',
-        buttons: ['Deny', 'Allow'],
-        defaultId: 0,
-        cancelId: 0,
-        message: 'An Applet wants to access your camera and microphone.',
-      });
-      if (response.response === 1) {
+  const mediaSourceWindow = new BrowserWindow({
+    webPreferences: {
+      preload: path.resolve(__dirname, '../preload/selectmediasource.js'),
+    },
+  });
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mediaSourceWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/selectmediasource.html`);
+  } else {
+    mediaSourceWindow.loadFile(path.join(__dirname, '../renderer/selectmediasource.html'));
+  }
+  session.defaultSession.setPermissionRequestHandler(
+    async (_webContents, permission, callback, details) => {
+      if (permission === 'media') {
+        let messageContent = `An Applet wants to access the following:${
+          details.mediaTypes?.includes('video') ? '\n* camera' : ''
+        }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
+        if (!details.mediaTypes || details.mediaTypes.length === 0) {
+          messageContent =
+            'An Applet wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
+        }
+        const response = await dialog.showMessageBox(MAIN_WINDOW!, {
+          type: 'question',
+          buttons: ['Deny', 'Allow'],
+          defaultId: 0,
+          cancelId: 0,
+          message: messageContent,
+        });
+        if (response.response === 1) {
+          callback(true);
+        }
+      }
+      if (permission === 'clipboard-sanitized-write') {
         callback(true);
       }
-    }
-    if (permission === 'clipboard-sanitized-write') {
-      callback(true);
-    }
-    callback(false);
-  });
+      callback(false);
+    },
+  );
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
   tray = new Tray(icon);
 
@@ -346,6 +366,9 @@ app.whenReady().then(async () => {
       return Promise.reject('Main window does not exist.');
     }
   });
+  ipcMain.handle('get-media-sources', () =>
+    desktopCapturer.getSources({ types: ['window', 'screen'] }),
+  );
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('open-app', async (_e, appId: string) =>
     createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),

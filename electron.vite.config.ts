@@ -16,8 +16,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           admin: resolve(__dirname, 'src/preload/admin.ts'),
-          happs: resolve(__dirname, 'src/preload/happs.ts'),
           splashscreen: resolve(__dirname, 'src/preload/splashscreen.ts'),
+          // selectmediasource: resolve(__dirname, 'src/preload/selectmediasource.ts'),
         },
       },
     },
@@ -28,6 +28,7 @@ export default defineConfig({
         input: {
           admin: resolve(__dirname, 'src/renderer/index.html'),
           splashscreen: resolve(__dirname, 'src/renderer/splashscreen.html'),
+          // selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
         },
       },
     },
