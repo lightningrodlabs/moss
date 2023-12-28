@@ -8,26 +8,17 @@ import {
   writable,
 } from '@holochain-open-dev/stores';
 import { encodeHashToBase64, EntryHash } from '@holochain/client';
-import {
-  AppletToParentMessage,
-  BlockType,
-  InternalAttachmentType,
-  RenderView,
-} from '@lightningrodlabs/we-applet';
+import { BlockType, InternalAttachmentType } from '@lightningrodlabs/we-applet';
 
 import { AppletHost } from './applet-host.js';
 import { Applet } from './types.js';
 import {
   appEntryIdFromDistInfo,
-  appIdFromAppletHash,
-  appletOrigin,
   clearAppletNotificationStatus,
   getAllIframes,
   loadAppletNotificationStatus,
-  renderViewToQueryString,
-  urlFromAppletHash,
 } from '../utils.js';
-import { ConductorInfo, getAppletDevPort } from '../electron-api.js';
+import { ConductorInfo } from '../electron-api.js';
 import { AppletBundlesStore } from '../applet-bundles/applet-bundles-store.js';
 
 export class AppletStore {

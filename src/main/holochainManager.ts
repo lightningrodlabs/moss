@@ -3,7 +3,7 @@ import getPort from 'get-port';
 import fs from 'fs';
 import path from 'path';
 import * as childProcess from 'child_process';
-import { HolochainVersion, LauncherEmitter } from './launcherEmitter';
+import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
 import { AdminWebsocket, AppInfo } from '@holochain/client';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
@@ -20,12 +20,12 @@ export class HolochainManager {
   adminWebsocket: AdminWebsocket;
   fs: WeFileSystem;
   installedApps: AppInfo[];
-  launcherEmitter: LauncherEmitter;
+  weEmitter: WeEmitter;
   version: HolochainVersion;
 
   constructor(
     processHandle: childProcess.ChildProcessWithoutNullStreams,
-    launcherEmitter: LauncherEmitter,
+    weEmitter: WeEmitter,
     launcherFileSystem: WeFileSystem,
     adminPort: AdminPort,
     appPort: AppPort,
@@ -34,7 +34,7 @@ export class HolochainManager {
     version: HolochainVersion,
   ) {
     this.processHandle = processHandle;
-    this.launcherEmitter = launcherEmitter;
+    this.weEmitter = weEmitter;
     this.adminPort = adminPort;
     this.appPort = appPort;
     this.adminWebsocket = adminWebsocket;
@@ -44,7 +44,7 @@ export class HolochainManager {
   }
 
   static async launch(
-    launcherEmitter: LauncherEmitter,
+    weEmitter: WeEmitter,
     launcherFileSystem: WeFileSystem,
     binary: string,
     password: string,
@@ -75,13 +75,13 @@ export class HolochainManager {
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
     conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      launcherEmitter.emitHolochainLog({
+      weEmitter.emitHolochainLog({
         version,
         data: line,
       });
     });
     conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
-      launcherEmitter.emitHolochainError({
+      weEmitter.emitHolochainError({
         version,
         data: line,
       });
@@ -113,7 +113,7 @@ export class HolochainManager {
           resolve(
             new HolochainManager(
               conductorHandle,
-              launcherEmitter,
+              weEmitter,
               launcherFileSystem,
               adminPort,
               appPort,
@@ -187,7 +187,7 @@ export class HolochainManager {
     console.log(`Installed app '${appId}'.`);
     const installedApps = await this.adminWebsocket.listApps({});
     this.installedApps = installedApps;
-    this.launcherEmitter.emitAppInstalled({
+    this.weEmitter.emitAppInstalled({
       version: this.version,
       data: appInfo,
     });
@@ -207,7 +207,7 @@ export class HolochainManager {
       await this.adminWebsocket.enableApp({ installed_app_id: appId });
       const installedApps = await this.adminWebsocket.listApps({});
       this.installedApps = installedApps;
-      this.launcherEmitter.emitAppInstalled({
+      this.weEmitter.emitAppInstalled({
         version: this.version,
         data: appInfo,
       });

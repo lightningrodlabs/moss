@@ -15,7 +15,7 @@ import { weStoreContext } from './context.js';
 import { WeStore } from './we-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
-import { getConductorInfo, isAppletDev, selectScreenOrWindow } from './electron-api.js';
+import { getConductorInfo, isAppletDev } from './electron-api.js';
 
 type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
