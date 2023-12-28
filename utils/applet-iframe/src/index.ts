@@ -168,31 +168,18 @@ const weApi: WeServices = {
     return;
   }
 
-  if (view.type !== 'background-service') {
-    // add eventlistener for clipboard
-    window.addEventListener('keydown', async (zEvent) => {
-      if (zEvent.altKey && zEvent.key === 's') {
-        // case sensitive
-        await postMessage({ type: 'toggle-clipboard' });
-      }
-    });
-  }
+  // add eventlistener for clipboard
+  window.addEventListener('keydown', async (zEvent) => {
+    if (zEvent.altKey && zEvent.key === 's') {
+      // case sensitive
+      await postMessage({ type: 'toggle-clipboard' });
+    }
+  });
 
-  if (view.type === 'background-service') {
+  if (view.type === 'applet-view') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
-    const appletHash = window.__WE_APPLET_HASH__;
-
-    const [profilesClient, appletClient] = await Promise.all([
-      setupProfilesClient(
-        iframeConfig.appPort,
-        iframeConfig.profilesLocation.profilesAppId,
-        iframeConfig.profilesLocation.profilesRoleName,
-      ),
-      setupAppletClient(iframeConfig.appPort, iframeConfig.appletHash),
-    ]);
-
-    // message handler for ParentToApplet messages - Only added for background-service iframes
+    // message handler for ParentToApplet messages - Only added for applet main-view
     window.addEventListener('message', async (m: MessageEvent<any>) => {
       try {
         const result = await handleMessage(appletClient, appletHash, m.data);
@@ -201,24 +188,6 @@ const weApi: WeServices = {
         m.ports[0].postMessage({ type: 'error', error: (e as any).message });
       }
     });
-
-    // Send message to AppletHost that background-service is ready and listening
-    await postMessage({
-      type: 'ready',
-    });
-
-    // return dummy "applet-view" RenderInfo for the sake of keeping the applet-facing API clean, i.e.
-    // such that RenderInfo only contains "applet-view" and "cross-applet-view" but not "background-services"
-    window.__WE_RENDER_INFO__ = {
-      type: 'applet-view',
-      view: { type: 'main' },
-      appletClient,
-      profilesClient,
-      appletHash,
-      groupProfiles: iframeConfig.groupProfiles,
-    };
-  } else if (view.type === 'applet-view') {
-    if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(
@@ -481,7 +450,7 @@ async function getGlobalAttachmentTypes() {
 async function queryStringToRenderView(s: string): Promise<RenderView> {
   const args = s.split('&');
 
-  const view = args[0].split('=')[1] as 'applet-view' | 'cross-applet-view' | 'background-service';
+  const view = args[0].split('=')[1] as 'applet-view' | 'cross-applet-view';
   let viewType: string | undefined;
   let block: string | undefined;
   let hrl: Hrl | undefined;
@@ -503,13 +472,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
 
   switch (viewType) {
     case undefined:
-      if (view !== 'background-service') {
-        throw new Error('view is undefined');
-      }
-      return {
-        type: view,
-        view: null,
-      };
+      throw new Error('view is undefined');
     case 'main':
       if (view !== 'applet-view' && view !== 'cross-applet-view') {
         throw new Error(`invalid query string: ${s}.`);

@@ -201,7 +201,7 @@ export class WeApp extends LitElement {
       case 'running':
         return html`
           ${this.renderFeedbackBoard()}
-          <main-dashboard></main-dashboard>
+          <main-dashboard id="main-dashboard"></main-dashboard>
         `;
       case 'factoryReset':
         return html`

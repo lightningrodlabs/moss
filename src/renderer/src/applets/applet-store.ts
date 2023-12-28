@@ -22,6 +22,7 @@ import {
   appIdFromAppletHash,
   appletOrigin,
   clearAppletNotificationStatus,
+  getAllIframes,
   loadAppletNotificationStatus,
   renderViewToQueryString,
   urlFromAppletHash,
@@ -45,59 +46,27 @@ export class AppletStore {
 
   host: AsyncReadable<AppletHost | undefined> = lazyLoad(async () => {
     const appletHashBase64 = encodeHashToBase64(this.appletHash);
-
-    let iframe = document.getElementById(appletHashBase64) as HTMLIFrameElement | undefined;
-    if (iframe) {
-      return new AppletHost(iframe, appletHashBase64);
-    }
-
-    const renderView: RenderView = {
-      type: 'background-service',
-      view: null,
-    };
-
-    let iframeSrc: string;
-
-    if (this.isAppletDev) {
-      const appId = appIdFromAppletHash(this.appletHash);
-      const appletDevPort = await getAppletDevPort(appId);
-      if (appletDevPort) {
-        // UI running on localhost
-        iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
-          renderView,
-        )}#${urlFromAppletHash(this.appletHash)}`;
-      } else {
-        // UI from filesystem
-        iframeSrc = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
-      }
+    const allIframes = getAllIframes();
+    const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
+    if (relevantIframe) {
+      return new AppletHost(relevantIframe, appletHashBase64);
     } else {
-      iframeSrc = `${appletOrigin(this.appletHash)}?${renderViewToQueryString(renderView)}`;
-    }
-
-    iframe = document.createElement('iframe');
-    iframe.id = appletHashBase64;
-    iframe.src = iframeSrc;
-    iframe.style.display = 'none';
-
-    document.body.appendChild(iframe);
-
-    return new Promise<AppletHost | undefined>((resolve) => {
-      const timeOut = setTimeout(() => {
-        console.warn(
-          `Connecting to applet host for applet ${appletHashBase64} timed out in 10000ms`,
-        );
-        resolve(undefined);
-      }, 10000);
-
-      window.addEventListener('message', (message) => {
-        if (message.source === iframe?.contentWindow) {
-          if ((message.data as AppletToParentMessage).request.type === 'ready') {
-            clearTimeout(timeOut);
-            resolve(new AppletHost(iframe!, appletHashBase64));
+      return new Promise<AppletHost | undefined>((resolve) => {
+        setTimeout(() => {
+          const allIframes = getAllIframes();
+          const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
+          if (relevantIframe) {
+            resolve(new AppletHost(relevantIframe, appletHashBase64));
+          } else {
+            console.log('ALL IFRAMES: ', allIframes);
+            console.warn(
+              `Connecting to applet host for applet ${appletHashBase64} timed out in 10000ms`,
+            );
           }
-        }
+          resolve(undefined);
+        }, 10000);
       });
-    });
+    }
   });
 
   attachmentTypes: AsyncReadable<Record<string, InternalAttachmentType>> = pipe(this.host, (host) =>

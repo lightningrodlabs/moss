@@ -184,10 +184,6 @@ export type RenderView =
   | {
       type: 'cross-applet-view';
       view: CrossAppletView;
-    }
-  | {
-      type: 'background-service';
-      view: null;
     };
 
 export type ParentToAppletRequest =
