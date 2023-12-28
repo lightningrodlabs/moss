@@ -17,7 +17,7 @@ export default defineConfig({
         input: {
           admin: resolve(__dirname, 'src/preload/admin.ts'),
           splashscreen: resolve(__dirname, 'src/preload/splashscreen.ts'),
-          // selectmediasource: resolve(__dirname, 'src/preload/selectmediasource.ts'),
+          selectmediasource: resolve(__dirname, 'src/preload/selectmediasource.ts'),
         },
       },
     },
@@ -28,7 +28,7 @@ export default defineConfig({
         input: {
           admin: resolve(__dirname, 'src/renderer/index.html'),
           splashscreen: resolve(__dirname, 'src/renderer/splashscreen.html'),
-          // selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
+          selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
         },
       },
     },

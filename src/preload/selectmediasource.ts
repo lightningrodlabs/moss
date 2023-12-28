@@ -4,4 +4,5 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getMediaSources: () => ipcRenderer.invoke('get-media-sources'),
+  sourceSelected: (id: string) => ipcRenderer.invoke('source-selected', id),
 });

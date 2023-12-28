@@ -21,7 +21,11 @@ import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@h
 import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AppOpenViews } from '../layout/types.js';
-import { getAppletIframeScript, signZomeCallElectron } from '../electron-api.js';
+import {
+  getAppletIframeScript,
+  selectScreenOrWindow,
+  signZomeCallElectron,
+} from '../electron-api.js';
 import { WeStore } from '../we-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
@@ -203,6 +207,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async userSelectHrl() {
       throw new Error('userSelectHrl is not supported in headless WeServices.');
     },
+    async userSelectScreen() {
+      throw new Error('userSelectScreen is not supported in headless WeServices.');
+    },
     async hrlToClipboard(hrl: HrlWithContext): Promise<void> {
       weStore.hrlToClipboard(hrl);
     },
@@ -311,6 +318,8 @@ export async function handleAppletIframeMessage(
       return weServices.search(message.filter);
     case 'user-select-hrl':
       return openViews.userSelectHrl();
+    case 'user-select-screen':
+      return selectScreenOrWindow();
     case 'toggle-clipboard':
       return openViews.toggleClipboard();
     case 'notify-we': {

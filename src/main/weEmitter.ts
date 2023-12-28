@@ -20,8 +20,10 @@ export type WASM_LOG = 'wasm-log';
 export const WASM_LOG = 'wasm-log';
 export type WRONG_PASSWORD = 'wrong-password';
 export const WRONG_PASSWORD = 'wrong-password';
+export type SCREEN_OR_WINDOW_SELECTED = 'screen-or-window-selected';
+export const SCREEN_OR_WINDOW_SELECTED = 'screen-or-window-selected';
 
-export declare interface LauncherEmitter {
+export declare interface WeEmitter {
   on(
     event:
       | APP_INSTALLED
@@ -33,12 +35,13 @@ export declare interface LauncherEmitter {
       | HOLOCHAIN_ERROR
       | HOLOCHAIN_FATAL_PANIC
       | HOLOCHAIN_LOG
-      | WASM_LOG,
+      | WASM_LOG
+      | SCREEN_OR_WINDOW_SELECTED,
     listener: (event: HolochainData | string | Error) => void,
   ): this;
 }
 
-export class LauncherEmitter extends EventEmitter {
+export class WeEmitter extends EventEmitter {
   emitAppInstalled(app: HolochainData) {
     this.emit(APP_INSTALLED, app);
   }
@@ -68,6 +71,9 @@ export class LauncherEmitter extends EventEmitter {
   }
   emitWasmLog(log: HolochainData) {
     this.emit(WASM_LOG, log);
+  }
+  emitScreenOrWindowSelected(id: string) {
+    this.emit(SCREEN_OR_WINDOW_SELECTED, id);
   }
 }
 

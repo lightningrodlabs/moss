@@ -3,13 +3,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import split from 'split';
-import { LAIR_ERROR, LauncherEmitter, WRONG_PASSWORD } from './launcherEmitter';
+import { LAIR_ERROR, WeEmitter, WRONG_PASSWORD } from './weEmitter';
 import { nanoid } from 'nanoid';
 
 export async function initializeLairKeystore(
   lairBinary: string,
   keystoreDir: string,
-  launcherEmitter: LauncherEmitter,
+  weEmitter: WeEmitter,
   password: string,
 ): Promise<void> {
   const lairHandle = childProcess.spawn(lairBinary, ['init', '-p'], { cwd: keystoreDir });
@@ -18,7 +18,7 @@ export async function initializeLairKeystore(
   return new Promise((resolve) => {
     let killAfterNextLine = false;
     lairHandle.stdout.pipe(split()).on('data', (line: string) => {
-      launcherEmitter.emitLairLog(line);
+      weEmitter.emitLairLog(line);
       if (killAfterNextLine) {
         lairHandle.kill();
         resolve();
@@ -33,7 +33,7 @@ export async function initializeLairKeystore(
 export async function launchLairKeystore(
   lairBinary: string,
   keystoreDir: string,
-  launcherEmitter: LauncherEmitter,
+  weEmitter: WeEmitter,
   password: string,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, string]> {
   // On Unix systems, there is a limit to the path length of a domain socket. Create a symlink to the lair directory from the tempdir
@@ -66,22 +66,22 @@ export async function launchLairKeystore(
   // Wait for connection url or internal sodium error and return error or EventEmitter
   lairHandle.stderr.pipe(split()).on('data', (line: string) => {
     if (line.includes('InternalSodium')) {
-      launcherEmitter.emit(WRONG_PASSWORD);
+      weEmitter.emit(WRONG_PASSWORD);
     } else {
-      launcherEmitter.emit(LAIR_ERROR, line);
+      weEmitter.emit(LAIR_ERROR, line);
     }
   });
   lairHandle.stdout.pipe(split()).on('data', (line: string) => {
-    launcherEmitter.emitLairLog(line);
+    weEmitter.emitLairLog(line);
     if (line.includes('# lair-keystore connection_url #')) {
       const connectionUrl = line.split('#')[2].trim();
-      launcherEmitter.emitLairReady(connectionUrl);
+      weEmitter.emitLairReady(connectionUrl);
     }
   });
 
   return new Promise((resolve, reject) => {
-    launcherEmitter.on('wrong-password', () => reject('Wrong password.'));
-    launcherEmitter.on('lair-error', (line) => reject(line));
-    launcherEmitter.on('lair-ready', (url) => resolve([lairHandle, url as string]));
+    weEmitter.on('wrong-password', () => reject('Wrong password.'));
+    weEmitter.on('lair-error', (line) => reject(line));
+    weEmitter.on('lair-ready', (url) => resolve([lairHandle, url as string]));
   });
 }

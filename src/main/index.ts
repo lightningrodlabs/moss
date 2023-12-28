@@ -25,7 +25,7 @@ import contextMenu from 'electron-context-menu';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
 import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
-import { LauncherEmitter } from './launcherEmitter';
+import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
@@ -142,9 +142,9 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
   'utf-8',
 );
 
-const launcherEmitter = new LauncherEmitter();
+const WE_EMITTER = new WeEmitter();
 
-setupLogs(launcherEmitter, WE_FILE_SYSTEM);
+setupLogs(WE_EMITTER, WE_FILE_SYSTEM);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -168,6 +168,7 @@ let HOLOCHAIN_MANAGER: HolochainManager | undefined;
 let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
 let SPLASH_SCREEN_WINDOW: BrowserWindow | undefined;
+let SELECT_SCREEN_OR_WINDOW_WINDOW: BrowserWindow | undefined | null;
 let isAppQuitting = false;
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
@@ -288,22 +289,49 @@ const createOrShowMainWindow = () => {
   MAIN_WINDOW = mainWindow;
 };
 
+const selectScreenOrWindow = async (): Promise<string> => {
+  if (SELECT_SCREEN_OR_WINDOW_WINDOW)
+    throw new Error("Only one 'Select Screen or Window' window allowed at a time.");
+  SELECT_SCREEN_OR_WINDOW_WINDOW = new BrowserWindow({
+    height: 800,
+    width: 1200,
+    minimizable: false,
+    autoHideMenuBar: true,
+    title: 'Select Screen or Window',
+    webPreferences: {
+      preload: path.resolve(__dirname, '../preload/selectmediasource.js'),
+    },
+  });
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    SELECT_SCREEN_OR_WINDOW_WINDOW.loadURL(
+      `${process.env['ELECTRON_RENDERER_URL']}/selectmediasource.html`,
+    );
+  } else {
+    SELECT_SCREEN_OR_WINDOW_WINDOW.loadFile(
+      path.join(__dirname, '../renderer/selectmediasource.html'),
+    );
+  }
+  return new Promise((resolve, reject) => {
+    WE_EMITTER.on(SCREEN_OR_WINDOW_SELECTED, (id) => {
+      if (SELECT_SCREEN_OR_WINDOW_WINDOW) {
+        SELECT_SCREEN_OR_WINDOW_WINDOW.close();
+        SELECT_SCREEN_OR_WINDOW_WINDOW = null;
+      }
+      return resolve(id as string);
+    });
+    SELECT_SCREEN_OR_WINDOW_WINDOW!.on('closed', () => {
+      SELECT_SCREEN_OR_WINDOW_WINDOW = null;
+      return reject('Selection canceled by user.');
+    });
+  });
+};
+
 let tray;
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
-  const mediaSourceWindow = new BrowserWindow({
-    webPreferences: {
-      preload: path.resolve(__dirname, '../preload/selectmediasource.js'),
-    },
-  });
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mediaSourceWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/selectmediasource.html`);
-  } else {
-    mediaSourceWindow.loadFile(path.join(__dirname, '../renderer/selectmediasource.html'));
-  }
   session.defaultSession.setPermissionRequestHandler(
     async (_webContents, permission, callback, details) => {
       if (permission === 'media') {
@@ -366,9 +394,23 @@ app.whenReady().then(async () => {
       return Promise.reject('Main window does not exist.');
     }
   });
-  ipcMain.handle('get-media-sources', () =>
-    desktopCapturer.getSources({ types: ['window', 'screen'] }),
-  );
+  ipcMain.handle('get-media-sources', async () => {
+    const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
+    return sources.map((source) => {
+      return {
+        name: source.name,
+        id: source.id,
+        thumbnail: source.thumbnail.toDataURL(),
+        aspectRatio: source.thumbnail.getAspectRatio(),
+      };
+    });
+  });
+  ipcMain.handle('select-screen-or-window', async () => {
+    if (SELECT_SCREEN_OR_WINDOW_WINDOW)
+      return Promise.reject('Cannot select multiple screens/windows at once.');
+    return selectScreenOrWindow();
+  });
+  ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('open-app', async (_e, appId: string) =>
     createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
@@ -659,7 +701,7 @@ app.whenReady().then(async () => {
     // await delay(5000);
     [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
       WE_FILE_SYSTEM,
-      launcherEmitter,
+      WE_EMITTER,
       SPLASH_SCREEN_WINDOW,
       password,
       BOOTSTRAP_URL,
@@ -677,7 +719,7 @@ app.whenReady().then(async () => {
   if (WE_APPLET_DEV_INFO) {
     [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
       WE_FILE_SYSTEM,
-      launcherEmitter,
+      WE_EMITTER,
       undefined,
       'dummy-dev-password :)',
       BOOTSTRAP_URL,

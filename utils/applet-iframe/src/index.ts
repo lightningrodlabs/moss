@@ -138,6 +138,11 @@ const weApi: WeServices = {
       type: 'notify-we',
       notifications,
     }),
+
+  userSelectScreen: () =>
+    postMessage({
+      type: 'user-select-screen',
+    }),
 };
 
 (async () => {

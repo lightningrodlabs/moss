@@ -5,7 +5,6 @@ import os from 'os';
 import { app, BrowserWindow } from 'electron';
 import { DistributionInfo, WeFileSystem, breakingAppVersion } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { LauncherEmitter } from './launcherEmitter';
 import { APPSTORE_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
@@ -13,6 +12,7 @@ import { HolochainManager } from './holochainManager';
 import { devSetup } from './devSetup';
 import { WeRustHandler } from 'hc-we-rust-utils';
 import { WeAppletDevInfo } from './cli';
+import { WeEmitter } from './weEmitter';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -22,7 +22,7 @@ const DEFAULT_APPS = {
 
 export async function launch(
   weFileSystem: WeFileSystem,
-  launcherEmitter: LauncherEmitter,
+  weEmitter: WeEmitter,
   splashscreenWindow: BrowserWindow | undefined,
   password: string,
   bootstrapUrl: string,
@@ -47,7 +47,7 @@ export async function launch(
     // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
     //   console.log("[LAIR INIT]: ", line);
     // })
-    await initializeLairKeystore(LAIR_BINARY, weFileSystem.keystoreDir, launcherEmitter, password);
+    await initializeLairKeystore(LAIR_BINARY, weFileSystem.keystoreDir, weEmitter, password);
   }
   if (splashscreenWindow)
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
@@ -56,7 +56,7 @@ export async function launch(
   const [lairHandle, lairUrl] = await launchLairKeystore(
     LAIR_BINARY,
     weFileSystem.keystoreDir,
-    launcherEmitter,
+    weEmitter,
     password,
   );
 
@@ -70,7 +70,7 @@ export async function launch(
 
   // launch holochain
   const holochainManager = await HolochainManager.launch(
-    launcherEmitter,
+    weEmitter,
     weFileSystem,
     HOLOCHAIN_BINARIES[holochainVersion],
     password,

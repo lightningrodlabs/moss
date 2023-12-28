@@ -274,6 +274,9 @@ export type AppletToParentRequest =
       type: 'user-select-hrl';
     }
   | {
+      type: 'user-select-screen';
+    }
+  | {
       type: 'toggle-clipboard';
     }
   | {

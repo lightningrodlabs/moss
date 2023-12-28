@@ -50,6 +50,7 @@ declare global {
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
+      selectScreenOrWindow: () => Promise<string>;
       updateAppletUi: (
         appId: string,
         happOrWebHappUrl: string,
@@ -113,6 +114,10 @@ export async function enableDevMode(): Promise<void> {
 
 export async function disableDevMode(): Promise<void> {
   return window.electronAPI.disableDevMode();
+}
+
+export async function selectScreenOrWindow(): Promise<string> {
+  return window.electronAPI.selectScreenOrWindow();
 }
 
 export async function validateHappOrWebhapp(bytes: number[]) {

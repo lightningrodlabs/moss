@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
+  selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   updateAppletUi: (
     appId: string,
     happOrWebHappUrl: string,

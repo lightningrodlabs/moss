@@ -8,9 +8,9 @@ import {
   HolochainVersion,
   LAIR_ERROR,
   LAIR_LOG,
-  LauncherEmitter,
+  WeEmitter,
   WASM_LOG,
-} from './launcherEmitter';
+} from './weEmitter';
 
 const { combine, timestamp } = format;
 
@@ -19,30 +19,30 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 // TODO define class LauncherLogger that can log all lair, holochain and launcher-specific stuff
 // with methods logLair, logHolochain, logLauncher, logHapp, ...
 
-export function setupLogs(launcherEmitter: LauncherEmitter, launcherFileSystem: WeFileSystem) {
+export function setupLogs(weEmitter: WeEmitter, launcherFileSystem: WeFileSystem) {
   const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
   // with file rotation set maxsize. But then we require logic to garbage collect old files...
   // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
   const logFileTransport = new transports.File({ filename: logFilePath });
   const lairLogger = createLairLogger(logFileTransport);
 
-  launcherEmitter.on(LAIR_LOG, (log) => {
+  weEmitter.on(LAIR_LOG, (log) => {
     const logLine = `[LAIR] ${log}`;
     console.log(logLine);
     lairLogger.log('info', logLine);
   });
-  launcherEmitter.on(LAIR_ERROR, (log) => {
+  weEmitter.on(LAIR_ERROR, (log) => {
     const logLine = `[LAIR] ERROR: ${log}`;
     console.log(logLine);
     lairLogger.log('info', logLine);
   });
-  launcherEmitter.on(HOLOCHAIN_LOG, (holochainData) => {
+  weEmitter.on(HOLOCHAIN_LOG, (holochainData) => {
     logHolochain(holochainData as HolochainData, logFileTransport);
   });
-  launcherEmitter.on(HOLOCHAIN_ERROR, (holochainData) => {
+  weEmitter.on(HOLOCHAIN_ERROR, (holochainData) => {
     logHolochain(holochainData as HolochainData, logFileTransport);
   });
-  launcherEmitter.on(WASM_LOG, (holochainData) => {
+  weEmitter.on(WASM_LOG, (holochainData) => {
     logHolochain(holochainData as HolochainData, logFileTransport);
   });
 }

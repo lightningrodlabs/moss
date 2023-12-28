@@ -193,6 +193,11 @@ export interface WeServices {
    * @returns
    */
   notifyWe: (notifications: Array<WeNotification>) => Promise<any>;
+  /**
+   * Let's the user select a Screen or Window and returns the selected id. Useful
+   * for screen sharing applications.
+   */
+  userSelectScreen: () => Promise<string>;
 }
 
 export class WeClient implements WeServices {
@@ -253,4 +258,6 @@ export class WeClient implements WeServices {
   userSelectHrl = () => window.__WE_API__.userSelectHrl();
 
   notifyWe = (notifications: Array<WeNotification>) => window.__WE_API__.notifyWe(notifications);
+
+  userSelectScreen = () => window.__WE_API__.userSelectScreen();
 }
