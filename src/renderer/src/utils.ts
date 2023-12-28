@@ -505,3 +505,55 @@ export function notifyAndThrow(message: string) {
   notifyError(message);
   throw new Error(message);
 }
+
+// export function getAllIframes() {
+//   const iframes: HTMLIFrameElement[] = [];
+
+//   // Recursive function to get iframes from a given shadow root
+//   function getIframesFromShadowRoot(shadowRoot: ShadowRoot) {
+//     const shadowIframes = shadowRoot.querySelectorAll('iframe');
+//     Array.from(shadowIframes).forEach((iframe) => {
+//       iframes.push(iframe);
+//     });
+
+//     // Check if the current shadow root itself has any child shadow roots
+//     const childShadowRoots = shadowRoot.querySelectorAll('shadow-root');
+//     console.log('Got child shadowRoots: ', childShadowRoots);
+//     childShadowRoots.forEach((childShadowRoot) => {
+//       if (childShadowRoot.shadowRoot) getIframesFromShadowRoot(childShadowRoot.shadowRoot);
+//     });
+//   }
+
+//   // Get the top-level document's iframes within main shadow root
+//   const mainShadowRoot = document.getElementById('app-container')!.shadowRoot;
+//   getIframesFromShadowRoot(mainShadowRoot!);
+
+//   return iframes;
+// }
+
+export function getAllIframes() {
+  const result: HTMLIFrameElement[] = [];
+
+  // Recursive function to traverse the DOM tree
+  function traverse(node) {
+    // Check if the current node is an iframe
+    if (node.tagName === 'IFRAME') {
+      result.push(node);
+    }
+
+    // Get the shadow root of the node if available
+    const shadowRoot = node.shadowRoot;
+
+    // Traverse child nodes if any
+    if (shadowRoot) {
+      shadowRoot.childNodes.forEach(traverse);
+    } else {
+      node.childNodes.forEach(traverse);
+    }
+  }
+
+  // Start traversing from the main document's body
+  traverse(document.body);
+
+  return result;
+}

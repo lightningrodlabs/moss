@@ -172,7 +172,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
 
       const promises: Array<Promise<Array<HrlWithContext>>> = [];
 
-      // TODO fix case where background-service applet host failed to initialize
+      // TODO fix case where applet host failed to initialize
       for (const host of Array.from(hosts.values())) {
         promises.push(
           (async () => {
