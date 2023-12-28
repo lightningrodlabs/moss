@@ -157,6 +157,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yarn build:win
+          # Retry 5 times on Windows due to weird flaky issue
+          yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
           ls dist
           gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
