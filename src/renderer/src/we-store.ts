@@ -397,12 +397,6 @@ export class WeStore {
         // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
         // console.log('groupDnaHashes: ', groupDnaHashes);
 
-        // Disabling an applet here is dangerous. this.groupStores is coming from a
-        // manualReloadStore(), i.e. it is not reliable to be up to date with the
-        // actual state in the conductor.
-        // if (groupDnaHashes.length === 0) {
-        //   this.appletBundlesStore.disableApplet(appletHash);
-        // }
         const groupStores = await toPromise(this.groupStores);
 
         // console.log(
@@ -619,8 +613,8 @@ export class WeStore {
   }
 
   async reloadManualStores() {
-    await this.installedApps.reload();
     await this.groupStores.reload();
+    await this.installedApps.reload();
     // The stuff below may not be necessary
     // const groupStores = await toPromise(this.groupStores);
     // await Promise.all(

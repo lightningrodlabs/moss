@@ -49,7 +49,6 @@ export class AppletStore {
           if (relevantIframe) {
             resolve(new AppletHost(relevantIframe, appletHashBase64));
           } else {
-            console.log('ALL IFRAMES: ', allIframes);
             console.warn(
               `Connecting to applet host for applet ${appletHashBase64} timed out in 10000ms`,
             );

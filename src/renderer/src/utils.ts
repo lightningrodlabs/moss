@@ -506,31 +506,6 @@ export function notifyAndThrow(message: string) {
   throw new Error(message);
 }
 
-// export function getAllIframes() {
-//   const iframes: HTMLIFrameElement[] = [];
-
-//   // Recursive function to get iframes from a given shadow root
-//   function getIframesFromShadowRoot(shadowRoot: ShadowRoot) {
-//     const shadowIframes = shadowRoot.querySelectorAll('iframe');
-//     Array.from(shadowIframes).forEach((iframe) => {
-//       iframes.push(iframe);
-//     });
-
-//     // Check if the current shadow root itself has any child shadow roots
-//     const childShadowRoots = shadowRoot.querySelectorAll('shadow-root');
-//     console.log('Got child shadowRoots: ', childShadowRoots);
-//     childShadowRoots.forEach((childShadowRoot) => {
-//       if (childShadowRoot.shadowRoot) getIframesFromShadowRoot(childShadowRoot.shadowRoot);
-//     });
-//   }
-
-//   // Get the top-level document's iframes within main shadow root
-//   const mainShadowRoot = document.getElementById('app-container')!.shadowRoot;
-//   getIframesFromShadowRoot(mainShadowRoot!);
-
-//   return iframes;
-// }
-
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
 

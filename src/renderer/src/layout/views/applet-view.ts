@@ -240,6 +240,7 @@ export class AppletViewEl extends LitElement {
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'error':
+        console.error('Error initializing the client for this group: ', this._applet.value.error);
         return html`<display-error
           .headline=${msg('Error initializing the client for this group')}
           .error=${this._applet.value.error}

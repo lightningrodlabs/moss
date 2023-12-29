@@ -221,7 +221,6 @@ export class MainDashboard extends LitElement {
                 groupDnaHash: DnaHash;
               };
             }) => {
-              this._showTabView = false;
               this.dashboardState = {
                 viewType: 'group',
                 groupHash: e.detail.groupDnaHash,
@@ -409,7 +408,7 @@ export class MainDashboard extends LitElement {
     // });
   }
 
-  renderDashboard() {
+  renderAppletMainViews() {
     switch (this._runningApplets.value.status) {
       case 'pending':
         return html`Loading running applets...`;
@@ -423,43 +422,49 @@ export class MainDashboard extends LitElement {
               style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
             ></applet-main>`;
           })}
-          ${this._openGroups.map(
-            (groupHash) => html`
-              <group-context .groupDnaHash=${groupHash}>
-                <group-home
-                  style="flex: 1; ${this.displayGroupHome(groupHash) ? '' : 'display: none'}"
-                  @group-left=${() => {
-                    this.dashboardState = { viewType: 'personal' };
-                  }}
-                  @applet-selected=${(e: CustomEvent) => {
-                    this.openViews.openAppletMain(e.detail.appletHash);
-                    this._showTabView = false;
-                  }}
-                  @applet-installed=${(e: {
-                    detail: {
-                      appletEntryHash: AppletHash;
-                      groupDnaHash: DnaHash;
-                    };
-                  }) => {
-                    this.dashboardState = {
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletEntryHash,
-                    };
-                    this._showTabView = false;
-                  }}
-                  @custom-view-selected=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                  @custom-view-created=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                ></group-home>
-              </group-context>
-            `,
-          )}
         `;
     }
+  }
+
+  renderDashboard() {
+    return html`
+      ${this.renderAppletMainViews()}
+      ${this._openGroups.map(
+        (groupHash) => html`
+          <group-context .groupDnaHash=${groupHash}>
+            <group-home
+              style="flex: 1; ${this.displayGroupHome(groupHash) ? '' : 'display: none'}"
+              @group-left=${() => {
+                this.dashboardState = { viewType: 'personal' };
+              }}
+              @applet-selected=${(e: CustomEvent) => {
+                this.openViews.openAppletMain(e.detail.appletHash);
+                this._showTabView = false;
+              }}
+              @applet-installed=${(e: {
+                detail: {
+                  appletEntryHash: AppletHash;
+                  groupDnaHash: DnaHash;
+                };
+              }) => {
+                this.dashboardState = {
+                  viewType: 'group',
+                  groupHash: e.detail.groupDnaHash,
+                  appletHash: e.detail.appletEntryHash,
+                };
+                this._showTabView = false;
+              }}
+              @custom-view-selected=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+              @custom-view-created=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+            ></group-home>
+          </group-context>
+        `,
+      )}
+    `;
   }
 
   renderOpenTabs() {

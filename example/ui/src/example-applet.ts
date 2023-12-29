@@ -37,7 +37,6 @@ export class ExampleApplet extends LitElement {
   firstUpdated() {
     if (this.weClient.renderInfo.type === 'applet-view') {
       const groupProfiles = this.weClient.renderInfo.groupProfiles;
-      console.log('Got group profiles: ', groupProfiles);
       const appletHash = this.weClient.renderInfo.appletHash;
       console.log('we link for applet: ', weLinkFromAppletHash(appletHash));
     }

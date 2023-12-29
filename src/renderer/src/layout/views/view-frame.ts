@@ -31,9 +31,6 @@ export class ViewFrame extends LitElement {
   @property()
   appletDevPort: number | undefined;
 
-  @property()
-  iframeId: string | undefined;
-
   async firstUpdated() {
     console.log('@view-frame: IS APPLET DEV: ', this.weStore.isAppletDev);
     if (this.weStore.isAppletDev) {
@@ -47,11 +44,9 @@ export class ViewFrame extends LitElement {
     return html`<iframe
       frameborder="0"
       title="TODO"
-      id=${this.iframeId
-        ? this.iframeId
-        : this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-          ? encodeHashToBase64(this.appletHash)
-          : undefined}
+      id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
+        ? encodeHashToBase64(this.appletHash)
+        : undefined}
       src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
       style="flex: 1; display: block; padding: 0; margin: 0;"
       allow="camera; microphone; clipboard-write;"
@@ -72,11 +67,9 @@ export class ViewFrame extends LitElement {
         return html`<iframe
           frameborder="0"
           title="TODO"
-          id=${this.iframeId
-            ? this.iframeId
-            : this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-              ? encodeHashToBase64(this.appletHash)
-              : undefined}
+          id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
+            ? encodeHashToBase64(this.appletHash)
+            : undefined}
           src="${iframeSrc}"
           style="flex: 1; display: block; padding: 0; margin: 0;"
           allow="camera; microphone; clipboard-write;"
