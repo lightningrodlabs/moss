@@ -55,27 +55,65 @@ export class GroupsSidebar extends LitElement {
         .map(
           ([groupDnaHash, groupProfile]) => html`
             <group-context .groupDnaHash=${groupDnaHash} .debug=${true}>
-              <group-sidebar-button
-                style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-                .selected=${this.selectedGroupDnaHash &&
-                groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
-                .indicated=${this.indicatedGroupDnaHashes.includes(
-                  encodeHashToBase64(groupDnaHash),
-                )}
-                .logoSrc=${groupProfile.logo_src}
-                .tooltipText=${groupProfile.name}
-                @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('group-selected', {
-                      detail: {
-                        groupDnaHash,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                }}
-              ></group-sidebar-button>
+              <div style="height: 70px; position: relative; margin: 0; padding: 0;">
+                <group-sidebar-button
+                  draggable="true"
+                  @dragstart=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.add('dragging');
+                  }}
+                  @dragend=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.remove('dragging');
+                    Array.from(
+                      (
+                        e.target as HTMLElement
+                      ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
+                        'dropzone',
+                      ),
+                    ).forEach((el) => {
+                      console.log('@dragend el: ', el);
+                      console.log('@dragend el.classList: ', el.classList);
+                      el.classList.remove('active');
+                    });
+                    console.log('dragend.');
+                  }}
+                  style="border-radius: 50%; --size: 58px;"
+                  .selected=${this.selectedGroupDnaHash &&
+                  groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+                  .indicated=${this.indicatedGroupDnaHashes.includes(
+                    encodeHashToBase64(groupDnaHash),
+                  )}
+                  .logoSrc=${groupProfile.logo_src}
+                  .tooltipText=${groupProfile.name}
+                  @click=${() => {
+                    this.dispatchEvent(
+                      new CustomEvent('group-selected', {
+                        detail: {
+                          groupDnaHash,
+                        },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                ></group-sidebar-button>
+                <div
+                  class="column center-content dropzone"
+                  @dragenter=${(e: DragEvent) => {
+                    console.log('@dragenter: e.target: ', e.target);
+                    (e.target as HTMLElement).classList.add('active');
+                  }}
+                  @dragleave=${(e: DragEvent) => {
+                    console.log('@dragleave: e.target: ', e.target);
+                    (e.target as HTMLElement).classList.remove('active');
+                  }}
+                  @dragover=${(e: DragEvent) => {
+                    e.preventDefault();
+                    console.log('dragover');
+                  }}
+                >
+                  <div class="dropzone-indicator"></div>
+                </div>
+              </div>
             </group-context>
           `,
         )}
@@ -178,6 +216,40 @@ export class GroupsSidebar extends LitElement {
       .sidebar {
         padding-top: 12px;
         align-items: center;
+      }
+
+      .dropzone {
+        position: absolute;
+        bottom: -28px;
+        height: 4px;
+        width: 58px;
+        left: 8px;
+        border-radius: 2px;
+        padding: 24px 0;
+      }
+
+      .dragging {
+        opacity: 0.4;
+      }
+
+      .dropzone-indicator {
+        /* width: 100%;
+        background: var(--sl-color-primary-100);
+        height: 4px;
+        border-radius: 2px;
+        display: none; */
+        position: absolute;
+        left: -12px;
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-left: 20px solid var(--sl-color-primary-100);
+        border-bottom: 10px solid transparent;
+        display: none;
+      }
+
+      .active .dropzone-indicator {
+        display: block;
       }
     `,
   ];
