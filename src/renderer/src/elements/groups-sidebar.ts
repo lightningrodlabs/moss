@@ -61,9 +61,15 @@ export class GroupsSidebar extends LitElement {
           .map(([hash, _profile]) => encodeHashToBase64(hash)),
       );
       window.localStorage.setItem('customGroupOrder', customGroupOrderJSON);
-      console.log('Setting customGroupJson: ', customGroupOrderJSON);
     }
     const customGroupOrder: DnaHashB64[] = JSON.parse(customGroupOrderJSON);
+    knownGroups.forEach(([hash, _]) => {
+      if (!customGroupOrder.includes(encodeHashToBase64(hash))) {
+        customGroupOrder.splice(0, 0, encodeHashToBase64(hash));
+      }
+      window.localStorage.setItem('customGroupOrder', JSON.stringify(customGroupOrder));
+      this.requestUpdate();
+    });
 
     return html`
       <div style="height: 10px;"></div>
@@ -78,14 +84,12 @@ export class GroupsSidebar extends LitElement {
         }}
         @dragover=${(e: DragEvent) => {
           e.preventDefault();
-          console.log('dragover');
         }}
         @drop=${(e: DragEvent) => {
           e.preventDefault();
           const dropGroupHash = undefined;
           storeNewOrder(this.dragged!, dropGroupHash);
           this.requestUpdate();
-          console.log('Dropped element with dropGroupHash: ', dropGroupHash);
         }}
       >
         <div class="dropzone-indicator"></div>
@@ -116,11 +120,8 @@ export class GroupsSidebar extends LitElement {
                         'dropzone',
                       ),
                     ).forEach((el) => {
-                      console.log('@dragend el: ', el);
-                      console.log('@dragend el.classList: ', el.classList);
                       el.classList.remove('active');
                     });
-                    console.log('dragend.');
                     this.dragged = null;
                   }}
                   style="border-radius: 50%; --size: 58px;"
@@ -146,16 +147,13 @@ export class GroupsSidebar extends LitElement {
                 <div
                   class="column center-content dropzone below"
                   @dragenter=${(e: DragEvent) => {
-                    console.log('@dragenter: e.target: ', e.target);
                     (e.target as HTMLElement).classList.add('active');
                   }}
                   @dragleave=${(e: DragEvent) => {
-                    console.log('@dragleave: e.target: ', e.target);
                     (e.target as HTMLElement).classList.remove('active');
                   }}
                   @dragover=${(e: DragEvent) => {
                     e.preventDefault();
-                    console.log('dragover');
                   }}
                   @drop=${(e: DragEvent) => {
                     e.preventDefault();
@@ -164,7 +162,6 @@ export class GroupsSidebar extends LitElement {
                     ).previousElementSibling!.id.slice(10);
                     storeNewOrder(this.dragged!, dropGroupHash);
                     this.requestUpdate();
-                    console.log('Dropped element with dropGroupHash: ', dropGroupHash);
                   }}
                 >
                   <div class="dropzone-indicator"></div>
