@@ -107,12 +107,20 @@ export class GroupHome extends LitElement {
                   "Cannot get unjoined applets from distribution types other than appstore-light'",
                 );
               const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
-              appstoreAppEntry = await toPromise(
-                this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
-              );
-              appletLogo = await toPromise(
-                this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
-              );
+              let appstoreAppEntry: Entity<AppEntry> | undefined = undefined;
+              try {
+                appstoreAppEntry = await toPromise(
+                  this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
+                );
+              } catch (e) {}
+              console.log('appstoreAppEntry: ', appstoreAppEntry);
+              let appletLogo: string | undefined = undefined;
+              try {
+                appletLogo = await toPromise(
+                  this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
+                );
+              } catch (e) {}
+              console.log('appletLogo', appletLogo);
             }
             return [
               appletHash,
@@ -259,7 +267,7 @@ export class GroupHome extends LitElement {
                           : html``
                       }
                       <span style="margin-left: 10px; font-size: 20px;">${
-                        appEntry ? appEntry.title : '<i>unknwon</i>'
+                        appEntry ? appEntry.title : '<i>unknown</i>'
                       }&nbsp;</span>
                     </div>
                     <div class="row" style="align-items: center; margin-bottom: 5px;">

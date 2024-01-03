@@ -70,7 +70,7 @@ export class TopBarButton extends LitElement {
           height: 7px;
           border-radius: 7px 7px 0 0;
           width: 32px;
-          background: #f9502e;
+          background: #51ed18;
         }
 
         .icon-container {

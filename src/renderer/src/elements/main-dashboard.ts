@@ -481,7 +481,7 @@ export class MainDashboard extends LitElement {
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
-            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #f9502e;"
+            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #51ed18;"
           ></div>
         </div>
       </div>`;

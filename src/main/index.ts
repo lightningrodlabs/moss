@@ -227,6 +227,14 @@ const createOrShowMainWindow = () => {
     MAIN_WINDOW.show();
     return;
   }
+
+  // // Debugging for webRTC
+  // let webRTCWindow = new BrowserWindow({
+  //   width: 1200,
+  //   height: 800,
+  // });
+  // webRTCWindow.loadURL('chrome://webrtc-internals');
+
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1200,
