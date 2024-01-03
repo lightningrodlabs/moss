@@ -87,6 +87,12 @@ export class MainDashboard extends LitElement {
   _clipboard!: WeClipboard;
 
   @state()
+  _drawerWidth: number = 200;
+
+  @state()
+  _resizeDrawerX: number | null = null;
+
+  @state()
   showClipboard: boolean = false;
 
   @state()
@@ -371,6 +377,57 @@ export class MainDashboard extends LitElement {
         this.openClipboard();
         break;
     }
+  }
+
+  resizeMouseDownHandler(e: MouseEvent) {
+    document.body.style.cursor = 'col-resize';
+    const groupViewAreaEl = this.shadowRoot?.getElementById('group-view-area');
+    if (groupViewAreaEl) {
+      groupViewAreaEl.style.userSelect = 'none';
+      groupViewAreaEl.style.pointerEvents = 'none';
+    }
+    const welcomeViewEl = this.shadowRoot?.getElementById('welcome-view');
+    if (welcomeViewEl) {
+      welcomeViewEl.style.userSelect = 'none';
+      welcomeViewEl.style.pointerEvents = 'none';
+    }
+    this._resizeDrawerX = e.clientX;
+    this.addEventListener('mousemove', this.resizeMouseMoveHandler);
+    this.addEventListener('mouseup', this.resizeMouseUpHandler);
+    console.log('this._resizeDrawerX: ', this._resizeDrawerX);
+  }
+
+  resizeMouseMoveHandler(e: MouseEvent) {
+    // console.log('mousemove event: ', e);
+    console.log('@mousemove: e.clientX: ', e.clientX);
+    // console.log('@mousemove: this._drawerWidth: ', this._drawerWidth);
+    if (this._resizeDrawerX) {
+      const deltaX = this._resizeDrawerX - e.clientX;
+      const currentDrawerWidth = this._drawerWidth;
+      console.log('currentDrawerWidth: ', currentDrawerWidth);
+      console.log('deltaX: ', deltaX);
+      this._drawerWidth = this._drawerWidth + deltaX;
+      // console.log('New drawer width: ', this._drawerWidth);
+    }
+    this._resizeDrawerX = e.clientX;
+  }
+
+  resizeMouseUpHandler(_e: MouseEvent) {
+    console.log('#### MOUSE UP');
+    document.body.style.removeProperty('cursor');
+    const groupViewAreaEl = this.shadowRoot?.getElementById('group-view-area');
+    if (groupViewAreaEl) {
+      groupViewAreaEl.style.removeProperty('user-select');
+      groupViewAreaEl.style.removeProperty('pointer-events');
+    }
+    const welcomeViewEl = this.shadowRoot?.getElementById('welcome-view');
+    if (welcomeViewEl) {
+      welcomeViewEl.style.removeProperty('user-select');
+      welcomeViewEl.style.removeProperty('pointer-events');
+    }
+    this._resizeDrawerX = null;
+    this.removeEventListener('mousemove', this.resizeMouseMoveHandler);
+    this.removeEventListener('mouseup', this.resizeMouseUpHandler);
   }
 
   // disconnectedCallback(): void {
@@ -680,6 +737,7 @@ export class MainDashboard extends LitElement {
         <!-- PERSONAL VIEW -->
         ${this.dashboardState.viewType === 'personal'
           ? html` <welcome-view
+              id="welcome-view"
               @click=${(e) => e.stopPropagation()}
               style="display: flex; flex: 1;"
               @open-appstore=${() => this.openAppStore()}
@@ -693,11 +751,22 @@ export class MainDashboard extends LitElement {
 
         <!-- GROUP VIEW -->
         <div
+          id="group-view-area"
           style="${this.dashboardState.viewType === 'group'
             ? 'display: flex; flex: 1;'
             : 'display: none;'}"
         >
           ${this.renderDashboard()}
+        </div>
+        <div
+          style="width: 2px; background: black; cursor: col-resize"
+          @mousedown=${(e) => {
+            console.log('Got mousedown event: ', e);
+            this.resizeMouseDownHandler(e);
+          }}
+        ></div>
+        <div style="width: ${this._drawerWidth > 200 ? this._drawerWidth : 200}px;">
+          ${this.renderOpenTabs()}
         </div>
       </div>
 
