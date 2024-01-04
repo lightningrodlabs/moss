@@ -34,6 +34,7 @@ import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
+import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import './group-peers-status.js';
 import './related-groups.js';
@@ -97,7 +98,12 @@ export class GroupHome extends LitElement {
       pipe(this.groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           appletsAndKeys.map(async ([appletHash, agentKey]) => {
-            const appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
+            let appletEntry: Applet | undefined;
+            try {
+              appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
+            } catch (e) {
+              console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
+            }
             let appstoreAppEntry: Entity<AppEntry> | undefined;
             let appletLogo: string | undefined;
             if (appletEntry) {
@@ -107,20 +113,20 @@ export class GroupHome extends LitElement {
                   "Cannot get unjoined applets from distribution types other than appstore-light'",
                 );
               const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
-              let appstoreAppEntry: Entity<AppEntry> | undefined = undefined;
               try {
                 appstoreAppEntry = await toPromise(
                   this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
                 );
-              } catch (e) {}
-              console.log('appstoreAppEntry: ', appstoreAppEntry);
-              let appletLogo: string | undefined = undefined;
+              } catch (e) {
+                console.warn('@group-home @unjoined-applets: Failed to get appstoreAppEntry: ', e);
+              }
               try {
                 appletLogo = await toPromise(
                   this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
                 );
-              } catch (e) {}
-              console.log('appletLogo', appletLogo);
+              } catch (e) {
+                console.warn('@group-home @unjoined-applets: Failed to get appletLogo: ', e);
+              }
             }
             return [
               appletHash,
@@ -246,11 +252,18 @@ export class GroupHome extends LitElement {
   renderNewApplets() {
     switch (this._unjoinedApplets.value.status) {
       // TODO handle loading and error case nicely
+      case 'pending':
+        return html`<div class="column center-content">
+          <sl-spinner style="font-size: 30px;"></sl-spinner>
+        </div>`;
+      case 'error':
+        console.error('Failed to get unjoined applets: ', this._unjoinedApplets.value.error);
+        return html`<div class="column center-content">
+          <h3>Error: Failed to fetch unjoined Applets</h3>
+          <span>${this._unjoinedApplets.value.error}</span>
+        </div> `;
       case 'complete':
         return html`
-          <span class="title">New Group Applets</span>
-          <sl-divider style="--color: grey"></sl-divider>
-
           <div class="row" style="flex-wrap: wrap;">
             ${this._unjoinedApplets.value.value
               .filter(
@@ -266,12 +279,12 @@ export class GroupHome extends LitElement {
                           ? html`<img src=${logo} alt="Applet logo" style="height: 45px;" />`
                           : html``
                       }
-                      <span style="margin-left: 10px; font-size: 20px;">${
-                        appEntry ? appEntry.title : '<i>unknown</i>'
-                      }&nbsp;</span>
+                      <span style="margin-left: 10px; font-size: 20px; ${
+                        appEntry?.title ? '' : 'opacity: 0.6;'
+                      }">${appEntry ? appEntry.title : 'unknown'}&nbsp;</span>
                     </div>
                     <div class="row" style="align-items: center; margin-bottom: 5px;">
-                      <b>name:</b>&nbsp;${appletEntry ? appletEntry.custom_name : '<i>unknown</i>'}
+                      <b>name:</b>&nbsp;${appletEntry ? appletEntry.custom_name : 'unknown'}
                     </div>
                     <div class="row" style="align-items: center; margin-bottom: 20px;">
                       <span><b>added by:</b></span>
@@ -329,6 +342,9 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
+
+          <span class="title">New Group Applets</span>
+          <sl-divider style="--color: grey"></sl-divider>
           ${this.renderNewApplets()}
 
           <!-- Related Groups Row -->
