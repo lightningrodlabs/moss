@@ -138,14 +138,16 @@ export class EntryView extends LitElement {
       }
 
       .toolbar {
-        position: fixed;
+        position: absolute;
         bottom: 30px;
         right: 0;
         background: red;
         padding: 10px;
         border-radius: 20px 0 0 20px;
-        background: #eacbff83;
-        box-shadow: 0 0 6px #5804a8;
+        background: #51ed187f;
+        box-shadow: 0 0 6px #4d832b;
+        /* background: #eacbff83;
+        box-shadow: 0 0 6px #5804a8; */
       }
 
       .toolbar-btn {

@@ -1,4 +1,5 @@
 import { consume, provide } from '@lit/context';
+import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
 import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
@@ -87,6 +88,15 @@ export class MainDashboard extends LitElement {
   _clipboard!: WeClipboard;
 
   @state()
+  _drawerWidth: number = 380;
+
+  @state()
+  _drawerResizing = false;
+
+  @state()
+  _resizeDrawerX: number | null = null;
+
+  @state()
   showClipboard: boolean = false;
 
   @state()
@@ -100,6 +110,9 @@ export class MainDashboard extends LitElement {
 
   @state()
   _showTabView = false;
+
+  @state()
+  _entryViewerState: 'front' | 'side' = 'side';
 
   @state()
   dashboardState: DashboardState = {
@@ -226,7 +239,9 @@ export class MainDashboard extends LitElement {
                 groupHash: e.detail.groupDnaHash,
                 appletHash: e.detail.appletEntryHash,
               };
-              this._showTabView = false;
+              if (this._entryViewerState === 'front') {
+                this._showTabView = false;
+              }
             }}
           ></appstore-view>
         `,
@@ -328,7 +343,7 @@ export class MainDashboard extends LitElement {
 
     // add event listener to close entry viewer when clicking outside of it
     document.addEventListener('click', () => {
-      if (this._showTabView) {
+      if (this._showTabView && this._entryViewerState === 'front') {
         this._showTabView = false;
       }
     });
@@ -373,6 +388,36 @@ export class MainDashboard extends LitElement {
     }
   }
 
+  resizeMouseDownHandler(e: MouseEvent) {
+    document.body.style.cursor = 'col-resize';
+    this._drawerResizing = true;
+    this._resizeDrawerX = e.clientX;
+    this.addEventListener('mousemove', this.resizeMouseMoveHandler);
+    this.addEventListener('mouseup', this.resizeMouseUpHandler);
+    console.log('this._resizeDrawerX: ', this._resizeDrawerX);
+  }
+
+  resizeMouseMoveHandler(e: MouseEvent) {
+    // console.log('mousemove event: ', e);
+    // console.log('@mousemove: this._drawerWidth: ', this._drawerWidth);
+    if (this._resizeDrawerX) {
+      const deltaX = this._resizeDrawerX - e.clientX;
+      this._drawerWidth = this._drawerWidth + deltaX;
+      // console.log('New drawer width: ', this._drawerWidth);
+    }
+    this._resizeDrawerX = e.clientX;
+  }
+
+  resizeMouseUpHandler(_e: MouseEvent) {
+    document.body.style.removeProperty('cursor');
+    this.removeEventListener('mousemove', this.resizeMouseMoveHandler);
+    this.removeEventListener('mouseup', this.resizeMouseUpHandler);
+    this._drawerResizing = false;
+    console.log('### MOUSEUP');
+    console.log('this._showTabView', this._showTabView);
+    console.log('this._drawerWidth', this._drawerWidth);
+  }
+
   // disconnectedCallback(): void {
   //   if (this._unlisten) this._unlisten();
   // }
@@ -397,7 +442,9 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     };
-    this._showTabView = false;
+    if (this._entryViewerState === 'front') {
+      this._showTabView = false;
+    }
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
     //   type: "component",
@@ -433,13 +480,17 @@ export class MainDashboard extends LitElement {
         (groupHash) => html`
           <group-context .groupDnaHash=${groupHash}>
             <group-home
-              style="flex: 1; ${this.displayGroupHome(groupHash) ? '' : 'display: none'}"
+              style="flex: 1; position: relative; ${this.displayGroupHome(groupHash)
+                ? ''
+                : 'display: none'}"
               @group-left=${() => {
                 this.dashboardState = { viewType: 'personal' };
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
-                this._showTabView = false;
+                if (this._entryViewerState === 'front') {
+                  this._showTabView = false;
+                }
               }}
               @applet-installed=${(e: {
                 detail: {
@@ -452,7 +503,9 @@ export class MainDashboard extends LitElement {
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
                 };
-                this._showTabView = false;
+                if (this._entryViewerState === 'front') {
+                  this._showTabView = false;
+                }
               }}
               @custom-view-selected=${(_e) => {
                 throw new Error('Displaying custom views is currently not implemented.');
@@ -471,17 +524,18 @@ export class MainDashboard extends LitElement {
     const allOpenTabs = Object.values(this._openTabs);
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
-        <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px;">Entry Viewer</div>
+        <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
+          Entry Viewer
+        </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
           This is where attachments and other entries are displayed. Opening an attachment in one of
           your applets will create a new tab here.<br /><br />
-          Click anywhere outside of the Entry Viewer to close the Entry Viewer again.<br /><br />
           If you are looking at an attachment, red indicators show you the group(s) and applet(s)
           this specific attachment belongs to:
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
-            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #f9502e;"
+            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #51ed18;"
           ></div>
         </div>
       </div>`;
@@ -506,7 +560,9 @@ export class MainDashboard extends LitElement {
         return html`<entry-view
           @jump-to-applet=${(e) => {
             this.openViews.openAppletMain(e.detail);
-            this._showTabView = false;
+            if (this._entryViewerState === 'front') {
+              this._showTabView = false;
+            }
           }}
           .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
           .context=${info.tab.hrl.context}
@@ -676,42 +732,79 @@ export class MainDashboard extends LitElement {
         }}
       ></create-group-dialog>
 
-      <div class="group-viewer invisible-scrollbars">
+      <div class="group-viewer invisible-scrollbars column">
         <!-- PERSONAL VIEW -->
-        ${this.dashboardState.viewType === 'personal'
-          ? html` <welcome-view
-              @click=${(e) => e.stopPropagation()}
-              style="display: flex; flex: 1;"
-              @open-appstore=${() => this.openAppStore()}
-              @request-create-group=${() =>
-                (
-                  this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
-                ).open()}
-              @request-join-group=${(_e) => this.joinGroupDialog.open()}
-            ></welcome-view>`
-          : html``}
-
-        <!-- GROUP VIEW -->
         <div
-          style="${this.dashboardState.viewType === 'group'
-            ? 'display: flex; flex: 1;'
-            : 'display: none;'}"
+          class="row"
+          style="flex: 1; ${this._showTabView ? 'max-height: calc(100vh - 124px);' : ''}"
         >
-          ${this.renderDashboard()}
-        </div>
-      </div>
+          ${this.dashboardState.viewType === 'personal'
+            ? html` <welcome-view
+                id="welcome-view"
+                @click=${(e) => e.stopPropagation()}
+                style="display: flex; flex: 1;${this._drawerResizing
+                  ? 'pointer-events: none; user-select: none;'
+                  : ''}"
+                @open-appstore=${() => this.openAppStore()}
+                @request-create-group=${() =>
+                  (
+                    this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
+                  ).open()}
+                @request-join-group=${(_e) => this.joinGroupDialog.open()}
+              ></welcome-view>`
+            : html``}
 
-      <!-- TABS VIEW -->
-      <div
-        id="entry-view-container"
-        class="entry-viewer slide-in-right slide-out-right ${this._showTabView ? 'show' : 'hide'}"
-        @click=${(e) => {
-          // Prevent propagation such hat only clicks outside of this container bubble up and we
-          // can close the entry-view-container on side-click
-          e.stopPropagation();
-        }}
-      >
-        ${this.renderOpenTabs()}
+          <!-- GROUP VIEW -->
+          <div
+            id="group-view-area"
+            style="${this.dashboardState.viewType === 'group'
+              ? 'display: flex; flex: 1;'
+              : 'display: none;'}${this._drawerResizing
+              ? 'pointer-events: none; user-select: none;'
+              : ''}"
+          >
+            ${this.renderDashboard()}
+          </div>
+          <div
+            style="width: 3px; background: #51ed18; cursor: col-resize;${this._showTabView
+              ? ''
+              : 'display: none;'}"
+            @mousedown=${(e) => {
+              console.log('Got mousedown event: ', e);
+              this.resizeMouseDownHandler(e);
+            }}
+          ></div>
+          <div
+            id="entry-viewer"
+            class="${classMap({
+              'entry-viewer': this._entryViewerState === 'front',
+              'slide-in-right': this._entryViewerState === 'front',
+              'slide-out-right': this._entryViewerState === 'front',
+              'side-drawer': this._entryViewerState === 'side',
+              hidden: !this._showTabView && this._entryViewerState === 'side',
+              show: this._showTabView && this._entryViewerState === 'front',
+              hide: !this._showTabView && this._entryViewerState === 'front',
+            })}"
+            style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
+              ._showTabView && this._entryViewerState === 'side'
+              ? `width: ${
+                  this._drawerWidth > 200 ? this._drawerWidth : 200
+                }px; display: flex; flex-grow: 0; flex-shrink: 0;`
+              : ''}"
+            @click=${(e) => {
+              // Prevent propagation such hat only clicks outside of this container bubble up and we
+              // can close the entry-view-container on side-click
+              e.stopPropagation();
+            }}
+          >
+            ${this.renderOpenTabs()}
+          </div>
+        </div>
+
+        <!-- BOTTOM BAR -->
+        <div class="entry-view-bar" style="${this._showTabView ? '' : 'display: none;'}">
+          ${this.renderEntryTabBar()}
+        </div>
       </div>
 
       <!-- LEFT SIDEBAR -->
@@ -764,21 +857,18 @@ export class MainDashboard extends LitElement {
         <span style="display: flex; flex: 1;"></span>
 
         <!-- TAB BAR BUTTON -->
-        <div
-          id="tab-bar-button"
-          class="entry-tab-bar-button ${this._showTabView ? 'btn-selected' : ''}"
-          tabindex="0"
-          @click=${(e) => {
-            e.stopPropagation();
-            this._showTabView = !this._showTabView;
-          }}
-          @keypress=${(e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              this._showTabView = !this._showTabView;
-            }
-          }}
-        >
-          <sl-icon .src=${wrapPathInSvg(mdiViewGalleryOutline)} style="font-size: 34px;"></sl-icon>
+        <div class="row center-content">
+          <sl-icon
+            tabindex="0"
+            class="search-button"
+            @click=${() => this.openClipboard()}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                this.openClipboard();
+              }
+            }}
+            .src=${wrapPathInSvg(mdiMagnify)}
+          ></sl-icon>
         </div>
       </div>
 
@@ -787,54 +877,109 @@ export class MainDashboard extends LitElement {
         class="top-bar row"
         style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
       >
-        ${this.dashboardState.viewType === 'group'
-          ? html`
-              <group-context .groupDnaHash=${this.dashboardState.groupHash}>
-                <group-applets-sidebar
-                  .selectedAppletHash=${this.dashboardState.appletHash}
-                  .indicatedAppletHashes=${this._showTabView &&
-                  this._selectedTab &&
-                  this._selectedTab.tab.type === 'hrl'
-                    ? this._selectedTab.tab.appletIds
-                    : []}
-                  @applet-selected=${(e: {
-                    detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-                  }) => {
-                    this.dashboardState = {
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletHash,
-                    };
-                    this._showTabView = false;
-                  }}
-                  style="margin-left: 12px; flex: 1; overflow-x: sroll;"
-                ></group-applets-sidebar>
-              </group-context>
-            `
-          : html`<div style="font-size: 28px; margin-left: 20px;">Home</div>`}
-      </div>
-
-      <!-- BOTTOM BAR -->
-      <div
-        class="entry-view-bar"
-        style="${this._showTabView
-          ? ''
-          : 'display: none;'} position: fixed; bottom: 0; left: 74px; right: 0;"
-      >
-        ${this.renderEntryTabBar()}
-      </div>
-
-      <sl-button
-        variant="success"
-        style="margin-right: 8px; margin-top: 8px; position: fixed; top: 0; right: 0; font-size: 18px;"
-        @click=${() => this.openClipboard()}
-        @keypress.enter=${() => this.openClipboard()}
-      >
-        <div class="row" style="align-items: center; font-size: 18px;">
-          <sl-icon .src=${wrapPathInSvg(mdiMagnify)} style="font-size: 24px;"></sl-icon>
-          <span style="margin-left: 10px;">${msg('Search')}</span>
+        <div class="row invisible-scrollbars" style="overflow-x: auto; padding-right: 40px;">
+          ${this.dashboardState.viewType === 'group'
+            ? html`
+                <group-context .groupDnaHash=${this.dashboardState.groupHash}>
+                  <group-applets-sidebar
+                    .selectedAppletHash=${this.dashboardState.appletHash}
+                    .indicatedAppletHashes=${this._showTabView &&
+                    this._selectedTab &&
+                    this._selectedTab.tab.type === 'hrl'
+                      ? this._selectedTab.tab.appletIds
+                      : []}
+                    @applet-selected=${(e: {
+                      detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+                    }) => {
+                      this.dashboardState = {
+                        viewType: 'group',
+                        groupHash: e.detail.groupDnaHash,
+                        appletHash: e.detail.appletHash,
+                      };
+                      if (this._entryViewerState === 'front') {
+                        this._showTabView = false;
+                      }
+                    }}
+                    style="margin-left: 12px; flex: 1; overflow-x: sroll;"
+                  ></group-applets-sidebar>
+                </group-context>
+              `
+            : html`<div style="font-size: 28px;">Home</div>`}
         </div>
-      </sl-button>
+        <div style="display: flex; flex: 1;"></div>
+        <div class="row">
+          <div
+            id="tab-bar-button"
+            class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'front'
+              ? 'btn-selected'
+              : ''}"
+            tabindex="0"
+            @click=${(e) => {
+              e.stopPropagation();
+              if (this._showTabView && this._entryViewerState === 'front') {
+                this._showTabView = false;
+                return;
+              }
+              this._entryViewerState = 'front';
+              this._showTabView = true;
+            }}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+                if (this._showTabView && this._entryViewerState === 'front') {
+                  this._showTabView = false;
+                  return;
+                }
+                this._entryViewerState = 'front';
+                this._showTabView = true;
+              }
+            }}
+          >
+            <div class="column center-content">
+              <sl-icon
+                .src=${wrapPathInSvg(mdiViewGalleryOutline)}
+                style="font-size: 34px;"
+              ></sl-icon>
+              front
+            </div>
+          </div>
+          <div
+            id="tab-bar-button"
+            class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'side'
+              ? 'btn-selected'
+              : ''}"
+            tabindex="0"
+            @click="${(e) => {
+              if (this._showTabView && this._entryViewerState === 'side') {
+                this._showTabView = false;
+                return;
+              }
+              console.log('Setting entryViewerState to side.');
+              this._entryViewerState = 'side';
+              this._showTabView = true;
+            }}"
+            @keypress="${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                if (this._showTabView && this._entryViewerState === 'side') {
+                  this._showTabView = false;
+                  return;
+                }
+                console.log('Setting entryViewerState to side.');
+                this._entryViewerState = 'side';
+                this._showTabView = true;
+              }
+            }}"
+          >
+            <div class="column center-content">
+              <sl-icon
+                .src=${wrapPathInSvg(mdiViewGalleryOutline)}
+                style="font-size: 34px;"
+              ></sl-icon>
+              side
+            </div>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -845,6 +990,10 @@ export class MainDashboard extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        .hidden {
+          display: none;
         }
 
         .top-left-corner {
@@ -870,6 +1019,12 @@ export class MainDashboard extends LitElement {
           height: var(--sidebar-width);
         }
 
+        .side-drawer {
+          position: relative;
+          max-height: calc(100vh - 124px);
+          background: var(--sl-color-primary-100);
+        }
+
         .entry-viewer {
           overflow: hidden;
           display: flex;
@@ -881,13 +1036,16 @@ export class MainDashboard extends LitElement {
           right: 0;
           background: var(--sl-color-primary-100);
           box-shadow: 0 0 4px 1px #08044c;
+          /* box-shadow: 0 0 4px 1px #51ed18; */
           border-radius: 20px 0 0 0;
           border-top: 1px solid var(--sl-color-primary-800);
           border-left: 1px solid var(--sl-color-primary-800);
+          /* border-top: 1px solid #51ed18;
+          border-left: 1px solid #51ed18; */
         }
 
         .group-viewer {
-          display: flex;
+          /* display: flex; */
           flex: 1;
           position: fixed;
           top: 74px;
@@ -895,7 +1053,6 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           right: 0;
           background: white;
-          overflow-y: auto;
         }
 
         .invisible-scrollbars {
@@ -935,13 +1092,15 @@ export class MainDashboard extends LitElement {
           align-items: center;
           padding-left: 5px;
           height: 50px;
-          background: var(--sl-color-primary-200);
+          background: #51ed18;
         }
 
         .entry-tab {
           height: 40px;
           width: 200px;
-          background: var(--sl-color-primary-400);
+          background: #43c016;
+          color: black;
+          /* background: var(--sl-color-primary-400); */
           border-radius: 4px;
           margin-right: 5px;
           padding-left: 4px;
@@ -966,21 +1125,27 @@ export class MainDashboard extends LitElement {
           color: black;
           background: var(--sl-color-primary-200);
           cursor: pointer;
-          margin: 5px;
-          border-radius: 5px;
-          height: 40px;
+          /* margin: 5px; */
+          height: 74px;
+          width: 50px;
         }
 
         .entry-tab-bar-button:hover {
-          margin: 0;
-          border-radius: 5px 0 0 5px;
-          height: 50px;
+          background: #51ed18;
+          /* margin: 0; */
+          /* border-radius: 5px 0 0 5px; */
+          /* height: 50px; */
+        }
+
+        .entry-tab-bar-button:focus {
+          background: #51ed18;
         }
 
         .btn-selected {
-          margin: 0;
+          background: #51ed18;
+          /* margin: 0;
           border-radius: 5px 0 0 5px;
-          height: 50px;
+          height: 50px; */
         }
 
         .tab-bar-active {
@@ -1049,6 +1214,20 @@ export class MainDashboard extends LitElement {
 
         .slide-out-right.hide {
           transform: translateX(102%);
+        }
+
+        .search-button {
+          font-size: 66px;
+          color: var(--sl-color-primary-300);
+          cursor: pointer;
+        }
+
+        .search-button:hover {
+          color: var(--sl-color-primary-50);
+        }
+
+        .search-button:focus {
+          color: var(--sl-color-primary-50);
         }
       `,
     ];

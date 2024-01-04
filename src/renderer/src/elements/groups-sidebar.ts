@@ -2,7 +2,7 @@ import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { GroupProfile } from '@lightningrodlabs/we-applet';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
@@ -40,6 +40,11 @@ export class GroupsSidebar extends LitElement {
   @property()
   indicatedGroupDnaHashes: DnaHashB64[] = [];
 
+  @state()
+  dragged: DnaHashB64 | null = null;
+
+  firstUpdated() {}
+
   renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>) {
     const knownGroups = Array.from(groups.entries()).filter(
       ([_, groupProfile]) => !!groupProfile,
@@ -48,34 +53,120 @@ export class GroupsSidebar extends LitElement {
       ([_, groupProfile]) => !groupProfile,
     ) as Array<[DnaHash, GroupProfile]>;
 
+    let customGroupOrderJSON = window.localStorage.getItem('customGroupOrder');
+    if (!customGroupOrderJSON) {
+      customGroupOrderJSON = JSON.stringify(
+        knownGroups
+          .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
+          .map(([hash, _profile]) => encodeHashToBase64(hash)),
+      );
+      window.localStorage.setItem('customGroupOrder', customGroupOrderJSON);
+    }
+    const customGroupOrder: DnaHashB64[] = JSON.parse(customGroupOrderJSON);
+    knownGroups.forEach(([hash, _]) => {
+      if (!customGroupOrder.includes(encodeHashToBase64(hash))) {
+        customGroupOrder.splice(0, 0, encodeHashToBase64(hash));
+      }
+      window.localStorage.setItem('customGroupOrder', JSON.stringify(customGroupOrder));
+      this.requestUpdate();
+    });
+
     return html`
       <div style="height: 10px;"></div>
+      <div
+        class="column center-content dropzone"
+        style="position: absolute; top: 92px;"
+        @dragenter=${(e: DragEvent) => {
+          (e.target as HTMLElement).classList.add('active');
+        }}
+        @dragleave=${(e: DragEvent) => {
+          (e.target as HTMLElement).classList.remove('active');
+        }}
+        @dragover=${(e: DragEvent) => {
+          e.preventDefault();
+        }}
+        @drop=${(e: DragEvent) => {
+          e.preventDefault();
+          const dropGroupHash = undefined;
+          storeNewOrder(this.dragged!, dropGroupHash);
+          this.requestUpdate();
+        }}
+      >
+        <div class="dropzone-indicator"></div>
+      </div>
       ${knownGroups
-        .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
+        .sort(
+          ([a_hash, _a], [b_hash, _b]) =>
+            customGroupOrder.indexOf(encodeHashToBase64(a_hash)) -
+            customGroupOrder.indexOf(encodeHashToBase64(b_hash)),
+        )
         .map(
           ([groupDnaHash, groupProfile]) => html`
             <group-context .groupDnaHash=${groupDnaHash} .debug=${true}>
-              <group-sidebar-button
-                style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
-                .selected=${this.selectedGroupDnaHash &&
-                groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
-                .indicated=${this.indicatedGroupDnaHashes.includes(
-                  encodeHashToBase64(groupDnaHash),
-                )}
-                .logoSrc=${groupProfile.logo_src}
-                .tooltipText=${groupProfile.name}
-                @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('group-selected', {
-                      detail: {
-                        groupDnaHash,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                }}
-              ></group-sidebar-button>
+              <div style="height: 70px; position: relative; margin: 0; padding: 0;">
+                <group-sidebar-button
+                  id="${`groupIcon#${encodeHashToBase64(groupDnaHash)}`}"
+                  draggable="true"
+                  @dragstart=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.add('dragging');
+                    this.dragged = encodeHashToBase64(groupDnaHash);
+                  }}
+                  @dragend=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.remove('dragging');
+                    Array.from(
+                      (
+                        e.target as HTMLElement
+                      ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
+                        'dropzone',
+                      ),
+                    ).forEach((el) => {
+                      el.classList.remove('active');
+                    });
+                    this.dragged = null;
+                  }}
+                  style="border-radius: 50%; --size: 58px;"
+                  .selected=${this.selectedGroupDnaHash &&
+                  groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+                  .indicated=${this.indicatedGroupDnaHashes.includes(
+                    encodeHashToBase64(groupDnaHash),
+                  )}
+                  .logoSrc=${groupProfile.logo_src}
+                  .tooltipText=${groupProfile.name}
+                  @click=${() => {
+                    this.dispatchEvent(
+                      new CustomEvent('group-selected', {
+                        detail: {
+                          groupDnaHash,
+                        },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                ></group-sidebar-button>
+                <div
+                  class="column center-content dropzone below"
+                  @dragenter=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.add('active');
+                  }}
+                  @dragleave=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.remove('active');
+                  }}
+                  @dragover=${(e: DragEvent) => {
+                    e.preventDefault();
+                  }}
+                  @drop=${(e: DragEvent) => {
+                    e.preventDefault();
+                    const dropGroupHash = (
+                      e.target as HTMLElement
+                    ).previousElementSibling!.id.slice(10);
+                    storeNewOrder(this.dragged!, dropGroupHash);
+                    this.requestUpdate();
+                  }}
+                >
+                  <div class="dropzone-indicator"></div>
+                </div>
+              </div>
             </group-context>
           `,
         )}
@@ -179,6 +270,55 @@ export class GroupsSidebar extends LitElement {
         padding-top: 12px;
         align-items: center;
       }
+
+      .dropzone {
+        height: 4px;
+        width: 58px;
+        left: 8px;
+        padding: 4px 0;
+        z-index: 1;
+      }
+
+      .below {
+        position: absolute;
+        bottom: -8px;
+      }
+
+      .dragging {
+        opacity: 0.4;
+      }
+
+      .dropzone-indicator {
+        /* width: 100%;
+        background: var(--sl-color-primary-100);
+        height: 4px;
+        border-radius: 2px;
+        display: none; */
+        position: absolute;
+        left: -12px;
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-left: 20px solid var(--sl-color-primary-100);
+        border-bottom: 10px solid transparent;
+        display: none;
+      }
+
+      .active .dropzone-indicator {
+        display: block;
+      }
     `,
   ];
+}
+
+function storeNewOrder(draggedHash: DnaHashB64, droppedHash: DnaHashB64 | undefined) {
+  if (draggedHash === droppedHash) return;
+  // TODO potentially make this more resilient and remove elements of deleted groups
+  let customGroupOrderJSON = window.localStorage.getItem('customGroupOrder');
+  const customGroupOrder: DnaHashB64[] = JSON.parse(customGroupOrderJSON!);
+  const currentIdx = customGroupOrder.indexOf(draggedHash);
+  customGroupOrder.splice(currentIdx, 1);
+  const newIdx = droppedHash ? customGroupOrder.indexOf(droppedHash) + 1 : 0;
+  customGroupOrder.splice(newIdx, 0, draggedHash);
+  window.localStorage.setItem('customGroupOrder', JSON.stringify(customGroupOrder));
 }
