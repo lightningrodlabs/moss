@@ -766,9 +766,8 @@ export class MainDashboard extends LitElement {
             ${this.renderDashboard()}
           </div>
           <div
-            style="width: 3px; background: #51ed18; cursor: col-resize;${this._showTabView
-              ? ''
-              : 'display: none;'}"
+            class="drawer-separator"
+            style="${this._showTabView ? '' : 'display: none;'}"
             @mousedown=${(e) => {
               console.log('Got mousedown event: ', e);
               this.resizeMouseDownHandler(e);
@@ -858,17 +857,19 @@ export class MainDashboard extends LitElement {
 
         <!-- TAB BAR BUTTON -->
         <div class="row center-content">
-          <sl-icon
-            tabindex="0"
-            class="search-button"
-            @click=${() => this.openClipboard()}
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this.openClipboard();
-              }
-            }}
-            .src=${wrapPathInSvg(mdiMagnify)}
-          ></sl-icon>
+          <sl-tooltip content="Clipboard + Search" placement="right" hoist>
+            <sl-icon
+              tabindex="0"
+              class="search-button"
+              @click=${() => this.openClipboard()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.openClipboard();
+                }
+              }}
+              .src=${wrapPathInSvg(mdiMagnify)}
+            ></sl-icon>
+          </sl-tooltip>
         </div>
       </div>
 
@@ -908,23 +909,14 @@ export class MainDashboard extends LitElement {
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
-          <div
-            id="tab-bar-button"
-            class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'front'
-              ? 'btn-selected'
-              : ''}"
-            tabindex="0"
-            @click=${(e) => {
-              e.stopPropagation();
-              if (this._showTabView && this._entryViewerState === 'front') {
-                this._showTabView = false;
-                return;
-              }
-              this._entryViewerState = 'front';
-              this._showTabView = true;
-            }}
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
+          <sl-tooltip content="Show Entry Viewer in Front" placement="bottom" hoist>
+            <div
+              id="tab-bar-button"
+              class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'front'
+                ? 'btn-selected'
+                : ''}"
+              tabindex="0"
+              @click=${(e) => {
                 e.stopPropagation();
                 if (this._showTabView && this._entryViewerState === 'front') {
                   this._showTabView = false;
@@ -932,34 +924,37 @@ export class MainDashboard extends LitElement {
                 }
                 this._entryViewerState = 'front';
                 this._showTabView = true;
-              }
-            }}
-          >
-            <div class="column center-content">
-              <sl-icon
-                .src=${wrapPathInSvg(mdiViewGalleryOutline)}
-                style="font-size: 34px;"
-              ></sl-icon>
-              front
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  e.stopPropagation();
+                  if (this._showTabView && this._entryViewerState === 'front') {
+                    this._showTabView = false;
+                    return;
+                  }
+                  this._entryViewerState = 'front';
+                  this._showTabView = true;
+                }
+              }}
+            >
+              <div class="column center-content">
+                <sl-icon
+                  .src=${wrapPathInSvg(mdiViewGalleryOutline)}
+                  style="font-size: 34px;"
+                ></sl-icon>
+                front
+              </div>
             </div>
-          </div>
-          <div
-            id="tab-bar-button"
-            class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'side'
-              ? 'btn-selected'
-              : ''}"
-            tabindex="0"
-            @click="${(e) => {
-              if (this._showTabView && this._entryViewerState === 'side') {
-                this._showTabView = false;
-                return;
-              }
-              console.log('Setting entryViewerState to side.');
-              this._entryViewerState = 'side';
-              this._showTabView = true;
-            }}"
-            @keypress="${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
+          </sl-tooltip>
+
+          <sl-tooltip content="Show Entry Viewer to the Side" placement="bottom" hoist>
+            <div
+              id="tab-bar-button"
+              class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'side'
+                ? 'btn-selected'
+                : ''}"
+              tabindex="0"
+              @click="${(_e) => {
                 if (this._showTabView && this._entryViewerState === 'side') {
                   this._showTabView = false;
                   return;
@@ -967,17 +962,28 @@ export class MainDashboard extends LitElement {
                 console.log('Setting entryViewerState to side.');
                 this._entryViewerState = 'side';
                 this._showTabView = true;
-              }
-            }}"
-          >
-            <div class="column center-content">
-              <sl-icon
-                .src=${wrapPathInSvg(mdiViewGalleryOutline)}
-                style="font-size: 34px;"
-              ></sl-icon>
-              side
+              }}"
+              @keypress="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  if (this._showTabView && this._entryViewerState === 'side') {
+                    this._showTabView = false;
+                    return;
+                  }
+                  console.log('Setting entryViewerState to side.');
+                  this._entryViewerState = 'side';
+                  this._showTabView = true;
+                }
+              }}"
+            >
+              <div class="column center-content">
+                <sl-icon
+                  .src=${wrapPathInSvg(mdiViewGalleryOutline)}
+                  style="font-size: 34px;"
+                ></sl-icon>
+                side
+              </div>
             </div>
-          </div>
+          </sl-tooltip>
         </div>
       </div>
     `;
@@ -1019,10 +1025,17 @@ export class MainDashboard extends LitElement {
           height: var(--sidebar-width);
         }
 
+        .drawer-separator {
+          width: 2px;
+          background: #1f5a09;
+          cursor: col-resize;
+        }
+
         .side-drawer {
           position: relative;
           max-height: calc(100vh - 124px);
           background: var(--sl-color-primary-100);
+          border-top: 4px solid #51ed18;
         }
 
         .entry-viewer {
