@@ -1098,7 +1098,9 @@ export class MainDashboard extends LitElement {
         .entry-tab {
           height: 40px;
           width: 200px;
-          background: var(--sl-color-primary-400);
+          background: #43c016;
+          color: black;
+          /* background: var(--sl-color-primary-400); */
           border-radius: 4px;
           margin-right: 5px;
           padding-left: 4px;
