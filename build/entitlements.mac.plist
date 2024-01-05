@@ -8,5 +8,9 @@
     <true/>
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
     <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Lightningrodlabs We needs access to your camera for one of your Applets.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Lightningrodlabs We needs access to your microphone for one of your Applets.</string>
   </dict>
 </plist>
