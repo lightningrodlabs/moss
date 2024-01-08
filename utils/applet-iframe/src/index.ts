@@ -239,12 +239,10 @@ const weApi: WeServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-
   document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 
   // get global attachment-types with setTimeout in order not to block subsequent stuff
   setTimeout(async () => {
-    // console.log(`@applet-iframe setup: Getting global attachment types...`);
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
     window.__WE_API__.attachmentTypes = globalAttachmentTypes;
   });
@@ -415,7 +413,6 @@ async function getRenderView(): Promise<RenderView | undefined> {
 
 async function getGlobalAttachmentTypes() {
   const attachmentTypes = new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>();
-
   const internalAttachmentTypes: Record<
     AppletId,
     Record<AttachmentName, InternalAttachmentType>

@@ -517,22 +517,21 @@ export class WeStore {
   );
 
   allAttachmentTypes: AsyncReadable<Record<EntryHashB64, Record<string, InternalAttachmentType>>> =
-    alwaysSubscribed(
-      pipe(
-        this.allRunningApplets,
-        (runningApplets) =>
-          mapAndJoin(runningApplets, (appletStore) => appletStore.attachmentTypes),
-        (allAttachmentTypes) => {
-          const attachments: Record<AppletId, Record<string, InternalAttachmentType>> = {};
+    pipe(
+      this.allRunningApplets,
+      (runningApplets) => {
+        return mapAndJoin(runningApplets, (appletStore) => appletStore.attachmentTypes);
+      },
+      (allAttachmentTypes) => {
+        const attachments: Record<AppletId, Record<string, InternalAttachmentType>> = {};
 
-          for (const [appletHash, appletAttachments] of Array.from(allAttachmentTypes.entries())) {
-            if (Object.keys(appletAttachments).length > 0) {
-              attachments[encodeHashToBase64(appletHash)] = appletAttachments;
-            }
+        for (const [appletHash, appletAttachments] of Array.from(allAttachmentTypes.entries())) {
+          if (Object.keys(appletAttachments).length > 0) {
+            attachments[encodeHashToBase64(appletHash)] = appletAttachments;
           }
-          return completed(attachments);
-        },
-      ),
+        }
+        return completed(attachments);
+      },
     );
 
   async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
