@@ -53,7 +53,7 @@ import { AppOpenViews } from '../layout/types.js';
 type OpenTab =
   | {
       type: 'hrl';
-      hrl: HrlWithContext;
+      hrlWithContext: HrlWithContext;
       groupHashesB64: DnaHashB64[];
       appletIds: AppletId[];
     }
@@ -164,7 +164,7 @@ export class MainDashboard extends LitElement {
         id: tabId,
         tab: {
           type: 'hrl',
-          hrl: {
+          hrlWithContext: {
             hrl,
             context,
           },
@@ -341,7 +341,7 @@ export class MainDashboard extends LitElement {
     //   }
     // });
 
-    // add event listener to close entry viewer when clicking outside of it
+    // add event listener to close attachable viewer when clicking outside of it
     document.addEventListener('click', () => {
       if (this._showTabView && this._attachableViewerState === 'front') {
         this._showTabView = false;
@@ -525,13 +525,13 @@ export class MainDashboard extends LitElement {
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
-          Entry Viewer
+          Attachable Viewer
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where attachments and other entries are displayed. Opening an attachment in one of
-          your applets will create a new tab here.<br /><br />
-          If you are looking at an attachment, red indicators show you the group(s) and applet(s)
-          this specific attachment belongs to:
+          This is where attachables are displayed. Opening an attachable from one of your applets
+          will create a new tab here.<br /><br />
+          If you are looking at an attachable, green indicators show you the group(s) and applet(s)
+          the specific attachable belongs to:
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
@@ -564,8 +564,7 @@ export class MainDashboard extends LitElement {
               this._showTabView = false;
             }
           }}
-          .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
-          .context=${info.tab.hrl.context}
+          .hrlWithContext=${info.tab.hrlWithContext}
           style="display: flex; flex: 1;"
         ></attachable-view>`;
       case 'html':
@@ -641,7 +640,7 @@ export class MainDashboard extends LitElement {
               }}
             >
               ${this.renderCloseTab(tabInfo.id)}
-              <entry-title .hrlWithContext=${tabInfo.tab.hrl}></entry-title>
+              <entry-title .hrlWithContext=${tabInfo.tab.hrlWithContext}></entry-title>
             </div>
           `;
         case 'html':
@@ -682,7 +681,7 @@ export class MainDashboard extends LitElement {
           const alreadyOpen = Object.values(this._openTabs).find(
             (tabInfo) =>
               tabInfo.tab.type === 'hrl' &&
-              JSON.stringify(tabInfo.tab.hrl) === JSON.stringify(hrlWithContext),
+              JSON.stringify(tabInfo.tab.hrlWithContext) === JSON.stringify(hrlWithContext),
           );
           if (alreadyOpen) {
             this.openTab(alreadyOpen);
@@ -695,7 +694,7 @@ export class MainDashboard extends LitElement {
             id: tabId,
             tab: {
               type: 'hrl',
-              hrl: hrlWithContext,
+              hrlWithContext,
               groupHashesB64: groupContextHashesB64,
               appletIds: appletContextIds,
             },
@@ -909,7 +908,7 @@ export class MainDashboard extends LitElement {
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
-          <sl-tooltip content="Show Entry Viewer in Front" placement="bottom" hoist>
+          <sl-tooltip content="Show Attachable Viewer in Front" placement="bottom" hoist>
             <div
               id="tab-bar-button"
               class="entry-tab-bar-button ${this._showTabView &&
@@ -948,7 +947,7 @@ export class MainDashboard extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content="Show Entry Viewer to the Side" placement="bottom" hoist>
+          <sl-tooltip content="Show Attachable Viewer to the Side" placement="bottom" hoist>
             <div
               id="tab-bar-button"
               class="entry-tab-bar-button ${this._showTabView &&

@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { weClientContext } from '../context';
-import { Hrl } from '@lightningrodlabs/we-applet';
+import { Hrl, HrlWithContext } from '@lightningrodlabs/we-applet';
 import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiNotePlusOutline } from '@mdi/js';
@@ -21,16 +21,13 @@ import { mdiNotePlusOutline } from '@mdi/js';
 @customElement('hrl-to-clipboard')
 export class HrlToClipboard extends LitElement {
   @property()
-  hrl!: Hrl;
-
-  @property()
-  context: any;
+  hrlWithContext!: HrlWithContext;
 
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient | WeServices;
 
   async hrlToClipboard() {
-    await this.weClient.hrlToClipboard({ hrl: this.hrl, context: this.context });
+    await this.weClient.hrlToClipboard(this.hrlWithContext);
   }
 
   render() {

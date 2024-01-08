@@ -51,7 +51,7 @@ export class AddAttachment extends LitElement {
       const hrlWithContext = await this.weClient.userSelectHrl();
       if (hrlWithContext) {
         await this.attachmentsStore.client.addAttachment(this.hash, hrlWithContext);
-        notify(msg('Entry attached.'));
+        notify(msg('Attachable attached.'));
       }
     } catch (e) {
       notifyError(msg('Error creating the attachment'));
@@ -61,7 +61,7 @@ export class AddAttachment extends LitElement {
 
   render() {
     return html`
-      <sl-tooltip content="Attach existing entry">
+      <sl-tooltip content="Attach existing attachable">
         <div
           class="row btn"
           tabindex="0"
