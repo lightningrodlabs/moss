@@ -13,7 +13,6 @@ import {
   AppletInfo,
   AttachableLocationAndInfo,
   GroupProfile,
-  HrlB64WithContext,
   HrlWithContext,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';

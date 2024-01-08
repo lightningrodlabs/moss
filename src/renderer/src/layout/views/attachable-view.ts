@@ -12,7 +12,7 @@ import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { Hrl, HrlWithContext } from '@lightningrodlabs/we-applet';
+import { HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import { weStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
