@@ -310,8 +310,8 @@ export class GroupHome extends LitElement {
       <span style="position: absolute; bottom: 5px; left: 10px;"
         >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
       >
-      <div class="row" style="flex: 1">
-        <div class="column" style="flex: 1; margin: 16px;">
+      <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
+        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll;">
           <!-- Top Row -->
 
           <div class="row" style="align-items: center; margin-bottom: 24px">
