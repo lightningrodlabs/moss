@@ -121,17 +121,17 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     // background-services don't need to provide global attachment types as they are available via the WeStore anyway.
     attachmentTypes: new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>(),
     async attachableInfo(
-      hrlWithConext: HrlWithContext,
+      hrlWithContext: HrlWithContext,
     ): Promise<AttachableLocationAndInfo | undefined> {
-      const dnaHash = hrlWithConext.hrl[0];
+      const dnaHash = hrlWithContext.hrl[0];
 
       try {
         const location = await toPromise(
-          weStore.hrlLocations.get(dnaHash).get(hrlWithConext.hrl[1]),
+          weStore.hrlLocations.get(dnaHash).get(hrlWithContext.hrl[1]),
         );
         if (!location) return undefined;
         const attachableInfo = await toPromise(
-          weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(hrlWithConext))),
+          weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(hrlWithContext))),
         );
 
         if (!attachableInfo) return undefined;
@@ -144,9 +144,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         return attachableAndAppletInfo;
       } catch (e) {
         console.warn(
-          `Failed to get attachableInfo for hrl ${hrlWithConext.hrl.map((hash) =>
+          `Failed to get attachableInfo for hrl ${hrlWithContext.hrl.map((hash) =>
             encodeHashToBase64(hash),
-          )} with context ${hrlWithConext.context}: ${e}`,
+          )} with context ${hrlWithContext.context}: ${e}`,
         );
         return undefined;
       }
@@ -218,8 +218,8 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeServices.');
     },
-    async hrlToClipboard(hrlWithConext: HrlWithContext): Promise<void> {
-      weStore.hrlToClipboard(hrlWithConext);
+    async hrlToClipboard(hrlWithContext: HrlWithContext): Promise<void> {
+      weStore.hrlToClipboard(hrlWithContext);
     },
   };
 }

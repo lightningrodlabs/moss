@@ -173,13 +173,15 @@ export interface WeServices {
    * @param hrl
    * @returns
    */
-  attachableInfo: (hrlWithConext: HrlWithContext) => Promise<AttachableLocationAndInfo | undefined>;
+  attachableInfo: (
+    hrlWithContext: HrlWithContext,
+  ) => Promise<AttachableLocationAndInfo | undefined>;
   /**
    * Adds the specified HRL to the We-internal clipboard
    * @param hrl
    * @returns
    */
-  hrlToClipboard: (hrlWithConext: HrlWithContext) => Promise<void>;
+  hrlToClipboard: (hrlWithContext: HrlWithContext) => Promise<void>;
   /**
    * Searching across all We Applets
    * @param searchFilter
@@ -256,11 +258,11 @@ export class WeClient implements WeServices {
 
   appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
 
-  attachableInfo = (hrlWithConext: HrlWithContext) =>
-    window.__WE_API__.attachableInfo(hrlWithConext);
+  attachableInfo = (hrlWithContext: HrlWithContext) =>
+    window.__WE_API__.attachableInfo(hrlWithContext);
 
-  hrlToClipboard = (hrlWithConext: HrlWithContext) =>
-    window.__WE_API__.hrlToClipboard(hrlWithConext);
+  hrlToClipboard = (hrlWithContext: HrlWithContext) =>
+    window.__WE_API__.hrlToClipboard(hrlWithContext);
 
   search = (filter: string) => window.__WE_API__.search(filter);
 
