@@ -74,7 +74,7 @@ export class ExampleApplet extends LitElement {
             `;
           case 'block':
             throw new Error('Block view is not implemented.');
-          case 'entry':
+          case 'attachable':
             switch (this.weClient.renderInfo.view.roleName) {
               case 'forum':
                 switch (this.weClient.renderInfo.view.integrityZomeName) {

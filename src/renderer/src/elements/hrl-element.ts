@@ -9,14 +9,14 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { decodeHashFromBase64 } from '@holochain/client';
+import { encodeHashToBase64 } from '@holochain/client';
 
-import { HrlB64WithContext } from '@lightningrodlabs/we-applet';
+import { HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
-import { hrlB64WithContextToRaw } from '../utils.js';
+import { hrlWithContextToB64 } from '../utils.js';
 
 @localized()
 @customElement('hrl-element')
@@ -26,7 +26,7 @@ export class HrlElement extends LitElement {
   _weStore!: WeStore;
 
   @property()
-  hrlB64!: HrlB64WithContext;
+  hrlWithContext!: HrlWithContext;
 
   @property()
   selectTitle: string | undefined;
@@ -40,37 +40,41 @@ export class HrlElement extends LitElement {
   //   notify(msg("Link copied to the clipboard."));
   // }
 
-  entryInfo = new StoreSubscriber(
+  attachableInfo = new StoreSubscriber(
     this,
     () =>
-      this._weStore.entryInfo
-        .get(decodeHashFromBase64(this.hrlB64.hrl[0]))
-        .get(decodeHashFromBase64(this.hrlB64.hrl[1])),
-    () => [this.hrlB64],
+      this._weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(this.hrlWithContext))),
+    () => [this.hrlWithContext],
   );
 
   handleClick() {
     this.dispatchEvent(
       new CustomEvent('hrl-selected', {
         detail: {
-          hrlWithContext: hrlB64WithContextToRaw(this.hrlB64),
+          hrlWithContext: this.hrlWithContext,
         },
       }),
     );
   }
 
   render() {
-    switch (this.entryInfo.value.status) {
+    switch (this.attachableInfo.value.status) {
       case 'pending':
         return html`<div class="row element" style="height: 30px;"><span>loading...</span></div>`;
       case 'error':
         return html`<div>Error</div>`;
       case 'complete':
-        if (this.entryInfo.value.value) {
+        if (this.attachableInfo.value.value) {
           return html`
             <div
               class="row element"
-              title=${`https://lightningrodlabs.org/we?we://hrl/${this.hrlB64.hrl[0]}/${this.hrlB64.hrl[1]}`}
+              title=${`https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
+                this.hrlWithContext.hrl[0],
+              )}/${encodeHashToBase64(this.hrlWithContext.hrl[1])}${
+                this.hrlWithContext.context
+                  ? `?context=${JSON.stringify(this.hrlWithContext.context)}`
+                  : ''
+              }`}
             >
               <div
                 class="row"
@@ -83,11 +87,11 @@ export class HrlElement extends LitElement {
                 <div class="row icon-container">
                   <sl-icon
                     style="height: 30px; width: 30px; border-radius: 5px 0 0 5px;"
-                    .src=${this.entryInfo.value.value.icon_src}
-                    alt="${this.entryInfo.value.value.name} entry type icon"
+                    .src=${this.attachableInfo.value.value.icon_src}
+                    alt="${this.attachableInfo.value.value.name} entry type icon"
                   ></sl-icon>
                 </div>
-                <div class="row title-container">${this.entryInfo.value.value.name}</div>
+                <div class="row title-container">${this.attachableInfo.value.value.name}</div>
               </div>
               <!-- <div class="row open">Open</div> -->
               <div
@@ -95,7 +99,7 @@ export class HrlElement extends LitElement {
                 title=${msg('Remove from clipboard.')}
                 tabindex="0"
                 @click=${() => {
-                  this._weStore.removeHrlFromClipboard(this.hrlB64);
+                  this._weStore.removeHrlFromClipboard(this.hrlWithContext);
                   this.dispatchEvent(new CustomEvent('hrl-removed', {}));
                 }}
               >

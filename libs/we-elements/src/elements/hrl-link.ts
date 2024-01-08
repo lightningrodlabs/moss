@@ -38,16 +38,19 @@ export class HrlLink extends LitElement {
     this,
     () =>
       lazyLoad(async () => {
-        const entryInfo = await this.weClient.entryInfo(this.hrl);
-        if (!entryInfo) return undefined;
+        const attachableInfo = await this.weClient.attachableInfo({
+          hrl: this.hrl,
+          context: this.context,
+        });
+        if (!attachableInfo) return undefined;
 
         const { groupsProfiles, appletsInfos } = await getAppletsInfosAndGroupsProfiles(
           this.weClient as WeClient,
-          [entryInfo.appletHash],
+          [attachableInfo.appletHash],
         );
 
         return {
-          entryInfo,
+          attachableInfo,
           groupsProfiles,
           appletsInfos,
         };
@@ -62,15 +65,19 @@ export class HrlLink extends LitElement {
       case 'complete':
         if (this.info.value.value === undefined) return html``; // TODO: what to put here?
 
-        const { appletsInfos, groupsProfiles, entryInfo } = this.info.value.value;
+        const { appletsInfos, groupsProfiles, attachableInfo } = this.info.value.value;
 
         return html`
           <sl-tooltip
             ><div slot="content">
               <div class="row" style="align-items: center">
-                ${this.onlyIcon ? html` <span>${entryInfo.entryInfo.name},&nbsp;</span> ` : html``}
-                <span> ${appletsInfos.get(entryInfo.appletHash)?.appletName} ${msg('in')}</span>
-                ${appletsInfos.get(entryInfo.appletHash)?.groupsIds.map(
+                ${this.onlyIcon
+                  ? html` <span>${attachableInfo.attachableInfo.name},&nbsp;</span> `
+                  : html``}
+                <span>
+                  ${appletsInfos.get(attachableInfo.appletHash)?.appletName} ${msg('in')}</span
+                >
+                ${appletsInfos.get(attachableInfo.appletHash)?.groupsIds.map(
                   (groupId) => html`
                     <img
                       .src=${groupsProfiles.get(groupId)?.logo_src}
@@ -93,10 +100,12 @@ export class HrlLink extends LitElement {
               }}
             >
               <div class="row" style="align-items: center">
-                <sl-icon .src=${entryInfo.entryInfo.icon_src}></sl-icon>
+                <sl-icon .src=${attachableInfo.attachableInfo.icon_src}></sl-icon>
                 ${this.onlyIcon
                   ? html``
-                  : html` <span style="margin-left: 8px">${entryInfo.entryInfo.name}</span> `}
+                  : html`
+                      <span style="margin-left: 8px">${attachableInfo.attachableInfo.name}</span>
+                    `}
               </div>
             </sl-tag>
           </sl-tooltip>

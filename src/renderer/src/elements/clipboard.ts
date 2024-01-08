@@ -11,7 +11,7 @@ import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import {
   AppletInfo,
-  EntryLocationAndInfo,
+  AttachableLocationAndInfo,
   GroupProfile,
   HrlB64WithContext,
   HrlWithContext,
@@ -23,9 +23,10 @@ import { buildHeadlessWeClient } from '../applets/applet-host.js';
 import './hrl-element.js';
 import './clipboard-search.js';
 import { ClipboardSearch } from './clipboard-search.js';
+import { hrlB64WithContextToRaw } from '../utils.js';
 
 export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, EntryLocationAndInfo]>;
+  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
 }
@@ -51,7 +52,7 @@ export class WeClipboard extends LitElement {
   mode: 'open' | 'select' = 'open';
 
   @state()
-  clipboardContent: Array<HrlB64WithContext> = [];
+  clipboardContent: Array<string> = [];
 
   show(mode: 'open' | 'select') {
     this.loadClipboardContent();
@@ -67,15 +68,15 @@ export class WeClipboard extends LitElement {
 
   loadClipboardContent() {
     const clipboardJSON: string | null = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<HrlB64WithContext> = [];
+    let clipboardContent: Array<string> = [];
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
     }
     this.clipboardContent = clipboardContent;
   }
 
-  removeHrlFromClipboard(hrlB64: HrlB64WithContext) {
-    this._weStore.removeHrlFromClipboard(hrlB64);
+  removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
+    this._weStore.removeHrlFromClipboard(hrlWithContext);
     this.loadClipboardContent();
   }
 
@@ -164,9 +165,9 @@ export class WeClipboard extends LitElement {
 
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
             ${this.clipboardContent.map(
-              (hrlB64) => html`
+              (hrlB64Stringified) => html`
                 <hrl-element
-                  .hrlB64=${hrlB64}
+                  .hrlWithContext=${hrlB64WithContextToRaw(JSON.parse(hrlB64Stringified))}
                   .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
                   @hrl-removed=${() => this.loadClipboardContent()}
                   @hrl-selected=${(e) => this.handleHrlSelected(e)}

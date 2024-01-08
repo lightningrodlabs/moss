@@ -29,7 +29,7 @@ export interface HrlB64WithContext {
   context: any;
 }
 
-export interface EntryInfo {
+export interface AttachableInfo {
   name: string;
   icon_src: string;
 }
@@ -42,7 +42,7 @@ export interface GroupProfile {
 export interface AttachmentType {
   label: string;
   icon_src: string;
-  create: (attachToHrl: Hrl) => Promise<HrlWithContext>;
+  create: (attachToHrlWithContext: HrlWithContext) => Promise<HrlWithContext>;
 }
 
 export type AttachmentName = string;
@@ -109,9 +109,9 @@ export interface OpenViews {
   openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
 }
 
-export interface EntryLocationAndInfo {
-  appletHash: EntryHash;
-  entryInfo: EntryInfo;
+export interface AttachableLocationAndInfo {
+  appletHash: AppletHash;
+  attachableInfo: AttachableInfo;
 }
 
 export interface AppletInfo {
@@ -129,7 +129,7 @@ export type AppletView =
   | { type: 'main' }
   | { type: 'block'; block: string; context: any }
   | {
-      type: 'entry';
+      type: 'attachable';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
@@ -188,11 +188,11 @@ export type RenderView =
 
 export type ParentToAppletRequest =
   | {
-      type: 'get-applet-entry-info';
+      type: 'get-applet-attachable-info';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
-      hrl: Hrl;
+      hrlWithContext: HrlWithContext;
     }
   | {
       type: 'get-applet-attachment-types';
@@ -207,7 +207,7 @@ export type ParentToAppletRequest =
   | {
       type: 'create-attachment';
       attachmentType: string;
-      attachToHrl: Hrl;
+      attachToHrlWithContext: HrlWithContext;
     };
 
 export interface AppletToParentMessage {
@@ -259,8 +259,8 @@ export type AppletToParentRequest =
       groupId: DnaHash;
     }
   | {
-      type: 'get-global-entry-info';
-      hrl: Hrl;
+      type: 'get-global-attachable-info';
+      hrlWithContext: HrlWithContext;
     }
   | {
       type: 'hrl-to-clipboard';
@@ -324,7 +324,7 @@ export type OpenViewRequest =
 export interface CreateAttachmentRequest {
   appletHash: EntryHash;
   attachmentType: string;
-  attachToHrl: Hrl;
+  attachToHrlWithContext: HrlWithContext;
 }
 
 export interface InternalAttachmentType {

@@ -66,7 +66,7 @@ export class AppletStore {
         if (!host) return Promise.resolve({});
         try {
           const attachmentTypes = await host.getAppletAttachmentTypes();
-          console.log(attachmentTypes);
+          // console.log(attachmentTypes);
           return attachmentTypes;
         } catch (e) {
           console.warn(`Failed to get attachment types from applet "${host.appletId}": ${e}`);

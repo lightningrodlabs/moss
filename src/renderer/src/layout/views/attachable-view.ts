@@ -21,8 +21,8 @@ import { WeStore } from '../../we-store.js';
 import './applet-view.js';
 import { buildHeadlessWeClient } from '../../applets/applet-host.js';
 
-@customElement('entry-view')
-export class EntryView extends LitElement {
+@customElement('attachable-view')
+export class AttachableView extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
   _weStore!: WeStore;
 
@@ -64,7 +64,7 @@ export class EntryView extends LitElement {
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
         .view=${{
-          type: 'entry',
+          type: 'attachable',
           roleName: dnaLocation.roleName,
           integrityZomeName: entryTypeLocation.integrity_zome,
           entryType: entryTypeLocation.entry_def,

@@ -24,16 +24,13 @@ export class HrlToClipboard extends LitElement {
   hrl!: Hrl;
 
   @property()
-  context: any = {};
+  context: any;
 
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient | WeServices;
 
   async hrlToClipboard() {
-    await this.weClient.hrlToClipboard({
-      hrl: this.hrl,
-      context: this.context,
-    });
+    await this.weClient.hrlToClipboard({ hrl: this.hrl, context: this.context });
   }
 
   render() {

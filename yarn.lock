@@ -1680,15 +1680,15 @@
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
 "@lightningrodlabs/attachments@file:libs/attachments":
-  version "0.3.1"
+  version "0.4.0"
   dependencies:
     "@holochain-open-dev/elements" "0.8.4"
     "@holochain-open-dev/profiles" "0.17.3"
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-fb6b402a-6f94-45a9-8531-22b3ab7dd2fe-1703721843369/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.3.1-fb6b402a-6f94-45a9-8531-22b3ab7dd2fe-1703721843369/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.4.0-3cf2c9d5-9f0f-4024-8625-be6c2dcd247b-1704707378605/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.4.0-3cf2c9d5-9f0f-4024-8625-be6c2dcd247b-1704707378605/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1697,19 +1697,19 @@
     lit "^3.0.2"
 
 "@lightningrodlabs/we-applet@file:./libs/we-applet", "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.12.2"
+  version "0.12.3"
   dependencies:
     "@holochain/client" "0.16.6"
 
 "@lightningrodlabs/we-elements@file:libs/we-elements":
-  version "0.1.1"
+  version "0.2.0"
   dependencies:
     "@holochain-open-dev/elements" "^0.8.4"
     "@holochain-open-dev/profiles" "^0.17.3"
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.1.1-bde3fdc9-d9f0-4b56-bb0e-c3d32ead21d1-1703721843370/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.2.0-07e43a7a-0cf8-46f5-b586-dc9ce143e87e-1704707378604/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -2422,11 +2422,6 @@
   version "4.14.202"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.202.tgz#f09dbd2fb082d507178b2f2a5c7e74bd72ff98f8"
   integrity sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==
-
-"@types/md5@^2.3.2":
-  version "2.3.5"
-  resolved "https://registry.yarnpkg.com/@types/md5/-/md5-2.3.5.tgz#481cef0a896e3a5dcbfc5a8a8b02c05958af48a5"
-  integrity sha512-/i42wjYNgE6wf0j2bcTX6kuowmdL/6PE4IVitMpm2eYKBUuYCprdcWVK+xEF0gcV6ufMCRhtxmReGfc6hIK7Jw==
 
 "@types/mdast@^3.0.0":
   version "3.0.15"

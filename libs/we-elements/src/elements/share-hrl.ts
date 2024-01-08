@@ -18,10 +18,16 @@ export class ShareHrl extends LitElement {
   @property()
   hrl!: Hrl;
 
+  @property()
+  context: any;
+
   async copyHrl() {
-    const url = `https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
+    let url = `https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
       this.hrl[0],
     )}/${encodeHashToBase64(this.hrl[1])}`;
+    if (this.context) {
+      url = `${url}?context=${JSON.stringify(this.context)}`;
+    }
     await navigator.clipboard.writeText(url);
 
     notify(msg('Link copied.'));
