@@ -172,12 +172,12 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       } as AppletInfo;
     },
     async search(filter: string) {
-      console.log('%%%%%% @headlessWeClient: searching...');
+      // console.log('%%%%%% @headlessWeClient: searching...');
       const hosts = await toPromise(weStore.allAppletsHosts);
-      console.log(
-        '%%%%%% @headlessWeClient: got hosts: ',
-        Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
-      );
+      // console.log(
+      //   '%%%%%% @headlessWeClient: got hosts: ',
+      //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
+      // );
 
       const promises: Array<Promise<Array<HrlWithContext>>> = [];
 
