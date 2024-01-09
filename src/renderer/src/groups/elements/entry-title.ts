@@ -7,11 +7,12 @@ import { encodeHashToBase64 } from '@holochain/client';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { EntryInfo, Hrl } from '@lightningrodlabs/we-applet';
+import { AttachableInfo, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
+import { hrlWithContextToB64 } from '../../utils.js';
 
 @customElement('entry-title')
 export class EntryTitle extends LitElement {
@@ -22,21 +23,16 @@ export class EntryTitle extends LitElement {
    * REQUIRED. The Hrl of the entry to render
    */
   @property()
-  hrl!: Hrl;
+  hrlWithContext!: HrlWithContext;
 
-  /**
-   * REQUIRED. The context necessary to render this Hrl
-   */
-  @property()
-  context!: any;
-
-  entryInfo = new StoreSubscriber(
+  attachableInfo = new StoreSubscriber(
     this,
-    () => this._weStore.entryInfo.get(this.hrl[0]).get(this.hrl[1]),
-    () => [this.hrl],
+    () =>
+      this._weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(this.hrlWithContext))),
+    () => [this.hrlWithContext],
   );
 
-  renderName(info: EntryInfo | undefined) {
+  renderName(info: AttachableInfo | undefined) {
     if (!info) return html`[Unknown]`;
 
     return html` <sl-icon
@@ -47,16 +43,18 @@ export class EntryTitle extends LitElement {
   }
 
   render() {
-    switch (this.entryInfo.value.status) {
+    switch (this.attachableInfo.value.status) {
       case 'pending':
         return html``;
       case 'complete':
-        return this.renderName(this.entryInfo.value.value);
+        return this.renderName(this.attachableInfo.value.value);
       case 'error':
         console.error(
-          `Failed to get entry info for HRL '${this.hrl.map((hash) =>
+          `Failed to get attachable info for HRL '${this.hrlWithContext.hrl.map((hash) =>
             encodeHashToBase64(hash),
-          )}': ${this.entryInfo.value.error}`,
+          )} and context ${JSON.stringify(this.hrlWithContext.context)}': ${
+            this.attachableInfo.value.error
+          }`,
         );
         return html`[Unknown]`;
     }

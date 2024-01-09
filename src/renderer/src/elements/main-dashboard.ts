@@ -34,7 +34,7 @@ import './search-bar.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/appstore-view.js';
 import '../layout/views/publishing-view.js';
-import '../layout/views/entry-view.js';
+import '../layout/views/attachable-view.js';
 import '../groups/elements/group-home.js';
 
 import { weStyles } from '../shared-styles.js';
@@ -53,7 +53,7 @@ import { AppOpenViews } from '../layout/types.js';
 type OpenTab =
   | {
       type: 'hrl';
-      hrl: HrlWithContext;
+      hrlWithContext: HrlWithContext;
       groupHashesB64: DnaHashB64[];
       appletIds: AppletId[];
     }
@@ -112,7 +112,7 @@ export class MainDashboard extends LitElement {
   _showTabView = false;
 
   @state()
-  _entryViewerState: 'front' | 'side' = 'side';
+  _attachableViewerState: 'front' | 'side' = 'side';
 
   @state()
   dashboardState: DashboardState = {
@@ -164,7 +164,7 @@ export class MainDashboard extends LitElement {
         id: tabId,
         tab: {
           type: 'hrl',
-          hrl: {
+          hrlWithContext: {
             hrl,
             context,
           },
@@ -239,7 +239,7 @@ export class MainDashboard extends LitElement {
                 groupHash: e.detail.groupDnaHash,
                 appletHash: e.detail.appletEntryHash,
               };
-              if (this._entryViewerState === 'front') {
+              if (this._attachableViewerState === 'front') {
                 this._showTabView = false;
               }
             }}
@@ -341,9 +341,9 @@ export class MainDashboard extends LitElement {
     //   }
     // });
 
-    // add event listener to close entry viewer when clicking outside of it
+    // add event listener to close attachable viewer when clicking outside of it
     document.addEventListener('click', () => {
-      if (this._showTabView && this._entryViewerState === 'front') {
+      if (this._showTabView && this._attachableViewerState === 'front') {
         this._showTabView = false;
       }
     });
@@ -442,7 +442,7 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     };
-    if (this._entryViewerState === 'front') {
+    if (this._attachableViewerState === 'front') {
       this._showTabView = false;
     }
     // this.dynamicLayout.openTab({
@@ -488,7 +488,7 @@ export class MainDashboard extends LitElement {
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
-                if (this._entryViewerState === 'front') {
+                if (this._attachableViewerState === 'front') {
                   this._showTabView = false;
                 }
               }}
@@ -503,7 +503,7 @@ export class MainDashboard extends LitElement {
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
                 };
-                if (this._entryViewerState === 'front') {
+                if (this._attachableViewerState === 'front') {
                   this._showTabView = false;
                 }
               }}
@@ -525,13 +525,13 @@ export class MainDashboard extends LitElement {
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
-          Entry Viewer
+          Attachable Viewer
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where attachments and other entries are displayed. Opening an attachment in one of
-          your applets will create a new tab here.<br /><br />
-          If you are looking at an attachment, red indicators show you the group(s) and applet(s)
-          this specific attachment belongs to:
+          This is where attachables are displayed. Opening an attachable from one of your applets
+          will create a new tab here.<br /><br />
+          If you are looking at an attachable, green indicators show you the group(s) and applet(s)
+          the specific attachable belongs to:
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
@@ -557,17 +557,16 @@ export class MainDashboard extends LitElement {
   renderTabContent(info: TabInfo) {
     switch (info.tab.type) {
       case 'hrl':
-        return html`<entry-view
+        return html`<attachable-view
           @jump-to-applet=${(e) => {
             this.openViews.openAppletMain(e.detail);
-            if (this._entryViewerState === 'front') {
+            if (this._attachableViewerState === 'front') {
               this._showTabView = false;
             }
           }}
-          .hrl=${[info.tab.hrl.hrl[0], info.tab.hrl.hrl[1]]}
-          .context=${info.tab.hrl.context}
+          .hrlWithContext=${info.tab.hrlWithContext}
           style="display: flex; flex: 1;"
-        ></entry-view>`;
+        ></attachable-view>`;
       case 'html':
         return info.tab.template;
       default:
@@ -641,7 +640,7 @@ export class MainDashboard extends LitElement {
               }}
             >
               ${this.renderCloseTab(tabInfo.id)}
-              <entry-title .hrl=${[tabInfo.tab.hrl.hrl[0], tabInfo.tab.hrl.hrl[1]]}></entry-title>
+              <entry-title .hrlWithContext=${tabInfo.tab.hrlWithContext}></entry-title>
             </div>
           `;
         case 'html':
@@ -682,7 +681,7 @@ export class MainDashboard extends LitElement {
           const alreadyOpen = Object.values(this._openTabs).find(
             (tabInfo) =>
               tabInfo.tab.type === 'hrl' &&
-              JSON.stringify(tabInfo.tab.hrl) === JSON.stringify(hrlWithContext),
+              JSON.stringify(tabInfo.tab.hrlWithContext) === JSON.stringify(hrlWithContext),
           );
           if (alreadyOpen) {
             this.openTab(alreadyOpen);
@@ -695,7 +694,7 @@ export class MainDashboard extends LitElement {
             id: tabId,
             tab: {
               type: 'hrl',
-              hrl: hrlWithContext,
+              hrlWithContext,
               groupHashesB64: groupContextHashesB64,
               appletIds: appletContextIds,
             },
@@ -774,25 +773,25 @@ export class MainDashboard extends LitElement {
             }}
           ></div>
           <div
-            id="entry-viewer"
+            id="attachable-viewer"
             class="${classMap({
-              'entry-viewer': this._entryViewerState === 'front',
-              'slide-in-right': this._entryViewerState === 'front',
-              'slide-out-right': this._entryViewerState === 'front',
-              'side-drawer': this._entryViewerState === 'side',
-              hidden: !this._showTabView && this._entryViewerState === 'side',
-              show: this._showTabView && this._entryViewerState === 'front',
-              hide: !this._showTabView && this._entryViewerState === 'front',
+              'attachable-viewer': this._attachableViewerState === 'front',
+              'slide-in-right': this._attachableViewerState === 'front',
+              'slide-out-right': this._attachableViewerState === 'front',
+              'side-drawer': this._attachableViewerState === 'side',
+              hidden: !this._showTabView && this._attachableViewerState === 'side',
+              show: this._showTabView && this._attachableViewerState === 'front',
+              hide: !this._showTabView && this._attachableViewerState === 'front',
             })}"
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
-              ._showTabView && this._entryViewerState === 'side'
+              ._showTabView && this._attachableViewerState === 'side'
               ? `width: ${
                   this._drawerWidth > 200 ? this._drawerWidth : 200
                 }px; display: flex; flex-grow: 0; flex-shrink: 0;`
               : ''}"
             @click=${(e) => {
               // Prevent propagation such hat only clicks outside of this container bubble up and we
-              // can close the entry-view-container on side-click
+              // can close the attachable-view-container on side-click
               e.stopPropagation();
             }}
           >
@@ -801,7 +800,7 @@ export class MainDashboard extends LitElement {
         </div>
 
         <!-- BOTTOM BAR -->
-        <div class="entry-view-bar" style="${this._showTabView ? '' : 'display: none;'}">
+        <div class="attachable-view-bar" style="${this._showTabView ? '' : 'display: none;'}">
           ${this.renderEntryTabBar()}
         </div>
       </div>
@@ -897,7 +896,7 @@ export class MainDashboard extends LitElement {
                         groupHash: e.detail.groupDnaHash,
                         appletHash: e.detail.appletHash,
                       };
-                      if (this._entryViewerState === 'front') {
+                      if (this._attachableViewerState === 'front') {
                         this._showTabView = false;
                       }
                     }}
@@ -909,30 +908,31 @@ export class MainDashboard extends LitElement {
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
-          <sl-tooltip content="Show Entry Viewer in Front" placement="bottom" hoist>
+          <sl-tooltip content="Show Attachable Viewer in Front" placement="bottom" hoist>
             <div
               id="tab-bar-button"
-              class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'front'
+              class="entry-tab-bar-button ${this._showTabView &&
+              this._attachableViewerState === 'front'
                 ? 'btn-selected'
                 : ''}"
               tabindex="0"
               @click=${(e) => {
                 e.stopPropagation();
-                if (this._showTabView && this._entryViewerState === 'front') {
+                if (this._showTabView && this._attachableViewerState === 'front') {
                   this._showTabView = false;
                   return;
                 }
-                this._entryViewerState = 'front';
+                this._attachableViewerState = 'front';
                 this._showTabView = true;
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   e.stopPropagation();
-                  if (this._showTabView && this._entryViewerState === 'front') {
+                  if (this._showTabView && this._attachableViewerState === 'front') {
                     this._showTabView = false;
                     return;
                   }
-                  this._entryViewerState = 'front';
+                  this._attachableViewerState = 'front';
                   this._showTabView = true;
                 }
               }}
@@ -947,30 +947,31 @@ export class MainDashboard extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content="Show Entry Viewer to the Side" placement="bottom" hoist>
+          <sl-tooltip content="Show Attachable Viewer to the Side" placement="bottom" hoist>
             <div
               id="tab-bar-button"
-              class="entry-tab-bar-button ${this._showTabView && this._entryViewerState === 'side'
+              class="entry-tab-bar-button ${this._showTabView &&
+              this._attachableViewerState === 'side'
                 ? 'btn-selected'
                 : ''}"
               tabindex="0"
               @click="${(_e) => {
-                if (this._showTabView && this._entryViewerState === 'side') {
+                if (this._showTabView && this._attachableViewerState === 'side') {
                   this._showTabView = false;
                   return;
                 }
-                console.log('Setting entryViewerState to side.');
-                this._entryViewerState = 'side';
+                console.log('Setting attachableViewerState to side.');
+                this._attachableViewerState = 'side';
                 this._showTabView = true;
               }}"
               @keypress="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  if (this._showTabView && this._entryViewerState === 'side') {
+                  if (this._showTabView && this._attachableViewerState === 'side') {
                     this._showTabView = false;
                     return;
                   }
-                  console.log('Setting entryViewerState to side.');
-                  this._entryViewerState = 'side';
+                  console.log('Setting attachableViewerState to side.');
+                  this._attachableViewerState = 'side';
                   this._showTabView = true;
                 }
               }}"
@@ -1038,7 +1039,7 @@ export class MainDashboard extends LitElement {
           border-top: 4px solid #51ed18;
         }
 
-        .entry-viewer {
+        .attachable-viewer {
           overflow: hidden;
           display: flex;
           flex: 1;
@@ -1100,7 +1101,7 @@ export class MainDashboard extends LitElement {
           color: var(--sl-color-primary-50);
         }
 
-        .entry-view-bar {
+        .attachable-view-bar {
           display: flex;
           align-items: center;
           padding-left: 5px;

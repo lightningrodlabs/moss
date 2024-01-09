@@ -64,9 +64,7 @@ export class ExampleApplet extends LitElement {
                       const appInfo = await client.appInfo();
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                         .cell_id[0];
-                      this.weClient!.openHrl([dnaHash, e.detail.postHash], {
-                        detail: 'post',
-                      });
+                      this.weClient!.openHrl([dnaHash, e.detail.postHash], {});
                     }}
                   ></applet-main>
                 </attachments-context>
@@ -74,7 +72,7 @@ export class ExampleApplet extends LitElement {
             `;
           case 'block':
             throw new Error('Block view is not implemented.');
-          case 'entry':
+          case 'attachable':
             switch (this.weClient.renderInfo.view.roleName) {
               case 'forum':
                 switch (this.weClient.renderInfo.view.integrityZomeName) {

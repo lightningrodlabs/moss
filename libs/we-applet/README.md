@@ -6,14 +6,17 @@ The differences between a We Applet and a normal Holochain App are:
 
 - A We Applet can make use of the profiles zome provided by We instead of using its own profiles module
 - A We Applet can provide more than just the default "main" UI. It can additionally provide:
-  - UI elements to display single DHT entries
+  - UI elements to display single "attachables"
   - UI widgets/blocks of any kind
   - UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
 - A We Applet can provide `AppletServices` for We or other Applets to use, including:
-  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) pointing to DHT content
-  - attachmentTypes: Entry types that can be attached by other Applets, alongside with a `create()` method that creates a new entry type to be attached ad hoc.
-  - getEntryInfo(): A function that returns info for the entry associated to the HRL if it exists in the Applet and the method is implemented.
+  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) with context pointing to an attachable
+  - attachmentTypes: Attachable types that can be attached by other Applets, alongside with a `create()` method that creates a new attachable to be attached ad hoc.
+  - getAttachableInfo(): A function that returns info for the attachable associated to the HrlWithContext if it exists in the Applet and the method is implemented.
   - blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
+
+**Definition**: An "attachable" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
+"attachable-view", i.e. it can be displayed by the applet if requested.
 
 ### Implementing a most basic applet UI
 
@@ -41,7 +44,7 @@ const profilesClient = weClient.renderInfo.profilesClient;
 ### Implementing an (almost) full-fletched We Applet
 
 ```typescript=
-import { WeClient, AppletServices, HrlWithContext, EntryInfo } from '@lightningrodlabs/we-applet';
+import { WeClient, AppletServices, HrlWithContext, AttachableInfo } from '@lightningrodlabs/we-applet';
 
 // First define your AppletServices that We can call on your applet
 // to do things like search your applet or get information
@@ -52,9 +55,9 @@ const appletServices: Appletservices = {
         'post': {
             label: 'post',
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe',
-            create: (attachToHrl: Hrl) => {
-            // logic to create a new entry of that type. The attachToHrl can be used for
-            // backlinking, i.e. it is the HRL that the entry which is being
+            create: (attachToHrlWithContext: HrlWithContext) => {
+            // logic to create a new attachable of that type. The attachToHrlWithContext can be used for
+            // backlinking, i.e. it is the HrlWithContext that the attachable which is being
             // created with this function is being attached to.
             appletClient.callZome(...)
             ...
@@ -78,13 +81,14 @@ const appletServices: Appletservices = {
             view: "cross-applet-view",
         }
     },
-    getEntryInfo: async (
+    getAttachableInfo: async (
         appletClient: AppAgentClient,
         roleName: RoleName,
         integrityZomeName: ZomeName,
         entryType: string,
         hrl: Hrl,
-    ): Promise<EntryInfo | undefined> => {
+        context: any,
+    ): Promise<AttachableInfo | undefined> => {
         // your logic here...
         // for example
         const post = appletClient.callZome({
@@ -137,7 +141,7 @@ switch (weClient.renderInfo.type) {
           default:
              throw new Error("Unknown applet-view block type");
         }
-      case "entry":
+      case "attachable":
         switch (weClient.renderInfo.view.roleName) {
           case "forum":
             switch (weClient.renderInfo.view.integrityZomeName) {

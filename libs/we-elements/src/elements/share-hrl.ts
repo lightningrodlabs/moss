@@ -10,18 +10,21 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { notify, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiShareVariantOutline } from '@mdi/js';
 
-import { Hrl } from '@lightningrodlabs/we-applet';
+import { HrlWithContext } from '@lightningrodlabs/we-applet';
 
 @localized()
 @customElement('share-hrl')
 export class ShareHrl extends LitElement {
   @property()
-  hrl!: Hrl;
+  hrlWithContext!: HrlWithContext;
 
   async copyHrl() {
-    const url = `https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
-      this.hrl[0],
-    )}/${encodeHashToBase64(this.hrl[1])}`;
+    let url = `https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
+      this.hrlWithContext.hrl[0],
+    )}/${encodeHashToBase64(this.hrlWithContext.hrl[1])}`;
+    if (this.hrlWithContext.context) {
+      url = `${url}?context=${JSON.stringify(this.hrlWithContext.context)}`;
+    }
     await navigator.clipboard.writeText(url);
 
     notify(msg('Link copied.'));

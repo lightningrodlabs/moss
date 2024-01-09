@@ -22,7 +22,7 @@ import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdo
 
 import {
   AppletInfo,
-  EntryLocationAndInfo,
+  AttachableLocationAndInfo,
   GroupProfile,
   HrlWithContext,
 } from '@lightningrodlabs/we-applet';
@@ -34,7 +34,7 @@ import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { mdiMagnify } from '@mdi/js';
 
 export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, EntryLocationAndInfo]>;
+  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
 }
@@ -106,7 +106,7 @@ export class SearchEntry extends LitElement implements FormField {
    * @internal
    */
   @state()
-  info!: EntryLocationAndInfo | undefined;
+  info!: AttachableLocationAndInfo | undefined;
 
   /**
    * @internal
@@ -168,12 +168,12 @@ export class SearchEntry extends LitElement implements FormField {
 
     const hrlsWithInfo = await Promise.all(
       hrls.map(async (hrlWithContext) => {
-        const info = await this.weClient.entryInfo(hrlWithContext.hrl);
-        return [hrlWithContext, info] as [HrlWithContext, EntryLocationAndInfo | undefined];
+        const info = await this.weClient.attachableInfo(hrlWithContext.hrl);
+        return [hrlWithContext, info] as [HrlWithContext, AttachableLocationAndInfo | undefined];
       }),
     );
     const filteredHrls = hrlsWithInfo.filter(([hrl, info]) => info !== undefined) as Array<
-      [HrlWithContext, EntryLocationAndInfo]
+      [HrlWithContext, AttachableLocationAndInfo]
     >;
 
     const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
@@ -201,7 +201,7 @@ export class SearchEntry extends LitElement implements FormField {
     );
   }
 
-  onEntrySelected(hrlWithContext: HrlWithContext, info: EntryLocationAndInfo) {
+  onEntrySelected(hrlWithContext: HrlWithContext, info: AttachableLocationAndInfo) {
     this.dispatchEvent(
       new CustomEvent('entry-selected', {
         detail: {
@@ -260,10 +260,10 @@ export class SearchEntry extends LitElement implements FormField {
               <sl-menu-item .info=${info} .hrl=${hrlWithContext}>
                 <sl-icon
                   slot="prefix"
-                  .src=${info.entryInfo.icon_src}
+                  .src=${info.attachableInfo.icon_src}
                   style="margin-right: 16px"
                 ></sl-icon>
-                ${info.entryInfo.name}
+                ${info.attachableInfo.name}
                 <div slot="suffix" class="row" style="align-items: center">
                   <span class="placeholder">&nbsp;${msg('in')}&nbsp;</span>
                   ${searchResult.appletsInfos
@@ -309,10 +309,10 @@ export class SearchEntry extends LitElement implements FormField {
             .label=${this._label}
             .placeholder=${this.placeholder}
             @input=${() => this.onFilterChange()}
-            .value=${this.info ? this.info.entryInfo.name : ''}
+            .value=${this.info ? this.info.attachableInfo.name : ''}
           >
             ${this.info
-              ? html`<sl-icon .src=${this.info.entryInfo.icon_src} slot="prefix"></sl-icon>`
+              ? html`<sl-icon .src=${this.info.attachableInfo.icon_src} slot="prefix"></sl-icon>`
               : html`<sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon> `}
           </sl-input>
           <sl-menu

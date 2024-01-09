@@ -1,5 +1,4 @@
 import {
-  alwaysSubscribed,
   asyncDerived,
   asyncDeriveStore,
   AsyncReadable,
@@ -15,7 +14,14 @@ import {
   manualReloadStore,
   asyncReadable,
 } from '@holochain-open-dev/stores';
-import { DnaHashMap, HoloHashMap, LazyHoloHashMap, pickBy, slice } from '@holochain-open-dev/utils';
+import {
+  DnaHashMap,
+  HoloHashMap,
+  LazyHoloHashMap,
+  LazyMap,
+  pickBy,
+  slice,
+} from '@holochain-open-dev/utils';
 import { AppInfo, AppWebsocket, ProvisionedCell } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
@@ -42,6 +48,7 @@ import {
   appletHashFromAppId,
   appletIdFromAppId,
   findAppForDnaHash,
+  hrlB64WithContextToRaw,
   hrlWithContextToB64,
   initAppClient,
   isAppRunning,
@@ -450,30 +457,32 @@ export class WeStore {
       }),
   );
 
-  entryInfo = new LazyHoloHashMap(
-    (dnaHash: DnaHash) =>
-      new LazyHoloHashMap((hash: EntryHash | ActionHash) =>
-        pipe(this.hrlLocations.get(dnaHash).get(hash), (location) =>
-          location
-            ? pipe(
-                this.appletStores.get(location.dnaLocation.appletHash),
-                (appletStore) => appletStore!.host,
-                (host) =>
-                  lazyLoad(() =>
-                    host
-                      ? host.getAppletEntryInfo(
-                          location.dnaLocation.roleName,
-                          location.entryDefLocation.integrity_zome,
-                          location.entryDefLocation.entry_def,
-                          [dnaHash, hash],
-                        )
-                      : Promise.resolve(undefined),
-                  ),
-              )
-            : completed(undefined),
-        ),
-      ),
-  );
+  attachableInfo = new LazyMap((hrlB64WithContextStringified: string) => {
+    console.log('hrlWithContextStringified: ', hrlB64WithContextStringified);
+    const hrlB64WithContext: HrlB64WithContext = JSON.parse(hrlB64WithContextStringified);
+    const hrlWithContext = hrlB64WithContextToRaw(hrlB64WithContext);
+    return pipe(
+      this.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),
+      (location) =>
+        location
+          ? pipe(
+              this.appletStores.get(location.dnaLocation.appletHash),
+              (appletStore) => appletStore!.host,
+              (host) =>
+                lazyLoad(() =>
+                  host
+                    ? host.getAppletAttachableInfo(
+                        location.dnaLocation.roleName,
+                        location.entryDefLocation.integrity_zome,
+                        location.entryDefLocation.entry_def,
+                        hrlWithContext,
+                      )
+                    : Promise.resolve(undefined),
+                ),
+            )
+          : completed(undefined),
+    );
+  });
 
   appletsForBundleHash = new LazyHoloHashMap(
     (
@@ -639,32 +648,34 @@ export class WeStore {
     ),
   );
 
-  hrlToClipboard(hrl: HrlWithContext) {
-    const hrlB64 = hrlWithContextToB64(hrl);
+  hrlToClipboard(hrlWithContext: HrlWithContext) {
     const clipboardJSON = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<HrlB64WithContext> = [];
+    let clipboardContent: Array<string> = [];
+    const hrlB64WithConextStringified = JSON.stringify(hrlWithContextToB64(hrlWithContext));
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
-      // Only add if it's not already there
-      if (
-        clipboardContent.filter(
-          (hrlB64Stored) => JSON.stringify(hrlB64Stored) === JSON.stringify(hrlB64),
-        ).length === 0
-      ) {
-        clipboardContent.push(hrlB64);
-      }
     }
+    // Only add if it's not already there
+    if (
+      clipboardContent.filter(
+        (hrlB64StringifiedStored) => hrlB64StringifiedStored === hrlB64WithConextStringified,
+      ).length === 0
+    ) {
+      clipboardContent.push(hrlB64WithConextStringified);
+    }
+
     window.localStorage.setItem('clipboard', JSON.stringify(clipboardContent));
     notify(msg('Added to clipboard.'));
   }
 
-  removeHrlFromClipboard(hrlB64: HrlB64WithContext) {
+  removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
     const clipboardJSON = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<HrlB64WithContext> = [];
+    let clipboardContent: Array<string> = [];
+    const hrlB64WithConextStringified = JSON.stringify(hrlWithContextToB64(hrlWithContext));
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
       const newClipboardContent = clipboardContent.filter(
-        (hrlB64Stored) => JSON.stringify(hrlB64Stored) !== JSON.stringify(hrlB64),
+        (hrlB64StringifiedStored) => hrlB64StringifiedStored !== hrlB64WithConextStringified,
       );
       window.localStorage.setItem('clipboard', JSON.stringify(newClipboardContent));
       // const index = clipboardContent.indexOf(hrlB64);

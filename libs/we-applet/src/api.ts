@@ -9,7 +9,7 @@ import {
 import {
   BlockType,
   AttachmentType,
-  EntryInfo,
+  AttachableInfo,
   Hrl,
   HrlWithContext,
   WeNotification,
@@ -18,7 +18,7 @@ import {
   BlockName,
   AppletHash,
   AppletInfo,
-  EntryLocationAndInfo,
+  AttachableLocationAndInfo,
 } from './types';
 import { postMessage } from './utils';
 
@@ -71,8 +71,14 @@ export class AppletServices {
     (this.attachmentTypes = async (_appletClient, _appletHash, _weServices) => ({})),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => []),
-      (this.getEntryInfo = async (_appletClient, _roleName, _integrityZomeName, _entryType, _hrl) =>
-        undefined);
+      (this.getAttachableInfo = async (
+        _appletClient,
+        _roleName,
+        _integrityZomeName,
+        _entryType,
+        _hrl,
+        _context,
+      ) => undefined);
   }
 
   /**
@@ -90,13 +96,14 @@ export class AppletServices {
   /**
    * Get info about the specified entry of this Applet
    */
-  getEntryInfo: (
+  getAttachableInfo: (
     appletClient: AppAgentClient,
     roleName: RoleName,
     integrityZomeName: ZomeName,
     entryType: string,
     hrl: Hrl,
-  ) => Promise<EntryInfo | undefined>;
+    context?: any,
+  ) => Promise<AttachableInfo | undefined>;
   /**
    * Search in this Applet
    */
@@ -166,13 +173,15 @@ export interface WeServices {
    * @param hrl
    * @returns
    */
-  entryInfo: (hrl: Hrl) => Promise<EntryLocationAndInfo | undefined>;
+  attachableInfo: (
+    hrlWithContext: HrlWithContext,
+  ) => Promise<AttachableLocationAndInfo | undefined>;
   /**
    * Adds the specified HRL to the We-internal clipboard
    * @param hrl
    * @returns
    */
-  hrlToClipboard: (hrl: HrlWithContext) => Promise<void>;
+  hrlToClipboard: (hrlWithContext: HrlWithContext) => Promise<void>;
   /**
    * Searching across all We Applets
    * @param searchFilter
@@ -249,9 +258,11 @@ export class WeClient implements WeServices {
 
   appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
 
-  entryInfo = (hrl: Hrl) => window.__WE_API__.entryInfo(hrl);
+  attachableInfo = (hrlWithContext: HrlWithContext) =>
+    window.__WE_API__.attachableInfo(hrlWithContext);
 
-  hrlToClipboard = (hrl: HrlWithContext) => window.__WE_API__.hrlToClipboard(hrl);
+  hrlToClipboard = (hrlWithContext: HrlWithContext) =>
+    window.__WE_API__.hrlToClipboard(hrlWithContext);
 
   search = (filter: string) => window.__WE_API__.search(filter);
 

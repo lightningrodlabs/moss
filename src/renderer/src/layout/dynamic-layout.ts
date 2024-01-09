@@ -24,7 +24,7 @@ import './views/appstore-view.js';
 import './views/publishing-view.js';
 import './views/applet-block.js';
 import './views/applet-main.js';
-import './views/entry-view.js';
+import './views/attachable-view.js';
 import '../custom-views/elements/custom-view.js';
 
 import { openViewsContext } from './context.js';
@@ -319,11 +319,11 @@ export class DynamicLayout extends LitElement {
           ></entry-title>
         `}
         .template=${({ hrl, context }) =>
-          html` <entry-view
+          html` <attachable-view
             .hrl=${[decodeHashFromBase64(hrl[0]), decodeHashFromBase64(hrl[1])]}
             .context=${context}
             style="flex: 1"
-          ></entry-view>`}
+          ></attachable-view>`}
       >
       </golden-layout-register>
       <golden-layout-register

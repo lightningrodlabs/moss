@@ -48,6 +48,9 @@ export class CreateAttachment extends LitElement {
   @property(hashProperty('hash'))
   hash!: AnyDhtHash;
 
+  @property()
+  context: any;
+
   appletsInfosAndGroupsProfiles = new StoreSubscriber(
     this,
     () =>
@@ -63,7 +66,10 @@ export class CreateAttachment extends LitElement {
   async createAttachment(attachmentType: AttachmentType) {
     try {
       const dnaHash = await this.attachmentsStore.client.getDnaHash();
-      const hrlWithContext = await attachmentType.create([dnaHash, this.hash]);
+      const hrlWithContext = await attachmentType.create({
+        hrl: [dnaHash, this.hash],
+        context: this.context,
+      });
 
       await this.attachmentsStore.client.addAttachment(this.hash, hrlWithContext);
       this.weClient.openHrl(hrlWithContext.hrl, hrlWithContext.context);

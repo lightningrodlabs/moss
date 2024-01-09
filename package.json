@@ -26,7 +26,7 @@
     "build": "yarn typecheck && electron-vite build",
     "setup": "cd utils/rust-utils && yarn && yarn build && cd ../.. && yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && mkdir resources/default-apps && yarn prepare:default-apps",
     "setup:release": "cd utils/rust-utils && yarn && yarn build && cd ../.. && yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && yarn fetch:default-apps",
-    "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements install --check-files && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build",
+    "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements install --check-files && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build && rimraf ./node_modules/@lightningrodlabs/we-applet && yarn install --check-files",
     "build:rust-utils": "cd utils/rust-utils && yarn && yarn build && cd ../.. && rimraf node_modules/hc-we-rust-utils && yarn install --check-files",
     "build:applet-iframe": "yarn workspace applet-iframe build",
     "build:happ-iframe": "yarn workspace happ-iframe build",

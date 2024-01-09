@@ -12,7 +12,7 @@ import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { Hrl } from '@lightningrodlabs/we-applet';
+import { HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import { weStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
@@ -21,8 +21,8 @@ import { WeStore } from '../../we-store.js';
 import './applet-view.js';
 import { buildHeadlessWeClient } from '../../applets/applet-host.js';
 
-@customElement('entry-view')
-export class EntryView extends LitElement {
+@customElement('attachable-view')
+export class AttachableView extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
   _weStore!: WeStore;
 
@@ -30,18 +30,13 @@ export class EntryView extends LitElement {
    * REQUIRED. The Hrl of the entry to render
    */
   @property()
-  hrl!: Hrl;
-
-  /**
-   * REQUIRED. The context necessary to render this Hrl
-   */
-  @property()
-  context!: any;
+  hrlWithContext!: HrlWithContext;
 
   location = new StoreSubscriber(
     this,
-    () => this._weStore.hrlLocations.get(this.hrl[0]).get(this.hrl[1]),
-    () => [this.hrl],
+    () =>
+      this._weStore.hrlLocations.get(this.hrlWithContext.hrl[0]).get(this.hrlWithContext.hrl[1]),
+    () => [this.hrlWithContext],
   );
 
   jumpToApplet() {
@@ -64,12 +59,12 @@ export class EntryView extends LitElement {
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
         .view=${{
-          type: 'entry',
+          type: 'attachable',
           roleName: dnaLocation.roleName,
           integrityZomeName: entryTypeLocation.integrity_zome,
           entryType: entryTypeLocation.entry_def,
-          hrl: this.hrl,
-          context: this.context,
+          hrl: this.hrlWithContext.hrl,
+          context: this.hrlWithContext.context,
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
@@ -88,8 +83,11 @@ export class EntryView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiHomeImportOutline)}></sl-icon>
             </div>
           </sl-tooltip>
-          <hrl-to-clipboard .hrl=${this.hrl} class="toolbar-btn"></hrl-to-clipboard>
-          <share-hrl .hrl=${this.hrl} class="toolbar-btn"></share-hrl>
+          <hrl-to-clipboard
+            .hrlWithContext=${this.hrlWithContext}
+            class="toolbar-btn"
+          ></hrl-to-clipboard>
+          <share-hrl .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></share-hrl>
         </we-client-context>
       </div> `;
   }

@@ -2,9 +2,8 @@ import { pipe, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
   AttachmentType,
-  EntryInfo,
-  EntryLocationAndInfo,
-  Hrl,
+  AttachableInfo,
+  AttachableLocationAndInfo,
   HrlLocation,
   HrlWithContext,
   WeNotification,
@@ -32,6 +31,7 @@ import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
   getNotificationState,
+  hrlWithContextToB64,
   storeAppletNotifications,
   toOriginalCaseB64,
   validateNotifications,
@@ -120,25 +120,33 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
   return {
     // background-services don't need to provide global attachment types as they are available via the WeStore anyway.
     attachmentTypes: new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>(),
-    async entryInfo(hrl: Hrl): Promise<EntryLocationAndInfo | undefined> {
-      const dnaHash = hrl[0];
+    async attachableInfo(
+      hrlWithContext: HrlWithContext,
+    ): Promise<AttachableLocationAndInfo | undefined> {
+      const dnaHash = hrlWithContext.hrl[0];
 
       try {
-        const location = await toPromise(weStore.hrlLocations.get(dnaHash).get(hrl[1]));
+        const location = await toPromise(
+          weStore.hrlLocations.get(dnaHash).get(hrlWithContext.hrl[1]),
+        );
         if (!location) return undefined;
-        const entryInfo = await toPromise(weStore.entryInfo.get(hrl[0]).get(hrl[1]));
+        const attachableInfo = await toPromise(
+          weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(hrlWithContext))),
+        );
 
-        if (!entryInfo) return undefined;
+        if (!attachableInfo) return undefined;
 
-        const entryAndAppletInfo: EntryLocationAndInfo = {
+        const attachableAndAppletInfo: AttachableLocationAndInfo = {
           appletHash: location.dnaLocation.appletHash,
-          entryInfo,
+          attachableInfo,
         };
 
-        return entryAndAppletInfo;
+        return attachableAndAppletInfo;
       } catch (e) {
         console.warn(
-          `Failed to get entryInfo for hrl ${hrl.map((hash) => encodeHashToBase64(hash))}: ${e}`,
+          `Failed to get attachableInfo for hrl ${hrlWithContext.hrl.map((hash) =>
+            encodeHashToBase64(hash),
+          )} with context ${hrlWithContext.context}: ${e}`,
         );
         return undefined;
       }
@@ -163,12 +171,12 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       } as AppletInfo;
     },
     async search(filter: string) {
-      console.log('%%%%%% @headlessWeClient: searching...');
+      // console.log('%%%%%% @headlessWeClient: searching...');
       const hosts = await toPromise(weStore.allAppletsHosts);
-      console.log(
-        '%%%%%% @headlessWeClient: got hosts: ',
-        Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
-      );
+      // console.log(
+      //   '%%%%%% @headlessWeClient: got hosts: ',
+      //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
+      // );
 
       const promises: Array<Promise<Array<HrlWithContext>>> = [];
 
@@ -210,8 +218,8 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeServices.');
     },
-    async hrlToClipboard(hrl: HrlWithContext): Promise<void> {
-      weStore.hrlToClipboard(hrl);
+    async hrlToClipboard(hrlWithContext: HrlWithContext): Promise<void> {
+      weStore.hrlToClipboard(hrlWithContext);
     },
   };
 }
@@ -382,9 +390,9 @@ export async function handleAppletIframeMessage(
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
       return weServices.groupProfile(message.groupId);
-    case 'get-global-entry-info':
-      console.log("@applet-host: got 'get-entry-info' message: ", message);
-      return weServices.entryInfo(message.hrl);
+    case 'get-global-attachable-info':
+      console.log("@applet-host: got 'get-attachable-info' message: ", message);
+      return weServices.attachableInfo(message.hrlWithContext);
     case 'get-global-attachment-types':
       return toPromise(weStore.allAttachmentTypes);
     case 'sign-zome-call':
@@ -397,7 +405,10 @@ export async function handleAppletIframeMessage(
         ),
       );
       return host
-        ? host.createAttachment(message.request.attachmentType, message.request.attachToHrl)
+        ? host.createAttachment(
+            message.request.attachmentType,
+            message.request.attachToHrlWithContext,
+          )
         : Promise.reject(new Error('No applet host available.'));
     case 'localStorage.setItem':
       const appletLocalStorageJson: string | null =
@@ -444,19 +455,19 @@ export class AppletHost {
     this.appletId = appletId;
   }
 
-  async getAppletEntryInfo(
+  async getAppletAttachableInfo(
     roleName: string,
     integrityZomeName: string,
     entryType: string,
-    hrl: Hrl,
-  ): Promise<EntryInfo | undefined> {
-    console.log('@applet-host: calling getAppletEntryInfo()');
+    hrlWithContext: HrlWithContext,
+  ): Promise<AttachableInfo | undefined> {
+    console.log('@applet-host: calling getAppletAttachableInfo()');
     return this.postMessage({
-      type: 'get-applet-entry-info',
+      type: 'get-applet-attachable-info',
       roleName,
       integrityZomeName,
       entryType,
-      hrl,
+      hrlWithContext,
     });
   }
 
@@ -467,11 +478,14 @@ export class AppletHost {
     });
   }
 
-  createAttachment(attachmentType: string, attachToHrl: Hrl): Promise<HrlWithContext> {
+  createAttachment(
+    attachmentType: string,
+    attachToHrlWithContext: HrlWithContext,
+  ): Promise<HrlWithContext> {
     return this.postMessage({
       type: 'create-attachment',
       attachmentType,
-      attachToHrl,
+      attachToHrlWithContext,
     });
   }
 

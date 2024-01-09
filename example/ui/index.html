@@ -2,10 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="Description" content="Example We Applet." />
     <base href="/" />
     <title>Example We Applet</title>
@@ -19,97 +16,100 @@
       import '@shoelace-style/shoelace/dist/themes/light.css';
       // import './src/example-applet.ts';
       import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
-      import { WeClient, isWeContext, initializeHotReload } from "@lightningrodlabs/we-applet";
-      import "@lightningrodlabs/we-elements/dist/elements/we-client-context.js"
-      import { AttachmentsClient, AttachmentsStore } from "@lightningrodlabs/attachments";
-      import { CellType, encodeHashToBase64 } from "@holochain/client";
-      import { wrapPathInSvg } from "@holochain-open-dev/elements";
-      import { mdiPost } from "@mdi/js";
+      import { WeClient, isWeContext, initializeHotReload } from '@lightningrodlabs/we-applet';
+      import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+      import { AttachmentsClient, AttachmentsStore } from '@lightningrodlabs/attachments';
+      import { CellType, encodeHashToBase64 } from '@holochain/client';
+      import { wrapPathInSvg } from '@holochain-open-dev/elements';
+      import { mdiPost } from '@mdi/js';
 
-      import { ExampleApplet } from "./src/example-applet.ts";
-      import { PostsClient } from "./src/posts-client.ts";
-      import { PostsStore } from "./src/posts-store.ts";
+      import { ExampleApplet } from './src/example-applet.ts';
+      import { PostsClient } from './src/posts-client.ts';
+      import { PostsStore } from './src/posts-store.ts';
 
-
-      console.log("@example-applet: calling initializeHotReload");
-      console.log("@example-applet: initializeHotReload function: ", JSON.stringify(initializeHotReload));
+      console.log('@example-applet: calling initializeHotReload');
+      console.log(
+        '@example-applet: initializeHotReload function: ',
+        JSON.stringify(initializeHotReload)
+      );
       if (import.meta.env.DEV) {
         try {
           await initializeHotReload();
         } catch (e) {
-          console.warn("Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.")
+          console.warn(
+            'Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.'
+          );
         }
       }
-      console.log("Hot reload initialized.");
+      console.log('Hot reload initialized.');
 
-      console.log("window.__WE_API__: ", window.__WE_API__);
+      console.log('window.__WE_API__: ', window.__WE_API__);
 
-
-      console.log("isWeContext? ", isWeContext());
-
+      console.log('isWeContext? ', isWeContext());
 
       setBasePath('shoelace');
 
-      (async function() {
-
+      (async function () {
         const appletServices = {
           attachmentTypes: async (appletClient, _appletHash, _weServices) => ({
-            "post": {
-              label: "post",
+            post: {
+              label: 'post',
               icon_src: wrapPathInSvg(mdiPost),
               create: async (attachToHrl) => {
-                const postsClient = new PostsClient(appletClient, "forum");
+                const postsClient = new PostsClient(appletClient, 'forum');
                 const post = {
-                  title: "Attached Post",
-                  content: "",
+                  title: 'Attached Post',
+                  content: '',
                 };
                 const postRecord = await postsClient.createPost(post);
-                console.warn("@example-applet: created post with postRecord: ", postRecord);
-                console.warn(`@example-applet: @create: postRecord.action ${postRecord.action} ; post.action() ${postRecord.action()} ; postRecord.actionHash ${postRecord.actionHash}; post.actionHash() ${postRecord.actionHash()};`);
+                console.warn('@example-applet: created post with postRecord: ', postRecord);
+                console.warn(
+                  `@example-applet: @create: postRecord.action ${
+                    postRecord.action
+                  } ; post.action() ${postRecord.action()} ; postRecord.actionHash ${
+                    postRecord.actionHash
+                  }; post.actionHash() ${postRecord.actionHash()};`
+                );
                 const appInfo = await appletClient.appInfo();
-                const dnaHash = (appInfo.cell_info.forum[0])[
-                  CellType.Provisioned
-                ].cell_id[0];
-                const hrl = [
-                  postRecord.actionHash,
-                  dnaHash,
-                ];
+                const dnaHash = appInfo.cell_info.forum[0][CellType.Provisioned].cell_id[0];
+                const hrl = [postRecord.actionHash, dnaHash];
                 return {
                   hrl,
                   context: {},
-                }
-              }
-            }
+                };
+              },
+            },
           }),
           blockTypes: {},
           search: async (appletClient, _appletHash, _weServices, searchFilter) => {
-            const postsClient = new PostsClient(weClient.renderInfo.appletClient, "forum");
+            const postsClient = new PostsClient(weClient.renderInfo.appletClient, 'forum');
             const appInfo = await appletClient.appInfo();
-            const dnaHash = (appInfo.cell_info.forum[0])[
-              CellType.Provisioned
-            ].cell_id[0];
+            const dnaHash = appInfo.cell_info.forum[0][CellType.Provisioned].cell_id[0];
             const allPosts = await postsClient.getAllPosts();
             return allPosts
               .map((postEntryRecord) => [postEntryRecord.entry, postEntryRecord.actionHash])
-              .filter(([post, _actionHash]) => post.title.toLowerCase().includes(searchFilter.toLowerCase()) ? true : false)
+              .filter(([post, _actionHash]) =>
+                post.title.toLowerCase().includes(searchFilter.toLowerCase()) ? true : false
+              )
               .map(([post, actionHash]) => ({
                 hrl: [dnaHash, actionHash],
                 context: {},
               }));
           },
-          getEntryInfo: async (
+          getAttachableInfo: async (
             appletClient,
             roleName,
             integrityZomeName,
             entryType,
-            hrl
+            hrl,
+            _context
           ) => {
             switch (roleName) {
-              case "forum":
+              case 'forum':
                 switch (integrityZomeName) {
-                  case "posts_integrity":
+                  case 'posts_integrity':
                     switch (entryType) {
-                      case "post":
+                      case 'post':
                         const postsClient = new PostsClient(appletClient, roleName);
                         const post = await postsClient.getPost(hrl[1]);
                         if (!post) return undefined;
@@ -126,20 +126,22 @@
               default:
                 throw new Error(`Unknown role name '${roleName}'.`);
             }
-          }
+          },
         };
 
         const weClient = await WeClient.connect(appletServices);
-        const provider = document.getElementById("provider");
+        const provider = document.getElementById('provider');
         provider.weClient = weClient;
 
-        customElements.define("example-applet", ExampleApplet);
-        const exampleApplet = document.getElementById("example-applet");
-        exampleApplet.postsStore = new PostsStore(new PostsClient(weClient.renderInfo.appletClient, "forum"));
-        exampleApplet.attachmentsStore = new AttachmentsStore(new AttachmentsClient(weClient.renderInfo.appletClient, "forum"));
-
+        customElements.define('example-applet', ExampleApplet);
+        const exampleApplet = document.getElementById('example-applet');
+        exampleApplet.postsStore = new PostsStore(
+          new PostsClient(weClient.renderInfo.appletClient, 'forum')
+        );
+        exampleApplet.attachmentsStore = new AttachmentsStore(
+          new AttachmentsClient(weClient.renderInfo.appletClient, 'forum')
+        );
       })();
-
     </script>
   </body>
 </html>

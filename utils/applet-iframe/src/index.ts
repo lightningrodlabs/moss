@@ -110,10 +110,10 @@ const weApi: WeServices = {
       appletHash,
     }),
 
-  entryInfo: (hrl: Hrl) =>
+  attachableInfo: (hrlWithContext: HrlWithContext) =>
     postMessage({
-      type: 'get-global-entry-info',
-      hrl,
+      type: 'get-global-attachable-info',
+      hrlWithContext,
     }),
 
   hrlToClipboard: (hrl: HrlWithContext) =>
@@ -263,13 +263,14 @@ const handleMessage = async (
   request: ParentToAppletRequest,
 ) => {
   switch (request.type) {
-    case 'get-applet-entry-info':
-      return window.__WE_APPLET_SERVICES__.getEntryInfo(
+    case 'get-applet-attachable-info':
+      return window.__WE_APPLET_SERVICES__.getAttachableInfo(
         appletClient,
         request.roleName,
         request.integrityZomeName,
         request.entryType,
-        request.hrl,
+        request.hrlWithContext.hrl,
+        request.hrlWithContext.context,
       );
     case 'get-applet-attachment-types':
       const types = await window.__WE_APPLET_SERVICES__.attachmentTypes(
@@ -307,7 +308,7 @@ const handleMessage = async (
         throw new Error('Necessary attachment type not provided by the applet.');
       }
       try {
-        const hrl = await postAttachment.create(request.attachToHrl);
+        const hrl = await postAttachment.create(request.attachToHrlWithContext);
         return hrl;
       } catch (e) {
         return Promise.reject(
@@ -426,13 +427,13 @@ async function getGlobalAttachmentTypes() {
       attachmentTypesForThisApplet[name] = {
         label: attachmentType.label,
         icon_src: attachmentType.icon_src,
-        create: (attachToHrl) =>
+        create: (attachToHrlWithContext) =>
           postMessage({
             type: 'create-attachment',
             request: {
               appletHash: decodeHashFromBase64(appletId),
               attachmentType: name,
-              attachToHrl,
+              attachToHrlWithContext,
             },
           }),
       };
@@ -493,7 +494,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
           context,
         },
       };
-    case 'entry':
+    case 'attachable':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
       const hrlLocation: HrlLocation = await postMessage({
@@ -503,7 +504,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
       return {
         type: view,
         view: {
-          type: 'entry',
+          type: 'attachable',
           roleName: hrlLocation.roleName,
           integrityZomeName: hrlLocation.integrityZomeName,
           entryType: hrlLocation.entryType,

@@ -16,20 +16,25 @@ export type AppletId = EntryHashB64;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
+/**
+ * Variables of this type must be invariant under JSON.parse(JSON.stringify($variable))
+ */
+export type JSONCompatible = any;
+
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
 export interface HrlWithContext {
   hrl: Hrl;
-  context: any;
+  context: JSONCompatible;
 }
 
 export interface HrlB64WithContext {
   hrl: HrlB64;
-  context: any;
+  context: JSONCompatible;
 }
 
-export interface EntryInfo {
+export interface AttachableInfo {
   name: string;
   icon_src: string;
 }
@@ -42,7 +47,7 @@ export interface GroupProfile {
 export interface AttachmentType {
   label: string;
   icon_src: string;
-  create: (attachToHrl: Hrl) => Promise<HrlWithContext>;
+  create: (attachToHrlWithContext: HrlWithContext) => Promise<HrlWithContext>;
 }
 
 export type AttachmentName = string;
@@ -103,15 +108,15 @@ export interface NotificationCount {
 
 export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
-  openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
-  openHrl(hrl: Hrl, context: any): void;
+  openAppletBlock(appletHash: EntryHash, block: string, context: JSONCompatible): void;
+  openHrl(hrl: Hrl, context: JSONCompatible): void;
   openCrossAppletMain(appletBundleId: ActionHash): void;
-  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
+  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: JSONCompatible): void;
 }
 
-export interface EntryLocationAndInfo {
-  appletHash: EntryHash;
-  entryInfo: EntryInfo;
+export interface AttachableLocationAndInfo {
+  appletHash: AppletHash;
+  attachableInfo: AttachableInfo;
 }
 
 export interface AppletInfo {
@@ -127,14 +132,14 @@ export interface AppletClients {
 
 export type AppletView =
   | { type: 'main' }
-  | { type: 'block'; block: string; context: any }
+  | { type: 'block'; block: string; context: JSONCompatible }
   | {
-      type: 'entry';
+      type: 'attachable';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
       hrl: Hrl;
-      context: any;
+      context: JSONCompatible;
     };
 
 export type CrossAppletView =
@@ -144,7 +149,7 @@ export type CrossAppletView =
   | {
       type: 'block';
       block: string;
-      context: any;
+      context: JSONCompatible;
     };
 
 export interface BlockType {
@@ -188,11 +193,11 @@ export type RenderView =
 
 export type ParentToAppletRequest =
   | {
-      type: 'get-applet-entry-info';
+      type: 'get-applet-attachable-info';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
-      hrl: Hrl;
+      hrlWithContext: HrlWithContext;
     }
   | {
       type: 'get-applet-attachment-types';
@@ -207,7 +212,7 @@ export type ParentToAppletRequest =
   | {
       type: 'create-attachment';
       attachmentType: string;
-      attachToHrl: Hrl;
+      attachToHrlWithContext: HrlWithContext;
     };
 
 export interface AppletToParentMessage {
@@ -259,8 +264,8 @@ export type AppletToParentRequest =
       groupId: DnaHash;
     }
   | {
-      type: 'get-global-entry-info';
-      hrl: Hrl;
+      type: 'get-global-attachable-info';
+      hrlWithContext: HrlWithContext;
     }
   | {
       type: 'hrl-to-clipboard';
@@ -307,24 +312,24 @@ export type OpenViewRequest =
       type: 'applet-block';
       appletHash: EntryHash;
       block: string;
-      context: any;
+      context: JSONCompatible;
     }
   | {
       type: 'cross-applet-block';
       appletBundleId: ActionHash;
       block: string;
-      context: any;
+      context: JSONCompatible;
     }
   | {
       type: 'hrl';
       hrl: Hrl;
-      context: any;
+      context: JSONCompatible;
     };
 
 export interface CreateAttachmentRequest {
   appletHash: EntryHash;
   attachmentType: string;
-  attachToHrl: Hrl;
+  attachToHrlWithContext: HrlWithContext;
 }
 
 export interface InternalAttachmentType {
