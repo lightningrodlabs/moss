@@ -247,6 +247,7 @@ export class MainDashboard extends LitElement {
         `,
       },
     };
+    this._attachableViewerState = 'front';
     this.openTab(tabInfo);
   }
 

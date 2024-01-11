@@ -40,9 +40,6 @@ export class WeApp extends LitElement {
   _weStore!: WeStore;
 
   async firstUpdated() {
-    // TODO remove again
-    // add this temporarily to remove incompatible clipboard format of We versions prior to 0.9.6
-    window.localStorage.removeItem('clipboard');
     // await listen('clear-systray-notification-state', async () => {
     //   await invoke('clear_systray_notification_state', {});
     // });

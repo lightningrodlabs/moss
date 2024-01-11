@@ -105,6 +105,7 @@ if (process.env.NODE_ENV === 'development') {
 contextMenu({
   showSaveImageAs: true,
   showSearchWithGoogle: false,
+  showInspectElement: true,
 });
 
 console.log('APP PATH: ', app.getAppPath());
