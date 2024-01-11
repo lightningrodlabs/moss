@@ -62,6 +62,14 @@ fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
         }
     }
 
+    // Create a link to your own public key for others to see that you joined that applet
+    create_link(
+        applet_hash.clone(),
+        agent_info()?.agent_initial_pubkey,
+        LinkTypes::AppletToAgent,
+        (),
+    )?;
+
     // Store a local copy of the Applet struct to the source chain as a private entry
     create_entry(EntryTypes::AppletPrivate(AppletCopy {
         public_entry_hash: applet_hash.clone(),
@@ -185,6 +193,16 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
     Ok(applet_infos
         .into_iter()
         .filter(|(entry_hash, _author)| !my_applet_copies_public_hashes.contains(entry_hash))
+        .collect())
+}
+
+#[hdk_extern]
+fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
+    let links = get_links(applet_hash, LinkTypes::AppletToAgent, None)?;
+    Ok(links
+        .into_iter()
+        .map(|link| AgentPubKey::try_from(link.target).ok())
+        .filter_map(|pubkey| pubkey)
         .collect())
 }
 

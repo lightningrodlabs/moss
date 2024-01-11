@@ -30,16 +30,7 @@ export class InstallableApplets extends LitElement {
 
   _installableApplets = new StoreSubscriber(
     this,
-    () =>
-      asyncDeriveAndJoin(
-        this.weStore.appletBundlesStore.installableAppletBundles,
-        (installableAppletBundles) =>
-          joinAsync(
-            installableAppletBundles.map((b) =>
-              this.weStore.appletBundlesStore.appletBundleLogo.get(b.id),
-            ),
-          ),
-      ),
+    () => this.weStore.appletBundlesStore.installableAppletBundles,
     () => [],
   );
 
@@ -55,7 +46,7 @@ export class InstallableApplets extends LitElement {
   @state()
   _selectedAppEntry: Entity<AppEntry> | undefined;
 
-  renderInstallableApplet(appEntry: Entity<AppEntry>, iconSrc: string | undefined) {
+  renderInstallableApplet(appEntry: Entity<AppEntry>) {
     return html`
       <sl-card
         tabindex="0"
@@ -73,9 +64,9 @@ export class InstallableApplets extends LitElement {
         }}
       >
         <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
-          ${iconSrc
+          ${appEntry.content.icon_src
             ? html`<img
-                src=${iconSrc}
+                src=${appEntry.content.icon_src}
                 alt="${appEntry.content.title} applet icon"
                 style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
               />`
@@ -89,18 +80,19 @@ export class InstallableApplets extends LitElement {
     `;
   }
 
-  renderApplets(allApplets: [Array<Entity<AppEntry>>, Array<IconSrcOption>]) {
+  renderApplets(allApplets: Array<Entity<AppEntry>>) {
+    const nonDeprecatedApplets = allApplets.filter((entity) => !entity.content.deprecation);
     return html`
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
       >
-        ${allApplets[0].length === 0
+        ${nonDeprecatedApplets.length === 0
           ? html`
               <div class="column center-content" style="flex: 1;">
                 <span class="placeholder">${msg('No applets available yet.')}</span>
               </div>
             `
-          : allApplets[0].map((item, i) => this.renderInstallableApplet(item, allApplets[1][i]))}
+          : nonDeprecatedApplets.map((applet) => this.renderInstallableApplet(applet))}
       </div>
     `;
   }

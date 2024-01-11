@@ -14,7 +14,7 @@ pub enum EntryTypes {
 #[hdk_link_types]
 pub enum LinkTypes {
     AnchorToApplet,
-    AgentToApplet,
+    AppletToAgent,
     AppletToExternalAgent,
     AppletToInvitedGroup, // links to "first-order" neighbor groups if an app is being federated
     GroupInfoPath,
