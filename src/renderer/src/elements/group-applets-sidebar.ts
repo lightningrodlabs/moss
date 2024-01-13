@@ -67,7 +67,6 @@ export class GroupAppletsSidebar extends LitElement {
           .map(
             ([_appletBundleHash, appletStore]) => html`
               <applet-topbar-button
-                title="double-click to open in tab"
                 .appletStore=${appletStore}
                 .selected=${this.selectedAppletHash &&
                 this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
@@ -88,6 +87,21 @@ export class GroupAppletsSidebar extends LitElement {
                     }),
                   );
                   appletStore.clearNotificationStatus();
+                }}
+                @contextmenu=${(e: PointerEvent) => {
+                  e.preventDefault();
+                  this.dispatchEvent(
+                    new CustomEvent('applet-right-click', {
+                      detail: {
+                        groupDnaHash: this._groupStore.groupDnaHash,
+                        appletHash: appletStore.appletHash,
+                        pageX: e.pageX,
+                        pageY: e.pageY,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
                 }}
               >
               </applet-topbar-button>
