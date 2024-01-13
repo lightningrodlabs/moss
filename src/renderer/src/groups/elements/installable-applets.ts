@@ -2,7 +2,7 @@ import { html, LitElement, css } from 'lit';
 import { consume } from '@lit/context';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { asyncDeriveAndJoin, joinAsync, StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -17,7 +17,6 @@ import './group-context.js';
 import { weStyles } from '../../shared-styles.js';
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
-import { IconSrcOption } from '../../applet-bundles/types.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';

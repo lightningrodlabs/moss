@@ -9,8 +9,8 @@ import {
   encodeHashToBase64,
 } from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
-import { getAllApps } from '../processes/appstore/appstore-light.js';
-import { AppEntry } from '../processes/appstore/types.js';
+import { getAllApps, responseToPromise } from '../processes/appstore/appstore-light.js';
+import { AppEntry, DevHubResponse, Entity } from '../processes/appstore/types.js';
 
 export class AppletBundlesStore {
   constructor(
@@ -53,6 +53,16 @@ export class AppletBundlesStore {
     });
     if (!record) throw new Error('Record not found for acion hash.');
     return new EntryRecord(record);
+  }
+
+  async getLatestAppEntry(appEntryId: ActionHash): Promise<Entity<AppEntry>> {
+    const response: DevHubResponse<Entity<AppEntry>> = await this.appstoreClient.callZome({
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'get_app',
+      payload: { id: appEntryId },
+    });
+    return responseToPromise(response, 'getLatestAppEntry');
   }
 
   async fetchIcon(appActionHash: ActionHash) {
