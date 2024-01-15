@@ -378,7 +378,12 @@ app.whenReady().then(async () => {
       label: 'Open',
       type: 'normal',
       click() {
-        createOrShowMainWindow();
+        try {
+          SPLASH_SCREEN_WINDOW!.show();
+        } catch (_e) {
+          // Fails if SPLASH_SCREEN_WINDOW has been destroyed in the meantime
+          createOrShowMainWindow();
+        }
       },
     },
     {
