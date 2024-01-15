@@ -76,8 +76,7 @@ export class AppletServices {
         _roleName,
         _integrityZomeName,
         _entryType,
-        _hrl,
-        _context,
+        _hrlWithContext,
       ) => undefined);
   }
 
@@ -101,8 +100,7 @@ export class AppletServices {
     roleName: RoleName,
     integrityZomeName: ZomeName,
     entryType: string,
-    hrl: Hrl,
-    context?: any,
+    hrlWithContext: HrlWithContext,
   ) => Promise<AttachableInfo | undefined>;
   /**
    * Search in this Applet
@@ -155,7 +153,7 @@ export interface WeServices {
    * @param context
    * @returns
    */
-  openHrl: (hrl: Hrl, context: any) => Promise<void>;
+  openHrl: (hrlWithContext: HrlWithContext) => Promise<void>;
   /**
    * Get the group profile of the specified group
    * @param groupId
@@ -252,7 +250,8 @@ export class WeClient implements WeServices {
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
     window.__WE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openHrl = (hrl: Hrl, context: any): Promise<void> => window.__WE_API__.openHrl(hrl, context);
+  openHrl = (hrlWithContext: HrlWithContext): Promise<void> =>
+    window.__WE_API__.openHrl(hrlWithContext);
 
   groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
 

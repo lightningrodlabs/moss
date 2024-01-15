@@ -72,7 +72,7 @@ export class CreateAttachment extends LitElement {
       });
 
       await this.attachmentsStore.client.addAttachment(this.hash, hrlWithContext);
-      this.weClient.openHrl(hrlWithContext.hrl, hrlWithContext.context);
+      this.weClient.openHrl(hrlWithContext);
     } catch (e) {
       notifyError(msg('Error creating the attachment'));
       console.error(e);

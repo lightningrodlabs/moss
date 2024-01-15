@@ -92,10 +92,10 @@ export class HrlLink extends LitElement {
               pill
               style="cursor: pointer"
               tabindex="0"
-              @click=${() => this.weClient.openHrl(this.hrl, this.context)}
+              @click=${() => this.weClient.openHrl({ hrl: this.hrl, context: this.context })}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.weClient.openHrl(this.hrl, this.context);
+                  this.weClient.openHrl({ hrl: this.hrl, context: this.context });
                 }
               }}
             >

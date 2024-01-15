@@ -316,11 +316,11 @@ export async function handleAppletIframeMessage(
             message.request.context,
           );
         case 'hrl':
-          return openViews.openHrl(message.request.hrl, message.request.context);
+          return openViews.openHrl(message.request.hrlWithContext);
       }
       break;
     case 'hrl-to-clipboard':
-      weStore.hrlToClipboard(message.hrl);
+      weStore.hrlToClipboard(message.hrlWithContext);
       break;
     case 'search':
       return weServices.search(message.filter);

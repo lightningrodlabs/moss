@@ -88,13 +88,12 @@ const weApi: WeServices = {
       },
     }),
 
-  openHrl: (hrl: Hrl, context: any): Promise<void> =>
+  openHrl: (hrlWithContext: HrlWithContext): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'hrl',
-        hrl,
-        context,
+        hrlWithContext,
       },
     }),
 
@@ -116,10 +115,10 @@ const weApi: WeServices = {
       hrlWithContext,
     }),
 
-  hrlToClipboard: (hrl: HrlWithContext) =>
+  hrlToClipboard: (hrlWithContext: HrlWithContext) =>
     postMessage({
       type: 'hrl-to-clipboard',
-      hrl,
+      hrlWithContext,
     }),
 
   search: (filter: string) =>
@@ -269,8 +268,7 @@ const handleMessage = async (
         request.roleName,
         request.integrityZomeName,
         request.entryType,
-        request.hrlWithContext.hrl,
-        request.hrlWithContext.context,
+        request.hrlWithContext,
       );
     case 'get-applet-attachment-types':
       const types = await window.__WE_APPLET_SERVICES__.attachmentTypes(
@@ -508,8 +506,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
           roleName: hrlLocation.roleName,
           integrityZomeName: hrlLocation.integrityZomeName,
           entryType: hrlLocation.entryType,
-          hrl,
-          context,
+          hrlWithContext: { hrl, context },
         },
       };
 

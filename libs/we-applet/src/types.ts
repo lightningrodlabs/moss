@@ -24,35 +24,35 @@ export type JSONCompatible = any;
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
-export interface HrlWithContext {
+export type HrlWithContext = {
   hrl: Hrl;
-  context: JSONCompatible;
-}
+  context?: JSONCompatible;
+};
 
-export interface HrlB64WithContext {
+export type HrlB64WithContext = {
   hrl: HrlB64;
-  context: JSONCompatible;
-}
+  context?: JSONCompatible;
+};
 
-export interface AttachableInfo {
+export type AttachableInfo = {
   name: string;
   icon_src: string;
-}
+};
 
-export interface GroupProfile {
+export type GroupProfile = {
   name: string;
   logo_src: string;
-}
+};
 
-export interface AttachmentType {
+export type AttachmentType = {
   label: string;
   icon_src: string;
   create: (attachToHrlWithContext: HrlWithContext) => Promise<HrlWithContext>;
-}
+};
 
 export type AttachmentName = string;
 
-export interface WeNotification {
+export type WeNotification = {
   /**
    * Title of the message.
    */
@@ -96,39 +96,39 @@ export interface WeNotification {
   //  * a certain time period.
   //  */
   // customCountReset?: NotificationId;
-}
+};
 
 export type NotificationId = string;
 
-export interface NotificationCount {
+export type NotificationCount = {
   low: number;
   medium: number;
   high: number;
-}
+};
 
 export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: JSONCompatible): void;
-  openHrl(hrl: Hrl, context: JSONCompatible): void;
+  openHrl(hrlWithContext: HrlWithContext): void;
   openCrossAppletMain(appletBundleId: ActionHash): void;
   openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: JSONCompatible): void;
 }
 
-export interface AttachableLocationAndInfo {
+export type AttachableLocationAndInfo = {
   appletHash: AppletHash;
   attachableInfo: AttachableInfo;
-}
+};
 
-export interface AppletInfo {
+export type AppletInfo = {
   appletBundleId: ActionHash;
   appletName: string;
   groupsIds: Array<DnaHash>;
-}
+};
 
-export interface AppletClients {
+export type AppletClients = {
   appletClient: AppAgentClient;
   profilesClient: ProfilesClient;
-}
+};
 
 export type AppletView =
   | { type: 'main' }
@@ -138,8 +138,7 @@ export type AppletView =
       roleName: string;
       integrityZomeName: string;
       entryType: string;
-      hrl: Hrl;
-      context: JSONCompatible;
+      hrlWithContext: HrlWithContext;
     };
 
 export type CrossAppletView =
@@ -152,11 +151,11 @@ export type CrossAppletView =
       context: JSONCompatible;
     };
 
-export interface BlockType {
+export type BlockType = {
   label: string;
   icon_src: string;
   view: 'applet-view' | 'cross-applet-view';
-}
+};
 
 export type BlockName = string;
 
@@ -215,10 +214,10 @@ export type ParentToAppletRequest =
       attachToHrlWithContext: HrlWithContext;
     };
 
-export interface AppletToParentMessage {
+export type AppletToParentMessage = {
   request: AppletToParentRequest;
   appletHash?: EntryHash; // Only required in dev mode when iframe origin is localhost
-}
+};
 
 export type AppletToParentRequest =
   | {
@@ -269,7 +268,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'hrl-to-clipboard';
-      hrl: HrlWithContext;
+      hrlWithContext: HrlWithContext;
     }
   | {
       type: 'user-select-hrl';
@@ -322,20 +321,19 @@ export type OpenViewRequest =
     }
   | {
       type: 'hrl';
-      hrl: Hrl;
-      context: JSONCompatible;
+      hrlWithContext: HrlWithContext;
     };
 
-export interface CreateAttachmentRequest {
+export type CreateAttachmentRequest = {
   appletHash: EntryHash;
   attachmentType: string;
   attachToHrlWithContext: HrlWithContext;
-}
+};
 
-export interface InternalAttachmentType {
+export type InternalAttachmentType = {
   label: string;
   icon_src: string;
-}
+};
 
 export type IframeConfig =
   | {
@@ -355,13 +353,13 @@ export type IframeConfig =
       appletName: string;
     };
 
-export interface ProfilesLocation {
+export type ProfilesLocation = {
   profilesAppId: string;
   profilesRoleName: string;
-}
+};
 
-export interface HrlLocation {
+export type HrlLocation = {
   roleName: string;
   integrityZomeName: string;
   entryType: string;
-}
+};

@@ -436,12 +436,13 @@ export function renderViewToQueryString(renderView: RenderView): string {
     if ('block' in renderView.view) {
       base = `${base}&block=${renderView.view.block}`;
     }
-    if ('hrl' in renderView.view) {
-      base = `${base}&hrl=${stringifyHrl(renderView.view.hrl)}`;
-    }
-    if ('context' in renderView.view) {
-      const b64context = fromUint8Array(encode(renderView.view.context), true);
-      base = `${base}&context=${b64context}`;
+    if ('hrlWithContext' in renderView.view) {
+      const hrlWithContext = renderView.view.hrlWithContext;
+      base = `${base}&hrl=${stringifyHrl(hrlWithContext.hrl)}`;
+      if (hrlWithContext.context) {
+        const b64context = fromUint8Array(encode(hrlWithContext.context), true);
+        base = `${base}&context=${b64context}`;
+      }
     }
   }
 
