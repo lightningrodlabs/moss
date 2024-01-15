@@ -396,6 +396,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('exit', () => {
     app.exit(0);
   });
+  ipcMain.handle('get-app-version', () => app.getVersion());
   ipcMain.handle('dialog-messagebox', async (_e, options: Electron.MessageBoxOptions) => {
     if (MAIN_WINDOW) {
       return dialog.showMessageBox(MAIN_WINDOW, options);

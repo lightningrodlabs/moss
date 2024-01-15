@@ -31,6 +31,7 @@ declare global {
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;
+      getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo>;
       getConductorInfo: () => Promise<ConductorInfo>;
       installAppletBundle: (
@@ -90,6 +91,10 @@ export async function getAppletDevPort(appId: string): Promise<number> {
 
 export async function getAppletIframeScript(): Promise<string> {
   return window.electronAPI.getAppletIframeScript();
+}
+
+export async function getAppVersion(): Promise<string> {
+  return window.electronAPI.getAppVersion();
 }
 
 export async function getConductorInfo(): Promise<ConductorInfo> {

@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
   getAppletIframeScript: () => ipcRenderer.invoke('get-applet-iframe-script'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
   installAppletBundle: (

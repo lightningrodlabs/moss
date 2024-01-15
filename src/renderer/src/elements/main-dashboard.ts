@@ -50,6 +50,7 @@ import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import { getAllIframes, stringifyHrlWithContext } from '../utils.js';
+import { getAppVersion } from '../electron-api.js';
 
 type OpenTab =
   | {
@@ -87,6 +88,9 @@ export class MainDashboard extends LitElement {
 
   @query('#clipboard')
   _clipboard!: WeClipboard;
+
+  @state()
+  appVersion: string | undefined;
 
   @state()
   _drawerWidth: number = 380;
@@ -365,6 +369,8 @@ export class MainDashboard extends LitElement {
         }
       }
     });
+
+    this.appVersion = await getAppVersion();
   }
 
   openClipboard() {
@@ -870,6 +876,15 @@ export class MainDashboard extends LitElement {
               .src=${wrapPathInSvg(mdiMagnify)}
             ></sl-icon>
           </sl-tooltip>
+        </div>
+        <div
+          style="color: white; text-align: center; margin-bottom: 3px;"
+          title=${this.appVersion
+            ? `
+        Lightningrod Labs We version ${this.appVersion}`
+            : ``}
+        >
+          ${this.appVersion ? `v${this.appVersion}` : ''}
         </div>
       </div>
 
