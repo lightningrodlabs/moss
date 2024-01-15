@@ -196,6 +196,26 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
         .collect())
 }
 
+/// Gets Applets that are registered in the group but have never been installed in
+/// the local conductor yet and have already been archived by the person that initially
+/// added it to the group
+#[hdk_extern]
+fn get_unjoined_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
+    let my_applet_copies = get_my_applet_copies(())?;
+    let my_applet_copies_public_hashes = my_applet_copies
+        .into_iter()
+        .map(|ac| ac.public_entry_hash)
+        .collect::<Vec<EntryHash>>();
+
+    let archived_applets = get_archived_applets(())?;
+
+    Ok(archived_applets
+        .into_iter()
+        .filter(|entry_hash| !my_applet_copies_public_hashes.contains(entry_hash))
+        .collect())
+}
+
+/// Gets all the agents that joined the given Applet through calling register_applet
 #[hdk_extern]
 fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
     let links = get_links(applet_hash, LinkTypes::AppletToAgent, None)?;
