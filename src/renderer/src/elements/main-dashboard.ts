@@ -49,7 +49,7 @@ import { WeClipboard } from './clipboard.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { stringifyHrlWithContext } from '../utils.js';
+import { getAllIframes, stringifyHrlWithContext } from '../utils.js';
 
 type OpenTab =
   | {
@@ -347,8 +347,6 @@ export class MainDashboard extends LitElement {
       if (this._showTabView && this._attachableViewerState === 'front') {
         this._showTabView = false;
       }
-      const appletContextMenu = this.shadowRoot?.getElementById('applet-context-menu');
-      if (appletContextMenu) appletContextMenu.style.display = 'none';
     });
 
     // add eventlistener for clipboard
@@ -903,12 +901,14 @@ export class MainDashboard extends LitElement {
                         this._showTabView = false;
                       }
                     }}
-                    @applet-right-click=${(e: CustomEvent<{ pageX: number; pageY: number }>) => {
-                      const appletContextMenu =
-                        this.shadowRoot!.getElementById('applet-context-menu')!;
-                      appletContextMenu.style.display = 'block';
-                      appletContextMenu.style.top = `${e.detail.pageY}px`;
-                      appletContextMenu.style.left = `${e.detail.pageX}px`;
+                    @refresh-applet=${(e: CustomEvent) => {
+                      const allIframes = getAllIframes();
+                      const appletIframe = allIframes.find(
+                        (iframe) => iframe.id === encodeHashToBase64(e.detail.appletHash),
+                      );
+                      if (appletIframe) {
+                        appletIframe.src += '';
+                      }
                     }}
                     style="margin-left: 12px; flex: 1; overflow-x: sroll;"
                   ></group-applets-sidebar>
@@ -995,13 +995,6 @@ export class MainDashboard extends LitElement {
               </div>
             </div>
           </sl-tooltip>
-        </div>
-
-        <div
-          id="applet-context-menu"
-          style="display: none; position: fixed; padding: 5px; border-radius: 5px; background: red; z-index: 1;"
-        >
-          Reload Applet
         </div>
       </div>
     `;

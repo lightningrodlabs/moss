@@ -88,21 +88,6 @@ export class GroupAppletsSidebar extends LitElement {
                   );
                   appletStore.clearNotificationStatus();
                 }}
-                @contextmenu=${(e: PointerEvent) => {
-                  e.preventDefault();
-                  this.dispatchEvent(
-                    new CustomEvent('applet-right-click', {
-                      detail: {
-                        groupDnaHash: this._groupStore.groupDnaHash,
-                        appletHash: appletStore.appletHash,
-                        pageX: e.pageX,
-                        pageY: e.pageY,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                }}
               >
               </applet-topbar-button>
             `,
