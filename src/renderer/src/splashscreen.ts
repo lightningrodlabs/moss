@@ -356,21 +356,3 @@ export class SplashScreen extends LitElement {
     ];
   }
 }
-
-// const selectAppInput = document.getElementById("select-app-input") as HTMLInputElement;
-
-// const installAppButton = document.getElementById("install-app-button");
-// installAppButton.addEventListener("click", async () => {
-//   const file = selectAppInput.files[0];
-//   if (file){
-//     await (window as any).electronAPI.installApp(file.path)
-//   } else {
-//     alert("No file selected.");
-//   }
-// });
-
-// const uninstallAppButton = document.getElementById("uninstall-app-button");
-// uninstallAppButton.addEventListener("click", async () => await (window as any).electronAPI.uninstallApp());
-
-// const openAppButton = document.getElementById("open-app-button");
-// openAppButton.addEventListener("click", async () => await (window as any).electronAPI.openApp());

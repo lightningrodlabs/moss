@@ -13,7 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
-  // uninstallApp: (appId: string) => ipcRenderer.invoke('uninstall-app', appId),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openDevHub: () => ipcRenderer.invoke('open-devhub'),
@@ -73,6 +72,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       sha256Ui,
       sha256Webhapp,
     ),
+  uninstallApplet: (appId: string) => ipcRenderer.invoke('uninstall-applet', appId),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
 });
 

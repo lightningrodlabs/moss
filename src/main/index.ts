@@ -439,9 +439,6 @@ app.whenReady().then(async () => {
     },
   );
   ipcMain.handle('is-applet-dev', (_e) => !!WE_APPLET_DEV_INFO);
-  // ipcMain.handle('uninstall-app', async (_e, appId: string) => {
-  //   await HOLOCHAIN_MANAGER!.uninstallApp(appId);
-  // });
   ipcMain.handle(
     'get-all-app-assets-infos',
     async (): Promise<Record<InstalledAppId, AppAssetsInfo>> => {
@@ -599,6 +596,12 @@ app.whenReady().then(async () => {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     },
   );
+  ipcMain.handle('uninstall-applet', async (_e, appId: string) => {
+    await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
+      installed_app_id: appId,
+    });
+    WE_FILE_SYSTEM.deleteAppAssetsInfo(appId);
+  });
   ipcMain.handle(
     'install-applet-bundle',
     async (

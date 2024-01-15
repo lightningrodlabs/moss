@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
-import { mdiShareVariant } from '@mdi/js';
+import { mdiShareVariant, mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -70,7 +70,18 @@ export class AppletDetailCard extends LitElement {
     );
   }
 
+  async uninstallApplet() {
+    this.dispatchEvent(
+      new CustomEvent('uninstall-applet', {
+        bubbles: true,
+        composed: true,
+        detail: this.appletHash,
+      }),
+    );
+  }
+
   render() {
+    if (!this.appInfo) return html``;
     return html`
       <sl-card class="applet-card">
         <div class="column" style="flex: 1;">
@@ -83,6 +94,11 @@ export class AppletDetailCard extends LitElement {
               ? html`<sl-button
                   variant="success"
                   @click=${() => this.updateUi()}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      this.updateUi();
+                    }
+                  }}
                   title="Update Applet"
                   >Install Update</sl-button
                 >`
@@ -99,13 +115,15 @@ export class AppletDetailCard extends LitElement {
                     }),
                   );
                 }}
-                @keypress.enter=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('federate-applet', {
-                      detail: this.appletHash,
-                      bubbles: true,
-                    }),
-                  );
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this.dispatchEvent(
+                      new CustomEvent('federate-applet', {
+                        detail: this.appletHash,
+                        bubbles: true,
+                      }),
+                    );
+                  }
                 }}
               ></sl-icon-button>
             </sl-tooltip>
@@ -176,6 +194,25 @@ export class AppletDetailCard extends LitElement {
                 )
               : html``}
           </div>
+          <div class="row" style="justify-content: flex-end; margin-top: 10px;">
+            <sl-button
+              variant="danger"
+              @click=${() => this.uninstallApplet()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.uninstallApplet();
+                }
+              }}
+            >
+              <div class="row center-content">
+                <sl-icon
+                  style="height: 20px; width: 20px;"
+                  .src=${wrapPathInSvg(mdiTrashCanOutline)}
+                ></sl-icon
+                ><span style="margin-left: 5px;">Uninstall</span>
+              </div>
+            </sl-button>
+          </div>
         </div>
       </sl-card>
     `;
@@ -188,7 +225,7 @@ export class AppletDetailCard extends LitElement {
         flex: 1;
         margin-bottom: 16px;
         min-width: 800px;
-        --border-radius: 15px;"
+        --border-radius: 15px;
       }
       .cell-card {
         border-radius: 10px;

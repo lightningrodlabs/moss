@@ -26,7 +26,6 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
-      uninstallApp: (appId: string) => Promise<void>;
       openApp: (appId: string) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
@@ -60,6 +59,7 @@ declare global {
         sha256Ui: string,
         sha256Webhapp: string,
       ) => Promise<void>;
+      uninstallApplet: (appId: string) => Promise<void>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
   }

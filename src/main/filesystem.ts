@@ -181,6 +181,24 @@ export class WeFileSystem {
     }
   }
 
+  /**
+   * Deletes information about happ and (optionally) UI of an installed app
+   *
+   * @param installedAppId
+   */
+  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
+    const filePath = path.join(this.appsDir, `${installedAppId}.json`);
+    const backupFilePath = path.join(this.appsDir, `${installedAppId}.json.previous`);
+    try {
+      fs.rmSync(filePath);
+    } catch (e) {
+      throw new Error(`Failed to write app assets info to json file: ${e}`);
+    }
+    try {
+      fs.rmSync(backupFilePath);
+    } catch (e) {}
+  }
+
   backupAppAssetsInfo(installedAppId: InstalledAppId) {
     const fileToBackup = path.join(this.appsDir, `${installedAppId}.json`);
     const backupPath = path.join(this.appsDir, `${installedAppId}.json.previous`);
