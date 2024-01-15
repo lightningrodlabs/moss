@@ -64,7 +64,7 @@ export class ExampleApplet extends LitElement {
                       const appInfo = await client.appInfo();
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                         .cell_id[0];
-                      this.weClient!.openHrl([dnaHash, e.detail.postHash], {});
+                      this.weClient!.openHrl({ hrl: [dnaHash, e.detail.postHash] });
                     }}
                   ></applet-main>
                 </attachments-context>
@@ -83,7 +83,7 @@ export class ExampleApplet extends LitElement {
                           <posts-context .store=${this.postsStore}>
                             <attachments-context .store=${this.attachmentsStore}>
                               <post-detail
-                                .postHash=${this.weClient.renderInfo.view.hrl[1]}
+                                .postHash=${this.weClient.renderInfo.view.hrlWithContext.hrl[1]}
                               ></post-detail>
                             </attachments-context>
                           </posts-context>

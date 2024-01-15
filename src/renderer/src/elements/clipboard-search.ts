@@ -167,7 +167,7 @@ export class ClipboardSearch extends LitElement implements FormField {
   async search(filter: string): Promise<SearchResult> {
     const hrls = await this.weClient.search(filter);
 
-    // console.log('@clipboard-search: Got search results: ', hrls);
+    console.log('@clipboard-search: Got search results: ', hrls);
 
     const hrlsWithInfo = await Promise.all(
       hrls.map(async (hrlWithContext) => {

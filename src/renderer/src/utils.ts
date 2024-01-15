@@ -15,15 +15,9 @@ import {
   HoloHashB64,
   ActionHash,
 } from '@holochain/client';
-import {
-  Hrl,
-  HrlB64WithContext,
-  HrlWithContext,
-  RenderView,
-  WeNotification,
-} from '@lightningrodlabs/we-applet';
-import { encode } from '@msgpack/msgpack';
-import { fromUint8Array } from 'js-base64';
+import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodlabs/we-applet';
+import { decode, encode } from '@msgpack/msgpack';
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings } from './applets/types.js';
 import { AppletHash, AppletId, DistributionInfo } from './types.js';
@@ -413,18 +407,12 @@ export function getAppletNotificationSettings(appletId: AppletId): AppletNotific
   return appletNotificationSettings;
 }
 
-export function hrlWithContextToB64(hrl: HrlWithContext): HrlB64WithContext {
-  return {
-    hrl: [encodeHashToBase64(hrl.hrl[0]), encodeHashToBase64(hrl.hrl[1])],
-    context: hrl.context,
-  };
+export function stringifyHrlWithContext(hrlWithContext: HrlWithContext): string {
+  return fromUint8Array(encode(hrlWithContext));
 }
 
-export function hrlB64WithContextToRaw(hrlB64: HrlB64WithContext): HrlWithContext {
-  return {
-    hrl: [decodeHashFromBase64(hrlB64.hrl[0]), decodeHashFromBase64(hrlB64.hrl[1])],
-    context: hrlB64.context,
-  };
+export function deStringifyHrlWithContext(hrlWithContextStringified: string): HrlWithContext {
+  return decode(toUint8Array(hrlWithContextStringified)) as HrlWithContext;
 }
 
 export function renderViewToQueryString(renderView: RenderView): string {

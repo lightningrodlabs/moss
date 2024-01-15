@@ -22,7 +22,7 @@ import { buildHeadlessWeClient } from '../applets/applet-host.js';
 import './hrl-element.js';
 import './clipboard-search.js';
 import { ClipboardSearch } from './clipboard-search.js';
-import { hrlB64WithContextToRaw } from '../utils.js';
+import { deStringifyHrlWithContext } from '../utils.js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
@@ -164,9 +164,9 @@ export class WeClipboard extends LitElement {
 
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
             ${this.clipboardContent.map(
-              (hrlB64Stringified) => html`
+              (hrlWithContextStringified) => html`
                 <hrl-element
-                  .hrlWithContext=${hrlB64WithContextToRaw(JSON.parse(hrlB64Stringified))}
+                  .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
                   .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
                   @hrl-removed=${() => this.loadClipboardContent()}
                   @hrl-selected=${(e) => this.handleHrlSelected(e)}

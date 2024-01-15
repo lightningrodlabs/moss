@@ -67,6 +67,15 @@ export class GroupClient {
     return this.callZome('get_unjoined_applets', null);
   }
 
+  /**
+   * Gets Applet entries that have been advertised by other agents in the
+   * group but have never been installed into the local conductor yet.
+   * @returns
+   */
+  async getUnjoinedArchivedApplets(): Promise<Array<EntryHash>> {
+    return this.callZome('get_unjoined_archived_applets', null);
+  }
+
   async getArchivedApplets(): Promise<Array<EntryHash>> {
     return this.callZome('get_archived_applets', null);
   }
@@ -80,6 +89,10 @@ export class GroupClient {
       return undefined;
     }
     return maybeApplet;
+  }
+
+  async getAppletAgents(appletHash: EntryHash): Promise<Array<AgentPubKey>> {
+    return this.callZome('get_applet_agents', appletHash);
   }
 
   /**

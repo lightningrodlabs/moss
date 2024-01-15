@@ -28,7 +28,6 @@ import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
 import {
   GroupProfile,
-  HrlB64WithContext,
   HrlWithContext,
   InternalAttachmentType,
   ProfilesLocation,
@@ -47,9 +46,8 @@ import {
   appIdFromAppletHash,
   appletHashFromAppId,
   appletIdFromAppId,
+  deStringifyHrlWithContext,
   findAppForDnaHash,
-  hrlB64WithContextToRaw,
-  hrlWithContextToB64,
   initAppClient,
   isAppRunning,
 } from './utils.js';
@@ -59,6 +57,8 @@ import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';
 import { AppEntry, Entity } from './processes/appstore/types.js';
+import { fromUint8Array } from 'js-base64';
+import { encode } from '@msgpack/msgpack';
 
 export class WeStore {
   constructor(
@@ -457,10 +457,9 @@ export class WeStore {
       }),
   );
 
-  attachableInfo = new LazyMap((hrlB64WithContextStringified: string) => {
-    console.log('hrlWithContextStringified: ', hrlB64WithContextStringified);
-    const hrlB64WithContext: HrlB64WithContext = JSON.parse(hrlB64WithContextStringified);
-    const hrlWithContext = hrlB64WithContextToRaw(hrlB64WithContext);
+  attachableInfo = new LazyMap((hrlWithContextStringified: string) => {
+    console.log('hrlWithContextStringified: ', hrlWithContextStringified);
+    const hrlWithContext = deStringifyHrlWithContext(hrlWithContextStringified);
     return pipe(
       this.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),
       (location) =>
@@ -651,17 +650,18 @@ export class WeStore {
   hrlToClipboard(hrlWithContext: HrlWithContext) {
     const clipboardJSON = window.localStorage.getItem('clipboard');
     let clipboardContent: Array<string> = [];
-    const hrlB64WithConextStringified = JSON.stringify(hrlWithContextToB64(hrlWithContext));
+    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
     }
     // Only add if it's not already there
     if (
       clipboardContent.filter(
-        (hrlB64StringifiedStored) => hrlB64StringifiedStored === hrlB64WithConextStringified,
+        (hrlWithContextStringifiedStored) =>
+          hrlWithContextStringifiedStored === hrlWithContextStringified,
       ).length === 0
     ) {
-      clipboardContent.push(hrlB64WithConextStringified);
+      clipboardContent.push(hrlWithContextStringified);
     }
 
     window.localStorage.setItem('clipboard', JSON.stringify(clipboardContent));
@@ -671,11 +671,12 @@ export class WeStore {
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
     const clipboardJSON = window.localStorage.getItem('clipboard');
     let clipboardContent: Array<string> = [];
-    const hrlB64WithConextStringified = JSON.stringify(hrlWithContextToB64(hrlWithContext));
+    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
     if (clipboardJSON) {
       clipboardContent = JSON.parse(clipboardJSON);
       const newClipboardContent = clipboardContent.filter(
-        (hrlB64StringifiedStored) => hrlB64StringifiedStored !== hrlB64WithConextStringified,
+        (hrlWithContextStringifiedStored) =>
+          hrlWithContextStringifiedStored !== hrlWithContextStringified,
       );
       window.localStorage.setItem('clipboard', JSON.stringify(newClipboardContent));
       // const index = clipboardContent.indexOf(hrlB64);

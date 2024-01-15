@@ -93,7 +93,6 @@
               )
               .map(([post, actionHash]) => ({
                 hrl: [dnaHash, actionHash],
-                context: {},
               }));
           },
           getAttachableInfo: async (
@@ -101,8 +100,7 @@
             roleName,
             integrityZomeName,
             entryType,
-            hrl,
-            _context
+            hrlWithContext
           ) => {
             switch (roleName) {
               case 'forum':
@@ -111,7 +109,7 @@
                     switch (entryType) {
                       case 'post':
                         const postsClient = new PostsClient(appletClient, roleName);
-                        const post = await postsClient.getPost(hrl[1]);
+                        const post = await postsClient.getPost(hrlWithContext.hrl[1]);
                         if (!post) return undefined;
                         return {
                           name: post.entry.title,

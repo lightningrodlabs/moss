@@ -12,7 +12,7 @@ import { AttachableInfo, HrlWithContext } from '@lightningrodlabs/we-applet';
 import { WeStore } from '../../we-store.js';
 import { weStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { hrlWithContextToB64 } from '../../utils.js';
+import { stringifyHrlWithContext } from '../../utils.js';
 
 @customElement('entry-title')
 export class EntryTitle extends LitElement {
@@ -27,8 +27,7 @@ export class EntryTitle extends LitElement {
 
   attachableInfo = new StoreSubscriber(
     this,
-    () =>
-      this._weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(this.hrlWithContext))),
+    () => this._weStore.attachableInfo.get(stringifyHrlWithContext(this.hrlWithContext)),
     () => [this.hrlWithContext],
   );
 

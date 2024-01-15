@@ -31,8 +31,8 @@ import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
   getNotificationState,
-  hrlWithContextToB64,
   storeAppletNotifications,
+  stringifyHrlWithContext,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';
@@ -131,7 +131,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         );
         if (!location) return undefined;
         const attachableInfo = await toPromise(
-          weStore.attachableInfo.get(JSON.stringify(hrlWithContextToB64(hrlWithContext))),
+          weStore.attachableInfo.get(stringifyHrlWithContext(hrlWithContext)),
         );
 
         if (!attachableInfo) return undefined;

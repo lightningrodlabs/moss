@@ -49,6 +49,7 @@ import { WeClipboard } from './clipboard.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
+import { stringifyHrlWithContext } from '../utils.js';
 
 type OpenTab =
   | {
@@ -157,17 +158,16 @@ export class MainDashboard extends LitElement {
     openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
-    openHrl: async (hrl: Hrl, context: any) => {
-      const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
-      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(hrl);
+    openHrl: async (hrlWithContext: HrlWithContext) => {
+      const tabId = stringifyHrlWithContext(hrlWithContext);
+      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
+        hrlWithContext.hrl,
+      );
       const tabInfo: TabInfo = {
         id: tabId,
         tab: {
           type: 'hrl',
-          hrlWithContext: {
-            hrl,
-            context,
-          },
+          hrlWithContext,
           groupHashesB64: groupContextHashesB64,
           appletIds: appletContextIds,
         },

@@ -6,7 +6,7 @@ import { ComponentItemConfig, GoldenLayout, LayoutConfig, RootItemConfig } from 
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { consume, provide } from '@lit/context';
-import { Hrl, HrlWithContext } from '@lightningrodlabs/we-applet';
+import { HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '../groups/elements/group-context.js';
 import '../groups/elements/group-home.js';
@@ -124,20 +124,26 @@ export class DynamicLayout extends LitElement {
         },
       });
     },
-    openHrl: async (hrl: Hrl, context: any) => {
+    openHrl: async (hrlWithContext: HrlWithContext) => {
       this.dispatchEvent(
         new CustomEvent('open-tab-request', {
           bubbles: true,
           detail: 'open-hrl',
         }),
       );
+      // id should probably contain the context here
       this.openTab({
-        id: `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`,
+        id: `hrl://${encodeHashToBase64(hrlWithContext.hrl[0])}/${encodeHashToBase64(
+          hrlWithContext.hrl[1],
+        )}`,
         type: 'component',
         componentType: 'entry',
         componentState: {
-          hrl: [encodeHashToBase64(hrl[0]), encodeHashToBase64(hrl[1])],
-          context,
+          hrl: [
+            encodeHashToBase64(hrlWithContext.hrl[0]),
+            encodeHashToBase64(hrlWithContext.hrl[1]),
+          ],
+          context: hrlWithContext.context,
         },
       });
     },

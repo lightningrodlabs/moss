@@ -10,7 +10,6 @@ import {
   BlockType,
   AttachmentType,
   AttachableInfo,
-  Hrl,
   HrlWithContext,
   WeNotification,
   RenderInfo,

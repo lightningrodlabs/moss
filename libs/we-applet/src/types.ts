@@ -16,22 +16,17 @@ export type AppletId = EntryHashB64;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-/**
- * Variables of this type must be invariant under JSON.parse(JSON.stringify($variable))
- */
-export type JSONCompatible = any;
-
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
 export type HrlWithContext = {
   hrl: Hrl;
-  context?: JSONCompatible;
+  context?: any;
 };
 
 export type HrlB64WithContext = {
   hrl: HrlB64;
-  context?: JSONCompatible;
+  context?: any;
 };
 
 export type AttachableInfo = {
@@ -108,10 +103,10 @@ export type NotificationCount = {
 
 export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
-  openAppletBlock(appletHash: EntryHash, block: string, context: JSONCompatible): void;
+  openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openHrl(hrlWithContext: HrlWithContext): void;
   openCrossAppletMain(appletBundleId: ActionHash): void;
-  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: JSONCompatible): void;
+  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
 }
 
 export type AttachableLocationAndInfo = {
@@ -132,7 +127,7 @@ export type AppletClients = {
 
 export type AppletView =
   | { type: 'main' }
-  | { type: 'block'; block: string; context: JSONCompatible }
+  | { type: 'block'; block: string; context: any }
   | {
       type: 'attachable';
       roleName: string;
@@ -148,7 +143,7 @@ export type CrossAppletView =
   | {
       type: 'block';
       block: string;
-      context: JSONCompatible;
+      context: any;
     };
 
 export type BlockType = {
@@ -311,13 +306,13 @@ export type OpenViewRequest =
       type: 'applet-block';
       appletHash: EntryHash;
       block: string;
-      context: JSONCompatible;
+      context: any;
     }
   | {
       type: 'cross-applet-block';
       appletBundleId: ActionHash;
       block: string;
-      context: JSONCompatible;
+      context: any;
     }
   | {
       type: 'hrl';

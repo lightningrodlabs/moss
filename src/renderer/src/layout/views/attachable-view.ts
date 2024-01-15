@@ -63,8 +63,7 @@ export class AttachableView extends LitElement {
           roleName: dnaLocation.roleName,
           integrityZomeName: entryTypeLocation.integrity_zome,
           entryType: entryTypeLocation.entry_def,
-          hrl: this.hrlWithContext.hrl,
-          context: this.hrlWithContext.context,
+          hrlWithContext: this.hrlWithContext,
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
