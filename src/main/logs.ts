@@ -1,5 +1,6 @@
 import winston, { createLogger, transports, format } from 'winston';
 import path from 'path';
+import fs from 'fs';
 import { WeFileSystem } from './filesystem';
 import {
   HOLOCHAIN_ERROR,
@@ -20,7 +21,12 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 // with methods logLair, logHolochain, logLauncher, logHapp, ...
 
 export function setupLogs(weEmitter: WeEmitter, launcherFileSystem: WeFileSystem) {
-  const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
+  // Old log file created too much output so it should be deleted to free up disk space
+  const oldLogFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
+  if (fs.existsSync(oldLogFilePath)) {
+    fs.rmSync(oldLogFilePath);
+  }
+  const logFilePath = path.join(launcherFileSystem.appLogsDir, 'We.log');
   // with file rotation set maxsize. But then we require logic to garbage collect old files...
   // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
   const logFileTransport = new transports.File({ filename: logFilePath });
