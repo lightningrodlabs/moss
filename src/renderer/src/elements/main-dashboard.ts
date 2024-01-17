@@ -324,6 +324,14 @@ export class MainDashboard extends LitElement {
 
   async firstUpdated() {
     setupAppletMessageHandler(this._weStore, this.openViews);
+    window.electronAPI.onSwitchToApplet((_, appletId) => {
+      if (appletId) {
+        this.openViews.openAppletMain(decodeHashFromBase64(appletId));
+        if (this._attachableViewerState === 'front') {
+          this._showTabView = false;
+        }
+      }
+    });
     // this._unlisten = await listen('deep-link-received', async (e) => {
     //   const deepLink = e.payload as string;
     //   try {

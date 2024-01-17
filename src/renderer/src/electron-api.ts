@@ -10,7 +10,7 @@ import {
   InstalledAppId,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
-import { WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
@@ -26,6 +26,7 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
+      onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
       openApp: (appId: string) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
@@ -45,8 +46,16 @@ declare global {
         sha256Webhapp?: string,
         metadata?: string,
       ) => Promise<AppInfo>;
+      isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string) => Promise<AppInfo>;
+      notification: (
+        notification: WeNotification,
+        showInSystray: boolean,
+        notifyOS: boolean,
+        appletId: AppletId | undefined,
+        appletName: string | undefined,
+      ) => Promise<void>;
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;

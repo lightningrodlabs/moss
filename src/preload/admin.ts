@@ -5,6 +5,7 @@ import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
 import { DistributionInfo } from '../main/filesystem';
+import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
@@ -13,6 +14,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
+  onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
+    ipcRenderer.on('switch-to-applet', callback),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openDevHub: () => ipcRenderer.invoke('open-devhub'),
@@ -49,7 +52,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       metadata,
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
+  isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),
+  notification: (
+    notification: WeNotification,
+    showInSystray: boolean,
+    notifyOS: boolean,
+    appletId: AppletId | undefined,
+    appletName: string | undefined,
+  ) =>
+    ipcRenderer.invoke('notification', notification, showInSystray, notifyOS, appletId, appletName),
   enableDevMode: () => ipcRenderer.invoke('enable-dev-mode'),
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>

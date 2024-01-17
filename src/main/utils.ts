@@ -29,3 +29,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     return { action: 'deny' };
   });
 }
+
+export function emitToWindow<T>(targetWindow: BrowserWindow, channel: string, payload: T): void {
+  targetWindow.webContents.send(channel, payload);
+}

@@ -30,12 +30,14 @@ import { WeStore } from '../we-store.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
+  getAppletNotificationSettings,
   getNotificationState,
   storeAppletNotifications,
   stringifyHrlWithContext,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';
+import { AppletNotificationSettings } from './types.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -339,7 +341,7 @@ export async function handleAppletIframeMessage(
       }
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
 
-      // const mainWindowFocused = await isMainWindowFocused();
+      const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
       // const windowFocused = await appWindow.isFocused();
       // const windowVisible = await appWindow.isVisible();
 
@@ -362,27 +364,26 @@ export async function handleAppletIframeMessage(
       // update the notifications store
       appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
 
-      // // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
-      // const appletNotificationSettings: AppletNotificationSettings =
-      //   getAppletNotificationSettings(appletId);
+      // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
+      const appletNotificationSettings: AppletNotificationSettings =
+        getAppletNotificationSettings(appletId);
 
-      // await Promise.all(
-      //   notifications.map(async (notification) => {
-      //     // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
-      //     // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
-      //     // user was offline
-      //     if (Date.now() - notification.timestamp < 300000) {
-      //       console.log('notifying electron main process');
-      //       await notifyElectron(
-      //         notification,
-      //         appletNotificationSettings.showInSystray && !windowVisible,
-      //         appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
-      //         // appletStore ? encodeHashToBase64(appletStore.applet.appstore_app_hash) : undefined,
-      //         appletStore ? appletStore.applet.custom_name : undefined,
-      //       );
-      //     }
-      //   }),
-      // );
+      await Promise.all(
+        notifications.map(async (notification) => {
+          // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
+          // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
+          // user was offline
+          if (Date.now() - notification.timestamp < 300000) {
+            await window.electronAPI.notification(
+              notification,
+              appletNotificationSettings.showInSystray && !mainWindowFocused,
+              appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
+              appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
+              appletStore ? appletStore.applet.custom_name : undefined,
+            );
+          }
+        }),
+      );
       return;
     }
 

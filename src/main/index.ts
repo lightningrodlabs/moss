@@ -12,6 +12,7 @@ import {
   dialog,
   session,
   desktopCapturer,
+  Notification,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -29,7 +30,7 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { setLinkOpenHandlers } from './utils';
+import { emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
@@ -37,6 +38,7 @@ import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
+import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -170,7 +172,18 @@ let LAIR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 let MAIN_WINDOW: BrowserWindow | undefined | null;
 let SPLASH_SCREEN_WINDOW: BrowserWindow | undefined;
 let SELECT_SCREEN_OR_WINDOW_WINDOW: BrowserWindow | undefined | null;
+let SYSTRAY_ICON_STATE: 'high' | 'medium' | undefined = undefined;
+let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
+
+// icons
+const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32.png'));
+const SYSTRAY_ICON_HIGH = nativeImage.createFromPath(
+  path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32.png'),
+);
+const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
+  path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32.png'),
+);
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
@@ -223,10 +236,10 @@ const createSplashscreenWindow = (): BrowserWindow => {
   return splashWindow;
 };
 
-const createOrShowMainWindow = () => {
+const createOrShowMainWindow = (): BrowserWindow => {
   if (MAIN_WINDOW) {
     MAIN_WINDOW.show();
-    return;
+    return MAIN_WINDOW;
   }
 
   // // Debugging for webRTC
@@ -295,7 +308,14 @@ const createOrShowMainWindow = () => {
     // mainWindow = null;
     MAIN_WINDOW = null;
   });
-  MAIN_WINDOW = mainWindow;
+  mainWindow.on('focus', () => {
+    if (SYSTRAY) {
+      SYSTRAY.setImage(SYSTRAY_ICON_DEFAULT);
+      SYSTRAY_ICON_STATE = undefined;
+    }
+  });
+
+  return mainWindow;
 };
 
 const selectScreenOrWindow = async (): Promise<string> => {
@@ -335,7 +355,6 @@ const selectScreenOrWindow = async (): Promise<string> => {
   });
 };
 
-let tray;
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -368,8 +387,9 @@ app.whenReady().then(async () => {
       callback(false);
     },
   );
-  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '16x16.png'));
-  tray = new Tray(icon);
+  SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
+
+  const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
   handleAppletProtocol(WE_FILE_SYSTEM);
 
@@ -395,12 +415,50 @@ app.whenReady().then(async () => {
     },
   ]);
 
-  tray.setToolTip('Lightningrodlabs We');
-  tray.setContextMenu(contextMenu);
+  SYSTRAY.setToolTip('Lightningrodlabs We');
+  SYSTRAY.setContextMenu(contextMenu);
 
   ipcMain.handle('exit', () => {
     app.exit(0);
   });
+  ipcMain.handle('is-main-window-focused', () => MAIN_WINDOW?.isFocused());
+  ipcMain.handle(
+    'notification',
+    (
+      _e,
+      notification: WeNotification,
+      showInSystray: boolean,
+      notifyOS: boolean,
+      appletId: AppletId | undefined,
+      appletName: string | undefined,
+    ) => {
+      if (showInSystray && notification.urgency === 'high') {
+        SYSTRAY_ICON_STATE = 'high';
+        SYSTRAY!.setImage(SYSTRAY_ICON_HIGH);
+      } else if (
+        showInSystray &&
+        notification.urgency === 'medium' &&
+        SYSTRAY_ICON_STATE !== 'high'
+      ) {
+        SYSTRAY_ICON_STATE = 'medium';
+        SYSTRAY!.setImage(SYSTRAY_ICON_MEDIUM);
+      }
+      if (notifyOS) {
+        new Notification({
+          title: `${appletName}: ${notification.title}`,
+          body: notification.body,
+          icon: notificationIcon,
+        })
+          .on('click', () => {
+            createOrShowMainWindow();
+            emitToWindow(MAIN_WINDOW!, 'switch-to-applet', appletId);
+            SYSTRAY_ICON_STATE = undefined;
+            if (SYSTRAY) SYSTRAY.setImage(SYSTRAY_ICON_DEFAULT);
+          })
+          .show();
+      }
+    },
+  );
   ipcMain.handle('get-app-version', () => app.getVersion());
   ipcMain.handle('dialog-messagebox', async (_e, options: Electron.MessageBoxOptions) => {
     if (MAIN_WINDOW) {
@@ -731,7 +789,7 @@ app.whenReady().then(async () => {
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-    createOrShowMainWindow();
+    MAIN_WINDOW = createOrShowMainWindow();
   });
 
   if (WE_APPLET_DEV_INFO) {
@@ -745,7 +803,7 @@ app.whenReady().then(async () => {
       APPSTORE_NETWORK_SEED,
       WE_APPLET_DEV_INFO,
     );
-    createOrShowMainWindow();
+    MAIN_WINDOW = createOrShowMainWindow();
   } else {
     SPLASH_SCREEN_WINDOW = createSplashscreenWindow();
   }
@@ -780,6 +838,3 @@ app.on('quit', () => {
     HOLOCHAIN_MANAGER.processHandle.kill();
   }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
