@@ -13,7 +13,7 @@ import {
   pipe,
   sliceAndJoin,
 } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
   AppAgentWebsocket,
@@ -269,13 +269,26 @@ export class GroupStore {
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
     const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
-    // console.log('Got unjoined applets: ', unjoinedApplets);
-    // const allGroupApplets = await this.groupClient.getGroupApplets();
-    // console.log(
-    //   'allGroupApplets: ',
-    //   allGroupApplets.map((hash) => encodeHashToBase64(hash)),
-    // );
-    return unjoinedApplets;
+    const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AgentPubKey[]]> =
+      new EntryHashMap();
+    try {
+      await Promise.all(
+        unjoinedApplets.map(async ([appletHash, addingAgent, timestamp]) => {
+          const joinedMembers = await this.groupClient.getAppletAgents(appletHash);
+          unjoinedAppletsWithGroupMembers.set(appletHash, [addingAgent, timestamp, joinedMembers]);
+        }),
+      );
+    } catch (e) {
+      console.warn('Failed to get joined members for unjoined applets: ', e);
+      const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
+        [AgentPubKey, number, AgentPubKey[]]
+      > = new EntryHashMap();
+      unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
+        unjoinedAppletsWithGroupMembersFallback.set(appletHash, [addingAgent, timestamp, []]);
+      });
+      return unjoinedAppletsWithGroupMembersFallback;
+    }
+    return unjoinedAppletsWithGroupMembers;
   }, NEW_APPLETS_POLLING_FREQUENCY);
 
   // Currently unused

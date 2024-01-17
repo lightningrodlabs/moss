@@ -174,7 +174,7 @@ fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 /// the local conductor yet, together with the agent pubkey of the agent that added
 /// the applet to the group
 #[hdk_extern]
-fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
+fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey, Timestamp)>> {
     let my_applet_copies = get_my_applet_copies(())?;
     let my_applet_copies_public_hashes = my_applet_copies
         .into_iter()
@@ -184,15 +184,23 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey)>> {
     let path = get_group_applets_path();
     let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
 
-    let applet_infos: Vec<(EntryHash, AgentPubKey)> = links
+    let applet_infos: Vec<(EntryHash, AgentPubKey, Timestamp)> = links
         .into_iter()
         .filter(|link| link.target.clone().into_entry_hash().is_some())
-        .map(|link| (link.target.into_entry_hash().unwrap(), link.author))
+        .map(|link| {
+            (
+                link.target.into_entry_hash().unwrap(),
+                link.author,
+                link.timestamp,
+            )
+        })
         .collect();
 
     Ok(applet_infos
         .into_iter()
-        .filter(|(entry_hash, _author)| !my_applet_copies_public_hashes.contains(entry_hash))
+        .filter(|(entry_hash, _author, _timestamp)| {
+            !my_applet_copies_public_hashes.contains(entry_hash)
+        })
         .collect())
 }
 

@@ -21,6 +21,8 @@ import { consume } from '@lit/context';
 import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import { mdiArrowLeft, mdiCog, mdiHelpCircle, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
 
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -64,6 +66,8 @@ import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 
+TimeAgo.addDefaultLocale(en);
+
 type View =
   | {
       view: 'main';
@@ -98,51 +102,62 @@ export class GroupHome extends LitElement {
     () =>
       pipe(this.groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
-          appletsAndKeys.map(async ([appletHash, agentKey]) => {
-            let appletEntry: Applet | undefined;
-            try {
-              appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
-            } catch (e) {
-              console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
-            }
-            let appstoreAppEntry: Entity<AppEntry> | undefined;
-            let appletLogo: string | undefined;
-            if (appletEntry) {
-              const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
-              if (distributionInfo.type !== 'appstore-light')
-                throw new Error(
-                  "Cannot get unjoined applets from distribution types other than appstore-light'",
-                );
-              const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
+          Array.from(appletsAndKeys.entries()).map(
+            async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
+              let appletEntry: Applet | undefined;
               try {
-                appstoreAppEntry = await toPromise(
-                  this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
-                );
+                appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
               } catch (e) {
-                console.warn('@group-home @unjoined-applets: Failed to get appstoreAppEntry: ', e);
+                console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
-              try {
-                appletLogo = await toPromise(
-                  this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
+              let appstoreAppEntry: Entity<AppEntry> | undefined;
+              let appletLogo: string | undefined;
+              if (appletEntry) {
+                const distributionInfo: DistributionInfo = JSON.parse(
+                  appletEntry.distribution_info,
                 );
-              } catch (e) {
-                console.warn('@group-home @unjoined-applets: Failed to get appletLogo: ', e);
+                if (distributionInfo.type !== 'appstore-light')
+                  throw new Error(
+                    "Cannot get unjoined applets from distribution types other than appstore-light'",
+                  );
+                const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
+                try {
+                  appstoreAppEntry = await toPromise(
+                    this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
+                  );
+                } catch (e) {
+                  console.warn(
+                    '@group-home @unjoined-applets: Failed to get appstoreAppEntry: ',
+                    e,
+                  );
+                }
+                try {
+                  appletLogo = await toPromise(
+                    this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
+                  );
+                } catch (e) {
+                  console.warn('@group-home @unjoined-applets: Failed to get appletLogo: ', e);
+                }
               }
-            }
-            return [
-              appletHash,
-              appletEntry,
-              appstoreAppEntry?.content ? appstoreAppEntry.content : undefined,
-              appletLogo,
-              agentKey,
-            ] as [
-              AppletHash,
-              Applet | undefined,
-              AppEntry | undefined,
-              string | undefined,
-              AgentPubKey,
-            ];
-          }),
+              return [
+                appletHash,
+                appletEntry,
+                appstoreAppEntry?.content ? appstoreAppEntry.content : undefined,
+                appletLogo,
+                agentKey,
+                timestamp,
+                joinedMembers,
+              ] as [
+                AppletHash,
+                Applet | undefined,
+                AppEntry | undefined,
+                string | undefined,
+                AgentPubKey,
+                number,
+                AgentPubKey[],
+              ];
+            },
+          ),
         ),
       ),
     () => [this.groupStore, this.weStore],
@@ -282,6 +297,7 @@ export class GroupHome extends LitElement {
           <span>${this._unjoinedApplets.value.error}</span>
         </div> `;
       case 'complete':
+        console.log('this._unjoinedApplets.value.value: ', this._unjoinedApplets.value.value);
         if (
           this._unjoinedApplets.value.value.filter(
             ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
@@ -289,6 +305,7 @@ export class GroupHome extends LitElement {
         ) {
           return html`${msg('No new applets to install.')}`;
         }
+        const timeAgo = new TimeAgo('en-US');
         return html`
           <div class="row" style="flex-wrap: wrap;">
             ${this._unjoinedApplets.value.value
@@ -296,33 +313,74 @@ export class GroupHome extends LitElement {
                 ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
               )
               .map(
-                ([appletHash, appletEntry, appEntry, logo, agentKey]) => html`
-                <sl-card class="applet-card">
-                  <div class="column" style="flex: 1;">
-                    <div class="row" style="align-items: center; margin-bottom: 10px;">
-                      ${
-                        logo
-                          ? html`<img src=${logo} alt="Applet logo" style="height: 45px;" />`
-                          : html``
-                      }
-                      <span style="margin-left: 10px; font-size: 20px; ${
-                        appEntry?.title ? '' : 'opacity: 0.6;'
-                      }">${appEntry ? appEntry.title : 'unknown'}&nbsp;</span>
+                ([
+                  appletHash,
+                  appletEntry,
+                  appEntry,
+                  logo,
+                  agentKey,
+                  timestamp,
+                  joinedMembers,
+                ]) => html`
+                  <sl-card class="applet-card">
+                    <div class="column" style="flex: 1;">
+                      <div style="margin-bottom: 3px; text-align: right; opacity: 0.65;">
+                        ${timeAgo.format(new Date(timestamp / 1000))}
+                      </div>
+                      <div class="row" style="align-items: center;">
+                        <agent-avatar
+                          .size=${40}
+                          style="margin-left: 5px;"
+                          .agentPubKey=${agentKey}
+                        ></agent-avatar>
+                        <span style="margin-left: 10px; margin-right: 10px;"
+                          >${msg('added a new instance of ')}</span
+                        >
+                        <sl-tooltip
+                          style="${appEntry ? '' : 'display: none;'}"
+                          content="${appEntry?.subtitle}"
+                        >
+                          <div class="row" style="align-items: center; cursor: help;">
+                            ${logo
+                              ? html`<img src=${logo} alt="Applet logo" style="height: 40px;" />`
+                              : html``}
+                            <span
+                              style="margin-left: 5px; font-weight: bold; ${appEntry?.title
+                                ? ''
+                                : 'opacity: 0.6;'}"
+                              >${appEntry ? appEntry.title : 'unknown'}&nbsp;</span
+                            >
+                          </div>
+                        </sl-tooltip>
+                        <span style="margin-left: 10px; margin-right: 10px;"
+                          >${msg('with the name ')}</span
+                        >
+                        <span style="font-weight: bold;"
+                          >${appletEntry ? appletEntry.custom_name : 'unknown'}</span
+                        >
+                      </div>
+                      <div class="row" style="align-items: center; margin-top: 20px;">
+                        <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
+                        ${joinedMembers.map(
+                          (agentKey) => html`
+                            <agent-avatar
+                              style="margin-left: 5px;"
+                              .agentPubKey=${agentKey}
+                            ></agent-avatar>
+                          `,
+                        )}
+                        <span style="display: flex; flex: 1;"></span>
+                        <sl-button
+                          style="margin-left: 20px;"
+                          .loading=${this._joiningNewApplet === encodeHashToBase64(appletHash)}
+                          variant="success"
+                          @click=${() => this.joinNewApplet(appletHash)}
+                          >${msg('Join')}</sl-button
+                        >
+                      </div>
                     </div>
-                    <div class="row" style="align-items: center; margin-bottom: 5px;">
-                      <b>name:</b>&nbsp;${appletEntry ? appletEntry.custom_name : 'unknown'}
-                    </div>
-                    <div class="row" style="align-items: center; margin-bottom: 20px;">
-                      <span><b>added by:</b></span>
-                      <profile-detail style="margin-left: 5px;" .agentPubKey=${agentKey}></profile-detail>
-                    </div>
-                    <sl-button .loading=${
-                      this._joiningNewApplet === encodeHashToBase64(appletHash)
-                    } variant="primary" @click=${() =>
-                      this.joinNewApplet(appletHash)}>Join</sl-button>
-                  <div>
-                </sl-card>
-              `,
+                  </sl-card>
+                `,
               )}
           </div>
         `;
@@ -614,8 +672,7 @@ export class GroupHome extends LitElement {
         font-size: 25px;
       }
       .applet-card {
-        width: 300px;
-        height: 210px;
+        width: 100%;
         margin: 10px;
         --border-radius: 15px;
         border: none;

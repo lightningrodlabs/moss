@@ -495,7 +495,7 @@ async function publishApplet(
 
   const payload = {
     title: appletConfig.name,
-    subtitle: appletConfig.name,
+    subtitle: appletConfig.subtitle,
     description: appletConfig.description,
     icon_src: appletIcon,
     publisher: publisher.payload.id,

@@ -24,6 +24,7 @@
     "@scoped-elements/golden-layout": "https://github.com/matthme/scoped-golden-layout.git#build",
     "golden-layout": "^2.6.0",
     "grapes-editor": "^0.1.0",
+    "javascript-time-ago": "2.5.9",
     "js-base64": "^3.7.2",
     "lit": "^3.0.2",
     "uuid": "^8.3.2"

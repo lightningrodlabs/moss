@@ -63,7 +63,7 @@ export class GroupClient {
    * group but have never been installed into the local conductor yet.
    * @returns
    */
-  async getUnjoinedApplets(): Promise<Array<[EntryHash, AgentPubKey]>> {
+  async getUnjoinedApplets(): Promise<Array<[EntryHash, AgentPubKey, number]>> {
     return this.callZome('get_unjoined_applets', null);
   }
 
