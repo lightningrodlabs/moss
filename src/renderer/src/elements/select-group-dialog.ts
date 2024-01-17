@@ -107,7 +107,7 @@ export class SelectGroupDialog extends LitElement {
 
   render() {
     return html`<sl-dialog id="dialog" .label=${msg('Select Group')}>
-      <div class="column">Select in which Group you would like to install the Applet:</div>
+      <div>${msg('Select the Group to which you would like to add the Applet:')}</div>
       <div class="column" style="margin-top: 10px;">
         ${this.renderDialogContent()}
         <sl-button

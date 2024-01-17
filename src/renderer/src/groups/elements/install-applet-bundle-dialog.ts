@@ -13,6 +13,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
@@ -181,7 +182,7 @@ export class InstallAppletBundleDialog extends LitElement {
           ></sl-input>
 
           <span
-            style="text-decoration: underline; cursor: pointer;"
+            style="text-decoration: underline; cursor: pointer; margin-bottom: 3px;"
             @click=${() => {
               this._showAdvanced = !this._showAdvanced;
             }}
@@ -200,7 +201,7 @@ export class InstallAppletBundleDialog extends LitElement {
             : html``}
 
           <sl-button variant="primary" type="submit" .loading=${this._installing}>
-            ${msg('Install')}
+            ${msg('Add to Group')}
           </sl-button>
           <div>${this._installationProgress}</div>
         `;
@@ -217,7 +218,7 @@ export class InstallAppletBundleDialog extends LitElement {
     return html`
       <sl-dialog
         id="applet-dialog"
-        .label=${msg('Install Applet')}
+        .label=${msg('Add New Applet to Group')}
         @sl-request-close=${(e) => {
           if (this._installing) {
             e.preventDefault();
@@ -231,6 +232,22 @@ export class InstallAppletBundleDialog extends LitElement {
           }
         }}
       >
+        <div style="margin-top: -20px; margin-bottom: 30px;">
+          <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span>${msg(
+            'Adding a new Applet to a group ',
+          )}<b>${msg('creates a new unique instance ')}</b>${msg(
+            "of that Applet which other group members may install an join directly from the group's main page.",
+          )}
+          <sl-tooltip
+            content=${msg(
+              `Each time you add an applet to a group via the Applet Library, you create a new unique peer-to-peer network specifically for that instance of the Applet. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Installable Applets" section. If two members each add the same Applet from the Applet Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Applet.`,
+            )}
+          >
+            <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
+              >${msg('Details')}</span
+            ></sl-tooltip
+          >
+        </div>
         <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
       </sl-dialog>
     `;

@@ -117,7 +117,7 @@ export class WelcomeView extends LitElement {
                     .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
                     style="color: white; height: 40px; width: 40px; margin-right: 10px;"
                   ></sl-icon>
-                  <span>Create Group</span>
+                  <span>${msg('Create Group')}</span>
                 </div>
               </button>
               <button
@@ -136,7 +136,7 @@ export class WelcomeView extends LitElement {
                     .src=${wrapPathInSvg(mdiViewGridPlus)}
                     style="color: white; height: 40px; width: 40px; margin-right: 10px;"
                   ></sl-icon>
-                  <span>Install Applet</span>
+                  <span>${msg('Applet Library')}</span>
                 </div>
               </button>
               <button
@@ -164,7 +164,7 @@ export class WelcomeView extends LitElement {
                     .src=${wrapPathInSvg(mdiAccountLockOpen)}
                     style="color: white; height: 40px; width: 40px; margin-right: 10px;"
                   ></sl-icon>
-                  <span>Join Group</span>
+                  <span>${'Join Group'}</span>
                 </div>
               </button>
             </div>

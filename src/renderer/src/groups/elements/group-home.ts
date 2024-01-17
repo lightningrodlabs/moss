@@ -19,7 +19,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
-import { mdiArrowLeft, mdiCog, mdiLinkVariantPlus } from '@mdi/js';
+import { mdiArrowLeft, mdiCog, mdiHelpCircle, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
@@ -34,7 +34,8 @@ import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
-import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import './group-peers-status.js';
 import './related-groups.js';
@@ -281,6 +282,13 @@ export class GroupHome extends LitElement {
           <span>${this._unjoinedApplets.value.error}</span>
         </div> `;
       case 'complete':
+        if (
+          this._unjoinedApplets.value.value.filter(
+            ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
+          ).length === 0
+        ) {
+          return html`${msg('No new applets to install.')}`;
+        }
         return html`
           <div class="row" style="flex-wrap: wrap;">
             ${this._unjoinedApplets.value.value
@@ -343,11 +351,13 @@ export class GroupHome extends LitElement {
             </div>
 
             <div style="position: relative;">
-              ${!!this.updatesAvailable.value
-                ? html`<div
-                    style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
-                  ></div>`
-                : html``}
+              ${
+                !!this.updatesAvailable.value
+                  ? html`<div
+                      style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
+                    ></div>`
+                  : html``
+              }
               <sl-icon-button
                 .src=${wrapPathInSvg(mdiCog)}
                 title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
@@ -360,21 +370,18 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
-
-          <span class="title">New Group Applets</span>
+          <div class="row" style="align-items: center;">
+          <span class="title">${msg('Installable Applets')}</span>
+          <sl-tooltip content="${msg(
+            'Applet instances that have been added to this group by other members via the Applet Library show up here for you to install and join as well.',
+          )}">
+          <sl-icon style="height: 28px; width: 28px; margin-left: 10px; cursor: help;" .src=${wrapPathInSvg(
+            mdiHelpCircle,
+          )}><sl-icon>
+              </sl-tooltip>
+        </div>
           <sl-divider style="--color: grey"></sl-divider>
           ${this.renderNewApplets()}
-
-          <!-- Related Groups Row -->
-
-          <div class="row">
-            <div class="column" style="flex: 1; margin-right: 16px">
-              <!-- <span class="title">Installed Applets</span>
-              <sl-divider style="--color: grey"></sl-divider>
-              <group-applets style="flex: 1; margin: 10px;"></group-applets> -->
-              <related-groups style="flex: 1; margin: 10px; margin-top: 30px;"></related-groups>
-            </div>
-          </div>
         </div>
 
         <div
