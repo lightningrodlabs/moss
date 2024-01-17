@@ -86,8 +86,7 @@ const appletServices: Appletservices = {
         roleName: RoleName,
         integrityZomeName: ZomeName,
         entryType: string,
-        hrl: Hrl,
-        context: any,
+        hrlWithContext: HrlWithContext,
     ): Promise<AttachableInfo | undefined> => {
         // your logic here...
         // for example
