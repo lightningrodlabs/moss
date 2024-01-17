@@ -65,9 +65,17 @@ export class AppletStore {
       return lazyLoadAndPoll(async () => {
         if (!host) return Promise.resolve({});
         try {
-          const attachmentTypes = await host.getAppletAttachmentTypes();
-          // console.log(attachmentTypes);
-          return attachmentTypes;
+          return new Promise(async (resolve) => {
+            setTimeout(() => {
+              console.warn(
+                `Getting attachmentTypes for applet ${host.appletId} timed out in 5000ms`,
+              );
+              resolve({});
+            }, 5000);
+            const attachmentTypes = await host.getAppletAttachmentTypes();
+            console.log(attachmentTypes);
+            resolve(attachmentTypes);
+          });
         } catch (e) {
           console.warn(`Failed to get attachment types from applet "${host.appletId}": ${e}`);
           return Promise.resolve({});
