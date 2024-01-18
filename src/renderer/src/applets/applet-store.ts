@@ -66,15 +66,22 @@ export class AppletStore {
         if (!host) return Promise.resolve({});
         try {
           return new Promise(async (resolve) => {
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
               console.warn(
                 `Getting attachmentTypes for applet ${host.appletId} timed out in 5000ms`,
               );
               resolve({});
             }, 5000);
-            const attachmentTypes = await host.getAppletAttachmentTypes();
-            console.log(attachmentTypes);
-            resolve(attachmentTypes);
+            try {
+              const attachmentTypes = await host.getAppletAttachmentTypes();
+              clearTimeout(timeout);
+              resolve(attachmentTypes);
+            } catch (e: any) {
+              if (e.toString().includes('before initialization')) {
+                return;
+              }
+              console.warn('Failed to get attachment types: ', e);
+            }
           });
         } catch (e) {
           console.warn(`Failed to get attachment types from applet "${host.appletId}": ${e}`);
