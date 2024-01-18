@@ -368,22 +368,24 @@ export async function handleAppletIframeMessage(
       const appletNotificationSettings: AppletNotificationSettings =
         getAppletNotificationSettings(appletId);
 
-      await Promise.all(
-        notifications.map(async (notification) => {
-          // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
-          // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
-          // user was offline
-          if (Date.now() - notification.timestamp < 300000) {
-            await window.electronAPI.notification(
-              notification,
-              appletNotificationSettings.showInSystray && !mainWindowFocused,
-              appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
-              appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
-              appletStore ? appletStore.applet.custom_name : undefined,
-            );
-          }
-        }),
-      );
+      if (!mainWindowFocused) {
+        await Promise.all(
+          notifications.map(async (notification) => {
+            // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
+            // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
+            // user was offline
+            if (Date.now() - notification.timestamp < 300000) {
+              await window.electronAPI.notification(
+                notification,
+                appletNotificationSettings.showInSystray && !mainWindowFocused,
+                appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
+                appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
+                appletStore ? appletStore.applet.custom_name : undefined,
+              );
+            }
+          }),
+        );
+      }
       return;
     }
 

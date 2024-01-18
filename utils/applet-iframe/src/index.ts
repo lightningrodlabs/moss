@@ -243,34 +243,16 @@ const weApi: WeServices = {
   // get global attachment-types with setTimeout in order not to block subsequent stuff
   setTimeout(async () => {
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    console.log(
-      `@applet-iframe of applet ${encodeHashToBase64(
-        window.__WE_APPLET_HASH__,
-      )}: globalAttachmentTypes:`,
-    );
-    console.log(globalAttachmentTypes);
     window.__WE_API__.attachmentTypes = globalAttachmentTypes;
   });
   setTimeout(async () => {
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    console.log(
-      `@applet-iframe of applet ${encodeHashToBase64(
-        window.__WE_APPLET_HASH__,
-      )}: globalAttachmentTypes:`,
-    );
-    console.log(globalAttachmentTypes);
     window.__WE_API__.attachmentTypes = globalAttachmentTypes;
   }, 2000);
   setInterval(async () => {
     const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    console.log(
-      `@applet-iframe of applet ${encodeHashToBase64(
-        window.__WE_APPLET_HASH__,
-      )}: globalAttachmentTypes:`,
-    );
-    console.log(globalAttachmentTypes);
     window.__WE_API__.attachmentTypes = globalAttachmentTypes;
-  }, 6000);
+  }, 10000);
 })();
 
 async function fetchLocalStorage() {

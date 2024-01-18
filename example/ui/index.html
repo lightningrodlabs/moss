@@ -62,20 +62,11 @@
                   content: '',
                 };
                 const postRecord = await postsClient.createPost(post);
-                console.warn('@example-applet: created post with postRecord: ', postRecord);
-                console.warn(
-                  `@example-applet: @create: postRecord.action ${
-                    postRecord.action
-                  } ; post.action() ${postRecord.action()} ; postRecord.actionHash ${
-                    postRecord.actionHash
-                  }; post.actionHash() ${postRecord.actionHash()};`
-                );
                 const appInfo = await appletClient.appInfo();
                 const dnaHash = appInfo.cell_info.forum[0][CellType.Provisioned].cell_id[0];
                 const hrl = [postRecord.actionHash, dnaHash];
                 return {
                   hrl,
-                  context: {},
                 };
               },
             },
