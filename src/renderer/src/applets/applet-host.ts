@@ -377,7 +377,7 @@ export async function handleAppletIframeMessage(
             if (Date.now() - notification.timestamp < 300000) {
               await window.electronAPI.notification(
                 notification,
-                appletNotificationSettings.showInSystray && !mainWindowFocused,
+                appletNotificationSettings.showInSystray,
                 appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
                 appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
                 appletStore ? appletStore.applet.custom_name : undefined,

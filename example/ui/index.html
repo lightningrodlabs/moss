@@ -64,7 +64,7 @@
                 const postRecord = await postsClient.createPost(post);
                 const appInfo = await appletClient.appInfo();
                 const dnaHash = appInfo.cell_info.forum[0][CellType.Provisioned].cell_id[0];
-                const hrl = [postRecord.actionHash, dnaHash];
+                const hrl = [dnaHash, postRecord.actionHash];
                 return {
                   hrl,
                 };
