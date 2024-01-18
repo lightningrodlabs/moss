@@ -133,7 +133,7 @@ export class JoinGroupDialog extends LitElement {
 }
 
 function networkSeedFromInviteLink(inviteLink: string): string | undefined {
-  const split = inviteLink.split('://');
+  const split = inviteLink.trim().split('://');
   const split2 = split[2].split('/');
   if (split2[0] === 'group') {
     return split2[1];
