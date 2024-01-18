@@ -466,23 +466,26 @@ async function publishApplet(
   happOrWebHappPath: string,
   appHashes: AppHashes,
 ): Promise<DevHubResponse<Entity<AppEntry>>> {
-  const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome({
-    role_name: 'appstore',
-    zome_name: 'appstore_api',
-    fn_name: 'create_publisher',
-    payload: {
-      name: 'applet-developer',
-      location: {
-        country: 'in',
-        region: 'frontof',
-        city: 'myscreen',
+  const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome(
+    {
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'create_publisher',
+      payload: {
+        name: 'applet-developer',
+        location: {
+          country: 'in',
+          region: 'frontof',
+          city: 'myscreen',
+        },
+        website: {
+          url: 'https://duckduckgo.com',
+        },
+        icon_src: 'unnecessary',
       },
-      website: {
-        url: 'https://duckduckgo.com',
-      },
-      icon_src: 'unnecessary',
     },
-  });
+    10000,
+  );
 
   // TODO: Potentially change this to be taken from the original source or a local cache
   // Instead of pointing to local temp files
