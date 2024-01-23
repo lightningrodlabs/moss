@@ -236,11 +236,11 @@ export class InstallAppletBundleDialog extends LitElement {
           <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span>${msg(
             'Adding a new Applet to a group ',
           )}<b>${msg('creates a new unique instance ')}</b>${msg(
-            "of that Applet which other group members may install an join directly from the group's main page.",
+            "of that Applet which other group members may join directly from the group's main page.",
           )}
           <sl-tooltip
             content=${msg(
-              `Each time you add an applet to a group via the Applet Library, you create a new unique peer-to-peer network specifically for that instance of the Applet. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Installable Applets" section. If two members each add the same Applet from the Applet Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Applet.`,
+              `Each time you add an applet to a group via the Applet Library, you create a new unique peer-to-peer network specifically for that instance of the Applet. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Applets" section. If two members each add the same Applet from the Applet Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Applet.`,
             )}
           >
             <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"

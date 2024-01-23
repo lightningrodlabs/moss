@@ -429,7 +429,7 @@ export class GroupHome extends LitElement {
 
           <!-- NEW APPLETS -->
           <div class="row" style="align-items: center;">
-          <span class="title">${msg('Installable Applets')}</span>
+          <span class="title">${msg('Joinable Applets')}</span>
           <sl-tooltip content="${msg(
             'Applet instances that have been added to this group by other members via the Applet Library show up here for you to install and join as well.',
           )}">

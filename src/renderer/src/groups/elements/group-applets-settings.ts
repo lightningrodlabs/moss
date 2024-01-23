@@ -154,7 +154,7 @@ export class GroupAppletsSettings extends LitElement {
             style="flex: 1; align-items: center; overflow: auto; padding: 30px 10px 20px 10px; --sl-border-radius-medium: 20px;"
           >
             <span class="title" style="margin-bottom: 30px; font-size: 28px;"
-              >${msg('Installed Applets')}</span
+              >${msg('Joined Applets')}</span
             >
             ${this.renderInstalledApplets(
               this._groupApplets.value.value[0][0],
