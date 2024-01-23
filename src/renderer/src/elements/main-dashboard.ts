@@ -815,7 +815,15 @@ export class MainDashboard extends LitElement {
         </div>
 
         <!-- BOTTOM BAR -->
-        <div class="attachable-view-bar" style="${this._showTabView ? '' : 'display: none;'}">
+        <div
+          class="attachable-view-bar"
+          style="${this._showTabView ? '' : 'display: none;'}"
+          @click=${(e) => {
+            // Prevent propagation such hat only clicks outside of this container bubble up and we
+            // can close the attachable-view-container on side-click
+            e.stopPropagation();
+          }}
+        >
           ${this.renderEntryTabBar()}
         </div>
       </div>
