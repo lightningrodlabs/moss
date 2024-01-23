@@ -441,6 +441,14 @@ export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
+export function encodeContext(context: any) {
+  fromUint8Array(encode(context), true);
+}
+
+export function decodeContext(contextStringified: string): any {
+  decode(toUint8Array(contextStringified));
+}
+
 // Crop the image and return a base64 bytes string of its content
 export function resizeAndExport(img: HTMLImageElement) {
   const MAX_WIDTH = 300;

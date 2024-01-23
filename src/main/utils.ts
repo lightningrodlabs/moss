@@ -9,7 +9,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       return;
     }
     if (e.url.startsWith('we://')) {
-      // TODO implement sending event to renderer
+      emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
       e.url.startsWith('http://') ||
@@ -28,7 +28,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       return;
     }
     if (e.url.startsWith('we://')) {
-      // TODO implement sending event to renderer
+      emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
       e.url.startsWith('http://') ||

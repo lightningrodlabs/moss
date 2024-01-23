@@ -1,5 +1,5 @@
 import { LitElement, css, html } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 
 import { localized } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
@@ -18,6 +18,9 @@ export class AppletMain extends LitElement {
   @property()
   weClient!: WeClient;
 
+  @query('#hrl-input-field')
+  hrlInputField!: HTMLInputElement;
+
   @state()
   mediumInterval: number | null = null;
 
@@ -26,6 +29,9 @@ export class AppletMain extends LitElement {
 
   @state()
   selectedHrl: HrlWithContext | undefined = undefined;
+
+  @state()
+  hrlLink: string = '';
 
   // @state()
   // unsubscribe: undefined | (() => void);
@@ -38,6 +44,10 @@ export class AppletMain extends LitElement {
   // disconnectedCallback(): void {
   //   if (this.unsubscribe) this.unsubscribe();
   // }
+
+  updateHrlLink() {
+    this.hrlLink = this.hrlInputField.value;
+  }
 
   sendUrgentNotification(delay: number) {
     const notification: WeNotification = {
@@ -117,8 +127,19 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
-            <a href="we://hello.world">we://hello.world</a>
-            <a href="https://duckduckgo.com">duckduckgo</a>
+            <div>Enter Hrl:</div>
+            <textarea
+              id="hrl-input-field"
+              type="text"
+              @input=${() => this.updateHrlLink()}
+              rows="4"
+              cols="50"
+            ></textarea>
+            <button>Update HRL Link</button>
+            <a href="${this.hrlLink}"
+              >${this.hrlLink ? this.hrlLink : 'Paste HRL in field above to update me'}</a
+            >
+            <a href="https://duckduckgo.com">duckduckgo.com</a>
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts

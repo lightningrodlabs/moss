@@ -16,7 +16,7 @@ import { HrlWithContext } from '@lightningrodlabs/we-applet';
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
-import { stringifyHrlWithContext } from '../utils.js';
+import { encodeContext, stringifyHrlWithContext } from '../utils.js';
 
 @localized()
 @customElement('hrl-element')
@@ -67,11 +67,11 @@ export class HrlElement extends LitElement {
           return html`
             <div
               class="row element"
-              title=${`https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
+              title=${`we://hrl/${encodeHashToBase64(
                 this.hrlWithContext.hrl[0],
               )}/${encodeHashToBase64(this.hrlWithContext.hrl[1])}${
                 this.hrlWithContext.context
-                  ? `?context=${JSON.stringify(this.hrlWithContext.context)}`
+                  ? `?context=${encodeContext(this.hrlWithContext.context)}`
                   : ''
               }`}
             >
