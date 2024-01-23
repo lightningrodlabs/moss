@@ -29,7 +29,7 @@ linux:
     - AppImage
     # - snap
     # - deb
-  maintainer: electronjs.org
+  maintainer: lightningrodlabs.org
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

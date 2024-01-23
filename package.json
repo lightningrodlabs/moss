@@ -2,7 +2,7 @@
   "name": "org.lightningrodlabs.we-electron-alpha",
   "version": "0.10.0",
   "private": true,
-  "description": "lightningrodlabs We (Alhpa)",
+  "description": "lightningrodlabs We (Alpha)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
