@@ -40,9 +40,9 @@ export async function getAppletsInfosAndGroupsProfiles(
 }
 
 export function encodeContext(context: any) {
-  fromUint8Array(encode(context), true);
+  return fromUint8Array(encode(context), true);
 }
 
 export function decodeContext(contextStringified: string): any {
-  decode(toUint8Array(contextStringified));
+  return decode(toUint8Array(contextStringified));
 }

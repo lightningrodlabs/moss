@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
-  onDeepLinkReceived: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
+  onDeepLinkReceived: (callback: (e: Electron.IpcRendererEvent, payload: string) => any) =>
     ipcRenderer.on('deep-link-received', callback),
   onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
     ipcRenderer.on('switch-to-applet', callback),

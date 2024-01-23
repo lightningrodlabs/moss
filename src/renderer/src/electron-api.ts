@@ -26,7 +26,7 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
-      onDeepLinkReceived: (callback: (e: any, payload: AppletId) => any) => any;
+      onDeepLinkReceived: (callback: (e: any, payload: string) => any) => any;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
       openApp: (appId: string) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;

@@ -49,7 +49,7 @@ import { WeClipboard } from './clipboard.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { getAllIframes, stringifyHrlWithContext } from '../utils.js';
+import { decodeContext, getAllIframes, stringifyHrlWithContext } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 
 type OpenTab =
@@ -312,15 +312,37 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  // async handleOpenHrl(dnaHash: DnaHash, hash: AnyDhtHash) {
-  //   this.selectedGroupDnaHash = undefined;
-  // }
+  async handleOpenHrl(hrlWithContext: HrlWithContext) {
+    const hrl = hrlWithContext.hrl;
+    const alreadyOpen = Object.values(this._openTabs).find(
+      (tabInfo) =>
+        tabInfo.tab.type === 'hrl' &&
+        JSON.stringify(tabInfo.tab.hrlWithContext) === JSON.stringify(hrlWithContext),
+    );
+    if (alreadyOpen) {
+      this.openTab(alreadyOpen);
+      return;
+    }
+    const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
+    const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(hrl);
+    const tabInfo: TabInfo = {
+      id: tabId,
+      tab: {
+        type: 'hrl',
+        hrlWithContext,
+        groupHashesB64: groupContextHashesB64,
+        appletIds: appletContextIds,
+      },
+    };
+    this.openTab(tabInfo);
+  }
 
-  // async handleOpenAppletMain(appletHash: AppletHash) {
-  //   this.selectedGroupDnaHash = undefined;
-  //   this.dashboardMode = 'groupView';
-  //   // this.dynamicLayout.openViews.openAppletMain(appletHash);
-  // }
+  async handleOpenAppletMain(appletHash: AppletHash) {
+    this.openViews.openAppletMain(appletHash);
+    if (this._attachableViewerState === 'front') {
+      this._showTabView = false;
+    }
+  }
 
   async firstUpdated() {
     setupAppletMessageHandler(this._weStore, this.openViews);
@@ -333,26 +355,29 @@ export class MainDashboard extends LitElement {
       }
     });
 
-    window.electronAPI.onDeepLinkReceived(async (e) => {
-      const deepLink = e.payload as string;
+    window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
       console.log('Received deeplink: ', deepLink);
       try {
         const split = deepLink.split('://');
+        // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
         const split2 = split[1].split('/');
+        // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
 
         console.log('split 1: ', split);
         console.log('split 2: ', split2);
 
-        // if (split2[0] === 'hrl') {
-        //   await this.handleOpenHrl(
-        //     decodeHashFromBase64(split2[1]),
-        //     decodeHashFromBase64(split2[2]),
-        //   );
-        // } else if (split2[0] === 'group') {
-        //   await this.handleOpenGroup(split2[1]);
-        // } else if (split2[0] === 'applet') {
-        //   await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
-        // }
+        if (split2[0] === 'hrl') {
+          const contextSplit = split2[2].split('?context=');
+          console.log('contextSplit', contextSplit);
+          await this.handleOpenHrl({
+            hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
+            context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
+          });
+        } else if (split2[0] === 'group') {
+          await this.handleOpenGroup(split2[1]);
+        } else if (split2[0] === 'applet') {
+          await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
+        }
       } catch (e) {
         console.error(e);
         // notifyError(msg('Error opening the link.'));
@@ -695,32 +720,7 @@ export class MainDashboard extends LitElement {
       <we-clipboard
         id="clipboard"
         @click=${(e) => e.stopPropagation()}
-        @open-hrl=${async (e) => {
-          const hrlWithContext = e.detail.hrlWithContext;
-          const hrl = hrlWithContext.hrl;
-          const alreadyOpen = Object.values(this._openTabs).find(
-            (tabInfo) =>
-              tabInfo.tab.type === 'hrl' &&
-              JSON.stringify(tabInfo.tab.hrlWithContext) === JSON.stringify(hrlWithContext),
-          );
-          if (alreadyOpen) {
-            this.openTab(alreadyOpen);
-            return;
-          }
-          const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
-          const [groupContextHashesB64, appletContextIds] =
-            await this.getRelatedGroupsAndApplets(hrl);
-          const tabInfo: TabInfo = {
-            id: tabId,
-            tab: {
-              type: 'hrl',
-              hrlWithContext,
-              groupHashesB64: groupContextHashesB64,
-              appletIds: appletContextIds,
-            },
-          };
-          this.openTab(tabInfo);
-        }}
+        @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
         @hrl-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('hrl-selected', {
