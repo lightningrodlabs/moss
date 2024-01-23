@@ -9,7 +9,7 @@ import {
   AgentPubKey,
   encodeHashToBase64,
 } from '@holochain/client';
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 
 import { Applet } from '../applets/types.js';
 import { RelatedGroup } from './types.js';
@@ -45,6 +45,14 @@ export class GroupClient {
   }
 
   /** Applets */
+
+  async getPublicApplet(appletHash: AppletHash): Promise<EntryRecord<Applet> | undefined> {
+    const response: Record | undefined = await this.callZome('get_public_applet', appletHash);
+    if (response) {
+      return new EntryRecord(response);
+    }
+    return undefined;
+  }
 
   async getGroupApplets(): Promise<Array<EntryHash>> {
     return this.callZome('get_group_applets', null);

@@ -1,4 +1,4 @@
-import { AppInfo, DnaHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AppInfo, DnaHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
 import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -6,6 +6,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
 import { mdiShareVariant, mdiTrashCanOutline } from '@mdi/js';
 
+import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -17,6 +18,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
+import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import { Applet } from '../../applets/types.js';
 import { weStyles } from '../../shared-styles.js';
@@ -29,17 +31,29 @@ import {
   getProvisionedCells,
   isAppRunning,
 } from '../../utils.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
+import { groupStoreContext } from '../context.js';
+import { GroupStore } from '../group-store.js';
 
 @customElement('applet-detail-card')
 export class AppletDetailCard extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
   weStore!: WeStore;
 
-  appletUpdatable = new StoreSubscriber(
+  @consume({ context: groupStoreContext, subscribe: true })
+  groupStore!: GroupStore;
+
+  _appletUpdatable = new StoreSubscriber(
     this,
     () => this.weStore.appletUpdatable(this.appletHash),
     () => [this.weStore],
+  );
+
+  _joinedMembers = new StoreSubscriber(
+    this,
+    () =>
+      lazyLoadAndPoll(() => this.groupStore.groupClient.getAppletAgents(this.appletHash), 10000),
+    () => [this.groupStore],
   );
 
   @property(hashProperty('applet-hash'))
@@ -52,12 +66,19 @@ export class AppletDetailCard extends LitElement {
   federatedGroups!: ReadonlyMap<EntryHash, Array<DnaHash>>;
 
   @state()
+  addedBy: AgentPubKey | undefined;
+
+  @state()
   appInfo: AppInfo | undefined;
 
   async firstUpdated() {
     this.appInfo = await this.weStore.appWebsocket.appInfo({
       installed_app_id: appIdFromAppletHash(this.appletHash),
     });
+    const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
+    if (appletRecord) {
+      this.addedBy = appletRecord.action.author;
+    }
   }
 
   async updateUi() {
@@ -80,6 +101,27 @@ export class AppletDetailCard extends LitElement {
     );
   }
 
+  renderJoinedMembers() {
+    switch (this._joinedMembers.value.status) {
+      case 'error':
+        console.error(
+          'Failed to get members that joined the applet: ',
+          this._joinedMembers.value.error,
+        );
+        return html`ERROR: See console for details.`;
+      case 'pending':
+        return html`<sl-spinner></sl-spinner>`;
+      case 'complete':
+        return html`
+          ${this._joinedMembers.value.value.map(
+            (agentKey) => html`
+              <agent-avatar style="margin-left: 5px;" .agentPubKey=${agentKey}></agent-avatar>
+            `,
+          )}
+        `;
+    }
+  }
+
   render() {
     if (!this.appInfo) return html``;
     return html`
@@ -90,7 +132,7 @@ export class AppletDetailCard extends LitElement {
             <span style="flex: 1; font-size: 23px; font-weight: 600;"
               >${this.applet.custom_name}</span
             >
-            ${!!this.appletUpdatable.value
+            ${!!this._appletUpdatable.value
               ? html`<sl-button
                   variant="success"
                   @click=${() => this.updateUi()}
@@ -150,7 +192,7 @@ export class AppletDetailCard extends LitElement {
               </sl-switch>
             </sl-tooltip>
           </div>
-          <div class="row" style="margin-top: 15px;">
+          <div class="row" style="margin-top: 15px; align-items: center;">
             <span><b>appletHash:&nbsp;</b></span
             ><span>${encodeHashToBase64(this.appletHash)}</span>
             <span style="flex: 1;"></span>
@@ -158,6 +200,20 @@ export class AppletDetailCard extends LitElement {
             this.federatedGroups.get(this.appletHash)!.length > 0
               ? html`<span style="margin-right: 5px; margin-bottom: 5px;">Federated with:</span>`
               : html`<div style="height: 30px;"></div>`}
+
+            <div class="row" style="align-items: center;">
+              <span><b>added by&nbsp;</b></span>
+              ${this.addedBy
+                ? html`<agent-avatar
+                    style="margin-left: 5px;"
+                    .agentPubKey=${this.addedBy}
+                  ></agent-avatar>`
+                : html`unknown`}
+            </div>
+          </div>
+          <div class="row" style="align-items: center; margin-top: 4px;">
+            <span><b>joined by:&nbsp;</b></span>
+            ${this.renderJoinedMembers()}
           </div>
           <div class="row" style="justify-content: flex-end">
             ${Array.from(this.federatedGroups.get(this.appletHash)!).map(
