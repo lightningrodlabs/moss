@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@rollup/plugin-replace": "^5.0.2",
-    "grapesjs": "^0.21.1",
+    "grapesjs": "^0.21.8",
     "grapesjs-blocks-basic": "^1.0.1",
     "grapesjs-preset-webpage": "^1.0.2",
     "grapesjs-tabs": "^1.0.6",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@open-wc/eslint-config": "^4.3.0",
-    "@rollup/plugin-commonjs": "^21.0.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
@@ -49,7 +49,7 @@
     "lint-staged": "^10.5.4",
     "prettier": "^2.3.2",
     "rimraf": "^3.0.2",
-    "rollup": "^4.0.2",
+    "rollup": "^4.9.6",
     "rollup-plugin-postcss": "^4.0.1",
     "rollup-plugin-postcss-lit": "^2.0.0",
     "tslib": "^2.3.1",
