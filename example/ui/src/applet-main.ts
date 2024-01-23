@@ -117,6 +117,8 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
+            <a href="we://hello.world">we://hello.world</a>
+            <a href="https://duckduckgo.com">duckduckgo</a>
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts

@@ -2,12 +2,33 @@ import { BrowserWindow, shell } from 'electron';
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
+  browserWindow.webContents.on('will-frame-navigate', (e) => {
+    console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    if (e.url.startsWith('http://localhost:')) {
+      // ignore vite routing in dev mode
+      return;
+    }
+    if (e.url.startsWith('we://')) {
+      // TODO implement sending event to renderer
+    }
+    if (
+      e.url.startsWith('http://') ||
+      e.url.startsWith('https://') ||
+      e.url.startsWith('mailto://')
+    ) {
+      e.preventDefault();
+      shell.openExternal(e.url);
+    }
+  });
   // instead of the webview
   browserWindow.webContents.on('will-navigate', (e) => {
     console.log('GOT WILL-NAVIGATE EVENT: ', e);
-    if (e.url.startsWith('http://localhost:517')) {
+    if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
+    }
+    if (e.url.startsWith('we://')) {
+      // TODO implement sending event to renderer
     }
     if (
       e.url.startsWith('http://') ||
