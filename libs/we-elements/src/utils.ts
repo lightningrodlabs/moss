@@ -3,6 +3,8 @@ import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
 import { WeClient } from '@lightningrodlabs/we-applet';
+import { decode, encode } from '@msgpack/msgpack';
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 export async function getAppletsInfosAndGroupsProfiles(
   weClient: WeClient,
@@ -35,4 +37,12 @@ export async function getAppletsInfosAndGroupsProfiles(
     groupsProfiles,
     appletsInfos,
   };
+}
+
+export function encodeContext(context: any) {
+  fromUint8Array(encode(context), true);
+}
+
+export function decodeContext(contextStringified: string): any {
+  decode(toUint8Array(contextStringified));
 }

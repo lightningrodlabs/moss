@@ -11,6 +11,7 @@ import { notify, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/element
 import { mdiShareVariantOutline } from '@mdi/js';
 
 import { HrlWithContext } from '@lightningrodlabs/we-applet';
+import { encodeContext } from '../utils';
 
 @localized()
 @customElement('share-hrl')
@@ -19,11 +20,11 @@ export class ShareHrl extends LitElement {
   hrlWithContext!: HrlWithContext;
 
   async copyHrl() {
-    let url = `https://lightningrodlabs.org/we?we://hrl/${encodeHashToBase64(
-      this.hrlWithContext.hrl[0],
-    )}/${encodeHashToBase64(this.hrlWithContext.hrl[1])}`;
+    let url = `we://hrl/${encodeHashToBase64(this.hrlWithContext.hrl[0])}/${encodeHashToBase64(
+      this.hrlWithContext.hrl[1],
+    )}`;
     if (this.hrlWithContext.context) {
-      url = `${url}?context=${JSON.stringify(this.hrlWithContext.context)}`;
+      url = `${url}?context=${encodeContext(this.hrlWithContext.context)}`;
     }
     await navigator.clipboard.writeText(url);
 
