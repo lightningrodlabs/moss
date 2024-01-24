@@ -135,9 +135,7 @@ export class WeClipboard extends LitElement {
               ? html`<div style="font-size: 25px; margin-bottom: 30px;">
                   ${msg('Select Attachment:')}
                 </div>`
-              : html`<div style="font-size: 25px; margin-bottom: 30px;">
-                  ${msg('Your Clipboard')}
-                </div>`
+              : html``
           }
           ${
             this.mode === 'open'
@@ -161,19 +159,28 @@ export class WeClipboard extends LitElement {
               @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
             ></clipboard-search>
           </we-client-context>
-
+          <div class="row" style="font-size: 25px; margin-top: 30px; align-itmes: center;">
+            <div style="transform: rotate(-90deg); margin-right: 10px;">🧲</div>
+            ${msg('On Your Magnet')}
+            <div style="transform: rotate(-90deg); margin-left: 10px;">🧲</div>
+          </div>
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
-            ${this.clipboardContent.map(
-              (hrlWithContextStringified) => html`
-                <hrl-element
-                  .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
-                  .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
-                  @hrl-removed=${() => this.loadClipboardContent()}
-                  @hrl-selected=${(e) => this.handleHrlSelected(e)}
-                  style="margin: 0 7px 7px 0;"
-                ></hrl-element>
-              `,
-            )}
+            ${
+              this.clipboardContent.length > 0
+                ? this.clipboardContent.map(
+                    (hrlWithContextStringified) => html`
+                      <hrl-element
+                        .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
+                        .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
+                        @hrl-removed=${() => this.loadClipboardContent()}
+                        @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                        style="margin: 0 7px 7px 0;"
+                      ></hrl-element>
+                    `,
+                  )
+                : html`Nothing on your magnet. Watch out for magnet icons to add things to your
+                  magnet.`
+            }
           </div>
       </sl-dialog>
     `;

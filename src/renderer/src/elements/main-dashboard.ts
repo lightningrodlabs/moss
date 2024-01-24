@@ -13,7 +13,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
+import { mdiMagnetOn, mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
 import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -118,6 +118,9 @@ export class MainDashboard extends LitElement {
 
   @state()
   _selectedTab: TabInfo | undefined;
+
+  @state()
+  _magnetColor: 0 | 1 | 2 | 3 = 0;
 
   _dashboardState = new StoreSubscriber(
     this,
@@ -363,6 +366,21 @@ export class MainDashboard extends LitElement {
           this._weStore.setAttachableViewerState({ position: 'front', visible: false });
         }
       }
+    });
+
+    document.addEventListener('swooosh', () => {
+      this._magnetColor = 1;
+      window.setTimeout(() => {
+        this._magnetColor = 2;
+      }, 200);
+
+      window.setTimeout(() => {
+        this._magnetColor = 3;
+      }, 400);
+
+      window.setTimeout(() => {
+        this._magnetColor = 0;
+      }, 600);
     });
 
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
@@ -923,18 +941,23 @@ export class MainDashboard extends LitElement {
         <span style="display: flex; flex: 1;"></span>
 
         <!-- TAB BAR BUTTON -->
-        <div class="row center-content">
-          <sl-tooltip content="Clipboard + Search" placement="right" hoist>
+        <div class="row center-content" style="margin-bottom: 5px;">
+          <sl-tooltip content="Magnet" placement="right" hoist>
             <sl-icon
               tabindex="0"
-              class="search-button"
+              class=${classMap({
+                magnet: true,
+                green: this._magnetColor === 1,
+                purple: this._magnetColor === 2,
+                yellow: this._magnetColor === 3,
+              })}
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openClipboard();
                 }
               }}
-              .src=${wrapPathInSvg(mdiMagnify)}
+              .src=${wrapPathInSvg(mdiMagnetOn)}
             ></sl-icon>
           </sl-tooltip>
         </div>
@@ -1323,6 +1346,28 @@ export class MainDashboard extends LitElement {
 
         .slide-out-right.hide {
           transform: translateX(102%);
+        }
+
+        .magnet {
+          font-size: 66px;
+          color: #ff1e1e;
+          cursor: pointer;
+        }
+
+        .magnet:hover {
+          color: #ffef1e;
+        }
+
+        .yellow {
+          color: #ffef1e;
+        }
+
+        .green {
+          color: #74ff1e;
+        }
+
+        .purple {
+          color: #b764ff;
         }
 
         .search-button {

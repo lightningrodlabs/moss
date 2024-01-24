@@ -692,7 +692,8 @@ export class WeStore {
     }
 
     window.localStorage.setItem('clipboard', JSON.stringify(clipboardContent));
-    notify(msg('Added to clipboard.'));
+    notify(msg('Swooosh'));
+    document.dispatchEvent(new CustomEvent('swooosh'));
   }
 
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {

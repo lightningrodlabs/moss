@@ -8,7 +8,7 @@ import { mdiHomeImportOutline } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
+import '@lightningrodlabs/we-elements/dist/elements/hrl-magnet.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
@@ -82,10 +82,7 @@ export class AttachableView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiHomeImportOutline)}></sl-icon>
             </div>
           </sl-tooltip>
-          <hrl-to-clipboard
-            .hrlWithContext=${this.hrlWithContext}
-            class="toolbar-btn"
-          ></hrl-to-clipboard>
+          <hrl-magnet .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></hrl-magnet>
           <share-hrl .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></share-hrl>
         </we-client-context>
       </div> `;
