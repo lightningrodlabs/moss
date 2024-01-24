@@ -275,11 +275,11 @@ export class GroupHome extends LitElement {
       );
       notify('Applet installed.');
       console.log('Successfully installed applet.');
+      this._recentlyJoined.push(encodeHashToBase64(appletHash));
     } catch (e) {
       notifyError(`Failed to join Applet (See console for details).`);
       console.error(e);
     }
-    this._recentlyJoined.push(encodeHashToBase64(appletHash));
     this._joiningNewApplet = undefined;
   }
 
@@ -429,15 +429,15 @@ export class GroupHome extends LitElement {
 
           <!-- NEW APPLETS -->
           <div class="row" style="align-items: center;">
-          <span class="title">${msg('Joinable Applets')}</span>
-          <sl-tooltip content="${msg(
-            'Applet instances that have been added to this group by other members via the Applet Library show up here for you to install and join as well.',
-          )}">
-          <sl-icon style="height: 28px; width: 28px; margin-left: 10px; cursor: help;" .src=${wrapPathInSvg(
-            mdiHelpCircle,
-          )}><sl-icon>
-              </sl-tooltip>
-        </div>
+            <span class="title">${msg('Joinable Applets')}</span>
+            <sl-tooltip content="${msg(
+              'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
+            )}">
+              <sl-icon style="height: 28px; width: 28px; margin-left: 10px; cursor: help;" .src=${wrapPathInSvg(
+                mdiHelpCircle,
+              )}><sl-icon>
+            </sl-tooltip>
+          </div>
           <sl-divider style="--color: grey"></sl-divider>
           ${this.renderNewApplets()}
         </div>
