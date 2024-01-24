@@ -408,8 +408,6 @@ export class GroupHome extends LitElement {
                         : html`
                             <sl-button
                               style="margin-left: 5px;"
-                              .loading=${this._joiningNewApplet ===
-                              encodeHashToBase64(info.appletHash)}
                               variant="warning"
                               @click=${() => this.ignoreApplet(info.appletHash)}
                               >${msg('Ignore')}</sl-button

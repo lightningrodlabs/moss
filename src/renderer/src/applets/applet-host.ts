@@ -1,4 +1,4 @@
-import { pipe, toPromise } from '@holochain-open-dev/stores';
+import { get, pipe, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
   AttachmentType,
@@ -342,19 +342,18 @@ export async function handleAppletIframeMessage(
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
-      // const windowFocused = await appWindow.isFocused();
-      // const windowVisible = await appWindow.isVisible();
 
       // If the applet that the notification is coming from is already open, and the We main window
       // itself is also open, don't do anything
-      // const selectedAppletHash = get(weStore.selectedAppletHash());
-      // if (
-      //   selectedAppletHash &&
-      //   selectedAppletHash.toString() === appletHash.toString() &&
-      //   windowFocused
-      // ) {
-      //   return;
-      // }
+      const dashboardMode = get(weStore.dashboardState());
+      if (
+        dashboardMode.viewType === 'group' &&
+        dashboardMode.appletHash &&
+        dashboardMode.appletHash.toString() === appletHash.toString() &&
+        mainWindowFocused
+      ) {
+        return;
+      }
 
       // add notifications to unread messages and store them in the persisted notifications log
       const notifications: Array<WeNotification> = message.notifications;

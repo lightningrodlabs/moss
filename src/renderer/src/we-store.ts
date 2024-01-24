@@ -59,6 +59,7 @@ import { WebHappSource } from './processes/appstore/appstore-light.js';
 import { AppEntry, Entity } from './processes/appstore/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
+import { DashboardState } from './elements/main-dashboard.js';
 
 export class WeStore {
   constructor(
@@ -71,6 +72,11 @@ export class WeStore {
 
   private _updatableApplets: Writable<Record<AppletId, Entity<AppEntry>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
+  // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
+  // here at the WeStore level
+  private _dashboardState: Writable<DashboardState> = writable({
+    viewType: 'personal',
+  });
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);
@@ -145,6 +151,14 @@ export class WeStore {
     return derived(this._updatableApplets, (store) =>
       Object.keys(store).includes(encodeHashToBase64(appletHash)),
     );
+  }
+
+  dashboardState(): Readable<DashboardState> {
+    return derived(this._dashboardState, (state) => state);
+  }
+
+  setDashboardState(dashboardState: DashboardState) {
+    this._dashboardState.set(dashboardState);
   }
 
   /**

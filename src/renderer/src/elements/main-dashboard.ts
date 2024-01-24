@@ -6,6 +6,7 @@ import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
   asyncDeriveStore,
+  get,
   joinAsyncMap,
   toPromise,
 } from '@holochain-open-dev/stores';
@@ -71,7 +72,7 @@ export type TabInfo = {
   tab: OpenTab;
 };
 
-type DashboardState =
+export type DashboardState =
   | {
       viewType: 'personal';
     }
@@ -120,9 +121,11 @@ export class MainDashboard extends LitElement {
   _attachableViewerState: 'front' | 'side' = 'side';
 
   @state()
-  dashboardState: DashboardState = {
-    viewType: 'personal',
-  };
+  _dashboardState = new StoreSubscriber(
+    this,
+    () => this._weStore.dashboardState(),
+    () => [this._weStore],
+  );
 
   _allGroupHashes = new StoreSubscriber(
     this,
@@ -147,11 +150,11 @@ export class MainDashboard extends LitElement {
       if (groupDnaHashes.length === 0) throw new Error('Applet not found in any of the groups.');
       // pick an arbitrary group this applet is installed in
       const groupDnaHash = groupDnaHashes[0];
-      this.dashboardState = {
+      this._weStore.setDashboardState({
         viewType: 'group',
         groupHash: groupDnaHash,
         appletHash,
-      };
+      });
     },
     openAppletBlock: (_appletHash, _block, _context) => {
       throw new Error('Opening applet blocks is currently not implemented.');
@@ -202,9 +205,9 @@ export class MainDashboard extends LitElement {
 
   displayApplet(appletHash: AppletHash) {
     return (
-      this.dashboardState.viewType === 'group' &&
-      this.dashboardState.appletHash &&
-      this.dashboardState.appletHash.toString() === appletHash.toString()
+      this._dashboardState.value.viewType === 'group' &&
+      this._dashboardState.value.appletHash &&
+      this._dashboardState.value.appletHash.toString() === appletHash.toString()
     );
   }
 
@@ -238,11 +241,11 @@ export class MainDashboard extends LitElement {
                 groupDnaHash: DnaHash;
               };
             }) => {
-              this.dashboardState = {
+              this._weStore.setDashboardState({
                 viewType: 'group',
                 groupHash: e.detail.groupDnaHash,
                 appletHash: e.detail.appletEntryHash,
-              };
+              });
               if (this._attachableViewerState === 'front') {
                 this._showTabView = false;
               }
@@ -281,11 +284,11 @@ export class MainDashboard extends LitElement {
     // this HRL belongs to, the applets bar needs to actually be there,
     // i.e. we need to switch to group view if we haven't yet
     if (
-      this.dashboardState.viewType === 'personal' &&
+      this._dashboardState.value.viewType === 'personal' &&
       tabInfo.tab.type === 'hrl' &&
       tabInfo.tab.groupHashesB64.length > 0
     ) {
-      this.dashboardState = {
+      this._dashboardState.value = {
         viewType: 'group',
         groupHash: decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]),
       };
@@ -469,9 +472,9 @@ export class MainDashboard extends LitElement {
 
   displayGroupHome(groupHash: DnaHash) {
     return (
-      this.dashboardState.viewType === 'group' &&
-      !this.dashboardState.appletHash &&
-      this.dashboardState.groupHash.toString() === groupHash.toString()
+      this._dashboardState.value.viewType === 'group' &&
+      !this._dashboardState.value.appletHash &&
+      this._dashboardState.value.groupHash.toString() === groupHash.toString()
     );
   }
 
@@ -483,10 +486,10 @@ export class MainDashboard extends LitElement {
     ) {
       this._openGroups.push(groupDnaHash);
     }
-    this.dashboardState = {
+    this._weStore.setDashboardState({
       viewType: 'group',
       groupHash: groupDnaHash,
-    };
+    });
     if (this._attachableViewerState === 'front') {
       this._showTabView = false;
     }
@@ -529,7 +532,7 @@ export class MainDashboard extends LitElement {
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
-                this.dashboardState = { viewType: 'personal' };
+                this._weStore.setDashboardState({ viewType: 'personal' });
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
@@ -543,11 +546,11 @@ export class MainDashboard extends LitElement {
                   groupDnaHash: DnaHash;
                 };
               }) => {
-                this.dashboardState = {
+                this._weStore.setDashboardState({
                   viewType: 'group',
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
-                };
+                });
                 if (this._attachableViewerState === 'front') {
                   this._showTabView = false;
                 }
@@ -757,7 +760,7 @@ export class MainDashboard extends LitElement {
           class="row"
           style="flex: 1; ${this._showTabView ? 'max-height: calc(100vh - 124px);' : ''}"
         >
-          ${this.dashboardState.viewType === 'personal'
+          ${this._dashboardState.value.viewType === 'personal'
             ? html` <welcome-view
                 id="welcome-view"
                 @click=${(e) => e.stopPropagation()}
@@ -776,7 +779,7 @@ export class MainDashboard extends LitElement {
           <!-- GROUP VIEW -->
           <div
             id="group-view-area"
-            style="${this.dashboardState.viewType === 'group'
+            style="${this._dashboardState.value.viewType === 'group'
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
               ? 'pointer-events: none; user-select: none;'
@@ -839,7 +842,7 @@ export class MainDashboard extends LitElement {
         style="position: fixed; left: 0; top: 0; bottom: 0; background: var(--sl-color-primary-900);"
       >
         <div
-          class="column top-left-corner ${this.dashboardState.viewType === 'personal'
+          class="column top-left-corner ${this._dashboardState.value.viewType === 'personal'
             ? 'selected'
             : ''}"
         >
@@ -851,12 +854,12 @@ export class MainDashboard extends LitElement {
             placement="bottom"
             tabindex="0"
             @click=${() => {
-              this.dashboardState = { viewType: 'personal' };
+              this._weStore.setDashboardState({ viewType: 'personal' });
               this._showTabView = false;
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter') {
-                this.dashboardState = { viewType: 'personal' };
+                this._weStore.setDashboardState({ viewType: 'personal' });
                 this._showTabView = false;
               }
             }}
@@ -865,8 +868,8 @@ export class MainDashboard extends LitElement {
 
         <groups-sidebar
           class="left-sidebar"
-          .selectedGroupDnaHash=${this.dashboardState.viewType === 'group'
-            ? this.dashboardState.groupHash
+          .selectedGroupDnaHash=${this._dashboardState.value.viewType === 'group'
+            ? this._dashboardState.value.groupHash
             : undefined}
           .indicatedGroupDnaHashes=${this._showTabView &&
           this._selectedTab &&
@@ -915,11 +918,11 @@ export class MainDashboard extends LitElement {
         style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
       >
         <div class="row invisible-scrollbars" style="overflow-x: auto; padding-right: 40px;">
-          ${this.dashboardState.viewType === 'group'
+          ${this._dashboardState.value.viewType === 'group'
             ? html`
-                <group-context .groupDnaHash=${this.dashboardState.groupHash}>
+                <group-context .groupDnaHash=${this._dashboardState.value.groupHash}>
                   <group-applets-sidebar
-                    .selectedAppletHash=${this.dashboardState.appletHash}
+                    .selectedAppletHash=${this._dashboardState.value.appletHash}
                     .indicatedAppletHashes=${this._showTabView &&
                     this._selectedTab &&
                     this._selectedTab.tab.type === 'hrl'
@@ -928,11 +931,11 @@ export class MainDashboard extends LitElement {
                     @applet-selected=${(e: {
                       detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
                     }) => {
-                      this.dashboardState = {
+                      this._weStore.setDashboardState({
                         viewType: 'group',
                         groupHash: e.detail.groupDnaHash,
                         appletHash: e.detail.appletHash,
-                      };
+                      });
                       if (this._attachableViewerState === 'front') {
                         this._showTabView = false;
                       }
