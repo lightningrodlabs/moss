@@ -6,14 +6,13 @@ import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
   asyncDeriveStore,
-  get,
   joinAsyncMap,
   toPromise,
 } from '@holochain-open-dev/stores';
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnetOn, mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
+import { mdiMagnetOn, mdiViewGalleryOutline } from '@mdi/js';
 import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
