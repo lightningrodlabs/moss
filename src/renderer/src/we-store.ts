@@ -59,7 +59,7 @@ import { WebHappSource } from './processes/appstore/appstore-light.js';
 import { AppEntry, Entity } from './processes/appstore/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
-import { DashboardState } from './elements/main-dashboard.js';
+import { AttachableViewerState, DashboardState } from './elements/main-dashboard.js';
 
 export class WeStore {
   constructor(
@@ -76,6 +76,11 @@ export class WeStore {
   // here at the WeStore level
   private _dashboardState: Writable<DashboardState> = writable({
     viewType: 'personal',
+  });
+
+  private _attachableViewerState: Writable<AttachableViewerState> = writable({
+    position: 'side',
+    visible: false,
   });
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
@@ -159,6 +164,14 @@ export class WeStore {
 
   setDashboardState(dashboardState: DashboardState) {
     this._dashboardState.set(dashboardState);
+  }
+
+  attachableViewerState(): Readable<AttachableViewerState> {
+    return derived(this._attachableViewerState, (state) => state);
+  }
+
+  setAttachableViewerState(state: AttachableViewerState) {
+    this._attachableViewerState.set(state);
   }
 
   /**

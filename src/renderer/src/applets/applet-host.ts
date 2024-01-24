@@ -346,7 +346,9 @@ export async function handleAppletIframeMessage(
       // If the applet that the notification is coming from is already open, and the We main window
       // itself is also open, don't do anything
       const dashboardMode = get(weStore.dashboardState());
+      const attachableViewerState = get(weStore.attachableViewerState());
       if (
+        !(attachableViewerState.visible && attachableViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
         dashboardMode.appletHash.toString() === appletHash.toString() &&
