@@ -63,7 +63,7 @@ import { AppHashes, AppletHash, AssetSource, DistributionInfo } from '../../type
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../applets/types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
-import { appIdFromAppletHash } from '../../utils.js';
+import { appIdFromAppletHash, getLocalStorageItem, setLocalStorageItem } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 
 TimeAgo.addDefaultLocale(en);
@@ -96,6 +96,9 @@ export class GroupHome extends LitElement {
 
   @state()
   _recentlyJoined: Array<AppletId> = [];
+
+  @state()
+  _showIgnoredApplets = false;
 
   _unjoinedApplets = new StoreSubscriber(
     this,
@@ -261,7 +264,6 @@ export class GroupHome extends LitElement {
   async joinNewApplet(appletHash: AppletHash) {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
-      console.log('Trying to join applet.');
       await this.groupStore.installApplet(appletHash);
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
@@ -274,13 +276,35 @@ export class GroupHome extends LitElement {
         }),
       );
       notify('Applet installed.');
-      console.log('Successfully installed applet.');
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
+      this._showIgnoredApplets = false;
     } catch (e) {
       notifyError(`Failed to join Applet (See console for details).`);
       console.error(e);
     }
     this._joiningNewApplet = undefined;
+  }
+
+  ignoreApplet(appletHash: AppletHash) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupStore.groupDnaHash);
+    const key = `ignoredApplets#${groupDnaHashB64}`;
+    let ignoredApplets = getLocalStorageItem<Array<AppletId>>(key);
+    if (!ignoredApplets) {
+      ignoredApplets = [];
+    }
+    ignoredApplets.push(encodeHashToBase64(appletHash));
+    // deduplicate ignored applets
+    ignoredApplets = Array.from(new Set(ignoredApplets));
+    setLocalStorageItem<Array<AppletId>>(key, ignoredApplets);
+    this.requestUpdate();
+  }
+
+  toggleIgnoredApplets() {
+    const checkbox = this.shadowRoot!.getElementById(
+      'show-ignored-applets-checkbox',
+    ) as HTMLInputElement;
+    this._showIgnoredApplets = checkbox.checked;
+    this.requestUpdate();
   }
 
   renderNewApplets() {
@@ -297,91 +321,105 @@ export class GroupHome extends LitElement {
           <span>${this._unjoinedApplets.value.error}</span>
         </div> `;
       case 'complete':
-        console.log('this._unjoinedApplets.value.value: ', this._unjoinedApplets.value.value);
-        if (
-          this._unjoinedApplets.value.value.filter(
+        const timeAgo = new TimeAgo('en-US');
+        const ignoredApplets = getLocalStorageItem<Array<AppletId>>(
+          `ignoredApplets#${encodeHashToBase64(this.groupStore.groupDnaHash)}`,
+        );
+        const filteredApplets = this._unjoinedApplets.value.value
+          .filter(
             ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
-          ).length === 0
-        ) {
+          )
+          .map(([appletHash, appletEntry, appEntry, logo, agentKey, timestamp, joinedMembers]) => ({
+            appletHash,
+            appletEntry,
+            appEntry,
+            logo,
+            agentKey,
+            timestamp,
+            joinedMembers,
+            isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
+          }))
+          .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true));
+
+        if (filteredApplets.length === 0) {
           return html`${msg('No new applets to install.')}`;
         }
-        const timeAgo = new TimeAgo('en-US');
         return html`
           <div class="row" style="flex-wrap: wrap;">
-            ${this._unjoinedApplets.value.value
-              .filter(
-                ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
-              )
-              .map(
-                ([
-                  appletHash,
-                  appletEntry,
-                  appEntry,
-                  logo,
-                  agentKey,
-                  timestamp,
-                  joinedMembers,
-                ]) => html`
-                  <sl-card class="applet-card">
-                    <div class="column" style="flex: 1;">
-                      <div style="margin-bottom: 3px; text-align: right; opacity: 0.65;">
-                        ${timeAgo.format(new Date(timestamp / 1000))}
-                      </div>
-                      <div class="row" style="align-items: center;">
-                        <agent-avatar
-                          .size=${40}
-                          style="margin-left: 5px;"
-                          .agentPubKey=${agentKey}
-                        ></agent-avatar>
-                        <span style="margin-left: 10px; margin-right: 10px;"
-                          >${msg('added a new instance of ')}</span
-                        >
-                        <sl-tooltip
-                          style="${appEntry ? '' : 'display: none;'}"
-                          content="${appEntry?.subtitle}"
-                        >
-                          <div class="row" style="align-items: center; cursor: help;">
-                            ${logo
-                              ? html`<img src=${logo} alt="Applet logo" style="height: 40px;" />`
-                              : html``}
-                            <span
-                              style="margin-left: 5px; font-weight: bold; ${appEntry?.title
-                                ? ''
-                                : 'opacity: 0.6;'}"
-                              >${appEntry ? appEntry.title : 'unknown'}&nbsp;</span
-                            >
-                          </div>
-                        </sl-tooltip>
-                        <span style="margin-left: 10px; margin-right: 10px;"
-                          >${msg('with the name ')}</span
-                        >
-                        <span style="font-weight: bold;"
-                          >${appletEntry ? appletEntry.custom_name : 'unknown'}</span
-                        >
-                      </div>
-                      <div class="row" style="align-items: center; margin-top: 20px;">
-                        <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
-                        ${joinedMembers.map(
-                          (agentKey) => html`
-                            <agent-avatar
-                              style="margin-left: 5px;"
-                              .agentPubKey=${agentKey}
-                            ></agent-avatar>
-                          `,
-                        )}
-                        <span style="display: flex; flex: 1;"></span>
-                        <sl-button
-                          style="margin-left: 20px;"
-                          .loading=${this._joiningNewApplet === encodeHashToBase64(appletHash)}
-                          variant="success"
-                          @click=${() => this.joinNewApplet(appletHash)}
-                          >${msg('Join')}</sl-button
-                        >
-                      </div>
+            ${filteredApplets.map(
+              (info) => html`
+                <sl-card class="applet-card">
+                  <div class="column" style="flex: 1;">
+                    <div style="margin-bottom: 3px; text-align: right; opacity: 0.65;">
+                      ${timeAgo.format(new Date(info.timestamp / 1000))}
                     </div>
-                  </sl-card>
-                `,
-              )}
+                    <div class="row" style="align-items: center;">
+                      <agent-avatar
+                        .size=${40}
+                        style="margin-left: 5px;"
+                        .agentPubKey=${info.agentKey}
+                      ></agent-avatar>
+                      <span style="margin-left: 10px; margin-right: 10px;"
+                        >${msg('added a new instance of ')}</span
+                      >
+                      <sl-tooltip
+                        style="${info.appEntry ? '' : 'display: none;'}"
+                        content="${info.appEntry?.subtitle}"
+                      >
+                        <div class="row" style="align-items: center; cursor: help;">
+                          ${info.logo
+                            ? html`<img src=${info.logo} alt="Applet logo" style="height: 40px;" />`
+                            : html``}
+                          <span
+                            style="margin-left: 5px; font-weight: bold; ${info.appEntry?.title
+                              ? ''
+                              : 'opacity: 0.6;'}"
+                            >${info.appEntry ? info.appEntry.title : 'unknown'}&nbsp;</span
+                          >
+                        </div>
+                      </sl-tooltip>
+                      <span style="margin-left: 10px; margin-right: 10px;"
+                        >${msg('with the name ')}</span
+                      >
+                      <span style="font-weight: bold;"
+                        >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
+                      >
+                    </div>
+                    <div class="row" style="align-items: center; margin-top: 20px;">
+                      <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
+                      ${info.joinedMembers.map(
+                        (agentKey) => html`
+                          <agent-avatar
+                            style="margin-left: 5px;"
+                            .agentPubKey=${agentKey}
+                          ></agent-avatar>
+                        `,
+                      )}
+                      <span style="display: flex; flex: 1;"></span>
+                      <sl-button
+                        style="margin-left: 20px;"
+                        .loading=${this._joiningNewApplet === encodeHashToBase64(info.appletHash)}
+                        variant="success"
+                        @click=${() => this.joinNewApplet(info.appletHash)}
+                        >${msg('Join')}</sl-button
+                      >
+                      ${info.isIgnored
+                        ? html``
+                        : html`
+                            <sl-button
+                              style="margin-left: 5px;"
+                              .loading=${this._joiningNewApplet ===
+                              encodeHashToBase64(info.appletHash)}
+                              variant="warning"
+                              @click=${() => this.ignoreApplet(info.appletHash)}
+                              >${msg('Ignore')}</sl-button
+                            >
+                          `}
+                    </div>
+                  </div>
+                </sl-card>
+              `,
+            )}
           </div>
         `;
       default:
@@ -439,6 +477,11 @@ export class GroupHome extends LitElement {
             </sl-tooltip>
           </div>
           <sl-divider style="--color: grey"></sl-divider>
+          <div class="row" style="align-items: center; justify-content: flex-end; margin-top: -10px;">
+            <input @input=${() =>
+              this.toggleIgnoredApplets()} id="show-ignored-applets-checkbox" type="checkbox">
+            <span>${msg('Show ignored Applets')}</span>
+          </div>
           ${this.renderNewApplets()}
         </div>
 

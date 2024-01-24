@@ -449,6 +449,15 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
+export function getLocalStorageItem<T>(key: string): T | undefined {
+  const item: string | null = window.localStorage.getItem(key);
+  return item ? JSON.parse(item) : undefined;
+}
+
+export function setLocalStorageItem<T>(key: string, value: T): void {
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
 // Crop the image and return a base64 bytes string of its content
 export function resizeAndExport(img: HTMLImageElement) {
   const MAX_WIDTH = 300;
