@@ -44,6 +44,9 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     console.log('GOT NEW WINDOW EVENT: ', details);
+    if (details.url.startsWith('we://')) {
+      emitToWindow(browserWindow, 'deep-link-received', details.url);
+    }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
       shell.openExternal(details.url);
     }

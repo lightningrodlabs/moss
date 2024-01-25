@@ -139,7 +139,11 @@ export class AppletMain extends LitElement {
             <a href="${this.hrlLink}"
               >${this.hrlLink ? this.hrlLink : 'Paste HRL in field above to update me'}</a
             >
+            <a href="${this.hrlLink}" target="_blank"
+              >${this.hrlLink ? this.hrlLink : 'Paste HRL in field above to update me'}</a
+            >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
+            <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts
