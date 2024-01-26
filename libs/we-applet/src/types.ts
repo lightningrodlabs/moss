@@ -319,6 +319,7 @@ export type OpenViewRequest =
   | {
       type: 'hrl';
       hrlWithContext: HrlWithContext;
+      mode?: OpenHrlMode;
     };
 
 export type CreateAttachmentRequest = {

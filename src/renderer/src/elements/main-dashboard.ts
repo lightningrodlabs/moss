@@ -13,7 +13,7 @@ import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnetOn, mdiViewGalleryOutline } from '@mdi/js';
-import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId, HrlWithContext, OpenHrlMode } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -171,7 +171,7 @@ export class MainDashboard extends LitElement {
     openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
-    openHrl: async (hrlWithContext: HrlWithContext) => {
+    openHrl: async (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => {
       const tabId = stringifyHrlWithContext(hrlWithContext);
       const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
         hrlWithContext.hrl,
@@ -185,7 +185,7 @@ export class MainDashboard extends LitElement {
           appletIds: appletContextIds,
         },
       };
-      this.openTab(tabInfo);
+      this.openTab(tabInfo, mode);
     },
     userSelectHrl: async () => {
       this._clipboard.show('select');
@@ -279,7 +279,7 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async openTab(tabInfo: TabInfo) {
+  async openTab(tabInfo: TabInfo, mode?: OpenHrlMode) {
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
     );
@@ -300,7 +300,7 @@ export class MainDashboard extends LitElement {
       };
     }
     this._weStore.setAttachableViewerState({
-      position: this._attachableViewerState.value.position,
+      position: mode ? mode : this._attachableViewerState.value.position,
       visible: true,
     });
     this._selectedTab = tabInfo;

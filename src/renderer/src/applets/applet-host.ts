@@ -318,7 +318,7 @@ export async function handleAppletIframeMessage(
             message.request.context,
           );
         case 'hrl':
-          return openViews.openHrl(message.request.hrlWithContext);
+          return openViews.openHrl(message.request.hrlWithContext, message.request.mode);
       }
       break;
     case 'hrl-to-clipboard':

@@ -108,7 +108,6 @@ export class AppletMain extends LitElement {
 
   async userSelectHrl() {
     const selectedHrl = await this.weClient.userSelectHrl();
-    console.log('User selected HRL: ', selectedHrl);
     this.selectedHrl = selectedHrl;
   }
 

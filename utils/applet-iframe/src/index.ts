@@ -31,6 +31,7 @@ import {
   AppletHash,
   AppletId,
   AppletServices,
+  OpenHrlMode,
 } from '@lightningrodlabs/we-applet';
 
 declare global {
@@ -88,12 +89,13 @@ const weApi: WeServices = {
       },
     }),
 
-  openHrl: (hrlWithContext: HrlWithContext): Promise<void> =>
+  openHrl: (hrlWithContext: HrlWithContext, mode?: OpenHrlMode): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'hrl',
         hrlWithContext,
+        mode,
       },
     }),
 

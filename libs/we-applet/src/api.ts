@@ -250,8 +250,8 @@ export class WeClient implements WeServices {
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
     window.__WE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openHrl = (hrlWithContext: HrlWithContext): Promise<void> =>
-    window.__WE_API__.openHrl(hrlWithContext);
+  openHrl = (hrlWithContext: HrlWithContext, mode?: OpenHrlMode): Promise<void> =>
+    window.__WE_API__.openHrl(hrlWithContext, mode);
 
   groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
 
