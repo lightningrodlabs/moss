@@ -19,7 +19,7 @@ import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodla
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
-import { AppletNotificationSettings } from './applets/types.js';
+import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
 import { AppletHash, AppletId, DistributionInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 
@@ -256,31 +256,35 @@ export function validateNotifications(notifications: Array<WeNotification>): voi
  *
  * @param notifications
  * @param appletId
+ * @param storeUnread Whether or not to store the notifications to unread notifications
  * @returns
  */
 export function storeAppletNotifications(
   notifications: Array<WeNotification>,
   appletId: AppletId,
-): Array<WeNotification> {
-  // store them to unread messages
-  const unreadNotificationsJson: string | null = window.localStorage.getItem(
-    `appletNotificationsUnread#${appletId}`,
-  );
-  let unreadNotifications: Array<WeNotification>;
+  storeUnread: boolean,
+): Array<WeNotification> | undefined {
+  let unreadNotifications: Array<WeNotification> | undefined;
+  if (storeUnread) {
+    // store them to unread messages
+    const unreadNotificationsJson: string | null = window.localStorage.getItem(
+      `appletNotificationsUnread#${appletId}`,
+    );
 
-  if (unreadNotificationsJson) {
-    unreadNotifications = JSON.parse(unreadNotificationsJson);
-    unreadNotifications = [...new Set([...unreadNotifications, ...notifications])]; // dedpulicated array
-  } else {
-    unreadNotifications = [...notifications];
+    if (unreadNotificationsJson) {
+      unreadNotifications = JSON.parse(unreadNotificationsJson) as Array<WeNotification>;
+      unreadNotifications = [...new Set([...unreadNotifications, ...notifications])]; // dedpulicated array
+    } else {
+      unreadNotifications = [...notifications];
+    }
+
+    window.localStorage.setItem(
+      `appletNotificationsUnread#${appletId}`,
+      JSON.stringify(unreadNotifications),
+    );
   }
 
-  window.localStorage.setItem(
-    `appletNotificationsUnread#${appletId}`,
-    JSON.stringify(unreadNotifications),
-  );
-
-  // store to persistend time-indexed notifications log
+  // store to persisted time-indexed notifications log
   notifications.forEach((notification) => {
     const timestamp = notification.timestamp;
     const daysSinceEpoch = Math.floor(timestamp / 8.64e7);
@@ -397,14 +401,36 @@ export function getAppletNotificationSettings(appletId: AppletId): AppletNotific
   const appletNotificationSettings: AppletNotificationSettings = appletNotificationSettingsJson
     ? JSON.parse(appletNotificationSettingsJson)
     : {
-        allowOSNotification: true,
-        showInSystray: true,
-        showInGroupSidebar: true,
-        showInAppletSidebar: true,
-        showInGroupHomeFeed: true,
+        applet: {
+          allowOSNotification: true,
+          showInSystray: true,
+          showInGroupSidebar: true,
+          showInAppletSidebar: true,
+          showInFeed: true,
+        },
+        notificationTypes: {},
       };
 
   return appletNotificationSettings;
+}
+
+export function getNotificationTypeSettings(
+  type: string,
+  appletNotificationSettings: AppletNotificationSettings,
+): NotificationSettings {
+  const appletSettings = appletNotificationSettings.applet;
+  const typeSettings = appletNotificationSettings.notificationTypes[type];
+  if (typeSettings) {
+    return {
+      allowOSNotification: appletSettings.allowOSNotification && typeSettings.allowOSNotification,
+      showInSystray: appletSettings.showInSystray && typeSettings.showInSystray,
+      showInGroupSidebar: appletSettings.showInGroupSidebar && typeSettings.showInGroupSidebar,
+      showInAppletSidebar: appletSettings.showInAppletSidebar && typeSettings.showInAppletSidebar,
+      showInFeed: appletSettings.showInFeed && typeSettings.showInFeed,
+    };
+  }
+  // If there are no type specific settings, use the applet-wide settings
+  return appletNotificationSettings.applet;
 }
 
 export function stringifyHrlWithContext(hrlWithContext: HrlWithContext): string {

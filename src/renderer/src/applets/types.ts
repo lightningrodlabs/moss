@@ -22,10 +22,21 @@ export type NotificationStorage = Record<
   Record<NotificationLevel, Array<[WeNotification, NotificationTimestamp]>>
 >;
 
-export interface AppletNotificationSettings {
+export type AppletNotificationSettings = {
+  /**
+   * Notification settings that get applied to the applet as a whole
+   */
+  applet: NotificationSettings;
+  /**
+   * Notification type specific notification settings. Get superseeded by applet-wide notification settings.
+   */
+  notificationTypes: Record<string, NotificationSettings>;
+};
+
+export type NotificationSettings = {
   allowOSNotification: boolean;
   showInSystray: boolean;
   showInGroupSidebar: boolean;
   showInAppletSidebar: boolean;
-  showInGroupHomeFeed: boolean;
-}
+  showInFeed: boolean;
+};
