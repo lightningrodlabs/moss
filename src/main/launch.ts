@@ -60,7 +60,7 @@ export async function launch(
     password,
   );
 
-  const holochainVersion = 'holochain-v0.2.5-rc.0';
+  const holochainVersion = 'holochain-v0.2.5-rc.1';
 
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
