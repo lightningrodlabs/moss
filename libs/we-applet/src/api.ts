@@ -18,6 +18,7 @@ import {
   AppletHash,
   AppletInfo,
   AttachableLocationAndInfo,
+  OpenHrlMode,
 } from './types';
 import { postMessage } from './utils';
 
@@ -152,7 +153,7 @@ export interface WeServices {
    * @param context
    * @returns
    */
-  openHrl: (hrlWithContext: HrlWithContext) => Promise<void>;
+  openHrl: (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => Promise<void>;
   /**
    * Get the group profile of the specified group
    * @param groupId
