@@ -692,8 +692,8 @@ export class WeStore {
     }
 
     window.localStorage.setItem('clipboard', JSON.stringify(clipboardContent));
-    notify(msg('Swooosh'));
-    document.dispatchEvent(new CustomEvent('swooosh'));
+    notify(msg('Added to Magnet.'));
+    document.dispatchEvent(new CustomEvent('added-to-magnet'));
   }
 
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
