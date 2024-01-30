@@ -258,10 +258,12 @@ const weApi: WeServices = {
 async function fetchLocalStorage() {
   // override localStorage methods and fetch localStorage for this applet from main window
   overrideLocalStorage();
-  const localStorageJson: string | null = await postMessage({ type: 'get-localStorage' });
-  const localStorage = localStorageJson ? JSON.parse(localStorageJson) : null;
-  if (localStorageJson)
-    Object.keys(localStorage).forEach((key) => window.localStorage.setItem(key, localStorage[key]));
+  const appletLocalStorage: Record<string, string> = await postMessage({
+    type: 'get-localStorage',
+  });
+  Object.keys(appletLocalStorage).forEach((key) =>
+    window.localStorage.setItem(key, appletLocalStorage[key]),
+  );
 }
 
 const handleMessage = async (

@@ -236,8 +236,6 @@ export async function handleAppletIframeMessage(
   let host: AppletHost | undefined;
   const weServices = buildHeadlessWeClient(weStore);
 
-  const appletLocalStorageKey = `appletLocalStorage#${encodeHashToBase64(appletHash)}`;
-
   switch (message.type) {
     case 'get-iframe-config':
       const isInstalled = await toPromise(weStore.isInstalled.get(appletHash));
@@ -349,7 +347,7 @@ export async function handleAppletIframeMessage(
       const dashboardMode = get(weStore.dashboardState());
       const attachableViewerState = get(weStore.attachableViewerState());
 
-      const registerAsUnread =
+      const ignoreNotification =
         !(attachableViewerState.visible && attachableViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
@@ -362,7 +360,8 @@ export async function handleAppletIframeMessage(
       const maybeUnreadNotifications = storeAppletNotifications(
         notifications,
         appletId,
-        registerAsUnread ? true : false,
+        !ignoreNotification ? true : false,
+        weStore.persistedStore,
       );
 
       // update the notifications store
@@ -423,36 +422,32 @@ export async function handleAppletIframeMessage(
             message.request.attachToHrlWithContext,
           )
         : Promise.reject(new Error('No applet host available.'));
-    case 'localStorage.setItem':
-      const appletLocalStorageJson: string | null =
-        window.localStorage.getItem(appletLocalStorageKey);
-      const appletLocalStorage: Record<string, string> = appletLocalStorageJson
-        ? JSON.parse(appletLocalStorageJson)
-        : {};
+    case 'localStorage.setItem': {
+      const appletId = encodeHashToBase64(appletHash);
+      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
-      window.localStorage.setItem(appletLocalStorageKey, JSON.stringify(appletLocalStorage));
+      weStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
       break;
-    case 'localStorage.removeItem':
-      const appletLocalStorageJson2: string | null =
-        window.localStorage.getItem(appletLocalStorageKey);
-      const appletLocalStorage2: Record<string, string> = appletLocalStorageJson2
-        ? JSON.parse(appletLocalStorageJson2)
-        : undefined;
-      if (appletLocalStorage2) {
-        const filteredStorage = {};
-        Object.keys(appletLocalStorage2).forEach((key) => {
-          if (key !== message.key) {
-            filteredStorage[key] = appletLocalStorage2[key];
-          }
-        });
-        window.localStorage.setItem(appletLocalStorageKey, JSON.stringify(filteredStorage));
-      }
+    }
+    case 'localStorage.removeItem': {
+      const appletId = encodeHashToBase64(appletHash);
+      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
+      const filteredStorage = {};
+      Object.keys(appletLocalStorage).forEach((key) => {
+        if (key !== message.key) {
+          filteredStorage[key] = appletLocalStorage[key];
+        }
+      });
+      weStore.persistedStore.appletLocalStorage.set(filteredStorage, appletId);
       break;
-    case 'localStorage.clear':
-      window.localStorage.removeItem(`appletLocalStorage#${encodeHashToBase64(appletHash)}`);
+    }
+    case 'localStorage.clear': {
+      const appletId = encodeHashToBase64(appletHash);
+      weStore.persistedStore.appletLocalStorage.set({}, appletId);
       break;
+    }
     case 'get-localStorage':
-      return window.localStorage.getItem(appletLocalStorageKey);
+      return weStore.persistedStore.appletLocalStorage.value(encodeHashToBase64(appletHash));
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
   }
