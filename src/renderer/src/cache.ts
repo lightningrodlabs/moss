@@ -1,49 +1,67 @@
-// /**
-//  * Cache for We
-//  */
-// export class WeCache {
-//   private store: KeyValueStore;
+import {
+  AttachableInfo,
+  AttachableLocationAndInfo,
+  HrlWithContext,
+} from '@lightningrodlabs/we-applet';
+import { stringifyHrlWithContext } from './utils';
+import { SubStore } from './persisted-store';
 
-//   constructor(store: KeyValueStore) {
-//     this.store = store;
-//   }
-// }
+/**
+ * Cache for We
+ */
+export class WeCache {
+  private store: KeyValueStore;
 
-// export interface SubStore<T, U, V> {
-//   value: (id: V) => T;
-//   set: (value: U, id: V) => void;
-// }
+  constructor(store?: KeyValueStore) {
+    this.store = store ? store : new SessionStorageStore();
+  }
 
-// export class SessionStorageStore implements KeyValueStore {
-//   getItem = <T>(key: string): T | undefined => {
-//     return getSessionStorageItem<T>(key);
-//   };
+  attachableInfo: SubStore<
+    AttachableLocationAndInfo | undefined,
+    AttachableLocationAndInfo,
+    [HrlWithContext]
+  > = {
+    value: (hrlWithContext: HrlWithContext) => {
+      const stringifiedHrlWithContext = stringifyHrlWithContext(hrlWithContext);
+      return this.store.getItem<AttachableLocationAndInfo>(
+        `attachableInfo#${stringifiedHrlWithContext}`,
+      );
+    },
+    set: (value, hrlWithContext: HrlWithContext) =>
+      this.store.setItem(`attachableInfo#${stringifyHrlWithContext(hrlWithContext)}`, value),
+  };
+}
 
-//   setItem = <T>(key: string, value: T) => {
-//     setSessionStorageItem(key, value);
-//   };
+export class SessionStorageStore implements KeyValueStore {
+  getItem = <T>(key: string): T | undefined => {
+    return getSessionStorageItem<T>(key);
+  };
 
-//   removeItem = (key: string) => {
-//     window.sessionStorage.removeItem(key);
-//   };
+  setItem = <T>(key: string, value: T) => {
+    setSessionStorageItem(key, value);
+  };
 
-//   clear = () => {
-//     window.sessionStorage.clear();
-//   };
-// }
+  removeItem = (key: string) => {
+    window.sessionStorage.removeItem(key);
+  };
 
-// export interface KeyValueStore {
-//   getItem: <T>(key: string) => T | undefined;
-//   setItem: <T>(key: string, value: T) => void;
-//   clear: () => void;
-//   removeItem: (key: string) => any;
-// }
+  clear = () => {
+    window.sessionStorage.clear();
+  };
+}
 
-// export function getSessionStorageItem<T>(key: string): T | undefined {
-//   const item: string | null = window.sessionStorage.getItem(key);
-//   return item ? JSON.parse(item) : undefined;
-// }
+export interface KeyValueStore {
+  getItem: <T>(key: string) => T | undefined;
+  setItem: <T>(key: string, value: T) => void;
+  clear: () => void;
+  removeItem: (key: string) => any;
+}
 
-// export function setSessionStorageItem<T>(key: string, value: T): void {
-//   window.sessionStorage.setItem(key, JSON.stringify(value));
-// }
+export function getSessionStorageItem<T>(key: string): T | undefined {
+  const item: string | null = window.sessionStorage.getItem(key);
+  return item ? JSON.parse(item) : undefined;
+}
+
+export function setSessionStorageItem<T>(key: string, value: T): void {
+  window.sessionStorage.setItem(key, JSON.stringify(value));
+}

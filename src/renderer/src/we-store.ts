@@ -61,6 +61,7 @@ import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AttachableViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
+import { WeCache } from './cache.js';
 
 export class WeStore {
   constructor(
@@ -85,6 +86,8 @@ export class WeStore {
   });
 
   persistedStore: PersistedStore = new PersistedStore();
+
+  weCache: WeCache = new WeCache();
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);

@@ -126,6 +126,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async attachableInfo(
       hrlWithContext: HrlWithContext,
     ): Promise<AttachableLocationAndInfo | undefined> {
+      const maybeCachedInfo = weStore.weCache.attachableInfo.value(hrlWithContext);
+      if (maybeCachedInfo) return maybeCachedInfo;
+
       const dnaHash = hrlWithContext.hrl[0];
 
       try {
@@ -143,6 +146,8 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           appletHash: location.dnaLocation.appletHash,
           attachableInfo,
         };
+
+        weStore.weCache.attachableInfo.set(attachableAndAppletInfo, hrlWithContext);
 
         return attachableAndAppletInfo;
       } catch (e) {
