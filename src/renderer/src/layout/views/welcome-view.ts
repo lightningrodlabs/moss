@@ -320,7 +320,7 @@ export class WelcomeView extends LitElement {
 
       .feed {
         max-height: calc(100vh - 330px);
-        overflow-y: scroll;
+        overflow-y: auto;
       }
 
       .notification {

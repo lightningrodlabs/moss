@@ -8,7 +8,6 @@ import { mdiHomeImportOutline } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@lightningrodlabs/we-elements/dist/elements/hrl-magnet.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
@@ -19,6 +18,7 @@ import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js
 import { weStyles } from '../../shared-styles.js';
 import { WeStore } from '../../we-store.js';
 import './applet-view.js';
+import '../../elements/hrl-pocket.js';
 import { buildHeadlessWeClient } from '../../applets/applet-host.js';
 
 @customElement('attachable-view')
@@ -82,7 +82,11 @@ export class AttachableView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiHomeImportOutline)}></sl-icon>
             </div>
           </sl-tooltip>
-          <hrl-magnet .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></hrl-magnet>
+          <hrl-pocket
+            iconSrc="pocket.png"
+            .hrlWithContext=${this.hrlWithContext}
+            class="toolbar-btn"
+          ></hrl-pocket>
           <share-hrl .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></share-hrl>
         </we-client-context>
       </div> `;
