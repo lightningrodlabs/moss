@@ -19,9 +19,10 @@ import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodla
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
-import { AppletNotificationSettings } from './applets/types.js';
+import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
 import { AppletHash, AppletId, DistributionInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
+import { PersistedStore } from './persisted-store.js';
 
 export async function initAppClient(
   appId: string,
@@ -251,53 +252,38 @@ export function validateNotifications(notifications: Array<WeNotification>): voi
 }
 
 /**
- * Stores applet notifications to localStorage - to the array of unread notifications
+ * Stores applet notifications to persisted store - to the array of unread notifications
  * as well as to a persistent (deduplicated) log of all received notifications
  *
  * @param notifications
  * @param appletId
+ * @param storeUnread Whether or not to store the notifications to unread notifications
  * @returns
  */
 export function storeAppletNotifications(
   notifications: Array<WeNotification>,
   appletId: AppletId,
-): Array<WeNotification> {
-  // store them to unread messages
-  const unreadNotificationsJson: string | null = window.localStorage.getItem(
-    `appletNotificationsUnread#${appletId}`,
-  );
-  let unreadNotifications: Array<WeNotification>;
-
-  if (unreadNotificationsJson) {
-    unreadNotifications = JSON.parse(unreadNotificationsJson);
+  storeUnread: boolean,
+  persistedStore: PersistedStore,
+): Array<WeNotification> | undefined {
+  let unreadNotifications: Array<WeNotification> | undefined;
+  if (storeUnread) {
+    // store them to unread messages
+    unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
     unreadNotifications = [...new Set([...unreadNotifications, ...notifications])]; // dedpulicated array
-  } else {
-    unreadNotifications = [...notifications];
+    persistedStore.appletNotificationsUnread.set(unreadNotifications, appletId);
   }
 
-  window.localStorage.setItem(
-    `appletNotificationsUnread#${appletId}`,
-    JSON.stringify(unreadNotifications),
-  );
-
-  // store to persistend time-indexed notifications log
+  // store to persisted time-indexed notifications log
   notifications.forEach((notification) => {
     const timestamp = notification.timestamp;
     const daysSinceEpoch = Math.floor(timestamp / 8.64e7);
-    const notificationsOfSameDateJSON: string | null = window.localStorage.getItem(
-      `appletNotifications#${daysSinceEpoch}#${appletId}`,
+    let notificationsOfSameDate = persistedStore.appletNotifications.value(
+      appletId,
+      daysSinceEpoch,
     );
-    let notificationsOfSameDate: Array<WeNotification>;
-    if (notificationsOfSameDateJSON) {
-      notificationsOfSameDate = JSON.parse(notificationsOfSameDateJSON);
-      notificationsOfSameDate = [...new Set([...notificationsOfSameDate, notification])];
-    } else {
-      notificationsOfSameDate = [notification];
-    }
-    window.localStorage.setItem(
-      `appletNotifications#${daysSinceEpoch}#${appletId}`,
-      JSON.stringify(notificationsOfSameDate),
-    );
+    notificationsOfSameDate = [...new Set([...notificationsOfSameDate, notification])];
+    persistedStore.appletNotifications.set(notificationsOfSameDate, appletId, daysSinceEpoch);
   });
 
   return unreadNotifications;
@@ -320,21 +306,13 @@ function isMillisecondTimestamp(timestamp: number): boolean {
 export function loadAppletNotificationStatus(
   appletId: AppletId,
 ): [string | undefined, number | undefined] {
-  const unreadNotificationsJson: string | null = window.localStorage.getItem(
-    `appletNotificationsUnread#${appletId}`,
-  );
-  let unreadNotifications: Array<WeNotification>;
-
-  if (unreadNotificationsJson) {
-    unreadNotifications = JSON.parse(unreadNotificationsJson);
-    return getNotificationState(unreadNotifications);
-  } else {
-    return [undefined, undefined];
-  }
+  const persistedStore = new PersistedStore();
+  const unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
+  return getNotificationState(unreadNotifications);
 }
 
 /**
- * Reads the current applet notification states from localStorage
+ * Reads the current applet notification states from persisted store
  *
  * @returns
  */
@@ -343,11 +321,9 @@ export function loadAllNotificationStates(): Record<
   [string | undefined, number | undefined]
 > {
   const states = {};
-  Object.keys(localStorage).forEach((key) => {
-    if (key.includes('appletNotificationsUnread#')) {
-      const appletId = key.slice(26);
-      states[appletId] = loadAppletNotificationStatus(appletId);
-    }
+  const persistedStore = new PersistedStore();
+  persistedStore.getAppletsWithUnreadNotifications().forEach((appletId) => {
+    states[appletId] = loadAppletNotificationStatus(appletId);
   });
   return states;
 }
@@ -382,29 +358,37 @@ export function getNotificationState(
  * @param appletId
  */
 export function clearAppletNotificationStatus(appletId: AppletId): void {
-  window.localStorage.setItem(`appletNotificationsUnread#${appletId}`, JSON.stringify([]));
+  const persistedStore = new PersistedStore();
+  persistedStore.appletNotificationsUnread.set([], appletId);
 }
 
 /**
- * Gets the user-defined notification settings for the specified applet Id from localStorage
+ * Gets the user-defined notification settings for the specified applet Id from persisted store
  * @param appletId
  * @returns
  */
 export function getAppletNotificationSettings(appletId: AppletId): AppletNotificationSettings {
-  const appletNotificationSettingsJson: string | null = window.localStorage.getItem(
-    `appletNotificationSettings#${appletId}`,
-  );
-  const appletNotificationSettings: AppletNotificationSettings = appletNotificationSettingsJson
-    ? JSON.parse(appletNotificationSettingsJson)
-    : {
-        allowOSNotification: true,
-        showInSystray: true,
-        showInGroupSidebar: true,
-        showInAppletSidebar: true,
-        showInGroupHomeFeed: true,
-      };
+  const persistedStore = new PersistedStore();
+  return persistedStore.appletNotificationSettings.value(appletId);
+}
 
-  return appletNotificationSettings;
+export function getNotificationTypeSettings(
+  type: string,
+  appletNotificationSettings: AppletNotificationSettings,
+): NotificationSettings {
+  const appletSettings = appletNotificationSettings.applet;
+  const typeSettings = appletNotificationSettings.notificationTypes[type];
+  if (typeSettings) {
+    return {
+      allowOSNotification: appletSettings.allowOSNotification && typeSettings.allowOSNotification,
+      showInSystray: appletSettings.showInSystray && typeSettings.showInSystray,
+      showInGroupSidebar: appletSettings.showInGroupSidebar && typeSettings.showInGroupSidebar,
+      showInAppletSidebar: appletSettings.showInAppletSidebar && typeSettings.showInAppletSidebar,
+      showInFeed: appletSettings.showInFeed && typeSettings.showInFeed,
+    };
+  }
+  // If there are no type specific settings, use the applet-wide settings
+  return appletNotificationSettings.applet;
 }
 
 export function stringifyHrlWithContext(hrlWithContext: HrlWithContext): string {
@@ -447,15 +431,6 @@ export function encodeContext(context: any) {
 
 export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
-}
-
-export function getLocalStorageItem<T>(key: string): T | undefined {
-  const item: string | null = window.localStorage.getItem(key);
-  return item ? JSON.parse(item) : undefined;
-}
-
-export function setLocalStorageItem<T>(key: string, value: T): void {
-  window.localStorage.setItem(key, JSON.stringify(value));
 }
 
 // Crop the image and return a base64 bytes string of its content

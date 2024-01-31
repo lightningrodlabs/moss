@@ -1,4 +1,5 @@
 import { ActionHashB64, DnaHash, DnaHashB64, EntryHash, EntryHashB64 } from '@holochain/client';
+import { WeNotification } from '@lightningrodlabs/we-applet';
 
 /**
  * EntryHashB64 of the Applet entry in the group's We DHT.
@@ -86,3 +87,8 @@ export type AssetSource =
   | {
       type: 'default-app'; // Shipped with the We executable by default
     };
+
+export type AppletNotification = {
+  appletId: AppletId;
+  notification: WeNotification;
+};

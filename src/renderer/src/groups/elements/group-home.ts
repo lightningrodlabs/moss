@@ -63,7 +63,7 @@ import { AppHashes, AppletHash, AssetSource, DistributionInfo } from '../../type
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../applets/types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
-import { appIdFromAppletHash, getLocalStorageItem, setLocalStorageItem } from '../../utils.js';
+import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 
 TimeAgo.addDefaultLocale(en);
@@ -287,15 +287,11 @@ export class GroupHome extends LitElement {
 
   ignoreApplet(appletHash: AppletHash) {
     const groupDnaHashB64 = encodeHashToBase64(this.groupStore.groupDnaHash);
-    const key = `ignoredApplets#${groupDnaHashB64}`;
-    let ignoredApplets = getLocalStorageItem<Array<AppletId>>(key);
-    if (!ignoredApplets) {
-      ignoredApplets = [];
-    }
+    let ignoredApplets = this.weStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
     ignoredApplets.push(encodeHashToBase64(appletHash));
     // deduplicate ignored applets
     ignoredApplets = Array.from(new Set(ignoredApplets));
-    setLocalStorageItem<Array<AppletId>>(key, ignoredApplets);
+    this.weStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
     this.requestUpdate();
   }
 
@@ -322,8 +318,8 @@ export class GroupHome extends LitElement {
         </div> `;
       case 'complete':
         const timeAgo = new TimeAgo('en-US');
-        const ignoredApplets = getLocalStorageItem<Array<AppletId>>(
-          `ignoredApplets#${encodeHashToBase64(this.groupStore.groupDnaHash)}`,
+        const ignoredApplets = this.weStore.persistedStore.ignoredApplets.value(
+          encodeHashToBase64(this.groupStore.groupDnaHash),
         );
         const filteredApplets = this._unjoinedApplets.value.value
           .filter(

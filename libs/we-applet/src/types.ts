@@ -16,6 +16,8 @@ export type AppletId = EntryHashB64;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
+export type OpenHrlMode = 'front' | 'side';
+
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
@@ -317,6 +319,7 @@ export type OpenViewRequest =
   | {
       type: 'hrl';
       hrlWithContext: HrlWithContext;
+      mode?: OpenHrlMode;
     };
 
 export type CreateAttachmentRequest = {

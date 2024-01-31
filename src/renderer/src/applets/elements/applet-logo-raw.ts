@@ -48,7 +48,11 @@ export class AppletLogo extends LitElement {
         <div
           class="row center-content notification-dot
             ${this.notificationUrgency === 'high' ? 'urgent' : ''}
-            ${this.notificationCount && this.notificationCount > 9 ? 'padded' : ''}
+            ${this.notificationUrgency === 'high' &&
+          this.notificationCount &&
+          this.notificationCount > 9
+            ? 'padded'
+            : ''}
           "
           style="${!this.notificationUrgency ? 'display: none' : ''}"
         >

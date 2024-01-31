@@ -66,12 +66,7 @@ export class WeClipboard extends LitElement {
   }
 
   loadClipboardContent() {
-    const clipboardJSON: string | null = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<string> = [];
-    if (clipboardJSON) {
-      clipboardContent = JSON.parse(clipboardJSON);
-    }
-    this.clipboardContent = clipboardContent;
+    this.clipboardContent = this._weStore.persistedStore.clipboard.value();
   }
 
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
@@ -159,10 +154,9 @@ export class WeClipboard extends LitElement {
               @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
             ></clipboard-search>
           </we-client-context>
-          <div class="row" style="font-size: 25px; margin-top: 30px; align-itmes: center;">
-            <div style="transform: rotate(-90deg); margin-right: 10px;">🧲</div>
-            ${msg('On Your Magnet')}
-            <div style="transform: rotate(-90deg); margin-left: 10px;">🧲</div>
+          <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
+            <img src="pocket_black.png" style="height: 38px; margin-right: 10px;">
+            ${msg('In Your Pocket:')}
           </div>
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
             ${
@@ -178,8 +172,8 @@ export class WeClipboard extends LitElement {
                       ></hrl-element>
                     `,
                   )
-                : html`Nothing on your magnet. Watch out for magnet icons to add things to your
-                  magnet.`
+                : html`Nothing in your pocket. Watch out for pocket icons to add things to your
+                  pocket.`
             }
           </div>
       </sl-dialog>

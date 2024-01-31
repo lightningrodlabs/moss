@@ -21,6 +21,7 @@ import './create-group-dialog.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { weStyles } from '../shared-styles.js';
+import { PersistedStore } from '../persisted-store.js';
 
 @localized()
 @customElement('groups-sidebar')
@@ -53,21 +54,18 @@ export class GroupsSidebar extends LitElement {
       ([_, groupProfile]) => !groupProfile,
     ) as Array<[DnaHash, GroupProfile]>;
 
-    let customGroupOrderJSON = window.localStorage.getItem('customGroupOrder');
-    if (!customGroupOrderJSON) {
-      customGroupOrderJSON = JSON.stringify(
-        knownGroups
-          .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
-          .map(([hash, _profile]) => encodeHashToBase64(hash)),
-      );
-      window.localStorage.setItem('customGroupOrder', customGroupOrderJSON);
+    let customGroupOrder = this._weStore.persistedStore.groupOrder.value();
+    if (!customGroupOrder) {
+      customGroupOrder = knownGroups
+        .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
+        .map(([hash, _profile]) => encodeHashToBase64(hash));
+      this._weStore.persistedStore.groupOrder.set(customGroupOrder);
     }
-    const customGroupOrder: DnaHashB64[] = JSON.parse(customGroupOrderJSON);
     knownGroups.forEach(([hash, _]) => {
-      if (!customGroupOrder.includes(encodeHashToBase64(hash))) {
-        customGroupOrder.splice(0, 0, encodeHashToBase64(hash));
+      if (!customGroupOrder!.includes(encodeHashToBase64(hash))) {
+        customGroupOrder!.splice(0, 0, encodeHashToBase64(hash));
       }
-      window.localStorage.setItem('customGroupOrder', JSON.stringify(customGroupOrder));
+      this._weStore.persistedStore.groupOrder.set(customGroupOrder!);
       this.requestUpdate();
     });
 
@@ -97,8 +95,8 @@ export class GroupsSidebar extends LitElement {
       ${knownGroups
         .sort(
           ([a_hash, _a], [b_hash, _b]) =>
-            customGroupOrder.indexOf(encodeHashToBase64(a_hash)) -
-            customGroupOrder.indexOf(encodeHashToBase64(b_hash)),
+            customGroupOrder!.indexOf(encodeHashToBase64(a_hash)) -
+            customGroupOrder!.indexOf(encodeHashToBase64(b_hash)),
         )
         .map(
           ([groupDnaHash, groupProfile]) => html`
@@ -314,11 +312,11 @@ export class GroupsSidebar extends LitElement {
 function storeNewOrder(draggedHash: DnaHashB64, droppedHash: DnaHashB64 | undefined) {
   if (draggedHash === droppedHash) return;
   // TODO potentially make this more resilient and remove elements of deleted groups
-  let customGroupOrderJSON = window.localStorage.getItem('customGroupOrder');
-  const customGroupOrder: DnaHashB64[] = JSON.parse(customGroupOrderJSON!);
+  const persistedStore = new PersistedStore();
+  const customGroupOrder = persistedStore.groupOrder.value();
   const currentIdx = customGroupOrder.indexOf(draggedHash);
   customGroupOrder.splice(currentIdx, 1);
   const newIdx = droppedHash ? customGroupOrder.indexOf(droppedHash) + 1 : 0;
   customGroupOrder.splice(newIdx, 0, draggedHash);
-  window.localStorage.setItem('customGroupOrder', JSON.stringify(customGroupOrder));
+  persistedStore.groupOrder.set(customGroupOrder);
 }

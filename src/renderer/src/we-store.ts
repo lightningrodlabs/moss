@@ -52,7 +52,7 @@ import {
   isAppRunning,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppHashes, AppletHash, AppletId, DistributionInfo } from './types.js';
+import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';
@@ -60,6 +60,8 @@ import { AppEntry, Entity } from './processes/appstore/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AttachableViewerState, DashboardState } from './elements/main-dashboard.js';
+import { PersistedStore } from './persisted-store.js';
+import { WeCache } from './cache.js';
 
 export class WeStore {
   constructor(
@@ -82,6 +84,12 @@ export class WeStore {
     position: 'side',
     visible: false,
   });
+
+  persistedStore: PersistedStore = new PersistedStore();
+
+  weCache: WeCache = new WeCache();
+
+  _notificationFeed: Writable<AppletNotification[]> = writable([]);
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);
@@ -172,6 +180,33 @@ export class WeStore {
 
   setAttachableViewerState(state: AttachableViewerState) {
     this._attachableViewerState.set(state);
+  }
+
+  notificationFeed(): Readable<AppletNotification[]> {
+    return derived(this._notificationFeed, (store) => store);
+  }
+
+  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
+    this._notificationFeed.update((store) => {
+      console.log('store: ', store);
+      const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
+      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
+        .value(appletId, daysSinceEpoch)
+        .map((notification) => JSON.stringify({ appletId, notification }));
+      console.log('updatedAppletNotifications: ', updatedAppletNotifications);
+      console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+      const updatedNotifications: string[] = [
+        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
+      ];
+      console.log('updatedNotifications: ', updatedNotifications);
+      return updatedNotifications
+        .map((notificationsString) => JSON.parse(notificationsString))
+        .sort(
+          (appletNotification_a, appletNotification_b) =>
+            appletNotification_b.notification.timestamp -
+            appletNotification_a.notification.timestamp,
+        );
+    });
   }
 
   /**
@@ -675,12 +710,8 @@ export class WeStore {
   );
 
   hrlToClipboard(hrlWithContext: HrlWithContext) {
-    const clipboardJSON = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<string> = [];
+    const clipboardContent = this.persistedStore.clipboard.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
-    if (clipboardJSON) {
-      clipboardContent = JSON.parse(clipboardJSON);
-    }
     // Only add if it's not already there
     if (
       clipboardContent.filter(
@@ -690,28 +721,18 @@ export class WeStore {
     ) {
       clipboardContent.push(hrlWithContextStringified);
     }
-
-    window.localStorage.setItem('clipboard', JSON.stringify(clipboardContent));
-    notify(msg('Swooosh'));
-    document.dispatchEvent(new CustomEvent('swooosh'));
+    this.persistedStore.clipboard.set(clipboardContent);
+    notify(msg('Added to Pocket.'));
+    document.dispatchEvent(new CustomEvent('added-to-pocket'));
   }
 
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
-    const clipboardJSON = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<string> = [];
+    const clipboardContent = this.persistedStore.clipboard.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
-    if (clipboardJSON) {
-      clipboardContent = JSON.parse(clipboardJSON);
-      const newClipboardContent = clipboardContent.filter(
-        (hrlWithContextStringifiedStored) =>
-          hrlWithContextStringifiedStored !== hrlWithContextStringified,
-      );
-      window.localStorage.setItem('clipboard', JSON.stringify(newClipboardContent));
-      // const index = clipboardContent.indexOf(hrlB64);
-      // console.log("INDEX: ", index);
-      // if (index > -1) { // only splice array when item is found
-      //   clipboardContent.splice(index, 1);
-      // }
-    }
+    const newClipboardContent = clipboardContent.filter(
+      (hrlWithContextStringifiedStored) =>
+        hrlWithContextStringifiedStored !== hrlWithContextStringified,
+    );
+    this.persistedStore.clipboard.set(newClipboardContent);
   }
 }

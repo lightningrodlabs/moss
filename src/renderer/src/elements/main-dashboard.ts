@@ -12,8 +12,8 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnetOn, mdiViewGalleryOutline } from '@mdi/js';
-import { AppletHash, AppletId, HrlWithContext } from '@lightningrodlabs/we-applet';
+import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
+import { AppletHash, AppletId, HrlWithContext, OpenHrlMode } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -118,9 +118,6 @@ export class MainDashboard extends LitElement {
   @state()
   _selectedTab: TabInfo | undefined;
 
-  @state()
-  _magnetColor: 0 | 1 | 2 | 3 = 0;
-
   _dashboardState = new StoreSubscriber(
     this,
     () => this._weStore.dashboardState(),
@@ -171,7 +168,7 @@ export class MainDashboard extends LitElement {
     openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
-    openHrl: async (hrlWithContext: HrlWithContext) => {
+    openHrl: async (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => {
       const tabId = stringifyHrlWithContext(hrlWithContext);
       const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
         hrlWithContext.hrl,
@@ -185,7 +182,7 @@ export class MainDashboard extends LitElement {
           appletIds: appletContextIds,
         },
       };
-      this.openTab(tabInfo);
+      this.openTab(tabInfo, mode);
     },
     userSelectHrl: async () => {
       this._clipboard.show('select');
@@ -279,7 +276,7 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async openTab(tabInfo: TabInfo) {
+  async openTab(tabInfo: TabInfo, mode?: OpenHrlMode) {
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
     );
@@ -300,7 +297,7 @@ export class MainDashboard extends LitElement {
       };
     }
     this._weStore.setAttachableViewerState({
-      position: this._attachableViewerState.value.position,
+      position: mode ? mode : this._attachableViewerState.value.position,
       visible: true,
     });
     this._selectedTab = tabInfo;
@@ -365,21 +362,6 @@ export class MainDashboard extends LitElement {
           this._weStore.setAttachableViewerState({ position: 'front', visible: false });
         }
       }
-    });
-
-    document.addEventListener('swooosh', () => {
-      this._magnetColor = 1;
-      window.setTimeout(() => {
-        this._magnetColor = 2;
-      }, 200);
-
-      window.setTimeout(() => {
-        this._magnetColor = 3;
-      }, 400);
-
-      window.setTimeout(() => {
-        this._magnetColor = 0;
-      }, 600);
     });
 
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
@@ -814,6 +796,12 @@ export class MainDashboard extends LitElement {
                     this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
                   ).open()}
                 @request-join-group=${(_e) => this.joinGroupDialog.open()}
+                @applet-selected=${(e: CustomEvent) => {
+                  this.openViews.openAppletMain(e.detail.appletHash);
+                  if (this._attachableViewerState.value.position === 'front') {
+                    this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                  }
+                }}
               ></welcome-view>`
             : html``}
 
@@ -941,22 +929,17 @@ export class MainDashboard extends LitElement {
 
         <!-- TAB BAR BUTTON -->
         <div class="row center-content" style="margin-bottom: 5px;">
-          <sl-tooltip content="Magnet" placement="right" hoist>
+          <sl-tooltip content="Search" placement="right" hoist>
             <sl-icon
               tabindex="0"
-              class=${classMap({
-                magnet: true,
-                green: this._magnetColor === 1,
-                purple: this._magnetColor === 2,
-                yellow: this._magnetColor === 3,
-              })}
+              class="search-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openClipboard();
                 }
               }}
-              .src=${wrapPathInSvg(mdiMagnetOn)}
+              .src=${wrapPathInSvg(mdiMagnify)}
             ></sl-icon>
           </sl-tooltip>
         </div>
@@ -1345,28 +1328,6 @@ export class MainDashboard extends LitElement {
 
         .slide-out-right.hide {
           transform: translateX(102%);
-        }
-
-        .magnet {
-          font-size: 66px;
-          color: #ff1e1e;
-          cursor: pointer;
-        }
-
-        .magnet:hover {
-          color: #ffef1e;
-        }
-
-        .yellow {
-          color: #ffef1e;
-        }
-
-        .green {
-          color: #74ff1e;
-        }
-
-        .purple {
-          color: #b764ff;
         }
 
         .search-button {

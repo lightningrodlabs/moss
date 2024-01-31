@@ -3,7 +3,7 @@ import { BrowserWindow, shell } from 'electron';
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
   browserWindow.webContents.on('will-frame-navigate', (e) => {
-    console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    // console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
@@ -22,7 +22,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   });
   // instead of the webview
   browserWindow.webContents.on('will-navigate', (e) => {
-    console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    // console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
@@ -44,6 +44,9 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     console.log('GOT NEW WINDOW EVENT: ', details);
+    if (details.url.startsWith('we://')) {
+      emitToWindow(browserWindow, 'deep-link-received', details.url);
+    }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
       shell.openExternal(details.url);
     }
