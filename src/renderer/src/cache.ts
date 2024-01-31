@@ -1,8 +1,4 @@
-import {
-  AttachableInfo,
-  AttachableLocationAndInfo,
-  HrlWithContext,
-} from '@lightningrodlabs/we-applet';
+import { AttachableLocationAndInfo, HrlWithContext } from '@lightningrodlabs/we-applet';
 import { stringifyHrlWithContext } from './utils';
 import { SubStore } from './persisted-store';
 

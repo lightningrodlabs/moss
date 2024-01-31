@@ -31,7 +31,6 @@ import {
   HrlWithContext,
   InternalAttachmentType,
   ProfilesLocation,
-  WeNotification,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
