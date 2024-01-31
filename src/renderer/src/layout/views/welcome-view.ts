@@ -7,10 +7,16 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiViewGridPlus } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiBell, mdiViewGridPlus } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
+import { weStoreContext } from '../../context.js';
+import { consume } from '@lit/context';
+import { WeStore } from '../../we-store.js';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { encodeHashToBase64 } from '@holochain/client';
+import TimeAgo from 'javascript-time-ago';
 
 enum WelcomePageView {
   Main,
@@ -18,6 +24,16 @@ enum WelcomePageView {
 @localized()
 @customElement('welcome-view')
 export class WelcomeView extends LitElement {
+  @consume({ context: weStoreContext })
+  @state()
+  _weStore!: WeStore;
+
+  runningApplets = new StoreSubscriber(
+    this,
+    () => this._weStore.runningApplets,
+    () => [this._weStore],
+  );
+
   @state()
   view: WelcomePageView = WelcomePageView.Main;
 
@@ -88,9 +104,10 @@ export class WelcomeView extends LitElement {
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
+        const timeAgo = new TimeAgo('en-US');
         return html`
           <div class="column" style="align-items: center; flex: 1; overflow: auto; padding: 24px;">
-            <div class="row" style="margin-top: 100px; flex-wrap: wrap;">
+            <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
               <button
                 class="btn"
                 @click=${() => {
@@ -169,8 +186,54 @@ export class WelcomeView extends LitElement {
               </button>
             </div>
 
-            <div class="row" style="margin-top: 100px; max-width: 1200px">
-              ${this.renderExplanationCard()} ${this.renderManagingGroupsCard()}
+            <!-- Notification Feed -->
+
+            <div class="column" style="align-items: center; display:flex; flex: 1;">
+              <div class="row" style="align-items: center;">
+                <sl-icon
+                  .src=${wrapPathInSvg(mdiBell)}
+                  style="font-size: 35px; margin-right: 10px;"
+                ></sl-icon>
+                <h1>Your Notifications:</h1>
+              </div>
+              <div class="column feed" style="display:flex; flex: 1;">
+                ${this.runningApplets.value.status === 'pending'
+                  ? html`Loading Notifications...`
+                  : html``}
+                ${this.runningApplets.value.status === 'complete'
+                  ? this.runningApplets.value.value.map((appletHash) => {
+                      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
+                      const notificationsToday =
+                        this._weStore.persistedStore.appletNotifications.value(
+                          encodeHashToBase64(appletHash),
+                          daysSinceEpoch,
+                        );
+                      const notificationsYesterday =
+                        this._weStore.persistedStore.appletNotifications.value(
+                          encodeHashToBase64(appletHash),
+                          daysSinceEpoch - 1,
+                        );
+                      const notifications = [...notificationsToday, ...notificationsYesterday];
+                      return notifications
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map(
+                          (notification) => html`
+                            <div class="column notification">
+                              <div class="row">
+                                <span style="display: flex; flex: 1;"></span>${timeAgo.format(
+                                  notification.timestamp,
+                                )}
+                              </div>
+                              <h3>${notification.title}</h3>
+                              <div style="display:flex; flex: 1;">
+                                ${notification.body}<span style="display:flex; flex: 1;"></span>
+                              </div>
+                            </div>
+                          `,
+                        );
+                    })
+                  : html``}
+              </div>
             </div>
           </div>
         `;
@@ -203,6 +266,20 @@ export class WelcomeView extends LitElement {
 
       .btn:active {
         background: var(--sl-color-primary-600);
+      }
+
+      .feed {
+        max-height: calc(100vh - 330px);
+        overflow-y: scroll;
+      }
+
+      .notification {
+        width: calc(100vw - 160px);
+        padding: 10px;
+        border-radius: 10px;
+        background: var(--sl-color-primary-100);
+        margin: 5px;
+        box-shadow: 1px 1px 3px #8a8a8a;
       }
     `,
     weStyles,
