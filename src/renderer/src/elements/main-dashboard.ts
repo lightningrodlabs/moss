@@ -796,6 +796,12 @@ export class MainDashboard extends LitElement {
                     this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
                   ).open()}
                 @request-join-group=${(_e) => this.joinGroupDialog.open()}
+                @applet-selected=${(e: CustomEvent) => {
+                  this.openViews.openAppletMain(e.detail.appletHash);
+                  if (this._attachableViewerState.value.position === 'front') {
+                    this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                  }
+                }}
               ></welcome-view>`
             : html``}
 

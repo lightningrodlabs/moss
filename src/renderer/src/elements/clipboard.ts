@@ -66,12 +66,7 @@ export class WeClipboard extends LitElement {
   }
 
   loadClipboardContent() {
-    const clipboardJSON: string | null = window.localStorage.getItem('clipboard');
-    let clipboardContent: Array<string> = [];
-    if (clipboardJSON) {
-      clipboardContent = JSON.parse(clipboardJSON);
-    }
-    this.clipboardContent = clipboardContent;
+    this.clipboardContent = this._weStore.persistedStore.clipboard.value();
   }
 
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
