@@ -308,7 +308,6 @@ export function loadAppletNotificationStatus(
 ): [string | undefined, number | undefined] {
   const persistedStore = new PersistedStore();
   const unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
-  console.log('@loadAppletNotificationStatus: GOT UNREAD NOTIFICATIONS: ', unreadNotifications);
   return getNotificationState(unreadNotifications);
 }
 

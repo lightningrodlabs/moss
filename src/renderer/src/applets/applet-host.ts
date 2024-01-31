@@ -374,6 +374,11 @@ export async function handleAppletIframeMessage(
         appletStore.setUnreadNotifications(getNotificationState(maybeUnreadNotifications));
       }
 
+      // Update feed
+      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
+      weStore.updateNotificationFeed(appletId, daysSinceEpoch);
+      weStore.updateNotificationFeed(appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
+
       // trigger OS notification if allowed by the user and notification is fresh enough (less than 5 minutes old)
       const appletNotificationSettings: AppletNotificationSettings =
         getAppletNotificationSettings(appletId);

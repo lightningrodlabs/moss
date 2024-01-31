@@ -31,6 +31,7 @@ import {
   HrlWithContext,
   InternalAttachmentType,
   ProfilesLocation,
+  WeNotification,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
@@ -52,7 +53,7 @@ import {
   isAppRunning,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppHashes, AppletHash, AppletId, DistributionInfo } from './types.js';
+import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
 import { Applet } from './applets/types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';
@@ -88,6 +89,8 @@ export class WeStore {
   persistedStore: PersistedStore = new PersistedStore();
 
   weCache: WeCache = new WeCache();
+
+  _notificationFeed: Writable<AppletNotification[]> = writable([]);
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);
@@ -178,6 +181,33 @@ export class WeStore {
 
   setAttachableViewerState(state: AttachableViewerState) {
     this._attachableViewerState.set(state);
+  }
+
+  notificationFeed(): Readable<AppletNotification[]> {
+    return derived(this._notificationFeed, (store) => store);
+  }
+
+  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
+    this._notificationFeed.update((store) => {
+      console.log('store: ', store);
+      const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
+      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
+        .value(appletId, daysSinceEpoch)
+        .map((notification) => JSON.stringify({ appletId, notification }));
+      console.log('updatedAppletNotifications: ', updatedAppletNotifications);
+      console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+      const updatedNotifications: string[] = [
+        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
+      ];
+      console.log('updatedNotifications: ', updatedNotifications);
+      return updatedNotifications
+        .map((notificationsString) => JSON.parse(notificationsString))
+        .sort(
+          (appletNotification_a, appletNotification_b) =>
+            appletNotification_b.notification.timestamp -
+            appletNotification_a.notification.timestamp,
+        );
+    });
   }
 
   /**

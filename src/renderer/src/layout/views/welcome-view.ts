@@ -16,8 +16,8 @@ import '../../applets/elements/applet-title.js';
 import { weStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { WeStore } from '../../we-store.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { encodeHashToBase64 } from '@holochain/client';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 
 enum WelcomePageView {
@@ -30,14 +30,35 @@ export class WelcomeView extends LitElement {
   @state()
   _weStore!: WeStore;
 
-  runningApplets = new StoreSubscriber(
+  @state()
+  view: WelcomePageView = WelcomePageView.Main;
+
+  @state()
+  notificationsLoading = true;
+
+  _notificationFeed = new StoreSubscriber(
     this,
-    () => this._weStore.runningApplets,
+    () => this._weStore.notificationFeed(),
     () => [this._weStore],
   );
 
-  @state()
-  view: WelcomePageView = WelcomePageView.Main;
+  async firstUpdated() {
+    try {
+      console.log('@ WELCOME-VIEW: loading notifications');
+      const runningApplets = await toPromise(this._weStore.runningApplets);
+      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
+      // load all notification of past 2 days since epoch
+      runningApplets.forEach((appletHash) => {
+        const appletId = encodeHashToBase64(appletHash);
+        this._weStore.updateNotificationFeed(appletId, daysSinceEpoch);
+        this._weStore.updateNotificationFeed(appletId, daysSinceEpoch - 1);
+      });
+      this.notificationsLoading = false;
+      console.log('Updated notifications.');
+    } catch (e) {
+      console.error('Failed to load notification feed: ', e);
+    }
+  }
 
   resetView() {
     this.view = WelcomePageView.Main;
@@ -199,89 +220,72 @@ export class WelcomeView extends LitElement {
                 <h1>Your Notifications:</h1>
               </div>
               <div class="column feed" style="display:flex; flex: 1;">
-                ${this.runningApplets.value.status === 'pending'
-                  ? html`Loading Notifications...`
-                  : html``}
-                ${this.runningApplets.value.status === 'complete'
-                  ? this.runningApplets.value.value.map((appletHash) => {
-                      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
-                      const notificationsToday =
-                        this._weStore.persistedStore.appletNotifications.value(
-                          encodeHashToBase64(appletHash),
-                          daysSinceEpoch,
-                        );
-                      const notificationsYesterday =
-                        this._weStore.persistedStore.appletNotifications.value(
-                          encodeHashToBase64(appletHash),
-                          daysSinceEpoch - 1,
-                        );
-                      const notifications = [...notificationsToday, ...notificationsYesterday];
-                      return notifications
-                        .sort((a, b) => b.timestamp - a.timestamp)
-                        .map(
-                          (notification) => html`
-                            <div
-                              class="column notification"
-                              tabindex="0"
-                              @click=${() =>
-                                this.dispatchEvent(
-                                  new CustomEvent('applet-selected', {
-                                    detail: {
-                                      appletHash,
-                                    },
-                                    bubbles: true,
-                                    composed: true,
-                                  }),
-                                )}
-                              @keypress=${(e: KeyboardEvent) => {
-                                if (e.key === 'Enter') {
-                                  this.dispatchEvent(
-                                    new CustomEvent('applet-selected', {
-                                      detail: {
-                                        appletHash,
-                                      },
-                                      bubbles: true,
-                                      composed: true,
-                                    }),
-                                  );
-                                }
-                              }}
-                            >
-                              <div class="row">
-                                <applet-title
-                                  .appletHash=${appletHash}
-                                  style="--size: 35px; font-size: 18px;"
-                                ></applet-title>
-                                <span style="display: flex; flex: 1;"></span>${timeAgo.format(
-                                  notification.timestamp,
-                                )}
-                              </div>
-                              <div
-                                class="row"
-                                style="align-items: center; margin-top: 6px; font-size: 20px; font-weight: bold;"
-                              >
-                                <span>${notification.title}</span>
-                                <span style="display: flex; flex: 1;"></span>
-                                ${notification.icon_src
-                                  ? html`<img
-                                      .src=${notification.icon_src}
-                                      style="height: 24px; width: 24px;"
-                                    />`
-                                  : html``}
+                ${this.notificationsLoading ? html`Loading Notifications...` : html``}
+                ${this.notificationsLoading
+                  ? html``
+                  : this._notificationFeed.value.map(
+                      (appletNotification) => html`
+                        <div
+                          class="column notification"
+                          tabindex="0"
+                          @click=${() =>
+                            this.dispatchEvent(
+                              new CustomEvent('applet-selected', {
+                                detail: {
+                                  appletHash: decodeHashFromBase64(appletNotification.appletId),
+                                },
+                                bubbles: true,
+                                composed: true,
+                              }),
+                            )}
+                          @keypress=${(e: KeyboardEvent) => {
+                            if (e.key === 'Enter') {
+                              this.dispatchEvent(
+                                new CustomEvent('applet-selected', {
+                                  detail: {
+                                    appletHash: decodeHashFromBase64(appletNotification.appletId),
+                                  },
+                                  bubbles: true,
+                                  composed: true,
+                                }),
+                              );
+                            }
+                          }}
+                        >
+                          <div class="row">
+                            <applet-title
+                              .appletHash=${decodeHashFromBase64(appletNotification.appletId)}
+                              style="--size: 35px; font-size: 18px;"
+                            ></applet-title>
+                            <span style="display: flex; flex: 1;"></span>${timeAgo.format(
+                              appletNotification.notification.timestamp,
+                            )}
+                          </div>
+                          <div
+                            class="row"
+                            style="align-items: center; margin-top: 6px; font-size: 20px; font-weight: bold;"
+                          >
+                            <span>${appletNotification.notification.title}</span>
+                            <span style="display: flex; flex: 1;"></span>
+                            ${appletNotification.notification.icon_src
+                              ? html`<img
+                                  .src=${appletNotification.notification.icon_src}
+                                  style="height: 24px; width: 24px;"
+                                />`
+                              : html``}
 
-                                <span
-                                  style="font-weight: normal; font-size: 18px; margin-left: 6px;"
-                                  >${notification.notification_type}</span
-                                >
-                              </div>
-                              <div style="display:flex; flex: 1; margin-top: 5px;">
-                                ${notification.body}<span style="display:flex; flex: 1;"></span>
-                              </div>
-                            </div>
-                          `,
-                        );
-                    })
-                  : html``}
+                            <span style="font-weight: normal; font-size: 18px; margin-left: 6px;"
+                              >${appletNotification.notification.notification_type}</span
+                            >
+                          </div>
+                          <div style="display:flex; flex: 1; margin-top: 5px;">
+                            ${appletNotification.notification.body}<span
+                              style="display:flex; flex: 1;"
+                            ></span>
+                          </div>
+                        </div>
+                      `,
+                    )}
                 <div style="min-height: 30px;"></div>
               </div>
             </div>
