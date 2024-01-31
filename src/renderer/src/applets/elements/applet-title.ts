@@ -57,7 +57,7 @@ export class AppletTitle extends LitElement {
         <img
           .src=${this.icon}
           alt="${appletStore.applet.custom_name}"
-          style="height: 25px; width: 25px; display: flex; margin-right: 4px; border-radius: 50%"
+          style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 50%); display: flex; margin-right: 4px;"
         />
         <span>${appletStore.applet.custom_name}</span>
       </div>

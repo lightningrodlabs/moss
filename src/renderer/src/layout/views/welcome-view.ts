@@ -11,6 +11,8 @@ import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiBell, mdiViewGridPlus } 
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
+import '../../applets/elements/applet-logo.js';
+import '../../applets/elements/applet-title.js';
 import { weStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { WeStore } from '../../we-store.js';
@@ -218,14 +220,61 @@ export class WelcomeView extends LitElement {
                         .sort((a, b) => b.timestamp - a.timestamp)
                         .map(
                           (notification) => html`
-                            <div class="column notification">
+                            <div
+                              class="column notification"
+                              tabindex="0"
+                              @click=${() =>
+                                this.dispatchEvent(
+                                  new CustomEvent('applet-selected', {
+                                    detail: {
+                                      appletHash,
+                                    },
+                                    bubbles: true,
+                                    composed: true,
+                                  }),
+                                )}
+                              @keypress=${(e: KeyboardEvent) => {
+                                if (e.key === 'Enter') {
+                                  this.dispatchEvent(
+                                    new CustomEvent('applet-selected', {
+                                      detail: {
+                                        appletHash,
+                                      },
+                                      bubbles: true,
+                                      composed: true,
+                                    }),
+                                  );
+                                }
+                              }}
+                            >
                               <div class="row">
+                                <applet-title
+                                  .appletHash=${appletHash}
+                                  style="--size: 35px; font-size: 18px;"
+                                ></applet-title>
                                 <span style="display: flex; flex: 1;"></span>${timeAgo.format(
                                   notification.timestamp,
                                 )}
                               </div>
-                              <h3>${notification.title}</h3>
-                              <div style="display:flex; flex: 1;">
+                              <div
+                                class="row"
+                                style="align-items: center; margin-top: 6px; font-size: 20px; font-weight: bold;"
+                              >
+                                <span>${notification.title}</span>
+                                <span style="display: flex; flex: 1;"></span>
+                                ${notification.icon_src
+                                  ? html`<img
+                                      .src=${notification.icon_src}
+                                      style="height: 24px; width: 24px;"
+                                    />`
+                                  : html``}
+
+                                <span
+                                  style="font-weight: normal; font-size: 18px; margin-left: 6px;"
+                                  >${notification.notification_type}</span
+                                >
+                              </div>
+                              <div style="display:flex; flex: 1; margin-top: 5px;">
                                 ${notification.body}<span style="display:flex; flex: 1;"></span>
                               </div>
                             </div>
@@ -233,6 +282,7 @@ export class WelcomeView extends LitElement {
                         );
                     })
                   : html``}
+                <div style="min-height: 30px;"></div>
               </div>
             </div>
           </div>
@@ -280,6 +330,11 @@ export class WelcomeView extends LitElement {
         background: var(--sl-color-primary-100);
         margin: 5px;
         box-shadow: 1px 1px 3px #8a8a8a;
+        cursor: pointer;
+      }
+
+      .notification:hover {
+        background: var(--sl-color-primary-200);
       }
     `,
     weStyles,
