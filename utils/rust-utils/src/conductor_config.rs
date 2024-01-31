@@ -41,6 +41,7 @@ pub fn default_conductor_config(
         network: Some(network_config),
         db_sync_strategy: Default::default(),
         tracing_override: None,
+        tracing_scope: None,
     };
 
     serde_yaml::to_string(&config).expect("Failed to convert conductor config to yaml string.")

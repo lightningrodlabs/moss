@@ -217,7 +217,7 @@ export class WelcomeView extends LitElement {
                   .src=${wrapPathInSvg(mdiBell)}
                   style="font-size: 35px; margin-right: 10px;"
                 ></sl-icon>
-                <h1>Your Notifications:</h1>
+                <h1>Recent Activities:</h1>
               </div>
               <div class="column feed" style="display:flex; flex: 1;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
