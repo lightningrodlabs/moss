@@ -32,6 +32,7 @@ import {
   appEntryIdFromDistInfo,
   getAppletNotificationSettings,
   getNotificationState,
+  getNotificationTypeSettings,
   storeAppletNotifications,
   stringifyHrlWithContext,
   toOriginalCaseB64,
@@ -125,6 +126,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     async attachableInfo(
       hrlWithContext: HrlWithContext,
     ): Promise<AttachableLocationAndInfo | undefined> {
+      const maybeCachedInfo = weStore.weCache.attachableInfo.value(hrlWithContext);
+      if (maybeCachedInfo) return maybeCachedInfo;
+
       const dnaHash = hrlWithContext.hrl[0];
 
       try {
@@ -142,6 +146,8 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           appletHash: location.dnaLocation.appletHash,
           attachableInfo,
         };
+
+        weStore.weCache.attachableInfo.set(attachableAndAppletInfo, hrlWithContext);
 
         return attachableAndAppletInfo;
       } catch (e) {
@@ -234,8 +240,6 @@ export async function handleAppletIframeMessage(
 ) {
   let host: AppletHost | undefined;
   const weServices = buildHeadlessWeClient(weStore);
-
-  const appletLocalStorageKey = `appletLocalStorage#${encodeHashToBase64(appletHash)}`;
 
   switch (message.type) {
     case 'get-iframe-config':
@@ -347,25 +351,30 @@ export async function handleAppletIframeMessage(
       // itself is also open, don't do anything
       const dashboardMode = get(weStore.dashboardState());
       const attachableViewerState = get(weStore.attachableViewerState());
-      if (
+
+      const ignoreNotification =
         !(attachableViewerState.visible && attachableViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
         dashboardMode.appletHash.toString() === appletHash.toString() &&
-        mainWindowFocused
-      ) {
-        return;
-      }
+        mainWindowFocused;
 
       // add notifications to unread messages and store them in the persisted notifications log
       const notifications: Array<WeNotification> = message.notifications;
       validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
-      const unreadNotifications = storeAppletNotifications(notifications, appletId);
+      const maybeUnreadNotifications = storeAppletNotifications(
+        notifications,
+        appletId,
+        !ignoreNotification ? true : false,
+        weStore.persistedStore,
+      );
 
       // update the notifications store
-      appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
+      if (maybeUnreadNotifications) {
+        appletStore.setUnreadNotifications(getNotificationState(maybeUnreadNotifications));
+      }
 
-      // trigger OS notification if allowed by the user and notification is fresh enough (less than 10 minutes old)
+      // trigger OS notification if allowed by the user and notification is fresh enough (less than 5 minutes old)
       const appletNotificationSettings: AppletNotificationSettings =
         getAppletNotificationSettings(appletId);
 
@@ -376,10 +385,14 @@ export async function handleAppletIframeMessage(
             // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
             // user was offline
             if (Date.now() - notification.timestamp < 300000) {
+              const notificationTypeSettings = getNotificationTypeSettings(
+                notification.notification_type,
+                appletNotificationSettings,
+              );
               await window.electronAPI.notification(
                 notification,
-                appletNotificationSettings.showInSystray,
-                appletNotificationSettings.allowOSNotification && notification.urgency === 'high',
+                notificationTypeSettings.showInSystray,
+                notificationTypeSettings.allowOSNotification && notification.urgency === 'high',
                 appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
                 appletStore ? appletStore.applet.custom_name : undefined,
               );
@@ -414,36 +427,32 @@ export async function handleAppletIframeMessage(
             message.request.attachToHrlWithContext,
           )
         : Promise.reject(new Error('No applet host available.'));
-    case 'localStorage.setItem':
-      const appletLocalStorageJson: string | null =
-        window.localStorage.getItem(appletLocalStorageKey);
-      const appletLocalStorage: Record<string, string> = appletLocalStorageJson
-        ? JSON.parse(appletLocalStorageJson)
-        : {};
+    case 'localStorage.setItem': {
+      const appletId = encodeHashToBase64(appletHash);
+      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
-      window.localStorage.setItem(appletLocalStorageKey, JSON.stringify(appletLocalStorage));
+      weStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
       break;
-    case 'localStorage.removeItem':
-      const appletLocalStorageJson2: string | null =
-        window.localStorage.getItem(appletLocalStorageKey);
-      const appletLocalStorage2: Record<string, string> = appletLocalStorageJson2
-        ? JSON.parse(appletLocalStorageJson2)
-        : undefined;
-      if (appletLocalStorage2) {
-        const filteredStorage = {};
-        Object.keys(appletLocalStorage2).forEach((key) => {
-          if (key !== message.key) {
-            filteredStorage[key] = appletLocalStorage2[key];
-          }
-        });
-        window.localStorage.setItem(appletLocalStorageKey, JSON.stringify(filteredStorage));
-      }
+    }
+    case 'localStorage.removeItem': {
+      const appletId = encodeHashToBase64(appletHash);
+      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
+      const filteredStorage = {};
+      Object.keys(appletLocalStorage).forEach((key) => {
+        if (key !== message.key) {
+          filteredStorage[key] = appletLocalStorage[key];
+        }
+      });
+      weStore.persistedStore.appletLocalStorage.set(filteredStorage, appletId);
       break;
-    case 'localStorage.clear':
-      window.localStorage.removeItem(`appletLocalStorage#${encodeHashToBase64(appletHash)}`);
+    }
+    case 'localStorage.clear': {
+      const appletId = encodeHashToBase64(appletHash);
+      weStore.persistedStore.appletLocalStorage.set({}, appletId);
       break;
+    }
     case 'get-localStorage':
-      return window.localStorage.getItem(appletLocalStorageKey);
+      return weStore.persistedStore.appletLocalStorage.value(encodeHashToBase64(appletHash));
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
   }
