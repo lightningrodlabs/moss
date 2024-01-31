@@ -6,14 +6,11 @@ use holochain_client::{
 };
 use holochain_conductor_api::{CellInfo, ClonedCell, ProvisionedCell};
 use holochain_state::nonce::fresh_nonce;
-use holochain_types::app::{
-    CreateCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload,
+use holochain_types::prelude::{
+    CellId, CreateCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload, ExternIO,
+    FunctionName, RoleName, Signature, Timestamp, ZomeCallUnsigned, ZomeName,
 };
-use holochain_types::prelude::ZomeCallUnsigned;
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use holochain_zome_types::{
-    CellId, ExternIO, FunctionName, RoleName, Signature, Timestamp, ZomeName,
-};
 use lair_keystore_api::LairClient;
 
 #[derive(Clone)]
