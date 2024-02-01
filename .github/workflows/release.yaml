@@ -57,20 +57,24 @@ jobs:
 
       - name: setup binaries (Windows only)
         if: matrix.platform == 'windows-2019'
+        shell: bash
         run: |
           mkdir resources/bins
 
-          cargo install --version 0.4.2 lair_keystore
-          $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
-          Copy-Item $LkPath -Destination resources/bins/lair-keystore-v0.4.2.exe
+          LAIR_VERSION=$(node -p -e "require('./moss.config.json').lairVersion")
+          HOLOCHAIN_VERSION=$(node -p -e "require('./moss.config.json').holochainVersion")
 
-          # curl -L --output resources/bins/lair-keystore-v0.4.2.exe https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v0.4.2/lair-keystore-v0.4.2-x86_64-pc-windows-msvc.exe
+          cargo install --version $LAIR_VERSION lair_keystore
+          LAIR_PATH=$(which lair-keystore)
+          cp $LAIR_PATH resources/bins/lair-keystore-v$LAIR_VERSION.exe
 
-          # cargo install holochain --version 0.2.5-rc.1 --locked --features sqlite-encrypted
-          # $HcPath = Get-Command holochain | Select-Object -ExpandProperty Definition
-          # Copy-Item $HcPath -Destination resources/bins/holochain-v0.2.5-rc.1.exe
+          # curl -L --output resources/bins/lair-keystore-v$LAIR_VERSION.exe https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$LAIR_VERSION/lair-keystore-v$LAIR_VERSION-x86_64-pc-windows-msvc.exe
 
-          curl -L --output resources/bins/holochain-v0.2.5-rc.1-8613839.exe https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v0.2.5-rc.1-8613839/holochain-v0.2.5-rc.1-8613839-x86_64-pc-windows-msvc.exe
+          # cargo install holochain --version $HOLOCHAIN_VERSION --locked --features sqlite-encrypted
+          # HOLOCHAIN_PATH=$(which holochain)
+          # cp $HOLOCHAIN_PATH resources/bins/holochain-v$HOLOCHAIN_VERSION.exe
+
+          curl -L --output resources/bins/holochain-v$HOLOCHAIN_PATH.exe https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v$HOLOCHAIN_PATH/holochain-v$HOLOCHAIN_PATH-x86_64-pc-windows-msvc.exe
 
           # NEW_VERSION: install new holochain version and copy its binary to the tauri path
 
@@ -79,19 +83,22 @@ jobs:
         run: |
           mkdir resources/bins
 
-          cargo install --version 0.4.2 lair_keystore
+          LAIR_VERSION=$(node -p -e "require('./moss.config.json').lairVersion")
+          HOLOCHAIN_VERSION=$(node -p -e "require('./moss.config.json').holochainVersion")
+
+          cargo install --version $LAIR_VERSION lair_keystore
           LAIR_PATH=$(which lair-keystore)
-          cp $LAIR_PATH resources/bins/lair-keystore-v0.4.2
+          cp $LAIR_PATH resources/bins/lair-keystore-v$LAIR_VERSION
 
-          # curl -L --output resources/bins/lair-keystore-v0.4.2 https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v0.4.2/lair-keystore-v0.4.2-x86_64-apple-darwin
-          # chmod +x ./resources/bins/lair-keystore-v0.4.2
+          # curl -L --output resources/bins/lair-keystore-v$LAIR_VERSION https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$LAIR_VERSION/lair-keystore-v$LAIR_VERSION-x86_64-apple-darwin
+          # chmod +x ./resources/bins/lair-keystore-v$LAIR_VERSION
 
-          # cargo install holochain --version 0.2.5-rc.1 --locked --features sqlite-encrypted
+          # cargo install holochain --version $HOLOCHAIN_VERSION --locked --features sqlite-encrypted
           # HOLOCHAIN_PATH=$(which holochain)
-          # cp $HOLOCHAIN_PATH resources/bins/holochain-v0.2.5-rc.1
+          # cp $HOLOCHAIN_PATH resources/bins/holochain-v$HOLOCHAIN_VERSION
 
-          curl -L --output resources/bins/holochain-v0.2.5-rc.1-8613839 https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v0.2.5-rc.1-8613839/holochain-v0.2.5-rc.1-8613839-x86_64-apple-darwin
-          chmod +x ./resources/bins/holochain-v0.2.5-rc.1-8613839
+          curl -L --output resources/bins/holochain-v$HOLOCHAIN_VERSION https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v$HOLOCHAIN_VERSION/holochain-v$HOLOCHAIN_VERSION-x86_64-apple-darwin
+          chmod +x ./resources/bins/holochain-v$HOLOCHAIN_VERSION
 
           # NEW_VERSION: install new holochain version and copy its binary to the tauri path
 
@@ -100,19 +107,22 @@ jobs:
         run: |
           mkdir resources/bins
 
-          cargo install --version 0.4.2 lair_keystore
+          LAIR_VERSION=$(node -p -e "require('./moss.config.json').lairVersion")
+          HOLOCHAIN_VERSION=$(node -p -e "require('./moss.config.json').holochainVersion")
+
+          cargo install --version $LAIR_VERSION lair_keystore
           LAIR_PATH=$(which lair-keystore)
-          cp $LAIR_PATH resources/bins/lair-keystore-v0.4.2
+          cp $LAIR_PATH resources/bins/lair-keystore-v$LAIR_VERSION
 
-          # curl -L --output resources/bins/lair-keystore-v0.4.2 https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v0.4.2/lair-keystore-v0.4.2-x86_64-unknown-linux-gnu
-          # chmod +x ./resources/bins/lair-keystore-v0.4.2
+          # curl -L --output resources/bins/lair-keystore-v$LAIR_VERSION https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$LAIR_VERSION/lair-keystore-v$LAIR_VERSION-x86_64-unknown-linux-gnu
+          # chmod +x ./resources/bins/lair-keystore-v$LAIR_VERSION
 
-          # cargo install holochain --version 0.2.5-rc.1 --locked --features sqlite-encrypted
+          # cargo install holochain --version $HOLOCHAIN_VERSION --locked --features sqlite-encrypted
           # HOLOCHAIN_PATH=$(which holochain)
-          # cp $HOLOCHAIN_PATH resources/bins/holochain-v0.2.5-rc.1
+          # cp $HOLOCHAIN_PATH resources/bins/holochain-v$HOLOCHAIN_VERSION
 
-          curl -L --output resources/bins/holochain-v0.2.5-rc.1-8613839 https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v0.2.5-rc.1-8613839/holochain-v0.2.5-rc.1-8613839-x86_64-unknown-linux-gnu
-          chmod +x ./resources/bins/holochain-v0.2.5-rc.1-8613839
+          curl -L --output resources/bins/holochain-v$HOLOCHAIN_VERSION https://github.com/holochain/launcher-electron/releases/download/holochain-binaries-v$HOLOCHAIN_VERSION/holochain-v$HOLOCHAIN_VERSION-x86_64-unknown-linux-gnu
+          chmod +x ./resources/bins/holochain-v$HOLOCHAIN_VERSION
 
           # NEW_VERSION: install new holochain version and copy its binary to the tauri path
 
@@ -134,15 +144,6 @@ jobs:
           ls dist
           gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.dmg" --clobber
 
-      - name: build and upload the app (Linux)
-        if: matrix.platform == 'ubuntu-20.04'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          yarn build:linux
-          ls dist
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
-
       - name: build and upload the app (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
         env:
@@ -153,6 +154,7 @@ jobs:
           gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
 
       - name: build and upload the app (Windows)
+        shell: bash
         if: matrix.platform == 'windows-2019'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

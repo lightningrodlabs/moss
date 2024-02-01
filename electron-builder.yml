@@ -5,6 +5,7 @@ directories:
 files:
   - resources
   - out
+  - moss.config.json
 asarUnpack:
   - resources/**
 win:
