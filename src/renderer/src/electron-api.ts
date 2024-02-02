@@ -72,6 +72,7 @@ declare global {
       uninstallApplet: (appId: string) => Promise<void>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
+    __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
 }
 

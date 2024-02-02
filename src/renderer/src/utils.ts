@@ -14,6 +14,7 @@ import {
   decodeHashFromBase64,
   HoloHashB64,
   ActionHash,
+  CallZomeRequest,
 } from '@holochain/client';
 import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
@@ -512,4 +513,30 @@ export function getAllIframes() {
   traverse(document.body);
 
   return result;
+}
+
+export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
+  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
+    const zomeCallCounts = window[`__zomeCallCount_${appletId}`];
+    if (zomeCallCounts) {
+      zomeCallCounts.totalCounts += 1;
+      if (zomeCallCounts.functionCalls[request.fn_name]) {
+        zomeCallCounts.functionCalls[request.fn_name] += 1;
+      } else {
+        if (!zomeCallCounts.functionCalls) {
+          zomeCallCounts.functionCalls = {};
+        }
+        zomeCallCounts.functionCalls[request.fn_name] = 1;
+      }
+      window[`__zomeCallCount_${appletId}`] = zomeCallCounts;
+    } else {
+      window[`__zomeCallCount_${appletId}`] = {
+        firstCall: Date.now(),
+        totalCounts: 1,
+        functionCalls: {
+          [request.fn_name]: 1,
+        },
+      };
+    }
+  }
 }

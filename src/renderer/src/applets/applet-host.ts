@@ -33,6 +33,7 @@ import {
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
+  logZomeCall,
   storeAppletNotifications,
   stringifyHrlWithContext,
   toOriginalCaseB64,
@@ -56,7 +57,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
   window.addEventListener('message', async (message) => {
     try {
       // console.log('and source: ', message.source);
-      let receivedAppletHash: AppletHash;
+      let receivedAppletId: AppletId;
       // if origin.startswith(applet://) then get it from the origin
       // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.weStore.isAppletDev) {
 
@@ -66,14 +67,14 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         // const appletHash = installedApplets.find(
         //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
         // );
-        receivedAppletHash = decodeHashFromBase64(lowerCaseAppletId);
+        receivedAppletId = lowerCaseAppletId;
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
           message.origin.startsWith('http://localhost')) &&
         weStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
-        receivedAppletHash = message.data.appletHash;
+        receivedAppletId = encodeHashToBase64(message.data.appletHash);
       } else if (message.origin.startsWith('default-app://')) {
         // There is another message handler for those messages in we-app.ts.
         return;
@@ -84,7 +85,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       const installedApplets = await toPromise(weStore.installedApplets);
 
       const installedAppletHash = installedApplets.find(
-        (hash) => encodeHashToBase64(hash) === encodeHashToBase64(receivedAppletHash),
+        (hash) => encodeHashToBase64(hash) === receivedAppletId,
       );
 
       if (!installedAppletHash) {
@@ -96,7 +97,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         );
         const iframeConfig: IframeConfig = {
           type: 'not-installed',
-          appletName: encodeHashToBase64(receivedAppletHash),
+          appletName: receivedAppletId,
         };
         message.ports[0].postMessage({ type: 'success', result: iframeConfig });
         // throw new Error(`Requested applet is not installed`);
@@ -107,7 +108,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       const result = await handleAppletIframeMessage(
         weStore,
         openViews,
-        receivedAppletHash,
+        receivedAppletId,
         message.data.request,
       );
       message.ports[0].postMessage({ type: 'success', result });
@@ -235,7 +236,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
 export async function handleAppletIframeMessage(
   weStore: WeStore,
   openViews: AppOpenViews,
-  appletHash: EntryHash,
+  appletId: AppletId,
   message: AppletToParentRequest,
 ) {
   let host: AppletHost | undefined;
@@ -243,6 +244,7 @@ export async function handleAppletIframeMessage(
 
   switch (message.type) {
     case 'get-iframe-config':
+      const appletHash = decodeHashFromBase64(appletId);
       const isInstalled = await toPromise(weStore.isInstalled.get(appletHash));
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
       if (!isInstalled) {
@@ -337,12 +339,12 @@ export async function handleAppletIframeMessage(
     case 'toggle-clipboard':
       return openViews.toggleClipboard();
     case 'notify-we': {
-      const appletId: AppletId = encodeHashToBase64(appletHash);
       if (!message.notifications) {
         throw new Error(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
         );
       }
+      const appletHash = decodeHashFromBase64(appletId);
       const appletStore = await toPromise(weStore.appletStores.get(appletHash));
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
@@ -418,13 +420,13 @@ export async function handleAppletIframeMessage(
     case 'get-global-attachment-types':
       return toPromise(weStore.allAttachmentTypes);
     case 'sign-zome-call':
+      logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);
-    case 'create-attachment':
+    case 'create-attachment': {
+      // TODO make sure that applets cannot create attachables on behalf of other applets
+      const appletHash = decodeHashFromBase64(appletId);
       host = await toPromise(
-        pipe(
-          weStore.appletStores.get(message.request.appletHash),
-          (appletStore) => appletStore!.host,
-        ),
+        pipe(weStore.appletStores.get(appletHash), (appletStore) => appletStore!.host),
       );
       return host
         ? host.createAttachment(
@@ -432,15 +434,14 @@ export async function handleAppletIframeMessage(
             message.request.attachToHrlWithContext,
           )
         : Promise.reject(new Error('No applet host available.'));
+    }
     case 'localStorage.setItem': {
-      const appletId = encodeHashToBase64(appletHash);
       const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
       weStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
       break;
     }
     case 'localStorage.removeItem': {
-      const appletId = encodeHashToBase64(appletHash);
       const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       const filteredStorage = {};
       Object.keys(appletLocalStorage).forEach((key) => {
@@ -452,12 +453,11 @@ export async function handleAppletIframeMessage(
       break;
     }
     case 'localStorage.clear': {
-      const appletId = encodeHashToBase64(appletHash);
       weStore.persistedStore.appletLocalStorage.set({}, appletId);
       break;
     }
     case 'get-localStorage':
-      return weStore.persistedStore.appletLocalStorage.value(encodeHashToBase64(appletHash));
+      return weStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
   }

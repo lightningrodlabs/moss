@@ -188,17 +188,17 @@ export class WeStore {
 
   updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
     this._notificationFeed.update((store) => {
-      console.log('store: ', store);
+      // console.log('store: ', store);
       const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
       const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
         .value(appletId, daysSinceEpoch)
         .map((notification) => JSON.stringify({ appletId, notification }));
-      console.log('updatedAppletNotifications: ', updatedAppletNotifications);
-      console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
+      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
       const updatedNotifications: string[] = [
         ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
       ];
-      console.log('updatedNotifications: ', updatedNotifications);
+      // console.log('updatedNotifications: ', updatedNotifications);
       return updatedNotifications
         .map((notificationsString) => JSON.parse(notificationsString))
         .sort(
