@@ -40,7 +40,7 @@ export class AppletLogo extends LitElement {
     return html`
       <img
         class="icon ${this.selected ? 'selected' : ''}"
-        style="height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--border-radius, 50%)"
+        style="height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--border-radius, 20%)"
         .src=${logo}
         alt="TODO"
       />

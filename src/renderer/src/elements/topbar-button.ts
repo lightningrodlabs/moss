@@ -78,7 +78,7 @@ export class TopBarButton extends LitElement {
           position: relative;
           align-items: center;
           justify-content: center;
-          border-radius: 50% 50% 0 0;
+          border-radius: 20% 20% 0 0;
           height: var(--sidebar-width);
           width: var(--sidebar-width);
         }
