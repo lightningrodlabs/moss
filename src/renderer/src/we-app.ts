@@ -50,6 +50,7 @@ export class WeApp extends LitElement {
     // });
     // const launched = await isLaunched();
     // if (launched) {
+    window.__ZOME_CALL_LOGGING_ENABLED__ = true;
     try {
       await this.connect();
     } catch (e) {

@@ -40,7 +40,7 @@ export class AppletLogo extends LitElement {
     return html`
       <img
         class="icon ${this.selected ? 'selected' : ''}"
-        style="height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--border-radius, 50%)"
+        style="height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--override-border-radius, 20%)"
         .src=${logo}
         alt="TODO"
       />
@@ -51,7 +51,7 @@ export class AppletLogo extends LitElement {
     switch (this.appletLogo.value.status) {
       case 'pending':
         return html`<sl-skeleton
-          style="height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--border-radius, 50%)"
+          style="height: var(--size, 64px); width: var(--size, 64px); --border-radius: var(--override-border-radius, 20%)"
           effect="pulse"
         ></sl-skeleton> `;
       case 'complete':

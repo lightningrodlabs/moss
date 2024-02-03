@@ -126,7 +126,7 @@ export class GroupApplets extends LitElement {
                 <applet-logo
                   .appletHash=${appletHash}
                   class="applet-icon"
-                  style="--size: 120px; --border-radius: 20px;"
+                  style="--size: 120px;"
                 ></applet-logo>
                 <span style="margin-top: 8px; font-size: 16px;">${applet.applet.custom_name}</span>
               </div>
@@ -142,15 +142,15 @@ export class GroupApplets extends LitElement {
         return html`
           <sl-skeleton
             effect="pulse"
-            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 20px; --color: var(--sl-color-primary-400);"
+            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 10px; --color: var(--sl-color-primary-400);"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 20px; --color: var(--sl-color-primary-400);"
+            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 10px; --color: var(--sl-color-primary-400);"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 20px; --color: var(--sl-color-primary-400);"
+            style="height: 120px; width: 120px; margin-right: 25px; --border-radius: 10px; --color: var(--sl-color-primary-400);"
           ></sl-skeleton>
         `;
       case 'error':

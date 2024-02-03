@@ -13,6 +13,7 @@ import { devSetup } from './devSetup';
 import { WeRustHandler } from 'hc-we-rust-utils';
 import { WeAppletDevInfo } from './cli';
 import { WeEmitter } from './weEmitter';
+import { MOSS_CONFIG } from './mossConfig';
 
 const rustUtils = require('hc-we-rust-utils');
 
@@ -60,7 +61,7 @@ export async function launch(
     password,
   );
 
-  const holochainVersion = 'holochain-v0.2.5-rc.1-8613839';
+  const holochainVersion = MOSS_CONFIG.holochainVersion;
 
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(

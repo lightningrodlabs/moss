@@ -1,4 +1,11 @@
-import { ActionHashB64, DnaHash, DnaHashB64, EntryHash, EntryHashB64 } from '@holochain/client';
+import {
+  ActionHashB64,
+  AgentPubKeyB64,
+  DnaHash,
+  DnaHashB64,
+  EntryHash,
+  EntryHashB64,
+} from '@holochain/client';
 import { WeNotification } from '@lightningrodlabs/we-applet';
 
 /**
@@ -92,3 +99,13 @@ export type AppletNotification = {
   appletId: AppletId;
   notification: WeNotification;
 };
+
+export type MessageContentPart =
+  | {
+      type: 'text';
+      content: string;
+    }
+  | {
+      type: 'agent';
+      pubkey: AgentPubKeyB64;
+    };

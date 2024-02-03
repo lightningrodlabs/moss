@@ -11,14 +11,14 @@ import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiBell, mdiViewGridPlus } 
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
+import '../../elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
 import { weStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { WeStore } from '../../we-store.js';
 import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
-import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
-import TimeAgo from 'javascript-time-ago';
+import { encodeHashToBase64 } from '@holochain/client';
 
 enum WelcomePageView {
   Main,
@@ -127,7 +127,6 @@ export class WelcomeView extends LitElement {
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
-        const timeAgo = new TimeAgo('en-US');
         return html`
           <div class="column" style="align-items: center; flex: 1; overflow: auto; padding: 24px;">
             <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
@@ -225,65 +224,7 @@ export class WelcomeView extends LitElement {
                   ? html``
                   : this._notificationFeed.value.map(
                       (appletNotification) => html`
-                        <div
-                          class="column notification"
-                          tabindex="0"
-                          @click=${() =>
-                            this.dispatchEvent(
-                              new CustomEvent('applet-selected', {
-                                detail: {
-                                  appletHash: decodeHashFromBase64(appletNotification.appletId),
-                                },
-                                bubbles: true,
-                                composed: true,
-                              }),
-                            )}
-                          @keypress=${(e: KeyboardEvent) => {
-                            if (e.key === 'Enter') {
-                              this.dispatchEvent(
-                                new CustomEvent('applet-selected', {
-                                  detail: {
-                                    appletHash: decodeHashFromBase64(appletNotification.appletId),
-                                  },
-                                  bubbles: true,
-                                  composed: true,
-                                }),
-                              );
-                            }
-                          }}
-                        >
-                          <div class="row">
-                            <applet-title
-                              .appletHash=${decodeHashFromBase64(appletNotification.appletId)}
-                              style="--size: 35px; font-size: 18px;"
-                            ></applet-title>
-                            <span style="display: flex; flex: 1;"></span>${timeAgo.format(
-                              appletNotification.notification.timestamp,
-                            )}
-                          </div>
-                          <div
-                            class="row"
-                            style="align-items: center; margin-top: 6px; font-size: 20px; font-weight: bold;"
-                          >
-                            <span>${appletNotification.notification.title}</span>
-                            <span style="display: flex; flex: 1;"></span>
-                            ${appletNotification.notification.icon_src
-                              ? html`<img
-                                  .src=${appletNotification.notification.icon_src}
-                                  style="height: 24px; width: 24px;"
-                                />`
-                              : html``}
-
-                            <span style="font-weight: normal; font-size: 18px; margin-left: 6px;"
-                              >${appletNotification.notification.notification_type}</span
-                            >
-                          </div>
-                          <div style="display:flex; flex: 1; margin-top: 5px;">
-                            ${appletNotification.notification.body}<span
-                              style="display:flex; flex: 1;"
-                            ></span>
-                          </div>
-                        </div>
+                        <feed-element .notification=${appletNotification}></feed-element>
                       `,
                     )}
                 <div style="min-height: 30px;"></div>
@@ -325,20 +266,6 @@ export class WelcomeView extends LitElement {
       .feed {
         max-height: calc(100vh - 330px);
         overflow-y: auto;
-      }
-
-      .notification {
-        width: calc(100vw - 160px);
-        padding: 10px;
-        border-radius: 10px;
-        background: var(--sl-color-primary-100);
-        margin: 5px;
-        box-shadow: 1px 1px 3px #8a8a8a;
-        cursor: pointer;
-      }
-
-      .notification:hover {
-        background: var(--sl-color-primary-200);
       }
     `,
     weStyles,

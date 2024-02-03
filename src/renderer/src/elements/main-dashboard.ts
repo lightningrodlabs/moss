@@ -36,6 +36,7 @@ import '../layout/views/appstore-view.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/attachable-view.js';
 import '../groups/elements/group-home.js';
+import '../elements/zome-call-panel.js';
 
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
@@ -255,6 +256,20 @@ export class MainDashboard extends LitElement {
             }}
           ></appstore-view>
         `,
+      },
+    };
+    this._weStore.setAttachableViewerState({ position: 'front', visible: true });
+    this.openTab(tabInfo);
+  }
+
+  openZomeCallPanel() {
+    const tabId = 'zome-call-panel';
+    const tabInfo: TabInfo = {
+      id: tabId,
+      tab: {
+        type: 'html',
+        title: 'Zome Call Panel',
+        template: html` <zome-call-panel></zome-call-panel> `,
       },
     };
     this._weStore.setAttachableViewerState({ position: 'front', visible: true });
@@ -944,6 +959,7 @@ export class MainDashboard extends LitElement {
           </sl-tooltip>
         </div>
         <div
+          @dblclick=${() => this.openZomeCallPanel()}
           style="color: white; text-align: center; margin-bottom: 3px;"
           title=${this.appVersion
             ? `

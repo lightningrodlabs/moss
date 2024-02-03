@@ -14,13 +14,14 @@ import {
   decodeHashFromBase64,
   HoloHashB64,
   ActionHash,
+  CallZomeRequest,
 } from '@holochain/client';
 import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { AppletHash, AppletId, DistributionInfo } from './types.js';
+import { AppletHash, AppletId, DistributionInfo, MessageContentPart } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 
@@ -487,6 +488,15 @@ export function notifyAndThrow(message: string) {
   throw new Error(message);
 }
 
+export function stringToMessageParts(input: string): Array<MessageContentPart> {
+  const splitParts = input.split(/(uhCAk\S{48})/);
+  return splitParts.map((part) => {
+    return part.startsWith('uhCAk') && part.length === 53
+      ? { type: 'agent', pubkey: part }
+      : { type: 'text', content: part };
+  });
+}
+
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
 
@@ -512,4 +522,30 @@ export function getAllIframes() {
   traverse(document.body);
 
   return result;
+}
+
+export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
+  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
+    const zomeCallCounts = window[`__zomeCallCount_${appletId}`];
+    if (zomeCallCounts) {
+      zomeCallCounts.totalCounts += 1;
+      if (zomeCallCounts.functionCalls[request.fn_name]) {
+        zomeCallCounts.functionCalls[request.fn_name] += 1;
+      } else {
+        if (!zomeCallCounts.functionCalls) {
+          zomeCallCounts.functionCalls = {};
+        }
+        zomeCallCounts.functionCalls[request.fn_name] = 1;
+      }
+      window[`__zomeCallCount_${appletId}`] = zomeCallCounts;
+    } else {
+      window[`__zomeCallCount_${appletId}`] = {
+        firstCall: Date.now(),
+        totalCounts: 1,
+        functionCalls: {
+          [request.fn_name]: 1,
+        },
+      };
+    }
+  }
 }

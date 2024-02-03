@@ -50,6 +50,7 @@ import {
   findAppForDnaHash,
   initAppClient,
   isAppRunning,
+  stringifyHrlWithContext,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
@@ -62,6 +63,8 @@ import { encode } from '@msgpack/msgpack';
 import { AttachableViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
+
+export type SearchStatus = 'complete' | 'loading';
 
 export class WeStore {
   constructor(
@@ -90,6 +93,55 @@ export class WeStore {
   weCache: WeCache = new WeCache();
 
   _notificationFeed: Writable<AppletNotification[]> = writable([]);
+
+  /**
+   * search filter as well as number of applet hosts from which a response is expected
+   */
+  _searchParams: [string, number] = ['', 0];
+
+  /**
+   * Number of responses that were received for a given set of search parameters
+   */
+  _searchResponses: number = 0;
+
+  _searchResults: Writable<[string, Array<HrlWithContext>, SearchStatus]> = writable([
+    '',
+    [],
+    'complete',
+  ]);
+
+  updateSearchParams(filter: string, waitingForNHosts: number) {
+    this._searchParams = [filter, waitingForNHosts];
+    this._searchResponses = 0;
+  }
+
+  updateSearchResults(filter: string, results: HrlWithContext[], fromCache: boolean) {
+    if (!fromCache) this._searchResponses += 1;
+    const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
+    this._searchResults.update((store) => {
+      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
+        return [filter, results, searchStatus];
+      } else if (this._searchParams[0] === filter) {
+        const deduplicatedResults = Array.from(
+          new Set(
+            [...store[1], ...results].map((hrlWithContext) =>
+              stringifyHrlWithContext(hrlWithContext),
+            ),
+          ),
+        ).map((stringifiedHrl) => deStringifyHrlWithContext(stringifiedHrl));
+        return [filter, deduplicatedResults, searchStatus];
+      }
+      return store;
+    });
+  }
+
+  clearSearchResults() {
+    this._searchResults.set(['', [], 'complete']);
+  }
+
+  searchResults(): Readable<[HrlWithContext[], SearchStatus]> {
+    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
+  }
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);
@@ -188,17 +240,17 @@ export class WeStore {
 
   updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
     this._notificationFeed.update((store) => {
-      console.log('store: ', store);
+      // console.log('store: ', store);
       const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
       const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
         .value(appletId, daysSinceEpoch)
         .map((notification) => JSON.stringify({ appletId, notification }));
-      console.log('updatedAppletNotifications: ', updatedAppletNotifications);
-      console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
+      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
       const updatedNotifications: string[] = [
         ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
       ];
-      console.log('updatedNotifications: ', updatedNotifications);
+      // console.log('updatedNotifications: ', updatedNotifications);
       return updatedNotifications
         .map((notificationsString) => JSON.parse(notificationsString))
         .sort(
