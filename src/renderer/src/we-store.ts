@@ -13,6 +13,7 @@ import {
   derived,
   manualReloadStore,
   asyncReadable,
+  get,
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
@@ -63,6 +64,8 @@ import { AttachableViewerState, DashboardState } from './elements/main-dashboard
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
 
+export type SearchStatus = 'complete' | 'loading';
+
 export class WeStore {
   constructor(
     public adminWebsocket: AdminWebsocket,
@@ -90,6 +93,48 @@ export class WeStore {
   weCache: WeCache = new WeCache();
 
   _notificationFeed: Writable<AppletNotification[]> = writable([]);
+
+  /**
+   * search filter as well as number of applet hosts from which a response is expected
+   */
+  _searchParams: [string, number] = ['', 0];
+
+  /**
+   * Number of responses that were received for a given set of search parameters
+   */
+  _searchResponses: number = 0;
+
+  _searchResults: Writable<[string, Array<HrlWithContext>, SearchStatus]> = writable([
+    '',
+    [],
+    'complete',
+  ]);
+
+  updateSearchParams(filter: string, waitingForNHosts: number) {
+    this._searchParams = [filter, waitingForNHosts];
+    this._searchResponses = 0;
+  }
+
+  updateSearchResults(filter: string, results: HrlWithContext[], fromCache: boolean) {
+    if (!fromCache) this._searchResponses += 1;
+    const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
+    this._searchResults.update((store) => {
+      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
+        return [filter, results, searchStatus];
+      } else if (this._searchParams[0] === filter) {
+        return [filter, [...store[1], ...results], searchStatus];
+      }
+      return store;
+    });
+  }
+
+  clearSearchResults() {
+    this._searchResults.set(['', [], 'complete']);
+  }
+
+  searchResults(): Readable<[HrlWithContext[], SearchStatus]> {
+    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
+  }
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
     const groupStores = await toPromise(this.groupStores);

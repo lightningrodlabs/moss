@@ -1,8 +1,8 @@
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
-import { localized, msg, str } from '@lit/localize';
-import { AsyncStatus, lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
+import { localized, msg } from '@lit/localize';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import {
   FormField,
   FormFieldController,
@@ -19,7 +19,6 @@ import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
-import { mdiContentPaste } from '@mdi/js';
 
 import {
   AppletInfo,
@@ -31,8 +30,11 @@ import {
 } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
+import { weClientContext } from '@lightningrodlabs/we-elements';
 import { mdiMagnify } from '@mdi/js';
+import { weStoreContext } from '../context';
+import { WeStore } from '../we-store';
+import './search-result-element';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
@@ -48,6 +50,10 @@ export interface SearchResult {
 @customElement('clipboard-search')
 export class ClipboardSearch extends LitElement implements FormField {
   /** Form field properties */
+
+  @consume({ context: weStoreContext })
+  @state()
+  _weStore!: WeStore;
 
   /**
    * The name of the field if this element is used inside a form
@@ -91,7 +97,7 @@ export class ClipboardSearch extends LitElement implements FormField {
   placeholder: string = msg('Search entry');
 
   @property({ type: Number, attribute: 'min-chars' })
-  minChars: number = 3;
+  minChars: number = 2;
 
   @consume({ context: weClientContext, subscribe: true })
   @property()
@@ -109,9 +115,16 @@ export class ClipboardSearch extends LitElement implements FormField {
   @state()
   info!: AttachableLocationAndInfo | undefined;
 
-  /**
-   * @internal
-   */
+  @state()
+  filterLength: number = 0;
+
+  @state()
+  _searchResults = new StoreSubscriber(
+    this,
+    () => this._weStore.searchResults(),
+    () => [this._weStore],
+  );
+
   _controller = new FormFieldController(this);
 
   reportValidity() {
@@ -133,21 +146,9 @@ export class ClipboardSearch extends LitElement implements FormField {
     });
   }
 
-  /**
-   * @internal
-   */
-  @state()
-  private _searchEntries: StoreSubscriber<AsyncStatus<SearchResult>> | undefined;
-
-  /**
-   * @internal
-   */
   @query('#textfield')
   private _textField!: SlInput;
 
-  /**
-   * @internal
-   */
   @query('#dropdown')
   private dropdown!: SlDropdown;
 
@@ -164,55 +165,20 @@ export class ClipboardSearch extends LitElement implements FormField {
     });
   }
 
-  async search(filter: string): Promise<SearchResult> {
-    const hrls = await this.weClient.search(filter);
-
-    console.log('@clipboard-search: Got search results: ', hrls);
-
-    const hrlsWithInfo = await Promise.all(
-      hrls.map(async (hrlWithContext) => {
-        const info = await this.weClient.attachableInfo(hrlWithContext);
-        return [hrlWithContext, info] as [HrlWithContext, AttachableLocationAndInfo | undefined];
-      }),
-    );
-
-    // console.log('@clipboard-search: Got hrlsWithInfo: ', hrlsWithInfo);
-
-    const filteredHrls = hrlsWithInfo.filter(([_hrl, info]) => info !== undefined) as Array<
-      [HrlWithContext, AttachableLocationAndInfo]
-    >;
-
-    // console.log('@clipboard-search: Got filteredHrls: ', filteredHrls);
-
-    const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
-      this.weClient as WeClient,
-      filteredHrls.map(([_, info]) => info.appletHash),
-    );
-
-    console.log(
-      '@clipboard-search: Got appletsInfos, groupsProfiles: ',
-      appletsInfos,
-      groupsProfiles,
-    );
-
-    return { hrlsWithInfo: filteredHrls, groupsProfiles, appletsInfos };
+  search(filter: string): void {
+    setTimeout(async () => this.weClient.search(filter));
   }
 
   onFilterChange() {
     const filter = this._textField.value;
+    this.filterLength = filter.length;
+    this.dropdown.show();
     if (filter.length < this.minChars) {
-      this._searchEntries = undefined;
+      this._weStore.clearSearchResults();
+      if (filter.length === 0) this.dropdown.hide();
       return;
     }
-
-    this.dropdown.show();
-
-    const store = lazyLoad(() => this.search(filter));
-    this._searchEntries = new StoreSubscriber(
-      this,
-      () => store,
-      () => [],
-    );
+    this.search(filter);
   }
 
   onEntrySelected(hrlWithContext: HrlWithContext, info: AttachableLocationAndInfo) {
@@ -240,92 +206,35 @@ export class ClipboardSearch extends LitElement implements FormField {
   }
 
   renderEntryList() {
-    if (this._searchEntries === undefined)
-      return html`<sl-menu-item disabled
-        >${msg(str`Enter ${this.minChars} chars to search...`)}</sl-menu-item
-      >`;
-    switch (this._searchEntries.value.status) {
-      case 'pending':
-        return Array(3).map(
-          () => html`
-            <sl-menu-item>
-              <sl-skeleton
-                effect="sheen"
-                slot="prefix"
-                style="height: 32px; width: 32px; border-radius: 50%; margin: 8px"
-              ></sl-skeleton>
-              <sl-skeleton
-                effect="sheen"
-                style="width: 100px; margin: 8px; border-radius: 12px"
-              ></sl-skeleton>
-            </sl-menu-item>
-          `,
-        );
-      case 'error':
-        console.error('Error searching entries: ', this._searchEntries.value.error);
-        return html`
-          <display-error
-            style="flex: 1; display:flex"
-            tooltip
-            .headline=${msg('Error searching entries')}
-            .error=${this._searchEntries.value.error}
-          ></display-error>
-        `;
-      case 'complete': {
-        const searchResult = this._searchEntries.value.value;
-
-        if (searchResult.hrlsWithInfo.length === 0)
-          return html`<sl-menu-item disabled>
-            ${msg('No entries match the filter')}
-          </sl-menu-item>`;
-
-        return html`
-          ${searchResult.hrlsWithInfo.map(
-            ([hrlWithContext, info]) => html`
-              <sl-menu-item .info=${info} .hrl=${hrlWithContext}>
-                <sl-icon
-                  slot="prefix"
-                  .src=${info.attachableInfo.icon_src}
-                  style="margin-right: 16px"
-                ></sl-icon>
-                <div class="row" style="align-items: center">
-                  <span>${info.attachableInfo.name}</span>
-                  <span style="flex: 1;"></span>
-                  <span class="placeholder">&nbsp;${msg('in')}&nbsp;</span>
-                  ${searchResult.appletsInfos
-                    .get(info.appletHash)
-                    ?.groupsIds.map(
-                      (groupId) => html`
-                        <img
-                          .src=${searchResult.groupsProfiles.get(groupId)?.logo_src}
-                          alt=${`Group icon of group ${searchResult.groupsProfiles.get(groupId)
-                            ?.name}`}
-                          style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
-                        />
-                      `,
-                    )}
-                  <span class="placeholder" style="margin-right: 5px;">
-                    ${searchResult.appletsInfos.get(info.appletHash)?.appletName}</span
-                  >
-                </div>
-                <div
-                  slot="suffix"
-                  class="row center-content to-clipboard"
-                  title=${msg('Add to clipboard')}
-                  @click=${(e) => {
-                    e.stopPropagation();
-                    this.onCopyToClipboard(hrlWithContext, info);
-                  }}
-                >
-                  <span>+</span>
-                  <sl-icon .src=${wrapPathInSvg(mdiContentPaste)}></sl-icon>
-                </div>
-              </sl-menu-item>
-            `,
-          )}
-        `;
+    if (this._searchResults.value[0].length === 0) {
+      if (this.filterLength < this.minChars) {
+        return html`<span style="padding-left: 20px;"
+          >${msg(`Enter at least ${this.minChars} characters to start searching.`)}</span
+        >`;
+      }
+      if (this._searchResults.value[1] === 'complete') {
+        return html`<span style="padding-left: 20px;">${msg('No results found.')}</span>`;
+      } else {
+        return html`<span style="padding-left: 20px;">${msg('Searching...')}</span>`;
       }
     }
+    console.log('Rendering for results: ', this._searchResults.value);
+    return html`
+      ${this._searchResults.value[0].map(
+        (hrlWithContext) => html`
+          <search-result-element .hrlWithContext=${hrlWithContext}></search-result-element>
+        `,
+      )}
+      ${this._searchResults.value[1] === 'loading'
+        ? html`
+            <sl-menu-item>
+              <div class="row" style="align-items: center">
+                <span>loading more...</span>
+              </div>
+            </sl-menu-item>
+          `
+        : html``}
+    `;
   }
 
   /**

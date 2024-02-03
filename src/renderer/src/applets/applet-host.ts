@@ -16,7 +16,7 @@ import {
   GroupProfile,
   AttachmentName,
 } from '@lightningrodlabs/we-applet';
-import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
+import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AppOpenViews } from '../layout/types.js';
@@ -40,6 +40,7 @@ import {
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
+import { AppletStore } from './applet-store.js';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -169,7 +170,21 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       return undefined;
     },
     async appletInfo(appletHash: AppletHash) {
-      const applet = await toPromise(weStore.appletStores.get(appletHash));
+      // TODO not caching is more efficient here
+      // const maybeCachedInfo = weStore.weCache.appletInfo.value(appletHash);
+      // if (maybeCachedInfo) return maybeCachedInfo;
+
+      let applet: AppletStore | undefined;
+      try {
+        applet = await toPromise(weStore.appletStores.get(appletHash));
+      } catch (e) {
+        console.warn(
+          'No appletInfo found for applet with id ',
+          encodeHashToBase64(appletHash),
+          ': ',
+          e,
+        );
+      }
       if (!applet) return undefined;
       const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
 
@@ -187,31 +202,36 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
       // );
 
-      const promises: Array<Promise<Array<HrlWithContext>>> = [];
+      const hostsArray = Array.from(hosts.values());
+      weStore.updateSearchParams(filter, hostsArray.length);
+
+      // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
+      // is still the same
+
+      const promises: Array<Promise<void>> = [];
 
       // TODO fix case where applet host failed to initialize
-      for (const host of Array.from(hosts.values())) {
+      for (const host of hostsArray) {
         promises.push(
           (async () => {
             try {
               // console.log(`searching for host ${host?.appletId}...`);
               const results = host ? await host.search(filter) : [];
+              // TODO Cache results here for an applet/filter pair.
+
+              weStore.updateSearchResults(filter, results, false);
               // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
-              return results;
+              // return results;
             } catch (e) {
               console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
-              return [];
+              // return [];
             }
           })(),
         );
       }
 
-      const hrlsWithApplets = await Promise.all(promises);
-      // console.log('%%%%%% @headlessWeClient: got hosts with applets: ', hrlsWithApplets);
-      const hrls = ([] as Array<HrlWithContext>)
-        .concat(...(hrlsWithApplets.filter((h) => !!h) as Array<Array<HrlWithContext>>))
-        .filter((h) => !!h);
-      return hrls;
+      // Do this async and return function immediately.
+      setTimeout(async () => await Promise.all(promises));
     },
     async notifyWe(_notifications: Array<WeNotification>) {
       throw new Error('notify is not implemented on headless WeServices.');
