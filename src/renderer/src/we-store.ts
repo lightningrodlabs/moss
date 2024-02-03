@@ -13,7 +13,6 @@ import {
   derived,
   manualReloadStore,
   asyncReadable,
-  get,
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
