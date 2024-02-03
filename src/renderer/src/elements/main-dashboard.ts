@@ -306,9 +306,11 @@ export class MainDashboard extends LitElement {
       tabInfo.tab.type === 'hrl' &&
       tabInfo.tab.groupHashesB64.length > 0
     ) {
+      const groupDnaHash = decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]);
+      this.openGroup(groupDnaHash);
       this._dashboardState.value = {
         viewType: 'group',
-        groupHash: decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]),
+        groupHash: groupDnaHash,
       };
     }
     this._weStore.setAttachableViewerState({
@@ -1223,6 +1225,7 @@ export class MainDashboard extends LitElement {
           padding-left: 5px;
           height: 50px;
           background: #51ed18;
+          z-index: 1;
         }
 
         .entry-tab {

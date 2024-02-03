@@ -95,7 +95,7 @@ export class SearchResultElement extends LitElement {
 
   render() {
     return html`
-      <sl-menu-item style="flex: 1;" .hrl=${this.hrlWithContext}>
+      <sl-menu-item style="flex: 1;" .hrlWithContext=${this.hrlWithContext}>
         ${this._attachableInfo
           ? html`
               <sl-icon

@@ -488,6 +488,19 @@ export function notifyAndThrow(message: string) {
   throw new Error(message);
 }
 
+export function validateHrlWithContext(hrlWithContext: HrlWithContext): HrlWithContext {
+  if (!hrlWithContext.hrl)
+    throw new Error(`Got invalid HrlWithContext: ${JSON.stringify(hrlWithContext)}`);
+  if (
+    hrlWithContext.hrl.length !== 2 ||
+    hrlWithContext.hrl[0].length !== 39 ||
+    hrlWithContext.hrl[1].length !== 39
+  )
+    throw new Error(`Got invalid HrlWithContext: ${JSON.stringify(hrlWithContext)}`);
+  // TODO validate that the right keys are there
+  return hrlWithContext;
+}
+
 export function stringToMessageParts(input: string): Array<MessageContentPart> {
   const splitParts = input.split(/(uhCAk\S{48})/);
   return splitParts.map((part) => {
