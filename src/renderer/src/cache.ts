@@ -42,6 +42,20 @@ export class WeCache {
     set: (value, appletHash) =>
       this.store.setItem(`appletInfo#${encodeHashToBase64(appletHash)}`, value),
   };
+
+  searchResults: SubStore<HrlWithContext[] | undefined, HrlWithContext[], [AppletHash, string]> = {
+    value: (appletHash: AppletHash, searchFilter: string) => {
+      return this.store.getItem<HrlWithContext[]>(
+        `search#${encodeHashToBase64(appletHash)}#${searchFilter}}`,
+      );
+    },
+    set: (value, appletHash, searchFilter) => {
+      return this.store.setItem<HrlWithContext[]>(
+        `search#${encodeHashToBase64(appletHash)}#${searchFilter}}`,
+        value,
+      );
+    },
+  };
 }
 
 export class SessionStorageStore implements KeyValueStore {

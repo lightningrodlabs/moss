@@ -1,4 +1,4 @@
-import { customElement, property, state, query } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
@@ -10,6 +10,7 @@ import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { mdiContentPaste } from '@mdi/js';
 
 import '../applets/elements/applet-title.js';
@@ -60,13 +61,17 @@ export class SearchResultElement extends LitElement {
   @state()
   _groupProfiles: ReadonlyMap<DnaHash, GroupProfile> | undefined;
 
+  @state()
+  _loading = true;
+
   // @state()
   // _appletStore: StoreSubscriber<AsyncStatus<AppletStore>> | undefined;
 
   async firstUpdated() {
     const attachableInfo = await this.weClient.attachableInfo(this.hrlWithContext);
+    this._attachableInfo = attachableInfo;
+    this._loading = false;
     if (attachableInfo) {
-      this._attachableInfo = attachableInfo;
       const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
         this.weClient as WeClient,
         [attachableInfo.appletHash],
@@ -90,7 +95,7 @@ export class SearchResultElement extends LitElement {
 
   render() {
     return html`
-      <sl-menu-item style="flex: 1;">
+      <sl-menu-item style="flex: 1;" .hrl=${this.hrlWithContext}>
         ${this._attachableInfo
           ? html`
               <sl-icon
@@ -105,7 +110,10 @@ export class SearchResultElement extends LitElement {
                 ${this._attachableInfo
                   ? html`
                       <span class="placeholder">&nbsp;${msg('in')}&nbsp;</span>
-                      <applet-title .appletHash=${this._attachableInfo.appletHash}></applet-title>
+                      <applet-title
+                        style="font-weight: bold;"
+                        .appletHash=${this._attachableInfo.appletHash}
+                      ></applet-title>
                     `
                   : html``}
                 ${this._groupProfiles
@@ -113,24 +121,25 @@ export class SearchResultElement extends LitElement {
                       <span class="placeholder">&nbsp;${msg('of')}&nbsp;</span>
                       ${Array.from(this._groupProfiles.values()).map(
                         (profile) => html`
-                          <img
-                            .src=${profile.logo_src}
-                            alt=${`Group icon of group ${profile.name}`}
-                            style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
-                          />
+                          <sl-tooltip content="${profile.name}" hoist position="top">
+                            <img
+                              .src=${profile.logo_src}
+                              alt=${`Group icon of group ${profile.name}`}
+                              style="height: 24px; width: 24px; margin-right: 4px; border-radius: 50%" />
+                            <sl-tooltip> </sl-tooltip
+                          ></sl-tooltip>
                         `,
                       )}
                     `
                   : html``}
               </div>
             `
-          : html`<span style="flex: 1;">[unknown attachable]</span>`}
-
+          : this._loading
+            ? html`<span style="flex: 1;">loading...</span>`
+            : html`<span style="flex: 1;">[unknown attachable]</span>`}
         <div
           slot="suffix"
-          class="row center-content to-clipboard"
           tabindex="0"
-          title=${msg('Add to clipboard')}
           @click=${(e) => {
             e.stopPropagation();
             this.onCopyToClipboard(this.hrlWithContext);
@@ -142,8 +151,12 @@ export class SearchResultElement extends LitElement {
             }
           }}
         >
-          <span>+</span>
-          <sl-icon .src=${wrapPathInSvg(mdiContentPaste)}></sl-icon>
+          <sl-tooltip content="${msg('Add to Pocket')}" m placement="right" hoist>
+            <div class="row center-content to-clipboard">
+              <span>+</span>
+              <sl-icon .src=${wrapPathInSvg(mdiContentPaste)}></sl-icon>
+            </div>
+          </sl-tooltip>
         </div>
       </sl-menu-item>
     `;

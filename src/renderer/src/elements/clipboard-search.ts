@@ -109,12 +109,6 @@ export class ClipboardSearch extends LitElement implements FormField {
   @state()
   value!: HrlWithContext | undefined;
 
-  /**
-   * @internal
-   */
-  @state()
-  info!: AttachableLocationAndInfo | undefined;
-
   @state()
   filterLength: number = 0;
 
@@ -141,7 +135,6 @@ export class ClipboardSearch extends LitElement implements FormField {
   reset() {
     setTimeout(() => {
       this._textField.value = '';
-      this.info = undefined;
       this.value = this.defaultValue;
     });
   }
@@ -181,7 +174,7 @@ export class ClipboardSearch extends LitElement implements FormField {
     this.search(filter);
   }
 
-  onEntrySelected(hrlWithContext: HrlWithContext, info: AttachableLocationAndInfo) {
+  onEntrySelected(hrlWithContext: HrlWithContext) {
     this.dispatchEvent(
       new CustomEvent('entry-selected', {
         detail: {
@@ -190,7 +183,6 @@ export class ClipboardSearch extends LitElement implements FormField {
       }),
     );
     this.value = hrlWithContext;
-    this.info = info;
 
     this.dropdown.hide();
   }
@@ -259,16 +251,14 @@ export class ClipboardSearch extends LitElement implements FormField {
             .label=${this._label}
             .placeholder=${this.placeholder}
             @input=${() => this.onFilterChange()}
-            .value=${this.info ? this.info.attachableInfo.name : ''}
           >
-            ${this.info
-              ? html`<sl-icon .src=${this.info.attachableInfo.icon_src} slot="prefix"></sl-icon>`
-              : html`<sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon> `}
+            <sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon>
           </sl-input>
           <sl-menu
+            id="search-results"
             style="min-width: 600px;"
             @sl-select=${(e: CustomEvent) => {
-              this.onEntrySelected(e.detail.item.hrl, e.detail.item.info);
+              this.onEntrySelected(e.detail.item.hrlWithContext);
             }}
           >
             ${this.renderEntryList()}

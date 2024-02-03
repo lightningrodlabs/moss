@@ -202,7 +202,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
       // );
 
-      const hostsArray = Array.from(hosts.values());
+      const hostsArray = Array.from(hosts.entries());
       weStore.updateSearchParams(filter, hostsArray.length);
 
       // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
@@ -211,20 +211,27 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       const promises: Array<Promise<void>> = [];
 
       // TODO fix case where applet host failed to initialize
-      for (const host of hostsArray) {
+      for (const [appletHash, host] of hostsArray) {
         promises.push(
           (async () => {
+            const cachedResults = weStore.weCache.searchResults.value(appletHash, filter);
+            if (cachedResults) {
+              console.log('Cache hit!');
+              weStore.updateSearchResults(filter, cachedResults, true);
+            }
             try {
               // console.log(`searching for host ${host?.appletId}...`);
               const results = host ? await host.search(filter) : [];
-              // TODO Cache results here for an applet/filter pair.
-
               weStore.updateSearchResults(filter, results, false);
+
+              // Cache results here for an applet/filter pair.
+              weStore.weCache.searchResults.set(results, appletHash, filter);
               // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
               // return results;
             } catch (e) {
               console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
-              // return [];
+              // Update search results to allow for reaching 'complete' state
+              weStore.updateSearchResults(filter, [], false);
             }
           })(),
         );
@@ -346,12 +353,9 @@ export async function handleAppletIframeMessage(
         case 'hrl':
           return openViews.openHrl(message.request.hrlWithContext, message.request.mode);
       }
-      break;
     case 'hrl-to-clipboard':
       weStore.hrlToClipboard(message.hrlWithContext);
       break;
-    case 'search':
-      return weServices.search(message.filter);
     case 'user-select-hrl':
       return openViews.userSelectHrl();
     case 'user-select-screen':
@@ -480,6 +484,8 @@ export async function handleAppletIframeMessage(
       return weStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
+    default:
+      throw Error(`Got unsupported message type: '${message.type}'`);
   }
 }
 

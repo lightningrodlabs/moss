@@ -51,6 +51,7 @@ import {
   findAppForDnaHash,
   initAppClient,
   isAppRunning,
+  stringifyHrlWithContext,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
@@ -122,7 +123,14 @@ export class WeStore {
       if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
         return [filter, results, searchStatus];
       } else if (this._searchParams[0] === filter) {
-        return [filter, [...store[1], ...results], searchStatus];
+        const deduplicatedResults = Array.from(
+          new Set(
+            [...store[1], ...results].map((hrlWithContext) =>
+              stringifyHrlWithContext(hrlWithContext),
+            ),
+          ),
+        ).map((stringifiedHrl) => deStringifyHrlWithContext(stringifiedHrl));
+        return [filter, deduplicatedResults, searchStatus];
       }
       return store;
     });
