@@ -21,7 +21,7 @@ import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { AppletHash, AppletId, DistributionInfo } from './types.js';
+import { AppletHash, AppletId, DistributionInfo, MessageContentPart } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 
@@ -486,6 +486,15 @@ export function appEntryIdFromDistInfo(distributionInfoString: string): ActionHa
 export function notifyAndThrow(message: string) {
   notifyError(message);
   throw new Error(message);
+}
+
+export function stringToMessageParts(input: string): Array<MessageContentPart> {
+  const splitParts = input.split(/(uhCAk\S{48})/);
+  return splitParts.map((part) => {
+    return part.startsWith('uhCAk') && part.length === 53
+      ? { type: 'agent', pubkey: part }
+      : { type: 'text', content: part };
+  });
 }
 
 export function getAllIframes() {
