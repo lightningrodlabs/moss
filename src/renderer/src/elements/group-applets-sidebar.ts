@@ -100,15 +100,15 @@ export class GroupAppletsSidebar extends LitElement {
     switch (this._groupApplets.value.status) {
       case 'pending':
         return html`<sl-skeleton
-            style="height: 58px; width: 58px; --border-radius: 50%; border-radius: 50%; margin-right: 10px;"
+            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; --border-radius: 50%; border-radius: 50%; margin-right: 10px;"
+            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; --border-radius: 50%; border-radius: 50%; margin-right: 10px;"
+            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton> `;
       case 'error':
