@@ -1225,6 +1225,7 @@ export class MainDashboard extends LitElement {
           padding-left: 5px;
           height: 50px;
           background: #51ed18;
+          z-index: 1;
         }
 
         .entry-tab {
