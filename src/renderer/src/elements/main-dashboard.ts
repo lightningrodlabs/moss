@@ -306,9 +306,11 @@ export class MainDashboard extends LitElement {
       tabInfo.tab.type === 'hrl' &&
       tabInfo.tab.groupHashesB64.length > 0
     ) {
+      const groupDnaHash = decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]);
+      this.openGroup(groupDnaHash);
       this._dashboardState.value = {
         viewType: 'group',
-        groupHash: decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]),
+        groupHash: groupDnaHash,
       };
     }
     this._weStore.setAttachableViewerState({
