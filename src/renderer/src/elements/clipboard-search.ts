@@ -210,7 +210,6 @@ export class ClipboardSearch extends LitElement implements FormField {
         return html`<span style="padding-left: 20px;">${msg('Searching...')}</span>`;
       }
     }
-    console.log('Rendering for results: ', this._searchResults.value);
     return html`
       ${this._searchResults.value[0].map(
         (hrlWithContext) => html`

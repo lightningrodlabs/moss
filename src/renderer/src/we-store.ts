@@ -51,6 +51,7 @@ import {
   initAppClient,
   isAppRunning,
   stringifyHrlWithContext,
+  validateHrlWithContext,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
@@ -762,6 +763,7 @@ export class WeStore {
   );
 
   hrlToClipboard(hrlWithContext: HrlWithContext) {
+    hrlWithContext = validateHrlWithContext(hrlWithContext);
     const clipboardContent = this.persistedStore.clipboard.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
     // Only add if it's not already there
