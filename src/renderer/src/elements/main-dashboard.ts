@@ -453,7 +453,7 @@ export class MainDashboard extends LitElement {
 
   openCreatablePanel() {
     this.showCreatablePanel = true;
-    this._creatablePanel.show('open');
+    this._creatablePanel.show();
     this._creatablePanel.focus();
   }
 
