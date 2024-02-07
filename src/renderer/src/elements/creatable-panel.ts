@@ -131,7 +131,8 @@ export class CreatablePanel extends LitElement {
     const host = allAppletHosts.get(decodeHashFromBase64(appletId));
     if (!host) throw Error('No applet host found.');
     try {
-      await host.createCreatable(creatableName, creatableContext);
+      const hrlWithContext = await host.createCreatable(creatableName, creatableContext);
+      this._weStore.hrlToRecentlyCreated(hrlWithContext);
       notify(`New ${creatableName} created.`);
     } catch (e) {
       console.error(msg('Failed to create attachable: '), e);
@@ -347,10 +348,6 @@ export class CreatablePanel extends LitElement {
                 `
               : html``
           }
-          <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
-            <img src="magic_hat.svg" style="height: 45px; margin-right: 10px; margin-bottom: 10px;">
-            ${msg('Recently created:')}
-          </div>
       </sl-dialog>
     `;
   }

@@ -1010,6 +1010,7 @@ export class MainDashboard extends LitElement {
                 }
               }}
               .src=${wrapPathInSvg(mdiMagnify)}
+              style="color: white;"
             ></sl-icon>
           </sl-tooltip>
         </div>

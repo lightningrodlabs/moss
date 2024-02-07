@@ -24,6 +24,16 @@ export class PersistedStore {
     },
   };
 
+  recentlyCreated: SubStore<string[], string[], []> = {
+    value: () => {
+      const recentlyCreatedContent = this.store.getItem<Array<string>>('recentlyCreated');
+      return recentlyCreatedContent ? recentlyCreatedContent : [];
+    },
+    set: (value) => {
+      this.store.setItem<string[]>('recentlyCreated', value);
+    },
+  };
+
   groupOrder: SubStore<DnaHashB64[], DnaHashB64[], []> = {
     value: () => {
       const groupOrder = this.store.getItem<Array<DnaHashB64>>('customGroupOrder');

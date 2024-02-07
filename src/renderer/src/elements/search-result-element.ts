@@ -153,8 +153,7 @@ export class SearchResultElement extends LitElement {
         >
           <sl-tooltip content="${msg('Add to Pocket')}" m placement="right" hoist>
             <div class="row center-content to-clipboard">
-              <span>+</span>
-              <sl-icon .src=${wrapPathInSvg(mdiContentPaste)}></sl-icon>
+              <img src="add-to-pocket.svg" style="height: 26px;" />
             </div>
           </sl-tooltip>
         </div>
@@ -173,7 +172,6 @@ export class SearchResultElement extends LitElement {
         .to-clipboard {
           background: #2eb2d7;
           border-radius: 5px;
-          padding: 0 8px;
           box-shadow: 0 0 3px black;
         }
 

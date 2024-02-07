@@ -802,6 +802,24 @@ export class WeStore {
     document.dispatchEvent(new CustomEvent('added-to-pocket'));
   }
 
+  hrlToRecentlyCreated(hrlWithContext: HrlWithContext) {
+    hrlWithContext = validateHrlWithContext(hrlWithContext);
+    let recentlyCreatedContent = this.persistedStore.clipboard.value();
+    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
+    // Only add if it's not already there
+    if (
+      recentlyCreatedContent.filter(
+        (hrlWithContextStringifiedStored) =>
+          hrlWithContextStringifiedStored === hrlWithContextStringified,
+      ).length === 0
+    ) {
+      recentlyCreatedContent.push(hrlWithContextStringified);
+    }
+    // keep the 8 latest created items only
+    recentlyCreatedContent = recentlyCreatedContent.slice(0, 8);
+    this.persistedStore.recentlyCreated.set(recentlyCreatedContent);
+  }
+
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
     const clipboardContent = this.persistedStore.clipboard.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
