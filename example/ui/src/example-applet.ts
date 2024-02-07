@@ -101,6 +101,35 @@ export class ExampleApplet extends LitElement {
               default:
                 throw new Error(`Unknown role name '${this.weClient.renderInfo.view.roleName}'.`);
             }
+          case 'creatable':
+            switch (this.weClient.renderInfo.view.creatableName) {
+              case 'post':
+                const reject = this.weClient.renderInfo.view.reject;
+                const resolve = this.weClient.renderInfo.view.resolve;
+                return html`
+                  <div class="column" style="align-items: center; flex: 1;">
+                    <div>Choose title:</div>
+                    <input id="title-input" type="text" />
+                    <div class="row">
+                      <button @click=${async () => reject('REJECTED!')}>Reject</button>
+                      <button
+                        @click=${async () => {
+                          const title = (
+                            this.shadowRoot!.getElementById('title-input') as HTMLInputElement
+                          ).value;
+                          resolve({ title });
+                        }}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                `;
+              default:
+                throw new Error(
+                  `Unknown creatable type '${this.weClient.renderInfo.view.creatableName}'.`
+                );
+            }
           default:
             throw new Error(`Unknown applet-view type.`);
         }

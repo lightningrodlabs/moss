@@ -51,14 +51,14 @@
 
       (async function () {
         const appletServices = {
-          attachmentTypes: async (appletClient, _appletHash, _weServices) => ({
+          creatables: {
             post: {
               label: 'post',
               icon_src: wrapPathInSvg(mdiPost),
-              create: async (attachToHrl) => {
+              create: async (appletClient, creatableContext) => {
                 const postsClient = new PostsClient(appletClient, 'forum');
                 const post = {
-                  title: 'Attached Post',
+                  title: creatableContext.title,
                   content: '',
                 };
                 const postRecord = await postsClient.createPost(post);
@@ -70,7 +70,7 @@
                 };
               },
             },
-          }),
+          },
           blockTypes: {},
           search: async (appletClient, _appletHash, _weServices, searchFilter) => {
             const postsClient = new PostsClient(weClient.renderInfo.appletClient, 'forum');

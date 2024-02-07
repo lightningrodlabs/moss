@@ -46,7 +46,9 @@ import { weLogoIcon } from '../icons/we-logo-icon.js';
 import { CreateGroupDialog } from './create-group-dialog.js';
 
 import './clipboard.js';
+import './creatable-panel.js';
 import { WeClipboard } from './clipboard.js';
+import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -95,6 +97,9 @@ export class MainDashboard extends LitElement {
   @query('#clipboard')
   _clipboard!: WeClipboard;
 
+  @query('#creatable-panel')
+  _creatablePanel!: CreatablePanel;
+
   @state()
   appVersion: string | undefined;
 
@@ -109,6 +114,9 @@ export class MainDashboard extends LitElement {
 
   @state()
   showClipboard: boolean = false;
+
+  @state()
+  showCreatablePanel: boolean = false;
 
   @state()
   _openTabs: Record<string, TabInfo> = {}; // open tabs by id
@@ -441,6 +449,12 @@ export class MainDashboard extends LitElement {
     this.showClipboard = true;
     this._clipboard.show('open');
     this._clipboard.focus();
+  }
+
+  openCreatablePanel() {
+    this.showCreatablePanel = true;
+    this._creatablePanel.show('open');
+    this._creatablePanel.focus();
   }
 
   closeClipboard() {
@@ -781,6 +795,29 @@ export class MainDashboard extends LitElement {
           this.showClipboard = false;
         }}
       ></we-clipboard>
+      <creatable-panel
+        id="creatable-panel"
+        @click=${(e) => e.stopPropagation()}
+        @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
+        @hrl-selected=${(e) => {
+          this.dispatchEvent(
+            new CustomEvent('hrl-selected', {
+              detail: e.detail,
+              bubbles: false,
+              composed: false,
+            }),
+          );
+        }}
+        @sl-hide=${() => {
+          this.dispatchEvent(
+            new CustomEvent('cancel-select-hrl', {
+              bubbles: false,
+              composed: false,
+            }),
+          );
+          this.showClipboard = false;
+        }}
+      ></creatable-panel>
       <join-group-dialog
         @group-joined=${(e) => this.openGroup(e.detail.groupDnaHash)}
       ></join-group-dialog>
@@ -945,6 +982,22 @@ export class MainDashboard extends LitElement {
         <span style="display: flex; flex: 1;"></span>
 
         <!-- TAB BAR BUTTON -->
+        <div class="row center-content" style="margin-bottom: 5px;">
+          <sl-tooltip content="${msg('Create New Attachable')}" placement="right" hoist>
+            <img
+              tabindex="0"
+              class="search-button"
+              @click=${() => this.openCreatablePanel()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.openCreatablePanel();
+                }
+              }}
+              style="height: 58px; margin-bottom: 3px; filter: invert(92%) sepia(60%) saturate(0%) hue-rotate(128deg) brightness(112%) contrast(100%);"
+              src="magic_hat.svg"
+            />
+          </sl-tooltip>
+        </div>
         <div class="row center-content" style="margin-bottom: 5px;">
           <sl-tooltip content="Search" placement="right" hoist>
             <sl-icon

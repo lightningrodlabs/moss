@@ -5,7 +5,6 @@ import { hashProperty, sharedStyles } from '@holochain-open-dev/elements';
 import { AnyDhtHash } from '@holochain/client';
 
 import './attachments-list.js';
-import './create-attachment.js';
 import './add-attachment.js';
 import { consume } from '@lit/context';
 import { AttachmentsStore } from '../attachments-store.js';
@@ -70,7 +69,6 @@ export class AttachmentsBar extends LitElement {
       <div class="row" style="align-items: center">
         ${this.renderAttachmentsBar()}
         <add-attachment .hash=${this.hash}></add-attachment>
-        <create-attachment .hash=${this.hash}></create-attachment>
       </div>
     `;
   }

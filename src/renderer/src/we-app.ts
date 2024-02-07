@@ -245,7 +245,7 @@ export class WeApp extends LitElement {
         .feedback-button {
           position: fixed;
           left: 0;
-          bottom: 130px;
+          bottom: 180px;
           padding: 20px 12px;
           min-height: 90px;
           justify-content: center;

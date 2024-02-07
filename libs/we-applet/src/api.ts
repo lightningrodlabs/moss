@@ -8,17 +8,17 @@ import {
 } from '@holochain/client';
 import {
   BlockType,
-  AttachmentType,
   AttachableInfo,
   HrlWithContext,
   WeNotification,
   RenderInfo,
-  AttachmentName,
   BlockName,
   AppletHash,
   AppletInfo,
   AttachableLocationAndInfo,
   OpenHrlMode,
+  CreatableName,
+  CreatableType,
 } from './types';
 import { postMessage } from './utils';
 
@@ -68,7 +68,7 @@ export const initializeHotReload = async () => {
 
 export class AppletServices {
   constructor() {
-    (this.attachmentTypes = async (_appletClient, _appletHash, _weServices) => ({})),
+    (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => []),
       (this.getAttachableInfo = async (
@@ -81,13 +81,10 @@ export class AppletServices {
   }
 
   /**
-   * Attachment types that this Applet offers for other Applets to attach
+   * Creatables that this Applet offers to be created from a We dialog
    */
-  attachmentTypes: (
-    appletClient: AppAgentClient,
-    appletHash: AppletHash,
-    weServices: WeServices,
-  ) => Promise<Record<AttachmentName, AttachmentType>>;
+  creatables: Record<CreatableName, CreatableType>;
+
   /**
    * Render block types that this Applet offers
    */
@@ -114,11 +111,6 @@ export class AppletServices {
 }
 
 export interface WeServices {
-  /**
-   * Available attachment types across all We Applets
-   * @returns
-   */
-  attachmentTypes: ReadonlyMap<AppletHash, Record<AttachmentName, AttachmentType>>;
   /**
    * Open the main view of the specified Applet
    * @param appletHash
@@ -211,9 +203,6 @@ export class WeClient implements WeServices {
   get renderInfo(): RenderInfo {
     return window.__WE_RENDER_INFO__;
   }
-  get attachmentTypes(): ReadonlyMap<AppletHash, Record<AttachmentName, AttachmentType>> {
-    return window.__WE_API__.attachmentTypes;
-  }
 
   private constructor() {}
 
@@ -222,6 +211,7 @@ export class WeClient implements WeServices {
       if (appletServices) {
         window.__WE_APPLET_SERVICES__ = appletServices;
       }
+      document.dispatchEvent(new CustomEvent('we-client-connected'));
       return new WeClient();
     } else {
       await new Promise((resolve, _reject) => {
@@ -234,6 +224,7 @@ export class WeClient implements WeServices {
       if (appletServices) {
         window.__WE_APPLET_SERVICES__ = appletServices;
       }
+      document.dispatchEvent(new CustomEvent('we-client-connected'));
       return new WeClient();
     }
   }

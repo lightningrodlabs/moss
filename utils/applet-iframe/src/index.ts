@@ -16,7 +16,6 @@ import { toUint8Array } from 'js-base64';
 import {
   WeServices,
   IframeConfig,
-  AttachmentType,
   Hrl,
   HrlWithContext,
   WeNotification,
@@ -24,14 +23,14 @@ import {
   RenderInfo,
   AppletToParentRequest,
   AppletToParentMessage,
-  InternalAttachmentType,
   HrlLocation,
   ParentToAppletRequest,
-  AttachmentName,
   AppletHash,
-  AppletId,
   AppletServices,
   OpenHrlMode,
+  InternalCreatableType,
+  CreatableName,
+  CreatableType,
 } from '@lightningrodlabs/we-applet';
 
 declare global {
@@ -44,11 +43,6 @@ declare global {
 }
 
 const weApi: WeServices = {
-  attachmentTypes: new HoloHashMap() as ReadonlyMap<
-    AppletHash,
-    Record<AttachmentName, AttachmentType>
-  >,
-
   openAppletMain: async (appletHash: EntryHash): Promise<void> =>
     postMessage({
       type: 'open-view',
@@ -240,21 +234,36 @@ const weApi: WeServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-  document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
+  document.addEventListener('we-client-connected', async () => {
+    // Once the WeClient of the applet has connected, we can update stuff from the AppletServices
+    let creatables: Record<CreatableName, CreatableType> = {};
+    creatables = window.__WE_APPLET_SERVICES__.creatables;
+    // validate that it
+    if (!creatables) {
+      console.warn(
+        `Creatables undefined. The AppletServices passed to the WeClient may contain an invalid 'creatables' property.`,
+      );
+      creatables = {};
+    }
 
-  // get global attachment-types with setTimeout in order not to block subsequent stuff
-  setTimeout(async () => {
-    const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    window.__WE_API__.attachmentTypes = globalAttachmentTypes;
+    console.log('@applet-iframe: creatables: ', creatables);
+
+    const internalCreatableTypes: Record<string, InternalCreatableType> = {};
+    for (const [name, creatableType] of Object.entries(creatables)) {
+      internalCreatableTypes[name] = {
+        icon_src: creatableType.icon_src,
+        label: creatableType.label,
+        creatableView: creatableType.creatableView,
+      };
+    }
+    console.log('@applet-iframe: internalCreatableTypes: ', internalCreatableTypes);
+
+    await postMessage({
+      type: 'update-creatable-types',
+      value: internalCreatableTypes,
+    });
   });
-  setTimeout(async () => {
-    const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    window.__WE_API__.attachmentTypes = globalAttachmentTypes;
-  }, 2000);
-  setInterval(async () => {
-    const globalAttachmentTypes = await getGlobalAttachmentTypes();
-    window.__WE_API__.attachmentTypes = globalAttachmentTypes;
-  }, 10000);
+  document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 })();
 
 async function fetchLocalStorage() {
@@ -282,22 +291,6 @@ const handleMessage = async (
         request.entryType,
         request.hrlWithContext,
       );
-    case 'get-applet-attachment-types':
-      const types = await window.__WE_APPLET_SERVICES__.attachmentTypes(
-        appletClient,
-        appletHash,
-        window.__WE_API__,
-      );
-
-      const internalAttachmentTypes: Record<string, InternalAttachmentType> = {};
-      for (const [name, attachmentType] of Object.entries(types)) {
-        internalAttachmentTypes[name] = {
-          icon_src: attachmentType.icon_src,
-          label: attachmentType.label,
-        };
-      }
-
-      return internalAttachmentTypes;
     case 'get-block-types':
       return window.__WE_APPLET_SERVICES__.blockTypes;
     case 'search':
@@ -307,28 +300,28 @@ const handleMessage = async (
         window.__WE_API__,
         request.filter,
       );
-    case 'create-attachment':
-      const attachments = await window.__WE_APPLET_SERVICES__.attachmentTypes(
-        appletClient,
-        appletHash,
-        window.__WE_API__,
-      );
-      const postAttachment = attachments[request.attachmentType];
-      if (!postAttachment) {
-        throw new Error('Necessary attachment type not provided by the applet.');
-      }
+    case 'create-creatable': {
+      const creatables = window.__WE_APPLET_SERVICES__.creatables;
+      if (!creatables) throw new Error('Creatables not defined in WeAppletServices.');
+
+      const creatable = creatables[request.creatableName];
+      if (!creatable)
+        throw new Error(
+          `Requested to create a creatable of type ${request.creatableName} but no such creatable was found in WeAppletServices.`,
+        );
       try {
-        const hrl = await postAttachment.create(request.attachToHrlWithContext);
-        return hrl;
+        const hrlWithContext = await creatable.create(appletClient, request.creatableContext);
+        return hrlWithContext;
       } catch (e) {
         return Promise.reject(
           new Error(
-            `Failed to create attachment of type '${
-              request.attachmentType
-            }' for applet with hash '${encodeHashToBase64(appletHash)}': ${e}`,
+            `Failed to create creatable of type '${
+              request.creatableName
+            }' for applet with hash '${encodeHashToBase64(appletHash)}': ${JSON.stringify(e)}`,
           ),
         );
       }
+    }
     default:
       throw new Error('Unknown ParentToAppletRequest');
   }
@@ -422,39 +415,6 @@ async function getRenderView(): Promise<RenderView | undefined> {
   return queryStringToRenderView(queryString);
 }
 
-async function getGlobalAttachmentTypes() {
-  const attachmentTypes = new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>();
-  const internalAttachmentTypes: Record<
-    AppletId,
-    Record<AttachmentName, InternalAttachmentType>
-  > = await postMessage({
-    type: 'get-global-attachment-types',
-  });
-
-  for (const [appletId, appletAttachmentTypes] of Object.entries(internalAttachmentTypes)) {
-    const attachmentTypesForThisApplet: Record<AttachmentName, AttachmentType> = {};
-    for (const [name, attachmentType] of Object.entries(appletAttachmentTypes)) {
-      attachmentTypesForThisApplet[name] = {
-        label: attachmentType.label,
-        icon_src: attachmentType.icon_src,
-        create: (attachToHrlWithContext) =>
-          postMessage({
-            type: 'create-attachment',
-            request: {
-              appletHash: decodeHashFromBase64(appletId),
-              attachmentType: name,
-              attachToHrlWithContext,
-            },
-          }),
-      };
-    }
-
-    attachmentTypes.set(decodeHashFromBase64(appletId), attachmentTypesForThisApplet);
-  }
-
-  return attachmentTypes;
-}
-
 async function queryStringToRenderView(s: string): Promise<RenderView> {
   const args = s.split('&');
 
@@ -463,6 +423,8 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
   let block: string | undefined;
   let hrl: Hrl | undefined;
   let context: any | undefined;
+  let creatableName: string | undefined;
+  let dialogId: string | undefined;
 
   if (args[1]) {
     viewType = args[1].split('=')[1];
@@ -476,6 +438,12 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
   }
   if (args[3] && args[3].split('=')[0] === 'context') {
     context = decode(toUint8Array(args[3].split('=')[1]));
+  }
+  if (args[2] && args[2].split('=')[0] === 'creatable') {
+    creatableName = args[2].split('=')[1];
+    if (args[3] && args[3].split('=')[0] === 'id') {
+      dialogId = args[3].split('=')[1];
+    }
   }
 
   switch (viewType) {
@@ -519,6 +487,30 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
           integrityZomeName: hrlLocation.integrityZomeName,
           entryType: hrlLocation.entryType,
           hrlWithContext: { hrl, context },
+        },
+      };
+    case 'creatable':
+      if (!creatableName)
+        throw new Error(`Invalid query string: ${s}. Missing creatable parameter.`);
+      if (!dialogId) throw new Error(`Invalid query string: ${s}. Missing parameter 'id'.`);
+      if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
+      return {
+        type: view,
+        view: {
+          type: 'creatable',
+          creatableName,
+          resolve: (creatableContext: any) =>
+            postMessage({
+              type: 'creatable-context-result',
+              result: { type: 'success', creatableContext },
+              dialogId: dialogId!,
+            }),
+          reject: (reason: any) =>
+            postMessage({
+              type: 'creatable-context-result',
+              result: { type: 'error', reason },
+              dialogId: dialogId!,
+            }),
         },
       };
 
