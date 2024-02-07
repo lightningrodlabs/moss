@@ -147,7 +147,7 @@ export class GroupAppletsRow extends LitElement {
       }
 
       .disabled {
-        opacity: 0.5;
+        opacity: 0.3;
       }
     `,
   ];

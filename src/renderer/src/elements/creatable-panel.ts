@@ -19,6 +19,7 @@ import {
   CreatableName,
   GroupProfile,
   HrlWithContext,
+  InternalCreatableType,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { weStoreContext } from '../context.js';
@@ -118,20 +119,45 @@ export class CreatablePanel extends LitElement {
       : undefined;
     if (appletId && creatableName && contextResult.type === 'success') {
       await this.createCreatable(appletId, creatableName, contextResult.creatableContext);
-      notify(`New ${creatableName} created.`);
       this._weStore.clearCreatableDialogResult(this._activeDialogId);
       this._activeDialogId = undefined;
       this._showCreatableView = undefined;
+      this._dialog.hide();
     }
   }
 
   async createCreatable(appletId: AppletId, creatableName: CreatableName, creatableContext: any) {
-    const appletStore = await toPromise(
-      this._weStore.appletStores.get(decodeHashFromBase64(appletId)),
-    );
-    const host = await toPromise(appletStore.host);
+    const allAppletHosts = await toPromise(this._weStore.allAppletsHosts);
+    const host = allAppletHosts.get(decodeHashFromBase64(appletId));
     if (!host) throw Error('No applet host found.');
-    await host.createCreatable(creatableName, creatableContext);
+    try {
+      await host.createCreatable(creatableName, creatableContext);
+      notify(`New ${creatableName} created.`);
+    } catch (e) {
+      console.error(msg('Failed to create attachable: '), e);
+      notifyError(msg('Failed to create attachable (See console for details).'));
+      return;
+    }
+    this._dialog.hide();
+    this._showCreatableView = undefined;
+    this._showCreatablesSelection = undefined;
+  }
+
+  async handleCreatableSelected(
+    appletHash: AppletHash,
+    creatableName: CreatableName,
+    creatable: InternalCreatableType,
+  ) {
+    if (!creatable.creatableView) {
+      await this.createCreatable(encodeHashToBase64(appletHash), creatableName, undefined);
+      return;
+    }
+    this._showCreatableView = {
+      appletHash,
+      creatableName,
+    };
+    this._creatableSelectionDialog.hide();
+    setTimeout(() => this._contextDialog.show());
   }
 
   hrlToClipboard(hrlWithContext: HrlWithContext) {
@@ -296,22 +322,19 @@ export class CreatablePanel extends LitElement {
                             class="row creatable-item"
                             style="align-items: center; cursor: pointer;"
                             tabindex="0"
-                            @click=${() => {
-                              this._showCreatableView = {
-                                appletHash: decodeHashFromBase64(this._showCreatablesSelection!),
+                            @click=${() =>
+                              this.handleCreatableSelected(
+                                decodeHashFromBase64(this._showCreatablesSelection!),
                                 creatableName,
-                              };
-                              this._creatableSelectionDialog.hide();
-                              setTimeout(() => this._contextDialog.show());
-                            }}
+                                creatable,
+                              )}
                             @keypress=${(e: KeyboardEvent) => {
                               if (e.key === 'Enter') {
-                                this._showCreatableView = {
-                                  appletHash: decodeHashFromBase64(this._showCreatablesSelection!),
+                                this.handleCreatableSelected(
+                                  decodeHashFromBase64(this._showCreatablesSelection!),
                                   creatableName,
-                                };
-                                this._creatableSelectionDialog.hide();
-                                setTimeout(() => this._contextDialog.show());
+                                  creatable,
+                                );
                               }
                             }}
                           >

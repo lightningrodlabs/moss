@@ -55,6 +55,7 @@
             post: {
               label: 'post',
               icon_src: wrapPathInSvg(mdiPost),
+              creatableView: true,
               create: async (appletClient, creatableContext) => {
                 const postsClient = new PostsClient(appletClient, 'forum');
                 const post = {
