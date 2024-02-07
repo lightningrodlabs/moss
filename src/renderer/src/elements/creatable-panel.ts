@@ -339,7 +339,11 @@ export class CreatablePanel extends LitElement {
                               }
                             }}
                           >
-                            <img src="${creatable.icon_src}" style="height: 35px; width: 35px;" />
+                            <sl-icon
+                              style="height: 35px; width: 35px;"
+                              .src=${creatable.icon_src}
+                              alt="${creatable.label} creatable type icon"
+                            ></sl-icon>
                             <div style="margin-left: 5px;">${creatable.label}</div>
                           </div>`,
                       )}
