@@ -804,7 +804,7 @@ export class WeStore {
 
   hrlToRecentlyCreated(hrlWithContext: HrlWithContext) {
     hrlWithContext = validateHrlWithContext(hrlWithContext);
-    let recentlyCreatedContent = this.persistedStore.clipboard.value();
+    let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
     // Only add if it's not already there
     if (

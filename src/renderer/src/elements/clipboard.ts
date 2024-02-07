@@ -171,21 +171,23 @@ export class WeClipboard extends LitElement {
                   </div>
                   <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
                     ${this.recentlyCreatedContent.length > 0
-                      ? this.recentlyCreatedContent.map(
-                          (hrlWithContextStringified) => html`
-                            <hrl-created-element
-                              .hrlWithContext=${deStringifyHrlWithContext(
-                                hrlWithContextStringified,
-                              )}
-                              .selectTitle=${this.mode === 'open'
-                                ? msg('Click to open')
-                                : undefined}
-                              @added-to-pocket=${() => this.loadClipboardContent()}
-                              @hrl-selected=${(e) => this.handleHrlSelected(e)}
-                              style="margin: 0 7px 7px 0;"
-                            ></hrl-created-element>
-                          `,
-                        )
+                      ? this.recentlyCreatedContent
+                          .reverse()
+                          .map(
+                            (hrlWithContextStringified) => html`
+                              <hrl-created-element
+                                .hrlWithContext=${deStringifyHrlWithContext(
+                                  hrlWithContextStringified,
+                                )}
+                                .selectTitle=${this.mode === 'open'
+                                  ? msg('Click to open')
+                                  : undefined}
+                                @added-to-pocket=${() => this.loadClipboardContent()}
+                                @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                                style="margin: 0 7px 7px 0;"
+                              ></hrl-created-element>
+                            `,
+                          )
                       : html`Nothing in your pocket. Watch out for pocket icons to add things to
                         your pocket.`}
                   </div>
