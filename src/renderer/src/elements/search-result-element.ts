@@ -2,7 +2,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -11,7 +11,6 @@ import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { mdiContentPaste } from '@mdi/js';
 
 import '../applets/elements/applet-title.js';
 

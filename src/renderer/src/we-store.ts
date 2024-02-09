@@ -1,7 +1,6 @@
 import {
   asyncDerived,
   asyncDeriveStore,
-  AsyncReadable,
   completed,
   lazyLoad,
   mapAndJoin,
@@ -27,12 +26,12 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
 import {
-  CreatableContextResult,
+  CreatableResult,
   CreatableName,
   GroupProfile,
   HrlWithContext,
-  InternalCreatableType,
   ProfilesLocation,
+  CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
@@ -113,20 +112,21 @@ export class WeStore {
     'complete',
   ]);
 
-  _allCreatableTypes: Writable<Record<AppletId, Record<CreatableName, InternalCreatableType>>> =
-    writable({});
+  _allCreatableTypes: Writable<Record<AppletId, Record<CreatableName, CreatableType>>> = writable(
+    {},
+  );
 
   // Contains a record of CreatableContextRestult ordered by dialog id.
-  _creatableDialogResults: Writable<Record<string, CreatableContextResult>> = writable({});
+  _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
 
-  setCreatableDialogResult(dialogId: string, result: CreatableContextResult) {
+  setCreatableDialogResult(dialogId: string, result: CreatableResult) {
     this._creatableDialogResults.update((store) => {
       store[dialogId] = result;
       return store;
     });
   }
 
-  creatableDialogResult(dialogId: string): Readable<CreatableContextResult | undefined> {
+  creatableDialogResult(dialogId: string): Readable<CreatableResult | undefined> {
     return derived(this._creatableDialogResults, (store) => store[dialogId]);
   }
 
@@ -288,10 +288,7 @@ export class WeStore {
     return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
   }
 
-  updateCreatableTypes(
-    appletId: AppletId,
-    creatableTypes: Record<CreatableName, InternalCreatableType>,
-  ) {
+  updateCreatableTypes(appletId: AppletId, creatableTypes: Record<CreatableName, CreatableType>) {
     this._allCreatableTypes.update((store) => {
       store[appletId] = creatableTypes;
       return store;
@@ -492,7 +489,7 @@ export class WeStore {
     }),
   );
 
-  allCreatableTypes(): Readable<Record<AppletId, Record<CreatableName, InternalCreatableType>>> {
+  allCreatableTypes(): Readable<Record<AppletId, Record<CreatableName, CreatableType>>> {
     return derived(this._allCreatableTypes, (store) => store);
   }
 

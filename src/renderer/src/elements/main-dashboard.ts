@@ -30,7 +30,6 @@ import '../groups/elements/entry-title.js';
 import './groups-sidebar.js';
 import './group-applets-sidebar.js';
 import './join-group-dialog.js';
-import './search-bar.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/appstore-view.js';
 import '../layout/views/publishing-view.js';
