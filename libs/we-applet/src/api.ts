@@ -173,12 +173,6 @@ export interface WeServices {
    */
   hrlToClipboard: (hrlWithContext: HrlWithContext) => Promise<void>;
   /**
-   * Searching across all We Applets
-   * @param searchFilter
-   * @returns
-   */
-  search: (searchFilter: string) => Promise<any>;
-  /**
    * Prompts the user with the search bar and We clipboard to select an HRL.
    * Returns an HrlWithContex as soon as the usser has selected an HRL
    * or undefined if the user cancels the selection process.
@@ -253,8 +247,6 @@ export class WeClient implements WeServices {
 
   hrlToClipboard = (hrlWithContext: HrlWithContext) =>
     window.__WE_API__.hrlToClipboard(hrlWithContext);
-
-  search = (filter: string) => window.__WE_API__.search(filter);
 
   userSelectHrl = () => window.__WE_API__.userSelectHrl();
 
