@@ -95,6 +95,9 @@ export class GroupHome extends LitElement {
   );
 
   @state()
+  _peerStatusLoading = true;
+
+  @state()
   _recentlyJoined: Array<AppletId> = [];
 
   @state()
@@ -187,6 +190,9 @@ export class GroupHome extends LitElement {
 
   async firstUpdated() {
     // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
+    setTimeout(() => {
+      this._peerStatusLoading = false;
+    }, 2500);
   }
 
   async updateUi(e: CustomEvent) {
@@ -486,7 +492,19 @@ export class GroupHome extends LitElement {
           <div class="flex-scrollable-parent">
             <div class="flex-scrollable-container">
               <div class="flex-scrollable-y">
-                <group-peers-status></group-peers-status>
+                ${
+                  this._peerStatusLoading
+                    ? html`<div
+                        class="column center-content"
+                        style="margin-top: 20px; font-size: 20px;"
+                      >
+                        <sl-spinner></sl-spinner>
+                      </div>`
+                    : html``
+                }
+                <group-peers-status style="${
+                  this._peerStatusLoading ? 'display: none;' : ''
+                }"></group-peers-status>
               </div>
             </div>
           </div>
