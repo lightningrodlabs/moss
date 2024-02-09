@@ -11,7 +11,7 @@ The differences between a We Applet and a normal Holochain App are:
   - UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
 - A We Applet can provide `AppletServices` for We or other Applets to use, including:
   - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) with context pointing to an attachable
-  - attachmentTypes: Attachable types that can be attached by other Applets, alongside with a `create()` method that creates a new attachable to be attached ad hoc.
+  - creatables: Attachables that can be created on-the-fly by a user.
   - getAttachableInfo(): A function that returns info for the attachable associated to the HrlWithContext if it exists in the Applet and the method is implemented.
   - blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
 
@@ -51,17 +51,11 @@ import { WeClient, AppletServices, HrlWithContext, AttachableInfo } from '@light
 // about the available block views etc.
 const appletServices: Appletservices = {
     // Types of attachment that this Applet offers for other Applets to attach
-    attachmentTypes: async (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices) => {
+    creatables: {
         'post': {
             label: 'post',
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe',
-            create: (attachToHrlWithContext: HrlWithContext) => {
-            // logic to create a new attachable of that type. The attachToHrlWithContext can be used for
-            // backlinking, i.e. it is the HrlWithContext that the attachable which is being
-            // created with this function is being attached to.
-            appletClient.callZome(...)
-            ...
-            }
+          }
         },
         'comment': {
             ...
@@ -156,6 +150,18 @@ switch (weClient.renderInfo.type) {
             }
           default:
             throw new Error("Unknown role name");
+        }
+
+      case "creatable":
+        switch (weClient.renderInfo.view.creatableName) {
+          case "post":
+            // here comes your rendering logic to create this creatable type.
+            // Once created, you need to call
+            // weClient.renderInfo.view.resolve(${HrlWithContext of your created creatable here});
+            // or if there's an error:
+            // weClient.renderInfo.view.reject("Failed to create attachable.");
+            // or if the user cancelled the creation:
+            // weClient.renderInfo.view.cancel();
         }
 
       default:

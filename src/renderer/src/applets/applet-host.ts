@@ -1,7 +1,6 @@
-import { get, pipe, toPromise } from '@holochain-open-dev/stores';
+import { get, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
-  AttachmentType,
   AttachableInfo,
   AttachableLocationAndInfo,
   HrlLocation,
@@ -10,14 +9,11 @@ import {
   AppletToParentRequest,
   ParentToAppletRequest,
   IframeConfig,
-  InternalAttachmentType,
   BlockType,
   WeServices,
   GroupProfile,
-  AttachmentName,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
-import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AppOpenViews } from '../layout/types.js';
 import {
@@ -123,8 +119,6 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
 
 export function buildHeadlessWeClient(weStore: WeStore): WeServices {
   return {
-    // background-services don't need to provide global attachment types as they are available via the WeStore anyway.
-    attachmentTypes: new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>(),
     async attachableInfo(
       hrlWithContext: HrlWithContext,
     ): Promise<AttachableLocationAndInfo | undefined> {
@@ -216,7 +210,6 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           (async () => {
             const cachedResults = weStore.weCache.searchResults.value(appletHash, filter);
             if (cachedResults) {
-              console.log('Cache hit!');
               weStore.updateSearchResults(filter, cachedResults, true);
             }
             try {
@@ -266,7 +259,6 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
-  let host: AppletHost | undefined;
   const weServices = buildHeadlessWeClient(weStore);
 
   switch (message.type) {
@@ -433,7 +425,6 @@ export async function handleAppletIframeMessage(
       }
       return;
     }
-
     case 'get-applet-info':
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
@@ -441,24 +432,18 @@ export async function handleAppletIframeMessage(
     case 'get-global-attachable-info':
       console.log("@applet-host: got 'get-attachable-info' message: ", message);
       return weServices.attachableInfo(message.hrlWithContext);
-    case 'get-global-attachment-types':
-      return toPromise(weStore.allAttachmentTypes);
     case 'sign-zome-call':
       logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);
-    case 'create-attachment': {
-      // TODO make sure that applets cannot create attachables on behalf of other applets
-      const appletHash = decodeHashFromBase64(appletId);
-      host = await toPromise(
-        pipe(weStore.appletStores.get(appletHash), (appletStore) => appletStore!.host),
-      );
-      return host
-        ? host.createAttachment(
-            message.request.attachmentType,
-            message.request.attachToHrlWithContext,
-          )
-        : Promise.reject(new Error('No applet host available.'));
-    }
+    case 'creatable-result':
+      if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
+      if (!message.result) throw new Error("Message is missing the 'result' property.");
+      weStore.setCreatableDialogResult(message.dialogId, message.result);
+      break;
+    case 'update-creatable-types':
+      // TODO validate message content
+      weStore.updateCreatableTypes(appletId, message.value);
+      break;
     case 'localStorage.setItem': {
       const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
@@ -496,6 +481,7 @@ export class AppletHost {
     public iframe: HTMLIFrameElement,
     appletId: AppletId,
   ) {
+    console.log('NEW APPLET HOST WITH CONTENTWINDOW: ', iframe.contentWindow);
     this.appletId = appletId;
   }
 
@@ -519,23 +505,6 @@ export class AppletHost {
     return this.postMessage({
       type: 'search',
       filter,
-    });
-  }
-
-  createAttachment(
-    attachmentType: string,
-    attachToHrlWithContext: HrlWithContext,
-  ): Promise<HrlWithContext> {
-    return this.postMessage({
-      type: 'create-attachment',
-      attachmentType,
-      attachToHrlWithContext,
-    });
-  }
-
-  async getAppletAttachmentTypes(): Promise<Record<string, InternalAttachmentType>> {
-    return this.postMessage({
-      type: 'get-applet-attachment-types',
     });
   }
 

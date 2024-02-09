@@ -41,14 +41,6 @@ export type GroupProfile = {
   logo_src: string;
 };
 
-export type AttachmentType = {
-  label: string;
-  icon_src: string;
-  create: (attachToHrlWithContext: HrlWithContext) => Promise<HrlWithContext>;
-};
-
-export type AttachmentName = string;
-
 export type WeNotification = {
   /**
    * Title of the message.
@@ -136,6 +128,26 @@ export type AppletView =
       integrityZomeName: string;
       entryType: string;
       hrlWithContext: HrlWithContext;
+    }
+  | {
+      type: 'creatable';
+      name: CreatableName;
+      /**
+       * To be called after the creatable has been successfully created. Will close the creatable view.
+       * @param hrlWithContext
+       * @returns
+       */
+      resolve: (hrlWithContext: HrlWithContext) => Promise<void>;
+      /**
+       * To be called if creation fails due to an error
+       * @param reason
+       * @returns
+       */
+      reject: (reason: any) => Promise<void>;
+      /**
+       * To be called if user cancels the creation
+       */
+      cancel: () => Promise<void>;
     };
 
 export type CrossAppletView =
@@ -146,6 +158,32 @@ export type CrossAppletView =
       type: 'block';
       block: string;
       context: any;
+    };
+
+export type CreatableType = {
+  /**
+   * The label for the creatable that's displayed in We to open the creatable view
+   */
+  label: string;
+  icon_src: string;
+};
+
+/**
+ * The name that's being used in RenderInfo to tell which creatable should be rendered
+ */
+export type CreatableName = string;
+
+export type CreatableResult =
+  | {
+      type: 'success';
+      hrlWithContext: HrlWithContext;
+    }
+  | {
+      type: 'cancel';
+    }
+  | {
+      type: 'error';
+      reason: any;
     };
 
 export type BlockType = {
@@ -196,19 +234,11 @@ export type ParentToAppletRequest =
       hrlWithContext: HrlWithContext;
     }
   | {
-      type: 'get-applet-attachment-types';
-    }
-  | {
       type: 'get-block-types';
     }
   | {
       type: 'search';
       filter: string;
-    }
-  | {
-      type: 'create-attachment';
-      attachmentType: string;
-      attachToHrlWithContext: HrlWithContext;
     };
 
 export type AppletToParentMessage = {
@@ -237,10 +267,6 @@ export type AppletToParentRequest =
       request: OpenViewRequest;
     }
   | {
-      type: 'create-attachment';
-      request: CreateAttachmentRequest;
-    }
-  | {
       type: 'search';
       filter: string;
     }
@@ -251,9 +277,6 @@ export type AppletToParentRequest =
   | {
       type: 'get-applet-info';
       appletHash: AppletHash;
-    }
-  | {
-      type: 'get-global-attachment-types';
     }
   | {
       type: 'get-group-profile';
@@ -275,6 +298,18 @@ export type AppletToParentRequest =
     }
   | {
       type: 'toggle-clipboard';
+    }
+  | {
+      type: 'update-creatable-types';
+      value: Record<CreatableName, CreatableType>;
+    }
+  | {
+      type: 'creatable-result';
+      result: CreatableResult;
+      /**
+       * The id of the dialog this result is coming from
+       */
+      dialogId: string;
     }
   | {
       type: 'localStorage.setItem';
@@ -321,17 +356,6 @@ export type OpenViewRequest =
       hrlWithContext: HrlWithContext;
       mode?: OpenHrlMode;
     };
-
-export type CreateAttachmentRequest = {
-  appletHash: EntryHash;
-  attachmentType: string;
-  attachToHrlWithContext: HrlWithContext;
-};
-
-export type InternalAttachmentType = {
-  label: string;
-  icon_src: string;
-};
 
 export type IframeConfig =
   | {

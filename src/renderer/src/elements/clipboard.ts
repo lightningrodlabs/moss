@@ -20,6 +20,7 @@ import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { buildHeadlessWeClient } from '../applets/applet-host.js';
 import './hrl-element.js';
+import './hrl-created-element.js';
 import './clipboard-search.js';
 import { ClipboardSearch } from './clipboard-search.js';
 import { deStringifyHrlWithContext } from '../utils.js';
@@ -53,11 +54,15 @@ export class WeClipboard extends LitElement {
   @state()
   clipboardContent: Array<string> = [];
 
+  @state()
+  recentlyCreatedContent: Array<string> = [];
+
   show(mode: 'open' | 'select') {
     this.loadClipboardContent();
     this.mode = mode;
     this._dialog.show();
     this._searchField.focus();
+    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value();
   }
 
   hide() {
@@ -154,6 +159,41 @@ export class WeClipboard extends LitElement {
               @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
             ></clipboard-search>
           </we-client-context>
+          ${
+            this.recentlyCreatedContent.length > 0
+              ? html`
+                  <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
+                    <img
+                      src="magic_hat.svg"
+                      style="height: 45px; margin-right: 10px; margin-bottom: 10px;"
+                    />
+                    ${msg('Recently created:')}
+                  </div>
+                  <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
+                    ${this.recentlyCreatedContent.length > 0
+                      ? this.recentlyCreatedContent
+                          .reverse()
+                          .map(
+                            (hrlWithContextStringified) => html`
+                              <hrl-created-element
+                                .hrlWithContext=${deStringifyHrlWithContext(
+                                  hrlWithContextStringified,
+                                )}
+                                .selectTitle=${this.mode === 'open'
+                                  ? msg('Click to open')
+                                  : undefined}
+                                @added-to-pocket=${() => this.loadClipboardContent()}
+                                @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                                style="margin: 0 7px 7px 0;"
+                              ></hrl-created-element>
+                            `,
+                          )
+                      : html`Nothing in your pocket. Watch out for pocket icons to add things to
+                        your pocket.`}
+                  </div>
+                `
+              : html``
+          }
           <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
             <img src="pocket_black.png" style="height: 38px; margin-right: 10px;">
             ${msg('In Your Pocket:')}

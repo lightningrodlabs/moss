@@ -18,9 +18,10 @@ import '@lightningrodlabs/attachments/dist/elements/attachments-context.js';
 import './applet-main.js';
 import './cross-applet-main.js';
 import { AttachmentsStore } from '@lightningrodlabs/attachments';
-import { CellType } from '@holochain/client';
+import { ActionHash, CellType, DnaHash } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
+import { PostsClient } from './posts-client.js';
 
 @localized()
 // @customElement("example-applet")
@@ -100,6 +101,52 @@ export class ExampleApplet extends LitElement {
                 }
               default:
                 throw new Error(`Unknown role name '${this.weClient.renderInfo.view.roleName}'.`);
+            }
+          case 'creatable':
+            switch (this.weClient.renderInfo.view.name) {
+              case 'post':
+                const reject = this.weClient.renderInfo.view.reject;
+                const resolve = this.weClient.renderInfo.view.resolve;
+                const cancel = this.weClient.renderInfo.view.cancel;
+                const appletClient = this.weClient.renderInfo.appletClient;
+                const postsClient = new PostsClient(appletClient, 'forum');
+                return html`
+                  <div class="column" style="align-items: center; flex: 1;">
+                    <div>Choose title:</div>
+                    <input id="title-input" type="text" />
+                    <div class="row">
+                      <button @click=${async () => cancel()}>Cancel</button>
+                      <button
+                        @click=${async () => {
+                          const title = (
+                            this.shadowRoot!.getElementById('title-input') as HTMLInputElement
+                          ).value;
+                          const post = {
+                            title,
+                            content: '',
+                          };
+                          try {
+                            const postRecord = await postsClient.createPost(post);
+                            const appInfo = await appletClient.appInfo();
+                            const dnaHash = (appInfo.cell_info.forum[0] as any)[
+                              CellType.Provisioned
+                            ].cell_id[0];
+                            const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
+                            await resolve({
+                              hrl,
+                            });
+                          } catch (e) {
+                            await reject(e);
+                          }
+                        }}
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                `;
+              default:
+                throw new Error(`Unknown creatable type '${this.weClient.renderInfo.view.name}'.`);
             }
           default:
             throw new Error(`Unknown applet-view type.`);

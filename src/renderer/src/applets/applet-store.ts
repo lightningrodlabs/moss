@@ -8,7 +8,7 @@ import {
   writable,
 } from '@holochain-open-dev/stores';
 import { encodeHashToBase64, EntryHash } from '@holochain/client';
-import { BlockType, InternalAttachmentType } from '@lightningrodlabs/we-applet';
+import { BlockType } from '@lightningrodlabs/we-applet';
 
 import { AppletHost } from './applet-host.js';
 import { Applet } from './types.js';
@@ -39,14 +39,14 @@ export class AppletStore {
     const appletHashBase64 = encodeHashToBase64(this.appletHash);
     const allIframes = getAllIframes();
     const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
-    if (relevantIframe) {
+    if (relevantIframe && relevantIframe.contentWindow) {
       return new AppletHost(relevantIframe, appletHashBase64);
     } else {
       return new Promise<AppletHost | undefined>((resolve) => {
         setTimeout(() => {
           const allIframes = getAllIframes();
           const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
-          if (relevantIframe) {
+          if (relevantIframe && relevantIframe.contentWindow) {
             resolve(new AppletHost(relevantIframe, appletHashBase64));
           } else {
             console.warn(
@@ -58,38 +58,6 @@ export class AppletStore {
       });
     }
   });
-
-  attachmentTypes: AsyncReadable<Record<string, InternalAttachmentType>> = pipe(
-    this.host,
-    (host) => {
-      return lazyLoadAndPoll(async () => {
-        if (!host) return Promise.resolve({});
-        try {
-          return new Promise(async (resolve) => {
-            const timeout = setTimeout(() => {
-              console.warn(
-                `Getting attachmentTypes for applet ${host.appletId} timed out in 5000ms`,
-              );
-              resolve({});
-            }, 5000);
-            try {
-              const attachmentTypes = await host.getAppletAttachmentTypes();
-              clearTimeout(timeout);
-              resolve(attachmentTypes);
-            } catch (e: any) {
-              if (e.toString().includes('before initialization')) {
-                return;
-              }
-              console.warn('Failed to get attachment types: ', e);
-            }
-          });
-        } catch (e) {
-          console.warn(`Failed to get attachment types from applet "${host.appletId}": ${e}`);
-          return Promise.resolve({});
-        }
-      }, 3000);
-    },
-  );
 
   blocks: AsyncReadable<Record<string, BlockType>> = pipe(this.host, (host) =>
     lazyLoadAndPoll(() => (host ? host.getBlocks() : Promise.resolve({})), 10000),
