@@ -21,6 +21,10 @@ export class GroupClient {
     public zomeName: string = 'group',
   ) {}
 
+  get myPubKey(): AgentPubKey {
+    return this.appAgentClient.myPubKey;
+  }
+
   /** GroupProfile */
 
   async getGroupProfile(): Promise<EntryRecord<GroupProfile> | undefined> {
