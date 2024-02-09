@@ -829,4 +829,45 @@ export class WeStore {
     );
     this.persistedStore.clipboard.set(newClipboardContent);
   }
+
+  async search(filter: string) {
+    const hosts = await toPromise(this.allAppletsHosts);
+
+    const hostsArray = Array.from(hosts.entries());
+    this.updateSearchParams(filter, hostsArray.length);
+
+    // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
+    // is still the same
+
+    const promises: Array<Promise<void>> = [];
+
+    // TODO fix case where applet host failed to initialize
+    for (const [appletHash, host] of hostsArray) {
+      promises.push(
+        (async () => {
+          const cachedResults = this.weCache.searchResults.value(appletHash, filter);
+          if (cachedResults) {
+            this.updateSearchResults(filter, cachedResults, true);
+          }
+          try {
+            // console.log(`searching for host ${host?.appletId}...`);
+            const results = host ? await host.search(filter) : [];
+            this.updateSearchResults(filter, results, false);
+
+            // Cache results here for an applet/filter pair.
+            this.weCache.searchResults.set(results, appletHash, filter);
+            // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
+            // return results;
+          } catch (e) {
+            console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
+            // Update search results to allow for reaching 'complete' state
+            this.updateSearchResults(filter, [], false);
+          }
+        })(),
+      );
+    }
+
+    // Do this async and return function immediately.
+    setTimeout(async () => await Promise.all(promises));
+  }
 }

@@ -25,12 +25,9 @@ import {
   AttachableLocationAndInfo,
   GroupProfile,
   HrlWithContext,
-  WeClient,
-  WeServices,
 } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { weClientContext } from '@lightningrodlabs/we-elements';
 import { mdiMagnify } from '@mdi/js';
 import { weStoreContext } from '../context';
 import { WeStore } from '../we-store';
@@ -99,10 +96,6 @@ export class ClipboardSearch extends LitElement implements FormField {
   @property({ type: Number, attribute: 'min-chars' })
   minChars: number = 2;
 
-  @consume({ context: weClientContext, subscribe: true })
-  @property()
-  weClient!: WeClient | WeServices;
-
   /**
    * @internal
    */
@@ -159,7 +152,7 @@ export class ClipboardSearch extends LitElement implements FormField {
   }
 
   search(filter: string): void {
-    setTimeout(async () => this.weClient.search(filter));
+    setTimeout(async () => this._weStore.search(filter));
   }
 
   onFilterChange() {

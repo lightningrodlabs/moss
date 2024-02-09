@@ -188,51 +188,6 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },
-    async search(filter: string) {
-      // console.log('%%%%%% @headlessWeClient: searching...');
-      const hosts = await toPromise(weStore.allAppletsHosts);
-      // console.log(
-      //   '%%%%%% @headlessWeClient: got hosts: ',
-      //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
-      // );
-
-      const hostsArray = Array.from(hosts.entries());
-      weStore.updateSearchParams(filter, hostsArray.length);
-
-      // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
-      // is still the same
-
-      const promises: Array<Promise<void>> = [];
-
-      // TODO fix case where applet host failed to initialize
-      for (const [appletHash, host] of hostsArray) {
-        promises.push(
-          (async () => {
-            const cachedResults = weStore.weCache.searchResults.value(appletHash, filter);
-            if (cachedResults) {
-              weStore.updateSearchResults(filter, cachedResults, true);
-            }
-            try {
-              // console.log(`searching for host ${host?.appletId}...`);
-              const results = host ? await host.search(filter) : [];
-              weStore.updateSearchResults(filter, results, false);
-
-              // Cache results here for an applet/filter pair.
-              weStore.weCache.searchResults.set(results, appletHash, filter);
-              // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
-              // return results;
-            } catch (e) {
-              console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
-              // Update search results to allow for reaching 'complete' state
-              weStore.updateSearchResults(filter, [], false);
-            }
-          })(),
-        );
-      }
-
-      // Do this async and return function immediately.
-      setTimeout(async () => await Promise.all(promises));
-    },
     async notifyWe(_notifications: Array<WeNotification>) {
       throw new Error('notify is not implemented on headless WeServices.');
     },

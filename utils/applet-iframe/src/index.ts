@@ -116,12 +116,6 @@ const weApi: WeServices = {
       hrlWithContext,
     }),
 
-  search: (filter: string) =>
-    postMessage({
-      type: 'search',
-      filter,
-    }),
-
   userSelectHrl: () =>
     postMessage({
       type: 'user-select-hrl',
