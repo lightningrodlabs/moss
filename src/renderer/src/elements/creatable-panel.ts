@@ -15,21 +15,21 @@ import {
   AppletId,
   AppletInfo,
   AttachableLocationAndInfo,
-  CreatableContextResult,
+  CreatableResult,
   CreatableName,
   GroupProfile,
   HrlWithContext,
-  InternalCreatableType,
+  CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import './hrl-element.js';
 import './clipboard-search.js';
-import './creatable-context-view.js';
+import './creatable-view.js';
 import './group-applets-row.js';
 
-import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
@@ -40,6 +40,7 @@ export interface SearchResult {
 export type CreatableInfo = {
   appletHash: AppletHash;
   creatableName: CreatableName;
+  creatable: CreatableType;
 };
 
 /**
@@ -56,11 +57,11 @@ export class CreatablePanel extends LitElement {
   @query('#creatable-dialog')
   _dialog!: SlDialog;
 
-  @query('#context-dialog')
-  _contextDialog!: SlDialog;
+  @query('#creatable-view-dialog')
+  _creatableViewDialog!: SlDialog | null;
 
   @query('#creatable-selection-dialog')
-  _creatableSelectionDialog!: SlDialog;
+  _creatableSelectionDialog!: SlDialog | null;
 
   @state()
   clipboardContent: Array<string> = [];
@@ -94,104 +95,55 @@ export class CreatablePanel extends LitElement {
     this._dialog.hide();
   }
 
-  async handleContextResponse(e: CustomEvent) {
-    const contextResult: CreatableContextResult = e.detail;
-    this._contextDialog.hide();
-    if (contextResult.type === 'error') {
-      notifyError(
-        `Failed to create new ${this._showCreatableView?.creatableName}: ${contextResult.reason}`,
-      );
-      console.error(
-        'Failed to create new ',
-        this._showCreatableView?.creatableName,
-        ': ',
-        contextResult.reason,
-      );
-      this._activeDialogId = undefined;
-      this._showCreatableView = undefined;
-      return;
+  async handleCreatableResponse(e: CustomEvent) {
+    const creatableResult: CreatableResult = e.detail;
+    if (this._creatableViewDialog) this._creatableViewDialog.hide();
+    switch (creatableResult.type) {
+      case 'error':
+        notifyError(
+          `Failed to create new ${this._showCreatableView?.creatable.label}: ${creatableResult.reason}`,
+        );
+        console.error(
+          'Failed to create new ',
+          this._showCreatableView?.creatable.label,
+          ': ',
+          creatableResult.reason,
+        );
+        this._activeDialogId = undefined;
+        this._showCreatableView = undefined;
+        return;
+      case 'cancel':
+        this._activeDialogId = undefined;
+        this._showCreatableView = undefined;
+        return;
+      case 'success':
+        this._weStore.hrlToRecentlyCreated(creatableResult.hrlWithContext);
+        notify(`New ${this._showCreatableView?.creatable.label} created.`);
+        this._weStore.clearCreatableDialogResult(this._activeDialogId);
+        this._activeDialogId = undefined;
+        this._showCreatableView = undefined;
+        this._dialog.hide();
     }
-    const appletId = this._showCreatableView
-      ? encodeHashToBase64(this._showCreatableView.appletHash)
-      : undefined;
-    const creatableName = this._showCreatableView
-      ? this._showCreatableView.creatableName
-      : undefined;
-    if (appletId && creatableName && contextResult.type === 'success') {
-      await this.createCreatable(appletId, creatableName, contextResult.creatableContext);
-      this._weStore.clearCreatableDialogResult(this._activeDialogId);
-      this._activeDialogId = undefined;
-      this._showCreatableView = undefined;
-      this._dialog.hide();
-    }
-  }
-
-  async createCreatable(appletId: AppletId, creatableName: CreatableName, creatableContext: any) {
-    const allAppletHosts = await toPromise(this._weStore.allAppletsHosts);
-    const host = allAppletHosts.get(decodeHashFromBase64(appletId));
-    if (!host) throw Error('No applet host found.');
-    try {
-      const hrlWithContext = await host.createCreatable(creatableName, creatableContext);
-      this._weStore.hrlToRecentlyCreated(hrlWithContext);
-      notify(`New ${creatableName} created.`);
-    } catch (e) {
-      console.error(msg('Failed to create attachable: '), e);
-      notifyError(msg('Failed to create attachable (See console for details).'));
-      return;
-    }
-    this._dialog.hide();
-    this._showCreatableView = undefined;
-    this._showCreatablesSelection = undefined;
   }
 
   async handleCreatableSelected(
     appletHash: AppletHash,
     creatableName: CreatableName,
-    creatable: InternalCreatableType,
+    creatable: CreatableType,
   ) {
-    if (!creatable.creatableView) {
-      await this.createCreatable(encodeHashToBase64(appletHash), creatableName, undefined);
-      return;
-    }
     this._showCreatableView = {
       appletHash,
       creatableName,
+      creatable,
     };
-    this._creatableSelectionDialog.hide();
-    setTimeout(() => this._contextDialog.show());
+    this._activeDialogId = uuidv4();
+    if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
+    setTimeout(() => this._creatableViewDialog!.show());
   }
 
   hrlToClipboard(hrlWithContext: HrlWithContext) {
     console.log('Adding hrl to clipboard: ', hrlWithContext);
     this._weStore.hrlToClipboard(hrlWithContext);
-  }
-
-  renderCreatables() {
-    return html`
-      ${Object.entries(this._allCreatableTypes.value).map(([appletId, creatables]) => {
-        return Object.entries(creatables).map(
-          ([creatableName, creatable]) => html`
-            <div
-              class="row"
-              style="align-items: center; justify-content: center; cursor: pointer;"
-              @click=${() => {
-                this._showCreatableView = {
-                  appletHash: decodeHashFromBase64(appletId),
-                  creatableName,
-                };
-                this._activeDialogId = uuidv4();
-                setTimeout(() => this._contextDialog.show());
-                console.log('this._showCreatableView: ', this._showCreatableView);
-                // this.createCreatable(appletId, creatableName)
-              }}
-            >
-              <img src="${creatable.icon_src}" style="height: 30px; width: 30px;" />
-              <span>${creatable.label}</span>
-            </div>
-          `,
-        );
-      })}
-    `;
   }
 
   renderAppletMatrix() {
@@ -254,9 +206,8 @@ export class CreatablePanel extends LitElement {
                         style="display: flex; flex: 1;"
                         .activeApplets=${Object.keys(this._allCreatableTypes.value)}
                         @applet-chosen=${(e) => {
-                          console.log('applet chosen: ', encodeHashToBase64(e.detail.appletHash));
                           this._showCreatablesSelection = encodeHashToBase64(e.detail.appletHash);
-                          setTimeout(() => this._creatableSelectionDialog.show());
+                          setTimeout(() => this._creatableSelectionDialog!.show());
                         }}
                       ></group-applets-row>
                     </div>
@@ -269,6 +220,7 @@ export class CreatablePanel extends LitElement {
   }
 
   render() {
+    console.log('Rendering with this._showCreatableView: ', this._showCreatableView);
     return html`
       <sl-dialog
         id="creatable-dialog"
@@ -284,17 +236,17 @@ export class CreatablePanel extends LitElement {
             this._showCreatableView
               ? html`
                   <sl-dialog
-                    id="context-dialog"
-                    label="${msg('Create New')} ${this._showCreatableView.creatableName}"
+                    id="creatable-view-dialog"
+                    label="${msg('Create New')} ${this._showCreatableView.creatable.label}"
                     @sl-hide=${() => {
                       this._showCreatableView = undefined;
                     }}
                   >
-                    <creatable-context-view
+                    <creatable-view
                       .creatableInfo=${this._showCreatableView}
                       .dialogId=${this._activeDialogId}
-                      @context-response-received=${(e) => this.handleContextResponse(e)}
-                    ></creatable-context-view>
+                      @creatable-response-received=${(e) => this.handleCreatableResponse(e)}
+                    ></creatable-view>
                   </sl-dialog>
                 `
               : html``

@@ -12,7 +12,6 @@ import {
   BlockType,
   WeServices,
   GroupProfile,
-  CreatableName,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -436,10 +435,9 @@ export async function handleAppletIframeMessage(
     case 'sign-zome-call':
       logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);
-    case 'creatable-context-result':
+    case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");
-      console.log('CREATABLE CONTEXT RESULT FROM DIALOGID: ', message.dialogId);
       weStore.setCreatableDialogResult(message.dialogId, message.result);
       break;
     case 'update-creatable-types':
@@ -507,14 +505,6 @@ export class AppletHost {
     return this.postMessage({
       type: 'search',
       filter,
-    });
-  }
-
-  createCreatable(creatableName: CreatableName, creatableContext?: any): Promise<HrlWithContext> {
-    return this.postMessage({
-      type: 'create-creatable',
-      creatableName,
-      creatableContext,
     });
   }
 

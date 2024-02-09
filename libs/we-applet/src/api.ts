@@ -17,8 +17,8 @@ import {
   AppletInfo,
   AttachableLocationAndInfo,
   OpenHrlMode,
-  CreatableName,
   CreatableType,
+  CreatableName,
 } from './types';
 import { postMessage } from './utils';
 

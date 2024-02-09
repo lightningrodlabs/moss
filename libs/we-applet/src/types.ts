@@ -41,27 +41,6 @@ export type GroupProfile = {
   logo_src: string;
 };
 
-export type CreatableType = {
-  label: string;
-  icon_src: string;
-  /**
-   * Whether We should show a creatable-view for this creatable to collect creatableContext to pass to the create function.
-   */
-  creatableView: boolean;
-  create: (appletClient: AppAgentClient, creatableContext?: any) => Promise<HrlWithContext>;
-};
-
-export type InternalCreatableType = {
-  label: string;
-  icon_src: string;
-  /**
-   * Whether We should show a creatable-view for this creatable to collect creatableContext to pass to the create function.
-   */
-  creatableView: boolean;
-};
-
-export type CreatableName = string;
-
 export type WeNotification = {
   /**
    * Title of the message.
@@ -140,16 +119,6 @@ export type AppletClients = {
   profilesClient: ProfilesClient;
 };
 
-export type CreatableContextResult =
-  | {
-      type: 'success';
-      creatableContext: any;
-    }
-  | {
-      type: 'error';
-      reason: any;
-    };
-
 export type AppletView =
   | { type: 'main' }
   | { type: 'block'; block: string; context: any }
@@ -162,9 +131,23 @@ export type AppletView =
     }
   | {
       type: 'creatable';
-      creatableName: CreatableName;
-      resolve: (context: any) => Promise<void>;
+      name: CreatableName;
+      /**
+       * To be called after the creatable has been successfully created. Will close the creatable view.
+       * @param hrlWithContext
+       * @returns
+       */
+      resolve: (hrlWithContext: HrlWithContext) => Promise<void>;
+      /**
+       * To be called if creation fails due to an error
+       * @param reason
+       * @returns
+       */
       reject: (reason: any) => Promise<void>;
+      /**
+       * To be called if user cancels the creation
+       */
+      cancel: () => Promise<void>;
     };
 
 export type CrossAppletView =
@@ -175,6 +158,32 @@ export type CrossAppletView =
       type: 'block';
       block: string;
       context: any;
+    };
+
+export type CreatableType = {
+  /**
+   * The label for the creatable that's displayed in We to open the creatable view
+   */
+  label: string;
+  icon_src: string;
+};
+
+/**
+ * The name that's being used in RenderInfo to tell which creatable should be rendered
+ */
+export type CreatableName = string;
+
+export type CreatableResult =
+  | {
+      type: 'success';
+      hrlWithContext: HrlWithContext;
+    }
+  | {
+      type: 'cancel';
+    }
+  | {
+      type: 'error';
+      reason: any;
     };
 
 export type BlockType = {
@@ -230,11 +239,6 @@ export type ParentToAppletRequest =
   | {
       type: 'search';
       filter: string;
-    }
-  | {
-      type: 'create-creatable';
-      creatableName: CreatableName;
-      creatableContext?: any;
     };
 
 export type AppletToParentMessage = {
@@ -297,11 +301,14 @@ export type AppletToParentRequest =
     }
   | {
       type: 'update-creatable-types';
-      value: Record<CreatableName, InternalCreatableType>;
+      value: Record<CreatableName, CreatableType>;
     }
   | {
-      type: 'creatable-context-result';
-      result: CreatableContextResult;
+      type: 'creatable-result';
+      result: CreatableResult;
+      /**
+       * The id of the dialog this result is coming from
+       */
       dialogId: string;
     }
   | {

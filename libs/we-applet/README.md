@@ -55,14 +55,7 @@ const appletServices: Appletservices = {
         'post': {
             label: 'post',
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe',
-            creatableView: true,
-            create: (appletClient: AppAgentClient, creatableContext: any) => {
-            // logic to create a new attachable of that type.
-            // The creatable context here will only be passed by We if creatableView is true
-            // and there is a creatable view defined to collect context information
-            appletClient.callZome(...)
-            ...
-            }
+          }
         },
         'comment': {
             ...
@@ -162,13 +155,13 @@ switch (weClient.renderInfo.type) {
       case "creatable":
         switch (weClient.renderInfo.view.creatableName) {
           case "post":
-            // here comes your rendering logic to collect context information for that
-            // specific creatable type. To send the collected information to We to have
-            // the creatable be created (through calling the create() method in the creatable
-            // that you defined in AppletServices), you need to call
-            // weClient.renderInfo.view.resolve(${your collected contextv here});
+            // here comes your rendering logic to create this creatable type.
+            // Once created, you need to call
+            // weClient.renderInfo.view.resolve(${HrlWithContext of your created creatable here});
             // or if there's an error:
             // weClient.renderInfo.view.reject("Failed to create attachable.");
+            // or if the user cancelled the creation:
+            // weClient.renderInfo.view.cancel();
         }
 
       default:

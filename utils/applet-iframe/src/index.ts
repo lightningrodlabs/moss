@@ -28,7 +28,6 @@ import {
   AppletHash,
   AppletServices,
   OpenHrlMode,
-  InternalCreatableType,
   CreatableName,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
@@ -246,21 +245,9 @@ const weApi: WeServices = {
       creatables = {};
     }
 
-    console.log('@applet-iframe: creatables: ', creatables);
-
-    const internalCreatableTypes: Record<string, InternalCreatableType> = {};
-    for (const [name, creatableType] of Object.entries(creatables)) {
-      internalCreatableTypes[name] = {
-        icon_src: creatableType.icon_src,
-        label: creatableType.label,
-        creatableView: creatableType.creatableView,
-      };
-    }
-    console.log('@applet-iframe: internalCreatableTypes: ', internalCreatableTypes);
-
     await postMessage({
       type: 'update-creatable-types',
-      value: internalCreatableTypes,
+      value: creatables,
     });
   });
   document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
@@ -300,28 +287,6 @@ const handleMessage = async (
         window.__WE_API__,
         request.filter,
       );
-    case 'create-creatable': {
-      const creatables = window.__WE_APPLET_SERVICES__.creatables;
-      if (!creatables) throw new Error('Creatables not defined in WeAppletServices.');
-
-      const creatable = creatables[request.creatableName];
-      if (!creatable)
-        throw new Error(
-          `Requested to create a creatable of type ${request.creatableName} but no such creatable was found in WeAppletServices.`,
-        );
-      try {
-        const hrlWithContext = await creatable.create(appletClient, request.creatableContext);
-        return hrlWithContext;
-      } catch (e) {
-        return Promise.reject(
-          new Error(
-            `Failed to create creatable of type '${
-              request.creatableName
-            }' for applet with hash '${encodeHashToBase64(appletHash)}': ${JSON.stringify(e)}`,
-          ),
-        );
-      }
-    }
     default:
       throw new Error('Unknown ParentToAppletRequest');
   }
@@ -498,17 +463,23 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
         type: view,
         view: {
           type: 'creatable',
-          creatableName,
-          resolve: (creatableContext: any) =>
+          name: creatableName,
+          resolve: (hrlWithContext: HrlWithContext) =>
             postMessage({
-              type: 'creatable-context-result',
-              result: { type: 'success', creatableContext },
+              type: 'creatable-result',
+              result: { type: 'success', hrlWithContext },
               dialogId: dialogId!,
             }),
           reject: (reason: any) =>
             postMessage({
-              type: 'creatable-context-result',
+              type: 'creatable-result',
               result: { type: 'error', reason },
+              dialogId: dialogId!,
+            }),
+          cancel: () =>
+            postMessage({
+              type: 'creatable-result',
+              result: { type: 'cancel' },
               dialogId: dialogId!,
             }),
         },

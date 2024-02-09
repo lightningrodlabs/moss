@@ -19,8 +19,8 @@ import { Unsubscriber } from '@holochain-open-dev/stores';
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
  */
 @localized()
-@customElement('creatable-context-view')
-export class CreatableContextView extends LitElement {
+@customElement('creatable-view')
+export class CreatableView extends LitElement {
   @consume({ context: weStoreContext })
   @state()
   _weStore!: WeStore;
@@ -39,7 +39,7 @@ export class CreatableContextView extends LitElement {
     this._unsubscribe = this._weStore.creatableDialogResult(this.dialogId).subscribe((value) => {
       if (value) {
         this.dispatchEvent(
-          new CustomEvent('context-response-received', {
+          new CustomEvent('creatable-response-received', {
             detail: value,
             composed: true,
           }),
