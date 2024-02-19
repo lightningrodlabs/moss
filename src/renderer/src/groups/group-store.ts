@@ -59,7 +59,10 @@ export class GroupStore {
   ) {
     this.groupClient = new GroupClient(appAgentWebsocket, 'group');
 
-    this.peerStatusStore = new PeerStatusStore(new PeerStatusClient(appAgentWebsocket, 'group'));
+    this.peerStatusStore = new PeerStatusStore(
+      new PeerStatusClient(appAgentWebsocket, 'group'),
+      {},
+    );
     this.profilesStore = new ProfilesStore(new ProfilesClient(appAgentWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appAgentWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
