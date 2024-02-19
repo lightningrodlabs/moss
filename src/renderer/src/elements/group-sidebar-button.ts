@@ -86,7 +86,7 @@ export class GroupSidebarButton extends LitElement {
         const onlineAgentCount = this._onlineAgents.value.value.length;
         setTimeout(() => {
           this._loadingPeerCount = false;
-        }, 3000);
+        }, 300);
         return html`
           <div
             class="row center-content online-agents ${onlineAgentCount > 0 ? 'green' : 'gray'}"
