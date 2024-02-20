@@ -22,43 +22,17 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 
 ### Environment Setup
 
-0. Enter nix shell to get the holochain dev environment (follow [holochain's setup instructions](https://developer.holochain.org/get-started/) if you don't have nix installed yet)
-
-```bash
-nix develop
-```
-
-1. Build the Node Rust-add-ons, install and build all dependencies and download default apps:
+1. Run the following command to set up the dev environment:
 
 ```bash
 yarn setup
 ```
 
-2. Fetch the holochain or lair binaries for your platform:
+This command will
 
-```bash
-# Linux
-mkdir resources/bins
-yarn fetch-binaries:linux
-chmod +x resources/bins/* # give permission to run the binaries
-
-# macOS
-mkdir resources/bins
-yarn fetch-binaries:macos
-chmod +x resources/bins/* # give permission to run the binaries
-
-# Windows
-mkdir resources/bins
-yarn fetch-binaries:windows
-```
-
-OR
-
-Build the sidecar binaries locally:
-
-```bash
-bash ./scripts/setup-binaries.sh
-```
+- install all npm dependencies
+- build the necessary local libraries
+- fetch the required holochain and lair binaries from [here](https://github.com/matthme/holochain-binaries/releases).
 
 ### Development
 
