@@ -47,8 +47,8 @@ This command will
 The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.json` file.
 
 ```bash
-$ yarn build:example-applet
-$ yarn applet-dev-example
+yarn build:example-applet
+yarn applet-dev-example
 ```
 
 We will start up 2 agents each with the same group and 3 applets installed. One of the applets will be in hot-reloading mode, i.e. you can modify the code in the `example/ui/` directory and should see the changes immediately. You should also see changes applied to the `src/renderer/src` directory immediately reflected.
@@ -57,13 +57,13 @@ We will start up 2 agents each with the same group and 3 applets installed. One 
 
 ```bash
 # For windows
-$ yarn build:win
+yarn build:win
 
 # For macOS
-$ yarn build:mac
+yarn build:mac
 
 # For Linux
-$ yarn build:linux
+yarn build:linux
 ```
 
 ## License
