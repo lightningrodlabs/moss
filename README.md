@@ -31,8 +31,10 @@ yarn setup
 This command will
 
 - install all npm dependencies
-- build the necessary local libraries
-- fetch the required holochain and lair binaries from [here](https://github.com/matthme/holochain-binaries/releases).
+- build the required local libraries
+- build the We group DNA and the zomes in the crates folder
+- fetch the required holochain and lair binaries from [here](https://github.com/matthme/holochain-binaries/releases)
+- fetch the default apps (at the time of writing those are the app library and the feedback board)
 
 ### Development
 
@@ -40,7 +42,7 @@ The following commands build the example applet and then run we in "applet-dev" 
 
 ```bash
 $ yarn build:example-applet
-$ yarn applet-dev
+$ yarn applet-dev-example
 ```
 
 We will start up 2 agents each with the same group and 3 applets installed. One of the applets will be in hot-reloading mode, i.e. you can modify the code in the `example/ui/` directory and should see the changes immediately. You should also see changes applied to the `src/renderer/src` directory immediately reflected.
