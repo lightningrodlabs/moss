@@ -22,6 +22,12 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 
 ### Environment Setup
 
+0. Enter nix shell to get the holochain dev environment (follow [holochain's setup instructions](https://developer.holochain.org/get-started/) if you don't have nix installed yet).
+
+```bash
+nix develop
+```
+
 1. Run the following command to set up the dev environment:
 
 ```bash
