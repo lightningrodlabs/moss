@@ -24,7 +24,7 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
-import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -40,7 +40,7 @@ import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
-const rustUtils = require('hc-we-rust-utils');
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 // https://github.com/nodeca/argparse/issues/128
 // if (app.isPackaged) {
@@ -92,9 +92,6 @@ console.log('GOT WECLI OPTIONS: ', weCli.opts());
 
 const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
   validateArgs(weCli.opts(), app);
-
-// import * as rustUtils from 'hc-we-rust-utils';
-
 // app.commandLine.appendSwitch('enable-logging');
 
 const appName = app.getName();

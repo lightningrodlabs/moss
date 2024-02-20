@@ -12,7 +12,7 @@ import {
 import { encode } from '@msgpack/msgpack';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
-import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
 
 // IPC_CHANGE_HERE

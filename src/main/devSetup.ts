@@ -23,7 +23,7 @@ import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
 
-const rustUtils = require('hc-we-rust-utils');
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function devSetup(
   config: WeAppletDevInfo,

@@ -10,12 +10,12 @@ import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './devSetup';
-import { WeRustHandler } from 'hc-we-rust-utils';
+import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { WeAppletDevInfo } from './cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 
-const rustUtils = require('hc-we-rust-utils');
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS = {
   'feedback-board': 'kando.webhapp',

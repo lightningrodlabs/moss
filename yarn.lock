@@ -1687,8 +1687,8 @@
     "@holochain-open-dev/stores" "0.8.3"
     "@holochain-open-dev/utils" "0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-28343cd5-c042-4c45-8938-23532feed87e-1708361081427/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-28343cd5-c042-4c45-8938-23532feed87e-1708361081427/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b9383861-5234-446f-8487-3c267f37b6bb-1708435880967/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b9383861-5234-446f-8487-3c267f37b6bb-1708435880967/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1709,13 +1709,43 @@
     "@holochain-open-dev/stores" "^0.8.3"
     "@holochain-open-dev/utils" "^0.16.3"
     "@holochain/client" "0.16.6"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.3.1-6499fed9-2d4d-4e9d-9934-314bade50e62-1708361081425/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.3.1-28d98fe1-4f9e-4761-aad5-2a1791c36ac1-1708435880965/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "^2.3.0"
     js-base64 "^3.7.5"
     lit "^3.0.2"
+
+"@lightningrodlabs/we-rust-utils-darwin-arm64@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.1.4.tgz#9b3b2d3289f52b5461d68aba08c63097a7a97bf0"
+  integrity sha512-chyZ24qFB1KhDAI0aKekuHnGfV811wQ6AW96J0jj10hKY9CBH4aedeA/mHjU3Qe5jSj1a4/ZTc6eBxN8BwziCw==
+
+"@lightningrodlabs/we-rust-utils-darwin-x64@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.1.4.tgz#a95c9f93e81c74384657bb54ba7269ee88b86ff7"
+  integrity sha512-eJz8K8yF0TETMJScdb3PKSe7j2BE9JWzIHTscHW9ZbA9fbqO8TV/7CIzbPXS4DVAOYqKQhGW9w4zGkh88hMACw==
+
+"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.1.4.tgz#7e0d88a16035881b5efca68a41bc4d6ef99d97c0"
+  integrity sha512-uWMeXr01t168kg5OOvsjkqr0dBfD1asuhlxKFRpzqv+9dOt4X21SDcmpqBma4oaNcz6ecA/WA4hjojgMI2WMVQ==
+
+"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.1.4.tgz#0fc81c497916e8827eb318c4a62eaf113c3aed2d"
+  integrity sha512-hhz5AeGkESEAxXLs42wTaWfdh38m+50ZTcQzGp/NEshCWF93xU4jNkOjGbaBNHjpGG6CyhQJEmkabDxk1G7ZMw==
+
+"@lightningrodlabs/we-rust-utils@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.1.4.tgz#e98823ec1ef33221c74ad25ccefdbd1580114cf9"
+  integrity sha512-R2naGe8pooElwr47Ov4Mn065bM6VFgVgx10S0gTrJ9OtSM08aOpQuhwE4LZ5LGtX2iwadme4vyZSNg1hdpE2lw==
+  optionalDependencies:
+    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.1.4"
+    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.1.4"
+    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.1.4"
+    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.1.4"
 
 "@lion/accordion@^0.9.0":
   version "0.9.0"
@@ -6157,9 +6187,6 @@ hastscript@^6.0.0:
     hast-util-parse-selector "^2.0.0"
     property-information "^5.0.0"
     space-separated-tokens "^1.0.0"
-
-"hc-we-rust-utils@file:./utils/rust-utils/dist":
-  version "0.0.1"
 
 he@^1.2.0:
   version "1.2.0"

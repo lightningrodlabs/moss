@@ -1,4 +1,4 @@
-import { ZomeCallNapi, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 
 declare global {
   interface Window {
