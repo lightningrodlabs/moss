@@ -4,6 +4,9 @@
   "private": true,
   "description": "lightningrodlabs We (Alpha)",
   "main": "./out/main/index.js",
+  "bin": {
+    "we-dev-cli": "./cli/dist/cli.js"
+  },
   "workspaces": [
     "libs/*",
     "utils/applet-iframe",
@@ -23,7 +26,7 @@
     "applet-dev-example": "yarn check:binaries && BPORT=46263 SPORT=46262; concurrently \"hc run-local-services -b $BPORT -s $SPORT\" \"UI_PORT=8888 yarn workspace example-applet start\" \"electron-vite dev -- --dev-config we.dev.config.example.json --agent-num 1 -b http://127.0.0.1:$BPORT -s ws://127.0.0.1:$SPORT\" \"sleep 10 && electron-vite dev -- --dev-config we.dev.config.example.json --agent-num 2 -b http://127.0.0.1:$BPORT -s ws://127.0.0.1:$SPORT\"",
     "dev": "yarn check:binaries && BPORT=46263 SPORT=46262; concurrently \"hc run-local-services -b $BPORT -s $SPORT\" \"UI_PORT=8888 yarn workspace example-applet start\" \"electron-vite dev -- --dev-config we.dev.config.json --agent-num 1 -b http://127.0.0.1:$BPORT -s ws://127.0.0.1:$SPORT\"",
     "dev:electron": "electron-vite dev",
-    "build": "yarn typecheck && electron-vite build",
+    "build": "yarn typecheck && electron-vite build && rimraf ./cli/dist && cp -r ./out ./cli && mv ./cli/out ./cli/dist && cp ./cli/cli.js ./cli/dist && cp moss.config.json ./cli/dist/main",
     "setup": "yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && mkdir -p resources/default-apps && yarn prepare:default-apps && mkdir -p resources/bins && yarn fetch:binaries",
     "setup:release": "yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && yarn fetch:default-apps && mkdir -p resources/bins && yarn fetch:binaries",
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements install --check-files && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build && rimraf ./node_modules/@lightningrodlabs/we-applet && yarn install --check-files",
