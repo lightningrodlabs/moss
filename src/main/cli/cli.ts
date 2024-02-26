@@ -14,13 +14,13 @@ export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
 export interface WeAppletDevInfo {
   config: WeDevConfig;
   tempDir: string;
-  agentNum: number;
+  agentIdx: number;
 }
 
 export interface CliOpts {
   profile?: string;
   devConfig?: string | undefined;
-  agentNum?: number | undefined;
+  agentIdx?: number | undefined;
   networkSeed?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
@@ -42,18 +42,18 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
       `The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-) but got '${args.profile}'`,
     );
   }
-  if (args.agentNum && !args.devConfig) {
+  if (args.agentIdx && !args.devConfig) {
     throw new Error(
-      'The --agent-num argument is only valid if a dev config file is passed as well via the --dev-config argument',
+      'The --agent-idx argument is only valid if a dev config file is passed as well via the --dev-config argument',
     );
   }
   if (
-    typeof args.agentNum !== 'undefined' &&
-    (typeof args.agentNum !== 'number' || isNaN(args.agentNum))
+    typeof args.agentIdx !== 'undefined' &&
+    (typeof args.agentIdx !== 'number' || isNaN(args.agentIdx))
   )
-    throw new Error('--agent-num argument must be of type number.');
-  if (args.devConfig && !args.agentNum)
-    console.warn('[WARNING]: --agent-num was argument not explicitly provided. Defaulting to "1".');
+    throw new Error('--agent-idx argument must be of type number.');
+  if (args.devConfig && !args.agentIdx)
+    console.warn('[WARNING]: --agent-idx was argument not explicitly provided. Defaulting to "1".');
   if (args.devConfig) {
     if (
       args.bootstrapUrl &&
@@ -76,18 +76,18 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
   let devInfo: WeAppletDevInfo | undefined;
   const devConfig: WeDevConfig | undefined = readAndValidateDevConfig(
     args.devConfig,
-    args.agentNum,
+    args.agentIdx,
   );
 
   if (devConfig) {
-    const agentNum = args.agentNum ? args.agentNum : 1;
+    const agentIdx = args.agentIdx ? args.agentIdx : 1;
     devInfo = {
       config: devConfig,
       tempDir: path.join(
         os.tmpdir(),
-        `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentNum}-${nanoid(8)}`,
+        `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
       ),
-      agentNum,
+      agentIdx,
     };
   }
 
@@ -110,10 +110,10 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
 
 function readAndValidateDevConfig(
   configPath: string | undefined,
-  agentNum: number | undefined,
+  agentIdx: number | undefined,
 ): WeDevConfig | undefined {
   if (!configPath) return undefined;
-  if (agentNum && agentNum > 10) throw new Error('the --agent-num argument cannot exceed 10.');
+  if (agentIdx && agentIdx > 10) throw new Error('the --agent-idx argument cannot exceed 10.');
   if (!fs.existsSync(configPath)) {
     throw new Error('No dev config found at the given path.');
   }
@@ -153,13 +153,13 @@ function readAndValidateDevConfig(
       throw new Error(
         `Invalid We dev config: No "creatingAgent" field provided for group '${group.name}'.`,
       );
-    if (!group.creatingAgent.agentNum)
+    if (!group.creatingAgent.agentIdx)
       throw new Error(
-        `Invalid We dev config: No "agentNum" field provided in the "creatingAgent" field for group '${group.name}'`,
+        `Invalid We dev config: No "agentIdx" field provided in the "creatingAgent" field for group '${group.name}'`,
       );
-    if (typeof group.creatingAgent.agentNum !== 'number')
+    if (typeof group.creatingAgent.agentIdx !== 'number')
       throw new Error(
-        `Invalid We dev config: "agentNum" field provided in the "creatingAgent" field for group '${group.name}' must be of type 'number'.`,
+        `Invalid We dev config: "agentIdx" field provided in the "creatingAgent" field for group '${group.name}' must be of type 'number'.`,
       );
     if (!group.creatingAgent.agentProfile)
       throw new Error(
@@ -174,17 +174,17 @@ function readAndValidateDevConfig(
         `Invalid We dev config: no "joiningAgents" field of type array provided for group '${group.name}'. Add at least an empty array [].`,
       );
     group.joiningAgents.forEach((agent) => {
-      if (!agent.agentNum)
+      if (!agent.agentIdx)
         throw new Error(
-          `Invalid We dev config: Must provide an "agentNum" field when specifying a "joiningAgent" for group ${group.name}`,
+          `Invalid We dev config: Must provide an "agentIdx" field when specifying a "joiningAgent" for group ${group.name}`,
         );
-      if (typeof agent.agentNum !== 'number')
+      if (typeof agent.agentIdx !== 'number')
         throw new Error(
-          `Invalid We dev config: "agentNum" fields provided for "joiningAgents" in group ${group.name} in the we dev config file must be of type 'number'.`,
+          `Invalid We dev config: "agentIdx" fields provided for "joiningAgents" in group ${group.name} in the we dev config file must be of type 'number'.`,
         );
-      if (agent.agentNum <= group.creatingAgent.agentNum)
+      if (agent.agentIdx <= group.creatingAgent.agentIdx)
         throw new Error(
-          `Invalid We dev config: "agentNum" fields for agents in the "joiningAgent" must be strictly greater than the "agentNum" field in "creatingAgent". Error occured for group ${group.name} in the we dev config.`,
+          `Invalid We dev config: "agentIdx" fields for agents in the "joiningAgent" must be strictly greater than the "agentIdx" field in "creatingAgent". Error occured for group ${group.name} in the we dev config.`,
         );
     });
 

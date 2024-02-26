@@ -8,7 +8,7 @@
         "path": "./example/ui/tennis_club.png"
       },
       "creatingAgent": {
-        "agentNum": 1,
+        "agentIdx": 1,
         "agentProfile": {
           "nickname": "Gaston",
           "avatar": {
@@ -19,7 +19,7 @@
       },
       "joiningAgents": [
         {
-          "agentNum": 2,
+          "agentIdx": 2,
           "agentProfile": {
             "nickname": "Marsupilami",
             "avatar": {

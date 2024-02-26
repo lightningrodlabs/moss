@@ -24,7 +24,13 @@ import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
 import * as childProcess from 'child_process';
 import split from 'split';
-import { AgentProfile, AppletConfig, GroupConfig, ResourceLocation } from './defineConfig';
+import {
+  AgentProfile,
+  AppletConfig,
+  GroupConfig,
+  ResourceLocation,
+  WebHappLocation,
+} from './defineConfig';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -62,8 +68,8 @@ export async function devSetup(
   holochainManager: HolochainManager,
   weFileSystem: WeFileSystem,
 ): Promise<void> {
-  const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentNum}]: ${msg}`);
-  logDevSetup(`Setting up agent ${config.agentNum}.`);
+  const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentIdx}]: ${msg}`);
+  logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, Entity<AppEntry>> = {};
   const installableApplets: Record<
     string,
@@ -106,15 +112,15 @@ export async function devSetup(
 
   for (const group of config.config.groups) {
     // If the running agent is supposed to create the group
-    const isCreatingAgent = group.creatingAgent.agentNum === config.agentNum;
+    const isCreatingAgent = group.creatingAgent.agentIdx === config.agentIdx;
     const isJoiningAgent = group.joiningAgents
-      .map((info) => info.agentNum)
-      .includes(config.agentNum);
+      .map((info) => info.agentIdx)
+      .includes(config.agentIdx);
 
     const agentProfile = isCreatingAgent
       ? group.creatingAgent.agentProfile
       : isJoiningAgent
-        ? group.joiningAgents.find((agent) => agent.agentNum === config.agentNum)?.agentProfile
+        ? group.joiningAgents.find((agent) => agent.agentIdx === config.agentIdx)?.agentProfile
         : undefined;
 
     if (agentProfile) {
@@ -135,8 +141,8 @@ export async function devSetup(
       }
 
       for (const appletInstallConfig of group.applets) {
-        const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentNum;
-        const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentNum);
+        const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentIdx;
+        const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentIdx);
 
         const appletConfig = config.config.applets.find(
           (appStoreApplet) => appStoreApplet.name === appletInstallConfig.name,
@@ -396,7 +402,9 @@ async function readIcon(location: ResourceLocation) {
 
     default:
       throw new Error(
-        `Fetching icon from source type ${location.type} is not implemented. Got icon source: ${location}.`,
+        `Fetching icon from source type ${
+          (location as any).type
+        } is not implemented. Got icon source: ${location}.`,
       );
   }
 }
@@ -426,7 +434,7 @@ async function installGroup(
 
 async function fetchHappOrWebHappIfNecessary(
   weFileSystem: WeFileSystem,
-  source: ResourceLocation,
+  source: WebHappLocation,
 ): Promise<[string, string, string | undefined, string | undefined, string | undefined]> {
   switch (source.type) {
     case 'https': {

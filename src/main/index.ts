@@ -94,7 +94,7 @@ weCli
   )
   .addOption(
     new Option(
-      '--agent-num <number>',
+      '--agent-idx <number>',
       'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
     ).argParser(parseInt),
   );
@@ -161,7 +161,7 @@ if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
   const files = fs.readdirSync(os.tmpdir());
   const foldersToDelete = files.filter((file) =>
-    file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentNum}`),
+    file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
   );
   for (const folder of foldersToDelete) {
     fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
