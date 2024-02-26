@@ -3,10 +3,10 @@ import os from 'os';
 import path from 'path';
 import mime from 'mime';
 
-import { HolochainManager } from './holochainManager';
+import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
-import { DEFAULT_APPS_DIRECTORY } from './paths';
+import { APPSTORE_APP_ID, AppHashes } from '../sharedTypes';
+import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
   AgentPubKey,
@@ -18,12 +18,13 @@ import {
   encodeHashToBase64,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
-import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
 import * as childProcess from 'child_process';
 import split from 'split';
+import { AgentProfile, AppletConfig, GroupConfig, ResourceLocation } from './defineConfig';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -625,65 +626,6 @@ function _arrayBufferToBase64(buffer) {
   }
   return btoa(binary);
 }
-
-export interface WeDevConfig {
-  groups: GroupConfig[];
-  applets: AppletConfig[];
-}
-
-export interface GroupConfig {
-  name: string;
-  networkSeed: string;
-  icon: ResourceLocation; // path to icon
-  creatingAgent: AgentSpecifier;
-  /**
-   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
-   */
-  joiningAgents: AgentSpecifier[];
-  applets: AppletInstallConfig[];
-}
-
-export interface AgentSpecifier {
-  agentNum: number;
-  agentProfile: AgentProfile;
-}
-
-export interface AgentProfile {
-  nickname: string;
-  avatar?: ResourceLocation; // path to icon
-}
-
-export interface AppletInstallConfig {
-  name: string;
-  instanceName: string;
-  registeringAgent: number;
-  /**
-   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
-   */
-  joiningAgents: number[];
-}
-export interface AppletConfig {
-  name: string;
-  subtitle: string;
-  description: string;
-  icon: ResourceLocation;
-  source: ResourceLocation;
-}
-
-export type ResourceLocation =
-  | {
-      type: 'filesystem';
-      path: string;
-    }
-  | {
-      type: 'localhost';
-      happPath: string;
-      uiPort: number;
-    }
-  | {
-      type: 'https';
-      url: string;
-    };
 
 export interface DevHubResponse<T> {
   type: 'success' | 'failure';

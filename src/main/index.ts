@@ -39,12 +39,12 @@ import {
   PRODUCTION_BOOTSTRAP_URLS,
   PRODUCTION_SIGNALING_URLS,
   validateArgs,
-} from './cli';
+} from './cli/cli';
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
-import { startLocalServices } from './devSetup';
+import { startLocalServices } from './cli/devSetup';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 

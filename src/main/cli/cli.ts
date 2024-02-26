@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { WeDevConfig, GroupConfig, AppletConfig } from './devSetup';
 import { nanoid } from 'nanoid';
-import { breakingAppVersion } from './filesystem';
+import { breakingAppVersion } from '../filesystem';
+import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
+import tsNode from 'ts-node';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 export const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
@@ -116,16 +117,26 @@ function readAndValidateDevConfig(
   if (!fs.existsSync(configPath)) {
     throw new Error('No dev config found at the given path.');
   }
-  const configString = fs.readFileSync(path.join(configPath), 'utf-8');
+
   let configObject: WeDevConfig | undefined;
-  try {
-    const parseResult: WeDevConfig = JSON.parse(configString);
-    configObject = parseResult;
-  } catch (e) {
-    throw new Error("Failed to parse config file. Make sure it's valid JSON.");
+  if (configPath.endsWith('.ts')) {
+    tsNode.register();
+    configObject = require(path.join(process.cwd(), configPath)).default;
+  } else {
+    const configString = fs.readFileSync(path.join(configPath), 'utf-8');
+    try {
+      const parseResult: WeDevConfig = JSON.parse(configString);
+      configObject = parseResult;
+    } catch (e) {
+      throw new Error("Failed to parse config file. Make sure it's valid JSON.");
+    }
   }
-  const groups: GroupConfig[] = configObject.groups ? configObject.groups : [];
-  const applets: AppletConfig[] = configObject.applets ? configObject.applets : [];
+  if (!configObject) {
+    throw new Error('Failed to read config object.');
+  }
+
+  const groups: GroupConfig[] = configObject!.groups ? configObject!.groups : [];
+  const applets: AppletConfig[] = configObject!.applets ? configObject!.applets : [];
 
   // validate groups field
   groups.forEach((group) => {

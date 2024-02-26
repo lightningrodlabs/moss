@@ -2,8 +2,9 @@
   "name": "@lightningrodlabs/we-dev-cli",
   "version": "0.10.4",
   "description": "CLI to run We applets in development mode",
+  "main": "defineConfig.js",
   "bin": {
-    "we-dev-cli": "./dist/cli.js"
+    "we-dev-cli": "./cli.js"
   },
   "scripts": {
     "postinstall": "node ./fetch-binaries.mjs"
@@ -22,8 +23,5 @@
     "nanoid": "5.0.4",
     "split": "1.0.1",
     "winston": "3.11.0"
-  },
-  "devDependencies": {
-    "electron": "^25.6.0"
   }
 }
