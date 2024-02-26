@@ -2,11 +2,11 @@ import * as fs from 'fs';
 import https from 'https';
 import * as path from 'path';
 
-const mossConfigJSON = fs.readFileSync(path.join('main', 'moss.config.json'));
+const mossConfigJSON = fs.readFileSync(path.join('dist', 'main', 'moss.config.json'));
 const mossConfig = JSON.parse(mossConfigJSON);
 
-const binariesDir = path.join('main', 'resources', 'bins');
-fs.mkdirSync(binariesDir);
+const binariesDir = path.join('dist', 'main', 'resources', 'bins');
+fs.mkdirSync(binariesDir, { recursive: true });
 
 const holochainRemoteFilenames = {
   win32: `holochain-v${mossConfig.holochainVersion}-x86_64-pc-windows-msvc.exe `,
@@ -68,7 +68,7 @@ function downloadLairBinary() {
   const destinationPath = path.join(binariesDir, lairBinaryFilename);
 
   const file = fs.createWriteStream(destinationPath);
-  console.log('Fetching lair binary from ', lairBinaryFilename);
+  console.log('Fetching lair binary from ', lairBinaryUrl);
   https
     .get(lairBinaryUrl, (response) => {
       if (response.statusCode === 302) {
