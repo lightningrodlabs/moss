@@ -6,8 +6,8 @@ import { nanoid } from 'nanoid';
 import { breakingAppVersion } from './filesystem';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
-const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
-const PRODUCTION_SIGNALING_URLS = ['wss://signal.holo.host'];
+export const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
+export const PRODUCTION_SIGNALING_URLS = ['wss://signal.holo.host'];
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
 
 export interface WeAppletDevInfo {
@@ -16,7 +16,7 @@ export interface WeAppletDevInfo {
   agentNum: number;
 }
 
-export interface CliArgs {
+export interface CliOpts {
   profile?: string;
   devConfig?: string | undefined;
   agentNum?: number | undefined;
@@ -26,10 +26,15 @@ export interface CliArgs {
   forceProductionUrls?: boolean;
 }
 
-export function validateArgs(
-  args: CliArgs,
-  app: Electron.App,
-): [string | undefined, string, WeAppletDevInfo | undefined, string, string] {
+export interface RunOptions {
+  profile: string | undefined;
+  appstoreNetworkSeed: string;
+  devInfo: WeAppletDevInfo | undefined;
+  bootstrapUrl: string | undefined;
+  signalingUrl: string | undefined;
+}
+
+export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
   if (args.profile && !allowedProfilePattern.test(args.profile)) {
     throw new Error(
@@ -49,15 +54,19 @@ export function validateArgs(
   if (args.devConfig && !args.agentNum)
     console.warn('[WARNING]: --agent-num was argument not explicitly provided. Defaulting to "1".');
   if (args.devConfig) {
-    if (!args.bootstrapUrl || !args.signalingUrl)
-      throw new Error(
-        'When running with the --dev-config argument: The --bootstrap-url and --signaling-url arguments need to be provided as well.',
-      );
-    if (PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrapUrl) && !args.forceProductionUrls)
+    if (
+      args.bootstrapUrl &&
+      PRODUCTION_BOOTSTRAP_URLS.includes(args.bootstrapUrl) &&
+      !args.forceProductionUrls
+    )
       throw new Error(
         'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
-    if (PRODUCTION_SIGNALING_URLS.includes(args.signalingUrl) && !args.forceProductionUrls)
+    if (
+      args.signalingUrl &&
+      PRODUCTION_SIGNALING_URLS.includes(args.signalingUrl) &&
+      !args.forceProductionUrls
+    )
       throw new Error(
         'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
@@ -82,8 +91,6 @@ export function validateArgs(
   }
 
   const profile = args.profile ? args.profile : undefined;
-  const bootstrapUrl = args.bootstrapUrl ? args.bootstrapUrl : PRODUCTION_BOOTSTRAP_URLS[0];
-  const singalingUrl = args.signalingUrl ? args.signalingUrl : PRODUCTION_SIGNALING_URLS[0];
   // If provided take the one provided, otherwise check whether it's applet dev mode
   const appstoreNetworkSeed = args.networkSeed
     ? args.networkSeed
@@ -91,7 +98,13 @@ export function validateArgs(
       ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
       : `lightningrodlabs-we-${breakingAppVersion(app)}`;
 
-  return [profile, appstoreNetworkSeed, devInfo, bootstrapUrl, singalingUrl];
+  return {
+    profile,
+    appstoreNetworkSeed,
+    devInfo,
+    bootstrapUrl: args.bootstrapUrl,
+    signalingUrl: args.signalingUrl,
+  };
 }
 
 function readAndValidateDevConfig(

@@ -31,7 +31,7 @@ export async function startLocalServices(): Promise<[string, string]> {
   const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
   return new Promise((resolve) => {
     let bootStrapUrl;
-    let signalUrl;
+    let signalingUrl;
     let bootstrapRunning = false;
     let signalRunnig = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
@@ -40,7 +40,7 @@ export async function startLocalServices(): Promise<[string, string]> {
         bootStrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
       }
       if (line.includes('HC SIGNAL - ADDR:')) {
-        signalUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
+        signalingUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
       }
       if (line.includes('HC BOOTSTRAP - RUNNING')) {
         bootstrapRunning = true;
@@ -48,7 +48,7 @@ export async function startLocalServices(): Promise<[string, string]> {
       if (line.includes('HC SIGNAL - RUNNING')) {
         signalRunnig = true;
       }
-      if (bootstrapRunning && signalRunnig) resolve([bootStrapUrl, signalUrl]);
+      if (bootstrapRunning && signalRunnig) resolve([bootStrapUrl, signalingUrl]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
