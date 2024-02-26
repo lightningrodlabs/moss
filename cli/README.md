@@ -145,11 +145,11 @@ will default to agentIdx=1).
 Run agent 1:
 
 ```
-we-dev-cli -c we.dev.config.ts --agent-idx 1
+we-dev-cli --agent-idx 1
 ```
 
 Run agent 2:
 
 ```
-we-dev-cli -c we.dev.config.ts --agent-idx 2
+we-dev-cli --agent-idx 2
 ```
