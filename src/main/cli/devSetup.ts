@@ -34,17 +34,22 @@ import {
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export async function startLocalServices(): Promise<[string, string]> {
+export async function startOrReadLocalServices(): Promise<[string, string]> {
+  if (fs.existsSync('.hc_local_services')) {
+    const localServicesString = fs.readFileSync('.hc_local_services', 'utf-8');
+    const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
+    return [bootstrapUrl, signalingUrl];
+  }
   const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
   return new Promise((resolve) => {
-    let bootStrapUrl;
+    let bootstrapUrl;
     let signalingUrl;
     let bootstrapRunning = false;
     let signalRunnig = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[we-dev-cli] | [hc run-local-services]: ${line}`);
       if (line.includes('HC BOOTSTRAP - ADDR:')) {
-        bootStrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
+        bootstrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
       }
       if (line.includes('HC SIGNAL - ADDR:')) {
         signalingUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
@@ -55,7 +60,8 @@ export async function startLocalServices(): Promise<[string, string]> {
       if (line.includes('HC SIGNAL - RUNNING')) {
         signalRunnig = true;
       }
-      if (bootstrapRunning && signalRunnig) resolve([bootStrapUrl, signalingUrl]);
+      fs.writeFileSync('.hc_local_services', JSON.stringify({ bootstrapUrl, signalingUrl }));
+      if (bootstrapRunning && signalRunnig) resolve([bootstrapUrl, signalingUrl]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);

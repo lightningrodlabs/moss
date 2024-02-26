@@ -44,7 +44,7 @@ import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
-import { startLocalServices } from './cli/devSetup';
+import { startOrReadLocalServices } from './cli/devSetup';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -455,7 +455,7 @@ app.whenReady().then(async () => {
   if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
     // in dev mode
     if (RUN_OPTIONS.devInfo) {
-      const [bootstrapUrl, signalingUrl] = await startLocalServices();
+      const [bootstrapUrl, signalingUrl] = await startOrReadLocalServices();
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl ? RUN_OPTIONS.bootstrapUrl : bootstrapUrl;
       RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl ? RUN_OPTIONS.signalingUrl : signalingUrl;
     } else {
@@ -850,8 +850,8 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       undefined,
       'dummy-dev-password :)',
-      RUN_OPTIONS.bootstrapUrl,
-      RUN_OPTIONS.signalingUrl,
+      RUN_OPTIONS.bootstrapUrl!,
+      RUN_OPTIONS.signalingUrl!,
       RUN_OPTIONS.appstoreNetworkSeed,
       RUN_OPTIONS.devInfo,
     );
@@ -883,6 +883,9 @@ app.on('before-quit', () => {
 });
 
 app.on('quit', () => {
+  if (fs.existsSync('.hc_local_services')) {
+    fs.rmSync('.hc_local_services');
+  }
   if (LAIR_HANDLE) {
     LAIR_HANDLE.kill();
   }
