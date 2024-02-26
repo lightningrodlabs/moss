@@ -42,19 +42,24 @@ import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-// https://github.com/nodeca/argparse/issues/128
-// if (app.isPackaged) {
-//   process.argv.splice(1, 0, '.');
-// }
+let appVersion = app.getVersion();
 
-console.log('process.argv: ', process.argv);
+const ranViaCli = process.argv[3].endsWith('we-dev-cli');
+if (ranViaCli) {
+  process.argv.splice(2, 2);
+  const cliPackageJsonPath = path.resolve(path.join(app.getAppPath(), '../../package.json'));
+  const cliPackageJson = require(cliPackageJsonPath);
+  appVersion = cliPackageJson.version;
+}
 
 const weCli = new Command();
 
 weCli
-  .name('Lightningrod Labs We')
-  .description('Running We via the command line.')
-  .version(app.getVersion())
+  .name(ranViaCli ? '@lightningrodlabs/we-dev-cli' : 'Lightningrod Labs We')
+  .description(
+    ranViaCli ? 'Running We applets in development mode.' : 'Running We via the command line.',
+  )
+  .version(appVersion)
   .option(
     '-p, --profile <string>',
     'Runs We with a custom profile with its own dedicated data store.',
@@ -87,6 +92,14 @@ weCli
   );
 
 weCli.parse();
+
+// If the app is being run via dev cli the --dev-config option is mandatory, otherwise We gets run with
+// the userData location .config/Electron
+if (ranViaCli) {
+  if (!weCli.opts().devConfig) {
+    throw new Error('You need to pass a config file via the --dev-config option.');
+  }
+}
 
 console.log('GOT WECLI OPTIONS: ', weCli.opts());
 

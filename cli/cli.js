@@ -20,13 +20,9 @@ if (!electronBinary) {
   throw new Error('Failed to locate electron binary. __dirname: ', __dirname);
 }
 
-const child = spawn(
-  electronBinary,
-  [path.resolve(__dirname, 'main/index.js'), ...process.argv.slice(2)],
-  {
-    stdio: 'inherit',
-  },
-);
+const child = spawn(electronBinary, [path.resolve(__dirname, 'main/index.js'), ...process.argv], {
+  stdio: 'inherit',
+});
 
 child.on('error', (err) => console.error('[electron]: ERROR: ', err));
 
