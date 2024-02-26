@@ -115,7 +115,9 @@ function readAndValidateDevConfig(
   if (!configPath) return undefined;
   if (agentIdx && agentIdx > 10) throw new Error('the --agent-idx argument cannot exceed 10.');
   if (!fs.existsSync(configPath)) {
-    throw new Error('No dev config found at the given path.');
+    throw new Error(
+      'No dev config found at the given path. If run via we-dev-cli and not specified otherwise via --dev-config, a dev config called we.dev.config.ts is expected in the current working directory',
+    );
   }
 
   let configObject: WeDevConfig | undefined;

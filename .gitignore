@@ -16,7 +16,7 @@ testing-applets*
 .hc*
 *.tsbuildinfo
 we.dev.config*
-!we.dev.config.example.json
+!we.dev.config.example.ts
 *.AppImage
 *.dmg
 *.exe

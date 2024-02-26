@@ -80,14 +80,8 @@ weCli
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
-  .option(
-    '-b, --bootstrap-url <url>',
-    'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  )
-  .option(
-    '-s, --signaling-url <url>',
-    'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  )
+  .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
+  .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
@@ -123,9 +117,7 @@ console.log('GOT WE CLI OPTIONS: ', cliOpts);
 // If the app is being run via dev cli the --dev-config option is mandatory, otherwise We gets run with
 // the userData location .config/Electron
 if (ranViaCli) {
-  if (!cliOpts.devConfig) {
-    throw new Error('You need to pass a config file via the --dev-config option.');
-  }
+  cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'we.dev.config.ts';
 }
 
 const RUN_OPTIONS = validateArgs(cliOpts, app);

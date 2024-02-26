@@ -1,6 +1,6 @@
 {
   "name": "@lightningrodlabs/we-dev-cli",
-  "version": "0.10.4",
+  "version": "0.10.5-alpha.0",
   "description": "CLI to run We applets in development mode",
   "main": "defineConfig.js",
   "bin": {

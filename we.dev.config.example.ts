@@ -1,42 +1,3 @@
-# we-dev-cli
-
-CLI to run We Applets in development mode.
-
-This version is compatible with `@lightningrodlabs/we-applet@0.15.0-alpha.0`.
-
-```
-Usage: @lightningrodlabs/we-dev-cli [options]
-
-Running We applets in development mode.
-
-Options:
-  -V, --version                output the version number
-  -p, --profile <string>       Runs We with a custom profile with its own dedicated data store.
-  -n, --network-seed <string>  Installs AppStore with the provided network seed in case AppStore has not been installed yet.
-  -c, --dev-config <path>      Runs We in applet developer mode based on the configuration file at the specified path.
-  -b, --bootstrap-url <url>    URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config
-                               argument.
-  -s, --signaling-url <url>    URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config
-                               argument.
-  --force-production-urls      Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It
-                               is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during
-                               development.
-  --agent-idx <number>         To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file)
-                               to run We for.
-  -h, --help                   display help for command
-```
-
-## Instructions
-
-### 1. Define a config file
-
-The config file specifies the groups and applets to install and run. The following is an example
-of a config file that will let the `we-dev-cli` install one group with 3 applets from different
-sources.
-
-`we.dev.config.ts`:
-
-```=typescript
 import { defineConfig } from '@lightningrodlabs/we-dev-cli';
 
 export default defineConfig({
@@ -135,21 +96,3 @@ export default defineConfig({
     },
   ],
 });
-```
-
-### 2. Run Agents
-
-To run an agent defined in the config file, you need to pass the `--agent-idx` option (if not specified it
-will default to agentIdx=1).
-
-Run agent 1:
-
-```
-we-dev-cli -c we.dev.config.ts --agent-idx 1
-```
-
-Run agent 2:
-
-```
-we-dev-cli -c we.dev.config.ts --agent-idx 2
-```
