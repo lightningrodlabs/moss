@@ -93,6 +93,21 @@ weCli
 
 weCli.parse();
 
+// In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
+// https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
+const rl = require('readline').createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.on('SIGINT', function () {
+  process.emit('SIGINT');
+});
+
+process.on('SIGINT', () => {
+  app.quit();
+});
+
 // If the app is being run via dev cli the --dev-config option is mandatory, otherwise We gets run with
 // the userData location .config/Electron
 if (ranViaCli) {

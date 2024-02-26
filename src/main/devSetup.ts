@@ -22,8 +22,39 @@ import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
+import * as childProcess from 'child_process';
+import split from 'split';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
+
+export async function startLocalServices(): Promise<[string, string]> {
+  const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
+  return new Promise((resolve) => {
+    let bootStrapUrl;
+    let signalUrl;
+    let bootstrapRunning = false;
+    let signalRunnig = false;
+    localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
+      console.log(`[we-dev-cli] | [hc run-local-services]: ${line}`);
+      if (line.includes('HC BOOTSTRAP - ADDR:')) {
+        bootStrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
+      }
+      if (line.includes('HC SIGNAL - ADDR:')) {
+        signalUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
+      }
+      if (line.includes('HC BOOTSTRAP - RUNNING')) {
+        bootstrapRunning = true;
+      }
+      if (line.includes('HC SIGNAL - RUNNING')) {
+        signalRunnig = true;
+      }
+      if (bootstrapRunning && signalRunnig) resolve([bootStrapUrl, signalUrl]);
+    });
+    localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
+      console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
+    });
+  });
+}
 
 export async function devSetup(
   config: WeAppletDevInfo,
