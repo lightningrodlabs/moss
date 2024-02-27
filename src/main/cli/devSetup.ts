@@ -467,6 +467,7 @@ async function fetchHappOrWebHappIfNecessary(
       const uisDir = path.join(weFileSystem.uisDir);
       const happsDir = path.join(weFileSystem.happsDir);
       const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
+      fs.rmSync(tmpDir, { recursive: true });
       // webHappHash should only be returned if it is actually a webhapp
       const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
       return [

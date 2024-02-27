@@ -686,6 +686,10 @@ app.whenReady().then(async () => {
         const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
         // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
         await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        try {
+          // clean up
+          fs.rmSync(tmpDir, { recursive: true });
+        } catch (e) {}
       } else {
         console.log(
           '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
@@ -777,6 +781,10 @@ app.whenReady().then(async () => {
         const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
         const [happFilePath, _] = result.split('$');
         happToBeInstalledPath = happFilePath;
+        try {
+          // clean up
+          fs.rmSync(tmpDir, { recursive: true });
+        } catch (e) {}
       } else {
         console.log(
           '@install-applet-bundle: happ and UI already on the filesystem. Skipping download from remote source.',
