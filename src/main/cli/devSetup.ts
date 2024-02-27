@@ -87,7 +87,7 @@ export async function devSetup(
   holochainManager: HolochainManager,
   weFileSystem: WeFileSystem,
 ): Promise<void> {
-  const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentIdx}]: ${msg}`);
+  const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, Entity<AppEntry>> = {};
   const installableApplets: Record<
