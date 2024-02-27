@@ -159,6 +159,56 @@ export async function devSetup(
         });
       }
 
+      const unjoinedApplets: Array<[EntryHash, Applet]> = [];
+
+      if (!isCreatingAgent) {
+        // Get unjoined applets. This is best effort. If applets have not been gossiped over yet, the agent won't
+        // be able to join them automatically
+        logDevSetup(`Fetching applets to join for group '${group.name}'...`);
+
+        // Look for unjoined applets
+        const unjoinedAppletsArray: Array<[EntryHash, AgentPubKey, number]> =
+          await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'get_unjoined_applets',
+            payload: null,
+          });
+        if (unjoinedApplets.length === 0) {
+          logDevSetup(
+            'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
+          );
+        }
+
+        // Fetch Applet entry for each
+        for (const unjoinedApplet of unjoinedAppletsArray) {
+          const appletHash = unjoinedApplet[0];
+          const applet: Applet | undefined = await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'get_applet',
+            payload: appletHash,
+          });
+
+          if (!applet) {
+            logDevSetup(
+              `Applet with entryhash ${encodeHashToBase64(
+                appletHash,
+              )} not found in group DHT yet. Skipping...`,
+            );
+          } else {
+            const appletInfo = [unjoinedApplet[0], applet];
+            unjoinedApplets.push(appletInfo as [EntryHash, Applet]);
+          }
+        }
+
+        logDevSetup(
+          `Found applets to join:\n${unjoinedApplets.map(
+            ([_eh, applet]) => `${applet.custom_name}\n`,
+          )}`,
+        );
+      }
+
       for (const appletInstallConfig of group.applets) {
         const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentIdx;
         const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentIdx);
@@ -263,75 +313,19 @@ export async function devSetup(
             payload: applet,
           });
         } else if (isJoiningAgent) {
-          // Get unjoined applets and join them.
-          logDevSetup(`Fetching applets to join for group '${group.name}'...`);
-
-          const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
-            role_name: 'group',
-            zome_name: 'group',
-            fn_name: 'get_unjoined_applets',
-            payload: null,
-          });
-          // setInterval(async () => {
-          //   const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
-          //     role_name: 'group',
-          //     zome_name: 'group',
-          //     fn_name: 'get_unjoined_applets',
-          //     payload: null,
-          //   });
-          //   logDevSetup(
-          //     `Polled unjoined_applets:\n${unjoinedApplets.map(
-          //       ([eh, ak]) => `[
-          //       ${encodeHashToBase64(eh)},
-          //       ${encodeHashToBase64(ak)},
-          //     ]\n`,
-          //     )}`,
-          //   );
-          // }, 5000);
-          if (unjoinedApplets.length === 0) {
-            logDevSetup(
-              'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
-            );
-          }
-          logDevSetup(
-            `Found applets to join:\n${unjoinedApplets.map(
-              ([eh, ak]) => `[
-              ${encodeHashToBase64(eh)},
-              ${encodeHashToBase64(ak)},
-            ]\n`,
-            )}`,
+          const maybeUnjoinedApplet = unjoinedApplets.find(
+            ([_entryHash, applet]) => applet.custom_name === appletInstallConfig.instanceName,
           );
-          // This is best effort. If applets have not been gossiped over yet, the agent won't be able to join them
-          // automatically
-          for (const unjoinedApplet of unjoinedApplets) {
-            const appletHash = unjoinedApplet[0];
-            logDevSetup(
-              `Trying to join applet with entry hash ${encodeHashToBase64(appletHash)} ...`,
-            );
-            const applet = await groupWebsocket.callZome({
-              role_name: 'group',
-              zome_name: 'group',
-              fn_name: 'get_applet',
-              payload: appletHash,
-            });
-            if (!applet) {
-              logDevSetup(
-                `Applet with entryhash ${encodeHashToBase64(
-                  appletHash,
-                )} not found in group DHT yet. Skipping...`,
-              );
-              return undefined;
-            }
 
-            const associatedAppletInstallConfig = group.applets.find(
-              (installConfig) => installConfig.instanceName === applet.custom_name,
-            );
-            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-              installableApplets[associatedAppletInstallConfig!.name];
+          if (maybeUnjoinedApplet) {
+            logDevSetup(`Joining applet instance ${appletInstallConfig.instanceName} ...`);
 
-            logDevSetup(`Joining applet instance '${applet.custom_name}'...`);
+            const [appletHash, applet] = maybeUnjoinedApplet;
 
             const appId = appIdFromAppletHash(appletHash);
+
+            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+              installableApplets[appletInstallConfig.name];
 
             await installHapp(
               holochainManager,
@@ -591,6 +585,7 @@ function storeAppAssetsInfo(
 ) {
   // TODO potentially add distribution info from AppEntry that's being published earlier
   // to be able to simulate UI updates
+
   // Store app metadata
   const appAssetsInfo: AppAssetsInfo =
     appletConfig.source.type === 'localhost'
@@ -639,6 +634,7 @@ function storeAppAssetsInfo(
             },
             distributionInfo,
           };
+
   fs.writeFileSync(
     path.join(weFileSystem.appsDir, `${appId}.json`),
     JSON.stringify(appAssetsInfo, undefined, 4),
