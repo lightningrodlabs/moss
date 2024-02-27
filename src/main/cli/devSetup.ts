@@ -204,7 +204,7 @@ export async function devSetup(
 
         logDevSetup(
           `Found applets to join:\n${unjoinedApplets.map(
-            ([_eh, applet]) => `${applet.custom_name}\n`,
+            ([_eh, applet]) => `${applet.custom_name}`,
           )}`,
         );
       }
