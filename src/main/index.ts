@@ -44,7 +44,7 @@ import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
-import { startOrReadLocalServices } from './cli/devSetup';
+import { readLocalServices, startLocalServices } from './cli/devSetup';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -89,7 +89,7 @@ weCli
   .addOption(
     new Option(
       '--agent-idx <number>',
-      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
+      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for. The agent with agentIdx 1 always needs to be run first.',
     ).argParser(parseInt),
   );
 
@@ -447,7 +447,8 @@ app.whenReady().then(async () => {
   if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
     // in dev mode
     if (RUN_OPTIONS.devInfo) {
-      const [bootstrapUrl, signalingUrl] = await startOrReadLocalServices();
+      const [bootstrapUrl, signalingUrl] =
+        RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : await readLocalServices();
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl ? RUN_OPTIONS.bootstrapUrl : bootstrapUrl;
       RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl ? RUN_OPTIONS.signalingUrl : signalingUrl;
     } else {

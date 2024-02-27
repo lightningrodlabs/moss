@@ -102,7 +102,8 @@ export type ResourceLocation = {
 };
 export interface AgentSpecifier {
     /**
-     * Agent index used to specify which agent to run the dev CLI with.
+     * Agent index used to specify which agent to run the dev CLI with. An agent with agentIdx = 1 must exist
+     * must always be run as the first agent.
      */
     agentIdx: number;
     /**

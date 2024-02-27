@@ -32,5 +32,9 @@ child.on('error', (err) => console.error('[electron]: ERROR: ', err));
 
 // Handle child process exit
 child.on('exit', (code, _signal) => {
+  console.log('Child exited.');
+  if (fs.existsSync('.hc_local_services')) {
+    fs.rmSync('.hc_local_services');
+  }
   process.exit(code);
 });

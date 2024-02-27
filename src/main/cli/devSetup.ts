@@ -34,11 +34,24 @@ import {
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export async function startOrReadLocalServices(): Promise<[string, string]> {
-  if (fs.existsSync('.hc_local_services')) {
-    const localServicesString = fs.readFileSync('.hc_local_services', 'utf-8');
+export async function readLocalServices(): Promise<[string, string]> {
+  if (!fs.existsSync('.hc_local_services')) {
+    throw new Error(
+      'No .hc_local_services file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
+    );
+  }
+  const localServicesString = fs.readFileSync('.hc_local_services', 'utf-8');
+  try {
     const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
     return [bootstrapUrl, signalingUrl];
+  } catch (e) {
+    throw new Error('Failed to parse content of .hc_local_services');
+  }
+}
+
+export async function startLocalServices(): Promise<[string, string]> {
+  if (fs.existsSync('.hc_local_services')) {
+    fs.rmSync('.hc_local_services');
   }
   const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
   return new Promise((resolve) => {
