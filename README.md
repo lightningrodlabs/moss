@@ -44,7 +44,7 @@ This command will
 
 ### Development
 
-The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.json` file.
+The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.ts` file.
 
 ```bash
 yarn build:example-applet

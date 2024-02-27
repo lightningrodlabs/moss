@@ -1,8 +1,16 @@
 {
   "name": "@lightningrodlabs/we-applet",
-  "version": "0.15.0",
+  "version": "0.15.0-alpha.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/we.git"
+  },
+  "keywords": [
+    "holochain"
+  ],
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"

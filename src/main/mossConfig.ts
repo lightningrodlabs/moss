@@ -7,6 +7,8 @@ export type MossConfig = {
   lairVersion: string;
 };
 
+console.log('APP PATH: ', app.getAppPath());
+
 const mossConfigPath = path.join(app.getAppPath(), 'moss.config.json');
 
 const mossConfigJSON = fs.readFileSync(mossConfigPath, 'utf-8');

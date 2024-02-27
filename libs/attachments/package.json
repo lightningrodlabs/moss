@@ -3,6 +3,7 @@
   "version": "0.6.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "license": "MIT",
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"

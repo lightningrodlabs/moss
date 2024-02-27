@@ -9,9 +9,9 @@ import { APPSTORE_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
-import { devSetup } from './devSetup';
+import { devSetup } from './cli/devSetup';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { WeAppletDevInfo } from './cli';
+import { WeAppletDevInfo } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 

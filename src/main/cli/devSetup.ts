@@ -3,10 +3,10 @@ import os from 'os';
 import path from 'path';
 import mime from 'mime';
 
-import { HolochainManager } from './holochainManager';
+import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
-import { DEFAULT_APPS_DIRECTORY } from './paths';
+import { APPSTORE_APP_ID, AppHashes } from '../sharedTypes';
+import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
   AgentPubKey,
@@ -18,20 +18,77 @@ import {
   encodeHashToBase64,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
-import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, WeFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
+import * as childProcess from 'child_process';
+import split from 'split';
+import {
+  AgentProfile,
+  AppletConfig,
+  GroupConfig,
+  ResourceLocation,
+  WebHappLocation,
+} from './defineConfig';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
+
+export async function readLocalServices(): Promise<[string, string]> {
+  if (!fs.existsSync('.hc_local_services')) {
+    throw new Error(
+      'No .hc_local_services file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
+    );
+  }
+  const localServicesString = fs.readFileSync('.hc_local_services', 'utf-8');
+  try {
+    const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
+    return [bootstrapUrl, signalingUrl];
+  } catch (e) {
+    throw new Error('Failed to parse content of .hc_local_services');
+  }
+}
+
+export async function startLocalServices(): Promise<[string, string]> {
+  if (fs.existsSync('.hc_local_services')) {
+    fs.rmSync('.hc_local_services');
+  }
+  const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
+  return new Promise((resolve) => {
+    let bootstrapUrl;
+    let signalingUrl;
+    let bootstrapRunning = false;
+    let signalRunnig = false;
+    localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
+      console.log(`[we-dev-cli] | [hc run-local-services]: ${line}`);
+      if (line.includes('HC BOOTSTRAP - ADDR:')) {
+        bootstrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
+      }
+      if (line.includes('HC SIGNAL - ADDR:')) {
+        signalingUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
+      }
+      if (line.includes('HC BOOTSTRAP - RUNNING')) {
+        bootstrapRunning = true;
+      }
+      if (line.includes('HC SIGNAL - RUNNING')) {
+        signalRunnig = true;
+      }
+      fs.writeFileSync('.hc_local_services', JSON.stringify({ bootstrapUrl, signalingUrl }));
+      if (bootstrapRunning && signalRunnig) resolve([bootstrapUrl, signalingUrl]);
+    });
+    localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
+      console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
+    });
+  });
+}
 
 export async function devSetup(
   config: WeAppletDevInfo,
   holochainManager: HolochainManager,
   weFileSystem: WeFileSystem,
 ): Promise<void> {
-  const logDevSetup = (msg) => console.log(`[APPLET-DEV-MODE - Agent ${config.agentNum}]: ${msg}`);
-  logDevSetup(`Setting up agent ${config.agentNum}.`);
+  const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
+  logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, Entity<AppEntry>> = {};
   const installableApplets: Record<
     string,
@@ -74,15 +131,15 @@ export async function devSetup(
 
   for (const group of config.config.groups) {
     // If the running agent is supposed to create the group
-    const isCreatingAgent = group.creatingAgent.agentNum === config.agentNum;
+    const isCreatingAgent = group.creatingAgent.agentIdx === config.agentIdx;
     const isJoiningAgent = group.joiningAgents
-      .map((info) => info.agentNum)
-      .includes(config.agentNum);
+      .map((info) => info.agentIdx)
+      .includes(config.agentIdx);
 
     const agentProfile = isCreatingAgent
       ? group.creatingAgent.agentProfile
       : isJoiningAgent
-        ? group.joiningAgents.find((agent) => agent.agentNum === config.agentNum)?.agentProfile
+        ? group.joiningAgents.find((agent) => agent.agentIdx === config.agentIdx)?.agentProfile
         : undefined;
 
     if (agentProfile) {
@@ -102,9 +159,59 @@ export async function devSetup(
         });
       }
 
+      const unjoinedApplets: Array<[EntryHash, Applet]> = [];
+
+      if (!isCreatingAgent) {
+        // Get unjoined applets. This is best effort. If applets have not been gossiped over yet, the agent won't
+        // be able to join them automatically
+        logDevSetup(`Fetching applets to join for group '${group.name}'...`);
+
+        // Look for unjoined applets
+        const unjoinedAppletsArray: Array<[EntryHash, AgentPubKey, number]> =
+          await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'get_unjoined_applets',
+            payload: null,
+          });
+        if (unjoinedApplets.length === 0) {
+          logDevSetup(
+            'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
+          );
+        }
+
+        // Fetch Applet entry for each
+        for (const unjoinedApplet of unjoinedAppletsArray) {
+          const appletHash = unjoinedApplet[0];
+          const applet: Applet | undefined = await groupWebsocket.callZome({
+            role_name: 'group',
+            zome_name: 'group',
+            fn_name: 'get_applet',
+            payload: appletHash,
+          });
+
+          if (!applet) {
+            logDevSetup(
+              `Applet with entryhash ${encodeHashToBase64(
+                appletHash,
+              )} not found in group DHT yet. Skipping...`,
+            );
+          } else {
+            const appletInfo = [unjoinedApplet[0], applet];
+            unjoinedApplets.push(appletInfo as [EntryHash, Applet]);
+          }
+        }
+
+        logDevSetup(
+          `Found applets to join:\n${unjoinedApplets.map(
+            ([_eh, applet]) => `${applet.custom_name}`,
+          )}`,
+        );
+      }
+
       for (const appletInstallConfig of group.applets) {
-        const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentNum;
-        const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentNum);
+        const isRegisteringAgent = appletInstallConfig.registeringAgent === config.agentIdx;
+        const isJoiningAgent = appletInstallConfig.joiningAgents.includes(config.agentIdx);
 
         const appletConfig = config.config.applets.find(
           (appStoreApplet) => appStoreApplet.name === appletInstallConfig.name,
@@ -206,75 +313,19 @@ export async function devSetup(
             payload: applet,
           });
         } else if (isJoiningAgent) {
-          // Get unjoined applets and join them.
-          logDevSetup(`Fetching applets to join for group '${group.name}'...`);
-
-          const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
-            role_name: 'group',
-            zome_name: 'group',
-            fn_name: 'get_unjoined_applets',
-            payload: null,
-          });
-          // setInterval(async () => {
-          //   const unjoinedApplets: Array<[EntryHash, AgentPubKey]> = await groupWebsocket.callZome({
-          //     role_name: 'group',
-          //     zome_name: 'group',
-          //     fn_name: 'get_unjoined_applets',
-          //     payload: null,
-          //   });
-          //   logDevSetup(
-          //     `Polled unjoined_applets:\n${unjoinedApplets.map(
-          //       ([eh, ak]) => `[
-          //       ${encodeHashToBase64(eh)},
-          //       ${encodeHashToBase64(ak)},
-          //     ]\n`,
-          //     )}`,
-          //   );
-          // }, 5000);
-          if (unjoinedApplets.length === 0) {
-            logDevSetup(
-              'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
-            );
-          }
-          logDevSetup(
-            `Found applets to join:\n${unjoinedApplets.map(
-              ([eh, ak]) => `[
-              ${encodeHashToBase64(eh)},
-              ${encodeHashToBase64(ak)},
-            ]\n`,
-            )}`,
+          const maybeUnjoinedApplet = unjoinedApplets.find(
+            ([_entryHash, applet]) => applet.custom_name === appletInstallConfig.instanceName,
           );
-          // This is best effort. If applets have not been gossiped over yet, the agent won't be able to join them
-          // automatically
-          for (const unjoinedApplet of unjoinedApplets) {
-            const appletHash = unjoinedApplet[0];
-            logDevSetup(
-              `Trying to join applet with entry hash ${encodeHashToBase64(appletHash)} ...`,
-            );
-            const applet = await groupWebsocket.callZome({
-              role_name: 'group',
-              zome_name: 'group',
-              fn_name: 'get_applet',
-              payload: appletHash,
-            });
-            if (!applet) {
-              logDevSetup(
-                `Applet with entryhash ${encodeHashToBase64(
-                  appletHash,
-                )} not found in group DHT yet. Skipping...`,
-              );
-              return undefined;
-            }
 
-            const associatedAppletInstallConfig = group.applets.find(
-              (installConfig) => installConfig.instanceName === applet.custom_name,
-            );
-            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-              installableApplets[associatedAppletInstallConfig!.name];
+          if (maybeUnjoinedApplet) {
+            logDevSetup(`Joining applet instance ${appletInstallConfig.instanceName} ...`);
 
-            logDevSetup(`Joining applet instance '${applet.custom_name}'...`);
+            const [appletHash, applet] = maybeUnjoinedApplet;
 
             const appId = appIdFromAppletHash(appletHash);
+
+            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+              installableApplets[appletInstallConfig.name];
 
             await installHapp(
               holochainManager,
@@ -364,7 +415,9 @@ async function readIcon(location: ResourceLocation) {
 
     default:
       throw new Error(
-        `Fetching icon from source type ${location.type} is not implemented. Got icon source: ${location}.`,
+        `Fetching icon from source type ${
+          (location as any).type
+        } is not implemented. Got icon source: ${location}.`,
       );
   }
 }
@@ -394,7 +447,7 @@ async function installGroup(
 
 async function fetchHappOrWebHappIfNecessary(
   weFileSystem: WeFileSystem,
-  source: ResourceLocation,
+  source: WebHappLocation,
 ): Promise<[string, string, string | undefined, string | undefined, string | undefined]> {
   switch (source.type) {
     case 'https': {
@@ -408,6 +461,7 @@ async function fetchHappOrWebHappIfNecessary(
       const uisDir = path.join(weFileSystem.uisDir);
       const happsDir = path.join(weFileSystem.happsDir);
       const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
+      fs.rmSync(tmpDir, { recursive: true });
       // webHappHash should only be returned if it is actually a webhapp
       const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
       return [
@@ -531,6 +585,7 @@ function storeAppAssetsInfo(
 ) {
   // TODO potentially add distribution info from AppEntry that's being published earlier
   // to be able to simulate UI updates
+
   // Store app metadata
   const appAssetsInfo: AppAssetsInfo =
     appletConfig.source.type === 'localhost'
@@ -579,6 +634,7 @@ function storeAppAssetsInfo(
             },
             distributionInfo,
           };
+
   fs.writeFileSync(
     path.join(weFileSystem.appsDir, `${appId}.json`),
     JSON.stringify(appAssetsInfo, undefined, 4),
@@ -594,65 +650,6 @@ function _arrayBufferToBase64(buffer) {
   }
   return btoa(binary);
 }
-
-export interface WeDevConfig {
-  groups: GroupConfig[];
-  applets: AppletConfig[];
-}
-
-export interface GroupConfig {
-  name: string;
-  networkSeed: string;
-  icon: ResourceLocation; // path to icon
-  creatingAgent: AgentSpecifier;
-  /**
-   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
-   */
-  joiningAgents: AgentSpecifier[];
-  applets: AppletInstallConfig[];
-}
-
-export interface AgentSpecifier {
-  agentNum: number;
-  agentProfile: AgentProfile;
-}
-
-export interface AgentProfile {
-  nickname: string;
-  avatar?: ResourceLocation; // path to icon
-}
-
-export interface AppletInstallConfig {
-  name: string;
-  instanceName: string;
-  registeringAgent: number;
-  /**
-   * joining agents must be strictly greater than the registering agent since it needs to be done sequentially
-   */
-  joiningAgents: number[];
-}
-export interface AppletConfig {
-  name: string;
-  subtitle: string;
-  description: string;
-  icon: ResourceLocation;
-  source: ResourceLocation;
-}
-
-export type ResourceLocation =
-  | {
-      type: 'filesystem';
-      path: string;
-    }
-  | {
-      type: 'localhost';
-      happPath: string;
-      uiPort: number;
-    }
-  | {
-      type: 'https';
-      url: string;
-    };
 
 export interface DevHubResponse<T> {
   type: 'success' | 'failure';

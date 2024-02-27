@@ -1,0 +1,33 @@
+{
+  "name": "@lightningrodlabs/we-dev-cli",
+  "version": "0.10.5-alpha.2",
+  "description": "CLI to run We applets in development mode",
+  "license": "CAL-1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/we.git"
+  },
+  "main": "defineConfig.js",
+  "bin": {
+    "we-dev-cli": "./cli.js"
+  },
+  "scripts": {
+    "postinstall": "node ./fetch-binaries.mjs"
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^2.0.0",
+    "@electron-toolkit/utils": "^2.0.0",
+    "@holochain/client": "0.16.6",
+    "@holochain-open-dev/utils": "0.16.3",
+    "@lightningrodlabs/we-applet": "0.15.0-alpha.0",
+    "@lightningrodlabs/we-rust-utils": "^0.1.4",
+    "bufferutil": "4.0.8",
+    "commander": "11.1.0",
+    "electron-context-menu": "3.6.1",
+    "mime": "4.0.0",
+    "nanoid": "5.0.4",
+    "split": "1.0.1",
+    "ts-node": "10.9.2",
+    "winston": "3.11.0"
+  }
+}
