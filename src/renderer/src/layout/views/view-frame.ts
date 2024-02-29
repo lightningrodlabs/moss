@@ -28,7 +28,7 @@ export class ViewFrame extends LitElement {
   @property()
   renderView!: RenderView;
 
-  @property()
+  @state()
   appletDevPort: number | undefined;
 
   async firstUpdated() {

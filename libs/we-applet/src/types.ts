@@ -106,6 +106,10 @@ export interface OpenViews {
 export type AttachableLocationAndInfo = {
   appletHash: AppletHash;
   attachableInfo: AttachableInfo;
+  /**
+   * Only set if We is run in applet development mode and the applet is running in hot-reloading mode
+   */
+  appletDevPort?: number;
 };
 
 export type AppletInfo = {

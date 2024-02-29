@@ -17,6 +17,7 @@ import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/cl
 
 import { AppOpenViews } from '../layout/types.js';
 import {
+  getAppletDevPort,
   getAppletIframeScript,
   selectScreenOrWindow,
   signZomeCallElectron,
@@ -26,12 +27,15 @@ import { WeStore } from '../we-store.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
+  appIdFromAppletHash,
+  appIdFromAppletId,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
   logZomeCall,
   storeAppletNotifications,
   stringifyHrlWithContext,
+  toLowerCaseB64,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';
@@ -386,7 +390,16 @@ export async function handleAppletIframeMessage(
       return weServices.groupProfile(message.groupId);
     case 'get-global-attachable-info':
       console.log("@applet-host: got 'get-attachable-info' message: ", message);
-      return weServices.attachableInfo(message.hrlWithContext);
+      let attachableInfo = await weServices.attachableInfo(message.hrlWithContext);
+      if (attachableInfo && weStore.isAppletDev) {
+        const appletDevPort = await getAppletDevPort(
+          appIdFromAppletHash(attachableInfo.appletHash),
+        );
+        if (appletDevPort) {
+          attachableInfo.appletDevPort = appletDevPort;
+        }
+      }
+      return attachableInfo;
     case 'sign-zome-call':
       logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);

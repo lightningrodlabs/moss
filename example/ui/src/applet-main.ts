@@ -7,7 +7,9 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import './elements/all-posts.js';
 import './elements/create-post.js';
 import { type HrlWithContext, type WeNotification, WeClient } from '@lightningrodlabs/we-applet';
-import { AppAgentClient } from '@holochain/client';
+import { AppAgentClient, decodeHashFromBase64 } from '@holochain/client';
+import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
+import { decodeContext } from '@lightningrodlabs/we-elements';
 
 @localized()
 @customElement('applet-main')
@@ -21,6 +23,9 @@ export class AppletMain extends LitElement {
   @query('#hrl-input-field')
   hrlInputField!: HTMLInputElement;
 
+  @query('#wal-embed-input-field')
+  walEmbedInputField!: HTMLInputElement;
+
   @state()
   mediumInterval: number | null = null;
 
@@ -32,6 +37,12 @@ export class AppletMain extends LitElement {
 
   @state()
   hrlLink: string = '';
+
+  @state()
+  walEmbedLink: string = '';
+
+  @state()
+  embedHrlWithContext: HrlWithContext | undefined;
 
   // @state()
   // unsubscribe: undefined | (() => void);
@@ -47,6 +58,13 @@ export class AppletMain extends LitElement {
 
   updateHrlLink() {
     this.hrlLink = this.hrlInputField.value;
+  }
+
+  updateWalEmbedLink() {
+    this.walEmbedLink = this.walEmbedInputField.value;
+    try {
+      this.embedHrlWithContext = this.urlToWal(this.walEmbedLink);
+    } catch (e) {}
   }
 
   sendUrgentNotification(delay: number) {
@@ -111,6 +129,27 @@ export class AppletMain extends LitElement {
     this.selectedHrl = selectedHrl;
   }
 
+  urlToWal(url: string): HrlWithContext {
+    if (!url.startsWith('we://')) {
+      throw new Error(`Invalid URL. we:// URL required but got '${url}'`);
+    }
+
+    const split = url.split('://');
+    // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
+    const split2 = split[1].split('/');
+    // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
+
+    if (split2[0] === 'hrl') {
+      const contextSplit = split2[2].split('?context=');
+      return {
+        hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
+        context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
+      };
+    } else {
+      throw new Error('This input field only accepts URLs pointing to a WAL.');
+    }
+  }
+
   render() {
     return html`
       <div class="column">
@@ -143,6 +182,25 @@ export class AppletMain extends LitElement {
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
+
+            <div>Embed Hrl:</div>
+            <input
+              id="wal-embed-input-field"
+              type="text"
+              @input=${() => {
+                this.updateWalEmbedLink();
+              }}
+              rows="4"
+              cols="50"
+            />
+            ${this.embedHrlWithContext
+              ? html`
+                  <wal-embed
+                    .weClient=${this.weClient}
+                    .hrlWithContext=${this.embedHrlWithContext}
+                  ></wal-embed>
+                `
+              : html``}
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts

@@ -19,8 +19,11 @@ import {
   OpenHrlMode,
   CreatableType,
   CreatableName,
+  Hrl,
 } from './types';
 import { postMessage } from './utils';
+import { encode } from '@msgpack/msgpack';
+import { fromUint8Array } from 'js-base64';
 
 declare global {
   interface Window {
@@ -52,6 +55,14 @@ export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) =
   link = link + `we://applet/${encodeHashToBase64(appletHash)}`;
   return link;
 };
+
+export function stringifyHrl(hrl: Hrl): string {
+  return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
+}
+
+export function encodeContext(context: any) {
+  return fromUint8Array(encode(context), true);
+}
 
 export const initializeHotReload = async () => {
   try {
