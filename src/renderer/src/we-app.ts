@@ -239,7 +239,7 @@ export class WeApp extends LitElement {
           display: flex;
           flex: 1;
           box-sizing: border-box;
-          border: 6px solid #27c60b;
+          border: 6px solid var(--sl-color-primary-100);
         }
 
         .feedback-button {
@@ -250,21 +250,21 @@ export class WeApp extends LitElement {
           min-height: 90px;
           justify-content: center;
           display: flex;
-          color: white;
+          color: var(--sl-color-secondary-800);
           font-weight: bold;
           font-size: 18px;
           writing-mode: vertical-rl;
           transform: rotate(-180deg);
           text-orientation: mixed;
-          background: #27c60b;
+          background: var(--sl-color-primary-100);
           border-radius: 10px 0 0 10px;
           pointer-events: auto;
           cursor: pointer;
         }
 
         .feedback-button:hover:not(.loading) {
-          background: #ecffe8;
-          color: #27c60b;
+          background: var(--sl-color-secondary-800);
+          color: var(--sl-color-primary-100);
         }
 
         .feedback-top-bar {
@@ -277,7 +277,7 @@ export class WeApp extends LitElement {
           top: 0;
           width: 100%;
           height: 57px;
-          background: #27c60b;
+          background: var(--sl-color-primary-100);
         }
 
         .loading {

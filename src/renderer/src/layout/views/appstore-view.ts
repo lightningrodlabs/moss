@@ -27,7 +27,9 @@ export class AppStoreView extends LitElement {
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1">
         <div class="row" style="margin-bottom: 16px; align-items: center">
-          <span class="title" style="flex: 1">${msg('Applet Library')}</span>
+          <span class="title" style="flex: 1; color: var(--sl-color-secondary-950);"
+            >${msg('Applet Library')}</span
+          >
           <sl-button
             @click=${() => {
               this.dispatchEvent(new CustomEvent('open-publishing-view'));
@@ -69,8 +71,9 @@ export class AppStoreView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background: white;
+        background: var(--sl-color-secondary-50);
         overflow: auto;
+        color: var(--sl-color-secondary-950);
       }
 
       .btn {

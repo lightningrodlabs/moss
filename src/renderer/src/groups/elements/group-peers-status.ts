@@ -32,6 +32,7 @@ export class GroupPeersStatus extends LitElement {
   renderPeersStatus(members: AgentPubKey[]) {
     return html`
       <list-agents-by-status
+        style="color: var(--sl-color-secondary-100);"
         .agents=${members.filter(
           (m) => m.toString() !== this._groupStore.groupClient.appAgentClient.myPubKey.toString(),
         )}

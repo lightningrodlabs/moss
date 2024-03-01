@@ -270,6 +270,10 @@ export class InstallAppletBundleDialog extends LitElement {
       .offline {
         background-color: #bfbfbf;
       }
+
+      sl-dialog {
+        --sl-panel-background-color: var(--sl-color-primary-0);
+      }
     `,
   ];
 }

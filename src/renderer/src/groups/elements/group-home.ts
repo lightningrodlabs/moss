@@ -486,8 +486,7 @@ export class GroupHome extends LitElement {
         </div>
 
         <div
-          class="column"
-          style="width: 260px; padding: 16px; background-color: var(--sl-color-primary-100)"
+          class="column online-status-bar"
         >
           <div class="flex-scrollable-parent">
             <div class="flex-scrollable-container">
@@ -534,6 +533,7 @@ export class GroupHome extends LitElement {
           </sl-dialog>
 
           <sl-button
+            class="invite-btn"
             variant="primary"
             @click=${() => {
               (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).show();
@@ -715,6 +715,7 @@ export class GroupHome extends LitElement {
     css`
       :host {
         display: flex;
+        background: var(--sl-color-secondary-0);
       }
       sl-tab-panel::part(base) {
         width: 600px;
@@ -726,12 +727,22 @@ export class GroupHome extends LitElement {
       .title {
         font-size: 25px;
       }
+      .invite-btn::part(base) {
+        background-color: var(--sl-color-secondary-200);
+        border-color: var(--sl-color-secondary-200);
+      }
       .applet-card {
         width: 100%;
         margin: 10px;
         --border-radius: 15px;
         border: none;
         --border-color: transparent;
+      }
+      .online-status-bar {
+        color: var(--sl-color-secondary-100);
+        width: 260px;
+        padding: 16px;
+        background-color: var(--sl-color-secondary-900);
       }
     `,
   ];

@@ -139,5 +139,12 @@ export class SelectGroupDialog extends LitElement {
     </sl-dialog>`;
   }
 
-  static styles = [weStyles, css``];
+  static styles = [
+    weStyles,
+    css`
+      sl-dialog {
+        --sl-panel-background-color: var(--sl-color-primary-0);
+      }
+    `,
+  ];
 }

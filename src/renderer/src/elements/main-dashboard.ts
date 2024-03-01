@@ -240,7 +240,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'App Library',
+        title: 'Applet Library',
         template: html`
           <appstore-view
             style="display: flex; flex: 1;"
@@ -925,10 +925,7 @@ export class MainDashboard extends LitElement {
       </div>
 
       <!-- LEFT SIDEBAR -->
-      <div
-        class="column"
-        style="position: fixed; left: 0; top: 0; bottom: 0; background: var(--sl-color-primary-900);"
-      >
+      <div class="column left-sidebar">
         <div
           class="column top-left-corner ${this._dashboardState.value.viewType === 'personal'
             ? 'selected'
@@ -961,7 +958,7 @@ export class MainDashboard extends LitElement {
         </div>
 
         <groups-sidebar
-          class="left-sidebar"
+          class="left-group-sidebar"
           .selectedGroupDnaHash=${this._dashboardState.value.viewType === 'group'
             ? this._dashboardState.value.groupHash
             : undefined}
@@ -991,7 +988,7 @@ export class MainDashboard extends LitElement {
                   this.openCreatablePanel();
                 }
               }}
-              style="height: 58px; margin-bottom: 3px; filter: invert(92%) sepia(60%) saturate(0%) hue-rotate(128deg) brightness(112%) contrast(100%);"
+              style="height: 58px; margin-bottom: 3px; filter: invert(89%) sepia(8%) saturate(1231%) hue-rotate(37deg) brightness(109%) contrast(104%);"
               src="magic_hat.svg"
             />
           </sl-tooltip>
@@ -1008,7 +1005,7 @@ export class MainDashboard extends LitElement {
                 }
               }}
               .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: white;"
+              style="color: var(--sl-color-primary-0);"
             ></sl-icon>
           </sl-tooltip>
         </div>
@@ -1176,14 +1173,14 @@ export class MainDashboard extends LitElement {
         .top-left-corner {
           align-items: center;
           justify-content: center;
-          background: var(--sl-color-primary-900);
+          background: var(--sl-color-primary-950);
           height: var(--sidebar-width);
           border-radius: 25px 25px 0 0;
         }
 
         .top-left-corner:hover {
           border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-600);
+          background: var(--sl-color-primary-300);
         }
 
         .hover-browser {
@@ -1198,15 +1195,15 @@ export class MainDashboard extends LitElement {
 
         .drawer-separator {
           width: 2px;
-          background: #1f5a09;
+          background: var(--sl-color-secondary-50);
           cursor: col-resize;
         }
 
         .side-drawer {
           position: relative;
           max-height: calc(100vh - 124px);
-          background: var(--sl-color-primary-100);
-          border-top: 4px solid #51ed18;
+          background: var(--sl-color-secondary-300);
+          border-top: 4px solid var(--sl-color-tertiary-50);
         }
 
         .attachable-viewer {
@@ -1218,12 +1215,12 @@ export class MainDashboard extends LitElement {
           left: 79px;
           bottom: 50px;
           right: 0;
-          background: var(--sl-color-primary-100);
-          box-shadow: 0 0 4px 1px #08044c;
+          background: var(--sl-color-secondary-100);
+          box-shadow: 0 0 4px 1px var(--sl-color-secondary-50);
           /* box-shadow: 0 0 4px 1px #51ed18; */
           border-radius: 20px 0 0 0;
-          border-top: 1px solid var(--sl-color-primary-800);
-          border-left: 1px solid var(--sl-color-primary-800);
+          border-top: 1px solid var(--sl-color-secodary-800);
+          border-left: 1px solid var(--sl-color-secodary-200);
           /* border-top: 1px solid #51ed18;
           border-left: 1px solid #51ed18; */
         }
@@ -1250,7 +1247,7 @@ export class MainDashboard extends LitElement {
 
         .selected {
           border-radius: 25px 0 0 25px;
-          background-color: var(--sl-color-primary-600);
+          background-color: var(--sl-color-primary-300);
         }
 
         .close-tab-button {
@@ -1276,8 +1273,11 @@ export class MainDashboard extends LitElement {
           align-items: center;
           padding-left: 5px;
           height: 50px;
-          background: #51ed18;
+          color: var(--sl-color-secondary-50);
+          /* background: #51ed18; */
+          background: var(--sl-color-secondary-950);
           z-index: 1;
+          box-shadow: -2px 0 4px var(--sl-color-secondary-100);
         }
 
         .entry-tab {
@@ -1308,7 +1308,7 @@ export class MainDashboard extends LitElement {
           justify-content: center;
           flex-direction: row;
           color: black;
-          background: var(--sl-color-primary-200);
+          background: var(--sl-color-secondary-400);
           cursor: pointer;
           /* margin: 5px; */
           height: 74px;
@@ -1316,18 +1316,18 @@ export class MainDashboard extends LitElement {
         }
 
         .entry-tab-bar-button:hover {
-          background: #51ed18;
+          background: var(--sl-color-tertiary-50);
           /* margin: 0; */
           /* border-radius: 5px 0 0 5px; */
           /* height: 50px; */
         }
 
         .entry-tab-bar-button:focus {
-          background: #51ed18;
+          background: var(--sl-color-tertiary-50);
         }
 
         .btn-selected {
-          background: #51ed18;
+          background: var(--sl-color-tertiary-50);
           /* margin: 0;
           border-radius: 5px 0 0 5px;
           height: 50px; */
@@ -1353,7 +1353,15 @@ export class MainDashboard extends LitElement {
         }
 
         .left-sidebar {
-          background-color: var(--sl-color-primary-900);
+          position: fixed;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          background-color: var(--sl-color-primary-950);
+        }
+
+        .left-group-sidebar {
+          background-color: var(--sl-color-primary-950);
           width: var(--sidebar-width);
           display: flex;
           overflow-y: auto;
@@ -1362,12 +1370,12 @@ export class MainDashboard extends LitElement {
           scrollbar-width: none; /* Firefox */
         }
 
-        .left-sidebar::-webkit-scrollbar {
+        .left-group-sidebar::-webkit-scrollbar {
           display: none;
         }
 
         .top-bar {
-          background-color: var(--sl-color-primary-600);
+          background-color: var(--sl-color-primary-300);
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;

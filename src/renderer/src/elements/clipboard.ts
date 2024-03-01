@@ -139,7 +139,9 @@ export class WeClipboard extends LitElement {
           }
           ${
             this.mode === 'open'
-              ? html`<div style="position: absolute; bottom: -10px; right: -10px; color: gray;">
+              ? html`<div
+                  style="position: absolute; bottom: -10px; right: -10px; color: var(--sl-color-secondary-950);"
+                >
                   <span
                     style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
                     >Alt + S</span
@@ -226,6 +228,10 @@ export class WeClipboard extends LitElement {
       css`
         :host {
           display: flex;
+        }
+
+        sl-dialog {
+          --sl-panel-background-color: var(--sl-color-primary-0);
         }
       `,
     ];

@@ -145,18 +145,21 @@ export class InstallableApplets extends LitElement {
         width: 300px;
         height: 180px;
         margin: 10px;
+        color: white;
         --border-radius: 15px;
         cursor: pointer;
         border: none;
         --border-color: transparent;
+        --sl-panel-background-color: var(--sl-color-secondary-600);
+        --sl-shadow-x-small: 1px 1px 2px 0 var(--sl-color-secondary-800);
       }
 
       .applet-card:hover {
-        --sl-panel-background-color: var(--sl-color-primary-100);
+        --sl-panel-background-color: var(--sl-color-secondary-400);
       }
 
       .applet-card:focus {
-        --sl-panel-background-color: var(--sl-color-primary-100);
+        --sl-panel-background-color: var(--sl-color-secondary-400);
       }
     `,
     weStyles,

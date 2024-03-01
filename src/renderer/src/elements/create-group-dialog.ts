@@ -1,4 +1,4 @@
-import { html, LitElement } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { state, query, customElement } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
@@ -102,5 +102,12 @@ export class CreateGroupDialog extends LitElement {
     `;
   }
 
-  static styles = [weStyles];
+  static styles = [
+    weStyles,
+    css`
+      sl-dialog {
+        --sl-panel-background-color: var(--sl-color-primary-0);
+      }
+    `,
+  ];
 }

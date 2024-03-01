@@ -169,9 +169,9 @@ export class FeedElement extends LitElement {
         width: calc(100vw - 160px);
         padding: 10px;
         border-radius: 10px;
-        background: var(--sl-color-primary-100);
+        background: var(--sl-color-primary-300);
         margin: 5px;
-        box-shadow: 1px 1px 3px #8a8a8a;
+        box-shadow: 1px 1px 3px var(--sl-color-primary-800);
         cursor: pointer;
       }
 

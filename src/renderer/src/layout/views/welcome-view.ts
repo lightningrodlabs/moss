@@ -211,7 +211,7 @@ export class WelcomeView extends LitElement {
             <!-- Notification Feed -->
 
             <div class="column" style="align-items: center; display:flex; flex: 1;">
-              <div class="row" style="align-items: center;">
+              <div class="row" style="align-items: center; color: var(--sl-color-secondary-100);">
                 <sl-icon
                   .src=${wrapPathInSvg(mdiBell)}
                   style="font-size: 35px; margin-right: 10px;"
@@ -240,6 +240,9 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
+        /* background: var(--sl-color-secondary-900); */
+        background: linear-gradient(var(--sl-color-secondary-900), var(--sl-color-secondary-950));
+        /* opacity: 0.8; */
       }
 
       .btn {
@@ -248,19 +251,19 @@ export class WelcomeView extends LitElement {
         font-size: 25px;
         height: 100px;
         min-width: 300px;
-        background: var(--sl-color-primary-800);
+        background: var(--sl-color-secondary-600);
         color: white;
         border-radius: 10px;
         cursor: pointer;
-        box-shadow: 0 2px 5px var(--sl-color-primary-900);
+        box-shadow: 0 2px 5px var(--sl-color-secondary-950);
       }
 
       .btn:hover {
-        background: var(--sl-color-primary-700);
+        background: var(--sl-color-secondary-300);
       }
 
       .btn:active {
-        background: var(--sl-color-primary-600);
+        background: var(--sl-color-secondary-300);
       }
 
       .feed {
