@@ -210,7 +210,7 @@ export class WelcomeView extends LitElement {
 
             <!-- Notification Feed -->
 
-            <div class="column" style="align-items: center; display:flex; flex: 1;">
+            <div class="column" style="align-items: center; display:flex; flex: 1; width: 100%;">
               <div class="row" style="align-items: center; color: var(--sl-color-secondary-100);">
                 <sl-icon
                   .src=${wrapPathInSvg(mdiBell)}
@@ -218,7 +218,7 @@ export class WelcomeView extends LitElement {
                 ></sl-icon>
                 <h1>Recent Activities:</h1>
               </div>
-              <div class="column feed" style="display:flex; flex: 1;">
+              <div class="column feed" style="display:flex; flex: 1;width: 100%;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
                 ${this.notificationsLoading
                   ? html``
