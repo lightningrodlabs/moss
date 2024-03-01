@@ -433,7 +433,12 @@ export class GroupHome extends LitElement {
         >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
       >
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
-        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll;">
+        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll; position: relative; background: var(--sl-color-secondary-200);">
+
+        <div style=" background-image: url(${
+          groupProfile.logo_src
+        }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2;"></div>
+
           <!-- Top Row -->
 
           <div class="row" style="align-items: center; margin-bottom: 24px">
@@ -715,7 +720,7 @@ export class GroupHome extends LitElement {
     css`
       :host {
         display: flex;
-        background: var(--sl-color-secondary-0);
+        /* background: var(--sl-color-secondary-0); */
       }
       sl-tab-panel::part(base) {
         width: 600px;
