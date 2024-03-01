@@ -116,7 +116,7 @@ export class SidebarButton extends LitElement {
           border-radius: 7px 0 0 7px;
           width: 5px;
           background: var(--sl-color-tertiary-50);
-          box-shadow: 0 0 1px 2px white;
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {

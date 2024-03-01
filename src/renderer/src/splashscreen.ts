@@ -109,10 +109,12 @@ export class SplashScreen extends LitElement {
   renderSetupLair() {
     return html`
       <div class="column center-content">
-        <h2>Setup We</h2>
+        <div class="row" style="align-items: center;">
+          <h1>Setup</h1>
+        </div>
         <div style="font-size: 17px; max-width: 500px; text-align: center;">
           Choose a password to encrypt your data and private keys. You will always need this
-          password to start We.
+          password to start Moss.
         </div>
         <h3>Select Password:</h3>
         <input
@@ -223,8 +225,21 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="background">
         ${this.renderContent()} ${this.progressState === '' ? this.renderExitButton() : html``}
+
+        <img
+          class="top-left"
+          src="icon.png"
+          style="height: 60px; margin-right: 15px;"
+          alt="Moss icon"
+          title="Moss"
+        />
         <div class="bottom-left">${this.progressState}</div>
-        <div class="bottom-right">Lightningrod Labs We</div>
+        <div class="bottom-right">
+          <div class="row" style="align-items: center;">
+            <span style="color: white; margin-left: 6px;">Lightnigrod Labs</span>
+            <img src="lightningrodlabs_logo.png" style="height: 30px; margin-left: 6px" />
+          </div>
+        </div>
         <div class="top-right errorbar row " style="${this.launchError ? '' : 'display: none;'}">
           ${this.launchError}
         </div>
@@ -331,6 +346,13 @@ export class SplashScreen extends LitElement {
           right: 10px;
           color: #ffffff;
           font-size: 15px;
+        }
+
+        .top-left {
+          position: absolute;
+          top: 5px;
+          left: 10px;
+          color: #ffffff;
         }
 
         .top-right {

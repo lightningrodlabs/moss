@@ -222,6 +222,8 @@ const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNa
 // }
 
 const createSplashscreenWindow = (): BrowserWindow => {
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
+
   // Create the browser window.
   const splashWindow = new BrowserWindow({
     height: 450,
@@ -231,6 +233,7 @@ const createSplashscreenWindow = (): BrowserWindow => {
     frame: false,
     show: false,
     backgroundColor: '#331ead',
+    icon,
     // use these settings so that the ui
     // can listen for status change events
     webPreferences: {
@@ -444,7 +447,7 @@ app.whenReady().then(async () => {
     },
   ]);
 
-  SYSTRAY.setToolTip('Lightningrodlabs We');
+  SYSTRAY.setToolTip('Moss');
   SYSTRAY.setContextMenu(contextMenu);
 
   if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {

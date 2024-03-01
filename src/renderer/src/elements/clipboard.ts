@@ -112,6 +112,25 @@ export class WeClipboard extends LitElement {
     this.hide();
   }
 
+  handleOpenWurl(e: { detail: { wurl: string }; target: { reset: () => void } }) {
+    this.dispatchEvent(
+      new CustomEvent('open-wurl', {
+        detail: {
+          wurl: e.detail.wurl,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    try {
+      // if the event target was the search bar
+      e.target.reset();
+    } catch (e) {
+      // ignore
+    }
+    this.hide();
+  }
+
   hrlToClipboard(hrlWithContext: HrlWithContext) {
     console.log('Adding hrl to clipboard: ', hrlWithContext);
     this._weStore.hrlToClipboard(hrlWithContext);
@@ -157,8 +176,10 @@ export class WeClipboard extends LitElement {
             <clipboard-search
               id="clipboard-search"
               field-label=""
+              .mode=${this.mode}
               @entry-selected=${(e) => this.handleHrlSelected(e)}
               @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
+              @open-wurl=${(e) => this.handleOpenWurl(e)}
             ></clipboard-search>
           </we-client-context>
           ${

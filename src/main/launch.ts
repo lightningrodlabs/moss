@@ -66,7 +66,7 @@ export async function launch(
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
       'loading-progress-update',
-      `Starting ${holochainVersion}...`,
+      `Starting Holochain ${holochainVersion}...`,
     );
 
   // launch holochain

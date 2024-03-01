@@ -28,7 +28,7 @@ import {
 } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { mdiMagnify } from '@mdi/js';
+import { mdiArrowRight, mdiMagnify } from '@mdi/js';
 import { weStoreContext } from '../context';
 import { WeStore } from '../we-store';
 import './search-result-element';
@@ -58,6 +58,9 @@ export class ClipboardSearch extends LitElement implements FormField {
    */
   @property()
   name!: string;
+
+  @property()
+  mode: 'open' | 'select' = 'open';
 
   /**
    * The default value of the field if this element is used inside a form
@@ -91,7 +94,7 @@ export class ClipboardSearch extends LitElement implements FormField {
    * @attr field-label
    */
   @property({ type: String, attribute: 'placeholder' })
-  placeholder: string = msg('Search entry');
+  placeholder: string = msg('Search or enter we:// URL');
 
   @property({ type: Number, attribute: 'min-chars' })
   minChars: number = 2;
@@ -104,6 +107,9 @@ export class ClipboardSearch extends LitElement implements FormField {
 
   @state()
   filterLength: number = 0;
+
+  @state()
+  wurl: string | undefined;
 
   @state()
   _searchResults = new StoreSubscriber(
@@ -148,6 +154,9 @@ export class ClipboardSearch extends LitElement implements FormField {
       if (event.key === ' ') {
         event.stopPropagation();
       }
+      if (event.key === 'Enter' && this.wurl) {
+        this.openWurl();
+      }
     });
   }
 
@@ -157,6 +166,16 @@ export class ClipboardSearch extends LitElement implements FormField {
 
   onFilterChange() {
     const filter = this._textField.value;
+    if (this.mode === 'open') {
+      if (filter.startsWith('we://')) {
+        // No dropdown but enable opening of WAL
+        this.wurl = filter;
+        this.dropdown.hide();
+        return;
+      } else {
+        this.wurl = undefined;
+      }
+    }
     this.filterLength = filter.length;
     this.dropdown.show();
     if (filter.length < this.minChars) {
@@ -221,6 +240,18 @@ export class ClipboardSearch extends LitElement implements FormField {
     `;
   }
 
+  openWurl() {
+    if (this.wurl) {
+      this.dispatchEvent(
+        new CustomEvent('open-wurl', {
+          detail: {
+            wurl: this.wurl,
+          },
+        }),
+      );
+    }
+  }
+
   /**
    * @internal
    */
@@ -235,27 +266,44 @@ export class ClipboardSearch extends LitElement implements FormField {
   render() {
     return html`
       <div style="flex: 1; display: flex; width: 600px;">
-        <sl-dropdown style="display: flex; flex: 1; width: 600px;" id="dropdown" hoist>
-          <sl-input
-            id="textfield"
-            slot="trigger"
-            style="width: 600px;"
-            .label=${this._label}
-            .placeholder=${this.placeholder}
-            @input=${() => this.onFilterChange()}
-          >
-            <sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon>
-          </sl-input>
-          <sl-menu
-            id="search-results"
-            style="min-width: 600px;"
-            @sl-select=${(e: CustomEvent) => {
-              this.onEntrySelected(e.detail.item.hrlWithContext);
-            }}
-          >
-            ${this.renderEntryList()}
-          </sl-menu>
-        </sl-dropdown>
+        <div class="row" style="align-items: center;">
+          <sl-dropdown style="display: flex; flex: 1; width: 600px;" id="dropdown" hoist>
+            <sl-input
+              id="textfield"
+              slot="trigger"
+              style="width: 600px;"
+              .label=${this._label}
+              .placeholder=${this.placeholder}
+              @input=${() => this.onFilterChange()}
+            >
+              <sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon>
+            </sl-input>
+            <sl-menu
+              id="search-results"
+              style="min-width: 600px;"
+              @sl-select=${(e: CustomEvent) => {
+                this.onEntrySelected(e.detail.item.hrlWithContext);
+              }}
+            >
+              ${this.renderEntryList()}
+            </sl-menu>
+          </sl-dropdown>
+          ${this.mode === 'open'
+            ? html`
+                <button
+                  style="margin-left: 5px; padding: 3px; height: 32px; width: 32px;"
+                  title=${msg('Open URL')}
+                  ?disabled=${!this.wurl}
+                  @click=${() => this.openWurl()}
+                >
+                  <sl-icon
+                    style="font-size: 26px; color: white;"
+                    .src=${wrapPathInSvg(mdiArrowRight)}
+                  ></sl-icon>
+                </button>
+              `
+            : html``}
+        </div>
       </div>
     `;
   }
@@ -277,6 +325,30 @@ export class ClipboardSearch extends LitElement implements FormField {
 
         .to-clipboard:hover {
           background: #7fd3eb;
+        }
+
+        button {
+          all: unset;
+          background: var(--sl-color-primary-300);
+          box-shadow: 1px 1px 1px 1px var(--sl-color-primary-600);
+          border-radius: 3px;
+          margin: 0;
+          padding: 0;
+          cursor: pointer;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-top: -2px;
+        }
+
+        button:hover:not(:disabled) {
+          background: var(--sl-color-primary-100);
+        }
+
+        button:disabled {
+          opacity: 0.6;
+          cursor: auto;
+          box-shadow: none;
         }
       `,
     ];

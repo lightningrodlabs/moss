@@ -10,10 +10,17 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
-import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
-import { AppletHash, AppletId, HrlWithContext, OpenHrlMode } from '@lightningrodlabs/we-applet';
+import {
+  AppletHash,
+  AppletId,
+  HrlWithContext,
+  OpenHrlMode,
+  WeaveLocation,
+  weaveUrlToLocation,
+} from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -40,7 +47,6 @@ import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { JoinGroupDialog } from './join-group-dialog.js';
-import { weLogoIcon } from '../icons/we-logo-icon.js';
 import { CreateGroupDialog } from './create-group-dialog.js';
 
 import './clipboard.js';
@@ -65,6 +71,9 @@ type OpenTab =
       template: TemplateResult;
       title: string;
       icon?: string;
+    }
+  | {
+      type: 'not found';
     };
 
 export type TabInfo = {
@@ -157,7 +166,10 @@ export class MainDashboard extends LitElement {
     openAppletMain: async (appletHash) => {
       const groupsForApplet = await toPromise(this._weStore.groupsForApplet.get(appletHash));
       const groupDnaHashes = Array.from(groupsForApplet.keys());
-      if (groupDnaHashes.length === 0) throw new Error('Applet not found in any of the groups.');
+      if (groupDnaHashes.length === 0) {
+        notifyError('Applet not found in any of your groups.');
+        throw new Error('Applet not found in any of the groups.');
+      }
       // pick an arbitrary group this applet is installed in
       const groupDnaHash = groupDnaHashes[0];
       this._weStore.setDashboardState({
@@ -177,19 +189,29 @@ export class MainDashboard extends LitElement {
     },
     openHrl: async (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => {
       const tabId = stringifyHrlWithContext(hrlWithContext);
-      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
-        hrlWithContext.hrl,
-      );
-      const tabInfo: TabInfo = {
-        id: tabId,
-        tab: {
-          type: 'hrl',
-          hrlWithContext,
-          groupHashesB64: groupContextHashesB64,
-          appletIds: appletContextIds,
-        },
-      };
-      this.openTab(tabInfo, mode);
+      try {
+        const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
+          hrlWithContext.hrl,
+        );
+        const tabInfo: TabInfo = {
+          id: tabId,
+          tab: {
+            type: 'hrl',
+            hrlWithContext,
+            groupHashesB64: groupContextHashesB64,
+            appletIds: appletContextIds,
+          },
+        };
+        this.openTab(tabInfo, mode);
+      } catch (e) {
+        console.error(e);
+        this.openTab({
+          id: Date.now().toString(),
+          tab: {
+            type: 'not found',
+          },
+        });
+      }
     },
     userSelectHrl: async () => {
       this._clipboard.show('select');
@@ -356,17 +378,55 @@ export class MainDashboard extends LitElement {
       return;
     }
     const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
-    const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(hrl);
-    const tabInfo: TabInfo = {
-      id: tabId,
-      tab: {
-        type: 'hrl',
-        hrlWithContext,
-        groupHashesB64: groupContextHashesB64,
-        appletIds: appletContextIds,
-      },
-    };
-    this.openTab(tabInfo);
+    try {
+      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(hrl);
+      const tabInfo: TabInfo = {
+        id: tabId,
+        tab: {
+          type: 'hrl',
+          hrlWithContext,
+          groupHashesB64: groupContextHashesB64,
+          appletIds: appletContextIds,
+        },
+      };
+      this.openTab(tabInfo);
+    } catch (e) {
+      this.openTab({
+        id: Date.now().toString(),
+        tab: {
+          type: 'not found',
+        },
+      });
+    }
+  }
+
+  async handleOpenWurl(wurl: string) {
+    let weaveLocation: WeaveLocation | undefined;
+    try {
+      weaveLocation = weaveUrlToLocation(wurl);
+    } catch (e) {
+      notifyError('Invalid URL');
+      console.error(e);
+      return;
+    }
+    if (!weaveLocation) {
+      notifyError('Failed to parse URL');
+    } else {
+      switch (weaveLocation.type) {
+        case 'applet':
+          return this.handleOpenAppletMain(weaveLocation.appletHash);
+        case 'group':
+          // TODO fix after renaming of group links to invite links
+          notifyError('URL type not supported.');
+          return;
+        case 'invitation':
+          // TODO implement after renaming of group links to invite links
+          notifyError('URL type not supported.');
+          return;
+        case 'asset':
+          return this.handleOpenHrl(weaveLocation.hrlWithContext);
+      }
+    }
   }
 
   async handleOpenAppletMain(appletHash: AppletHash) {
@@ -615,7 +675,7 @@ export class MainDashboard extends LitElement {
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
-            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: #51ed18;"
+            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: var(--sl-color-tertiary-200);"
           ></div>
         </div>
       </div>`;
@@ -649,6 +709,13 @@ export class MainDashboard extends LitElement {
         ></attachable-view>`;
       case 'html':
         return info.tab.template;
+      case 'not found':
+        return html`<div
+          class="column center-content"
+          style="font-size: 40px; font-weight: bold; flex: 1;"
+        >
+          404 -Not Found
+        </div>`;
       default:
         return html`Invalid tab type.`;
     }
@@ -764,6 +831,27 @@ export class MainDashboard extends LitElement {
               <span>${tabInfo.tab.title}</span>
             </div>
           `;
+        case 'not found':
+          return html` <div
+            class="entry-tab row ${this._selectedTab && this._selectedTab.id === tabInfo.id
+              ? 'tab-selected'
+              : ''}"
+            style="align-items: center; padding-left: 8px;"
+            tabindex="0"
+            @click=${async (e) => {
+              e.stopPropagation();
+              this._selectedTab = tabInfo;
+            }}
+            @keypress=${async (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+                this._selectedTab = tabInfo;
+              }
+            }}
+          >
+            ${this.renderCloseTab(tabInfo.id)}
+            <span>404 - Not Found</span>
+          </div>`;
       }
     });
   }
@@ -774,6 +862,7 @@ export class MainDashboard extends LitElement {
         id="clipboard"
         @click=${(e) => e.stopPropagation()}
         @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
+        @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
         @hrl-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('hrl-selected', {
@@ -835,27 +924,25 @@ export class MainDashboard extends LitElement {
             ? 'max-height: calc(100vh - 124px);'
             : ''}"
         >
-          ${this._dashboardState.value.viewType === 'personal'
-            ? html` <welcome-view
-                id="welcome-view"
-                @click=${(e) => e.stopPropagation()}
-                style="display: flex; flex: 1;${this._drawerResizing
-                  ? 'pointer-events: none; user-select: none;'
-                  : ''}"
-                @open-appstore=${() => this.openAppStore()}
-                @request-create-group=${() =>
-                  (
-                    this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog
-                  ).open()}
-                @request-join-group=${(_e) => this.joinGroupDialog.open()}
-                @applet-selected=${(e: CustomEvent) => {
-                  this.openViews.openAppletMain(e.detail.appletHash);
-                  if (this._attachableViewerState.value.position === 'front') {
-                    this._weStore.setAttachableViewerState({ position: 'front', visible: false });
-                  }
-                }}
-              ></welcome-view>`
-            : html``}
+          <welcome-view
+            id="welcome-view"
+            @click=${(e) => e.stopPropagation()}
+            style="${this._dashboardState.value.viewType === 'personal'
+              ? 'display: flex; flex: 1;'
+              : 'display: none;'}${this._drawerResizing
+              ? 'pointer-events: none; user-select: none;'
+              : ''}"
+            @open-appstore=${() => this.openAppStore()}
+            @request-create-group=${() =>
+              (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
+            @request-join-group=${(_e) => this.joinGroupDialog.open()}
+            @applet-selected=${(e: CustomEvent) => {
+              this.openViews.openAppletMain(e.detail.appletHash);
+              if (this._attachableViewerState.value.position === 'front') {
+                this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+              }
+            }}
+          ></welcome-view>
 
           <!-- GROUP VIEW -->
           <div
@@ -988,7 +1075,7 @@ export class MainDashboard extends LitElement {
                   this.openCreatablePanel();
                 }
               }}
-              style="height: 58px; margin-bottom: 3px; filter: invert(89%) sepia(8%) saturate(1231%) hue-rotate(37deg) brightness(109%) contrast(104%);"
+              style="height: 58px; margin-bottom: 3px; filter: invert(100%) sepia(32%) saturate(3851%) hue-rotate(178deg) brightness(103%) contrast(104%);"
               src="magic_hat.svg"
             />
           </sl-tooltip>
@@ -1005,7 +1092,7 @@ export class MainDashboard extends LitElement {
                 }
               }}
               .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: var(--sl-color-primary-0);"
+              style="color: var(--sl-color-tertiary-0);"
             ></sl-icon>
           </sl-tooltip>
         </div>
@@ -1195,14 +1282,14 @@ export class MainDashboard extends LitElement {
 
         .drawer-separator {
           width: 2px;
-          background: var(--sl-color-secondary-50);
+          background: var(--sl-color-tertiary-200);
           cursor: col-resize;
         }
 
         .side-drawer {
           position: relative;
           max-height: calc(100vh - 124px);
-          background: var(--sl-color-secondary-300);
+          background: var(--sl-color-tertiary-0);
           border-top: 4px solid var(--sl-color-tertiary-50);
         }
 
@@ -1215,8 +1302,8 @@ export class MainDashboard extends LitElement {
           left: 79px;
           bottom: 50px;
           right: 0;
-          background: var(--sl-color-secondary-100);
-          box-shadow: 0 0 4px 1px var(--sl-color-secondary-50);
+          background: var(--sl-color-tertiary-0);
+          box-shadow: 0 0 4px 1px var(--sl-color-tertiary-0);
           /* box-shadow: 0 0 4px 1px #51ed18; */
           border-radius: 20px 0 0 0;
           border-top: 1px solid var(--sl-color-secodary-800);
@@ -1273,17 +1360,17 @@ export class MainDashboard extends LitElement {
           align-items: center;
           padding-left: 5px;
           height: 50px;
-          color: var(--sl-color-secondary-50);
+          color: var(--sl-color-secondary-950);
           /* background: #51ed18; */
-          background: var(--sl-color-secondary-950);
+          /* background: var(--sl-color-secondary-950); */
+          background: var(--sl-color-tertiary-100);
           z-index: 1;
-          box-shadow: -2px 0 4px var(--sl-color-secondary-100);
         }
 
         .entry-tab {
           height: 40px;
           width: 200px;
-          background: #43c016;
+          background: var(--sl-color-tertiary-400);
           color: black;
           /* background: var(--sl-color-primary-400); */
           border-radius: 4px;
@@ -1294,11 +1381,11 @@ export class MainDashboard extends LitElement {
         }
 
         .entry-tab:hover {
-          background: var(--sl-color-primary-50);
+          background: var(--sl-color-tertiary-0);
         }
 
         .tab-selected {
-          background: var(--sl-color-primary-50);
+          background: var(--sl-color-tertiary-0);
           box-shadow: 0 0 3px #808080;
         }
 
@@ -1307,8 +1394,8 @@ export class MainDashboard extends LitElement {
           align-items: center;
           justify-content: center;
           flex-direction: row;
-          color: black;
-          background: var(--sl-color-secondary-400);
+          color: var(--sl-color-tertiary-0);
+          background: var(--sl-color-tertiary-800);
           cursor: pointer;
           /* margin: 5px; */
           height: 74px;
@@ -1317,6 +1404,7 @@ export class MainDashboard extends LitElement {
 
         .entry-tab-bar-button:hover {
           background: var(--sl-color-tertiary-50);
+          color: var(--sl-color-tertiary-950);
           /* margin: 0; */
           /* border-radius: 5px 0 0 5px; */
           /* height: 50px; */
@@ -1324,17 +1412,15 @@ export class MainDashboard extends LitElement {
 
         .entry-tab-bar-button:focus {
           background: var(--sl-color-tertiary-50);
+          color: var(--sl-color-tertiary-950);
         }
 
         .btn-selected {
           background: var(--sl-color-tertiary-50);
+          color: var(--sl-color-tertiary-950);
           /* margin: 0;
           border-radius: 5px 0 0 5px;
           height: 50px; */
-        }
-
-        .tab-bar-active {
-          background: #d66969;
         }
 
         .open-tab-btn {

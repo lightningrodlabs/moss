@@ -449,7 +449,6 @@ export class AppletHost {
     public iframe: HTMLIFrameElement,
     appletId: AppletId,
   ) {
-    console.log('NEW APPLET HOST WITH CONTENTWINDOW: ', iframe.contentWindow);
     this.appletId = appletId;
   }
 

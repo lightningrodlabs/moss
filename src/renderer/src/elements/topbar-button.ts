@@ -71,7 +71,7 @@ export class TopBarButton extends LitElement {
           border-radius: 7px 7px 0 0;
           width: 32px;
           background: var(--sl-color-tertiary-50);
-          box-shadow: 0 0 1px 2px white;
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {
