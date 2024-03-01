@@ -107,7 +107,7 @@ export class WalEmbed extends LitElement {
           frameborder="0"
           title="TODO"
           src="${iframeSrc}"
-          style="flex: 1; display: block; padding: 0; margin: 0;"
+          style="flex: 1; display: block; padding: 5px; margin: 0; resize: both;"
           allow="clipboard-write;"
           @load=${() => {
             console.log('iframe loaded.');
