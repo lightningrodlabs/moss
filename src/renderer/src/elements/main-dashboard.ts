@@ -937,8 +937,8 @@ export class MainDashboard extends LitElement {
           <sidebar-button
             style="--size: 58px; --border-radius: 20px; --hover-color: transparent;"
             .selected=${false}
-            .logoSrc=${weLogoIcon}
-            .tooltipText=${msg('Browser View')}
+            logoSrc="icon.png"
+            .tooltipText=${msg('Home')}
             placement="bottom"
             tabindex="0"
             @click=${() => {

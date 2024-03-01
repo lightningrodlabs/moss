@@ -275,10 +275,13 @@ const createOrShowMainWindow = (): BrowserWindow => {
   // });
   // webRTCWindow.loadURL('chrome://webrtc-internals');
 
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
+
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
       // autoplayPolicy: 'user-gesture-required',
