@@ -41,9 +41,6 @@ export class AppletMain extends LitElement {
   @state()
   walEmbedLink: string = '';
 
-  @state()
-  embedHrlWithContext: HrlWithContext | undefined;
-
   // @state()
   // unsubscribe: undefined | (() => void);
 
@@ -62,9 +59,6 @@ export class AppletMain extends LitElement {
 
   updateWalEmbedLink() {
     this.walEmbedLink = this.walEmbedInputField.value;
-    try {
-      this.embedHrlWithContext = this.urlToWal(this.walEmbedLink);
-    } catch (e) {}
   }
 
   sendUrgentNotification(delay: number) {
@@ -129,27 +123,6 @@ export class AppletMain extends LitElement {
     this.selectedHrl = selectedHrl;
   }
 
-  urlToWal(url: string): HrlWithContext {
-    if (!url.startsWith('we://')) {
-      throw new Error(`Invalid URL. we:// URL required but got '${url}'`);
-    }
-
-    const split = url.split('://');
-    // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
-    const split2 = split[1].split('/');
-    // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
-
-    if (split2[0] === 'hrl') {
-      const contextSplit = split2[2].split('?context=');
-      return {
-        hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
-        context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
-      };
-    } else {
-      throw new Error('This input field only accepts URLs pointing to a WAL.');
-    }
-  }
-
   render() {
     return html`
       <div class="column">
@@ -193,13 +166,8 @@ export class AppletMain extends LitElement {
               rows="4"
               cols="50"
             />
-            ${this.embedHrlWithContext
-              ? html`
-                  <wal-embed
-                    .weClient=${this.weClient}
-                    .hrlWithContext=${this.embedHrlWithContext}
-                  ></wal-embed>
-                `
+            ${this.walEmbedLink !== ''
+              ? html` <wal-embed .weClient=${this.weClient} .src=${this.walEmbedLink}></wal-embed> `
               : html``}
           </div>
           <div class="row" style="flex-wrap: wrap;">

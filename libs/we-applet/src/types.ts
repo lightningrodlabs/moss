@@ -18,6 +18,30 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
 export type OpenHrlMode = 'front' | 'side';
 
+/**
+ * String of the format weave://
+ */
+export type WeaveUrl = string;
+
+export type WeaveLocation =
+  | {
+      type: 'group';
+      dnaHash: DnaHash;
+    }
+  | {
+      type: 'applet';
+      appletHash: AppletHash;
+    }
+  | {
+      type: 'asset';
+      hrlWithContext: HrlWithContext;
+    }
+  | {
+      type: 'invitation';
+      // network seed and membrane proof
+      secret: string;
+    };
+
 // Contextual reference to a Hrl
 // Useful use case: image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }

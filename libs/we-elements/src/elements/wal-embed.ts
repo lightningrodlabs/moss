@@ -5,9 +5,28 @@ import {
   encodeContext,
   HrlWithContext,
   stringifyHrl,
+  WeaveLocation,
+  WeaveUrl,
+  weaveUrlToLocation,
   WeClient,
 } from '@lightningrodlabs/we-applet';
+import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { appletOrigin, urlFromAppletHash } from '../utils.js';
+
+type AssetStatus =
+  | {
+      type: 'invalid url';
+    }
+  | {
+      type: 'success';
+      attachableInfo: AttachableLocationAndInfo;
+    }
+  | {
+      type: 'loading';
+    }
+  | {
+      type: 'not found';
+    };
 
 @customElement('wal-embed')
 export class WalEmbed extends LitElement {
@@ -15,17 +34,34 @@ export class WalEmbed extends LitElement {
   weClient!: WeClient;
 
   @property()
-  hrlWithContext!: HrlWithContext;
+  src!: WeaveUrl;
 
   @state()
-  attachableInfo: AttachableLocationAndInfo | undefined;
+  assetStatus: AssetStatus = { type: 'loading' };
+
+  @state()
+  hrlWithContext: HrlWithContext | undefined;
 
   @state()
   iframeId: string | undefined;
 
   async firstUpdated() {
-    this.attachableInfo = await this.weClient.attachableInfo(this.hrlWithContext);
-    console.log('Got attachable info: ', this.attachableInfo);
+    let weaveLocation: WeaveLocation | undefined;
+    try {
+      weaveLocation = weaveUrlToLocation(this.src);
+    } catch (e) {
+      this.assetStatus = { type: 'invalid url' };
+      return;
+    }
+    if (weaveLocation.type !== 'asset') {
+      this.assetStatus = { type: 'invalid url' };
+    } else {
+      this.hrlWithContext = weaveLocation.hrlWithContext;
+      const attachableInfo = await this.weClient.attachableInfo(weaveLocation.hrlWithContext);
+      this.assetStatus = attachableInfo
+        ? { type: 'success', attachableInfo }
+        : { type: 'not found' };
+    }
     this.iframeId = Date.now().toString();
   }
 
@@ -45,31 +81,39 @@ export class WalEmbed extends LitElement {
   }
 
   render() {
-    const queryString = `view=applet-view&view-type=attachable&hrl=${stringifyHrl(
-      this.hrlWithContext.hrl,
-    )}${
-      this.hrlWithContext.context ? `&context=${encodeContext(this.hrlWithContext.context)}` : ''
-    }`;
-    if (!this.attachableInfo) {
-      return html`Weave Asset not found.`;
-    }
-    const iframeSrc = this.attachableInfo.appletDevPort
-      ? `http://localhost:${this.attachableInfo.appletDevPort}?${queryString}#${urlFromAppletHash(
-          this.attachableInfo.appletHash,
-        )}`
-      : `${appletOrigin(this.attachableInfo.appletHash)}?${queryString}`;
+    switch (this.assetStatus.type) {
+      case 'not found':
+        return html`Asset not found`;
+      case 'invalid url':
+        return html`invalid URL`;
+      case 'loading':
+        return html` <sl-spinner></sl-spinner> `;
+      case 'success':
+        const queryString = `view=applet-view&view-type=attachable&hrl=${stringifyHrl(
+          this.hrlWithContext!.hrl,
+        )}${
+          this.hrlWithContext!.context
+            ? `&context=${encodeContext(this.hrlWithContext!.context)}`
+            : ''
+        }`;
+        const iframeSrc = this.assetStatus.attachableInfo.appletDevPort
+          ? `http://localhost:${
+              this.assetStatus.attachableInfo.appletDevPort
+            }?${queryString}#${urlFromAppletHash(this.assetStatus.attachableInfo.appletHash)}`
+          : `${appletOrigin(this.assetStatus.attachableInfo.appletHash)}?${queryString}`;
 
-    return html`<iframe
-      id="${this.iframeId}"
-      frameborder="0"
-      title="TODO"
-      src="${iframeSrc}"
-      style="flex: 1; display: block; padding: 0; margin: 0;"
-      allow="clipboard-write;"
-      @load=${() => {
-        console.log('iframe loaded.');
-        setTimeout(() => this.resizeIFrameToFitContent());
-      }}
-    ></iframe>`;
+        return html`<iframe
+          id="${this.iframeId}"
+          frameborder="0"
+          title="TODO"
+          src="${iframeSrc}"
+          style="flex: 1; display: block; padding: 0; margin: 0;"
+          allow="clipboard-write;"
+          @load=${() => {
+            console.log('iframe loaded.');
+            setTimeout(() => this.resizeIFrameToFitContent());
+          }}
+        ></iframe>`;
+    }
   }
 }

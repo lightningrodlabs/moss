@@ -4,6 +4,7 @@ import {
   EntryHash,
   RoleName,
   ZomeName,
+  decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
 import {
@@ -20,10 +21,11 @@ import {
   CreatableType,
   CreatableName,
   Hrl,
+  WeaveLocation,
 } from './types';
 import { postMessage } from './utils';
-import { encode } from '@msgpack/msgpack';
-import { fromUint8Array } from 'js-base64';
+import { decode, encode } from '@msgpack/msgpack';
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 declare global {
   interface Window {
@@ -56,12 +58,48 @@ export const weLinkFromAppletHash = (appletHash: AppletHash, webPrefix = true) =
   return link;
 };
 
+export function weaveUrlToLocation(url: string): WeaveLocation {
+  if (!url.startsWith('we://')) {
+    throw new Error(`Got invalid We url: ${url}`);
+  }
+
+  const split = url.split('://');
+  // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
+  const split2 = split[1].split('/');
+  // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
+
+  if (split2[0] === 'hrl') {
+    const contextSplit = split2[2].split('?context=');
+    return {
+      type: 'asset',
+      hrlWithContext: {
+        hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
+        context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
+      },
+    };
+  } else if (split2[0] === 'group') {
+    throw new Error(
+      'Needs to be implemented in Moss version 0.11.x by changing group to invitation',
+    );
+  } else if (split2[0] === 'applet') {
+    return {
+      type: 'applet',
+      appletHash: decodeHashFromBase64(split2[1]),
+    };
+  }
+  throw new Error(`Got We url of unknown format: ${url}`);
+}
+
 export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
 export function encodeContext(context: any) {
   return fromUint8Array(encode(context), true);
+}
+
+export function decodeContext(contextStringified: string): any {
+  return decode(toUint8Array(contextStringified));
 }
 
 export const initializeHotReload = async () => {
