@@ -578,6 +578,7 @@ app.whenReady().then(async () => {
     return undefined;
   });
   ipcMain.handle('get-applet-iframe-script', () => {
+    // TODO make sure we is in dev mode (e.g. not return iframe script if We is in production mode)
     return APPLET_IFRAME_SCRIPT;
   });
   ipcMain.handle('get-installed-apps', async () => {

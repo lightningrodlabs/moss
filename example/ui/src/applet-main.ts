@@ -7,7 +7,9 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import './elements/all-posts.js';
 import './elements/create-post.js';
 import { type HrlWithContext, type WeNotification, WeClient } from '@lightningrodlabs/we-applet';
-import { AppAgentClient } from '@holochain/client';
+import { AppAgentClient, decodeHashFromBase64 } from '@holochain/client';
+import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
+import { decodeContext } from '@lightningrodlabs/we-elements';
 
 @localized()
 @customElement('applet-main')
@@ -21,6 +23,9 @@ export class AppletMain extends LitElement {
   @query('#hrl-input-field')
   hrlInputField!: HTMLInputElement;
 
+  @query('#wal-embed-input-field')
+  walEmbedInputField!: HTMLInputElement;
+
   @state()
   mediumInterval: number | null = null;
 
@@ -32,6 +37,9 @@ export class AppletMain extends LitElement {
 
   @state()
   hrlLink: string = '';
+
+  @state()
+  walEmbedLink: string = '';
 
   // @state()
   // unsubscribe: undefined | (() => void);
@@ -47,6 +55,10 @@ export class AppletMain extends LitElement {
 
   updateHrlLink() {
     this.hrlLink = this.hrlInputField.value;
+  }
+
+  updateWalEmbedLink() {
+    this.walEmbedLink = this.walEmbedInputField.value;
   }
 
   sendUrgentNotification(delay: number) {
@@ -143,6 +155,20 @@ export class AppletMain extends LitElement {
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
+
+            <div>Embed Hrl:</div>
+            <input
+              id="wal-embed-input-field"
+              type="text"
+              @input=${() => {
+                this.updateWalEmbedLink();
+              }}
+              rows="4"
+              cols="50"
+            />
+            ${this.walEmbedLink !== ''
+              ? html` <wal-embed .weClient=${this.weClient} .src=${this.walEmbedLink}></wal-embed> `
+              : html``}
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts
