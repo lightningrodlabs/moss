@@ -211,12 +211,12 @@ export class WelcomeView extends LitElement {
             <!-- Notification Feed -->
 
             <div class="column" style="align-items: center; display:flex; flex: 1; width: 100%;">
-              <div class="row" style="align-items: center; color: var(--sl-color-secondary-100);">
-                <sl-icon
-                  .src=${wrapPathInSvg(mdiBell)}
-                  style="font-size: 35px; margin-right: 10px;"
-                ></sl-icon>
-                <h1>Recent Activities:</h1>
+              <div class="row" style="align-items: center; color: var(--sl-color-tertiary-100);">
+                <img
+                  src="raindrops.svg"
+                  style="height: 36px; margin-right: 10px; margin-bottom: 3px; filter: invert(95%) sepia(42%) saturate(4437%) hue-rotate(178deg) brightness(96%) contrast(95%);"
+                />
+                <h1>Recent Rainfall:</h1>
               </div>
               <div class="column feed" style="display:flex; flex: 1;width: 100%;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
