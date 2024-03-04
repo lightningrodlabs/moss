@@ -175,7 +175,7 @@ export class FeedElement extends LitElement {
       }
 
       .notification:hover {
-        background: var(--sl-color-primary-200);
+        background: var(--sl-color-tertiary-100);
       }
     `,
     weStyles,
