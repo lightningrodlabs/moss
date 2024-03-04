@@ -129,7 +129,7 @@ export class SidebarButton extends LitElement {
           width: var(--sidebar-width);
         }
         .icon-container:hover {
-          background-color: var(--hover-color, var(--sl-color-primary-200));
+          background-color: var(--hover-color, var(--sl-color-primary-300));
         }
         .icon-container:hover::after {
           pointer-events: none;
@@ -142,7 +142,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .icon-container:hover::before {
           pointer-events: none;
@@ -155,11 +155,11 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .selected {
-          background-color: var(--hover-color, var(--sl-color-primary-200));
-          /* box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-200));
+          background-color: var(--hover-color, var(--sl-color-primary-300));
+          /* box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-300));
         background: var(--hover-color, var(--sl-color-primary-200)); */
         }
         .selected::after {
@@ -173,7 +173,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .selected::before {
           pointer-events: none;
@@ -186,7 +186,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
 
         .notification-dot {

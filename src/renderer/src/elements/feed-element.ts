@@ -168,7 +168,7 @@ export class FeedElement extends LitElement {
       .notification {
         padding: 10px;
         border-radius: 10px;
-        background: var(--sl-color-primary-300);
+        background: var(--sl-color-tertiary-200);
         margin: 5px;
         box-shadow: 1px 1px 3px var(--sl-color-primary-800);
         cursor: pointer;

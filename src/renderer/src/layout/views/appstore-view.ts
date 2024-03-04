@@ -71,7 +71,7 @@ export class AppStoreView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background: var(--sl-color-secondary-50);
+        background: var(--sl-color-tertiary-0);
         overflow: auto;
         color: var(--sl-color-secondary-950);
       }
