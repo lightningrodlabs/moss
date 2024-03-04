@@ -28,14 +28,12 @@ import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
   appIdFromAppletHash,
-  appIdFromAppletId,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
   logZomeCall,
   storeAppletNotifications,
   stringifyHrlWithContext,
-  toLowerCaseB64,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';

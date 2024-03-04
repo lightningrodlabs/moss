@@ -433,11 +433,11 @@ export class GroupHome extends LitElement {
         >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
       >
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
-        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll; position: relative; background: var(--sl-color-secondary-200);">
+        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll; position: relative; background-color: rgba(175,148,157,0.6);">
 
         <div style=" background-image: url(${
           groupProfile.logo_src
-        }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2;"></div>
+        }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"></div>
 
           <!-- Top Row -->
 
@@ -742,6 +742,7 @@ export class GroupHome extends LitElement {
         --border-radius: 15px;
         border: none;
         --border-color: transparent;
+        --sl-panel-background-color: var(--sl-color-tertiary-0);
       }
       .online-status-bar {
         color: var(--sl-color-secondary-100);

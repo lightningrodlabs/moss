@@ -2,7 +2,7 @@
 
 CLI to run We Applets in development mode.
 
-This version is compatible with `@lightningrodlabs/we-applet@0.15.0-alpha.0`.
+This version is compatible with `@lightningrodlabs/we-applet@0.15.0-alpha.1`.
 
 ```
 Usage: @lightningrodlabs/we-dev-cli [options]
