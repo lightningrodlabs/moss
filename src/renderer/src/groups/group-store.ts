@@ -219,9 +219,13 @@ export class GroupStore {
     this.weStore.persistedStore.disabledGroupApplets.set(disabledAppletsIds, this.groupDnaHash);
 
     for (const appletHash of installedApplets) {
-      await this.weStore.adminWebsocket.disableApp({
-        installed_app_id: appIdFromAppletHash(appletHash),
-      });
+      // federated applets can only be disabled exlicitly
+      const federatedGroups = await this.groupClient.getFederatedGroups(appletHash);
+      if (federatedGroups.length === 0) {
+        await this.weStore.adminWebsocket.disableApp({
+          installed_app_id: appIdFromAppletHash(appletHash),
+        });
+      }
     }
     await this.weStore.reloadManualStores();
   }

@@ -35,6 +35,7 @@ import {
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
+import { dialogMessagebox } from '../../electron-api.js';
 
 @localized()
 @customElement('applet-detail-card')
@@ -183,6 +184,21 @@ export class AppletDetailCard extends LitElement {
                 ?disabled=${!this.appInfo}
                 @sl-change=${async () => {
                   if (this.appInfo && isAppRunning(this.appInfo)) {
+                    const federatedGroups = await this.groupStore.groupClient.getFederatedGroups(
+                      this.appletHash,
+                    );
+                    if (federatedGroups.length > 0) {
+                      const confirmation = await dialogMessagebox({
+                        message:
+                          'WARNING: This Applet is federated with at least one other group. Disabling it will disable it for all groups.',
+                        type: 'warning',
+                        buttons: ['Cancel', 'Continue'],
+                      });
+                      if (confirmation.response === 0) {
+                        await this.weStore.reloadManualStores();
+                        return;
+                      }
+                    }
                     await this.weStore.disableApplet(this.appletHash);
                     notify(msg('Applet disabled.'));
                   } else if (this.appInfo && !isAppRunning(this.appInfo)) {
