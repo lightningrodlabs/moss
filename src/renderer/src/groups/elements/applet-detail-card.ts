@@ -3,7 +3,7 @@ import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/element
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { msg } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { mdiShareVariant, mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -19,6 +19,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { Applet } from '../../applets/types.js';
 import { weStyles } from '../../shared-styles.js';
@@ -35,6 +36,7 @@ import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 
+@localized()
 @customElement('applet-detail-card')
 export class AppletDetailCard extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
@@ -265,7 +267,7 @@ export class AppletDetailCard extends LitElement {
                   style="height: 20px; width: 20px;"
                   .src=${wrapPathInSvg(mdiTrashCanOutline)}
                 ></sl-icon
-                ><span style="margin-left: 5px;">Uninstall</span>
+                ><span style="margin-left: 5px;">${msg('Uninstall')}</span>
               </div>
             </sl-button>
           </div>
