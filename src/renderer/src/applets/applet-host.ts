@@ -389,7 +389,6 @@ export async function handleAppletIframeMessage(
     case 'get-group-profile':
       return weServices.groupProfile(message.groupId);
     case 'get-global-attachable-info':
-      console.log("@applet-host: got 'get-attachable-info' message: ", message);
       let attachableInfo = await weServices.attachableInfo(message.hrlWithContext);
       if (attachableInfo && weStore.isAppletDev) {
         const appletDevPort = await getAppletDevPort(
@@ -458,7 +457,6 @@ export class AppletHost {
     entryType: string,
     hrlWithContext: HrlWithContext,
   ): Promise<AttachableInfo | undefined> {
-    console.log('@applet-host: calling getAppletAttachableInfo()');
     return this.postMessage({
       type: 'get-applet-attachable-info',
       roleName,

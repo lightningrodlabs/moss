@@ -610,7 +610,6 @@ export class WeStore {
   );
 
   attachableInfo = new LazyMap((hrlWithContextStringified: string) => {
-    console.log('hrlWithContextStringified: ', hrlWithContextStringified);
     const hrlWithContext = deStringifyHrlWithContext(hrlWithContextStringified);
     return pipe(
       this.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),

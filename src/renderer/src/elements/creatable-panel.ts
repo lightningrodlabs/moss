@@ -227,7 +227,6 @@ export class CreatablePanel extends LitElement {
   }
 
   render() {
-    console.log('Rendering with this._showCreatableView: ', this._showCreatableView);
     return html`
       <sl-dialog
         id="creatable-dialog"

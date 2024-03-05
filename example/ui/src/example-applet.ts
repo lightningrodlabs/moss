@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeClient, WeNotification, weaveUrlFromAppletHash } from '@lightningrodlabs/we-applet';
+import { WeClient, WeNotification } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
 
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
@@ -36,11 +36,11 @@ export class ExampleApplet extends LitElement {
   attachmentsStore!: AttachmentsStore;
 
   firstUpdated() {
-    if (this.weClient.renderInfo.type === 'applet-view') {
-      const groupProfiles = this.weClient.renderInfo.groupProfiles;
-      const appletHash = this.weClient.renderInfo.appletHash;
-      console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
-    }
+    // if (this.weClient.renderInfo.type === 'applet-view') {
+    //   const groupProfiles = this.weClient.renderInfo.groupProfiles;
+    //   const appletHash = this.weClient.renderInfo.appletHash;
+    //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
+    // }
   }
 
   async notifyWe(notifications: WeNotification[]) {
