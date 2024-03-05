@@ -31,7 +31,7 @@
     "build:happ-iframe": "yarn workspace happ-iframe build",
     "build:utils": "yarn workspace applet-iframe install && yarn build:applet-iframe && yarn build:happ-iframe",
     "build:cli": "rimraf ./cli/dist && cp -r ./out ./cli && mv ./cli/out ./cli/dist && cp moss.config.json ./cli/dist/main && cp -r ./resources ./cli/dist/main/resources && rimraf ./cli/dist/main/resources/bins && tsc -p tsconfig.defineConfig.json && rimraf node_modules/@lightningrodlabs/we-dev-cli && yarn install --check-files",
-    "link:libs": "cd libs/we-applet && yarn link && cd ../we-elements && yarn link && yarn link @lightningrodlabs/we-applet && cd ../../example/ui && yarn link @lightningrodlabs/we-applet && yarn link @lightningrodlabs/we-elements",
+    "link:libs": "cd libs/we-applet && yarn link && cd ../we-elements && yarn link && yarn link @lightningrodlabs/we-applet && cd ../../example/ui && yarn link @lightningrodlabs/we-applet && yarn link @lightningrodlabs/we-elements && cd ../../src/renderer && yarn link @lightningrodlabs/we-applet && cd ../../utils/applet-iframe && yarn link @lightningrodlabs/we-applet",
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "prepare:default-apps": "yarn prepare:happ && yarn fetch:default-apps",
     "fetch:default-apps": "yarn download:appstore && yarn download:kando",

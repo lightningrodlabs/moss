@@ -266,6 +266,11 @@ export type ParentToAppletRequest =
       type: 'get-block-types';
     }
   | {
+      type: 'bind-asset';
+      srcWal: HrlWithContext;
+      dstWal: HrlWithContext;
+    }
+  | {
       type: 'search';
       filter: string;
     };
@@ -318,6 +323,11 @@ export type AppletToParentRequest =
   | {
       type: 'hrl-to-clipboard';
       hrlWithContext: HrlWithContext;
+    }
+  | {
+      type: 'request-bind';
+      srcWal: HrlWithContext;
+      dstWal: HrlWithContext;
     }
   | {
       type: 'user-select-hrl';

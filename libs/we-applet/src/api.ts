@@ -139,7 +139,8 @@ export class AppletServices {
         _integrityZomeName,
         _entryType,
         _hrlWithContext,
-      ) => undefined);
+      ) => undefined),
+      (this.bindAsset = async () => {});
   }
 
   /**
@@ -170,6 +171,11 @@ export class AppletServices {
     weServices: WeServices,
     searchFilter: string,
   ) => Promise<Array<HrlWithContext>>;
+
+  /**
+   * Bind an asset (srcWal) to an asset in your applet (dstWal).
+   */
+  bindAsset: (srcWal: HrlWithContext, dstWal: HrlWithContext) => Promise<void>;
 }
 
 export interface WeServices {
@@ -253,6 +259,12 @@ export interface WeServices {
    * for screen sharing applications.
    */
   userSelectScreen: () => Promise<string>;
+  /**
+   * Request the applet holding the destination WAL (dstWal) to bind the source
+   * WAL (srcWal) to it.
+   * The source WAL must belong to the requesting applet.
+   */
+  requestBind: (srcWal: HrlWithContext, dstWal: HrlWithContext) => Promise<void>;
 }
 
 export class WeClient implements WeServices {
@@ -315,4 +327,7 @@ export class WeClient implements WeServices {
   notifyWe = (notifications: Array<WeNotification>) => window.__WE_API__.notifyWe(notifications);
 
   userSelectScreen = () => window.__WE_API__.userSelectScreen();
+
+  requestBind = (srcWal: HrlWithContext, dstWal: HrlWithContext) =>
+    window.__WE_API__.requestBind(srcWal, dstWal);
 }

@@ -131,6 +131,13 @@ const weApi: WeServices = {
     postMessage({
       type: 'user-select-screen',
     }),
+
+  requestBind: (srcWal: HrlWithContext, dstWal: HrlWithContext) =>
+    postMessage({
+      type: 'request-bind',
+      srcWal,
+      dstWal,
+    }),
 };
 
 (async () => {
@@ -274,6 +281,8 @@ const handleMessage = async (
       );
     case 'get-block-types':
       return window.__WE_APPLET_SERVICES__.blockTypes;
+    case 'bind-asset':
+      return window.__WE_APPLET_SERVICES__.bindAsset(request.srcWal, request.dstWal);
     case 'search':
       return window.__WE_APPLET_SERVICES__.search(
         appletClient,

@@ -157,6 +157,25 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         return undefined;
       }
     },
+    async requestBind(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+      const dstLocation = await toPromise(
+        weStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
+      );
+      if (!dstLocation) throw new Error('No applet found for the given dstWal');
+      const appletStore = await toPromise(
+        weStore.appletStores.get(dstLocation.dnaLocation.appletHash),
+      );
+      const appletHost = await toPromise(appletStore.host);
+      if (!appletHost) throw new Error('No applet host found for applet of dstWal');
+      try {
+        const result = await appletHost.bindAsset(srcWal, dstWal);
+        // TODO sanitize result format
+        return result;
+      } catch (e) {
+        console.error('Binding failed due to an error in the destination applet: ', e);
+        throw new Error(`Binding failed due to an error in the destination applet.`);
+      }
+    },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await weStore.groupStore(groupDnaHash);
       if (groupStore) {
@@ -399,6 +418,16 @@ export async function handleAppletIframeMessage(
         }
       }
       return attachableInfo;
+    case 'request-bind': {
+      const srcLocation = await toPromise(
+        weStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
+      );
+      if (!srcLocation) throw new Error('No applet found for srcWal.');
+      if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
+        throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
+
+      return weServices.requestBind(message.srcWal, message.dstWal);
+    }
     case 'sign-zome-call':
       logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);
@@ -463,6 +492,14 @@ export class AppletHost {
       integrityZomeName,
       entryType,
       hrlWithContext,
+    });
+  }
+
+  bindAsset(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+    return this.postMessage({
+      type: 'bind-asset',
+      srcWal,
+      dstWal,
     });
   }
 
