@@ -62,7 +62,7 @@ export class WeClipboard extends LitElement {
     this.mode = mode;
     this._dialog.show();
     this._searchField.focus();
-    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value();
+    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value().reverse();
   }
 
   hide() {
@@ -222,23 +222,19 @@ export class WeClipboard extends LitElement {
                   </div>
                   <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
                     ${this.recentlyCreatedContent.length > 0
-                      ? this.recentlyCreatedContent
-                          .reverse()
-                          .map(
-                            (hrlWithContextStringified) => html`
-                              <hrl-created-element
-                                .hrlWithContext=${deStringifyHrlWithContext(
-                                  hrlWithContextStringified,
-                                )}
-                                .selectTitle=${this.mode === 'open'
-                                  ? msg('Click to open')
-                                  : undefined}
-                                @added-to-pocket=${() => this.loadClipboardContent()}
-                                @hrl-selected=${(e) => this.handleHrlSelected(e)}
-                                style="margin: 0 7px 7px 0;"
-                              ></hrl-created-element>
-                            `,
-                          )
+                      ? this.recentlyCreatedContent.map(
+                          (hrlWithContextStringified) => html`
+                            <hrl-created-element
+                              .hrlWithContext=${deStringifyHrlWithContext(
+                                hrlWithContextStringified,
+                              )}
+                              .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
+                              @added-to-pocket=${() => this.loadClipboardContent()}
+                              @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                              style="margin: 0 7px 7px 0;"
+                            ></hrl-created-element>
+                          `,
+                        )
                       : html`Nothing in your pocket. Watch out for pocket icons to add things to
                         your pocket.`}
                   </div>
@@ -256,7 +252,7 @@ export class WeClipboard extends LitElement {
                     (hrlWithContextStringified) => html`
                       <hrl-element
                         .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
-                        .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
+                        .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
                         @hrl-removed=${() => this.loadClipboardContent()}
                         @hrl-selected=${(e) => this.handleHrlSelected(e)}
                         style="margin: 0 7px 7px 0;"

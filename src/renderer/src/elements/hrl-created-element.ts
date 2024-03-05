@@ -11,12 +11,14 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { encodeHashToBase64 } from '@holochain/client';
 
-import { HrlWithContext } from '@lightningrodlabs/we-applet';
+import { HrlWithContext, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { encodeContext, stringifyHrlWithContext } from '../utils.js';
+import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiShareVariantOutline } from '@mdi/js';
 
 @localized()
 @customElement('hrl-created-element')
@@ -66,35 +68,65 @@ export class HrlCreatedElement extends LitElement {
                   : ''
               }`}
             >
-              <div
-                class="row"
-                style="align-items: center; padding: 0; margin: 0;"
-                title=${this.selectTitle ? this.selectTitle : msg('Click to select')}
-                tabindex="0"
-                @click=${() => this.handleClick()}
-                @keypress.enter=${() => this.handleClick()}
-              >
-                <div class="row icon-container">
-                  <sl-icon
-                    style="height: 30px; width: 30px; border-radius: 5px 0 0 5px;"
-                    .src=${this.attachableInfo.value.value.icon_src}
-                    alt="${this.attachableInfo.value.value.name} entry type icon"
-                  ></sl-icon>
+              <sl-tooltip .content=${this.selectTitle ? this.selectTitle : msg('Select')}>
+                <div
+                  class="row"
+                  style="align-items: center; padding: 0; margin: 0;"
+                  tabindex="0"
+                  @click=${() => this.handleClick()}
+                  @keypress.enter=${() => this.handleClick()}
+                >
+                  <div class="row icon-container">
+                    <sl-icon
+                      style="height: 30px; width: 30px; border-radius: 5px 0 0 5px;"
+                      .src=${this.attachableInfo.value.value.icon_src}
+                      alt="${this.attachableInfo.value.value.name} entry type icon"
+                    ></sl-icon>
+                  </div>
+                  <div class="row title-container">${this.attachableInfo.value.value.name}</div>
                 </div>
-                <div class="row title-container">${this.attachableInfo.value.value.name}</div>
-              </div>
+              </sl-tooltip>
               <!-- <div class="row open">Open</div> -->
-              <div
-                class="row add-to-pocket"
-                title=${msg('Add to Pocket')}
-                tabindex="0"
-                @click=${() => {
-                  this._weStore.hrlToClipboard(this.hrlWithContext);
-                  this.dispatchEvent(new CustomEvent('added-to-pocket', {}));
-                }}
-              >
-                <img src="add-to-pocket.svg" style="height: 26px;" />
-              </div>
+
+              <sl-tooltip .content=${msg('Copy URL')}>
+                <div
+                  class="row share"
+                  tabindex="0"
+                  @click=${async () => {
+                    const weaveUrl = weaveUrlFromWal(this.hrlWithContext, false);
+                    await navigator.clipboard.writeText(weaveUrl);
+                    notify(msg('URL copied.'));
+                  }}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      const weaveUrl = weaveUrlFromWal(this.hrlWithContext, false);
+                      await navigator.clipboard.writeText(weaveUrl);
+                      notify(msg('URL copied.'));
+                    }
+                  }}
+                >
+                    <sl-icon .src=${wrapPathInSvg(mdiShareVariantOutline)}><sl-icon>
+                </div>
+              </sl-tooltip>
+
+              <sl-tooltip .content=${msg('Add to Pocket')}>
+                <div
+                  class="row add-to-pocket"
+                  tabindex="0"
+                  @click=${() => {
+                    this._weStore.hrlToClipboard(this.hrlWithContext);
+                    this.dispatchEvent(new CustomEvent('added-to-pocket', {}));
+                  }}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      this._weStore.hrlToClipboard(this.hrlWithContext);
+                      this.dispatchEvent(new CustomEvent('added-to-pocket', {}));
+                    }
+                  }}
+                >
+                  <img src="add-to-pocket.svg" style="height: 26px;" />
+                </div>
+              </sl-tooltip>
             </div>
           `;
         }
@@ -135,15 +167,25 @@ export class HrlCreatedElement extends LitElement {
       }
 
       .open {
-        padding: 0 8px;
-        background: #e3ffdb;
+        border-radius: 8px 0 0 8px;
+      }
+
+      .open:hover {
+        background: #e6eeff;
+      }
+
+      .share {
+        background: #a1f374;
         align-items: center;
         justify-content: center;
         height: 40px;
+        font-weight: bold;
+        width: 40px;
         cursor: pointer;
       }
-      .open:hover {
-        background: #b7eaab;
+
+      .share:hover {
+        background: #c8ffaa;
       }
 
       .add-to-pocket {
