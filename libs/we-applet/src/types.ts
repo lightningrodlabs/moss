@@ -139,6 +139,7 @@ export type AttachableLocationAndInfo = {
 export type AppletInfo = {
   appletBundleId: ActionHash;
   appletName: string;
+  appletIcon: string;
   groupsIds: Array<DnaHash>;
 };
 

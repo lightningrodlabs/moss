@@ -170,9 +170,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       // const maybeCachedInfo = weStore.weCache.appletInfo.value(appletHash);
       // if (maybeCachedInfo) return maybeCachedInfo;
 
-      let applet: AppletStore | undefined;
+      let appletStore: AppletStore | undefined;
       try {
-        applet = await toPromise(weStore.appletStores.get(appletHash));
+        appletStore = await toPromise(weStore.appletStores.get(appletHash));
       } catch (e) {
         console.warn(
           'No appletInfo found for applet with id ',
@@ -181,12 +181,14 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           e,
         );
       }
-      if (!applet) return undefined;
+      if (!appletStore) return undefined;
       const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
+      const icon = await toPromise(appletStore.logo);
 
       return {
-        appletBundleId: appEntryIdFromDistInfo(applet.applet.distribution_info),
-        appletName: applet.applet.custom_name,
+        appletBundleId: appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+        appletName: appletStore.applet.custom_name,
+        appletIcon: icon,
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },

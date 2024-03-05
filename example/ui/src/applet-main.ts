@@ -7,9 +7,8 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import './elements/all-posts.js';
 import './elements/create-post.js';
 import { type HrlWithContext, type WeNotification, WeClient } from '@lightningrodlabs/we-applet';
-import { AppAgentClient, decodeHashFromBase64 } from '@holochain/client';
+import { AppAgentClient } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
-import { decodeContext } from '@lightningrodlabs/we-elements';
 
 @localized()
 @customElement('applet-main')
@@ -40,7 +39,6 @@ export class AppletMain extends LitElement {
 
   @state()
   walEmbedLink: string = '';
-
   // @state()
   // unsubscribe: undefined | (() => void);
 
@@ -125,7 +123,7 @@ export class AppletMain extends LitElement {
 
   render() {
     return html`
-      <div class="column">
+      <div class="column" style="margin-bottom: 500px;">
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>
@@ -157,17 +155,23 @@ export class AppletMain extends LitElement {
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
 
             <div>Embed Hrl:</div>
-            <input
-              id="wal-embed-input-field"
-              type="text"
-              @input=${() => {
+            <input id="wal-embed-input-field" type="text" rows="4" cols="50" />
+            <button
+              @click=${() => {
                 this.updateWalEmbedLink();
               }}
-              rows="4"
-              cols="50"
-            />
+              style="width: 100px; margin-top: 5px;"
+            >
+              Embed
+            </button>
             ${this.walEmbedLink !== ''
-              ? html` <wal-embed .weClient=${this.weClient} .src=${this.walEmbedLink}></wal-embed> `
+              ? html`
+                  <wal-embed
+                    style="margin-top: 20px;"
+                    .weClient=${this.weClient}
+                    .src=${this.walEmbedLink}
+                  ></wal-embed>
+                `
               : html``}
           </div>
           <div class="row" style="flex-wrap: wrap;">

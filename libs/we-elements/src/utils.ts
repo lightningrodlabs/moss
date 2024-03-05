@@ -39,6 +39,33 @@ export async function getAppletsInfosAndGroupsProfiles(
   };
 }
 
+export async function getAppletInfoAndGroupsProfiles(
+  weClient: WeClient,
+  appletHash: EntryHash,
+): Promise<{
+  appletInfo: AppletInfo | undefined;
+  groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
+}> {
+  const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
+  const appletInfo = await weClient.appletInfo(appletHash);
+  if (appletInfo) {
+    for (const groupId of appletInfo.groupsIds) {
+      if (!groupProfiles.has(groupId)) {
+        const groupProfile = await weClient.groupProfile(groupId);
+
+        if (groupProfile) {
+          groupProfiles.set(groupId, groupProfile);
+        }
+      }
+    }
+  }
+
+  return {
+    appletInfo,
+    groupProfiles,
+  };
+}
+
 export function encodeContext(context: any) {
   return fromUint8Array(encode(context), true);
 }

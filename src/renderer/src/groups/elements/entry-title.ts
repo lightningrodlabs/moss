@@ -34,11 +34,23 @@ export class EntryTitle extends LitElement {
   renderName(info: AttachableInfo | undefined) {
     if (!info) return html`[Unknown]`;
 
-    return html` <sl-icon
-        .src=${info.icon_src}
-        style="display: flex; margin-top: 2px; margin-right: 4px"
-      ></sl-icon>
-      <span style="color: black;">${info.name}</span>`;
+    return html`
+      <div class="row" style="align-items: center;">
+        <div>
+          <sl-icon
+            .src=${info.icon_src}
+            style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 20px;"
+          ></sl-icon>
+        </div>
+        <div
+          class="column"
+          title="${info.name}"
+          style="color: black; overflow: hidden; height: 26px; max-width: 145px; margin-top: 10px;"
+        >
+          ${info.name}
+        </div>
+      </div>
+    `;
   }
 
   render() {

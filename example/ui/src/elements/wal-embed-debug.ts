@@ -13,12 +13,12 @@ import {
   WeClient,
 } from '@lightningrodlabs/we-applet';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-import { appletOrigin, urlFromAppletHash } from '../utils';
+import { appletOrigin, urlFromAppletHash } from '@lightningrodlabs/we-elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { DnaHash } from '@holochain/client';
+import { DnaHash, EntryHash } from '@holochain/client';
+import { HoloHashMap } from '@holochain-open-dev/utils';
 import { mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
-import { getAppletInfoAndGroupsProfiles } from '../utils';
 
 type AssetStatus =
   | {
@@ -78,7 +78,7 @@ export class WalEmbed extends LitElement {
       if (attachableInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
           this.weClient,
-          attachableInfo?.appletHash,
+          attachableInfo?.appletHash
         );
         this.appletInfo = appletInfo;
         this.groupProfiles = groupProfiles;
@@ -112,7 +112,7 @@ export class WalEmbed extends LitElement {
         return html` <sl-spinner></sl-spinner> `;
       case 'success':
         const queryString = `view=applet-view&view-type=attachable&hrl=${stringifyHrl(
-          this.hrlWithContext!.hrl,
+          this.hrlWithContext!.hrl
         )}${
           this.hrlWithContext!.context
             ? `&context=${encodeContext(this.hrlWithContext!.context)}`
@@ -195,7 +195,7 @@ export class WalEmbed extends LitElement {
                           style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
                         />
                       </sl-tooltip>
-                    `,
+                    `
                   )}
                 </div>`
               : html``
@@ -250,4 +250,31 @@ export class WalEmbed extends LitElement {
       }
     `,
   ];
+}
+
+export async function getAppletInfoAndGroupsProfiles(
+  weClient: WeClient,
+  appletHash: EntryHash
+): Promise<{
+  appletInfo: AppletInfo | undefined;
+  groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
+}> {
+  const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
+  const appletInfo = await weClient.appletInfo(appletHash);
+  if (appletInfo) {
+    for (const groupId of appletInfo.groupsIds) {
+      if (!groupProfiles.has(groupId)) {
+        const groupProfile = await weClient.groupProfile(groupId);
+
+        if (groupProfile) {
+          groupProfiles.set(groupId, groupProfile);
+        }
+      }
+    }
+  }
+
+  return {
+    appletInfo,
+    groupProfiles,
+  };
 }
