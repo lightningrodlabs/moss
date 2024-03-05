@@ -225,6 +225,7 @@ export class MainDashboard extends LitElement {
             case 'hrl-selected':
               const hrlWithContext: HrlWithContext = e.detail.hrlWithContext;
               this.removeEventListener('hrl-selected', listener);
+              this._clipboard.hide();
               return resolve(hrlWithContext);
           }
         };
@@ -863,6 +864,7 @@ export class MainDashboard extends LitElement {
         @click=${(e) => e.stopPropagation()}
         @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
+        @open-creatable-panel=${() => this._creatablePanel.show()}
         @hrl-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('hrl-selected', {
@@ -894,15 +896,6 @@ export class MainDashboard extends LitElement {
               composed: false,
             }),
           );
-        }}
-        @sl-hide=${() => {
-          this.dispatchEvent(
-            new CustomEvent('cancel-select-hrl', {
-              bubbles: false,
-              composed: false,
-            }),
-          );
-          this.showClipboard = false;
         }}
       ></creatable-panel>
       <join-group-dialog

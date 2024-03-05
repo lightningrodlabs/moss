@@ -70,6 +70,15 @@ export class WeClipboard extends LitElement {
     this._dialog.hide();
   }
 
+  requestCreate() {
+    this.dispatchEvent(
+      new CustomEvent('open-creatable-panel', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   loadClipboardContent() {
     this.clipboardContent = this._weStore.persistedStore.clipboard.value();
   }
@@ -183,6 +192,25 @@ export class WeClipboard extends LitElement {
             ></clipboard-search>
           </we-client-context>
           ${
+            this.mode === 'select'
+              ? html`
+                  <sl-button
+                    variant="primary"
+                    style="margin-top: 10px;"
+                    @click=${() => this.requestCreate()}
+                  >
+                    <div class="row" style="align-items: center;">
+                      <img
+                        src="magic_hat.svg"
+                        style="height: 23px; margin-right: 3px; filter: invert(100%) sepia(0%) saturate(7482%) hue-rotate(211deg) brightness(99%) contrast(102%);"
+                      />
+                      <div>Create New</div>
+                    </div>
+                  </sl-button>
+                `
+              : html``
+          }
+          ${
             this.recentlyCreatedContent.length > 0
               ? html`
                   <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
@@ -252,7 +280,7 @@ export class WeClipboard extends LitElement {
         }
 
         sl-dialog {
-          --sl-panel-background-color: var(--sl-color-primary-0);
+          --sl-panel-background-color: var(--sl-color-tertiary-0);
         }
       `,
     ];

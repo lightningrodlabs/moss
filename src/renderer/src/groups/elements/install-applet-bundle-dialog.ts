@@ -272,7 +272,7 @@ export class InstallAppletBundleDialog extends LitElement {
       }
 
       sl-dialog {
-        --sl-panel-background-color: var(--sl-color-primary-0);
+        --sl-panel-background-color: var(--sl-color-tertiary-0);
       }
     `,
   ];

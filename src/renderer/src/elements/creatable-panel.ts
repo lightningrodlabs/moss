@@ -120,6 +120,13 @@ export class CreatablePanel extends LitElement {
         this._weStore.hrlToRecentlyCreated(creatableResult.hrlWithContext);
         notify(`New ${this._showCreatableView?.creatable.label} created.`);
         this._weStore.clearCreatableDialogResult(this._activeDialogId);
+        this.dispatchEvent(
+          new CustomEvent('hrl-selected', {
+            detail: { hrlWithContext: creatableResult.hrlWithContext },
+            bubbles: true,
+            composed: true,
+          }),
+        );
         this._activeDialogId = undefined;
         this._showCreatableView = undefined;
         this._dialog.hide();
@@ -326,7 +333,7 @@ export class CreatablePanel extends LitElement {
         }
 
         sl-dialog {
-          --sl-panel-background-color: var(--sl-color-primary-0);
+          --sl-panel-background-color: var(--sl-color-tertiary-0);
         }
       `,
     ];
