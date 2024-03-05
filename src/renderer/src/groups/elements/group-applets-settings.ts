@@ -165,29 +165,33 @@ export class GroupAppletsSettings extends LitElement {
                 ${msg('Joined Applets')}
               </div>
             </div>
-            <div
-              class="row"
-              style="flex: 1; justify-content: flex-end; align-items: center; margin-bottom: 18px; width: 800px;"
-            >
-              <span style="display: flex; flex: 1;"></span>
-              <span style="margin-right: 5px;"
-                >${groupDisabled ? msg('Enable Group') : msg('Disable Group')}</span
-              >
-              <sl-switch
-                size="large"
-                ?checked=${!groupDisabled}
-                @sl-change=${async () => {
-                  if (groupDisabled) {
-                    await this._groupStore.reEnableAllApplets();
-                    notify(msg('Applets re-enabled.'));
-                  } else {
-                    await this._groupStore.disableAllApplets();
-                    notify(msg('All Applets disabled.'));
-                  }
-                }}
-              >
-              </sl-switch>
-            </div>
+            ${this._groupApplets.value.value[0][0].size === 0
+              ? html``
+              : html`
+                  <div
+                    class="row"
+                    style="justify-content: flex-end; align-items: center; margin-bottom: 18px; width: 800px;"
+                  >
+                    <span style="display: flex; flex: 1;"></span>
+                    <span style="margin-right: 5px;"
+                      >${groupDisabled ? msg('Enable Group') : msg('Disable Group')}</span
+                    >
+                    <sl-switch
+                      size="large"
+                      ?checked=${!groupDisabled}
+                      @sl-change=${async () => {
+                        if (groupDisabled) {
+                          await this._groupStore.reEnableAllApplets();
+                          notify(msg('Applets re-enabled.'));
+                        } else {
+                          await this._groupStore.disableAllApplets();
+                          notify(msg('All Applets disabled.'));
+                        }
+                      }}
+                    >
+                    </sl-switch>
+                  </div>
+                `}
             ${this.renderInstalledApplets(
               this._groupApplets.value.value[0][0],
               this._groupApplets.value.value[0][1],
