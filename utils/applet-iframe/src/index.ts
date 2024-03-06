@@ -282,7 +282,14 @@ const handleMessage = async (
     case 'get-block-types':
       return window.__WE_APPLET_SERVICES__.blockTypes;
     case 'bind-asset':
-      return window.__WE_APPLET_SERVICES__.bindAsset(request.srcWal, request.dstWal);
+      return window.__WE_APPLET_SERVICES__.bindAsset(
+        appletClient,
+        request.srcWal,
+        request.dstWal,
+        request.dstRoleName,
+        request.dstIntegrityZomeName,
+        request.dstEntryType,
+      );
     case 'search':
       return window.__WE_APPLET_SERVICES__.search(
         appletClient,

@@ -168,7 +168,13 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       const appletHost = await toPromise(appletStore.host);
       if (!appletHost) throw new Error('No applet host found for applet of dstWal');
       try {
-        const result = await appletHost.bindAsset(srcWal, dstWal);
+        const result = await appletHost.bindAsset(
+          srcWal,
+          dstWal,
+          dstLocation.dnaLocation.roleName,
+          dstLocation.entryDefLocation.integrity_zome,
+          dstLocation.entryDefLocation.entry_def,
+        );
         // TODO sanitize result format
         return result;
       } catch (e) {
@@ -495,11 +501,20 @@ export class AppletHost {
     });
   }
 
-  bindAsset(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+  bindAsset(
+    srcWal: HrlWithContext,
+    dstWal: HrlWithContext,
+    dstRoleName: string,
+    dstIntegrityZomeName: string,
+    dstEntryType: string,
+  ): Promise<void> {
     return this.postMessage({
       type: 'bind-asset',
       srcWal,
       dstWal,
+      dstRoleName,
+      dstIntegrityZomeName,
+      dstEntryType,
     });
   }
 

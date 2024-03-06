@@ -175,7 +175,29 @@ export class AppletServices {
   /**
    * Bind an asset (srcWal) to an asset in your applet (dstWal).
    */
-  bindAsset: (srcWal: HrlWithContext, dstWal: HrlWithContext) => Promise<void>;
+  bindAsset: (
+    appletClient: AppAgentClient,
+    /**
+     * Waeve Asset Locator in the applet requesting the binding
+     */
+    srcWal: HrlWithContext,
+    /**
+     * Weave Asset Locator to which the srcWal should be bound to
+     */
+    dstWal: HrlWithContext,
+    /**
+     * role name of the dna containing the destination WAL
+     */
+    dstRoleName: RoleName,
+    /**
+     * integrity zome containing the destination WAL
+     */
+    dstIntegrityZomeName: ZomeName,
+    /**
+     * entry type of the destination WAL
+     */
+    dstEntryType: string,
+  ) => Promise<void>;
 }
 
 export interface WeServices {

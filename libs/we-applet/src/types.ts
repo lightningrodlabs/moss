@@ -269,6 +269,9 @@ export type ParentToAppletRequest =
       type: 'bind-asset';
       srcWal: HrlWithContext;
       dstWal: HrlWithContext;
+      dstRoleName: string;
+      dstIntegrityZomeName: string;
+      dstEntryType: string;
     }
   | {
       type: 'search';
