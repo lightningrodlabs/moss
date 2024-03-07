@@ -38,7 +38,7 @@ type AssetStatus =
 @localized()
 @customElement('wal-embed')
 export class WalEmbed extends LitElement {
-  @property()
+  @property({ type: WeClient, attribute: 'we-client' })
   weClient!: WeClient;
 
   @property()

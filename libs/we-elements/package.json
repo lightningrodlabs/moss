@@ -1,6 +1,6 @@
 {
   "name": "@lightningrodlabs/we-elements",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
