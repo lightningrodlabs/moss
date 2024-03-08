@@ -203,7 +203,13 @@ export class AppletMain extends LitElement {
               </div>
               ${this.walEmbedLink !== ''
                 ? html`
-                    <wal-embed style="margin-top: 20px;" .src=${this.walEmbedLink}></wal-embed>
+                    <wal-embed
+                      style="margin-top: 20px;"
+                      .src=${this.walEmbedLink}
+                      closable
+                      @open-in-sidebar=${() => console.log('Opening in sidebar')}
+                      @close=${() => console.log('Closing requested')}
+                    ></wal-embed>
                   `
                 : html``}
             </div>

@@ -1437,6 +1437,7 @@ export class MainDashboard extends LitElement {
           top: 0;
           bottom: 0;
           background-color: var(--sl-color-primary-950);
+          width: 74px;
         }
 
         .left-group-sidebar {
