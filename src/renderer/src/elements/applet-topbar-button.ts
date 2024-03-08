@@ -60,6 +60,7 @@ export class AppletTopBarButton extends LitElement {
         placement=${this.placement}
       >
         <applet-logo-raw
+          class="applet-icon ${this.selected ? 'no-shadow' : ''}"
           .appletHash=${this.appletStore.appletHash}
           .notificationUrgency=${this.appletNotificationStatus.value[0]}
           .notificationCount=${this.appletNotificationStatus.value[1]}
@@ -117,6 +118,19 @@ export class AppletTopBarButton extends LitElement {
 
       .refresh:hover {
         color: #90ff67;
+      }
+
+      .applet-icon {
+        box-shadow: 0 0 2px 3px var(--sl-color-primary-400);
+        border-radius: 12px;
+      }
+
+      .applet-icon:hover {
+        box-shadow: none;
+      }
+
+      .no-shadow {
+        box-shadow: none;
       }
     `,
   ];

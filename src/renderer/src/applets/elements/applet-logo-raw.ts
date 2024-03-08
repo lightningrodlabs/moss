@@ -44,7 +44,7 @@ export class AppletLogo extends LitElement {
     if (!logo) return html``;
 
     return html`
-      <div style="position: relative;">
+      <div style="position: relative;" class="row">
         <div
           class="row center-content notification-dot
             ${this.notificationUrgency === 'high' ? 'urgent' : ''}

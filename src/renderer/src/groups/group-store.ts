@@ -12,6 +12,7 @@ import {
   mapAndJoin,
   pipe,
   sliceAndJoin,
+  toPromise,
 } from '@holochain-open-dev/stores';
 import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
@@ -33,7 +34,7 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { WeStore } from '../we-store.js';
 import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet } from '../applets/types.js';
-import { isAppRunning, toLowerCaseB64 } from '../utils.js';
+import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
@@ -59,7 +60,10 @@ export class GroupStore {
   ) {
     this.groupClient = new GroupClient(appAgentWebsocket, 'group');
 
-    this.peerStatusStore = new PeerStatusStore(new PeerStatusClient(appAgentWebsocket, 'group'));
+    this.peerStatusStore = new PeerStatusStore(
+      new PeerStatusClient(appAgentWebsocket, 'group'),
+      {},
+    );
     this.profilesStore = new ProfilesStore(new ProfilesClient(appAgentWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appAgentWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
@@ -197,6 +201,64 @@ export class GroupStore {
     return appletHash;
   }
 
+  /**
+   * Disables all applets of this group and stores which applets had already been disabled
+   * in order to not re-enable those when enabling all applets again
+   */
+  async disableAllApplets() {
+    const installedApplets = await toPromise(this.allMyInstalledApplets);
+    const installedApps = await this.weStore.adminWebsocket.listApps({});
+    const disabledAppIds = installedApps
+      .filter((app) => isAppDisabled(app))
+      .map((appInfo) => appInfo.installed_app_id);
+
+    const disabledAppletsIds = installedApplets
+      .filter((appletHash) => disabledAppIds.includes(appIdFromAppletHash(appletHash)))
+      .map((appletHash) => encodeHashToBase64(appletHash));
+    // persist which applets have already been disabled
+    this.weStore.persistedStore.disabledGroupApplets.set(disabledAppletsIds, this.groupDnaHash);
+
+    for (const appletHash of installedApplets) {
+      // federated applets can only be disabled exlicitly
+      const federatedGroups = await this.groupClient.getFederatedGroups(appletHash);
+      if (federatedGroups.length === 0) {
+        await this.weStore.adminWebsocket.disableApp({
+          installed_app_id: appIdFromAppletHash(appletHash),
+        });
+      }
+    }
+    await this.weStore.reloadManualStores();
+  }
+
+  /**
+   * Re-enable all applets of this group except the onse that have already been disabled
+   * when calling disableAllApplets
+   */
+  async reEnableAllApplets() {
+    const installedApplets = await toPromise(this.allMyInstalledApplets);
+
+    const previouslyDisabled = this.weStore.persistedStore.disabledGroupApplets.value(
+      this.groupDnaHash,
+    );
+
+    const appletsToEnable = previouslyDisabled
+      ? installedApplets.filter(
+          (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
+        )
+      : installedApplets;
+
+    for (const appletHash of appletsToEnable) {
+      await this.weStore.adminWebsocket.enableApp({
+        installed_app_id: appIdFromAppletHash(appletHash),
+      });
+    }
+    // remove disabled group applets from persisted store since this also acts as an
+    // indicator for whether the group is disabled or not
+    this.weStore.persistedStore.disabledGroupApplets.set(undefined, this.groupDnaHash);
+
+    await this.weStore.reloadManualStores();
+  }
+
   appletFederatedGroups = new LazyHoloHashMap((appletHash: EntryHash) =>
     lazyLoadAndPoll(async () => this.groupClient.getFederatedGroups(appletHash), 5000),
   );
@@ -208,6 +270,29 @@ export class GroupStore {
   // need to change this. allApplets needs to come from the conductor
   // Currently unused
   // allGroupApplets = lazyLoadAndPoll(async () => this.groupClient.getGroupApplets(), APPLETS_POLLING_FREQUENCY);
+
+  allMyInstalledApplets = manualReloadStore(async () => {
+    const allMyApplets = await (async () => {
+      if (!this.constructed) {
+        return retryUntilResolved<Array<AppletHash>>(
+          () => this.groupClient.getMyApplets(),
+          200,
+          undefined,
+          false,
+        );
+      }
+      return this.groupClient.getMyApplets();
+    })();
+    // const allMyApplets = await this.groupClient.getMyApplets();
+    const installedApps = await this.weStore.adminWebsocket.listApps({});
+
+    const output = allMyApplets.filter((appletHash) =>
+      installedApps
+        .map((appInfo) => appInfo.installed_app_id)
+        .includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
+    );
+    return output;
+  });
 
   allMyRunningApplets = manualReloadStore(async () => {
     const allMyApplets = await (async () => {

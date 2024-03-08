@@ -6,8 +6,14 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 
 import './elements/all-posts.js';
 import './elements/create-post.js';
-import { type HrlWithContext, type WeNotification, WeClient } from '@lightningrodlabs/we-applet';
+import {
+  type HrlWithContext,
+  type WeNotification,
+  WeClient,
+  weaveUrlToLocation,
+} from '@lightningrodlabs/we-applet';
 import { AppAgentClient } from '@holochain/client';
+import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
 
 @localized()
 @customElement('applet-main')
@@ -21,6 +27,9 @@ export class AppletMain extends LitElement {
   @query('#hrl-input-field')
   hrlInputField!: HTMLInputElement;
 
+  @query('#wal-embed-input-field')
+  walEmbedInputField!: HTMLInputElement;
+
   @state()
   mediumInterval: number | null = null;
 
@@ -33,6 +42,8 @@ export class AppletMain extends LitElement {
   @state()
   hrlLink: string = '';
 
+  @state()
+  walEmbedLink: string = '';
   // @state()
   // unsubscribe: undefined | (() => void);
 
@@ -47,6 +58,10 @@ export class AppletMain extends LitElement {
 
   updateHrlLink() {
     this.hrlLink = this.hrlInputField.value;
+  }
+
+  updateWalEmbedLink() {
+    this.walEmbedLink = this.walEmbedInputField.value;
   }
 
   sendUrgentNotification(delay: number) {
@@ -113,7 +128,7 @@ export class AppletMain extends LitElement {
 
   render() {
     return html`
-      <div class="column">
+      <div class="column" style="margin-bottom: 500px;">
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>
@@ -143,6 +158,55 @@ export class AppletMain extends LitElement {
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
+
+            <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
+              <div><b>Create Binding:</b></div>
+              <div class="row">
+                <span>srcWal: </span>
+                <input id="src-wal-input" />
+              </div>
+              <div class="row">
+                <span>dstWal: </span>
+                <input id="dst-wal-input" />
+              </div>
+              <button
+                @click=${async () => {
+                  const srcValInput = this.shadowRoot!.getElementById(
+                    'src-wal-input'
+                  ) as HTMLInputElement;
+                  const dstWalInput = this.shadowRoot!.getElementById(
+                    'dst-wal-input'
+                  ) as HTMLInputElement;
+                  const srcWal = weaveUrlToLocation(srcValInput.value);
+                  if (srcWal.type !== 'asset') throw new Error('Invalid srcVal.');
+                  const dstWal = weaveUrlToLocation(dstWalInput.value);
+                  if (dstWal.type !== 'asset') throw new Error('Invalid dstVal.');
+                  await this.weClient.requestBind(srcWal.hrlWithContext, dstWal.hrlWithContext);
+                }}
+              >
+                Bind!
+              </button>
+            </div>
+
+            <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
+              <div><b>Embed Hrl:</b></div>
+              <div class="row" style="margin-bottom: 10px;">
+                <input id="wal-embed-input-field" type="text" rows="4" cols="50" />
+                <button
+                  @click=${() => {
+                    this.updateWalEmbedLink();
+                  }}
+                  style="width: 100px; margin-left: 5px;"
+                >
+                  Embed
+                </button>
+              </div>
+              ${this.walEmbedLink !== ''
+                ? html`
+                    <wal-embed style="margin-top: 20px;" .src=${this.walEmbedLink}></wal-embed>
+                  `
+                : html``}
+            </div>
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts

@@ -1,7 +1,6 @@
-import { get, pipe, toPromise } from '@holochain-open-dev/stores';
+import { get, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
-  AttachmentType,
   AttachableInfo,
   AttachableLocationAndInfo,
   HrlLocation,
@@ -10,17 +9,15 @@ import {
   AppletToParentRequest,
   ParentToAppletRequest,
   IframeConfig,
-  InternalAttachmentType,
   BlockType,
   WeServices,
   GroupProfile,
-  AttachmentName,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
-import { HoloHashMap } from '@holochain-open-dev/utils';
 
 import { AppOpenViews } from '../layout/types.js';
 import {
+  getAppletDevPort,
   getAppletIframeScript,
   selectScreenOrWindow,
   signZomeCallElectron,
@@ -30,6 +27,7 @@ import { WeStore } from '../we-store.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
   appEntryIdFromDistInfo,
+  appIdFromAppletHash,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
@@ -123,8 +121,6 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
 
 export function buildHeadlessWeClient(weStore: WeStore): WeServices {
   return {
-    // background-services don't need to provide global attachment types as they are available via the WeStore anyway.
-    attachmentTypes: new HoloHashMap<AppletHash, Record<AttachmentName, AttachmentType>>(),
     async attachableInfo(
       hrlWithContext: HrlWithContext,
     ): Promise<AttachableLocationAndInfo | undefined> {
@@ -161,6 +157,31 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         return undefined;
       }
     },
+    async requestBind(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+      const dstLocation = await toPromise(
+        weStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
+      );
+      if (!dstLocation) throw new Error('No applet found for the given dstWal');
+      const appletStore = await toPromise(
+        weStore.appletStores.get(dstLocation.dnaLocation.appletHash),
+      );
+      const appletHost = await toPromise(appletStore.host);
+      if (!appletHost) throw new Error('No applet host found for applet of dstWal');
+      try {
+        const result = await appletHost.bindAsset(
+          srcWal,
+          dstWal,
+          dstLocation.dnaLocation.roleName,
+          dstLocation.entryDefLocation.integrity_zome,
+          dstLocation.entryDefLocation.entry_def,
+        );
+        // TODO sanitize result format
+        return result;
+      } catch (e) {
+        console.error('Binding failed due to an error in the destination applet: ', e);
+        throw new Error(`Binding failed due to an error in the destination applet.`);
+      }
+    },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await weStore.groupStore(groupDnaHash);
       if (groupStore) {
@@ -174,9 +195,9 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       // const maybeCachedInfo = weStore.weCache.appletInfo.value(appletHash);
       // if (maybeCachedInfo) return maybeCachedInfo;
 
-      let applet: AppletStore | undefined;
+      let appletStore: AppletStore | undefined;
       try {
-        applet = await toPromise(weStore.appletStores.get(appletHash));
+        appletStore = await toPromise(weStore.appletStores.get(appletHash));
       } catch (e) {
         console.warn(
           'No appletInfo found for applet with id ',
@@ -185,60 +206,16 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
           e,
         );
       }
-      if (!applet) return undefined;
+      if (!appletStore) return undefined;
       const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
+      const icon = await toPromise(appletStore.logo);
 
       return {
-        appletBundleId: appEntryIdFromDistInfo(applet.applet.distribution_info),
-        appletName: applet.applet.custom_name,
+        appletBundleId: appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+        appletName: appletStore.applet.custom_name,
+        appletIcon: icon,
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
-    },
-    async search(filter: string) {
-      // console.log('%%%%%% @headlessWeClient: searching...');
-      const hosts = await toPromise(weStore.allAppletsHosts);
-      // console.log(
-      //   '%%%%%% @headlessWeClient: got hosts: ',
-      //   Array.from(hosts.keys()).map((hash) => encodeHashToBase64(hash)),
-      // );
-
-      const hostsArray = Array.from(hosts.entries());
-      weStore.updateSearchParams(filter, hostsArray.length);
-
-      // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
-      // is still the same
-
-      const promises: Array<Promise<void>> = [];
-
-      // TODO fix case where applet host failed to initialize
-      for (const [appletHash, host] of hostsArray) {
-        promises.push(
-          (async () => {
-            const cachedResults = weStore.weCache.searchResults.value(appletHash, filter);
-            if (cachedResults) {
-              console.log('Cache hit!');
-              weStore.updateSearchResults(filter, cachedResults, true);
-            }
-            try {
-              // console.log(`searching for host ${host?.appletId}...`);
-              const results = host ? await host.search(filter) : [];
-              weStore.updateSearchResults(filter, results, false);
-
-              // Cache results here for an applet/filter pair.
-              weStore.weCache.searchResults.set(results, appletHash, filter);
-              // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
-              // return results;
-            } catch (e) {
-              console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
-              // Update search results to allow for reaching 'complete' state
-              weStore.updateSearchResults(filter, [], false);
-            }
-          })(),
-        );
-      }
-
-      // Do this async and return function immediately.
-      setTimeout(async () => await Promise.all(promises));
     },
     async notifyWe(_notifications: Array<WeNotification>) {
       throw new Error('notify is not implemented on headless WeServices.');
@@ -266,7 +243,6 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
-  let host: AppletHost | undefined;
   const weServices = buildHeadlessWeClient(weStore);
 
   switch (message.type) {
@@ -433,32 +409,43 @@ export async function handleAppletIframeMessage(
       }
       return;
     }
-
     case 'get-applet-info':
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
       return weServices.groupProfile(message.groupId);
     case 'get-global-attachable-info':
-      console.log("@applet-host: got 'get-attachable-info' message: ", message);
-      return weServices.attachableInfo(message.hrlWithContext);
-    case 'get-global-attachment-types':
-      return toPromise(weStore.allAttachmentTypes);
+      let attachableInfo = await weServices.attachableInfo(message.hrlWithContext);
+      if (attachableInfo && weStore.isAppletDev) {
+        const appletDevPort = await getAppletDevPort(
+          appIdFromAppletHash(attachableInfo.appletHash),
+        );
+        if (appletDevPort) {
+          attachableInfo.appletDevPort = appletDevPort;
+        }
+      }
+      return attachableInfo;
+    case 'request-bind': {
+      const srcLocation = await toPromise(
+        weStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
+      );
+      if (!srcLocation) throw new Error('No applet found for srcWal.');
+      if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
+        throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
+
+      return weServices.requestBind(message.srcWal, message.dstWal);
+    }
     case 'sign-zome-call':
       logZomeCall(message.request, appletId);
       return signZomeCallElectron(message.request);
-    case 'create-attachment': {
-      // TODO make sure that applets cannot create attachables on behalf of other applets
-      const appletHash = decodeHashFromBase64(appletId);
-      host = await toPromise(
-        pipe(weStore.appletStores.get(appletHash), (appletStore) => appletStore!.host),
-      );
-      return host
-        ? host.createAttachment(
-            message.request.attachmentType,
-            message.request.attachToHrlWithContext,
-          )
-        : Promise.reject(new Error('No applet host available.'));
-    }
+    case 'creatable-result':
+      if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
+      if (!message.result) throw new Error("Message is missing the 'result' property.");
+      weStore.setCreatableDialogResult(message.dialogId, message.result);
+      break;
+    case 'update-creatable-types':
+      // TODO validate message content
+      weStore.updateCreatableTypes(appletId, message.value);
+      break;
     case 'localStorage.setItem': {
       const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
@@ -505,7 +492,6 @@ export class AppletHost {
     entryType: string,
     hrlWithContext: HrlWithContext,
   ): Promise<AttachableInfo | undefined> {
-    console.log('@applet-host: calling getAppletAttachableInfo()');
     return this.postMessage({
       type: 'get-applet-attachable-info',
       roleName,
@@ -515,27 +501,27 @@ export class AppletHost {
     });
   }
 
+  bindAsset(
+    srcWal: HrlWithContext,
+    dstWal: HrlWithContext,
+    dstRoleName: string,
+    dstIntegrityZomeName: string,
+    dstEntryType: string,
+  ): Promise<void> {
+    return this.postMessage({
+      type: 'bind-asset',
+      srcWal,
+      dstWal,
+      dstRoleName,
+      dstIntegrityZomeName,
+      dstEntryType,
+    });
+  }
+
   search(filter: string): Promise<Array<HrlWithContext>> {
     return this.postMessage({
       type: 'search',
       filter,
-    });
-  }
-
-  createAttachment(
-    attachmentType: string,
-    attachToHrlWithContext: HrlWithContext,
-  ): Promise<HrlWithContext> {
-    return this.postMessage({
-      type: 'create-attachment',
-      attachmentType,
-      attachToHrlWithContext,
-    });
-  }
-
-  async getAppletAttachmentTypes(): Promise<Record<string, InternalAttachmentType>> {
-    return this.postMessage({
-      type: 'get-applet-attachment-types',
     });
   }
 

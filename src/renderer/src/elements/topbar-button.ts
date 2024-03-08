@@ -67,10 +67,11 @@ export class TopBarButton extends LitElement {
         .indicator {
           position: absolute;
           bottom: 0;
-          height: 7px;
+          height: 5px;
           border-radius: 7px 7px 0 0;
           width: 32px;
-          background: #51ed18;
+          background: var(--sl-color-tertiary-50);
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {

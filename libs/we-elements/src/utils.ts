@@ -1,7 +1,7 @@
 import { HoloHashMap } from '@holochain-open-dev/utils';
-import { EntryHash } from '@holochain/client';
+import { EntryHash, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
 import { WeClient } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
@@ -39,10 +39,51 @@ export async function getAppletsInfosAndGroupsProfiles(
   };
 }
 
+export async function getAppletInfoAndGroupsProfiles(
+  weClient: WeClient,
+  appletHash: EntryHash,
+): Promise<{
+  appletInfo: AppletInfo | undefined;
+  groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
+}> {
+  const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
+  const appletInfo = await weClient.appletInfo(appletHash);
+  if (appletInfo) {
+    for (const groupId of appletInfo.groupsIds) {
+      if (!groupProfiles.has(groupId)) {
+        const groupProfile = await weClient.groupProfile(groupId);
+
+        if (groupProfile) {
+          groupProfiles.set(groupId, groupProfile);
+        }
+      }
+    }
+  }
+
+  return {
+    appletInfo,
+    groupProfiles,
+  };
+}
+
 export function encodeContext(context: any) {
   return fromUint8Array(encode(context), true);
 }
 
 export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
+}
+
+export function appletOrigin(appletHash: AppletHash): string {
+  return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
+}
+
+export function toLowerCaseB64(hashb64: HoloHashB64): string {
+  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
+}
+
+export function urlFromAppletHash(appletHash: AppletHash): string {
+  const appletHashB64 = encodeHashToBase64(appletHash);
+  const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
+  return lowerCaseAppletId.replaceAll('$', '%24');
 }

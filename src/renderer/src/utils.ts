@@ -400,22 +400,34 @@ export function deStringifyHrlWithContext(hrlWithContextStringified: string): Hr
   return decode(toUint8Array(hrlWithContextStringified)) as HrlWithContext;
 }
 
-export function renderViewToQueryString(renderView: RenderView): string {
+export function renderViewToQueryString(
+  renderView:
+    | RenderView
+    | { type: 'applet-view'; view: { type: 'creatable'; creatableName: string; dialogId: string } },
+): string {
   let base = `view=${renderView.type}`;
 
   if (renderView.view) {
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
 
-    if ('block' in renderView.view) {
+    if (renderView.view.type === 'block') {
       base = `${base}&block=${renderView.view.block}`;
     }
-    if ('hrlWithContext' in renderView.view) {
+    if (renderView.view.type === 'attachable') {
       const hrlWithContext = renderView.view.hrlWithContext;
       base = `${base}&hrl=${stringifyHrl(hrlWithContext.hrl)}`;
       if (hrlWithContext.context) {
         const b64context = fromUint8Array(encode(hrlWithContext.context), true);
         base = `${base}&context=${b64context}`;
       }
+    }
+    if (renderView.view.type === 'creatable') {
+      if (!('dialogId' in renderView.view))
+        throw new Error('dialog Id not provided in render view.');
+      const creatableName = renderView.view.creatableName;
+      // Note that this violates the typescript type
+      const dialogId = renderView.view.dialogId;
+      base = `${base}&creatable=${creatableName}&id=${dialogId}`;
     }
   }
 

@@ -22,66 +22,54 @@ Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and d
 
 ### Environment Setup
 
-0. Enter nix shell to get the holochain dev environment (follow [holochain's setup instructions](https://developer.holochain.org/get-started/) if you don't have nix installed yet)
+0. Enter nix shell to get the holochain dev environment (follow [holochain's setup instructions](https://developer.holochain.org/get-started/) if you don't have nix installed yet).
 
 ```bash
 nix develop
 ```
 
-1. Build the Node Rust-add-ons, install and build all dependencies and download default apps:
+1. Run the following command to set up the dev environment:
 
 ```bash
 yarn setup
 ```
 
-2. Fetch the holochain or lair binaries for your platform:
+This command will
 
-```bash
-# Linux
-mkdir resources/bins
-yarn fetch-binaries:linux
-chmod +x resources/bins/* # give permission to run the binaries
-
-# macOS
-mkdir resources/bins
-yarn fetch-binaries:macos
-chmod +x resources/bins/* # give permission to run the binaries
-
-# Windows
-mkdir resources/bins
-yarn fetch-binaries:windows
-```
-
-OR
-
-Build the sidecar binaries locally:
-
-```bash
-bash ./scripts/setup-binaries.sh
-```
+- install all npm dependencies
+- build the required local libraries
+- build the We group DNA and the zomes in the crates folder
+- fetch the required holochain and lair binaries from [here](https://github.com/matthme/holochain-binaries/releases)
+- fetch the default apps (at the time of writing those are the app library and the feedback board)
+- run the necessary commands to link the packages in `libs/we-applet` and `libs/we-elements` with `yarn link` to have them be hot-reloaded in the example applet
 
 ### Development
 
-The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.json` file.
+The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.ts` file.
 
 ```bash
-$ yarn build:example-applet
-$ yarn applet-dev
+yarn build
+yarn build:example-applet
+yarn applet-dev-example
 ```
 
 We will start up 2 agents each with the same group and 3 applets installed. One of the applets will be in hot-reloading mode, i.e. you can modify the code in the `example/ui/` directory and should see the changes immediately. You should also see changes applied to the `src/renderer/src` directory immediately reflected.
+
+#### Rust add-ons
+
+The Rust add-ons used in the main process are maintained in a [separate repository](https://github.com/lightningrodlabs/we-rust-utils)
 
 ### Build
 
 ```bash
 # For windows
-$ yarn build:win
+yarn build:win
 
 # For macOS
-$ yarn build:mac
+yarn build:mac
 
 # For Linux
-$ yarn build:linux
+yarn build:linux
 ```
 
 ## License

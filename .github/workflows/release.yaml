@@ -55,81 +55,11 @@ jobs:
           rustup target add wasm32-unknown-unknown
           yarn build:zomes
 
-      - name: setup binaries (Windows only)
-        if: matrix.platform == 'windows-2019'
-        run: |
-          mkdir resources/bins
-
-          $env:LAIR_VERSION = $(node -p -e "require('./moss.config.json').lairVersion")
-          $env:HOLOCHAIN_VERSION = $(node -p -e "require('./moss.config.json').holochainVersion")
-
-          cargo install --version $env:LAIR_VERSION lair_keystore
-          $LkPath = Get-Command lair-keystore | Select-Object -ExpandProperty Definition
-          Copy-Item $LkPath -Destination resources/bins/lair-keystore-v$env:LAIR_VERSION.exe
-
-          # curl -L --output resources/bins/lair-keystore-v$env:LAIR_VERSION.exe https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$env:LAIR_VERSION/lair-keystore-v$env:LAIR_VERSION-x86_64-pc-windows-msvc.exe
-
-          # cargo install --version $env:HOLOCHAIN_VERSION holochain
-          # $HcPath = Get-Command holochain | Select-Object -ExpandProperty Definition
-          # Copy-Item $HcPath -Destination holochain-v$env:HOLOCHAIN_VERSION-x86_64-pc-windows-msvc.exe
-
-          curl -L --output resources/bins/holochain-v$env:HOLOCHAIN_VERSION.exe https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-$env:HOLOCHAIN_VERSION/holochain-v$env:HOLOCHAIN_VERSION-x86_64-pc-windows-msvc.exe
-
-          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
-
-      - name: setup binaries (macos only)
-        if: matrix.platform == 'macos-11'
-        run: |
-          mkdir resources/bins
-
-          LAIR_VERSION=$(node -p -e "require('./moss.config.json').lairVersion")
-          HOLOCHAIN_VERSION=$(node -p -e "require('./moss.config.json').holochainVersion")
-
-          cargo install --version $LAIR_VERSION lair_keystore
-          LAIR_PATH=$(which lair-keystore)
-          cp $LAIR_PATH resources/bins/lair-keystore-v$LAIR_VERSION
-
-          # curl -L --output resources/bins/lair-keystore-v$LAIR_VERSION https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$LAIR_VERSION/lair-keystore-v$LAIR_VERSION-x86_64-apple-darwin
-          # chmod +x ./resources/bins/lair-keystore-v$LAIR_VERSION
-
-          # cargo install holochain --version $HOLOCHAIN_VERSION --locked --features sqlite-encrypted
-          # HOLOCHAIN_PATH=$(which holochain)
-          # cp $HOLOCHAIN_PATH resources/bins/holochain-v$HOLOCHAIN_VERSION
-
-          curl -L --output resources/bins/holochain-v$HOLOCHAIN_VERSION https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-$HOLOCHAIN_VERSION/holochain-v$HOLOCHAIN_VERSION-x86_64-apple-darwin
-          chmod +x ./resources/bins/holochain-v$HOLOCHAIN_VERSION
-
-          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
-
-      - name: setup binaries (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04' || matrix.platform == 'ubuntu-22.04'
-        run: |
-          mkdir resources/bins
-
-          LAIR_VERSION=$(node -p -e "require('./moss.config.json').lairVersion")
-          HOLOCHAIN_VERSION=$(node -p -e "require('./moss.config.json').holochainVersion")
-
-          cargo install --version $LAIR_VERSION lair_keystore
-          LAIR_PATH=$(which lair-keystore)
-          cp $LAIR_PATH resources/bins/lair-keystore-v$LAIR_VERSION
-
-          # curl -L --output resources/bins/lair-keystore-v$LAIR_VERSION https://github.com/holochain/launcher-electron/releases/download/lair-binaries-v$LAIR_VERSION/lair-keystore-v$LAIR_VERSION-x86_64-unknown-linux-gnu
-          # chmod +x ./resources/bins/lair-keystore-v$LAIR_VERSION
-
-          # cargo install holochain --version $HOLOCHAIN_VERSION --locked --features sqlite-encrypted
-          # HOLOCHAIN_PATH=$(which holochain)
-          # cp $HOLOCHAIN_PATH resources/bins/holochain-v$HOLOCHAIN_VERSION
-
-          curl -L --output resources/bins/holochain-v$HOLOCHAIN_VERSION https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-$HOLOCHAIN_VERSION/holochain-v$HOLOCHAIN_VERSION-x86_64-unknown-linux-gnu
-          chmod +x ./resources/bins/holochain-v$HOLOCHAIN_VERSION
-
-          # NEW_VERSION: install new holochain version and copy its binary to the tauri path
-
       - id: create-release
         uses: ncipollo/release-action@v1
         with:
           body: 'See assets below to download and install this version.'
-          name: Lightningrodlabs We (Alpha) v${{ steps.version.outputs.APP_VERSION }}
+          name: Moss (Alpha) v${{ steps.version.outputs.APP_VERSION }}
           tag: we-alpha-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           skipIfReleaseExists: true

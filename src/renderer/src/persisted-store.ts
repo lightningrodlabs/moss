@@ -1,4 +1,4 @@
-import { DnaHashB64 } from '@holochain/client';
+import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 import { AppletNotificationSettings } from './applets/types';
 
@@ -21,6 +21,16 @@ export class PersistedStore {
     },
     set: (value) => {
       this.store.setItem<string[]>('clipboard', value);
+    },
+  };
+
+  recentlyCreated: SubStore<string[], string[], []> = {
+    value: () => {
+      const recentlyCreatedContent = this.store.getItem<Array<string>>('recentlyCreated');
+      return recentlyCreatedContent ? recentlyCreatedContent : [];
+    },
+    set: (value) => {
+      this.store.setItem<string[]>('recentlyCreated', value);
     },
   };
 
@@ -109,6 +119,32 @@ export class PersistedStore {
     },
     set: (value: AppletNotificationSettings, appletId: AppletId) =>
       this.store.setItem(`appletNotificationSettings#${appletId}`, value),
+  };
+
+  /**
+   * When disabling all applets of a group the applets that were already disabled
+   * get stored here in order to not re-enable them again if the groups gets
+   * re-enabled
+   */
+  disabledGroupApplets: SubStore<
+    Array<AppletId> | undefined,
+    Array<AppletId> | undefined,
+    [DnaHash]
+  > = {
+    value: (groupDnaHash: DnaHash) => {
+      const disabledApplets = this.store.getItem<Array<AppletId>>(
+        `disabledGroupApplets#${encodeHashToBase64(groupDnaHash)}`,
+      );
+      return disabledApplets;
+    },
+    set: (value: Array<AppletId> | undefined, groupDnaHash: DnaHash) => {
+      const key = `disabledGroupApplets#${encodeHashToBase64(groupDnaHash)}`;
+      if (value) {
+        this.store.setItem(key, value);
+      } else {
+        this.store.removeItem(key);
+      }
+    },
   };
 }
 

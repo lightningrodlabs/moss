@@ -1,8 +1,16 @@
 {
   "name": "@lightningrodlabs/we-applet",
-  "version": "0.14.2",
+  "version": "0.15.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/we.git"
+  },
+  "keywords": [
+    "holochain"
+  ],
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"
@@ -16,7 +24,9 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "0.16.6"
+    "@holochain/client": "0.16.6",
+    "@msgpack/msgpack": "^2.7.2",
+    "js-base64": "^3.7.2"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

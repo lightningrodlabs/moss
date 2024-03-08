@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-GB">
   <head>
     <meta charset="utf-8" />
@@ -10,36 +10,63 @@
         height: 100%;
         width: 100%;
         display: flex;
-        font-family: "Aileron", "Open Sans", "Helvetica Neue", sans-serif;
+        font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
       }
 
       body {
-        --sl-color-primary-50: rgb(249 249 252);
-        --sl-color-primary-100: rgb(234 236 245);
-        --sl-color-primary-200: rgb(219 221 238);
-        --sl-color-primary-300: rgb(201 205 230);
-        --sl-color-primary-400: rgb(179 184 220);
-        --sl-color-primary-500: rgb(149 157 206);
-        --sl-color-primary-600: rgb(118 128 191);
-        --sl-color-primary-700: rgb(90 102 179);
-        --sl-color-primary-800: rgb(68 81 168);
-        --sl-color-primary-900: rgb(42 55 138);
-        --sl-color-primary-950: rgb(26 34 85);
+        --sl-color-primary-0: #ecffb6;
+        --sl-color-primary-50: #d8fc74;
+        --sl-color-primary-100: #a7ea03;
+        --sl-color-primary-200: #95d506;
+        --sl-color-primary-300: #82c009;
+        --sl-color-primary-400: #70ab0c;
+        --sl-color-primary-500: #5d960f;
+        --sl-color-primary-600: #4a8011;
+        --sl-color-primary-700: #386b14;
+        --sl-color-primary-800: #255617;
+        --sl-color-primary-900: #13411a;
+        --sl-color-primary-950: #002c1d;
+
+        --sl-color-secondary-0: #e2cbd4;
+        --sl-color-secondary-50: #d1b7c1;
+        --sl-color-secondary-100: #c0a5af;
+        --sl-color-secondary-200: #af949d;
+        --sl-color-secondary-300: #9f828c;
+        --sl-color-secondary-400: #8e717a;
+        --sl-color-secondary-500: #7d5f68;
+        --sl-color-secondary-600: #6c4d56;
+        --sl-color-secondary-700: #5b3c44;
+        --sl-color-secondary-800: #4b2a33;
+        --sl-color-secondary-900: #3a1921;
+        --sl-color-secondary-950: #29070f;
+
+        --sl-color-tertiary-0: #e7eeff;
+        --sl-color-tertiary-50: #dde7ff;
+        --sl-color-tertiary-100: #c7d3ef;
+        --sl-color-tertiary-200: #b1bedf;
+        --sl-color-tertiary-300: #9baacf;
+        --sl-color-tertiary-400: #8595bf;
+        --sl-color-tertiary-500: #6f81b0;
+        --sl-color-tertiary-600: #586ca0;
+        --sl-color-tertiary-700: #425890;
+        --sl-color-tertiary-800: #2c4380;
+        --sl-color-tertiary-900: #162f70;
+        --sl-color-tertiary-950: #001a60;
 
         --sidebar-width: 74px;
       }
     </style>
 
-    <title>We - Group Collaboration</title>
+    <title>Moss - Weaving Social Fabric</title>
   </head>
   <body>
     <we-app id="app-container"></we-app>
     <script>
-      window["__HC_LAUNCHER_ENV__"] = {};
+      window['__HC_LAUNCHER_ENV__'] = {};
     </script>
     <script type="module">
-      import "@shoelace-style/shoelace/dist/themes/light.css";
-      import "@fontsource/aileron";
+      import '@shoelace-style/shoelace/dist/themes/light.css';
+      import '@fontsource/aileron';
     </script>
     <script type="module" src="./src/we-app.ts"></script>
   </body>

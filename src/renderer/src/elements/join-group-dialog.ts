@@ -1,4 +1,4 @@
-import { html, LitElement } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { state, query, property, customElement } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
@@ -129,7 +129,14 @@ export class JoinGroupDialog extends LitElement {
     `;
   }
 
-  static styles = [weStyles];
+  static styles = [
+    weStyles,
+    css`
+      sl-dialog {
+        --sl-panel-background-color: var(--sl-color-primary-0);
+      }
+    `,
+  ];
 }
 
 function networkSeedFromInviteLink(inviteLink: string): string | undefined {

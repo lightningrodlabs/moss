@@ -13,6 +13,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '../groups/elements/group-context.js';
 import '../applets/elements/applet-logo.js';
 import './create-group-dialog.js';
+import './groups-for-applet.js';
 
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
@@ -72,6 +73,8 @@ export class ZomeCallPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 80px;">
             avg. zome calls per minute
           </div>
+          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
+          <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
         </div>
         ${Array.from(applets.entries())
           .sort(([hash_a, _a], [hash_b, _b]) => {
@@ -117,10 +120,14 @@ export class ZomeCallPanel extends LitElement {
                       : ''}
                   </div>
                   <span
-                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px;"
+                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
                     @click=${() => this.toggleDetails(appletId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
+                  <groups-for-applet
+                    style="margin-left: 10px;"
+                    .appletHash=${appletHash}
+                  ></groups-for-applet>
                 </div>
                 ${showDetails
                   ? Object.keys(zomeCallCount.functionCalls).map(

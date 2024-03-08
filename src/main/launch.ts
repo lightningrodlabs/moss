@@ -9,13 +9,13 @@ import { APPSTORE_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
-import { devSetup } from './devSetup';
-import { WeRustHandler } from 'hc-we-rust-utils';
-import { WeAppletDevInfo } from './cli';
+import { devSetup } from './cli/devSetup';
+import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { WeAppletDevInfo } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 
-const rustUtils = require('hc-we-rust-utils');
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS = {
   'feedback-board': 'kando.webhapp',
@@ -66,7 +66,7 @@ export async function launch(
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
       'loading-progress-update',
-      `Starting ${holochainVersion}...`,
+      `Starting Holochain ${holochainVersion}...`,
     );
 
   // launch holochain
@@ -152,12 +152,12 @@ export async function launch(
             const [happHash, uiHash, webHappHash] = hashResult.split('$');
             console.log('READ uiHash: ', uiHash);
             if (happHash !== currentAppAssetsInfo.happ.sha256) {
-              // In case that the previous happ sha256 is the one of KanDo 0.6.3, replace it fully
-              const sha256Happ064 =
-                '3c0ed7810919f0fb755116e37d27e995517e87f89225385ed797f22d8ca221d2';
-              if (currentAppAssetsInfo.happ.sha256 === sha256Happ064) {
+              // In case that the previous happ sha256 is not the one of KanDo 0.8.100, replace it fully
+              const sha256Happ_0_8_100 =
+                'fe4be7f9910b355533951afe33af899dcebe70e6837a2dbe13bf6fbdc5f50c72';
+              if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_8_100) {
                 console.warn(
-                  'Found KanDo feedback board version 0.6.x. Uninstalling it and replacing it with 0.7.x.',
+                  'Found old KanDo feedback board. Uninstalling it and replacing it with 0.8.100',
                 );
                 console.log(
                   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,

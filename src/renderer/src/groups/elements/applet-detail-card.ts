@@ -3,7 +3,7 @@ import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/element
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { msg } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { mdiShareVariant, mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -19,6 +19,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { Applet } from '../../applets/types.js';
 import { weStyles } from '../../shared-styles.js';
@@ -34,7 +35,9 @@ import {
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
+import { dialogMessagebox } from '../../electron-api.js';
 
+@localized()
 @customElement('applet-detail-card')
 export class AppletDetailCard extends LitElement {
   @consume({ context: weStoreContext, subscribe: true })
@@ -181,6 +184,21 @@ export class AppletDetailCard extends LitElement {
                 ?disabled=${!this.appInfo}
                 @sl-change=${async () => {
                   if (this.appInfo && isAppRunning(this.appInfo)) {
+                    const federatedGroups = await this.groupStore.groupClient.getFederatedGroups(
+                      this.appletHash,
+                    );
+                    if (federatedGroups.length > 0) {
+                      const confirmation = await dialogMessagebox({
+                        message:
+                          'WARNING: This Applet is federated with at least one other group. Disabling it will disable it for all groups.',
+                        type: 'warning',
+                        buttons: ['Cancel', 'Continue'],
+                      });
+                      if (confirmation.response === 0) {
+                        await this.weStore.reloadManualStores();
+                        return;
+                      }
+                    }
                     await this.weStore.disableApplet(this.appletHash);
                     notify(msg('Applet disabled.'));
                   } else if (this.appInfo && !isAppRunning(this.appInfo)) {
@@ -265,7 +283,7 @@ export class AppletDetailCard extends LitElement {
                   style="height: 20px; width: 20px;"
                   .src=${wrapPathInSvg(mdiTrashCanOutline)}
                 ></sl-icon
-                ><span style="margin-left: 5px;">Uninstall</span>
+                ><span style="margin-left: 5px;">${msg('Uninstall')}</span>
               </div>
             </sl-button>
           </div>

@@ -3,7 +3,7 @@
 // IPC_CHANGE_HERE
 import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
 

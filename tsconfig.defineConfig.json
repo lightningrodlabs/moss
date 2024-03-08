@@ -1,0 +1,17 @@
+{
+  "include": ["src/main/cli/defineConfig.ts"],
+  "compilerOptions": {
+    "outDir": "./cli",
+    "declaration": true,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "strict": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "noImplicitAny": false,
+    "experimentalDecorators": true,
+    "skipLibCheck": true
+  }
+}

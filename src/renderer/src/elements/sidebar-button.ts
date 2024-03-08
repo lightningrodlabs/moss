@@ -114,8 +114,9 @@ export class SidebarButton extends LitElement {
           right: 0;
           height: 32px;
           border-radius: 7px 0 0 7px;
-          width: 7px;
-          background: #51ed18;
+          width: 5px;
+          background: var(--sl-color-tertiary-50);
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {
@@ -128,7 +129,7 @@ export class SidebarButton extends LitElement {
           width: var(--sidebar-width);
         }
         .icon-container:hover {
-          background-color: var(--hover-color, var(--sl-color-primary-200));
+          background-color: var(--hover-color, var(--sl-color-primary-300));
         }
         .icon-container:hover::after {
           pointer-events: none;
@@ -141,7 +142,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .icon-container:hover::before {
           pointer-events: none;
@@ -154,11 +155,11 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .selected {
-          background-color: var(--hover-color, var(--sl-color-primary-200));
-          /* box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-200));
+          background-color: var(--hover-color, var(--sl-color-primary-300));
+          /* box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-300));
         background: var(--hover-color, var(--sl-color-primary-200)); */
         }
         .selected::after {
@@ -172,7 +173,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
         .selected::before {
           pointer-events: none;
@@ -185,7 +186,7 @@ export class SidebarButton extends LitElement {
           height: 50px;
           width: 80px;
           border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-200));
+          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
         }
 
         .notification-dot {

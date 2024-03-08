@@ -1,7 +1,6 @@
 import {
   asyncDerived,
   asyncDeriveStore,
-  AsyncReadable,
   completed,
   lazyLoad,
   mapAndJoin,
@@ -27,10 +26,12 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
 import {
+  CreatableResult,
+  CreatableName,
   GroupProfile,
   HrlWithContext,
-  InternalAttachmentType,
   ProfilesLocation,
+  CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
@@ -111,37 +112,29 @@ export class WeStore {
     'complete',
   ]);
 
-  updateSearchParams(filter: string, waitingForNHosts: number) {
-    this._searchParams = [filter, waitingForNHosts];
-    this._searchResponses = 0;
-  }
+  _allCreatableTypes: Writable<Record<AppletId, Record<CreatableName, CreatableType>>> = writable(
+    {},
+  );
 
-  updateSearchResults(filter: string, results: HrlWithContext[], fromCache: boolean) {
-    if (!fromCache) this._searchResponses += 1;
-    const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
-    this._searchResults.update((store) => {
-      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
-        return [filter, results, searchStatus];
-      } else if (this._searchParams[0] === filter) {
-        const deduplicatedResults = Array.from(
-          new Set(
-            [...store[1], ...results].map((hrlWithContext) =>
-              stringifyHrlWithContext(hrlWithContext),
-            ),
-          ),
-        ).map((stringifiedHrl) => deStringifyHrlWithContext(stringifiedHrl));
-        return [filter, deduplicatedResults, searchStatus];
-      }
+  // Contains a record of CreatableContextRestult ordered by dialog id.
+  _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
+
+  setCreatableDialogResult(dialogId: string, result: CreatableResult) {
+    this._creatableDialogResults.update((store) => {
+      store[dialogId] = result;
       return store;
     });
   }
 
-  clearSearchResults() {
-    this._searchResults.set(['', [], 'complete']);
+  creatableDialogResult(dialogId: string): Readable<CreatableResult | undefined> {
+    return derived(this._creatableDialogResults, (store) => store[dialogId]);
   }
 
-  searchResults(): Readable<[HrlWithContext[], SearchStatus]> {
-    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
+  clearCreatableDialogResult(dialogId): void {
+    this._creatableDialogResults.update((store) => {
+      delete store[dialogId];
+      return store;
+    });
   }
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
@@ -259,6 +252,46 @@ export class WeStore {
             appletNotification_b.notification.timestamp -
             appletNotification_a.notification.timestamp,
         );
+    });
+  }
+
+  updateSearchParams(filter: string, waitingForNHosts: number) {
+    this._searchParams = [filter, waitingForNHosts];
+    this._searchResponses = 0;
+  }
+
+  updateSearchResults(filter: string, results: HrlWithContext[], fromCache: boolean) {
+    if (!fromCache) this._searchResponses += 1;
+    const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
+    this._searchResults.update((store) => {
+      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
+        return [filter, results, searchStatus];
+      } else if (this._searchParams[0] === filter) {
+        const deduplicatedResults = Array.from(
+          new Set(
+            [...store[1], ...results].map((hrlWithContext) =>
+              stringifyHrlWithContext(hrlWithContext),
+            ),
+          ),
+        ).map((stringifiedHrl) => deStringifyHrlWithContext(stringifiedHrl));
+        return [filter, deduplicatedResults, searchStatus];
+      }
+      return store;
+    });
+  }
+
+  clearSearchResults() {
+    this._searchResults.set(['', [], 'complete']);
+  }
+
+  searchResults(): Readable<[HrlWithContext[], SearchStatus]> {
+    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
+  }
+
+  updateCreatableTypes(appletId: AppletId, creatableTypes: Record<CreatableName, CreatableType>) {
+    this._allCreatableTypes.update((store) => {
+      store[appletId] = creatableTypes;
+      return store;
     });
   }
 
@@ -456,6 +489,10 @@ export class WeStore {
     }),
   );
 
+  allCreatableTypes(): Readable<Record<AppletId, Record<CreatableName, CreatableType>>> {
+    return derived(this._allCreatableTypes, (store) => store);
+  }
+
   allRunningApplets = pipe(this.runningApplets, async (appletsHashes) => {
     // sliceAndJoin won't work here in case appletStores.get() returns an error
     // because an applet is installed in the conductor but not part of any of the groups
@@ -573,7 +610,6 @@ export class WeStore {
   );
 
   attachableInfo = new LazyMap((hrlWithContextStringified: string) => {
-    console.log('hrlWithContextStringified: ', hrlWithContextStringified);
     const hrlWithContext = deStringifyHrlWithContext(hrlWithContextStringified);
     return pipe(
       this.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),
@@ -638,24 +674,6 @@ export class WeStore {
   allAppletsHosts = pipe(this.allRunningApplets, (applets) =>
     mapAndJoin(applets, (appletStore) => appletStore.host),
   );
-
-  allAttachmentTypes: AsyncReadable<Record<EntryHashB64, Record<string, InternalAttachmentType>>> =
-    pipe(
-      this.allRunningApplets,
-      (runningApplets) => {
-        return mapAndJoin(runningApplets, (appletStore) => appletStore.attachmentTypes);
-      },
-      (allAttachmentTypes) => {
-        const attachments: Record<AppletId, Record<string, InternalAttachmentType>> = {};
-
-        for (const [appletHash, appletAttachments] of Array.from(allAttachmentTypes.entries())) {
-          if (Object.keys(appletAttachments).length > 0) {
-            attachments[encodeHashToBase64(appletHash)] = appletAttachments;
-          }
-        }
-        return completed(attachments);
-      },
-    );
 
   async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
@@ -780,6 +798,24 @@ export class WeStore {
     document.dispatchEvent(new CustomEvent('added-to-pocket'));
   }
 
+  hrlToRecentlyCreated(hrlWithContext: HrlWithContext) {
+    hrlWithContext = validateHrlWithContext(hrlWithContext);
+    let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();
+    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
+    // Only add if it's not already there
+    if (
+      recentlyCreatedContent.filter(
+        (hrlWithContextStringifiedStored) =>
+          hrlWithContextStringifiedStored === hrlWithContextStringified,
+      ).length === 0
+    ) {
+      recentlyCreatedContent.push(hrlWithContextStringified);
+    }
+    // keep the 8 latest created items only
+    recentlyCreatedContent = recentlyCreatedContent.slice(0, 8);
+    this.persistedStore.recentlyCreated.set(recentlyCreatedContent);
+  }
+
   removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
     const clipboardContent = this.persistedStore.clipboard.value();
     const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
@@ -788,5 +824,46 @@ export class WeStore {
         hrlWithContextStringifiedStored !== hrlWithContextStringified,
     );
     this.persistedStore.clipboard.set(newClipboardContent);
+  }
+
+  async search(filter: string) {
+    const hosts = await toPromise(this.allAppletsHosts);
+
+    const hostsArray = Array.from(hosts.entries());
+    this.updateSearchParams(filter, hostsArray.length);
+
+    // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
+    // is still the same
+
+    const promises: Array<Promise<void>> = [];
+
+    // TODO fix case where applet host failed to initialize
+    for (const [appletHash, host] of hostsArray) {
+      promises.push(
+        (async () => {
+          const cachedResults = this.weCache.searchResults.value(appletHash, filter);
+          if (cachedResults) {
+            this.updateSearchResults(filter, cachedResults, true);
+          }
+          try {
+            // console.log(`searching for host ${host?.appletId}...`);
+            const results = host ? await host.search(filter) : [];
+            this.updateSearchResults(filter, results, false);
+
+            // Cache results here for an applet/filter pair.
+            this.weCache.searchResults.set(results, appletHash, filter);
+            // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
+            // return results;
+          } catch (e) {
+            console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
+            // Update search results to allow for reaching 'complete' state
+            this.updateSearchResults(filter, [], false);
+          }
+        })(),
+      );
+    }
+
+    // Do this async and return function immediately.
+    setTimeout(async () => await Promise.all(promises));
   }
 }

@@ -24,7 +24,7 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
-import { WeRustHandler, ZomeCallUnsignedNapi } from 'hc-we-rust-utils';
+import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -34,27 +34,40 @@ import { emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
-import { APPLET_DEV_TMP_FOLDER_PREFIX, validateArgs } from './cli';
+import {
+  APPLET_DEV_TMP_FOLDER_PREFIX,
+  PRODUCTION_BOOTSTRAP_URLS,
+  PRODUCTION_SIGNALING_URLS,
+  validateArgs,
+} from './cli/cli';
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { readLocalServices, startLocalServices } from './cli/devSetup';
 
-const rustUtils = require('hc-we-rust-utils');
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-// https://github.com/nodeca/argparse/issues/128
-// if (app.isPackaged) {
-//   process.argv.splice(1, 0, '.');
-// }
+let appVersion = app.getVersion();
 
 console.log('process.argv: ', process.argv);
+
+const ranViaCli = process.argv[3] && process.argv[3].endsWith('we-dev-cli');
+if (ranViaCli) {
+  process.argv.splice(2, 2);
+  const cliPackageJsonPath = path.resolve(path.join(app.getAppPath(), '../../package.json'));
+  const cliPackageJson = require(cliPackageJsonPath);
+  appVersion = cliPackageJson.version;
+}
 
 const weCli = new Command();
 
 weCli
-  .name('Lightningrod Labs We')
-  .description('Running We via the command line.')
-  .version(app.getVersion())
+  .name(ranViaCli ? '@lightningrodlabs/we-dev-cli' : 'Lightningrod Labs We')
+  .description(
+    ranViaCli ? 'Running We applets in development mode.' : 'Running We via the command line.',
+  )
+  .version(appVersion)
   .option(
     '-p, --profile <string>',
     'Runs We with a custom profile with its own dedicated data store.',
@@ -67,34 +80,47 @@ weCli
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
-  .option(
-    '-b, --bootstrap-url <url>',
-    'URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  )
-  .option(
-    '-s, --signaling-url <url>',
-    'URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config argument.',
-  )
+  .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
+  .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
   )
   .addOption(
     new Option(
-      '--agent-num <number>',
-      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for.',
+      '--agent-idx <number>',
+      'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for. The agent with agentIdx 1 always needs to be run first.',
     ).argParser(parseInt),
   );
 
 weCli.parse();
 
-console.log('GOT WECLI OPTIONS: ', weCli.opts());
+// In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
+// https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
+const rl = require('readline').createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-const [PROFILE, APPSTORE_NETWORK_SEED, WE_APPLET_DEV_INFO, BOOTSTRAP_URL, SIGNALING_URL] =
-  validateArgs(weCli.opts(), app);
+rl.on('SIGINT', function () {
+  process.emit('SIGINT');
+});
 
-// import * as rustUtils from 'hc-we-rust-utils';
+process.on('SIGINT', () => {
+  app.quit();
+});
 
+const cliOpts = weCli.opts();
+
+console.log('GOT WE CLI OPTIONS: ', cliOpts);
+
+// If the app is being run via dev cli the --dev-config option is mandatory, otherwise We gets run with
+// the userData location .config/Electron
+if (ranViaCli) {
+  cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'we.dev.config.ts';
+}
+
+const RUN_OPTIONS = validateArgs(cliOpts, app);
 // app.commandLine.appendSwitch('enable-logging');
 
 const appName = app.getName();
@@ -123,11 +149,11 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 //   createOrShowMainWindow();
 // });
 
-if (WE_APPLET_DEV_INFO) {
+if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
   const files = fs.readdirSync(os.tmpdir());
   const foldersToDelete = files.filter((file) =>
-    file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${WE_APPLET_DEV_INFO.agentNum}`),
+    file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
   );
   for (const folder of foldersToDelete) {
     fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
@@ -136,8 +162,8 @@ if (WE_APPLET_DEV_INFO) {
 
 const WE_FILE_SYSTEM = WeFileSystem.connect(
   app,
-  PROFILE,
-  WE_APPLET_DEV_INFO ? WE_APPLET_DEV_INFO.tempDir : undefined,
+  RUN_OPTIONS.profile,
+  RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
 );
 
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
@@ -196,6 +222,8 @@ const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNa
 // }
 
 const createSplashscreenWindow = (): BrowserWindow => {
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
+
   // Create the browser window.
   const splashWindow = new BrowserWindow({
     height: 450,
@@ -205,6 +233,7 @@ const createSplashscreenWindow = (): BrowserWindow => {
     frame: false,
     show: false,
     backgroundColor: '#331ead',
+    icon,
     // use these settings so that the ui
     // can listen for status change events
     webPreferences: {
@@ -249,10 +278,13 @@ const createOrShowMainWindow = (): BrowserWindow => {
   // });
   // webRTCWindow.loadURL('chrome://webrtc-internals');
 
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
+
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
       // autoplayPolicy: 'user-gesture-required',
@@ -285,7 +317,7 @@ const createOrShowMainWindow = (): BrowserWindow => {
   });
 
   // Open the DevTools.
-  if (!app.isPackaged || (app.isPackaged && !!WE_APPLET_DEV_INFO)) {
+  if (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) {
     mainWindow.webContents.openDevTools();
   }
   mainWindow.on('close', (e) => {
@@ -415,8 +447,27 @@ app.whenReady().then(async () => {
     },
   ]);
 
-  SYSTRAY.setToolTip('Lightningrodlabs We');
+  SYSTRAY.setToolTip('Moss');
   SYSTRAY.setContextMenu(contextMenu);
+
+  if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
+    // in dev mode
+    if (RUN_OPTIONS.devInfo) {
+      const [bootstrapUrl, signalingUrl] =
+        RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : await readLocalServices();
+      RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl ? RUN_OPTIONS.bootstrapUrl : bootstrapUrl;
+      RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl ? RUN_OPTIONS.signalingUrl : signalingUrl;
+    } else {
+      RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
+        ? RUN_OPTIONS.bootstrapUrl
+        : PRODUCTION_BOOTSTRAP_URLS[0];
+      RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
+        ? RUN_OPTIONS.signalingUrl
+        : PRODUCTION_SIGNALING_URLS[0];
+    }
+  }
+
+  console.log('RUN_OPTIONS on startup: ', RUN_OPTIONS);
 
   ipcMain.handle('exit', () => {
     app.exit(0);
@@ -501,7 +552,7 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
-  ipcMain.handle('is-applet-dev', (_e) => !!WE_APPLET_DEV_INFO);
+  ipcMain.handle('is-applet-dev', (_e) => !!RUN_OPTIONS.devInfo);
   ipcMain.handle(
     'get-all-app-assets-infos',
     async (): Promise<Record<InstalledAppId, AppAssetsInfo>> => {
@@ -533,6 +584,7 @@ app.whenReady().then(async () => {
     return undefined;
   });
   ipcMain.handle('get-applet-iframe-script', () => {
+    // TODO make sure we is in dev mode (e.g. not return iframe script if We is in production mode)
     return APPLET_IFRAME_SCRIPT;
   });
   ipcMain.handle('get-installed-apps', async () => {
@@ -641,6 +693,10 @@ app.whenReady().then(async () => {
         const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
         // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
         await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        try {
+          // clean up
+          fs.rmSync(tmpDir, { recursive: true });
+        } catch (e) {}
       } else {
         console.log(
           '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
@@ -732,6 +788,10 @@ app.whenReady().then(async () => {
         const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
         const [happFilePath, _] = result.split('$');
         happToBeInstalledPath = happFilePath;
+        try {
+          // clean up
+          fs.rmSync(tmpDir, { recursive: true });
+        } catch (e) {}
       } else {
         console.log(
           '@install-applet-bundle: happ and UI already on the filesystem. Skipping download from remote source.',
@@ -780,10 +840,10 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       SPLASH_SCREEN_WINDOW,
       password,
-      BOOTSTRAP_URL,
-      SIGNALING_URL,
-      APPSTORE_NETWORK_SEED,
-      WE_APPLET_DEV_INFO,
+      RUN_OPTIONS.bootstrapUrl!,
+      RUN_OPTIONS.signalingUrl!,
+      RUN_OPTIONS.appstoreNetworkSeed,
+      RUN_OPTIONS.devInfo,
     );
 
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
@@ -792,16 +852,16 @@ app.whenReady().then(async () => {
     MAIN_WINDOW = createOrShowMainWindow();
   });
 
-  if (WE_APPLET_DEV_INFO) {
+  if (RUN_OPTIONS.devInfo) {
     [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
       WE_FILE_SYSTEM,
       WE_EMITTER,
       undefined,
       'dummy-dev-password :)',
-      BOOTSTRAP_URL,
-      SIGNALING_URL,
-      APPSTORE_NETWORK_SEED,
-      WE_APPLET_DEV_INFO,
+      RUN_OPTIONS.bootstrapUrl!,
+      RUN_OPTIONS.signalingUrl!,
+      RUN_OPTIONS.appstoreNetworkSeed,
+      RUN_OPTIONS.devInfo,
     );
     MAIN_WINDOW = createOrShowMainWindow();
   } else {
@@ -831,6 +891,9 @@ app.on('before-quit', () => {
 });
 
 app.on('quit', () => {
+  if (fs.existsSync('.hc_local_services')) {
+    fs.rmSync('.hc_local_services');
+  }
   if (LAIR_HANDLE) {
     LAIR_HANDLE.kill();
   }

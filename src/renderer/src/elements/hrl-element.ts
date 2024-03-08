@@ -11,12 +11,14 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { encodeHashToBase64 } from '@holochain/client';
 
-import { HrlWithContext } from '@lightningrodlabs/we-applet';
+import { HrlWithContext, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../shared-styles.js';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { encodeContext, stringifyHrlWithContext } from '../utils.js';
+import { mdiShareVariantOutline } from '@mdi/js';
+import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 
 @localized()
 @customElement('hrl-element')
@@ -75,10 +77,11 @@ export class HrlElement extends LitElement {
                   : ''
               }`}
             >
+            <sl-tooltip .content=${this.selectTitle ? this.selectTitle : msg('Select')}>
+
               <div
-                class="row"
+                class="row open"
                 style="align-items: center; padding: 0; margin: 0;"
-                title=${this.selectTitle ? this.selectTitle : msg('Click to select')}
                 tabindex="0"
                 @click=${() => this.handleClick()}
                 @keypress.enter=${() => this.handleClick()}
@@ -92,18 +95,48 @@ export class HrlElement extends LitElement {
                 </div>
                 <div class="row title-container">${this.attachableInfo.value.value.name}</div>
               </div>
+            </sl-tooltip>
               <!-- <div class="row open">Open</div> -->
-              <div
-                class="row clear"
-                title=${msg('Remove from clipboard.')}
-                tabindex="0"
-                @click=${() => {
-                  this._weStore.removeHrlFromClipboard(this.hrlWithContext);
-                  this.dispatchEvent(new CustomEvent('hrl-removed', {}));
-                }}
-              >
-                X
-              </div>
+
+              <sl-tooltip .content=${msg('Copy URL')}>
+                <div
+                  class="row share"
+                  tabindex="0"
+                  @click=${async () => {
+                    const weaveUrl = weaveUrlFromWal(this.hrlWithContext, false);
+                    await navigator.clipboard.writeText(weaveUrl);
+                    notify(msg('URL copied.'));
+                  }}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      const weaveUrl = weaveUrlFromWal(this.hrlWithContext, false);
+                      await navigator.clipboard.writeText(weaveUrl);
+                      notify(msg('URL copied.'));
+                    }
+                  }}
+                >
+                    <sl-icon .src=${wrapPathInSvg(mdiShareVariantOutline)}><sl-icon>
+                </div>
+              </sl-tooltip>
+
+              <sl-tooltip .content=${msg('Remove from Pocket')}>
+                <div
+                  class="row clear"
+                  tabindex="0"
+                  @click=${() => {
+                    this._weStore.removeHrlFromClipboard(this.hrlWithContext);
+                    this.dispatchEvent(new CustomEvent('hrl-removed', {}));
+                  }}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      this._weStore.removeHrlFromClipboard(this.hrlWithContext);
+                      this.dispatchEvent(new CustomEvent('hrl-removed', {}));
+                    }
+                  }}
+                >
+                  X
+                </div>
+              </sl-tooltip>
             </div>
           `;
         }
@@ -124,10 +157,6 @@ export class HrlElement extends LitElement {
         cursor: pointer;
       }
 
-      .element:hover {
-        background: #e6eeff;
-      }
-
       .icon-container {
         width: 40px;
         align-items: center;
@@ -144,15 +173,25 @@ export class HrlElement extends LitElement {
       }
 
       .open {
-        padding: 0 8px;
-        background: #e3ffdb;
+        border-radius: 8px 0 0 8px;
+      }
+
+      .open:hover {
+        background: #e6eeff;
+      }
+
+      .share {
+        background: #a1f374;
         align-items: center;
         justify-content: center;
         height: 40px;
+        font-weight: bold;
+        width: 40px;
         cursor: pointer;
       }
-      .open:hover {
-        background: #b7eaab;
+
+      .share:hover {
+        background: #c8ffaa;
       }
 
       .clear {

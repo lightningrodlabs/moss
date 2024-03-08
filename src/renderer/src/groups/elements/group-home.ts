@@ -95,6 +95,9 @@ export class GroupHome extends LitElement {
   );
 
   @state()
+  _peerStatusLoading = true;
+
+  @state()
   _recentlyJoined: Array<AppletId> = [];
 
   @state()
@@ -187,6 +190,9 @@ export class GroupHome extends LitElement {
 
   async firstUpdated() {
     // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
+    setTimeout(() => {
+      this._peerStatusLoading = false;
+    }, 2500);
   }
 
   async updateUi(e: CustomEvent) {
@@ -427,7 +433,12 @@ export class GroupHome extends LitElement {
         >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
       >
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
-        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll;">
+        <div class="column" style="flex: 1; padding: 16px; overflow-y: scroll; position: relative; background-color: rgba(175,148,157,0.6);">
+
+        <div style=" background-image: url(${
+          groupProfile.logo_src
+        }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"></div>
+
           <!-- Top Row -->
 
           <div class="row" style="align-items: center; margin-bottom: 24px">
@@ -480,13 +491,24 @@ export class GroupHome extends LitElement {
         </div>
 
         <div
-          class="column"
-          style="width: 260px; padding: 16px; background-color: var(--sl-color-primary-100)"
+          class="column online-status-bar"
         >
           <div class="flex-scrollable-parent">
             <div class="flex-scrollable-container">
               <div class="flex-scrollable-y">
-                <group-peers-status></group-peers-status>
+                ${
+                  this._peerStatusLoading
+                    ? html`<div
+                        class="column center-content"
+                        style="margin-top: 20px; font-size: 20px;"
+                      >
+                        <sl-spinner></sl-spinner>
+                      </div>`
+                    : html``
+                }
+                <group-peers-status style="${
+                  this._peerStatusLoading ? 'display: none;' : ''
+                }"></group-peers-status>
               </div>
             </div>
           </div>
@@ -516,6 +538,7 @@ export class GroupHome extends LitElement {
           </sl-dialog>
 
           <sl-button
+            class="invite-btn"
             variant="primary"
             @click=${() => {
               (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).show();
@@ -697,6 +720,7 @@ export class GroupHome extends LitElement {
     css`
       :host {
         display: flex;
+        /* background: var(--sl-color-secondary-0); */
       }
       sl-tab-panel::part(base) {
         width: 600px;
@@ -708,12 +732,23 @@ export class GroupHome extends LitElement {
       .title {
         font-size: 25px;
       }
+      .invite-btn::part(base) {
+        background-color: var(--sl-color-secondary-200);
+        border-color: var(--sl-color-secondary-200);
+      }
       .applet-card {
         width: 100%;
         margin: 10px;
         --border-radius: 15px;
         border: none;
         --border-color: transparent;
+        --sl-panel-background-color: var(--sl-color-tertiary-0);
+      }
+      .online-status-bar {
+        color: var(--sl-color-secondary-100);
+        width: 260px;
+        padding: 16px;
+        background-color: var(--sl-color-secondary-900);
       }
     `,
   ];

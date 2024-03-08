@@ -20,6 +20,7 @@ import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
 import { buildHeadlessWeClient } from '../applets/applet-host.js';
 import './hrl-element.js';
+import './hrl-created-element.js';
 import './clipboard-search.js';
 import { ClipboardSearch } from './clipboard-search.js';
 import { deStringifyHrlWithContext } from '../utils.js';
@@ -53,16 +54,29 @@ export class WeClipboard extends LitElement {
   @state()
   clipboardContent: Array<string> = [];
 
+  @state()
+  recentlyCreatedContent: Array<string> = [];
+
   show(mode: 'open' | 'select') {
     this.loadClipboardContent();
     this.mode = mode;
     this._dialog.show();
     this._searchField.focus();
+    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value().reverse();
   }
 
   hide() {
     this.mode = 'open';
     this._dialog.hide();
+  }
+
+  requestCreate() {
+    this.dispatchEvent(
+      new CustomEvent('open-creatable-panel', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   loadClipboardContent() {
@@ -107,6 +121,25 @@ export class WeClipboard extends LitElement {
     this.hide();
   }
 
+  handleOpenWurl(e: { detail: { wurl: string }; target: { reset: () => void } }) {
+    this.dispatchEvent(
+      new CustomEvent('open-wurl', {
+        detail: {
+          wurl: e.detail.wurl,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    try {
+      // if the event target was the search bar
+      e.target.reset();
+    } catch (e) {
+      // ignore
+    }
+    this.hide();
+  }
+
   hrlToClipboard(hrlWithContext: HrlWithContext) {
     console.log('Adding hrl to clipboard: ', hrlWithContext);
     this._weStore.hrlToClipboard(hrlWithContext);
@@ -134,7 +167,9 @@ export class WeClipboard extends LitElement {
           }
           ${
             this.mode === 'open'
-              ? html`<div style="position: absolute; bottom: -10px; right: -10px; color: gray;">
+              ? html`<div
+                  style="position: absolute; bottom: -10px; right: -10px; color: var(--sl-color-secondary-950);"
+                >
                   <span
                     style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
                     >Alt + S</span
@@ -150,10 +185,62 @@ export class WeClipboard extends LitElement {
             <clipboard-search
               id="clipboard-search"
               field-label=""
+              .mode=${this.mode}
               @entry-selected=${(e) => this.handleHrlSelected(e)}
               @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
+              @open-wurl=${(e) => this.handleOpenWurl(e)}
             ></clipboard-search>
           </we-client-context>
+          ${
+            this.mode === 'select'
+              ? html`
+                  <sl-button
+                    variant="primary"
+                    style="margin-top: 10px;"
+                    @click=${() => this.requestCreate()}
+                  >
+                    <div class="row" style="align-items: center;">
+                      <img
+                        src="magic_hat.svg"
+                        style="height: 23px; margin-right: 3px; filter: invert(100%) sepia(0%) saturate(7482%) hue-rotate(211deg) brightness(99%) contrast(102%);"
+                      />
+                      <div>Create New</div>
+                    </div>
+                  </sl-button>
+                `
+              : html``
+          }
+          ${
+            this.recentlyCreatedContent.length > 0
+              ? html`
+                  <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
+                    <img
+                      src="magic_hat.svg"
+                      style="height: 45px; margin-right: 10px; margin-bottom: 10px;"
+                    />
+                    ${msg('Recently created:')}
+                  </div>
+                  <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
+                    ${this.recentlyCreatedContent.length > 0
+                      ? this.recentlyCreatedContent.map(
+                          (hrlWithContextStringified) => html`
+                            <hrl-created-element
+                              .hrlWithContext=${deStringifyHrlWithContext(
+                                hrlWithContextStringified,
+                              )}
+                              .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
+                              @added-to-pocket=${() => this.loadClipboardContent()}
+                              @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                              style="margin: 0 7px 7px 0;"
+                            ></hrl-created-element>
+                          `,
+                        )
+                      : html`Nothing in your pocket. Watch out for pocket icons to add things to
+                        your pocket.`}
+                  </div>
+                `
+              : html``
+          }
           <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
             <img src="pocket_black.png" style="height: 38px; margin-right: 10px;">
             ${msg('In Your Pocket:')}
@@ -165,7 +252,7 @@ export class WeClipboard extends LitElement {
                     (hrlWithContextStringified) => html`
                       <hrl-element
                         .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
-                        .selectTitle=${this.mode === 'open' ? msg('Click to open') : undefined}
+                        .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
                         @hrl-removed=${() => this.loadClipboardContent()}
                         @hrl-selected=${(e) => this.handleHrlSelected(e)}
                         style="margin: 0 7px 7px 0;"
@@ -186,6 +273,10 @@ export class WeClipboard extends LitElement {
       css`
         :host {
           display: flex;
+        }
+
+        sl-dialog {
+          --sl-panel-background-color: var(--sl-color-tertiary-0);
         }
       `,
     ];

@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiBell, mdiViewGridPlus } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiViewGridPlus } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
@@ -210,15 +210,15 @@ export class WelcomeView extends LitElement {
 
             <!-- Notification Feed -->
 
-            <div class="column" style="align-items: center; display:flex; flex: 1;">
-              <div class="row" style="align-items: center;">
-                <sl-icon
-                  .src=${wrapPathInSvg(mdiBell)}
-                  style="font-size: 35px; margin-right: 10px;"
-                ></sl-icon>
+            <div class="column" style="align-items: center; display:flex; flex: 1; width: 100%;">
+              <div class="row" style="align-items: center; color: var(--sl-color-tertiary-100);">
+                <img
+                  src="raindrops.svg"
+                  style="height: 36px; margin-right: 10px; margin-bottom: 3px; filter: invert(95%) sepia(42%) saturate(4437%) hue-rotate(178deg) brightness(96%) contrast(95%);"
+                />
                 <h1>Recent Activities:</h1>
               </div>
-              <div class="column feed" style="display:flex; flex: 1;">
+              <div class="column feed" style="display:flex; flex: 1;width: 100%;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
                 ${this.notificationsLoading
                   ? html``
@@ -240,6 +240,9 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
+        /* background: var(--sl-color-secondary-900); */
+        background: linear-gradient(var(--sl-color-secondary-900), var(--sl-color-secondary-950));
+        /* opacity: 0.8; */
       }
 
       .btn {
@@ -248,19 +251,19 @@ export class WelcomeView extends LitElement {
         font-size: 25px;
         height: 100px;
         min-width: 300px;
-        background: var(--sl-color-primary-800);
+        background: var(--sl-color-secondary-600);
         color: white;
         border-radius: 10px;
         cursor: pointer;
-        box-shadow: 0 2px 5px var(--sl-color-primary-900);
+        box-shadow: 0 2px 5px var(--sl-color-secondary-950);
       }
 
       .btn:hover {
-        background: var(--sl-color-primary-700);
+        background: var(--sl-color-secondary-300);
       }
 
       .btn:active {
-        background: var(--sl-color-primary-600);
+        background: var(--sl-color-secondary-300);
       }
 
       .feed {

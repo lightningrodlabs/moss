@@ -1,8 +1,9 @@
 {
   "name": "@lightningrodlabs/we-elements",
-  "version": "0.3.1",
+  "version": "0.4.4",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "license": "MIT",
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"

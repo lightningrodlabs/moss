@@ -12,7 +12,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, EntryHash } from '@holochain/client';
-import { hashState } from '@holochain-open-dev/elements';
+import { hashState, notify } from '@holochain-open-dev/elements';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -53,8 +53,8 @@ export class GroupAppletsSettings extends LitElement {
     () =>
       joinAsync([
         asyncDeriveAndJoin(
-          pipe(this._groupStore.allMyApplets, (myApplets) =>
-            sliceAndJoin(this._groupStore.applets, myApplets),
+          pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
+            sliceAndJoin(this._groupStore.applets, myInstalledApplets),
           ),
           (applets) =>
             mapAndJoin(applets, (_applet, appletHash) =>
@@ -100,6 +100,9 @@ export class GroupAppletsSettings extends LitElement {
     applets: ReadonlyMap<EntryHash, Applet>,
     federatedGroups: ReadonlyMap<EntryHash, Array<DnaHash>>,
   ) {
+    const groupDisabled = !!this._weStore.persistedStore.disabledGroupApplets.value(
+      this._groupStore.groupDnaHash,
+    );
     if (applets.size === 0)
       return html`
         <div class="row center-content" style="flex: 1">
@@ -107,7 +110,7 @@ export class GroupAppletsSettings extends LitElement {
             class="placeholder"
             style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
             >${msg(
-              "This group doesn't have any applets installed yet. Go to the applet library to install applets to this group.",
+              "You don't have any applets installed in this group. Go to the applet library to install applets to this group.",
             )}
           </span>
         </div>
@@ -120,6 +123,7 @@ export class GroupAppletsSettings extends LitElement {
           .map(
             ([appletHash, applet]) => html`
               <applet-detail-card
+                style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                 @federate-applet=${(e) => {
                   this.appletToFederate = e.detail;
                 }}
@@ -137,6 +141,9 @@ export class GroupAppletsSettings extends LitElement {
   }
 
   render() {
+    const groupDisabled = !!this._weStore.persistedStore.disabledGroupApplets.value(
+      this._groupStore.groupDnaHash,
+    );
     switch (this._groupApplets.value?.status) {
       case 'pending':
         return html` <div class="column center-content" style="flex: 1;">
@@ -153,9 +160,38 @@ export class GroupAppletsSettings extends LitElement {
             class="column"
             style="flex: 1; align-items: center; overflow: auto; padding: 30px 10px 20px 10px; --sl-border-radius-medium: 20px;"
           >
-            <span class="title" style="margin-bottom: 30px; font-size: 28px;"
-              >${msg('Joined Applets')}</span
-            >
+            <div class="row" style="position: relative">
+              <div class="title" style="margin-bottom: 30px; font-size: 28px;">
+                ${msg('Joined Applets')}
+              </div>
+            </div>
+            ${this._groupApplets.value.value[0][0].size === 0
+              ? html``
+              : html`
+                  <div
+                    class="row"
+                    style="justify-content: flex-end; align-items: center; margin-bottom: 18px; width: 800px;"
+                  >
+                    <span style="display: flex; flex: 1;"></span>
+                    <span style="margin-right: 5px;"
+                      >${groupDisabled ? msg('Enable Group') : msg('Disable Group')}</span
+                    >
+                    <sl-switch
+                      size="large"
+                      ?checked=${!groupDisabled}
+                      @sl-change=${async () => {
+                        if (groupDisabled) {
+                          await this._groupStore.reEnableAllApplets();
+                          notify(msg('Applets re-enabled.'));
+                        } else {
+                          await this._groupStore.disableAllApplets();
+                          notify(msg('All Applets disabled.'));
+                        }
+                      }}
+                    >
+                    </sl-switch>
+                  </div>
+                `}
             ${this.renderInstalledApplets(
               this._groupApplets.value.value[0][0],
               this._groupApplets.value.value[0][1],

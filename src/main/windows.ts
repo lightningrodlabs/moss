@@ -39,6 +39,7 @@ export const createHappWindow = (
       return new Response(modifiedContent, indexHtmlResponse);
     }
   });
+
   // Create the browser window.
   let happWindow = new BrowserWindow({
     width: 1200,
