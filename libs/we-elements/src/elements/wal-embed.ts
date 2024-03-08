@@ -38,9 +38,6 @@ type AssetStatus =
 @localized()
 @customElement('wal-embed')
 export class WalEmbed extends LitElement {
-  @property({ type: WeClient, attribute: 'we-client' })
-  weClient!: WeClient;
-
   @property()
   src!: WeaveUrl;
 
@@ -71,13 +68,13 @@ export class WalEmbed extends LitElement {
       this.assetStatus = { type: 'invalid url' };
     } else {
       this.hrlWithContext = weaveLocation.hrlWithContext;
-      const attachableInfo = await this.weClient.attachableInfo(weaveLocation.hrlWithContext);
+      const attachableInfo = await window.__WE_API__.attachableInfo(weaveLocation.hrlWithContext);
       this.assetStatus = attachableInfo
         ? { type: 'success', attachableInfo }
         : { type: 'not found' };
       if (attachableInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
-          this.weClient,
+          window.__WE_API__ as WeClient,
           attachableInfo?.appletHash,
         );
         this.appletInfo = appletInfo;
@@ -203,11 +200,12 @@ export class WalEmbed extends LitElement {
             <sl-tooltip .content=${msg('Open in sidebar')}>
           <div class="column center-content open-btn" tabindex="0"
             @click=${async () => {
-              if (this.hrlWithContext) await this.weClient.openHrl(this.hrlWithContext, 'side');
+              if (this.hrlWithContext) await window.__WE_API__.openHrl(this.hrlWithContext, 'side');
             }}
             @keypress=${async (e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                if (this.hrlWithContext) await this.weClient.openHrl(this.hrlWithContext, 'side');
+                if (this.hrlWithContext)
+                  await window.__WE_API__.openHrl(this.hrlWithContext, 'side');
               }
             }}>
             <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
