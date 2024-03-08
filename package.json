@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.10.5",
+  "version": "0.11.0-alpha.1",
   "private": true,
   "description": "Moss (Alpha)",
   "main": "./out/main/index.js",
@@ -69,6 +69,7 @@
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
     "@electron-toolkit/eslint-config-ts": "^1.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@lightningrodlabs/we-dev-cli": "^0.10.5",
     "@types/commander": "2.12.2",
     "@types/nanoid": "3.0.0",
     "@types/node": "^18.17.5",
