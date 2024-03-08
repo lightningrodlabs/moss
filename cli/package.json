@@ -1,6 +1,6 @@
 {
   "name": "@lightningrodlabs/we-dev-cli",
-  "version": "0.10.5-alpha.6",
+  "version": "0.10.5",
   "description": "CLI to run We applets in development mode",
   "license": "CAL-1.0",
   "repository": {

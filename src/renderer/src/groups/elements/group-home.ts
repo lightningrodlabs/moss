@@ -341,7 +341,8 @@ export class GroupHome extends LitElement {
             joinedMembers,
             isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
           }))
-          .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true));
+          .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
+          .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
         if (filteredApplets.length === 0) {
           return html`${msg('No new applets to install.')}`;

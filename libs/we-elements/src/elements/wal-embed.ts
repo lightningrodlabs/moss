@@ -16,7 +16,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { appletOrigin, urlFromAppletHash } from '../utils';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash } from '@holochain/client';
-import { mdiOpenInNew } from '@mdi/js';
+import { mdiClose, mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
 
@@ -40,6 +40,9 @@ type AssetStatus =
 export class WalEmbed extends LitElement {
   @property()
   src!: WeaveUrl;
+
+  @property({ type: Boolean })
+  closable = false;
 
   @state()
   assetStatus: AssetStatus = { type: 'loading' };
@@ -84,6 +87,23 @@ export class WalEmbed extends LitElement {
     this.iframeId = Date.now().toString();
   }
 
+  async openInSidebar() {
+    if (this.hrlWithContext) await window.__WE_API__.openHrl(this.hrlWithContext, 'side');
+    this.dispatchEvent(
+      new CustomEvent('open-in-sidebar', {
+        detail: this.hrlWithContext,
+      }),
+    );
+  }
+
+  emitClose() {
+    this.dispatchEvent(
+      new CustomEvent('close', {
+        detail: this.hrlWithContext,
+      }),
+    );
+  }
+
   resizeIFrameToFitContent() {
     console.log('Resizing.');
     const iframe = this.shadowRoot?.getElementById(this.iframeId!.toString()) as
@@ -92,8 +112,6 @@ export class WalEmbed extends LitElement {
       | undefined;
     console.log('@resizeIFrameToFitContent: got iframe: ', iframe);
     if (iframe && iframe.contentWindow) {
-      console.log('scrollWidth: ', iframe.contentWindow.document.body.scrollWidth.toString());
-      console.log('scrollHeight: ', iframe.contentWindow.document.body.scrollHeight.toString());
       iframe.width = iframe.contentWindow.document.body.scrollWidth.toString();
       iframe.height = iframe.contentWindow.document.body.scrollHeight.toString();
     }
@@ -140,77 +158,89 @@ export class WalEmbed extends LitElement {
     return html`
       <div class="container">
         <div class="top-bar row" style="align-items: center;">
-          ${
-            this.assetStatus.type === 'success'
-              ? html`
-                  <div class="row" style="align-items: center;">
-                    <div class="row">
-                      <sl-icon
-                        style="font-size: 24px;"
-                        .src=${this.assetStatus.attachableInfo.attachableInfo.icon_src}
-                      ></sl-icon>
-                    </div>
-                    <div
-                      class="column"
-                      style="font-size: 18px; margin-left: 3px; height: 20px; overflow: hidden;"
-                      title=${this.assetStatus.attachableInfo.attachableInfo.name}
-                    >
-                      ${this.assetStatus.attachableInfo.attachableInfo.name}
-                    </div>
+          ${this.assetStatus.type === 'success'
+            ? html`
+                <div class="row" style="align-items: center;">
+                  <div class="row">
+                    <sl-icon
+                      style="font-size: 24px;"
+                      .src=${this.assetStatus.attachableInfo.attachableInfo.icon_src}
+                    ></sl-icon>
                   </div>
-                `
-              : html``
-          }
-          <span style="display: flex; flex: 1;"></span>
-          ${
-            this.appletInfo
-              ? html`
                   <div
-                    class="row"
-                    style="align-items: center; ${this.groupProfiles
-                      ? 'border-right: 2px solid black;'
-                      : ''}"
+                    class="column"
+                    style="font-size: 18px; margin-left: 3px; height: 20px; overflow: hidden;"
+                    title=${this.assetStatus.attachableInfo.attachableInfo.name}
                   >
-                    <sl-tooltip .content=${this.appletInfo.appletName}>
+                    ${this.assetStatus.attachableInfo.attachableInfo.name}
+                  </div>
+                </div>
+              `
+            : html``}
+          <span style="display: flex; flex: 1;"></span>
+          ${this.appletInfo
+            ? html`
+                <div
+                  class="row"
+                  style="align-items: center; ${this.groupProfiles
+                    ? 'border-right: 2px solid black;'
+                    : ''}"
+                >
+                  <sl-tooltip .content=${this.appletInfo.appletName}>
+                    <img
+                      style="height: 26px; margin-right: 4px; border-radius: 3px;"
+                      .src=${this.appletInfo.appletIcon}
+                    />
+                  </sl-tooltip>
+                </div>
+              `
+            : html``}
+          ${this.groupProfiles
+            ? html` <div class="row" style="align-items: center; margin-left: 4px;">
+                ${Array.from(this.groupProfiles.values()).map(
+                  (groupProfile) => html`
+                    <sl-tooltip .content=${groupProfile.name}>
                       <img
-                        style="height: 26px; margin-right: 4px; border-radius: 3px;"
-                        .src=${this.appletInfo.appletIcon}
+                        src=${groupProfile.logo_src}
+                        style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
                       />
                     </sl-tooltip>
+                  `,
+                )}
+              </div>`
+            : html``}
+          <sl-tooltip .content=${msg('Open in sidebar')}>
+            <div
+              class="column center-content open-btn"
+              tabindex="0"
+              @click=${async () => await this.openInSidebar()}
+              @keypress=${async (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  await this.openInSidebar();
+                }
+              }}
+            >
+              <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
+            </div>
+          </sl-tooltip>
+          ${this.closable
+            ? html`
+                <sl-tooltip .content=${msg('Close')}>
+                  <div
+                    class="column center-content close-btn"
+                    tabindex="0"
+                    @click=${async () => await this.emitClose()}
+                    @keypress=${async (e: KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        await this.emitClose();
+                      }
+                    }}
+                  >
+                    <sl-icon .src=${wrapPathInSvg(mdiClose)} style="font-size: 24px;"></sl-icon>
                   </div>
-                `
-              : html``
-          }
-          ${
-            this.groupProfiles
-              ? html` <div class="row" style="align-items: center; margin-left: 4px;">
-                  ${Array.from(this.groupProfiles.values()).map(
-                    (groupProfile) => html`
-                      <sl-tooltip .content=${groupProfile.name}>
-                        <img
-                          src=${groupProfile.logo_src}
-                          style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
-                        />
-                      </sl-tooltip>
-                    `,
-                  )}
-                </div>`
-              : html``
-          }
-            <sl-tooltip .content=${msg('Open in sidebar')}>
-          <div class="column center-content open-btn" tabindex="0"
-            @click=${async () => {
-              if (this.hrlWithContext) await window.__WE_API__.openHrl(this.hrlWithContext, 'side');
-            }}
-            @keypress=${async (e: KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                if (this.hrlWithContext)
-                  await window.__WE_API__.openHrl(this.hrlWithContext, 'side');
-              }
-            }}>
-            <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
-          </div>
-          <sl-tooltip>
+                </sl-tooltip>
+              `
+            : html``}
         </div>
         ${this.renderContent()}
       </div>
@@ -245,6 +275,18 @@ export class WalEmbed extends LitElement {
 
       .open-btn:hover {
         background: #b1bedf;
+      }
+
+      .close-btn {
+        height: 26px;
+        margin-left: 5px;
+        border-radius: 3px;
+        background: #ed3c3c;
+        cursor: pointer;
+      }
+
+      .close-btn:hover {
+        background: #f57373;
       }
     `,
   ];
