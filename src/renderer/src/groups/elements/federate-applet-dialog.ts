@@ -23,16 +23,16 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { mapValues, slice } from '@holochain-open-dev/utils';
 
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import { GroupStore } from '../group-store.js';
 import { groupStoreContext } from '../context.js';
 
 @localized()
 @customElement('federate-applet-dialog')
 export class FederateAppletDialog extends LitElement {
-  @consume({ context: weStoreContext })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  _mossStore!: MossStore;
 
   @consume({ context: groupStoreContext })
   _groupStore!: GroupStore;
@@ -45,8 +45,8 @@ export class FederateAppletDialog extends LitElement {
     () =>
       pipe(
         joinAsync([
-          this._weStore.groupStores,
-          this._weStore.groupsForApplet.get(this.appletHash),
+          this._mossStore.groupStores,
+          this._mossStore.groupsForApplet.get(this.appletHash),
         ]) as AsyncReadable<[ReadonlyMap<DnaHash, GroupStore>, ReadonlyMap<DnaHash, GroupStore>]>,
         ([allGroups, groupsForThisApplet]) => {
           const groupsToFederate = Array.from(allGroups.keys()).filter(
@@ -75,8 +75,8 @@ export class FederateAppletDialog extends LitElement {
 
     this.federating = true;
     try {
-      const appletStore = await toPromise(this._weStore.appletStores.get(this.appletHash));
-      const groupStore = await this._weStore.groupStore(groupDnaHash);
+      const appletStore = await toPromise(this._mossStore.appletStores.get(this.appletHash));
+      const groupStore = await this._mossStore.groupStore(groupDnaHash);
 
       if (!groupStore) throw new Error('Failed to federate Applet: GroupStore not found.');
 

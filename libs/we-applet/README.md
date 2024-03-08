@@ -6,17 +6,17 @@ The differences between a We Applet and a normal Holochain App are:
 
 - A We Applet can make use of the profiles zome provided by We instead of using its own profiles module
 - A We Applet can provide more than just the default "main" UI. It can additionally provide:
-  - UI elements to display single "attachables"
+  - UI elements to display single "assets"
   - UI widgets/blocks of any kind
   - UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
 - A We Applet can provide `AppletServices` for We or other Applets to use, including:
-  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) with context pointing to an attachable
-  - creatables: Attachables that can be created on-the-fly by a user.
-  - getAttachableInfo(): A function that returns info for the attachable associated to the HrlWithContext if it exists in the Applet and the method is implemented.
+  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) with context pointing to an asset
+  - creatables: Assets that can be created on-the-fly by a user.
+  - getAssetInfo(): A function that returns info for the asset associated to the WAL if it exists in the Applet and the method is implemented.
   - blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
 
-**Definition**: An "attachable" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
-"attachable-view", i.e. it can be displayed by the applet if requested.
+**Definition**: An "asset" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
+"asset-view", i.e. it can be displayed by the applet if requested.
 
 ### Implementing a most basic applet UI
 
@@ -44,7 +44,7 @@ const profilesClient = weClient.renderInfo.profilesClient;
 ### Implementing an (almost) full-fletched We Applet
 
 ```typescript=
-import { WeClient, AppletServices, HrlWithContext, AttachableInfo } from '@lightningrodlabs/we-applet';
+import { WeClient, AppletServices, WAL, AssetInfo } from '@lightningrodlabs/we-applet';
 
 // First define your AppletServices that We can call on your applet
 // to do things like search your applet or get information
@@ -75,13 +75,13 @@ const appletServices: Appletservices = {
             view: "cross-applet-view",
         }
     },
-    getAttachableInfo: async (
+    getAssetInfo: async (
         appletClient: AppAgentClient,
         roleName: RoleName,
         integrityZomeName: ZomeName,
         entryType: string,
-        hrlWithContext: HrlWithContext,
-    ): Promise<AttachableInfo | undefined> => {
+        wal: WAL,
+    ): Promise<AssetInfo | undefined> => {
         // your logic here...
         // for example
         const post = appletClient.callZome({
@@ -93,7 +93,7 @@ const appletServices: Appletservices = {
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe'
         };
     },
-    search: async (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<HrlWithContext>> => {
+    search: async (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<WAL>> => {
         // Your search logic here. For example
         let searchResults: Array<Record> = await appletClient.callZome({
             zome_name: 'search_posts',
@@ -134,7 +134,7 @@ switch (weClient.renderInfo.type) {
           default:
              throw new Error("Unknown applet-view block type");
         }
-      case "attachable":
+      case "asset":
         switch (weClient.renderInfo.view.roleName) {
           case "forum":
             switch (weClient.renderInfo.view.integrityZomeName) {
@@ -157,9 +157,9 @@ switch (weClient.renderInfo.type) {
           case "post":
             // here comes your rendering logic to create this creatable type.
             // Once created, you need to call
-            // weClient.renderInfo.view.resolve(${HrlWithContext of your created creatable here});
+            // weClient.renderInfo.view.resolve(${WAL of your created creatable here});
             // or if there's an error:
-            // weClient.renderInfo.view.reject("Failed to create attachable.");
+            // weClient.renderInfo.view.reject("Failed to create asset.");
             // or if the user cancelled the creation:
             // weClient.renderInfo.view.cancel();
         }

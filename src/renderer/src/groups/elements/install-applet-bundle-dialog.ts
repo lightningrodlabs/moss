@@ -19,14 +19,14 @@ import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 
 @localized()
 @customElement('install-applet-bundle-dialog')
 export class InstallAppletBundleDialog extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
@@ -109,7 +109,7 @@ export class InstallAppletBundleDialog extends LitElement {
     try {
       // Trigger the download of the icon
       this._installationProgress = 'Fetching app icon...';
-      await toPromise(this.weStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
+      await toPromise(this.mossStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
       this._installationProgress = 'Downloading and installing Applet...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._appletInfo!,

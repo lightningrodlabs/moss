@@ -2,10 +2,10 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
   AppletInfo,
-  AttachableLocationAndInfo,
+  AssetLocationAndInfo,
   encodeContext,
   GroupProfile,
-  HrlWithContext,
+  WAL,
   stringifyHrl,
   WeaveLocation,
   WeaveUrl,
@@ -26,7 +26,7 @@ type AssetStatus =
     }
   | {
       type: 'success';
-      attachableInfo: AttachableLocationAndInfo;
+      assetInfo: AssetLocationAndInfo;
     }
   | {
       type: 'loading';
@@ -48,7 +48,7 @@ export class WalEmbed extends LitElement {
   assetStatus: AssetStatus = { type: 'loading' };
 
   @state()
-  hrlWithContext: HrlWithContext | undefined;
+  wal: WAL | undefined;
 
   @state()
   appletInfo: AppletInfo | undefined;
@@ -70,15 +70,13 @@ export class WalEmbed extends LitElement {
     if (weaveLocation.type !== 'asset') {
       this.assetStatus = { type: 'invalid url' };
     } else {
-      this.hrlWithContext = weaveLocation.hrlWithContext;
-      const attachableInfo = await this.weClient.attachableInfo(weaveLocation.hrlWithContext);
-      this.assetStatus = attachableInfo
-        ? { type: 'success', attachableInfo }
-        : { type: 'not found' };
-      if (attachableInfo) {
+      this.wal = weaveLocation.wal;
+      const assetInfo = await this.weClient.assetInfo(weaveLocation.wal);
+      this.assetStatus = assetInfo ? { type: 'success', assetInfo } : { type: 'not found' };
+      if (assetInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
           this.weClient,
-          attachableInfo?.appletHash
+          assetInfo?.appletHash
         );
         this.appletInfo = appletInfo;
         this.groupProfiles = groupProfiles;
@@ -111,18 +109,14 @@ export class WalEmbed extends LitElement {
       case 'loading':
         return html` <sl-spinner></sl-spinner> `;
       case 'success':
-        const queryString = `view=applet-view&view-type=attachable&hrl=${stringifyHrl(
-          this.hrlWithContext!.hrl
-        )}${
-          this.hrlWithContext!.context
-            ? `&context=${encodeContext(this.hrlWithContext!.context)}`
-            : ''
+        const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
+          this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
-        const iframeSrc = this.assetStatus.attachableInfo.appletDevPort
+        const iframeSrc = this.assetStatus.assetInfo.appletDevPort
           ? `http://localhost:${
-              this.assetStatus.attachableInfo.appletDevPort
-            }?${queryString}#${urlFromAppletHash(this.assetStatus.attachableInfo.appletHash)}`
-          : `${appletOrigin(this.assetStatus.attachableInfo.appletHash)}?${queryString}`;
+              this.assetStatus.assetInfo.appletDevPort
+            }?${queryString}#${urlFromAppletHash(this.assetStatus.assetInfo.appletHash)}`
+          : `${appletOrigin(this.assetStatus.assetInfo.appletHash)}?${queryString}`;
 
         return html`<iframe
           id="${this.iframeId}"
@@ -150,15 +144,15 @@ export class WalEmbed extends LitElement {
                     <div class="row">
                       <sl-icon
                         style="font-size: 24px;"
-                        .src=${this.assetStatus.attachableInfo.attachableInfo.icon_src}
+                        .src=${this.assetStatus.assetInfo.assetInfo.icon_src}
                       ></sl-icon>
                     </div>
                     <div
                       class="column"
                       style="font-size: 18px; margin-left: 3px; height: 20px; overflow: hidden;"
-                      title=${this.assetStatus.attachableInfo.attachableInfo.name}
+                      title=${this.assetStatus.assetInfo.assetInfo.name}
                     >
-                      ${this.assetStatus.attachableInfo.attachableInfo.name}
+                      ${this.assetStatus.assetInfo.assetInfo.name}
                     </div>
                   </div>
                 `
@@ -203,11 +197,11 @@ export class WalEmbed extends LitElement {
             <sl-tooltip .content=${msg('Open in sidebar')}>
           <div class="column center-content open-btn" tabindex="0"
             @click=${async () => {
-              if (this.hrlWithContext) await this.weClient.openHrl(this.hrlWithContext, 'side');
+              if (this.wal) await this.weClient.openWal(this.wal, 'side');
             }}
             @keypress=${async (e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                if (this.hrlWithContext) await this.weClient.openHrl(this.hrlWithContext, 'side');
+                if (this.wal) await this.weClient.openWal(this.wal, 'side');
               }
             }}>
             <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>

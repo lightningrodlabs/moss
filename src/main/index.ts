@@ -43,7 +43,7 @@ import {
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
-import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -477,7 +477,7 @@ app.whenReady().then(async () => {
     'notification',
     (
       _e,
-      notification: WeNotification,
+      notification: FrameNotification,
       showInSystray: boolean,
       notifyOS: boolean,
       appletId: AppletId | undefined,

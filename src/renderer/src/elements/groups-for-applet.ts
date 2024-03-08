@@ -7,14 +7,14 @@ import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { consume } from '@lit/context';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 
 @customElement('groups-for-applet')
 export class GroupsForApplet extends LitElement {
-  @consume({ context: weStoreContext })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  _mossStore!: MossStore;
 
   @property()
   appletHash!: AppletHash;
@@ -25,7 +25,7 @@ export class GroupsForApplet extends LitElement {
   _groupProfiles = new StoreSubscriber(
     this,
     () =>
-      pipe(this._weStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
+      pipe(this._mossStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
             toPromise(groupStore.groupProfile),
@@ -33,7 +33,7 @@ export class GroupsForApplet extends LitElement {
         );
         return groupProfiles;
       }),
-    () => [this.appletHash, this._weStore],
+    () => [this.appletHash, this._mossStore],
   );
 
   render() {

@@ -10,14 +10,14 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 
 @customElement('applet-logo-raw')
 export class AppletLogo extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
@@ -34,7 +34,7 @@ export class AppletLogo extends LitElement {
   appletLogo = new StoreSubscriber(
     this,
     () =>
-      pipe(this.weStore.appletStores.get(this.appletHash), (appletStore) =>
+      pipe(this.mossStore.appletStores.get(this.appletHash), (appletStore) =>
         appletStore ? appletStore.logo : completed(undefined),
       ),
     () => [this.appletHash],

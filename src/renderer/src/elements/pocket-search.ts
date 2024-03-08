@@ -20,37 +20,24 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
-import {
-  AppletInfo,
-  AttachableLocationAndInfo,
-  GroupProfile,
-  HrlWithContext,
-} from '@lightningrodlabs/we-applet';
-import { EntryHash } from '@holochain/client';
-import { DnaHash } from '@holochain/client';
+import { AssetLocationAndInfo, WAL } from '@lightningrodlabs/we-applet';
 import { mdiArrowRight, mdiMagnify } from '@mdi/js';
-import { weStoreContext } from '../context';
-import { WeStore } from '../we-store';
+import { mossStoreContext } from '../context';
+import { MossStore } from '../moss-store';
 import './search-result-element';
-
-export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
-  groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
-  appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
-}
 
 /**
  * @element search-entry
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
  */
 @localized()
-@customElement('clipboard-search')
-export class ClipboardSearch extends LitElement implements FormField {
+@customElement('pocket-search')
+export class PocketSearch extends LitElement implements FormField {
   /** Form field properties */
 
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   /**
    * The name of the field if this element is used inside a form
@@ -66,7 +53,7 @@ export class ClipboardSearch extends LitElement implements FormField {
    * The default value of the field if this element is used inside a form
    */
   @property(hashProperty('default-value'))
-  defaultValue: HrlWithContext | undefined;
+  defaultValue: WAL | undefined;
 
   /**
    * Whether this field is required if this element is used inside a form
@@ -103,7 +90,7 @@ export class ClipboardSearch extends LitElement implements FormField {
    * @internal
    */
   @state()
-  value!: HrlWithContext | undefined;
+  value!: WAL | undefined;
 
   @state()
   filterLength: number = 0;
@@ -114,8 +101,8 @@ export class ClipboardSearch extends LitElement implements FormField {
   @state()
   _searchResults = new StoreSubscriber(
     this,
-    () => this._weStore.searchResults(),
-    () => [this._weStore],
+    () => this._mossStore.searchResults(),
+    () => [this._mossStore],
   );
 
   _controller = new FormFieldController(this);
@@ -161,7 +148,7 @@ export class ClipboardSearch extends LitElement implements FormField {
   }
 
   search(filter: string): void {
-    setTimeout(async () => this._weStore.search(filter));
+    setTimeout(async () => this._mossStore.search(filter));
   }
 
   onFilterChange() {
@@ -179,31 +166,31 @@ export class ClipboardSearch extends LitElement implements FormField {
     this.filterLength = filter.length;
     this.dropdown.show();
     if (filter.length < this.minChars) {
-      this._weStore.clearSearchResults();
+      this._mossStore.clearSearchResults();
       if (filter.length === 0) this.dropdown.hide();
       return;
     }
     this.search(filter);
   }
 
-  onEntrySelected(hrlWithContext: HrlWithContext) {
+  onEntrySelected(wal: WAL) {
     this.dispatchEvent(
       new CustomEvent('entry-selected', {
         detail: {
-          hrlWithContext,
+          wal,
         },
       }),
     );
-    this.value = hrlWithContext;
+    this.value = wal;
 
     this.dropdown.hide();
   }
 
-  onCopyToClipboard(hrlWithContext: HrlWithContext, _info: AttachableLocationAndInfo) {
+  onCopyToClipboard(wal: WAL, _info: AssetLocationAndInfo) {
     this.dispatchEvent(
-      new CustomEvent('hrl-to-clipboard', {
+      new CustomEvent('wal-to-pocket', {
         detail: {
-          hrlWithContext,
+          wal,
         },
       }),
     );
@@ -224,9 +211,7 @@ export class ClipboardSearch extends LitElement implements FormField {
     }
     return html`
       ${this._searchResults.value[0].map(
-        (hrlWithContext) => html`
-          <search-result-element .hrlWithContext=${hrlWithContext}></search-result-element>
-        `,
+        (wal) => html` <search-result-element .wal=${wal}></search-result-element> `,
       )}
       ${this._searchResults.value[1] === 'loading'
         ? html`
@@ -282,7 +267,7 @@ export class ClipboardSearch extends LitElement implements FormField {
               id="search-results"
               style="min-width: 600px;"
               @sl-select=${(e: CustomEvent) => {
-                this.onEntrySelected(e.detail.item.hrlWithContext);
+                this.onEntrySelected(e.detail.item.wal);
               }}
             >
               ${this.renderEntryList()}

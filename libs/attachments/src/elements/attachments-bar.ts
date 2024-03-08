@@ -10,7 +10,7 @@ import { consume } from '@lit/context';
 import { AttachmentsStore } from '../attachments-store.js';
 import { attachmentsStoreContext } from '../context.js';
 import { weClientContext } from '@lightningrodlabs/we-elements';
-import { HrlWithContext, WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WAL, WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @localized()
@@ -31,17 +31,17 @@ export class AttachmentsBar extends LitElement {
     () => [this.hash],
   );
 
-  renderAttachments(attachments: Array<HrlWithContext>) {
+  renderAttachments(attachments: Array<WAL>) {
     if (attachments.length === 0) return html``;
 
     return html`
       ${attachments.map(
         (attachment) => html`
-          <hrl-link
+          <wal-link
             style="margin-left: 8px"
             .hrl=${attachment.hrl}
             .context=${attachment.context}
-          ></hrl-link>
+          ></wal-link>
         `,
       )}
     `;

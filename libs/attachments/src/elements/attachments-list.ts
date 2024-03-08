@@ -19,9 +19,9 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { WeClient, HrlWithContext, WeServices } from '@lightningrodlabs/we-applet';
+import { WeClient, WAL, WeServices } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
-import '@lightningrodlabs/we-elements/dist/elements/hrl-link.js';
+import '@lightningrodlabs/we-elements/dist/elements/wal-link.js';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';
@@ -44,12 +44,12 @@ export class AttachmentsList extends LitElement {
   );
 
   @state()
-  _attachmentToRemove: HrlWithContext | undefined;
+  _attachmentToRemove: WAL | undefined;
 
   @state()
   removing = false;
 
-  async removeAttachment(attachmentToRemove: HrlWithContext) {
+  async removeAttachment(attachmentToRemove: WAL) {
     this.removing = true;
 
     try {
@@ -63,7 +63,7 @@ export class AttachmentsList extends LitElement {
     this.removing = false;
   }
 
-  renderAttachments(attachments: Array<HrlWithContext>) {
+  renderAttachments(attachments: Array<WAL>) {
     if (attachments.length === 0)
       return html`<span class="placeholder">${msg('There are no attachments yet.')}</span>`;
 
@@ -107,11 +107,11 @@ export class AttachmentsList extends LitElement {
         ${attachments.map(
           (attachment) =>
             html` <div class="row">
-              <hrl-link
+              <wal-link
                 style="flex:1"
                 .hrl=${attachment.hrl}
                 .context=${attachment.context}
-              ></hrl-link>
+              ></wal-link>
               <sl-icon-button
                 .src=${wrapPathInSvg(mdiAttachmentRemove)}
                 @click=${() => (this._attachmentToRemove = attachment)}

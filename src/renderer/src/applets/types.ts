@@ -1,4 +1,4 @@
-import { WeNotification } from '@lightningrodlabs/we-applet';
+import { FrameNotification } from '@lightningrodlabs/we-applet';
 import { AppletId } from '../types.js';
 
 export interface Applet {
@@ -19,7 +19,7 @@ export type NotificationLevel = 'low' | 'medium' | 'high';
 
 export type NotificationStorage = Record<
   AppletId,
-  Record<NotificationLevel, Array<[WeNotification, NotificationTimestamp]>>
+  Record<NotificationLevel, Array<[FrameNotification, NotificationTimestamp]>>
 >;
 
 export type AppletNotificationSettings = {

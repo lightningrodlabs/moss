@@ -9,24 +9,19 @@ import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import {
-  AppletInfo,
-  AttachableLocationAndInfo,
-  GroupProfile,
-  HrlWithContext,
-} from '@lightningrodlabs/we-applet';
+import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { buildHeadlessWeClient } from '../applets/applet-host.js';
-import './hrl-element.js';
-import './hrl-created-element.js';
-import './clipboard-search.js';
-import { ClipboardSearch } from './clipboard-search.js';
-import { deStringifyHrlWithContext } from '../utils.js';
+import './wal-element.js';
+import './wal-created-element.js';
+import './pocket-search.js';
+import { PocketSearch } from './pocket-search.js';
+import { deStringifyWal } from '../utils.js';
 
 export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
+  hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
 }
@@ -36,33 +31,33 @@ export interface SearchResult {
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
  */
 @localized()
-@customElement('we-clipboard')
-export class WeClipboard extends LitElement {
-  @consume({ context: weStoreContext })
+@customElement('moss-pocket')
+export class MossPocket extends LitElement {
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
-  @query('#clipboard-dialog')
+  @query('#pocket-dialog')
   _dialog!: SlDialog;
 
-  @query('#clipboard-search')
-  _searchField!: ClipboardSearch;
+  @query('#pocket-search')
+  _searchField!: PocketSearch;
 
   @state()
   mode: 'open' | 'select' = 'open';
 
   @state()
-  clipboardContent: Array<string> = [];
+  pocketContent: Array<string> = [];
 
   @state()
   recentlyCreatedContent: Array<string> = [];
 
   show(mode: 'open' | 'select') {
-    this.loadClipboardContent();
+    this.loadPocketContent();
     this.mode = mode;
     this._dialog.show();
     this._searchField.focus();
-    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value().reverse();
+    this.recentlyCreatedContent = this._mossStore.persistedStore.recentlyCreated.value().reverse();
   }
 
   hide() {
@@ -79,23 +74,20 @@ export class WeClipboard extends LitElement {
     );
   }
 
-  loadClipboardContent() {
-    this.clipboardContent = this._weStore.persistedStore.clipboard.value();
+  loadPocketContent() {
+    this.pocketContent = this._mossStore.persistedStore.pocket.value();
   }
 
-  removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
-    this._weStore.removeHrlFromClipboard(hrlWithContext);
-    this.loadClipboardContent();
+  removeWalFromPocket(wal: WAL) {
+    this._mossStore.removeWalFromPocket(wal);
+    this.loadPocketContent();
   }
 
-  handleHrlSelected(e: {
-    detail: { hrlWithContext: HrlWithContext };
-    target: { reset: () => void };
-  }) {
+  handleWalSelected(e: { detail: { wal: WAL }; target: { reset: () => void } }) {
     switch (this.mode) {
       case 'open':
         this.dispatchEvent(
-          new CustomEvent('open-hrl', {
+          new CustomEvent('open-wal', {
             detail: e.detail,
             bubbles: true,
             composed: true,
@@ -104,7 +96,7 @@ export class WeClipboard extends LitElement {
         break;
       case 'select':
         this.dispatchEvent(
-          new CustomEvent('hrl-selected', {
+          new CustomEvent('wal-selected', {
             detail: e.detail,
             bubbles: true,
             composed: true,
@@ -140,16 +132,16 @@ export class WeClipboard extends LitElement {
     this.hide();
   }
 
-  hrlToClipboard(hrlWithContext: HrlWithContext) {
-    console.log('Adding hrl to clipboard: ', hrlWithContext);
-    this._weStore.hrlToClipboard(hrlWithContext);
-    this.loadClipboardContent();
+  walToPocket(wal: WAL) {
+    console.log('Adding hrl to pocket: ', wal);
+    this._mossStore.walToPocket(wal);
+    this.loadPocketContent();
   }
 
   render() {
     return html`
       <sl-dialog
-        id="clipboard-dialog"
+        id="pocket-dialog"
         style="--width: 800px;"
         no-header
         @sl-initial-focus=${(e: { preventDefault: () => void }) => {
@@ -180,16 +172,16 @@ export class WeClipboard extends LitElement {
           }
 
           <we-client-context
-            .weClient=${buildHeadlessWeClient(this._weStore)}
+            .weClient=${buildHeadlessWeClient(this._mossStore)}
           >
-            <clipboard-search
-              id="clipboard-search"
+            <pocket-search
+              id="pocket-search"
               field-label=""
               .mode=${this.mode}
-              @entry-selected=${(e) => this.handleHrlSelected(e)}
-              @hrl-to-clipboard=${(e) => this.hrlToClipboard(e.detail.hrlWithContext)}
+              @entry-selected=${(e) => this.handleWalSelected(e)}
+              @wal-to-pocket=${(e) => this.walToPocket(e.detail.wal)}
               @open-wurl=${(e) => this.handleOpenWurl(e)}
-            ></clipboard-search>
+            ></pocket-search>
           </we-client-context>
           ${
             this.mode === 'select'
@@ -223,16 +215,14 @@ export class WeClipboard extends LitElement {
                   <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
                     ${this.recentlyCreatedContent.length > 0
                       ? this.recentlyCreatedContent.map(
-                          (hrlWithContextStringified) => html`
-                            <hrl-created-element
-                              .hrlWithContext=${deStringifyHrlWithContext(
-                                hrlWithContextStringified,
-                              )}
+                          (walStringified) => html`
+                            <wal-created-element
+                              .wal=${deStringifyWal(walStringified)}
                               .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
-                              @added-to-pocket=${() => this.loadClipboardContent()}
-                              @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                              @added-to-pocket=${() => this.loadPocketContent()}
+                              @wal-selected=${(e) => this.handleWalSelected(e)}
                               style="margin: 0 7px 7px 0;"
-                            ></hrl-created-element>
+                            ></wal-created-element>
                           `,
                         )
                       : html`Nothing in your pocket. Watch out for pocket icons to add things to
@@ -247,16 +237,16 @@ export class WeClipboard extends LitElement {
           </div>
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
             ${
-              this.clipboardContent.length > 0
-                ? this.clipboardContent.map(
-                    (hrlWithContextStringified) => html`
-                      <hrl-element
-                        .hrlWithContext=${deStringifyHrlWithContext(hrlWithContextStringified)}
+              this.pocketContent.length > 0
+                ? this.pocketContent.map(
+                    (walStringified) => html`
+                      <wal-element
+                        .wal=${deStringifyWal(walStringified)}
                         .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
-                        @hrl-removed=${() => this.loadClipboardContent()}
-                        @hrl-selected=${(e) => this.handleHrlSelected(e)}
+                        @wal-removed=${() => this.loadPocketContent()}
+                        @wal-selected=${(e) => this.handleWalSelected(e)}
                         style="margin: 0 7px 7px 0;"
-                      ></hrl-element>
+                      ></wal-element>
                     `,
                   )
                 : html`Nothing in your pocket. Watch out for pocket icons to add things to your

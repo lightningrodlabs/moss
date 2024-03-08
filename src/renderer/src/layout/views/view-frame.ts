@@ -12,15 +12,15 @@ import {
   renderViewToQueryString,
   urlFromAppletHash,
 } from '../../utils.js';
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import { getAppletDevPort } from '../../electron-api.js';
 
 @customElement('view-frame')
 export class ViewFrame extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  weStore!: WeStore;
+  mossStore!: MossStore;
 
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
@@ -32,8 +32,8 @@ export class ViewFrame extends LitElement {
   appletDevPort: number | undefined;
 
   async firstUpdated() {
-    console.log('@view-frame: IS APPLET DEV: ', this.weStore.isAppletDev);
-    if (this.weStore.isAppletDev) {
+    console.log('@view-frame: IS APPLET DEV: ', this.mossStore.isAppletDev);
+    if (this.mossStore.isAppletDev) {
       const appId = appIdFromAppletHash(this.appletHash);
       this.appletDevPort = await getAppletDevPort(appId);
       console.log('@view-frame @devmode: Got applet dev port: ', this.appletDevPort);
@@ -54,7 +54,7 @@ export class ViewFrame extends LitElement {
   }
 
   render() {
-    switch (this.weStore.isAppletDev) {
+    switch (this.mossStore.isAppletDev) {
       case false:
         return this.renderProductionFrame();
       case true:

@@ -6,7 +6,7 @@ import {
   EntryHash,
   EntryHashB64,
 } from '@holochain/client';
-import { WeNotification } from '@lightningrodlabs/we-applet';
+import { FrameNotification } from '@lightningrodlabs/we-applet';
 
 /**
  * EntryHashB64 of the Applet entry in the group's We DHT.
@@ -97,7 +97,7 @@ export type AssetSource =
 
 export type AppletNotification = {
   appletId: AppletId;
-  notification: WeNotification;
+  notification: FrameNotification;
 };
 
 export type MessageContentPart =

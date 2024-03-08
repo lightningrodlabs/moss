@@ -35,15 +35,15 @@ import { GroupStore } from '../group-store.js';
 import '../../elements/sidebar-button.js';
 import { weStyles } from '../../shared-styles.js';
 import { Applet } from '../../applets/types.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { GroupDnaHash } from '../../types.js';
 
 @localized()
 @customElement('group-applets-settings')
 export class GroupAppletsSettings extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
@@ -67,7 +67,7 @@ export class GroupAppletsSettings extends LitElement {
           ReadonlyMap<AppletHash, Array<GroupDnaHash>>, // Groups the Applet has been federated with
         ]
       >,
-    () => [this._groupStore, this._weStore],
+    () => [this._groupStore, this._mossStore],
   );
 
   @state(hashState())
@@ -100,7 +100,7 @@ export class GroupAppletsSettings extends LitElement {
     applets: ReadonlyMap<EntryHash, Applet>,
     federatedGroups: ReadonlyMap<EntryHash, Array<DnaHash>>,
   ) {
-    const groupDisabled = !!this._weStore.persistedStore.disabledGroupApplets.value(
+    const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
       this._groupStore.groupDnaHash,
     );
     if (applets.size === 0)
@@ -141,7 +141,7 @@ export class GroupAppletsSettings extends LitElement {
   }
 
   render() {
-    const groupDisabled = !!this._weStore.persistedStore.disabledGroupApplets.value(
+    const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
       this._groupStore.groupDnaHash,
     );
     switch (this._groupApplets.value?.status) {

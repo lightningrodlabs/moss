@@ -15,7 +15,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { PostsStore } from '../posts-store';
 import { postsStoreContext } from '../context';
 import { Post } from '../types';
-import { type WeNotification } from '@lightningrodlabs/we-applet';
+import { type FrameNotification } from '@lightningrodlabs/we-applet';
 
 /**
  * @element post-summary
@@ -53,7 +53,7 @@ export class PostSummary extends LitElement {
     // console.log("@post-summary: actionHashB64: ", actionHashB64);
     // console.log("@post-summary: knownPosts.includes(actionHashB64): ", knownPosts.includes(actionHashB64));
     if (!knownPosts.includes(actionHashB64)) {
-      const notification: WeNotification = {
+      const notification: FrameNotification = {
         title: 'New Post',
         body: `Heyho: ${encodeHashToBase64(entryRecord.action.author)} created a new Post: "${
           entryRecord.entry.title

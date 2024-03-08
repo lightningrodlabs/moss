@@ -24,15 +24,15 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { CustomView } from '../../custom-views/types.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { AppletStore } from '../../applets/applet-store.js';
 
 @localized()
 @customElement('group-applets')
 export class GroupApplets extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
@@ -45,7 +45,7 @@ export class GroupApplets extends LitElement {
           sliceAndJoin(this._groupStore.customViewsStore.customViews, allCustomViews),
         ),
         pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-          sliceAndJoin(this.weStore.appletStores, myRunningApplets),
+          sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
         ),
       ]) as AsyncReadable<
         [ReadonlyMap<ActionHash, EntryRecord<CustomView>>, ReadonlyMap<EntryHash, AppletStore>]
