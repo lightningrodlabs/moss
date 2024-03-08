@@ -17,8 +17,8 @@ import {
   WeServices,
   IframeConfig,
   Hrl,
-  HrlWithContext,
-  WeNotification,
+  WAL,
+  FrameNotification,
   RenderView,
   RenderInfo,
   AppletToParentRequest,
@@ -27,7 +27,7 @@ import {
   ParentToAppletRequest,
   AppletHash,
   AppletServices,
-  OpenHrlMode,
+  OpenWalMode,
   CreatableName,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
@@ -82,12 +82,12 @@ const weApi: WeServices = {
       },
     }),
 
-  openHrl: (hrlWithContext: HrlWithContext, mode?: OpenHrlMode): Promise<void> =>
+  openWal: (wal: WAL, mode?: OpenWalMode): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
-        type: 'hrl',
-        hrlWithContext,
+        type: 'wal',
+        wal,
         mode,
       },
     }),
@@ -104,26 +104,26 @@ const weApi: WeServices = {
       appletHash,
     }),
 
-  attachableInfo: (hrlWithContext: HrlWithContext) =>
+  assetInfo: (wal: WAL) =>
     postMessage({
-      type: 'get-global-attachable-info',
-      hrlWithContext,
+      type: 'get-global-asset-info',
+      wal,
     }),
 
-  hrlToClipboard: (hrlWithContext: HrlWithContext) =>
+  walToPocket: (wal: WAL) =>
     postMessage({
-      type: 'hrl-to-clipboard',
-      hrlWithContext,
+      type: 'wal-to-pocket',
+      wal,
     }),
 
-  userSelectHrl: () =>
+  userSelectWal: () =>
     postMessage({
-      type: 'user-select-hrl',
+      type: 'user-select-wal',
     }),
 
-  notifyWe: (notifications: Array<WeNotification>) =>
+  notifyFrame: (notifications: Array<FrameNotification>) =>
     postMessage({
-      type: 'notify-we',
+      type: 'notify-frame',
       notifications,
     }),
 
@@ -132,7 +132,7 @@ const weApi: WeServices = {
       type: 'user-select-screen',
     }),
 
-  requestBind: (srcWal: HrlWithContext, dstWal: HrlWithContext) =>
+  requestBind: (srcWal: WAL, dstWal: WAL) =>
     postMessage({
       type: 'request-bind',
       srcWal,
@@ -167,7 +167,7 @@ const weApi: WeServices = {
   window.addEventListener('keydown', async (zEvent) => {
     if (zEvent.altKey && zEvent.key === 's') {
       // case sensitive
-      await postMessage({ type: 'toggle-clipboard' });
+      await postMessage({ type: 'toggle-pocket' });
     }
   });
 
@@ -271,13 +271,13 @@ const handleMessage = async (
   request: ParentToAppletRequest,
 ) => {
   switch (request.type) {
-    case 'get-applet-attachable-info':
-      return window.__WE_APPLET_SERVICES__.getAttachableInfo(
+    case 'get-applet-asset-info':
+      return window.__WE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
         request.roleName,
         request.integrityZomeName,
         request.entryType,
-        request.hrlWithContext,
+        request.wal,
       );
     case 'get-block-types':
       return window.__WE_APPLET_SERVICES__.blockTypes;
@@ -447,7 +447,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
           context,
         },
       };
-    case 'attachable':
+    case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
       const hrlLocation: HrlLocation = await postMessage({
@@ -457,11 +457,11 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
       return {
         type: view,
         view: {
-          type: 'attachable',
+          type: 'asset',
           roleName: hrlLocation.roleName,
           integrityZomeName: hrlLocation.integrityZomeName,
           entryType: hrlLocation.entryType,
-          hrlWithContext: { hrl, context },
+          wal: { hrl, context },
         },
       };
     case 'creatable':
@@ -474,10 +474,10 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
         view: {
           type: 'creatable',
           name: creatableName,
-          resolve: (hrlWithContext: HrlWithContext) =>
+          resolve: (wal: WAL) =>
             postMessage({
               type: 'creatable-result',
-              result: { type: 'success', hrlWithContext },
+              result: { type: 'success', wal },
               dialogId: dialogId!,
             }),
           reject: (reason: any) =>

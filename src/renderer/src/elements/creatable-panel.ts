@@ -14,28 +14,22 @@ import {
   AppletHash,
   AppletId,
   AppletInfo,
-  AttachableLocationAndInfo,
+  AssetLocationAndInfo,
   CreatableResult,
   CreatableName,
   GroupProfile,
-  HrlWithContext,
+  WAL,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
-import './hrl-element.js';
-import './clipboard-search.js';
+import './wal-element.js';
+import './pocket-search.js';
 import './creatable-view.js';
 import './group-applets-row.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-
-export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
-  groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
-  appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
-}
 
 export type CreatableInfo = {
   appletHash: AppletHash;
@@ -117,12 +111,12 @@ export class CreatablePanel extends LitElement {
         this._showCreatableView = undefined;
         return;
       case 'success':
-        this._weStore.hrlToRecentlyCreated(creatableResult.hrlWithContext);
+        this._weStore.walToRecentlyCreated(creatableResult.wal);
         notify(`New ${this._showCreatableView?.creatable.label} created.`);
         this._weStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
-          new CustomEvent('hrl-selected', {
-            detail: { hrlWithContext: creatableResult.hrlWithContext },
+          new CustomEvent('wal-selected', {
+            detail: { wal: creatableResult.wal },
             bubbles: true,
             composed: true,
           }),
@@ -148,9 +142,9 @@ export class CreatablePanel extends LitElement {
     setTimeout(() => this._creatableViewDialog!.show());
   }
 
-  hrlToClipboard(hrlWithContext: HrlWithContext) {
-    console.log('Adding hrl to clipboard: ', hrlWithContext);
-    this._weStore.hrlToClipboard(hrlWithContext);
+  walToPocket(wal: WAL) {
+    console.log('Adding hrl to clipboard: ', wal);
+    this._weStore.walToPocket(wal);
   }
 
   renderAppletMatrix() {

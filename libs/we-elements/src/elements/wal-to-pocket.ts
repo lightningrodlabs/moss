@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import { localized } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -11,38 +11,39 @@ import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { HrlWithContext } from '@lightningrodlabs/we-applet';
+import { weClientContext } from '../context';
+import { WAL } from '@lightningrodlabs/we-applet';
 import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
-import { sharedStyles } from '@holochain-open-dev/elements';
-import { weClientContext } from '@lightningrodlabs/we-elements';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiNotePlusOutline } from '@mdi/js';
 
 @localized()
-@customElement('hrl-pocket')
-export class HrlPocket extends LitElement {
+@customElement('wal-to-pocket')
+export class WalToPocket extends LitElement {
   @property()
-  hrlWithContext!: HrlWithContext;
+  wal!: WAL;
 
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient | WeServices;
 
-  async hrlToClipboard() {
-    await this.weClient.hrlToClipboard(this.hrlWithContext);
+  async walToPocket() {
+    await this.weClient.walToPocket(this.wal);
   }
 
   render() {
     return html`
-      <sl-tooltip content="${msg('Add to Pocket')}">
+      <sl-tooltip content="Add to Clipboard">
         <div
           class="row btn"
           tabindex="0"
-          @click=${() => this.hrlToClipboard()}
+          @click=${() => this.walToPocket()}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-              this.hrlToClipboard();
+              this.walToPocket();
             }
           }}
         >
-          <img src="pocket_white.png" style="height: 35px; fill-color: white;" />
+          <sl-icon .src=${wrapPathInSvg(mdiNotePlusOutline)}></sl-icon>
         </div>
       </sl-tooltip>
     `;

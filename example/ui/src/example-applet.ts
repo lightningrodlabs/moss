@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeClient, WeNotification } from '@lightningrodlabs/we-applet';
+import { WeClient, FrameNotification } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
 
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
@@ -43,8 +43,8 @@ export class ExampleApplet extends LitElement {
     // }
   }
 
-  async notifyWe(notifications: WeNotification[]) {
-    this.weClient.notifyWe(notifications);
+  async notifyWe(notifications: FrameNotification[]) {
+    this.weClient.notifyFrame(notifications);
   }
 
   render() {
@@ -65,7 +65,7 @@ export class ExampleApplet extends LitElement {
                       const appInfo = await client.appInfo();
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                         .cell_id[0];
-                      this.weClient!.openHrl({ hrl: [dnaHash, e.detail.postHash] }, 'front');
+                      this.weClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
                     }}
                   ></applet-main>
                 </attachments-context>
@@ -73,7 +73,7 @@ export class ExampleApplet extends LitElement {
             `;
           case 'block':
             throw new Error('Block view is not implemented.');
-          case 'attachable':
+          case 'asset':
             switch (this.weClient.renderInfo.view.roleName) {
               case 'forum':
                 switch (this.weClient.renderInfo.view.integrityZomeName) {
@@ -84,7 +84,7 @@ export class ExampleApplet extends LitElement {
                           <posts-context .store=${this.postsStore}>
                             <attachments-context .store=${this.attachmentsStore}>
                               <post-detail
-                                .postHash=${this.weClient.renderInfo.view.hrlWithContext.hrl[1]}
+                                .postHash=${this.weClient.renderInfo.view.wal.hrl[1]}
                               ></post-detail>
                             </attachments-context>
                           </posts-context>

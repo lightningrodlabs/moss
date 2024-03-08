@@ -29,7 +29,7 @@ import {
   CreatableResult,
   CreatableName,
   GroupProfile,
-  HrlWithContext,
+  WAL,
   ProfilesLocation,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
@@ -47,12 +47,12 @@ import {
   appIdFromAppletHash,
   appletHashFromAppId,
   appletIdFromAppId,
-  deStringifyHrlWithContext,
+  deStringifyWal,
   findAppForDnaHash,
   initAppClient,
   isAppRunning,
-  stringifyHrlWithContext,
-  validateHrlWithContext,
+  stringifyWal,
+  validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
@@ -62,7 +62,7 @@ import { WebHappSource } from './processes/appstore/appstore-light.js';
 import { AppEntry, Entity } from './processes/appstore/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
-import { AttachableViewerState, DashboardState } from './elements/main-dashboard.js';
+import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
 
@@ -85,7 +85,7 @@ export class WeStore {
     viewType: 'personal',
   });
 
-  private _attachableViewerState: Writable<AttachableViewerState> = writable({
+  private _assetViewerState: Writable<AssetViewerState> = writable({
     position: 'side',
     visible: false,
   });
@@ -106,11 +106,7 @@ export class WeStore {
    */
   _searchResponses: number = 0;
 
-  _searchResults: Writable<[string, Array<HrlWithContext>, SearchStatus]> = writable([
-    '',
-    [],
-    'complete',
-  ]);
+  _searchResults: Writable<[string, Array<WAL>, SearchStatus]> = writable(['', [], 'complete']);
 
   _allCreatableTypes: Writable<Record<AppletId, Record<CreatableName, CreatableType>>> = writable(
     {},
@@ -220,12 +216,12 @@ export class WeStore {
     this._dashboardState.set(dashboardState);
   }
 
-  attachableViewerState(): Readable<AttachableViewerState> {
-    return derived(this._attachableViewerState, (state) => state);
+  assetViewerState(): Readable<AssetViewerState> {
+    return derived(this._assetViewerState, (state) => state);
   }
 
-  setAttachableViewerState(state: AttachableViewerState) {
-    this._attachableViewerState.set(state);
+  setAssetViewerState(state: AssetViewerState) {
+    this._assetViewerState.set(state);
   }
 
   notificationFeed(): Readable<AppletNotification[]> {
@@ -260,7 +256,7 @@ export class WeStore {
     this._searchResponses = 0;
   }
 
-  updateSearchResults(filter: string, results: HrlWithContext[], fromCache: boolean) {
+  updateSearchResults(filter: string, results: WAL[], fromCache: boolean) {
     if (!fromCache) this._searchResponses += 1;
     const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
     this._searchResults.update((store) => {
@@ -268,12 +264,8 @@ export class WeStore {
         return [filter, results, searchStatus];
       } else if (this._searchParams[0] === filter) {
         const deduplicatedResults = Array.from(
-          new Set(
-            [...store[1], ...results].map((hrlWithContext) =>
-              stringifyHrlWithContext(hrlWithContext),
-            ),
-          ),
-        ).map((stringifiedHrl) => deStringifyHrlWithContext(stringifiedHrl));
+          new Set([...store[1], ...results].map((wal) => stringifyWal(wal))),
+        ).map((stringifiedHrl) => deStringifyWal(stringifiedHrl));
         return [filter, deduplicatedResults, searchStatus];
       }
       return store;
@@ -284,7 +276,7 @@ export class WeStore {
     this._searchResults.set(['', [], 'complete']);
   }
 
-  searchResults(): Readable<[HrlWithContext[], SearchStatus]> {
+  searchResults(): Readable<[WAL[], SearchStatus]> {
     return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
   }
 
@@ -609,28 +601,26 @@ export class WeStore {
       }),
   );
 
-  attachableInfo = new LazyMap((hrlWithContextStringified: string) => {
-    const hrlWithContext = deStringifyHrlWithContext(hrlWithContextStringified);
-    return pipe(
-      this.hrlLocations.get(hrlWithContext.hrl[0]).get(hrlWithContext.hrl[1]),
-      (location) =>
-        location
-          ? pipe(
-              this.appletStores.get(location.dnaLocation.appletHash),
-              (appletStore) => appletStore!.host,
-              (host) =>
-                lazyLoad(() =>
-                  host
-                    ? host.getAppletAttachableInfo(
-                        location.dnaLocation.roleName,
-                        location.entryDefLocation.integrity_zome,
-                        location.entryDefLocation.entry_def,
-                        hrlWithContext,
-                      )
-                    : Promise.resolve(undefined),
-                ),
-            )
-          : completed(undefined),
+  assetInfo = new LazyMap((walStringified: string) => {
+    const wal = deStringifyWal(walStringified);
+    return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
+      location
+        ? pipe(
+            this.appletStores.get(location.dnaLocation.appletHash),
+            (appletStore) => appletStore!.host,
+            (host) =>
+              lazyLoad(() =>
+                host
+                  ? host.getAppletAssetInfo(
+                      location.dnaLocation.roleName,
+                      location.entryDefLocation.integrity_zome,
+                      location.entryDefLocation.entry_def,
+                      wal,
+                    )
+                  : Promise.resolve(undefined),
+              ),
+          )
+        : completed(undefined),
     );
   });
 
@@ -780,50 +770,46 @@ export class WeStore {
     ),
   );
 
-  hrlToClipboard(hrlWithContext: HrlWithContext) {
-    hrlWithContext = validateHrlWithContext(hrlWithContext);
-    const clipboardContent = this.persistedStore.clipboard.value();
-    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
+  walToPocket(wal: WAL) {
+    wal = validateWal(wal);
+    const pocketContent = this.persistedStore.pocket.value();
+    const walStringified = fromUint8Array(encode(wal));
     // Only add if it's not already there
     if (
-      clipboardContent.filter(
-        (hrlWithContextStringifiedStored) =>
-          hrlWithContextStringifiedStored === hrlWithContextStringified,
-      ).length === 0
+      pocketContent.filter((walStringifiedStored) => walStringifiedStored === walStringified)
+        .length === 0
     ) {
-      clipboardContent.push(hrlWithContextStringified);
+      pocketContent.push(walStringified);
     }
-    this.persistedStore.clipboard.set(clipboardContent);
+    this.persistedStore.pocket.set(pocketContent);
     notify(msg('Added to Pocket.'));
     document.dispatchEvent(new CustomEvent('added-to-pocket'));
   }
 
-  hrlToRecentlyCreated(hrlWithContext: HrlWithContext) {
-    hrlWithContext = validateHrlWithContext(hrlWithContext);
+  walToRecentlyCreated(wal: WAL) {
+    wal = validateWal(wal);
     let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();
-    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
+    const walStringified = fromUint8Array(encode(wal));
     // Only add if it's not already there
     if (
       recentlyCreatedContent.filter(
-        (hrlWithContextStringifiedStored) =>
-          hrlWithContextStringifiedStored === hrlWithContextStringified,
+        (walStringifiedStored) => walStringifiedStored === walStringified,
       ).length === 0
     ) {
-      recentlyCreatedContent.push(hrlWithContextStringified);
+      recentlyCreatedContent.push(walStringified);
     }
     // keep the 8 latest created items only
     recentlyCreatedContent = recentlyCreatedContent.slice(0, 8);
     this.persistedStore.recentlyCreated.set(recentlyCreatedContent);
   }
 
-  removeHrlFromClipboard(hrlWithContext: HrlWithContext) {
-    const clipboardContent = this.persistedStore.clipboard.value();
-    const hrlWithContextStringified = fromUint8Array(encode(hrlWithContext));
-    const newClipboardContent = clipboardContent.filter(
-      (hrlWithContextStringifiedStored) =>
-        hrlWithContextStringifiedStored !== hrlWithContextStringified,
+  removeWalFromPocket(wal: WAL) {
+    const pocketContent = this.persistedStore.pocket.value();
+    const walStringified = fromUint8Array(encode(wal));
+    const newClipboardContent = pocketContent.filter(
+      (walStringifiedStored) => walStringifiedStored !== walStringified,
     );
-    this.persistedStore.clipboard.set(newClipboardContent);
+    this.persistedStore.pocket.set(newClipboardContent);
   }
 
   async search(filter: string) {

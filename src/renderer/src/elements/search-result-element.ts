@@ -16,21 +16,15 @@ import '../applets/elements/applet-title.js';
 
 import {
   AppletInfo,
-  AttachableLocationAndInfo,
+  AssetLocationAndInfo,
   GroupProfile,
-  HrlWithContext,
+  WAL,
   WeClient,
   WeServices,
 } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
-
-export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
-  groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
-  appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
-}
 
 /**
  * @element search-entry
@@ -49,10 +43,10 @@ export class SearchResultElement extends LitElement {
    * @internal
    */
   @property()
-  hrlWithContext!: HrlWithContext;
+  wal!: WAL;
 
   @state()
-  _attachableInfo: AttachableLocationAndInfo | undefined;
+  _assetInfo: AssetLocationAndInfo | undefined;
 
   @state()
   _appletsInfos: ReadonlyMap<EntryHash, AppletInfo> | undefined;
@@ -67,24 +61,24 @@ export class SearchResultElement extends LitElement {
   // _appletStore: StoreSubscriber<AsyncStatus<AppletStore>> | undefined;
 
   async firstUpdated() {
-    const attachableInfo = await this.weClient.attachableInfo(this.hrlWithContext);
-    this._attachableInfo = attachableInfo;
+    const assetInfo = await this.weClient.assetInfo(this.wal);
+    this._assetInfo = assetInfo;
     this._loading = false;
-    if (attachableInfo) {
+    if (assetInfo) {
       const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
         this.weClient as WeClient,
-        [attachableInfo.appletHash],
+        [assetInfo.appletHash],
       );
       this._appletsInfos = appletsInfos;
       this._groupProfiles = groupsProfiles;
     }
   }
 
-  onCopyToClipboard(hrlWithContext: HrlWithContext) {
+  onCopyToClipboard(wal: WAL) {
     this.dispatchEvent(
-      new CustomEvent('hrl-to-clipboard', {
+      new CustomEvent('wal-to-pocket', {
         detail: {
-          hrlWithContext,
+          wal,
         },
         bubbles: true,
         composed: true,
@@ -94,24 +88,24 @@ export class SearchResultElement extends LitElement {
 
   render() {
     return html`
-      <sl-menu-item style="flex: 1;" .hrlWithContext=${this.hrlWithContext}>
-        ${this._attachableInfo
+      <sl-menu-item style="flex: 1;" .wal=${this.wal}>
+        ${this._assetInfo
           ? html`
               <sl-icon
                 slot="prefix"
-                .src=${this._attachableInfo.attachableInfo.icon_src}
+                .src=${this._assetInfo.assetInfo.icon_src}
                 style="margin-right: 16px"
               ></sl-icon>
 
               <div class="row" style="align-items: center; flex: 1;">
-                <span>${this._attachableInfo.attachableInfo.name}</span>
+                <span>${this._assetInfo.assetInfo.name}</span>
                 <span style="flex: 1;"></span>
-                ${this._attachableInfo
+                ${this._assetInfo
                   ? html`
                       <span class="placeholder">&nbsp;${msg('in')}&nbsp;</span>
                       <applet-title
                         style="font-weight: bold;"
-                        .appletHash=${this._attachableInfo.appletHash}
+                        .appletHash=${this._assetInfo.appletHash}
                       ></applet-title>
                     `
                   : html``}
@@ -135,18 +129,18 @@ export class SearchResultElement extends LitElement {
             `
           : this._loading
             ? html`<span style="flex: 1;">loading...</span>`
-            : html`<span style="flex: 1;">[unknown attachable]</span>`}
+            : html`<span style="flex: 1;">[unknown asset]</span>`}
         <div
           slot="suffix"
           tabindex="0"
           @click=${(e) => {
             e.stopPropagation();
-            this.onCopyToClipboard(this.hrlWithContext);
+            this.onCopyToClipboard(this.wal);
           }}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
               e.stopPropagation();
-              this.onCopyToClipboard(this.hrlWithContext);
+              this.onCopyToClipboard(this.wal);
             }
           }}
         >

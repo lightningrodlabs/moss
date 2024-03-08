@@ -1,5 +1,5 @@
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { AppletNotificationSettings } from './applets/types';
 
 /**
@@ -14,13 +14,13 @@ export class PersistedStore {
 
   keys;
 
-  clipboard: SubStore<string[], string[], []> = {
+  pocket: SubStore<string[], string[], []> = {
     value: () => {
-      const clipboardContent = this.store.getItem<Array<string>>('clipboard');
-      return clipboardContent ? clipboardContent : [];
+      const pocketContent = this.store.getItem<Array<string>>('pocket');
+      return pocketContent ? pocketContent : [];
     },
     set: (value) => {
-      this.store.setItem<string[]>('clipboard', value);
+      this.store.setItem<string[]>('pocket', value);
     },
   };
 
@@ -61,9 +61,13 @@ export class PersistedStore {
     set: (value, appletId: AppletId) => this.store.setItem(`appletLocalStorage#${appletId}`, value),
   };
 
-  appletNotificationsUnread: SubStore<Array<WeNotification>, Array<WeNotification>, [AppletId]> = {
+  appletNotificationsUnread: SubStore<
+    Array<FrameNotification>,
+    Array<FrameNotification>,
+    [AppletId]
+  > = {
     value: (appletId: AppletId) => {
-      const unreadNotifications = this.store.getItem<Array<WeNotification>>(
+      const unreadNotifications = this.store.getItem<Array<FrameNotification>>(
         `appletNotificationsUnread#${appletId}`,
       );
       return unreadNotifications ? unreadNotifications : [];
@@ -83,17 +87,20 @@ export class PersistedStore {
     return appletIds;
   };
 
-  appletNotifications: SubStore<Array<WeNotification>, Array<WeNotification>, [AppletId, number]> =
-    {
-      value: (appletId: AppletId, daysSinceEpoch: number) => {
-        const notifications = this.store.getItem<Array<WeNotification>>(
-          `appletNotifications#${daysSinceEpoch}#${appletId}`,
-        );
-        return notifications ? notifications : [];
-      },
-      set: (value: Array<WeNotification>, appletId: AppletId, daysSinceEpoch: number) =>
-        this.store.setItem(`appletNotifications#${daysSinceEpoch}#${appletId}`, value),
-    };
+  appletNotifications: SubStore<
+    Array<FrameNotification>,
+    Array<FrameNotification>,
+    [AppletId, number]
+  > = {
+    value: (appletId: AppletId, daysSinceEpoch: number) => {
+      const notifications = this.store.getItem<Array<FrameNotification>>(
+        `appletNotifications#${daysSinceEpoch}#${appletId}`,
+      );
+      return notifications ? notifications : [];
+    },
+    set: (value: Array<FrameNotification>, appletId: AppletId, daysSinceEpoch: number) =>
+      this.store.setItem(`appletNotifications#${daysSinceEpoch}#${appletId}`, value),
+  };
 
   appletNotificationSettings: SubStore<
     AppletNotificationSettings,

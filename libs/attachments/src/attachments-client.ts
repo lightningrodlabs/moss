@@ -1,13 +1,13 @@
-import { AnyDhtHash, AppAgentClient, DnaHash } from "@holochain/client";
-import { decode, encode } from "@msgpack/msgpack";
-import { HrlWithContext } from "@lightningrodlabs/we-applet";
-import { ZomeClient, getCellIdFromRoleName } from "@holochain-open-dev/utils";
+import { AnyDhtHash, AppAgentClient, DnaHash } from '@holochain/client';
+import { decode, encode } from '@msgpack/msgpack';
+import { WAL } from '@lightningrodlabs/we-applet';
+import { ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
 
 export class AttachmentsClient extends ZomeClient<{}> {
   constructor(
     public client: AppAgentClient,
     public roleName: string,
-    public zomeName = "attachments"
+    public zomeName = 'attachments',
   ) {
     super(client, roleName, zomeName);
   }
@@ -19,43 +19,37 @@ export class AttachmentsClient extends ZomeClient<{}> {
     return cellId[0];
   }
 
-  addAttachment(
-    hash: AnyDhtHash,
-    hrlWithContext: HrlWithContext
-  ): Promise<void> {
-    return this.callZome("add_attachment", {
+  addAttachment(hash: AnyDhtHash, wal: WAL): Promise<void> {
+    return this.callZome('add_attachment', {
       hash,
       hrl_with_context: {
         hrl: {
-          dna_hash: hrlWithContext.hrl[0],
-          resource_hash: hrlWithContext.hrl[1],
+          dna_hash: wal.hrl[0],
+          resource_hash: wal.hrl[1],
         },
-        context: encode(hrlWithContext.context),
+        context: encode(wal.context),
       },
     });
   }
 
-  async getAttachments(hash: AnyDhtHash): Promise<Array<HrlWithContext>> {
-    const hrls = await this.callZome("get_attachments", hash);
+  async getAttachments(hash: AnyDhtHash): Promise<Array<WAL>> {
+    const hrls = await this.callZome('get_attachments', hash);
 
-    return hrls.map((hrlWithContext) => ({
-      hrl: [hrlWithContext.hrl.dna_hash, hrlWithContext.hrl.resource_hash],
-      context: decode(hrlWithContext.context),
+    return hrls.map((wal) => ({
+      hrl: [wal.hrl.dna_hash, wal.hrl.resource_hash],
+      context: decode(wal.context),
     }));
   }
 
-  removeAttachment(
-    hash: AnyDhtHash,
-    hrlWithContext: HrlWithContext
-  ): Promise<void> {
-    return this.callZome("remove_attachment", {
+  removeAttachment(hash: AnyDhtHash, wal: WAL): Promise<void> {
+    return this.callZome('remove_attachment', {
       hash,
       hrl_with_context: {
         hrl: {
-          dna_hash: hrlWithContext.hrl[0],
-          resource_hash: hrlWithContext.hrl[1],
+          dna_hash: wal.hrl[0],
+          resource_hash: wal.hrl[1],
         },
-        context: encode(hrlWithContext.context),
+        context: encode(wal.context),
       },
     });
   }

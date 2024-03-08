@@ -9,8 +9,8 @@ import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
 import { weStoreContext } from '../context.js';
 import { WeStore } from '../we-store.js';
-import './hrl-element.js';
-import './clipboard-search.js';
+import './wal-element.js';
+import './pocket-search.js';
 import { CreatableInfo } from './creatable-panel.js';
 import { Unsubscriber } from '@holochain-open-dev/stores';
 

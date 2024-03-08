@@ -16,8 +16,8 @@ import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
-  HrlWithContext,
-  OpenHrlMode,
+  WAL,
+  OpenWalMode,
   WeaveLocation,
   weaveUrlToLocation,
 } from '@lightningrodlabs/we-applet';
@@ -29,7 +29,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
-import '@lightningrodlabs/we-elements/dist/elements/hrl-to-clipboard.js';
+import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
 import '../layout/views/welcome-view.js';
 import '../groups/elements/entry-title.js';
@@ -39,7 +39,7 @@ import './join-group-dialog.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/appstore-view.js';
 import '../layout/views/publishing-view.js';
-import '../layout/views/attachable-view.js';
+import '../layout/views/asset-view.js';
 import '../groups/elements/group-home.js';
 import '../elements/zome-call-panel.js';
 
@@ -49,20 +49,20 @@ import { WeStore } from '../we-store.js';
 import { JoinGroupDialog } from './join-group-dialog.js';
 import { CreateGroupDialog } from './create-group-dialog.js';
 
-import './clipboard.js';
+import './pocket.js';
 import './creatable-panel.js';
-import { WeClipboard } from './clipboard.js';
+import { MossPocket } from './pocket.js';
 import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, stringifyHrlWithContext } from '../utils.js';
+import { decodeContext, getAllIframes, stringifyWal } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 
 type OpenTab =
   | {
-      type: 'hrl';
-      hrlWithContext: HrlWithContext;
+      type: 'wal';
+      wal: WAL;
       groupHashesB64: DnaHashB64[];
       appletIds: AppletId[];
     }
@@ -87,7 +87,7 @@ export type DashboardState =
     }
   | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
 
-export type AttachableViewerState = {
+export type AssetViewerState = {
   position: 'front' | 'side';
   visible: boolean;
 };
@@ -101,8 +101,8 @@ export class MainDashboard extends LitElement {
   @query('join-group-dialog')
   joinGroupDialog!: JoinGroupDialog;
 
-  @query('#clipboard')
-  _clipboard!: WeClipboard;
+  @query('#pocket')
+  _pocket!: MossPocket;
 
   @query('#creatable-panel')
   _creatablePanel!: CreatablePanel;
@@ -140,9 +140,9 @@ export class MainDashboard extends LitElement {
     () => [this._weStore],
   );
 
-  _attachableViewerState = new StoreSubscriber(
+  _assetViewerState = new StoreSubscriber(
     this,
-    () => this._weStore.attachableViewerState(),
+    () => this._weStore.assetViewerState(),
     () => [this._weStore],
   );
 
@@ -187,17 +187,17 @@ export class MainDashboard extends LitElement {
     openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
-    openHrl: async (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => {
-      const tabId = stringifyHrlWithContext(hrlWithContext);
+    openWal: async (wal: WAL, mode?: OpenWalMode) => {
+      const tabId = stringifyWal(wal);
       try {
         const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
-          hrlWithContext.hrl,
+          wal.hrl,
         );
         const tabInfo: TabInfo = {
           id: tabId,
           tab: {
-            type: 'hrl',
-            hrlWithContext,
+            type: 'wal',
+            wal,
             groupHashesB64: groupContextHashesB64,
             appletIds: appletContextIds,
           },
@@ -213,24 +213,24 @@ export class MainDashboard extends LitElement {
         });
       }
     },
-    userSelectHrl: async () => {
-      this._clipboard.show('select');
+    userSelectWal: async () => {
+      this._pocket.show('select');
 
       return new Promise((resolve) => {
         const listener = (e) => {
           switch (e.type) {
-            case 'cancel-select-hrl':
-              this.removeEventListener('cancel-select-hrl', listener);
+            case 'cancel-select-wal':
+              this.removeEventListener('cancel-select-wal', listener);
               return resolve(undefined);
-            case 'hrl-selected':
-              const hrlWithContext: HrlWithContext = e.detail.hrlWithContext;
-              this.removeEventListener('hrl-selected', listener);
-              this._clipboard.hide();
-              return resolve(hrlWithContext);
+            case 'wal-selected':
+              const wal: WAL = e.detail.wal;
+              this.removeEventListener('wal-selected', listener);
+              this._pocket.hide();
+              return resolve(wal);
           }
         };
-        this.addEventListener('hrl-selected', listener);
-        this.addEventListener('cancel-select-hrl', listener);
+        this.addEventListener('wal-selected', listener);
+        this.addEventListener('cancel-select-wal', listener);
       });
     },
     toggleClipboard: () => this.toggleClipboard(),
@@ -279,15 +279,15 @@ export class MainDashboard extends LitElement {
                 groupHash: e.detail.groupDnaHash,
                 appletHash: e.detail.appletEntryHash,
               });
-              if (this._attachableViewerState.value.position === 'front') {
-                this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+              if (this._assetViewerState.value.position === 'front') {
+                this._weStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
           ></appstore-view>
         `,
       },
     };
-    this._weStore.setAttachableViewerState({ position: 'front', visible: true });
+    this._weStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -301,7 +301,7 @@ export class MainDashboard extends LitElement {
         template: html` <zome-call-panel></zome-call-panel> `,
       },
     };
-    this._weStore.setAttachableViewerState({ position: 'front', visible: true });
+    this._weStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -320,7 +320,7 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async openTab(tabInfo: TabInfo, mode?: OpenHrlMode) {
+  async openTab(tabInfo: TabInfo, mode?: OpenWalMode) {
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
     );
@@ -332,7 +332,7 @@ export class MainDashboard extends LitElement {
     // i.e. we need to switch to group view if we haven't yet
     if (
       this._dashboardState.value.viewType === 'personal' &&
-      tabInfo.tab.type === 'hrl' &&
+      tabInfo.tab.type === 'wal' &&
       tabInfo.tab.groupHashesB64.length > 0
     ) {
       const groupDnaHash = decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]);
@@ -342,8 +342,8 @@ export class MainDashboard extends LitElement {
         groupHash: groupDnaHash,
       };
     }
-    this._weStore.setAttachableViewerState({
-      position: mode ? mode : this._attachableViewerState.value.position,
+    this._weStore.setAssetViewerState({
+      position: mode ? mode : this._assetViewerState.value.position,
       visible: true,
     });
     this._selectedTab = tabInfo;
@@ -367,12 +367,11 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async handleOpenHrl(hrlWithContext: HrlWithContext) {
-    const hrl = hrlWithContext.hrl;
+  async handleOpenHrl(wal: WAL) {
+    const hrl = wal.hrl;
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfo) =>
-        tabInfo.tab.type === 'hrl' &&
-        JSON.stringify(tabInfo.tab.hrlWithContext) === JSON.stringify(hrlWithContext),
+        tabInfo.tab.type === 'wal' && JSON.stringify(tabInfo.tab.wal) === JSON.stringify(wal),
     );
     if (alreadyOpen) {
       this.openTab(alreadyOpen);
@@ -384,8 +383,8 @@ export class MainDashboard extends LitElement {
       const tabInfo: TabInfo = {
         id: tabId,
         tab: {
-          type: 'hrl',
-          hrlWithContext,
+          type: 'wal',
+          wal,
           groupHashesB64: groupContextHashesB64,
           appletIds: appletContextIds,
         },
@@ -425,15 +424,15 @@ export class MainDashboard extends LitElement {
           notifyError('URL type not supported.');
           return;
         case 'asset':
-          return this.handleOpenHrl(weaveLocation.hrlWithContext);
+          return this.handleOpenHrl(weaveLocation.wal);
       }
     }
   }
 
   async handleOpenAppletMain(appletHash: AppletHash) {
     this.openViews.openAppletMain(appletHash);
-    if (this._attachableViewerState.value.position === 'front') {
-      this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+    if (this._assetViewerState.value.position === 'front') {
+      this._weStore.setAssetViewerState({ position: 'front', visible: false });
     }
   }
 
@@ -442,8 +441,8 @@ export class MainDashboard extends LitElement {
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
-        if (this._attachableViewerState.value.position === 'front') {
-          this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+        if (this._assetViewerState.value.position === 'front') {
+          this._weStore.setAssetViewerState({ position: 'front', visible: false });
         }
       }
     });
@@ -477,25 +476,25 @@ export class MainDashboard extends LitElement {
       }
     });
 
-    // add event listener to close attachable viewer when clicking outside of it
+    // add event listener to close asset viewer when clicking outside of it
     document.addEventListener('click', () => {
-      if (this._attachableViewerState.value.position === 'front') {
-        this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+      if (this._assetViewerState.value.position === 'front') {
+        this._weStore.setAssetViewerState({ position: 'front', visible: false });
       }
     });
 
-    // add eventlistener for clipboard
+    // add eventlistener for pocket
     window.addEventListener('keydown', (zEvent) => {
       if (zEvent.altKey && zEvent.key === 's') {
         // case sensitive
         switch (this.showClipboard) {
           case false:
             this.showClipboard = true;
-            this._clipboard.show('open');
-            this._clipboard.focus();
+            this._pocket.show('open');
+            this._pocket.focus();
             break;
           case true:
-            this._clipboard.hide();
+            this._pocket.hide();
             break;
         }
       }
@@ -506,8 +505,8 @@ export class MainDashboard extends LitElement {
 
   openClipboard() {
     this.showClipboard = true;
-    this._clipboard.show('open');
-    this._clipboard.focus();
+    this._pocket.show('open');
+    this._pocket.focus();
   }
 
   openCreatablePanel() {
@@ -518,7 +517,7 @@ export class MainDashboard extends LitElement {
 
   closeClipboard() {
     this.showClipboard = false;
-    this._clipboard.hide();
+    this._pocket.hide();
   }
 
   toggleClipboard() {
@@ -583,8 +582,8 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     });
-    if (this._attachableViewerState.value.position === 'front') {
-      this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+    if (this._assetViewerState.value.position === 'front') {
+      this._weStore.setAssetViewerState({ position: 'front', visible: false });
     }
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
@@ -629,8 +628,8 @@ export class MainDashboard extends LitElement {
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
-                if (this._attachableViewerState.value.position === 'front') {
-                  this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                if (this._assetViewerState.value.position === 'front') {
+                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
                 }
               }}
               @applet-installed=${(e: {
@@ -644,8 +643,8 @@ export class MainDashboard extends LitElement {
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
                 });
-                if (this._attachableViewerState.value.position === 'front') {
-                  this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                if (this._assetViewerState.value.position === 'front') {
+                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
                 }
               }}
               @custom-view-selected=${(_e) => {
@@ -666,13 +665,13 @@ export class MainDashboard extends LitElement {
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
-          Attachable Viewer
+          Asset Viewer
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where attachables are displayed. Opening an attachable from one of your applets
-          will create a new tab here.<br /><br />
-          If you are looking at an attachable, green indicators show you the group(s) and applet(s)
-          the specific attachable belongs to:
+          This is where assets are displayed. Opening an asset from one of your applets will create
+          a new tab here.<br /><br />
+          If you are looking at an asset, green indicators show you the group(s) and applet(s) the
+          specific asset belongs to:
         </div>
         <div class="column" style="margin-top: 20px;">
           <div
@@ -697,17 +696,17 @@ export class MainDashboard extends LitElement {
 
   renderTabContent(info: TabInfo) {
     switch (info.tab.type) {
-      case 'hrl':
-        return html`<attachable-view
+      case 'wal':
+        return html`<asset-view
           @jump-to-applet=${(e) => {
             this.openViews.openAppletMain(e.detail);
-            if (this._attachableViewerState.value.position === 'front') {
-              this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+            if (this._assetViewerState.value.position === 'front') {
+              this._weStore.setAssetViewerState({ position: 'front', visible: false });
             }
           }}
-          .hrlWithContext=${info.tab.hrlWithContext}
+          .wal=${info.tab.wal}
           style="display: flex; flex: 1;"
-        ></attachable-view>`;
+        ></asset-view>`;
       case 'html':
         return info.tab.template;
       case 'not found':
@@ -734,13 +733,13 @@ export class MainDashboard extends LitElement {
           delete this._openTabs[tabId];
           if (nextOpenTab) {
             this._selectedTab = nextOpenTab;
-            this._weStore.setAttachableViewerState({
-              position: this._attachableViewerState.value.position,
+            this._weStore.setAssetViewerState({
+              position: this._assetViewerState.value.position,
               visible: true,
             });
           } else {
-            this._weStore.setAttachableViewerState({
-              position: this._attachableViewerState.value.position,
+            this._weStore.setAssetViewerState({
+              position: this._assetViewerState.value.position,
               visible: false,
             });
           }
@@ -753,13 +752,13 @@ export class MainDashboard extends LitElement {
             delete this._openTabs[tabId];
             if (nextOpenTab) {
               this._selectedTab = nextOpenTab;
-              this._weStore.setAttachableViewerState({
-                position: this._attachableViewerState.value.position,
+              this._weStore.setAssetViewerState({
+                position: this._assetViewerState.value.position,
                 visible: true,
               });
             } else {
-              this._weStore.setAttachableViewerState({
-                position: this._attachableViewerState.value.position,
+              this._weStore.setAssetViewerState({
+                position: this._assetViewerState.value.position,
                 visible: false,
               });
             }
@@ -778,7 +777,7 @@ export class MainDashboard extends LitElement {
     }
     return openTabs.map((tabInfo) => {
       switch (tabInfo.tab.type) {
-        case 'hrl':
+        case 'wal':
           return html`
             <div
               class="entry-tab row ${this._selectedTab && this._selectedTab.id === tabInfo.id
@@ -789,8 +788,8 @@ export class MainDashboard extends LitElement {
               @click=${async (e) => {
                 e.stopPropagation();
                 this._selectedTab = tabInfo;
-                this._weStore.setAttachableViewerState({
-                  position: this._attachableViewerState.value.position,
+                this._weStore.setAssetViewerState({
+                  position: this._assetViewerState.value.position,
                   visible: true,
                 });
               }}
@@ -798,15 +797,15 @@ export class MainDashboard extends LitElement {
                 if (e.key === 'Enter') {
                   e.stopPropagation();
                   this._selectedTab = tabInfo;
-                  this._weStore.setAttachableViewerState({
-                    position: this._attachableViewerState.value.position,
+                  this._weStore.setAssetViewerState({
+                    position: this._assetViewerState.value.position,
                     visible: true,
                   });
                 }
               }}
             >
               ${this.renderCloseTab(tabInfo.id)}
-              <entry-title .hrlWithContext=${tabInfo.tab.hrlWithContext}></entry-title>
+              <entry-title .wal=${tabInfo.tab.wal}></entry-title>
             </div>
           `;
         case 'html':
@@ -859,15 +858,15 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
-      <we-clipboard
-        id="clipboard"
+      <moss-pocket
+        id="pocket"
         @click=${(e) => e.stopPropagation()}
-        @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
+        @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
         @open-creatable-panel=${() => this._creatablePanel.show()}
-        @hrl-selected=${(e) => {
+        @wal-selected=${(e) => {
           this.dispatchEvent(
-            new CustomEvent('hrl-selected', {
+            new CustomEvent('wal-selected', {
               detail: e.detail,
               bubbles: false,
               composed: false,
@@ -876,21 +875,21 @@ export class MainDashboard extends LitElement {
         }}
         @sl-hide=${() => {
           this.dispatchEvent(
-            new CustomEvent('cancel-select-hrl', {
+            new CustomEvent('cancel-select-wal', {
               bubbles: false,
               composed: false,
             }),
           );
           this.showClipboard = false;
         }}
-      ></we-clipboard>
+      ></moss-pocket>
       <creatable-panel
         id="creatable-panel"
         @click=${(e) => e.stopPropagation()}
-        @open-hrl=${async (e) => await this.handleOpenHrl(e.detail.hrlWithContext)}
-        @hrl-selected=${(e) => {
+        @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
+        @wal-selected=${(e) => {
           this.dispatchEvent(
-            new CustomEvent('hrl-selected', {
+            new CustomEvent('wal-selected', {
               detail: e.detail,
               bubbles: false,
               composed: false,
@@ -913,7 +912,7 @@ export class MainDashboard extends LitElement {
         <!-- PERSONAL VIEW -->
         <div
           class="row"
-          style="flex: 1; ${this._attachableViewerState.value.visible
+          style="flex: 1; ${this._assetViewerState.value.visible
             ? 'max-height: calc(100vh - 124px);'
             : ''}"
         >
@@ -931,8 +930,8 @@ export class MainDashboard extends LitElement {
             @request-join-group=${(_e) => this.joinGroupDialog.open()}
             @applet-selected=${(e: CustomEvent) => {
               this.openViews.openAppletMain(e.detail.appletHash);
-              if (this._attachableViewerState.value.position === 'front') {
-                this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+              if (this._assetViewerState.value.position === 'front') {
+                this._weStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
           ></welcome-view>
@@ -950,39 +949,38 @@ export class MainDashboard extends LitElement {
           </div>
           <div
             class="drawer-separator"
-            style="${this._attachableViewerState.value.visible ? '' : 'display: none;'}"
+            style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
             @mousedown=${(e) => {
               console.log('Got mousedown event: ', e);
               this.resizeMouseDownHandler(e);
             }}
           ></div>
           <div
-            id="attachable-viewer"
+            id="asset-viewer"
             class="${classMap({
-              'attachable-viewer': this._attachableViewerState.value.position === 'front',
-              'slide-in-right': this._attachableViewerState.value.position === 'front',
-              'slide-out-right': this._attachableViewerState.value.position === 'front',
-              'side-drawer': this._attachableViewerState.value.position === 'side',
+              'asset-viewer': this._assetViewerState.value.position === 'front',
+              'slide-in-right': this._assetViewerState.value.position === 'front',
+              'slide-out-right': this._assetViewerState.value.position === 'front',
+              'side-drawer': this._assetViewerState.value.position === 'side',
               hidden:
-                !this._attachableViewerState.value.visible &&
-                this._attachableViewerState.value.position === 'side',
+                !this._assetViewerState.value.visible &&
+                this._assetViewerState.value.position === 'side',
               show:
-                this._attachableViewerState.value.visible &&
-                this._attachableViewerState.value.position === 'front',
+                this._assetViewerState.value.visible &&
+                this._assetViewerState.value.position === 'front',
               hide:
-                !this._attachableViewerState.value.visible &&
-                this._attachableViewerState.value.position === 'front',
+                !this._assetViewerState.value.visible &&
+                this._assetViewerState.value.position === 'front',
             })}"
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
-              ._attachableViewerState.value.visible &&
-            this._attachableViewerState.value.position === 'side'
+              ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
               ? `width: ${
                   this._drawerWidth > 200 ? this._drawerWidth : 200
                 }px; display: flex; flex-grow: 0; flex-shrink: 0;`
               : ''}"
             @click=${(e) => {
               // Prevent propagation such hat only clicks outside of this container bubble up and we
-              // can close the attachable-view-container on side-click
+              // can close the asset-view-container on side-click
               e.stopPropagation();
             }}
           >
@@ -992,11 +990,11 @@ export class MainDashboard extends LitElement {
 
         <!-- BOTTOM BAR -->
         <div
-          class="attachable-view-bar"
-          style="${this._attachableViewerState.value.visible ? '' : 'display: none;'}"
+          class="asset-view-bar"
+          style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
           @click=${(e) => {
             // Prevent propagation such hat only clicks outside of this container bubble up and we
-            // can close the attachable-view-container on side-click
+            // can close the asset-view-container on side-click
             e.stopPropagation();
           }}
         >
@@ -1020,16 +1018,16 @@ export class MainDashboard extends LitElement {
             tabindex="0"
             @click=${() => {
               this._weStore.setDashboardState({ viewType: 'personal' });
-              this._weStore.setAttachableViewerState({
-                position: this._attachableViewerState.value.position,
+              this._weStore.setAssetViewerState({
+                position: this._assetViewerState.value.position,
                 visible: false,
               });
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter') {
                 this._weStore.setDashboardState({ viewType: 'personal' });
-                this._weStore.setAttachableViewerState({
-                  position: this._attachableViewerState.value.position,
+                this._weStore.setAssetViewerState({
+                  position: this._assetViewerState.value.position,
                   visible: false,
                 });
               }
@@ -1042,9 +1040,9 @@ export class MainDashboard extends LitElement {
           .selectedGroupDnaHash=${this._dashboardState.value.viewType === 'group'
             ? this._dashboardState.value.groupHash
             : undefined}
-          .indicatedGroupDnaHashes=${this._attachableViewerState.value.visible &&
+          .indicatedGroupDnaHashes=${this._assetViewerState.value.visible &&
           this._selectedTab &&
-          this._selectedTab.tab.type === 'hrl'
+          this._selectedTab.tab.type === 'wal'
             ? this._selectedTab.tab.groupHashesB64
             : []}
           @group-selected=${(e: CustomEvent) => {
@@ -1058,7 +1056,7 @@ export class MainDashboard extends LitElement {
 
         <!-- TAB BAR BUTTON -->
         <div class="row center-content" style="margin-bottom: 5px;">
-          <sl-tooltip content="${msg('Create New Attachable')}" placement="right" hoist>
+          <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <img
               tabindex="0"
               class="search-button"
@@ -1112,9 +1110,9 @@ export class MainDashboard extends LitElement {
                 <group-context .groupDnaHash=${this._dashboardState.value.groupHash}>
                   <group-applets-sidebar
                     .selectedAppletHash=${this._dashboardState.value.appletHash}
-                    .indicatedAppletHashes=${this._attachableViewerState.value.visible &&
+                    .indicatedAppletHashes=${this._assetViewerState.value.visible &&
                     this._selectedTab &&
-                    this._selectedTab.tab.type === 'hrl'
+                    this._selectedTab.tab.type === 'wal'
                       ? this._selectedTab.tab.appletIds
                       : []}
                     @applet-selected=${(e: {
@@ -1125,8 +1123,8 @@ export class MainDashboard extends LitElement {
                         groupHash: e.detail.groupDnaHash,
                         appletHash: e.detail.appletHash,
                       });
-                      if (this._attachableViewerState.value.position === 'front') {
-                        this._weStore.setAttachableViewerState({
+                      if (this._assetViewerState.value.position === 'front') {
+                        this._weStore.setAssetViewerState({
                           position: 'front',
                           visible: false,
                         });
@@ -1149,36 +1147,36 @@ export class MainDashboard extends LitElement {
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
-          <sl-tooltip content="Show Attachable Viewer in Front" placement="bottom" hoist>
+          <sl-tooltip content="Show Asset Viewer in Front" placement="bottom" hoist>
             <div
               id="tab-bar-button"
-              class="entry-tab-bar-button ${this._attachableViewerState.value.visible &&
-              this._attachableViewerState.value.position === 'front'
+              class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
+              this._assetViewerState.value.position === 'front'
                 ? 'btn-selected'
                 : ''}"
               tabindex="0"
               @click=${(e) => {
                 e.stopPropagation();
                 if (
-                  this._attachableViewerState.value.visible &&
-                  this._attachableViewerState.value.position === 'front'
+                  this._assetViewerState.value.visible &&
+                  this._assetViewerState.value.position === 'front'
                 ) {
-                  this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
                   return;
                 }
-                this._weStore.setAttachableViewerState({ position: 'front', visible: true });
+                this._weStore.setAssetViewerState({ position: 'front', visible: true });
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   e.stopPropagation();
                   if (
-                    this._attachableViewerState.value.visible &&
-                    this._attachableViewerState.value.position === 'front'
+                    this._assetViewerState.value.visible &&
+                    this._assetViewerState.value.position === 'front'
                   ) {
-                    this._weStore.setAttachableViewerState({ position: 'front', visible: false });
+                    this._weStore.setAssetViewerState({ position: 'front', visible: false });
                     return;
                   }
-                  this._weStore.setAttachableViewerState({ position: 'front', visible: true });
+                  this._weStore.setAssetViewerState({ position: 'front', visible: true });
                 }
               }}
             >
@@ -1192,34 +1190,34 @@ export class MainDashboard extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content="Show Attachable Viewer to the Side" placement="bottom" hoist>
+          <sl-tooltip content="Show Asset Viewer to the Side" placement="bottom" hoist>
             <div
               id="tab-bar-button"
-              class="entry-tab-bar-button ${this._attachableViewerState.value.visible &&
-              this._attachableViewerState.value.position === 'side'
+              class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
+              this._assetViewerState.value.position === 'side'
                 ? 'btn-selected'
                 : ''}"
               tabindex="0"
               @click="${(_e) => {
                 if (
-                  this._attachableViewerState.value.visible &&
-                  this._attachableViewerState.value.position === 'side'
+                  this._assetViewerState.value.visible &&
+                  this._assetViewerState.value.position === 'side'
                 ) {
-                  this._weStore.setAttachableViewerState({ position: 'side', visible: false });
+                  this._weStore.setAssetViewerState({ position: 'side', visible: false });
                   return;
                 }
-                this._weStore.setAttachableViewerState({ position: 'side', visible: true });
+                this._weStore.setAssetViewerState({ position: 'side', visible: true });
               }}"
               @keypress="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   if (
-                    this._attachableViewerState.value.visible &&
-                    this._attachableViewerState.value.position === 'side'
+                    this._assetViewerState.value.visible &&
+                    this._assetViewerState.value.position === 'side'
                   ) {
-                    this._weStore.setAttachableViewerState({ position: 'side', visible: false });
+                    this._weStore.setAssetViewerState({ position: 'side', visible: false });
                     return;
                   }
-                  this._weStore.setAttachableViewerState({ position: 'side', visible: true });
+                  this._weStore.setAssetViewerState({ position: 'side', visible: true });
                 }
               }}"
             >
@@ -1286,7 +1284,7 @@ export class MainDashboard extends LitElement {
           border-top: 4px solid var(--sl-color-tertiary-50);
         }
 
-        .attachable-viewer {
+        .asset-viewer {
           overflow: hidden;
           display: flex;
           flex: 1;
@@ -1348,7 +1346,7 @@ export class MainDashboard extends LitElement {
           color: var(--sl-color-primary-50);
         }
 
-        .attachable-view-bar {
+        .asset-view-bar {
           display: flex;
           align-items: center;
           padding-left: 5px;

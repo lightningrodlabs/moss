@@ -1,17 +1,17 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
-  AttachableInfo,
-  AttachableLocationAndInfo,
+  AssetInfo,
+  AssetLocationAndInfo,
   HrlLocation,
-  HrlWithContext,
-  WeNotification,
+  WAL,
   AppletToParentRequest,
   ParentToAppletRequest,
   IframeConfig,
   BlockType,
   WeServices,
   GroupProfile,
+  FrameNotification,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -33,7 +33,7 @@ import {
   getNotificationTypeSettings,
   logZomeCall,
   storeAppletNotifications,
-  stringifyHrlWithContext,
+  stringifyWal,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';
@@ -121,43 +121,37 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
 
 export function buildHeadlessWeClient(weStore: WeStore): WeServices {
   return {
-    async attachableInfo(
-      hrlWithContext: HrlWithContext,
-    ): Promise<AttachableLocationAndInfo | undefined> {
-      const maybeCachedInfo = weStore.weCache.attachableInfo.value(hrlWithContext);
+    async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
+      const maybeCachedInfo = weStore.weCache.assetInfo.value(wal);
       if (maybeCachedInfo) return maybeCachedInfo;
 
-      const dnaHash = hrlWithContext.hrl[0];
+      const dnaHash = wal.hrl[0];
 
       try {
-        const location = await toPromise(
-          weStore.hrlLocations.get(dnaHash).get(hrlWithContext.hrl[1]),
-        );
+        const location = await toPromise(weStore.hrlLocations.get(dnaHash).get(wal.hrl[1]));
         if (!location) return undefined;
-        const attachableInfo = await toPromise(
-          weStore.attachableInfo.get(stringifyHrlWithContext(hrlWithContext)),
-        );
+        const assetInfo = await toPromise(weStore.assetInfo.get(stringifyWal(wal)));
 
-        if (!attachableInfo) return undefined;
+        if (!assetInfo) return undefined;
 
-        const attachableAndAppletInfo: AttachableLocationAndInfo = {
+        const assetAndAppletInfo: AssetLocationAndInfo = {
           appletHash: location.dnaLocation.appletHash,
-          attachableInfo,
+          assetInfo,
         };
 
-        weStore.weCache.attachableInfo.set(attachableAndAppletInfo, hrlWithContext);
+        weStore.weCache.assetInfo.set(assetAndAppletInfo, wal);
 
-        return attachableAndAppletInfo;
+        return assetAndAppletInfo;
       } catch (e) {
         console.warn(
-          `Failed to get attachableInfo for hrl ${hrlWithContext.hrl.map((hash) =>
+          `Failed to get assetInfo for hrl ${wal.hrl.map((hash) =>
             encodeHashToBase64(hash),
-          )} with context ${hrlWithContext.context}: ${e}`,
+          )} with context ${wal.context}: ${e}`,
         );
         return undefined;
       }
     },
-    async requestBind(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+    async requestBind(srcWal: WAL, dstWal: WAL): Promise<void> {
       const dstLocation = await toPromise(
         weStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
       );
@@ -217,22 +211,22 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },
-    async notifyWe(_notifications: Array<WeNotification>) {
+    async notifyFrame(_notifications: Array<FrameNotification>) {
       throw new Error('notify is not implemented on headless WeServices.');
     },
     openAppletMain: async () => {},
     openCrossAppletMain: async () => {},
-    openHrl: async () => {},
+    openWal: async () => {},
     openCrossAppletBlock: async () => {},
     openAppletBlock: async () => {},
-    async userSelectHrl() {
-      throw new Error('userSelectHrl is not supported in headless WeServices.');
+    async userSelectWal() {
+      throw new Error('userSelectWal is not supported in headless WeServices.');
     },
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeServices.');
     },
-    async hrlToClipboard(hrlWithContext: HrlWithContext): Promise<void> {
-      weStore.hrlToClipboard(hrlWithContext);
+    async walToPocket(wal: WAL): Promise<void> {
+      weStore.walToPocket(wal);
     },
   };
 }
@@ -326,19 +320,19 @@ export async function handleAppletIframeMessage(
             message.request.block,
             message.request.context,
           );
-        case 'hrl':
-          return openViews.openHrl(message.request.hrlWithContext, message.request.mode);
+        case 'wal':
+          return openViews.openWal(message.request.wal, message.request.mode);
       }
-    case 'hrl-to-clipboard':
-      weStore.hrlToClipboard(message.hrlWithContext);
+    case 'wal-to-pocket':
+      weStore.walToPocket(message.wal);
       break;
-    case 'user-select-hrl':
-      return openViews.userSelectHrl();
+    case 'user-select-wal':
+      return openViews.userSelectWal();
     case 'user-select-screen':
       return selectScreenOrWindow();
-    case 'toggle-clipboard':
+    case 'toggle-pocket':
       return openViews.toggleClipboard();
-    case 'notify-we': {
+    case 'notify-frame': {
       if (!message.notifications) {
         throw new Error(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
@@ -352,17 +346,17 @@ export async function handleAppletIframeMessage(
       // If the applet that the notification is coming from is already open, and the We main window
       // itself is also open, don't do anything
       const dashboardMode = get(weStore.dashboardState());
-      const attachableViewerState = get(weStore.attachableViewerState());
+      const assetViewerState = get(weStore.assetViewerState());
 
       const ignoreNotification =
-        !(attachableViewerState.visible && attachableViewerState.position === 'front') &&
+        !(assetViewerState.visible && assetViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
         dashboardMode.appletHash.toString() === appletHash.toString() &&
         mainWindowFocused;
 
       // add notifications to unread messages and store them in the persisted notifications log
-      const notifications: Array<WeNotification> = message.notifications;
+      const notifications: Array<FrameNotification> = message.notifications;
       validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
       const maybeUnreadNotifications = storeAppletNotifications(
         notifications,
@@ -413,17 +407,15 @@ export async function handleAppletIframeMessage(
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
       return weServices.groupProfile(message.groupId);
-    case 'get-global-attachable-info':
-      let attachableInfo = await weServices.attachableInfo(message.hrlWithContext);
-      if (attachableInfo && weStore.isAppletDev) {
-        const appletDevPort = await getAppletDevPort(
-          appIdFromAppletHash(attachableInfo.appletHash),
-        );
+    case 'get-global-asset-info':
+      let assetInfo = await weServices.assetInfo(message.wal);
+      if (assetInfo && weStore.isAppletDev) {
+        const appletDevPort = await getAppletDevPort(appIdFromAppletHash(assetInfo.appletHash));
         if (appletDevPort) {
-          attachableInfo.appletDevPort = appletDevPort;
+          assetInfo.appletDevPort = appletDevPort;
         }
       }
-      return attachableInfo;
+      return assetInfo;
     case 'request-bind': {
       const srcLocation = await toPromise(
         weStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
@@ -486,24 +478,24 @@ export class AppletHost {
     this.appletId = appletId;
   }
 
-  async getAppletAttachableInfo(
+  async getAppletAssetInfo(
     roleName: string,
     integrityZomeName: string,
     entryType: string,
-    hrlWithContext: HrlWithContext,
-  ): Promise<AttachableInfo | undefined> {
+    wal: WAL,
+  ): Promise<AssetInfo | undefined> {
     return this.postMessage({
-      type: 'get-applet-attachable-info',
+      type: 'get-applet-asset-info',
       roleName,
       integrityZomeName,
       entryType,
-      hrlWithContext,
+      wal,
     });
   }
 
   bindAsset(
-    srcWal: HrlWithContext,
-    dstWal: HrlWithContext,
+    srcWal: WAL,
+    dstWal: WAL,
     dstRoleName: string,
     dstIntegrityZomeName: string,
     dstEntryType: string,
@@ -518,7 +510,7 @@ export class AppletHost {
     });
   }
 
-  search(filter: string): Promise<Array<HrlWithContext>> {
+  search(filter: string): Promise<Array<WAL>> {
     return this.postMessage({
       type: 'search',
       filter,

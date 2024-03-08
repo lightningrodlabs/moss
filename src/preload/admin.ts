@@ -5,7 +5,7 @@ import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { DistributionInfo } from '../main/filesystem';
-import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
@@ -57,7 +57,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),
   notification: (
-    notification: WeNotification,
+    notification: FrameNotification,
     showInSystray: boolean,
     notifyOS: boolean,
     appletId: AppletId | undefined,
