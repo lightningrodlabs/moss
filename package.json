@@ -69,7 +69,6 @@
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
     "@electron-toolkit/eslint-config-ts": "^1.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
-    "@lightningrodlabs/we-dev-cli": "file:./cli",
     "@types/commander": "2.12.2",
     "@types/nanoid": "3.0.0",
     "@types/node": "^18.17.5",
