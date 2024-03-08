@@ -25,7 +25,7 @@
     "dev:electron": "electron-vite dev",
     "build": "yarn typecheck && electron-vite build && yarn build:cli",
     "setup": "yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && mkdir -p resources/default-apps && yarn prepare:default-apps && mkdir -p resources/bins && yarn fetch:binaries && yarn link:libs",
-    "setup:release": "yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && yarn fetch:default-apps && mkdir -p resources/bins && yarn fetch:binaries",
+    "setup:release": "yarn && yarn build:libs && yarn workspace applet-iframe install --force && yarn build:applet-iframe && yarn build:happ-iframe && yarn fetch:default-apps && yarn fetch:binaries",
     "build:libs": "yarn workspace @lightningrodlabs/we-applet build && yarn workspace @lightningrodlabs/we-elements install --check-files && yarn workspace @lightningrodlabs/we-elements build && yarn workspace @lightningrodlabs/attachments build && yarn workspace grapes-editor build && rimraf ./node_modules/@lightningrodlabs/we-applet && yarn install --check-files",
     "build:applet-iframe": "yarn workspace applet-iframe build",
     "build:happ-iframe": "yarn workspace happ-iframe build",
