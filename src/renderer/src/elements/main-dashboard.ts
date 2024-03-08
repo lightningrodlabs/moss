@@ -44,8 +44,8 @@ import '../groups/elements/group-home.js';
 import '../elements/zome-call-panel.js';
 
 import { weStyles } from '../shared-styles.js';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './join-group-dialog.js';
 import { CreateGroupDialog } from './create-group-dialog.js';
 
@@ -94,9 +94,9 @@ export type AssetViewerState = {
 
 @customElement('main-dashboard')
 export class MainDashboard extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @query('join-group-dialog')
   joinGroupDialog!: JoinGroupDialog;
@@ -136,26 +136,26 @@ export class MainDashboard extends LitElement {
 
   _dashboardState = new StoreSubscriber(
     this,
-    () => this._weStore.dashboardState(),
-    () => [this._weStore],
+    () => this._mossStore.dashboardState(),
+    () => [this._mossStore],
   );
 
   _assetViewerState = new StoreSubscriber(
     this,
-    () => this._weStore.assetViewerState(),
-    () => [this._weStore],
+    () => this._mossStore.assetViewerState(),
+    () => [this._mossStore],
   );
 
   _allGroupHashes = new StoreSubscriber(
     this,
-    () => this._weStore.groupsDnaHashes,
-    () => [this._weStore],
+    () => this._mossStore.groupsDnaHashes,
+    () => [this._mossStore],
   );
 
   _runningApplets = new StoreSubscriber(
     this,
-    () => this._weStore.runningApplets,
-    () => [this._weStore],
+    () => this._mossStore.runningApplets,
+    () => [this._mossStore],
   );
 
   // _unlisten: UnlistenFn | undefined;
@@ -164,7 +164,7 @@ export class MainDashboard extends LitElement {
   @property()
   openViews: AppOpenViews = {
     openAppletMain: async (appletHash) => {
-      const groupsForApplet = await toPromise(this._weStore.groupsForApplet.get(appletHash));
+      const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash));
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
         notifyError('Applet not found in any of your groups.');
@@ -172,7 +172,7 @@ export class MainDashboard extends LitElement {
       }
       // pick an arbitrary group this applet is installed in
       const groupDnaHash = groupDnaHashes[0];
-      this._weStore.setDashboardState({
+      this._mossStore.setDashboardState({
         viewType: 'group',
         groupHash: groupDnaHash,
         appletHash,
@@ -274,20 +274,20 @@ export class MainDashboard extends LitElement {
                 groupDnaHash: DnaHash;
               };
             }) => {
-              this._weStore.setDashboardState({
+              this._mossStore.setDashboardState({
                 viewType: 'group',
                 groupHash: e.detail.groupDnaHash,
                 appletHash: e.detail.appletEntryHash,
               });
               if (this._assetViewerState.value.position === 'front') {
-                this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                this._mossStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
           ></appstore-view>
         `,
       },
     };
-    this._weStore.setAssetViewerState({ position: 'front', visible: true });
+    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -301,16 +301,16 @@ export class MainDashboard extends LitElement {
         template: html` <zome-call-panel></zome-call-panel> `,
       },
     };
-    this._weStore.setAssetViewerState({ position: 'front', visible: true });
+    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
   async getRelatedGroupsAndApplets(hrl: Hrl): Promise<[DnaHashB64[], AppletId[]]> {
-    const location = await toPromise(this._weStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+    const location = await toPromise(this._mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
     if (location) {
       const appletContextHashes = [encodeHashToBase64(location.dnaLocation.appletHash)];
       const groupsForApplet = await toPromise(
-        this._weStore.groupsForApplet.get(location.dnaLocation.appletHash),
+        this._mossStore.groupsForApplet.get(location.dnaLocation.appletHash),
       );
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       const groupContextHashesB64 = groupDnaHashes.map((hash) => encodeHashToBase64(hash));
@@ -342,7 +342,7 @@ export class MainDashboard extends LitElement {
         groupHash: groupDnaHash,
       };
     }
-    this._weStore.setAssetViewerState({
+    this._mossStore.setAssetViewerState({
       position: mode ? mode : this._assetViewerState.value.position,
       visible: true,
     });
@@ -351,7 +351,7 @@ export class MainDashboard extends LitElement {
 
   async handleOpenGroup(networkSeed: string) {
     const groups = await toPromise(
-      asyncDeriveStore(this._weStore.groupStores, (groups) =>
+      asyncDeriveStore(this._mossStore.groupStores, (groups) =>
         joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
       ),
     );
@@ -432,17 +432,17 @@ export class MainDashboard extends LitElement {
   async handleOpenAppletMain(appletHash: AppletHash) {
     this.openViews.openAppletMain(appletHash);
     if (this._assetViewerState.value.position === 'front') {
-      this._weStore.setAssetViewerState({ position: 'front', visible: false });
+      this._mossStore.setAssetViewerState({ position: 'front', visible: false });
     }
   }
 
   async firstUpdated() {
-    setupAppletMessageHandler(this._weStore, this.openViews);
+    setupAppletMessageHandler(this._mossStore, this.openViews);
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
         if (this._assetViewerState.value.position === 'front') {
-          this._weStore.setAssetViewerState({ position: 'front', visible: false });
+          this._mossStore.setAssetViewerState({ position: 'front', visible: false });
         }
       }
     });
@@ -479,7 +479,7 @@ export class MainDashboard extends LitElement {
     // add event listener to close asset viewer when clicking outside of it
     document.addEventListener('click', () => {
       if (this._assetViewerState.value.position === 'front') {
-        this._weStore.setAssetViewerState({ position: 'front', visible: false });
+        this._mossStore.setAssetViewerState({ position: 'front', visible: false });
       }
     });
 
@@ -578,12 +578,12 @@ export class MainDashboard extends LitElement {
     ) {
       this._openGroups.push(groupDnaHash);
     }
-    this._weStore.setDashboardState({
+    this._mossStore.setDashboardState({
       viewType: 'group',
       groupHash: groupDnaHash,
     });
     if (this._assetViewerState.value.position === 'front') {
-      this._weStore.setAssetViewerState({ position: 'front', visible: false });
+      this._mossStore.setAssetViewerState({ position: 'front', visible: false });
     }
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
@@ -624,12 +624,12 @@ export class MainDashboard extends LitElement {
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
-                this._weStore.setDashboardState({ viewType: 'personal' });
+                this._mossStore.setDashboardState({ viewType: 'personal' });
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
                 if (this._assetViewerState.value.position === 'front') {
-                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
                 }
               }}
               @applet-installed=${(e: {
@@ -638,13 +638,13 @@ export class MainDashboard extends LitElement {
                   groupDnaHash: DnaHash;
                 };
               }) => {
-                this._weStore.setDashboardState({
+                this._mossStore.setDashboardState({
                   viewType: 'group',
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
                 });
                 if (this._assetViewerState.value.position === 'front') {
-                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
                 }
               }}
               @custom-view-selected=${(_e) => {
@@ -701,7 +701,7 @@ export class MainDashboard extends LitElement {
           @jump-to-applet=${(e) => {
             this.openViews.openAppletMain(e.detail);
             if (this._assetViewerState.value.position === 'front') {
-              this._weStore.setAssetViewerState({ position: 'front', visible: false });
+              this._mossStore.setAssetViewerState({ position: 'front', visible: false });
             }
           }}
           .wal=${info.tab.wal}
@@ -733,12 +733,12 @@ export class MainDashboard extends LitElement {
           delete this._openTabs[tabId];
           if (nextOpenTab) {
             this._selectedTab = nextOpenTab;
-            this._weStore.setAssetViewerState({
+            this._mossStore.setAssetViewerState({
               position: this._assetViewerState.value.position,
               visible: true,
             });
           } else {
-            this._weStore.setAssetViewerState({
+            this._mossStore.setAssetViewerState({
               position: this._assetViewerState.value.position,
               visible: false,
             });
@@ -752,12 +752,12 @@ export class MainDashboard extends LitElement {
             delete this._openTabs[tabId];
             if (nextOpenTab) {
               this._selectedTab = nextOpenTab;
-              this._weStore.setAssetViewerState({
+              this._mossStore.setAssetViewerState({
                 position: this._assetViewerState.value.position,
                 visible: true,
               });
             } else {
-              this._weStore.setAssetViewerState({
+              this._mossStore.setAssetViewerState({
                 position: this._assetViewerState.value.position,
                 visible: false,
               });
@@ -788,7 +788,7 @@ export class MainDashboard extends LitElement {
               @click=${async (e) => {
                 e.stopPropagation();
                 this._selectedTab = tabInfo;
-                this._weStore.setAssetViewerState({
+                this._mossStore.setAssetViewerState({
                   position: this._assetViewerState.value.position,
                   visible: true,
                 });
@@ -797,7 +797,7 @@ export class MainDashboard extends LitElement {
                 if (e.key === 'Enter') {
                   e.stopPropagation();
                   this._selectedTab = tabInfo;
-                  this._weStore.setAssetViewerState({
+                  this._mossStore.setAssetViewerState({
                     position: this._assetViewerState.value.position,
                     visible: true,
                   });
@@ -931,7 +931,7 @@ export class MainDashboard extends LitElement {
             @applet-selected=${(e: CustomEvent) => {
               this.openViews.openAppletMain(e.detail.appletHash);
               if (this._assetViewerState.value.position === 'front') {
-                this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                this._mossStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
           ></welcome-view>
@@ -1017,16 +1017,16 @@ export class MainDashboard extends LitElement {
             placement="bottom"
             tabindex="0"
             @click=${() => {
-              this._weStore.setDashboardState({ viewType: 'personal' });
-              this._weStore.setAssetViewerState({
+              this._mossStore.setDashboardState({ viewType: 'personal' });
+              this._mossStore.setAssetViewerState({
                 position: this._assetViewerState.value.position,
                 visible: false,
               });
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter') {
-                this._weStore.setDashboardState({ viewType: 'personal' });
-                this._weStore.setAssetViewerState({
+                this._mossStore.setDashboardState({ viewType: 'personal' });
+                this._mossStore.setAssetViewerState({
                   position: this._assetViewerState.value.position,
                   visible: false,
                 });
@@ -1118,13 +1118,13 @@ export class MainDashboard extends LitElement {
                     @applet-selected=${(e: {
                       detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
                     }) => {
-                      this._weStore.setDashboardState({
+                      this._mossStore.setDashboardState({
                         viewType: 'group',
                         groupHash: e.detail.groupDnaHash,
                         appletHash: e.detail.appletHash,
                       });
                       if (this._assetViewerState.value.position === 'front') {
-                        this._weStore.setAssetViewerState({
+                        this._mossStore.setAssetViewerState({
                           position: 'front',
                           visible: false,
                         });
@@ -1161,10 +1161,10 @@ export class MainDashboard extends LitElement {
                   this._assetViewerState.value.visible &&
                   this._assetViewerState.value.position === 'front'
                 ) {
-                  this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
                   return;
                 }
-                this._weStore.setAssetViewerState({ position: 'front', visible: true });
+                this._mossStore.setAssetViewerState({ position: 'front', visible: true });
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1173,10 +1173,10 @@ export class MainDashboard extends LitElement {
                     this._assetViewerState.value.visible &&
                     this._assetViewerState.value.position === 'front'
                   ) {
-                    this._weStore.setAssetViewerState({ position: 'front', visible: false });
+                    this._mossStore.setAssetViewerState({ position: 'front', visible: false });
                     return;
                   }
-                  this._weStore.setAssetViewerState({ position: 'front', visible: true });
+                  this._mossStore.setAssetViewerState({ position: 'front', visible: true });
                 }
               }}
             >
@@ -1203,10 +1203,10 @@ export class MainDashboard extends LitElement {
                   this._assetViewerState.value.visible &&
                   this._assetViewerState.value.position === 'side'
                 ) {
-                  this._weStore.setAssetViewerState({ position: 'side', visible: false });
+                  this._mossStore.setAssetViewerState({ position: 'side', visible: false });
                   return;
                 }
-                this._weStore.setAssetViewerState({ position: 'side', visible: true });
+                this._mossStore.setAssetViewerState({ position: 'side', visible: true });
               }}"
               @keypress="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1214,10 +1214,10 @@ export class MainDashboard extends LitElement {
                     this._assetViewerState.value.visible &&
                     this._assetViewerState.value.position === 'side'
                   ) {
-                    this._weStore.setAssetViewerState({ position: 'side', visible: false });
+                    this._mossStore.setAssetViewerState({ position: 'side', visible: false });
                     return;
                   }
-                  this._weStore.setAssetViewerState({ position: 'side', visible: true });
+                  this._mossStore.setAssetViewerState({ position: 'side', visible: true });
                 }
               }}"
             >

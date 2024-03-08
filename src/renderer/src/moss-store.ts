@@ -68,7 +68,7 @@ import { WeCache } from './cache.js';
 
 export type SearchStatus = 'complete' | 'loading';
 
-export class WeStore {
+export class MossStore {
   constructor(
     public adminWebsocket: AdminWebsocket,
     public appWebsocket: AppWebsocket,
@@ -80,7 +80,7 @@ export class WeStore {
   private _updatableApplets: Writable<Record<AppletId, Entity<AppEntry>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
-  // here at the WeStore level
+  // here at the MossStore level
   private _dashboardState: Writable<DashboardState> = writable({
     viewType: 'personal',
   });
@@ -818,7 +818,7 @@ export class WeStore {
     const hostsArray = Array.from(hosts.entries());
     this.updateSearchParams(filter, hostsArray.length);
 
-    // In setTimeout, store results to cache and update searchResults store in weStore if latest search filter
+    // In setTimeout, store results to cache and update searchResults store in mossStore if latest search filter
     // is still the same
 
     const promises: Array<Promise<void>> = [];

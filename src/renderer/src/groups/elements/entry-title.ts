@@ -9,15 +9,15 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { AssetInfo, WAL } from '@lightningrodlabs/we-applet';
 
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { stringifyWal } from '../../utils.js';
 
 @customElement('entry-title')
 export class EntryTitle extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   /**
    * REQUIRED. The Hrl of the entry to render
@@ -27,7 +27,7 @@ export class EntryTitle extends LitElement {
 
   assetInfo = new StoreSubscriber(
     this,
-    () => this._weStore.assetInfo.get(stringifyWal(this.wal)),
+    () => this._mossStore.assetInfo.get(stringifyWal(this.wal)),
     () => [this.wal],
   );
 

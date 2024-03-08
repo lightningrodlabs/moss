@@ -11,8 +11,8 @@ import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { buildHeadlessWeClient } from '../applets/applet-host.js';
 import './wal-element.js';
 import './wal-created-element.js';
@@ -33,9 +33,9 @@ export interface SearchResult {
 @localized()
 @customElement('moss-pocket')
 export class MossPocket extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @query('#pocket-dialog')
   _dialog!: SlDialog;
@@ -57,7 +57,7 @@ export class MossPocket extends LitElement {
     this.mode = mode;
     this._dialog.show();
     this._searchField.focus();
-    this.recentlyCreatedContent = this._weStore.persistedStore.recentlyCreated.value().reverse();
+    this.recentlyCreatedContent = this._mossStore.persistedStore.recentlyCreated.value().reverse();
   }
 
   hide() {
@@ -75,11 +75,11 @@ export class MossPocket extends LitElement {
   }
 
   loadPocketContent() {
-    this.pocketContent = this._weStore.persistedStore.pocket.value();
+    this.pocketContent = this._mossStore.persistedStore.pocket.value();
   }
 
   removeWalFromPocket(wal: WAL) {
-    this._weStore.removeWalFromPocket(wal);
+    this._mossStore.removeWalFromPocket(wal);
     this.loadPocketContent();
   }
 
@@ -134,7 +134,7 @@ export class MossPocket extends LitElement {
 
   walToPocket(wal: WAL) {
     console.log('Adding hrl to pocket: ', wal);
-    this._weStore.walToPocket(wal);
+    this._mossStore.walToPocket(wal);
     this.loadPocketContent();
   }
 
@@ -172,7 +172,7 @@ export class MossPocket extends LitElement {
           }
 
           <we-client-context
-            .weClient=${buildHeadlessWeClient(this._weStore)}
+            .weClient=${buildHeadlessWeClient(this._mossStore)}
           >
             <pocket-search
               id="pocket-search"

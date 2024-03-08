@@ -22,8 +22,8 @@ import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdo
 
 import { AssetLocationAndInfo, WAL } from '@lightningrodlabs/we-applet';
 import { mdiArrowRight, mdiMagnify } from '@mdi/js';
-import { weStoreContext } from '../context';
-import { WeStore } from '../we-store';
+import { mossStoreContext } from '../context';
+import { MossStore } from '../moss-store';
 import './search-result-element';
 
 /**
@@ -35,9 +35,9 @@ import './search-result-element';
 export class PocketSearch extends LitElement implements FormField {
   /** Form field properties */
 
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   /**
    * The name of the field if this element is used inside a form
@@ -101,8 +101,8 @@ export class PocketSearch extends LitElement implements FormField {
   @state()
   _searchResults = new StoreSubscriber(
     this,
-    () => this._weStore.searchResults(),
-    () => [this._weStore],
+    () => this._mossStore.searchResults(),
+    () => [this._mossStore],
   );
 
   _controller = new FormFieldController(this);
@@ -148,7 +148,7 @@ export class PocketSearch extends LitElement implements FormField {
   }
 
   search(filter: string): void {
-    setTimeout(async () => this._weStore.search(filter));
+    setTimeout(async () => this._mossStore.search(filter));
   }
 
   onFilterChange() {
@@ -166,7 +166,7 @@ export class PocketSearch extends LitElement implements FormField {
     this.filterLength = filter.length;
     this.dropdown.show();
     if (filter.length < this.minChars) {
-      this._weStore.clearSearchResults();
+      this._mossStore.clearSearchResults();
       if (filter.length === 0) this.dropdown.hide();
       return;
     }

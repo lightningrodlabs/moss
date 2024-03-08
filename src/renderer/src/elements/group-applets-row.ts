@@ -15,8 +15,8 @@ import '../applets/elements/applet-logo-raw.js';
 import './applet-topbar-button.js';
 import './create-group-dialog.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { GroupStore } from '../groups/group-store.js';
@@ -27,8 +27,8 @@ import { AppletId } from '@lightningrodlabs/we-applet';
 @localized()
 @customElement('group-applets-row')
 export class GroupAppletsRow extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
@@ -41,7 +41,7 @@ export class GroupAppletsRow extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-        sliceAndJoin(this.weStore.appletStores, myRunningApplets),
+        sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
       ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>,
     () => [this._groupStore],
   );

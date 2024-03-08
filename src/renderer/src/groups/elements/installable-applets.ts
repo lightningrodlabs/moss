@@ -15,8 +15,8 @@ import './install-applet-bundle-dialog.js';
 import './group-context.js';
 
 import { weStyles } from '../../shared-styles.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
@@ -24,12 +24,12 @@ import '../../elements/select-group-dialog.js';
 @localized()
 @customElement('installable-applets')
 export class InstallableApplets extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   _installableApplets = new StoreSubscriber(
     this,
-    () => this.weStore.appletBundlesStore.installableAppletBundles,
+    () => this.mossStore.appletBundlesStore.installableAppletBundles,
     () => [],
   );
 

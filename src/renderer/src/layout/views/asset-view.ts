@@ -13,18 +13,18 @@ import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
 import { WAL } from '@lightningrodlabs/we-applet';
 
-import { weStoreContext } from '../../context.js';
+import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
 import { weStyles } from '../../shared-styles.js';
-import { WeStore } from '../../we-store.js';
+import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/wal-pocket.js';
 import { buildHeadlessWeClient } from '../../applets/applet-host.js';
 
 @customElement('asset-view')
 export class AssetView extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   /**
    * REQUIRED. The Hrl of the entry to render
@@ -34,7 +34,7 @@ export class AssetView extends LitElement {
 
   location = new StoreSubscriber(
     this,
-    () => this._weStore.hrlLocations.get(this.wal.hrl[0]).get(this.wal.hrl[1]),
+    () => this._mossStore.hrlLocations.get(this.wal.hrl[0]).get(this.wal.hrl[1]),
     () => [this.wal],
   );
 
@@ -66,7 +66,7 @@ export class AssetView extends LitElement {
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
-        <we-client-context .weClient=${buildHeadlessWeClient(this._weStore)}>
+        <we-client-context .weClient=${buildHeadlessWeClient(this._mossStore)}>
           <sl-tooltip content="Jump to parent Applet">
             <div
               class="row btn toolbar-btn"

@@ -14,8 +14,8 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { WAL, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
 
 import { weStyles } from '../shared-styles.js';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { encodeContext, stringifyWal } from '../utils.js';
 import { mdiShareVariantOutline } from '@mdi/js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
@@ -23,9 +23,9 @@ import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 @localized()
 @customElement('wal-element')
 export class WalElement extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @property()
   wal!: WAL;
@@ -44,7 +44,7 @@ export class WalElement extends LitElement {
 
   assetInfo = new StoreSubscriber(
     this,
-    () => this._weStore.assetInfo.get(stringifyWal(this.wal)),
+    () => this._mossStore.assetInfo.get(stringifyWal(this.wal)),
     () => [this.wal],
   );
 
@@ -120,12 +120,12 @@ export class WalElement extends LitElement {
                   class="row clear"
                   tabindex="0"
                   @click=${() => {
-                    this._weStore.removeWalFromPocket(this.wal);
+                    this._mossStore.removeWalFromPocket(this.wal);
                     this.dispatchEvent(new CustomEvent('wal-removed', {}));
                   }}
                   @keypress=${async (e: KeyboardEvent) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      this._weStore.removeWalFromPocket(this.wal);
+                      this._mossStore.removeWalFromPocket(this.wal);
                       this.dispatchEvent(new CustomEvent('wal-removed', {}));
                     }
                   }}

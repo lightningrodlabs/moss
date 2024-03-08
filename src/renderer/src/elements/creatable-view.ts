@@ -7,8 +7,8 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import './wal-element.js';
 import './pocket-search.js';
 import { CreatableInfo } from './creatable-panel.js';
@@ -21,9 +21,9 @@ import { Unsubscriber } from '@holochain-open-dev/stores';
 @localized()
 @customElement('creatable-view')
 export class CreatableView extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @property()
   dialogId!: string;
@@ -36,7 +36,7 @@ export class CreatableView extends LitElement {
 
   updateStoreSubscriber() {
     if (this._unsubscribe) this._unsubscribe();
-    this._unsubscribe = this._weStore.creatableDialogResult(this.dialogId).subscribe((value) => {
+    this._unsubscribe = this._mossStore.creatableDialogResult(this.dialogId).subscribe((value) => {
       if (value) {
         this.dispatchEvent(
           new CustomEvent('creatable-response-received', {

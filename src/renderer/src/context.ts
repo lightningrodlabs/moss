@@ -1,4 +1,4 @@
 import { createContext } from '@lit/context';
-import { WeStore } from './we-store.js';
+import { MossStore } from './moss-store.js';
 
-export const weStoreContext = createContext<WeStore>('hc_zome_we/we_store_context');
+export const mossStoreContext = createContext<MossStore>('hc_zome_moss/moss_store_context');

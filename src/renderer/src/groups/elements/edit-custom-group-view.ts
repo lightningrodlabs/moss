@@ -24,15 +24,15 @@ import { GroupStore } from '../group-store.js';
 import { Applet } from '../../applets/types.js';
 import { CustomView } from '../../custom-views/types.js';
 import { appletOrigin } from '../../utils.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 
 @localized()
 @customElement('edit-custom-group-view')
 export class EditCustomGroupView extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  weStore!: WeStore;
+  mossStore!: MossStore;
 
   @property(hashProperty('custom-view-hash'))
   customViewHash!: ActionHash;

@@ -22,8 +22,8 @@ import {
   CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import './wal-element.js';
 import './pocket-search.js';
 import './creatable-view.js';
@@ -44,9 +44,9 @@ export type CreatableInfo = {
 @localized()
 @customElement('creatable-panel')
 export class CreatablePanel extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @query('#creatable-dialog')
   _dialog!: SlDialog;
@@ -62,14 +62,14 @@ export class CreatablePanel extends LitElement {
 
   _groupsProfiles = new StoreSubscriber(
     this,
-    () => this._weStore.allGroupsProfiles,
-    () => [this._weStore],
+    () => this._mossStore.allGroupsProfiles,
+    () => [this._mossStore],
   );
 
   _allCreatableTypes = new StoreSubscriber(
     this,
-    () => this._weStore.allCreatableTypes(),
-    () => [this._weStore],
+    () => this._mossStore.allCreatableTypes(),
+    () => [this._mossStore],
   );
 
   @state()
@@ -111,9 +111,9 @@ export class CreatablePanel extends LitElement {
         this._showCreatableView = undefined;
         return;
       case 'success':
-        this._weStore.walToRecentlyCreated(creatableResult.wal);
+        this._mossStore.walToRecentlyCreated(creatableResult.wal);
         notify(`New ${this._showCreatableView?.creatable.label} created.`);
-        this._weStore.clearCreatableDialogResult(this._activeDialogId);
+        this._mossStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
           new CustomEvent('wal-selected', {
             detail: { wal: creatableResult.wal },
@@ -144,7 +144,7 @@ export class CreatablePanel extends LitElement {
 
   walToPocket(wal: WAL) {
     console.log('Adding hrl to clipboard: ', wal);
-    this._weStore.walToPocket(wal);
+    this._mossStore.walToPocket(wal);
   }
 
   renderAppletMatrix() {
@@ -159,18 +159,18 @@ export class CreatablePanel extends LitElement {
           ([_, groupProfile]) => !!groupProfile,
         ) as Array<[DnaHash, GroupProfile]>;
 
-        let customGroupOrder = this._weStore.persistedStore.groupOrder.value();
+        let customGroupOrder = this._mossStore.persistedStore.groupOrder.value();
         if (!customGroupOrder) {
           customGroupOrder = knownGroups
             .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
             .map(([hash, _profile]) => encodeHashToBase64(hash));
-          this._weStore.persistedStore.groupOrder.set(customGroupOrder);
+          this._mossStore.persistedStore.groupOrder.set(customGroupOrder);
         }
         knownGroups.forEach(([hash, _]) => {
           if (!customGroupOrder!.includes(encodeHashToBase64(hash))) {
             customGroupOrder!.splice(0, 0, encodeHashToBase64(hash));
           }
-          this._weStore.persistedStore.groupOrder.set(customGroupOrder!);
+          this._mossStore.persistedStore.groupOrder.set(customGroupOrder!);
           this.requestUpdate();
         });
 

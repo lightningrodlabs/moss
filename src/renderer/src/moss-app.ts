@@ -11,16 +11,16 @@ import './password/create-password.js';
 import './password/factory-reset.js';
 import './elements/main-dashboard.js';
 import { weStyles } from './shared-styles.js';
-import { weStoreContext } from './context.js';
-import { WeStore } from './we-store.js';
+import { mossStoreContext } from './context.js';
+import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
 import { getConductorInfo, isAppletDev } from './electron-api.js';
 
 type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
-@customElement('we-app')
-export class WeApp extends LitElement {
+@customElement('moss-app')
+export class MossApp extends LitElement {
   @state()
   state: State = { state: 'loading' };
 
@@ -35,9 +35,9 @@ export class WeApp extends LitElement {
   // @state()
   // previousState: State = { state: 'loading' };
 
-  @provide({ context: weStoreContext })
+  @provide({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   async firstUpdated() {
     // await listen('clear-systray-notification-state', async () => {
@@ -69,9 +69,9 @@ export class WeApp extends LitElement {
       this._feedbackBoardReady = true;
     }
 
-    await this._weStore.checkForUiUpdates();
+    await this._mossStore.checkForUiUpdates();
     this._appletUiUpdateCheckInterval = window.setInterval(
-      async () => await this._weStore.checkForUiUpdates(),
+      async () => await this._mossStore.checkForUiUpdates(),
       20000,
     );
   }
@@ -107,7 +107,7 @@ export class WeApp extends LitElement {
 
     const isAppletDevMode = await isAppletDev();
 
-    this._weStore = new WeStore(
+    this._mossStore = new MossStore(
       adminWebsocket,
       appWebsocket,
       info,
@@ -131,7 +131,7 @@ export class WeApp extends LitElement {
 
     // try {
     // console.log('Fetching available UI updates');
-    //   await this._weStore.fetchAvailableUiUpdates();
+    //   await this._mossStore.fetchAvailableUiUpdates();
     // } catch (e) {
     //   console.error('Failed to fetch available applet updates: ', e);
     // }

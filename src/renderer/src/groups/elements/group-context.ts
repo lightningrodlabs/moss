@@ -6,8 +6,8 @@ import { PeerStatusStore, peerStatusStoreContext } from '@holochain-open-dev/pee
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { DnaHash } from '@holochain/client';
 
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { customViewsStoreContext } from '../../custom-views/context.js';
@@ -15,9 +15,9 @@ import { CustomViewsStore } from '../../custom-views/custom-views-store.js';
 
 @customElement('group-context')
 export class GroupContext extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
+  @consume({ context: mossStoreContext, subscribe: true })
   @state()
-  weStore!: WeStore;
+  mossStore!: MossStore;
 
   @property()
   groupDnaHash!: DnaHash;
@@ -42,7 +42,7 @@ export class GroupContext extends LitElement {
     if (changedValues.has('groupDnaHash')) {
       if (this.unsubscribe) this.unsubscribe();
 
-      this.unsubscribe = this.weStore.groupStores.subscribe((stores) => {
+      this.unsubscribe = this.mossStore.groupStores.subscribe((stores) => {
         if (stores.status === 'complete') {
           const groupStore = stores.value.get(this.groupDnaHash);
           if (groupStore) {

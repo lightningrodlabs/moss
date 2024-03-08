@@ -13,8 +13,8 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 
 @localized()
 @customElement('your-settings')
@@ -22,8 +22,8 @@ export class YourSettings extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @state()
   leaving = false;
@@ -33,7 +33,7 @@ export class YourSettings extends LitElement {
 
     const groupDnaHash = this.groupStore.groupDnaHash;
     try {
-      await this.weStore.leaveGroup(groupDnaHash);
+      await this.mossStore.leaveGroup(groupDnaHash);
 
       this.dispatchEvent(
         new CustomEvent('group-left', {

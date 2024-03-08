@@ -11,8 +11,8 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import './view-frame.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 
 @localized()
@@ -21,12 +21,12 @@ export class CrossAppletMain extends LitElement {
   @property(hashProperty('app-bundle-hash'))
   appletBundleHash!: ActionHash;
 
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   appletsForBundle = new StoreSubscriber(
     this,
-    () => this.weStore.appletsForBundleHash.get(this.appletBundleHash),
+    () => this.mossStore.appletsForBundleHash.get(this.appletBundleHash),
     () => [this.appletBundleHash],
   );
 

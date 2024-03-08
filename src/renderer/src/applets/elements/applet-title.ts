@@ -18,15 +18,15 @@ import { DnaHash, EntryHash } from '@holochain/client';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { mapValues } from '@holochain-open-dev/utils';
 
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../applet-store.js';
 
 @customElement('applet-title')
 export class AppletTitle extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
@@ -38,8 +38,8 @@ export class AppletTitle extends LitElement {
     this,
     () =>
       joinAsync([
-        this._weStore.appletStores.get(this.appletHash),
-        asyncDeriveStore(this._weStore.groupsForApplet.get(this.appletHash), (groupsStores) =>
+        this._mossStore.appletStores.get(this.appletHash),
+        asyncDeriveStore(this._mossStore.groupsForApplet.get(this.appletHash), (groupsStores) =>
           joinAsyncMap(mapValues(groupsStores, (groupStore) => groupStore.groupProfile)),
         ),
       ]) as AsyncReadable<[AppletStore | undefined, ReadonlyMap<DnaHash, GroupProfile>]>,
