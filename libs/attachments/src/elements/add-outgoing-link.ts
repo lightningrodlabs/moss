@@ -28,29 +28,32 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WeClient, WeServices, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
 import { weClientContext } from '@lightningrodlabs/we-elements';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';
+import { Wal } from '../attachments-client';
 
 @localized()
-@customElement('add-attachment')
-export class AddAttachment extends LitElement {
+@customElement('add-outgoing-link')
+export class AddOutgoingLink extends LitElement {
   @consume({ context: attachmentsStoreContext, subscribe: true })
   attachmentsStore!: AttachmentsStore;
 
-  @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient | WeServices;
+  @property()
+  wal!: Wal;
 
-  @property(hashProperty('hash'))
-  hash!: AnyDhtHash;
-
-  async addAttachment() {
+  async createOutgoingLink() {
     try {
-      const wal = await this.weClient.userSelectWal();
-      if (wal) {
-        await this.attachmentsStore.client.addAttachment(this.hash, wal);
+      const dstWAL = await window.__WE_API__.userSelectWal();
+      if (dstWAL) {
+        const linkingInput = {
+          src_wal: this.wal,
+          dst_wal: weaveUrlFromWal(dstWAL, false),
+        };
+        console.log('Creating outgoing link with linkingInput: ', linkingInput);
+        await this.attachmentsStore.client.createOutgoingLink(linkingInput);
         notify(msg('Asset attached.'));
       }
     } catch (e) {
@@ -65,10 +68,10 @@ export class AddAttachment extends LitElement {
         <div
           class="row btn"
           tabindex="0"
-          @click=${() => this.addAttachment()}
+          @click=${() => this.createOutgoingLink()}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-              this.addAttachment();
+              this.createOutgoingLink();
             }
           }}
         >

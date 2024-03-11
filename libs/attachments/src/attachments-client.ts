@@ -1,7 +1,12 @@
-import { AnyDhtHash, AppAgentClient, DnaHash } from '@holochain/client';
-import { decode, encode } from '@msgpack/msgpack';
-import { WAL } from '@lightningrodlabs/we-applet';
+import { ActionHash, AppAgentClient, DnaHash } from '@holochain/client';
 import { ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
+
+type LinkingInput = {
+  src_wal: string;
+  dst_wal: string;
+};
+
+export type Wal = string;
 
 export class AttachmentsClient extends ZomeClient<{}> {
   constructor(
@@ -19,38 +24,27 @@ export class AttachmentsClient extends ZomeClient<{}> {
     return cellId[0];
   }
 
-  addAttachment(hash: AnyDhtHash, wal: WAL): Promise<void> {
-    return this.callZome('add_attachment', {
-      hash,
-      hrl_with_context: {
-        hrl: {
-          dna_hash: wal.hrl[0],
-          resource_hash: wal.hrl[1],
-        },
-        context: encode(wal.context),
-      },
-    });
+  async createOutgoingLink(input: LinkingInput): Promise<Array<ActionHash>> {
+    return this.callZome('create_outgoing_link', input);
   }
 
-  async getAttachments(hash: AnyDhtHash): Promise<Array<WAL>> {
-    const hrls = await this.callZome('get_attachments', hash);
-
-    return hrls.map((wal) => ({
-      hrl: [wal.hrl.dna_hash, wal.hrl.resource_hash],
-      context: decode(wal.context),
-    }));
+  async createIncomingLink(input: LinkingInput): Promise<Array<ActionHash>> {
+    return this.callZome('create_incoming_link', input);
   }
 
-  removeAttachment(hash: AnyDhtHash, wal: WAL): Promise<void> {
-    return this.callZome('remove_attachment', {
-      hash,
-      hrl_with_context: {
-        hrl: {
-          dna_hash: wal.hrl[0],
-          resource_hash: wal.hrl[1],
-        },
-        context: encode(wal.context),
-      },
-    });
+  async getOutgoingLinks(wal: Wal): Promise<Array<Wal>> {
+    return this.callZome('get_outgoing_links', wal);
+  }
+
+  async getIncomingLinks(wal: Wal): Promise<Array<Wal>> {
+    return this.callZome('get_incoming_links', wal);
+  }
+
+  async removeOutgoingLink(input: LinkingInput): Promise<Array<ActionHash>> {
+    return this.callZome('remove_outgoing_link', input);
+  }
+
+  async removeIncomingLink(input: LinkingInput): Promise<Array<ActionHash>> {
+    return this.callZome('remove_incoming_link', input);
   }
 }

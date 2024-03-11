@@ -1,12 +1,16 @@
-import { lazyLoadAndPoll } from "@holochain-open-dev/stores";
-import { LazyHoloHashMap } from "@holochain-open-dev/utils";
+import { lazyLoadAndPoll } from '@holochain-open-dev/stores';
+import { LazyMap } from '@holochain-open-dev/utils';
 
-import { AttachmentsClient } from "./attachments-client";
+import { AttachmentsClient, Wal } from './attachments-client';
 
 export class AttachmentsStore {
   constructor(public client: AttachmentsClient) {}
 
-  attachments = new LazyHoloHashMap((hash) =>
-    lazyLoadAndPoll(() => this.client.getAttachments(hash), 2000)
+  outgoingLinks = new LazyMap((wal: Wal) =>
+    lazyLoadAndPoll(() => this.client.getOutgoingLinks(wal), 2000),
+  );
+
+  incomingLinks = new LazyMap((wal: Wal) =>
+    lazyLoadAndPoll(() => this.client.getIncomingLinks(wal), 2000),
   );
 }

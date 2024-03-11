@@ -103,6 +103,14 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
   throw new Error(`Got We url of unknown format: ${url}`);
 }
 
+export function weaveUrlToWAL(url: string): WAL {
+  const weaveLocation = weaveUrlToLocation(url);
+  if (weaveLocation.type !== 'asset') {
+    throw new Error('Passed URL is not a valid asset locator.');
+  }
+  return weaveLocation.wal;
+}
+
 export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
