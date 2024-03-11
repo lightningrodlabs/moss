@@ -28,6 +28,7 @@ import './edit-post.js';
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { Post } from '../types.js';
+import { WAL, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
 
 /**
  * @element post-detail
@@ -55,11 +56,21 @@ export class PostDetail extends LitElement {
     () => [this.postHash]
   );
 
+  @state()
+  WAL: WAL | undefined;
+
   /**
    * @internal
    */
   @state()
   _editing = false;
+
+  async firstUpdated() {
+    const dnaHash = await this.postsStore.client.getDnaHash();
+    this.WAL = {
+      hrl: [dnaHash, this.postHash],
+    };
+  }
 
   async deletePost() {
     try {
@@ -113,7 +124,7 @@ export class PostDetail extends LitElement {
             </div>
           </div>
         </sl-card>
-        <attachments-card .hash=${this.postHash}></attachments-card>
+        <attachments-card .wal=${weaveUrlFromWal(this.WAL!, false)}></attachments-card>
       </div>
     `;
   }

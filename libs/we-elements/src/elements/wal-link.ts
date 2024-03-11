@@ -14,7 +14,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
 import { weClientContext } from '../context';
-import { WAL } from '@lightningrodlabs/we-applet';
+import { WeaveUrl, weaveUrlToWAL } from '@lightningrodlabs/we-applet';
 import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { sharedStyles } from '@holochain-open-dev/elements';
@@ -23,7 +23,7 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 @customElement('wal-link')
 export class WalLink extends LitElement {
   @property()
-  wal!: WAL;
+  wal!: WeaveUrl;
 
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient | WeServices;
@@ -35,7 +35,7 @@ export class WalLink extends LitElement {
     this,
     () =>
       lazyLoad(async () => {
-        const assetInfo = await this.weClient.assetInfo(this.wal);
+        const assetInfo = await window.__WE_API__.assetInfo(weaveUrlToWAL(this.wal));
         if (!assetInfo) return undefined;
 
         const { groupsProfiles, appletsInfos } = await getAppletsInfosAndGroupsProfiles(
@@ -82,10 +82,10 @@ export class WalLink extends LitElement {
               pill
               style="cursor: pointer"
               tabindex="0"
-              @click=${() => this.weClient.openWal(this.wal)}
+              @click=${() => window.__WE_API__.openWal(weaveUrlToWAL(this.wal))}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.weClient.openWal(this.wal);
+                  window.__WE_API__.openWal(weaveUrlToWAL(this.wal));
                 }
               }}
             >
@@ -99,6 +99,7 @@ export class WalLink extends LitElement {
           </sl-tooltip>
         `;
       case 'error':
+        console.error(this.info.value.error);
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the entry')}

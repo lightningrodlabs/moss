@@ -1,7 +1,7 @@
 import { Post } from './types';
 
-import { AppAgentClient, Record, ActionHash } from '@holochain/client';
-import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
+import { AppAgentClient, Record, ActionHash, DnaHash } from '@holochain/client';
+import { EntryRecord, ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
 
 import { PostsSignal } from './types.js';
 
@@ -9,6 +9,14 @@ export class PostsClient extends ZomeClient<PostsSignal> {
   constructor(public client: AppAgentClient, public roleName: string, public zomeName = 'posts') {
     super(client, roleName, zomeName);
   }
+
+  async getDnaHash(): Promise<DnaHash> {
+    const appInfo = await this.client.appInfo();
+    const cellId = getCellIdFromRoleName(this.roleName, appInfo);
+
+    return cellId[0];
+  }
+
   /** Post */
 
   async createPost(post: Post): Promise<EntryRecord<Post>> {

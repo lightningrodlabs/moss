@@ -241,9 +241,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 LinkTypes::AllPosts => {
                     validate_create_link_all_posts(action, base_address, target_address, tag)
                 }
-                LinkTypes::PeerSubscription => {
-                    validate_create_link_peer_subscription(action, base_address, target_address, tag)
-                }
+                LinkTypes::PeerSubscription => validate_create_link_peer_subscription(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             },
             OpRecord::DeleteLink {
                 original_action_hash,

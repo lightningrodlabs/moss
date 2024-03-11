@@ -2186,7 +2186,7 @@ dependencies = [
 
 [[package]]
 name = "hc_zome_attachments_coordinator"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "hc_zome_attachments_integrity",
  "hdk",
@@ -2195,7 +2195,7 @@ dependencies = [
 
 [[package]]
 name = "hc_zome_attachments_integrity"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "hdi",
  "serde",
