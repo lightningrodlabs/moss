@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.10.6",
+  "version": "0.10.7",
   "private": true,
   "description": "Moss (Alpha)",
   "main": "./out/main/index.js",
@@ -55,7 +55,7 @@
     "@holochain/client": "0.16.6",
     "@holochain-open-dev/utils": "0.16.3",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "^0.1.4",
+    "@lightningrodlabs/we-rust-utils": "^0.2.0",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
