@@ -1011,10 +1011,8 @@ export class MainDashboard extends LitElement {
             ? 'selected'
             : ''}"
         >
-          <sidebar-button
-            style="--size: 58px; --border-radius: 20px; --hover-color: transparent;"
+          <button class="home-button"
             .selected=${false}
-            logoSrc="icon.png"
             .tooltipText=${msg('Home')}
             placement="bottom"
             tabindex="0"
@@ -1034,7 +1032,9 @@ export class MainDashboard extends LitElement {
                 });
               }
             }}
-          ></sidebar-button>
+          >
+            <img class="moss-icon" src="moss-icon.svg" />
+          </button>
         </div>
 
         <groups-sidebar
@@ -1253,14 +1253,26 @@ export class MainDashboard extends LitElement {
         .top-left-corner {
           align-items: center;
           justify-content: center;
-          background: var(--sl-color-primary-950);
           height: var(--sidebar-width);
-          border-radius: 25px 25px 0 0;
+        }
+
+        .home-button {
+          background-color: transparent;
+          border: none;
+          width: 50px;
+          height: 50px;
+          outline: none;
+        }
+
+        .home-button:hover {
+          cursor: pointer;
         }
 
         .top-left-corner:hover {
-          border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-300);
+          border-radius: 100% 0 0 100%;
+          background: linear-gradient(90deg, #96D96E 0%, #394333 90.91%);
+          cursor: pointer;
+
         }
 
         .hover-browser {
@@ -1312,8 +1324,17 @@ export class MainDashboard extends LitElement {
           top: 74px;
           left: 74px;
           bottom: 0;
+          background-color: rgba(57, 67, 51, 1.0);
           right: 0;
-          background: white;
+          padding: 8px;
+        }
+
+        #welcome-view, #group-view-area {
+          overflow: hidden;
+          border-radius: 5px;
+          filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));  
+          border-top: 2px solid rgba(115, 167, 114, .40);
+          max-height: calc(100vh - 90px);
         }
 
         .invisible-scrollbars {
@@ -1326,8 +1347,8 @@ export class MainDashboard extends LitElement {
         }
 
         .selected {
-          border-radius: 25px 0 0 25px;
-          background-color: var(--sl-color-primary-300);
+          border-radius: 100% 0 0 100%;
+          background: linear-gradient(90deg, #597448 0%, #394333 90.91%);
         }
 
         .close-tab-button {
@@ -1436,11 +1457,10 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background-color: var(--sl-color-primary-950);
+          background: linear-gradient(270deg, #101C09 0%, #293C2C 100%);
         }
 
         .left-group-sidebar {
-          background-color: var(--sl-color-primary-950);
           width: var(--sidebar-width);
           display: flex;
           overflow-y: auto;
@@ -1454,7 +1474,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-bar {
-          background-color: var(--sl-color-primary-300);
+          background: #394333;
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
