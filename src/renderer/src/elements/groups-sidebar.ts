@@ -241,7 +241,6 @@ export class GroupsSidebar extends LitElement {
                 }),
               );
             }}
-            style="margin-top: 8px;"
           >
             <div class="column center-content" style="height: 100%;">
               <sl-icon
@@ -265,7 +264,6 @@ export class GroupsSidebar extends LitElement {
       }
 
       .sidebar {
-        padding-top: 12px;
         align-items: center;
       }
 
@@ -318,7 +316,8 @@ export class GroupsSidebar extends LitElement {
         color: #fff;
         background: linear-gradient(270deg, #394333 0%, #526C44 100%);
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-        border-radius: 5px;        
+        border-radius: 5px;
+        margin-top: 15px;
       }
 
       .moss-button:hover {

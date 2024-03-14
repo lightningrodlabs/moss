@@ -1069,7 +1069,8 @@ export class MainDashboard extends LitElement {
               <img
                 tabindex="0"
                 class="moss-button-icon"
-                src="magic_hat.svg"
+                src="magic-wand.svg"
+                style="width: 24px; height: 24px;"
               />
             </button>
           </sl-tooltip>
@@ -1087,7 +1088,7 @@ export class MainDashboard extends LitElement {
               tabindex="0"
               class="moss-button-icon"
               .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: #fff; height: 24px;"
+              style="color: #fff; height: 24px; width: 24px"
             ></sl-icon>
             </button>
           </sl-tooltip>
@@ -1148,7 +1149,7 @@ export class MainDashboard extends LitElement {
                   ></group-applets-sidebar>
                 </group-context>
               `
-            : html`<div style="font-size: 28px;">Home</div>`}
+            : html``}
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
@@ -1328,17 +1329,13 @@ export class MainDashboard extends LitElement {
           left: 74px;
           bottom: 0;
           right: 0;
+          padding-left: 8px;
+          background-color: rgba(57, 67, 50, 1.0);
         }
 
         #group-view-area {
           overflow: hidden;
-          border-radius: 5px;
-          border-left: 8px solid rgba(57, 67, 51, 1.0);
-          filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));  
-          border-top: 2px solid rgba(115, 167, 114, .40);
-          max-height: calc(100vh - 90px);
-          background-color: rgba(86, 113, 71, 1.0);
-          padding: 8px;
+          max-height: calc(100vh - 70px);
         }
 
         .invisible-scrollbars {
