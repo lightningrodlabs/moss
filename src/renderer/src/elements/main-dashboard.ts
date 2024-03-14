@@ -1059,34 +1059,37 @@ export class MainDashboard extends LitElement {
         <!-- TAB BAR BUTTON -->
         <div class="row center-content" style="margin-bottom: 5px;">
           <sl-tooltip content="${msg('Create New Attachable')}" placement="right" hoist>
-            <img
-              tabindex="0"
-              class="search-button"
+            <button class="moss-button"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openCreatablePanel();
                 }
-              }}
-              style="height: 58px; margin-bottom: 3px; filter: invert(100%) sepia(32%) saturate(3851%) hue-rotate(178deg) brightness(103%) contrast(104%);"
-              src="magic_hat.svg"
-            />
+              }}>
+              <img
+                tabindex="0"
+                class="moss-button-icon"
+                src="magic_hat.svg"
+              />
+            </button>
           </sl-tooltip>
         </div>
         <div class="row center-content" style="margin-bottom: 5px;">
           <sl-tooltip content="Search" placement="right" hoist>
-            <sl-icon
-              tabindex="0"
-              class="search-button"
+            <button class="moss-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openClipboard();
                 }
-              }}
+              }}>
+            <sl-icon
+              tabindex="0"
+              class="moss-button-icon"
               .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: var(--sl-color-tertiary-0);"
+              style="color: #fff; height: 24px;"
             ></sl-icon>
+            </button>
           </sl-tooltip>
         </div>
         <div
@@ -1324,17 +1327,18 @@ export class MainDashboard extends LitElement {
           top: 74px;
           left: 74px;
           bottom: 0;
-          background-color: rgba(57, 67, 51, 1.0);
           right: 0;
-          padding: 8px;
         }
 
-        #welcome-view, #group-view-area {
+        #group-view-area {
           overflow: hidden;
           border-radius: 5px;
+          border-left: 8px solid rgba(57, 67, 51, 1.0);
           filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));  
           border-top: 2px solid rgba(115, 167, 114, .40);
           max-height: calc(100vh - 90px);
+          background-color: rgba(86, 113, 71, 1.0);
+          padding: 8px;
         }
 
         .invisible-scrollbars {
@@ -1508,18 +1512,34 @@ export class MainDashboard extends LitElement {
           transform: translateX(102%);
         }
 
-        .search-button {
+        .moss-button-icon {
           font-size: 66px;
-          color: var(--sl-color-primary-300);
+          color: #fff;
           cursor: pointer;
         }
 
-        .search-button:hover {
+        .moss-button-icon:hover {
           color: var(--sl-color-primary-50);
         }
 
-        .search-button:focus {
+        .moss-button-icon:focus {
           color: var(--sl-color-primary-50);
+        }
+
+        .moss-button {
+          width: 40px;
+          height: 40px;
+          outline: none;
+          border: none;
+          color: #fff;
+          background: linear-gradient(270deg, #394333 0%, #526C44 100%);
+          box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+          border-radius: 5px;        
+        }
+
+        .moss-button:hover {
+          background: linear-gradient(270deg, #495542 0%, #67924F 100%);
+          cursor: pointer;
         }
       `,
     ];

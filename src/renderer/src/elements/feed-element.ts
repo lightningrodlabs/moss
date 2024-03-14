@@ -87,20 +87,22 @@ export class FeedElement extends LitElement {
           }
         }}
       >
-        <div class="row">
-          <applet-title
-            .appletHash=${decodeHashFromBase64(this.notification.appletId)}
-            style="--size: 35px; font-size: 18px;"
-          ></applet-title>
-          <span style="display: flex; flex: 1;"></span>${timeAgo.format(
+        <div class="row" style="align-items: center; justify-content: space-between; width: 100%; opacity: .7;">
+          <div style=" display: flex; align-items: center;">
+            <applet-title
+              .appletHash=${decodeHashFromBase64(this.notification.appletId)}
+              style="--size: 18px; font-size: 12px; color: #fff; display: inline-block;"
+            ></applet-title>
+            <span style="font-size: 12px; display; inline-block; padding-left: 5px;">- ${this.notification.notification.title}</span>
+          </div>
+          <span style="font-size: 12px; padding-right: 10px;">${timeAgo.format(
             this.notification.notification.timestamp,
-          )}
+          )}</span>
         </div>
         <div
           class="row"
-          style="align-items: center; margin-top: 6px; font-size: 20px; font-weight: bold;"
+          style="align-items: center; margin-top: 6px; font-size: 14px; font-weight: bold;"
         >
-          <span>${this.notification.notification.title}</span>
           <span style="display: flex; flex: 1;"></span>
           ${this.notification.notification.icon_src
             ? html`<img
@@ -109,9 +111,11 @@ export class FeedElement extends LitElement {
               />`
             : html``}
 
-          <span style="font-weight: normal; font-size: 18px; margin-left: 6px;"
-            >${this.notification.notification.notification_type}</span
-          >
+          <!-- <span style="font-weight: normal; font-size: 18px; margin-left: 6px;"
+             >${this.notification.notification.notification_type}</span
+           >
+           I'm not sure this is necessary with notification.notification.title already here -Aaron
+          -->
         </div>
         <div class="row" style="display:flex; flex: 1; align-items: center; margin-top: 5px;">
           ${messageParts.map((part) => {
@@ -124,7 +128,7 @@ export class FeedElement extends LitElement {
                 return html`
                   <group-context .groupDnaHash=${this.groupDnaHash}>
                     <profile-detail
-                      style="margin: 0 8px; color: darkblue; font-weight: bold;"
+                      style="margin: 0 8px 0 0; color: white; font-weight: 900;"
                       .agentPubKey=${decodeHashFromBase64(part.pubkey)}
                     ></profile-detail>
                   </group-context>
@@ -168,14 +172,18 @@ export class FeedElement extends LitElement {
       .notification {
         padding: 10px;
         border-radius: 10px;
-        background: var(--sl-color-tertiary-200);
+        background: rgba(22, 35, 17, 1.0);
         margin: 5px;
-        box-shadow: 1px 1px 3px var(--sl-color-primary-800);
+        border: 2px solid 
         cursor: pointer;
+        color: #fff;
+        border: 2px solid rgba(96, 124, 4, .50);
+        transition: all .25s ease;
       }
 
       .notification:hover {
-        background: var(--sl-color-tertiary-100);
+        background-color: rgba(96, 124, 4, 1.0);
+        cursor: pointer;
       }
     `,
     weStyles,

@@ -128,8 +128,8 @@ export class WelcomeView extends LitElement {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
-          <div class="column" style="align-items: center; flex: 1; overflow: auto; padding: 24px;">
-            <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
+          <div class="column" style="align-items: center; flex: 1; overflow: auto;">
+            <div class="row" flex-wrap: wrap;">
               <button
                 class="btn"
                 @click=${() => {
@@ -211,12 +211,12 @@ export class WelcomeView extends LitElement {
             <!-- Notification Feed -->
 
             <div class="column" style="align-items: center; display:flex; flex: 1; width: 100%;">
-              <div class="row" style="align-items: center; color: var(--sl-color-tertiary-100);">
+              <div class="row recent-activity-header">
                 <img
                   src="raindrops.svg"
-                  style="height: 36px; margin-right: 10px; margin-bottom: 3px; filter: invert(95%) sepia(42%) saturate(4437%) hue-rotate(178deg) brightness(96%) contrast(95%);"
+                  style="height: 24px; margin-right: 10px; position: relative; bottom: -5px; filter: invert(95%) sepia(42%) saturate(4437%) hue-rotate(178deg) brightness(96%) contrast(95%);"
                 />
-                <h1>Recent Activities:</h1>
+                <h1>Recent Activity</h1>
               </div>
               <div class="column feed" style="display:flex; flex: 1;width: 100%;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
@@ -240,26 +240,35 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        /* background: var(--sl-color-secondary-900); */
-        background: linear-gradient(var(--sl-color-secondary-900), var(--sl-color-secondary-950));
+        background-color: rgba(57, 67, 51, 1.0);
         /* opacity: 0.8; */
+      }
+
+      .recent-activity-header {
+        color: #fff;
+        opacity: .5;
+        text-align: left;
+      }
+
+      .recent-activity-header h1 {
+        font-size: 16px;
       }
 
       .btn {
         all: unset;
         margin: 12px;
-        font-size: 25px;
-        height: 100px;
-        min-width: 300px;
-        background: var(--sl-color-secondary-600);
+        font-size: 16px;
+        padding: 10px;
+        background: transparent;
+        border: 2px solid #607C02;
         color: white;
         border-radius: 10px;
         cursor: pointer;
-        box-shadow: 0 2px 5px var(--sl-color-secondary-950);
+        transition: all .25s ease;
       }
 
       .btn:hover {
-        background: var(--sl-color-secondary-300);
+        background: #607C02;
       }
 
       .btn:active {
@@ -267,8 +276,17 @@ export class WelcomeView extends LitElement {
       }
 
       .feed {
-        max-height: calc(100vh - 330px);
+        max-height: calc(100vh - 200px);
         overflow-y: auto;
+      }
+
+      .feed::-webkit-scrollbar {
+        background-color: rgba(57, 67, 51, 1.0);
+      }
+
+      .feed::-webkit-scrollbar-thumb {
+        background: rgba(84, 109, 69, 1.0);
+        border-radius: 10px;
       }
     `,
     weStyles,
