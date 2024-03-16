@@ -160,7 +160,9 @@ fn get_my_applet_copies(_: ()) -> ExternResult<Vec<AppletCopy>> {
 fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     let entry_hashes = links
         .into_iter()
@@ -182,7 +184,10 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey, Time
         .collect::<Vec<EntryHash>>();
 
     let path = get_group_applets_path();
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     let applet_infos: Vec<(EntryHash, AgentPubKey, Timestamp)> = links
         .into_iter()
@@ -226,7 +231,9 @@ fn get_unjoined_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 /// Gets all the agents that joined the given Applet through calling register_applet
 #[hdk_extern]
 fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
-    let links = get_links(applet_hash, LinkTypes::AppletToAgent, None)?;
+    let links =
+        get_links(GetLinksInputBuilder::try_new(applet_hash, LinkTypes::AppletToAgent)?.build())?;
+
     Ok(links
         .into_iter()
         .map(|link| AgentPubKey::try_from(link.target).ok())
@@ -241,7 +248,9 @@ fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
 fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     for link in links {
         // TODO Make this an actual validation rule
@@ -280,7 +289,12 @@ fn unarchive_applet(applet_hash: EntryHash) -> ExternResult<()> {
 fn get_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_group_applets_path();
 
-    let links_details = get_link_details(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links_details = get_link_details(
+        path.path_entry_hash()?,
+        LinkTypes::AnchorToApplet,
+        None,
+        GetOptions::default(),
+    )?;
 
     let mut links_details_by_target: HashMap<
         EntryHash,
@@ -339,7 +353,10 @@ pub fn register_applet_federation(
 /// not know about ("viral federation").
 #[hdk_extern]
 pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHash>> {
-    let links = get_links(applet_hash, LinkTypes::AppletToInvitedGroup, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(applet_hash, LinkTypes::AppletToInvitedGroup)?.build(),
+    )?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())
@@ -351,7 +368,11 @@ pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHas
 pub fn get_federated_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_federated_applets_path();
     let anchor_hash = path.path_entry_hash()?;
-    let links = get_links(anchor_hash, LinkTypes::AnchorToFederatedApplet, None)?;
+
+    let links = get_links(
+        GetLinksInputBuilder::try_new(anchor_hash, LinkTypes::AnchorToFederatedApplet)?.build(),
+    )?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())

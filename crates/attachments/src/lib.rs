@@ -26,7 +26,8 @@ pub fn create_outgoing_link(input: LinkingInput) -> ExternResult<ActionHash> {
 #[hdk_extern]
 pub fn get_outgoing_links(wal: Wal) -> ExternResult<Vec<Wal>> {
     let wal_hash = hash_entry(EntryTypes::Wal(wal))?;
-    let links = get_links(wal_hash, LinkTypes::Outgoing, None)?;
+    let links = get_links(GetLinksInputBuilder::try_new(wal_hash, LinkTypes::Outgoing)?.build())?;
+
     let mut outgoing_links = Vec::new();
 
     for link in links {
@@ -68,7 +69,9 @@ pub fn create_incoming_link(input: LinkingInput) -> ExternResult<ActionHash> {
 #[hdk_extern]
 pub fn get_incoming_links(wal: Wal) -> ExternResult<Vec<Wal>> {
     let wal_hash = hash_entry(EntryTypes::Wal(wal))?;
-    let links: Vec<Link> = get_links(wal_hash, LinkTypes::Incoming, None)?;
+    let links: Vec<Link> =
+        get_links(GetLinksInputBuilder::try_new(wal_hash, LinkTypes::Incoming)?.build())?;
+
     let mut incoming_links = Vec::new();
 
     for link in links {
@@ -94,7 +97,7 @@ pub fn get_incoming_links(wal: Wal) -> ExternResult<Vec<Wal>> {
 #[hdk_extern]
 pub fn remove_outgoing_link(input: LinkingInput) -> ExternResult<Vec<ActionHash>> {
     let entry_hash = hash_entry(EntryTypes::Wal(input.src_wal))?;
-    let links = get_links(entry_hash, LinkTypes::Outgoing, None)?;
+    let links = get_links(GetLinksInputBuilder::try_new(entry_hash, LinkTypes::Outgoing)?.build())?;
 
     let mut links_to_delete = Vec::new();
 
@@ -133,7 +136,7 @@ pub fn remove_outgoing_link(input: LinkingInput) -> ExternResult<Vec<ActionHash>
 #[hdk_extern]
 pub fn remove_incoming_link(input: LinkingInput) -> ExternResult<Vec<ActionHash>> {
     let entry_hash = hash_entry(EntryTypes::Wal(input.dst_wal))?;
-    let links = get_links(entry_hash, LinkTypes::Incoming, None)?;
+    let links = get_links(GetLinksInputBuilder::try_new(entry_hash, LinkTypes::Incoming)?.build())?;
 
     let mut links_to_delete = Vec::new();
 

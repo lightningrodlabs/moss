@@ -1,11 +1,11 @@
 use hdi::prelude::*;
 pub use we_types::{Applet, AppletCopy, GroupProfile};
 
-#[hdk_entry_defs]
+#[hdk_entry_types]
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
     Applet(Applet),
-    #[entry_def(visibility = "private")]
+    #[entry_type(visibility = "private")]
     AppletPrivate(AppletCopy),
     RelatedGroup(RelatedGroup),
     GroupProfile(GroupProfile),
