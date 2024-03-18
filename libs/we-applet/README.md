@@ -1,21 +1,21 @@
 # @lightningrodlabs/we-applet
 
-This package contains the interfaces and contracts that a Holochain app UI needs to implement in order to become a We Applet.
+This package contains the interfaces and contracts that a Holochain app UI needs to implement in order to run as a Capacity in a Weave Frame like [Moss](theweave.social#tryit).
 
-The differences between a We Applet and a normal Holochain App are:
+The differences between a Weave Capacity and a normal Holochain App are:
 
-- A We Applet can make use of the profiles zome provided by We instead of using its own profiles module
-- A We Applet can provide more than just the default "main" UI. It can additionally provide:
+- A Weave Capacity can make use of the profiles zome provided by the Frame instead of using its own profiles module
+- A Weave Capacity can provide more than just the default "main" UI. It can additionally provide:
   - UI elements to display single "assets"
   - UI widgets/blocks of any kind
-  - UI elements ("main" view or "blocks") that render information across all instances of that same Applet type
-- A We Applet can provide `AppletServices` for We or other Applets to use, including:
-  - search: Searching in the Applet that returns Holochain Resource Locators (HRLs) with context pointing to an asset
+  - UI elements ("main" view or "blocks") that render information across all instances of that same Capacity type
+- A Weave Capacity can provide `AppletServices` for the Frame or other Applets to use, including:
+  - search: Searching in the Capacity that returns Holochain Resource Locators (HRLs) with context pointing to an asset
   - creatables: Assets that can be created on-the-fly by a user.
-  - getAssetInfo(): A function that returns info for the asset associated to the WAL if it exists in the Applet and the method is implemented.
-  - blockTypes: Types of UI widgets/blocks that this Applet can render if requested by We.
+  - getAssetInfo(): A function that returns info for the asset associated to the WAL if it exists in the Capacity and the method is implemented.
+  - blockTypes: Types of UI widgets/blocks that this Capacity can render if requested by the Frame.
 
-**Definition**: An "asset" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
+**Definition**: An "Asset" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
 "asset-view", i.e. it can be displayed by the applet if requested.
 
 ### Implementing a most basic applet UI
@@ -24,7 +24,7 @@ The differences between a We Applet and a normal Holochain App are:
 import { WeClient, isWeContext } from '@lightningrodlabs/we-applet';
 
 if (!isWeContext) {
-  // do non-We related rendering logic (launcher, kangaroo, electron, ...)
+  // do non-the Frame related rendering logic (launcher, kangaroo, electron, ...)
 }
 
 const weClient = await WeClient.connect();
@@ -32,7 +32,7 @@ const weClient = await WeClient.connect();
 if (
   (weClient.renderInfo.type !== "applet-view")
   || (weClient.renderInfo.view.type !== "main")
-) throw new Error("This Applet only implements the applet main view.");
+) throw new Error("This Capacity only implements the applet main view.");
 
 const appAgentClient = weClient.renderInfo.appletClient;
 const profilesClient = weClient.renderInfo.profilesClient;
@@ -41,16 +41,16 @@ const profilesClient = weClient.renderInfo.profilesClient;
 
 ```
 
-### Implementing an (almost) full-fletched We Applet
+### Implementing an (almost) full-fletched Weave Capacity
 
 ```typescript=
 import { WeClient, AppletServices, WAL, AssetInfo } from '@lightningrodlabs/we-applet';
 
-// First define your AppletServices that We can call on your applet
+// First define your AppletServices that the Frame can call on your applet
 // to do things like search your applet or get information
 // about the available block views etc.
 const appletServices: Appletservices = {
-    // Types of attachment that this Applet offers for other Applets to attach
+    // Types of attachment that this Capacity offers for other Applets to attach
     creatables: {
         'post': {
             label: 'post',
@@ -62,7 +62,7 @@ const appletServices: Appletservices = {
         }
 
     },
-    // Types of UI widgets/blocks that this Applet supports
+    // Types of UI widgets/blocks that this Capacity supports
     blockTypes: {
         'most_recent_posts': {
             label: 'most_recent_posts',
