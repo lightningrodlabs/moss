@@ -1,6 +1,6 @@
 {
-  "name": "we-alpha",
-  "version": "0.6.3",
+  "name": "moss-alpha",
+  "version": "0.11.0",
   "scripts": {
     "start": "vite --force --clearScreen false --port 1420",
     "build": "vite build",
@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "@fontsource/aileron": "^5.0.5",
-    "@holochain-open-dev/elements": "0.8.4",
-    "@holochain-open-dev/peer-status": "^0.11.0",
-    "@holochain-open-dev/profiles": "0.17.3",
-    "@holochain-open-dev/stores": "0.8.3",
-    "@holochain-open-dev/utils": "0.16.3",
-    "@holochain/client": "0.16.6",
+    "@holochain-open-dev/elements": "0.300.0-dev.0",
+    "@holochain-open-dev/peer-status": "0.300.0-dev.0",
+    "@holochain-open-dev/profiles": "0.300.0-dev.0",
+    "@holochain-open-dev/stores": "0.300.0-dev.0",
+    "@holochain-open-dev/utils": "0.300.0-dev.0",
+    "@holochain/client": "^0.17.0-dev.7",
     "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
     "@lightningrodlabs/we-elements": "file:../../libs/we-elements",
     "@lit/context": "^1.0.1",

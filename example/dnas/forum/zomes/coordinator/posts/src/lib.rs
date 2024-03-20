@@ -116,7 +116,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                             .iter()
                             .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
                             .collect::<Vec<AgentPubKey>>();
-                        remote_signal(ExternIO::encode(signal), peers)?;
+                        send_remote_signal(ExternIO::encode(signal), peers)?;
                     }
                     _ => (),
                 }

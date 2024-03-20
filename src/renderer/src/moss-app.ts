@@ -95,11 +95,13 @@ export class MossApp extends LitElement {
       FRAMEWORK: 'electron',
     };
 
-    const adminWebsocket = await AdminWebsocket.connect(
-      new URL(`ws://127.0.0.1:${info.admin_port}`),
-    );
+    const adminWebsocket = await AdminWebsocket.connect({
+      url: new URL(`ws://127.0.0.1:${info.admin_port}`),
+    });
 
-    const appWebsocket = await AppWebsocket.connect(new URL(`ws://127.0.0.1:${info.app_port}`));
+    const appWebsocket = await AppWebsocket.connect({
+      url: new URL(`ws://127.0.0.1:${info.app_port}`),
+    });
 
     const appstore_app_id = info.appstore_app_id;
 
@@ -118,6 +120,7 @@ export class MossApp extends LitElement {
     const appStoreAppInfo = await appWebsocket.appInfo({
       installed_app_id: info.appstore_app_id,
     });
+    if (!appStoreAppInfo) throw new Error('Appstore AppInfo null.');
     // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
 
     getProvisionedCells(appStoreAppInfo).map(([_roleName, cellInfo]) =>

@@ -107,9 +107,9 @@ export class HolochainManager {
           );
         }
         if (line.includes('Conductor ready.')) {
-          const adminWebsocket = await AdminWebsocket.connect(
-            new URL(`ws://127.0.0.1:${adminPort}`),
-          );
+          const adminWebsocket = await AdminWebsocket.connect({
+            url: new URL(`ws://127.0.0.1:${adminPort}`),
+          });
           console.log('Connected to admin websocket.');
           const installedApps = await adminWebsocket.listApps({});
           const appInterfaces = await adminWebsocket.listAppInterfaces();

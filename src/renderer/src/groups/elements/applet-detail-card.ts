@@ -72,7 +72,7 @@ export class AppletDetailCard extends LitElement {
   addedBy: AgentPubKey | undefined;
 
   @state()
-  appInfo: AppInfo | undefined;
+  appInfo: AppInfo | undefined | null;
 
   async firstUpdated() {
     this.appInfo = await this.mossStore.appWebsocket.appInfo({

@@ -8,13 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { EntryHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import {
   AppletHash,
   AppletId,
-  AppletInfo,
-  AssetLocationAndInfo,
   CreatableResult,
   CreatableName,
   GroupProfile,

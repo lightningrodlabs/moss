@@ -29,7 +29,10 @@ export async function initAppClient(
   appId: string,
   defaultTimeout?: number,
 ): Promise<AppAgentWebsocket> {
-  const client = await AppAgentWebsocket.connect(new URL('ws://UNUSED'), appId, defaultTimeout);
+  const client = await AppAgentWebsocket.connect(appId, {
+    url: new URL('ws://UNUSED'),
+    defaultTimeout,
+  });
   client.installedAppId = appId;
   client.cachedAppInfo = undefined;
   client.appWebsocket.overrideInstalledAppId = appId;

@@ -19,6 +19,7 @@ export class AttachmentsClient extends ZomeClient<{}> {
 
   async getDnaHash(): Promise<DnaHash> {
     const appInfo = await this.client.appInfo();
+    if (!appInfo) throw new Error('Appinfo is null.');
     const cellId = getCellIdFromRoleName(this.roleName, appInfo);
 
     return cellId[0];

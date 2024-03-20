@@ -12,6 +12,7 @@ export class PostsClient extends ZomeClient<PostsSignal> {
 
   async getDnaHash(): Promise<DnaHash> {
     const appInfo = await this.client.appInfo();
+    if (!appInfo) throw new Error('AppInfo is null.');
     const cellId = getCellIdFromRoleName(this.roleName, appInfo);
 
     return cellId[0];

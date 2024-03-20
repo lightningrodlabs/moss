@@ -113,11 +113,10 @@ export async function devSetup(
     }
   }
 
-  const appstoreClient = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
-    APPSTORE_APP_ID,
-    4000,
-  );
+  const appstoreClient = await AppAgentWebsocket.connect(APPSTORE_APP_ID, {
+    url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
+    defaultTimeout: 4000,
+  });
   const appstoreCells = await appstoreClient.appInfo();
   let appstoreDnaHash: DnaHashB64 | undefined = undefined;
   for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
@@ -368,10 +367,9 @@ async function joinGroup(
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
-  const groupWebsocket = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${appPort}`),
-    groupAppInfo.installed_app_id,
-  );
+  const groupWebsocket = await AppAgentWebsocket.connect(groupAppInfo.installed_app_id, {
+    url: new URL(`ws://127.0.0.1:${appPort}`),
+  });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
     await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
