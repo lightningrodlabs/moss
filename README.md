@@ -1,8 +1,8 @@
 # Moss
 
-_Moss_ is a reference implementation of a Frame for [The Weave](https://weave.social), which can also be understood as a Holochain runtime that makes it trivially easy for groups to build collaboration spaces by composing custom "Capacity" suites to meet their collaboration needs.
+_Moss_ is a reference implementation of a Frame for [The Weave](https://weave.social), which can also be understood as a Holochain runtime that makes it trivially easy for groups to build collaboration spaces by composing custom "Tool" suites to meet their collaboration needs.
 
-_Moss_ is composed of a group management DNA, together with a defined pattern on how to build _Capacity_ DNAs that can be added to a _Moss_ group. Each such group as well as each _Capacity_ used within a group is its own private peer-to-peer network.
+_Moss_ is composed of a group management DNA, together with a defined pattern on how to build _Tool_ DNAs that can be added to a _Moss_ group. Each such group as well as each _Tool_ used within a group is its own private peer-to-peer network.
 
 _Moss_ used to be call _We_, and you can read about it's early instantiation in [this blogpost](https://eric.harris-braun.com/blog/2022/07/26/id-390).
 
@@ -10,9 +10,9 @@ _Moss_ used to be call _We_, and you can read about it's early instantiation in 
 
 For details about the design, read the [design document](docs/Design.md).
 
-## Creating Moss Capacities
+## Creating Moss Tools
 
-The details on how to create a _Capacity_ can be found [here](docs/how-to-create-a-capacity.md).
+The details on how to create a _Tool_ can be found [here](docs/how-to-create-a-tool.md).
 
 ## Installation
 
