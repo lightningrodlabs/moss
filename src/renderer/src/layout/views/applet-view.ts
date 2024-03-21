@@ -17,7 +17,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
-import { Applet } from '../../applets/types.js';
+import { Applet, RegisterAppletInput } from '../../types.js';
 
 @localized()
 @customElement('applet-view')
@@ -106,12 +106,15 @@ export class AppletViewEl extends LitElement {
     applet: Applet,
     groupsForApplet: ReadonlyMap<DnaHash, GroupStore>,
   ): Promise<EntryHash> {
-    await this.mossStore.installApplet(appletHash, applet);
-
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    const registerAppletInput: RegisterAppletInput = {
+      applet,
+      joining_pubkey: appInfo.agent_pub_key,
+    };
     try {
       await Promise.all(
         Array.from(groupsForApplet.values()).map(async (groupStore) => {
-          await groupStore.groupClient.registerApplet(applet);
+          await groupStore.groupClient.registerApplet(registerAppletInput);
           await groupStore.allMyApplets.reload();
           await groupStore.allMyRunningApplets.reload();
         }),

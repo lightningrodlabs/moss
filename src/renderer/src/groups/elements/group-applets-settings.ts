@@ -34,7 +34,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import '../../elements/sidebar-button.js';
 import { weStyles } from '../../shared-styles.js';
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { GroupDnaHash } from '../../types.js';

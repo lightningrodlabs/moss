@@ -1,12 +1,12 @@
 use hdi::prelude::*;
-pub use we_types::{Applet, AppletCopy, GroupProfile};
+pub use we_types::{Applet, GroupProfile, PrivateAppletEntry};
 
 #[hdk_entry_types]
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
     Applet(Applet),
     #[entry_type(visibility = "private")]
-    AppletPrivate(AppletCopy),
+    AppletPrivate(PrivateAppletEntry),
     RelatedGroup(RelatedGroup),
     GroupProfile(GroupProfile),
 }
@@ -14,7 +14,8 @@ pub enum EntryTypes {
 #[hdk_link_types]
 pub enum LinkTypes {
     AnchorToApplet,
-    AppletToAgent,
+    AppletToJoinedAgent,
+    AppletToAbandonedAgent,
     AppletToExternalAgent,
     AppletToInvitedGroup, // links to "first-order" neighbor groups if an app is being federated
     GroupInfoPath,

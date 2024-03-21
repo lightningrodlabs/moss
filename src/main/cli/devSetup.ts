@@ -285,14 +285,9 @@ export async function devSetup(
           });
 
           const appId = appIdFromAppletHash(appletHash);
+          const appletPubKey = groupWebsocket.myPubKey;
           logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
-          await installHapp(
-            holochainManager,
-            appId,
-            networkSeed,
-            groupWebsocket.myPubKey,
-            happPath,
-          );
+          await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
           storeAppAssetsInfo(
             appletConfig,
             appId,
@@ -309,7 +304,10 @@ export async function devSetup(
             role_name: 'group',
             zome_name: 'group',
             fn_name: 'register_applet',
-            payload: applet,
+            payload: {
+              applet,
+              joining_pubkey: appletPubKey,
+            },
           });
         } else if (isJoiningAgent) {
           const maybeUnjoinedApplet = unjoinedApplets.find(
@@ -326,11 +324,13 @@ export async function devSetup(
             const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
               installableApplets[appletInstallConfig.name];
 
+            const appletPubKey = groupWebsocket.myPubKey;
+
             await installHapp(
               holochainManager,
               appId,
               applet.network_seed!,
-              groupWebsocket.myPubKey,
+              appletPubKey,
               happPath,
             );
             storeAppAssetsInfo(
@@ -348,7 +348,10 @@ export async function devSetup(
               role_name: 'group',
               zome_name: 'group',
               fn_name: 'register_applet',
-              payload: applet,
+              payload: {
+                applet,
+                joining_pubkey: appletPubKey,
+              },
             });
           }
         }

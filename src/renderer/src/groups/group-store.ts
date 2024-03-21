@@ -33,9 +33,9 @@ import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import { AppEntry, Entity } from '../processes/appstore/types.js';
-import { Applet } from '../applets/types.js';
+import { Applet, RegisterAppletInput } from '../types.js';
 import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
-import { AppHashes, DistributionInfo } from '../types.js';
+import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 
@@ -85,8 +85,8 @@ export class GroupStore {
     });
   }
 
-  public async addFederatedApplet(applet: Applet) {
-    await this.groupClient.registerApplet(applet);
+  public async addFederatedApplet(input: RegisterAppletInput) {
+    await this.groupClient.registerApplet(input);
     await this.allMyApplets.reload();
     await this.allMyRunningApplets.reload();
   }
@@ -118,9 +118,13 @@ export class GroupStore {
     console.log('@groupstore: @installApplet: Got applet: ', applet);
     if (!applet) throw new Error('Given applet instance hash was not found');
 
-    await this.mossStore.installApplet(appletHash, applet);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    const registerAppletInput = {
+      applet,
+      joining_pubkey: appInfo.agent_pub_key,
+    };
     try {
-      await this.groupClient.registerApplet(applet);
+      await this.groupClient.registerApplet(registerAppletInput);
     } catch (e) {
       console.error(
         `Failed to register applet in group dna after installation: ${e}\nUninstalling again.`,
@@ -175,10 +179,15 @@ export class GroupStore {
 
     const appletHash = await this.groupClient.hashApplet(applet);
 
-    await this.mossStore.installApplet(appletHash, applet);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+
+    const registerAppletInput: RegisterAppletInput = {
+      applet,
+      joining_pubkey: appInfo.agent_pub_key,
+    };
 
     try {
-      await this.groupClient.registerApplet(applet);
+      await this.groupClient.registerApplet(registerAppletInput);
     } catch (e) {
       console.error(
         `Failed to register Applet after installation. Uninstalling again. Error:\n${e}.`,
@@ -275,15 +284,15 @@ export class GroupStore {
     const allMyApplets = await (async () => {
       if (!this.constructed) {
         return retryUntilResolved<Array<AppletHash>>(
-          () => this.groupClient.getMyApplets(),
+          () => this.groupClient.getMyAppletsHashes(),
           200,
           undefined,
           false,
         );
       }
-      return this.groupClient.getMyApplets();
+      return this.groupClient.getMyAppletsHashes();
     })();
-    // const allMyApplets = await this.groupClient.getMyApplets();
+
     const installedApps = await this.mossStore.adminWebsocket.listApps({});
 
     const output = allMyApplets.filter((appletHash) =>
@@ -298,13 +307,13 @@ export class GroupStore {
     const allMyApplets = await (async () => {
       if (!this.constructed) {
         return retryUntilResolved<Array<AppletHash>>(
-          () => this.groupClient.getMyApplets(),
+          () => this.groupClient.getMyAppletsHashes(),
           200,
           undefined,
           false,
         );
       }
-      return this.groupClient.getMyApplets();
+      return this.groupClient.getMyAppletsHashes();
     })();
     // const allMyApplets = await this.groupClient.getMyApplets();
     const installedApps = await this.mossStore.adminWebsocket.listApps({});
@@ -328,13 +337,13 @@ export class GroupStore {
   allMyApplets = manualReloadStore(async () => {
     if (!this.constructed) {
       return retryUntilResolved<Array<AppletHash>>(
-        () => this.groupClient.getMyApplets(),
+        () => this.groupClient.getMyAppletsHashes(),
         200,
         undefined,
         false,
       );
     }
-    return this.groupClient.getMyApplets();
+    return this.groupClient.getMyAppletsHashes();
   });
 
   allAdvertisedApplets = manualReloadStore(async () => {
@@ -346,7 +355,7 @@ export class GroupStore {
         false,
       );
     }
-    return this.groupClient.getMyApplets();
+    return this.groupClient.getMyAppletsHashes();
   });
 
   // Applets that have been registered in the group by someone else but have never been installed
@@ -354,19 +363,19 @@ export class GroupStore {
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
     const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
-    const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AgentPubKey[]]> =
+    const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AppletAgent[]]> =
       new EntryHashMap();
     try {
       await Promise.all(
         unjoinedApplets.map(async ([appletHash, addingAgent, timestamp]) => {
-          const joinedMembers = await this.groupClient.getAppletAgents(appletHash);
+          const joinedMembers = await this.groupClient.getJoinedAppletAgents(appletHash);
           unjoinedAppletsWithGroupMembers.set(appletHash, [addingAgent, timestamp, joinedMembers]);
         }),
       );
     } catch (e) {
       console.warn('Failed to get joined members for unjoined applets: ', e);
       const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
-        [AgentPubKey, number, AgentPubKey[]]
+        [AgentPubKey, number, AppletAgent[]]
       > = new EntryHashMap();
       unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
         unjoinedAppletsWithGroupMembersFallback.set(appletHash, [addingAgent, timestamp, []]);

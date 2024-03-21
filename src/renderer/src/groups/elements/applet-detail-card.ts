@@ -21,7 +21,7 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -55,7 +55,10 @@ export class AppletDetailCard extends LitElement {
   _joinedMembers = new StoreSubscriber(
     this,
     () =>
-      lazyLoadAndPoll(() => this.groupStore.groupClient.getAppletAgents(this.appletHash), 10000),
+      lazyLoadAndPoll(
+        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
+        10000,
+      ),
     () => [this.groupStore],
   );
 
@@ -117,8 +120,11 @@ export class AppletDetailCard extends LitElement {
       case 'complete':
         return html`
           ${this._joinedMembers.value.value.map(
-            (agentKey) => html`
-              <agent-avatar style="margin-left: 5px;" .agentPubKey=${agentKey}></agent-avatar>
+            (appletAgent) => html`
+              <agent-avatar
+                style="margin-left: 5px;"
+                .agentPubKey=${appletAgent.group_pubkey}
+              ></agent-avatar>
             `,
           )}
         `;

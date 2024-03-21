@@ -11,8 +11,9 @@ import {
 } from '@holochain/client';
 import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 
-import { Applet } from '../applets/types.js';
+import { Applet, AppletAgent, PrivateAppletEntry } from '../types.js';
 import { RelatedGroup } from './types.js';
+import { RegisterAppletInput } from '../types.js';
 
 export class GroupClient {
   constructor(
@@ -66,8 +67,17 @@ export class GroupClient {
    * Gets all the private Applet entries from the source chain
    * @returns
    */
-  async getMyApplets(): Promise<Array<EntryHash>> {
+  async getMyApplets(): Promise<Array<PrivateAppletEntry>> {
     return this.callZome('get_my_applets', null);
+  }
+
+  /**
+   * Gets all the private Applet entries from the source chain
+   * @returns
+   */
+  async getMyAppletsHashes(): Promise<Array<AppletHash>> {
+    const applets: Array<PrivateAppletEntry> = await this.callZome('get_my_applets', null);
+    return applets.map((applet) => applet.public_entry_hash);
   }
 
   /**
@@ -103,8 +113,8 @@ export class GroupClient {
     return maybeApplet;
   }
 
-  async getAppletAgents(appletHash: EntryHash): Promise<Array<AgentPubKey>> {
-    return this.callZome('get_applet_agents', appletHash);
+  async getJoinedAppletAgents(appletHash: EntryHash): Promise<Array<AppletAgent>> {
+    return this.callZome('get_joined_applet_agents', appletHash);
   }
 
   /**
@@ -113,8 +123,19 @@ export class GroupClient {
    * entry as a private entry to the source chain.
    * @param applet
    */
-  async registerApplet(applet: Applet): Promise<EntryHash> {
-    return this.callZome('register_applet', applet);
+  async registerApplet(input: RegisterAppletInput): Promise<EntryHash> {
+    return this.callZome('register_applet', input);
+  }
+
+  /**
+   * Should be called after an applet has been uninstalled to signal to other peers
+   * that the applet has been abandoned.
+   *
+   * @param appletHash
+   * @returns
+   */
+  async abandonApplet(appletHash: AppletHash): Promise<void> {
+    return this.callZome('abandon_applet', appletHash);
   }
 
   async hashApplet(applet: Applet): Promise<EntryHash> {
