@@ -73,6 +73,7 @@ export class AppletBundlesStore {
 
   async appstoreDnaHash(): Promise<DnaHashB64> {
     const appStoreAppInfo = await this.appstoreClient.appInfo();
+    if (!appStoreAppInfo) throw new Error('Appstore AppInfo is null.');
     let appstoreDnaHash: DnaHashB64 | undefined = undefined;
     for (const [_role_name, [cell]] of Object.entries(appStoreAppInfo.cell_info)) {
       appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);

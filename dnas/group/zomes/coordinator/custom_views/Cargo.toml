@@ -22,4 +22,4 @@ hdk = { workspace = true, features = ["encoding", "test_utils"] }
 holochain = { workspace = true, default-features = false, features = [
   "test_utils",
 ] }
-tokio = { version = "=1.33.0", features = ["full"] }
+tokio = { version = "1.36.0", features = ["full"] }

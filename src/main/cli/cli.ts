@@ -7,8 +7,20 @@ import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
 import tsNode from 'ts-node';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
-export const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
-export const PRODUCTION_SIGNALING_URLS = ['wss://signal.holo.host'];
+// The first one will be picked by default. But all production bootstrap servers should be listed
+// here since there is a check to prevent accidental use of a production bootstrap server in development
+// mode
+export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap.infra.holochain.org',
+  'https://bootstrap.holo.host',
+];
+// The first one will be picked by default. But all production signaling servers should be listed
+// here since there is a check to prevent accidental use of a production signaling server in development
+// mode
+export const PRODUCTION_SIGNALING_URLS = [
+  'wss://signal.infra.holochain.org',
+  'wss://signal.holo.host',
+];
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
 
 export interface WeAppletDevInfo {

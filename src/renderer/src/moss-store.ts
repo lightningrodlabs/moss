@@ -56,7 +56,7 @@ import {
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
-import { Applet } from './applets/types.js';
+import { Applet } from './types.js';
 import { GroupClient } from './groups/group-client.js';
 import { WebHappSource } from './processes/appstore/appstore-light.js';
 import { AppEntry, Entity } from './processes/appstore/types.js';
@@ -368,7 +368,7 @@ export class MossStore {
       );
 
     // We get all Applets here already before we uninstall anything, in case it fails.
-    const applets = await groupStore.groupClient.getMyApplets();
+    const applets = await groupStore.groupClient.getMyAppletsHashes();
 
     await this.adminWebsocket.uninstallApp({
       installed_app_id: appToLeave.installed_app_id,
@@ -519,7 +519,7 @@ export class MossStore {
         const groupAppAgentWebsocket = await initAppClient(app.installed_app_id);
         const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
         const groupClient = new GroupClient(groupAppAgentWebsocket, 'group');
-        const allMyAppletDatas = await groupClient.getMyApplets();
+        const allMyAppletDatas = await groupClient.getMyAppletsHashes();
         if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
           groupsWithApplet.push(groupDnaHash);
         }

@@ -58,9 +58,9 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppHashes, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
+import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
@@ -159,7 +159,7 @@ export class GroupHome extends LitElement {
                 string | undefined,
                 AgentPubKey,
                 number,
-                AgentPubKey[],
+                AppletAgent[],
               ];
             },
           ),
@@ -257,8 +257,16 @@ export class GroupHome extends LitElement {
     });
     if (confirmation.response === 0) return;
     try {
-      const appId = appIdFromAppletHash(e.detail);
+      const appletHash = e.detail;
+      const appId = appIdFromAppletHash(appletHash);
       await window.electronAPI.uninstallApplet(appId);
+      // TODO abandon applet here for all groups this applet is installed in (groupClient.abandonApplet)
+      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
+      await Promise.all(
+        Array.from(groupsForApplet.values()).map((groupStore) =>
+          groupStore.groupClient.abandonApplet(appletHash),
+        ),
+      );
       this.mossStore.reloadManualStores();
     } catch (e) {
       console.error(`Failed to uninstall Applet instance: ${e}`);
@@ -390,10 +398,10 @@ export class GroupHome extends LitElement {
                     <div class="row" style="align-items: center; margin-top: 20px;">
                       <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
                       ${info.joinedMembers.map(
-                        (agentKey) => html`
+                        (appletAgent) => html`
                           <agent-avatar
                             style="margin-left: 5px;"
-                            .agentPubKey=${agentKey}
+                            .agentPubKey=${appletAgent.group_pubkey}
                           ></agent-avatar>
                         `,
                       )}

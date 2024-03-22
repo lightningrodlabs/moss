@@ -21,9 +21,10 @@ pub struct Applet {
 /// A copy of an applet instance to store on the local source chain
 #[hdk_entry_helper]
 #[derive(Clone)]
-pub struct AppletCopy {
+pub struct PrivateAppletEntry {
     pub public_entry_hash: EntryHash,
     pub applet: Applet,
+    pub applet_pubkey: AgentPubKey,
 }
 
 #[hdk_entry_helper]

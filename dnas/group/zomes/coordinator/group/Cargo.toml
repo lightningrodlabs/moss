@@ -19,4 +19,4 @@ fixt = "*"
 futures = { version = "0.3.1", default-features = false }
 hdk = { workspace = true, features = ["encoding", "test_utils"] }
 holochain = { workspace = true, features = ["test_utils"] }
-tokio = { version = "=1.33.0", features = ["full"] }
+tokio = { version = "1.36.0", features = ["full"] }

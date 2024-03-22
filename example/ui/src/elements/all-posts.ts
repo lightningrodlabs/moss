@@ -82,6 +82,7 @@ export class AllPosts extends LitElement {
       case 'complete':
         return this.renderList(this._allPosts.value.value);
       case 'error':
+        console.error('Error fetching the post: ', this._allPosts.value.error);
         return html`<display-error
           .headline=${msg('Error fetching the posts')}
           .error=${this._allPosts.value.error}

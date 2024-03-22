@@ -83,7 +83,12 @@ export class FederateAppletDialog extends LitElement {
       if (!appletStore) throw new Error('Applet not found');
 
       const applet = appletStore.applet;
-      await groupStore.addFederatedApplet(applet);
+      // TODO public key of applet here once applets use their own public key
+      const appletPubKey = groupStore.groupClient.myPubKey;
+      await groupStore.addFederatedApplet({
+        applet,
+        joining_pubkey: appletPubKey,
+      });
 
       // Two way link from one group to the other
       // TODO: what to do when the applet is uninstalled?

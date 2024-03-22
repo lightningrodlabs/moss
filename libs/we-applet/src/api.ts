@@ -49,7 +49,7 @@ export const isWeContext = () =>
  * @param webPrefix Whether to make the link work via web browsers. Default is true.
  * @returns
  */
-export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = true) => {
+export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false) => {
   let url: string = '';
   if (webPrefix) {
     url = 'https://lightningrodlabs.org/we?';
@@ -58,7 +58,7 @@ export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = true)
   return url;
 };
 
-export function weaveUrlFromWal(wal: WAL, webPrefix = true) {
+export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   let url: string = '';
   if (webPrefix) {
     url = 'https://lightningrodlabs.org/we?';

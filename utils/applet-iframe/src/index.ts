@@ -325,10 +325,9 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 }
 
 async function setupAppAgentClient(appPort: number, installedAppId: string) {
-  const appletClient = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${appPort}`),
-    installedAppId,
-  );
+  const appletClient = await AppAgentWebsocket.connect(installedAppId, {
+    url: new URL(`ws://127.0.0.1:${appPort}`),
+  });
 
   window.addEventListener('beforeunload', () => {
     // close websocket connection again to prevent insufficient resources error

@@ -63,6 +63,7 @@ export class ExampleApplet extends LitElement {
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
                       const appInfo = await client.appInfo();
+                      if (!appInfo) throw new Error('AppInfo is null.');
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                         .cell_id[0];
                       this.weClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
@@ -128,6 +129,7 @@ export class ExampleApplet extends LitElement {
                           try {
                             const postRecord = await postsClient.createPost(post);
                             const appInfo = await appletClient.appInfo();
+                            if (!appInfo) throw new Error('AppInfo is null.');
                             const dnaHash = (appInfo.cell_info.forum[0] as any)[
                               CellType.Provisioned
                             ].cell_id[0];
