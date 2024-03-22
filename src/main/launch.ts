@@ -30,6 +30,7 @@ export async function launch(
   singalingUrl: string,
   appstoreNetworkSeed: string,
   weAppletDevInfo: WeAppletDevInfo | undefined,
+  customBinary?: string,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   // Initialize lair if necessary
@@ -73,7 +74,7 @@ export async function launch(
   const holochainManager = await HolochainManager.launch(
     weEmitter,
     weFileSystem,
-    HOLOCHAIN_BINARIES[holochainVersion],
+    customBinary ? customBinary : HOLOCHAIN_BINARIES[holochainVersion],
     password,
     holochainVersion,
     weFileSystem.conductorDir,

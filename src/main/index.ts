@@ -80,6 +80,10 @@ weCli
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
+  .option(
+    '--holochain-path <path>',
+    'Runs the Holochain Launcher with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
+  )
   .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
   .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
   .option(
