@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.11.0-alpha.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Moss (Alpha)",
   "main": "./out/main/index.js",
@@ -52,11 +52,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain/client": "^0.17.0-dev.7",
+    "@holochain/client": "git+https://github.com/matthme/holochain-client-js.git#63274e6463a42ff1ed49eb242eee31f839c8055e",
     "@holochain-open-dev/utils": "0.300.0-dev.0",
     "@holochain-playground/cli": "^0.1.1",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "^0.300.0",
+    "@lightningrodlabs/we-rust-utils": "^0.300.1-dev.2",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",

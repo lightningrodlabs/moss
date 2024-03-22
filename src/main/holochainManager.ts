@@ -66,6 +66,7 @@ export class HolochainManager {
       lairUrl,
       bootstrapUrl,
       signalingUrl,
+      '*',
     );
     console.log('Writing conductor-config.yaml...');
 
@@ -109,6 +110,9 @@ export class HolochainManager {
         if (line.includes('Conductor ready.')) {
           const adminWebsocket = await AdminWebsocket.connect({
             url: new URL(`ws://127.0.0.1:${adminPort}`),
+            wsClientOptions: {
+              origin: 'moss-admin-main',
+            },
           });
           console.log('Connected to admin websocket.');
           const installedApps = await adminWebsocket.listApps({});
@@ -118,7 +122,9 @@ export class HolochainManager {
           if (appInterfaces.length > 0) {
             appPort = appInterfaces[0];
           } else {
-            const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({});
+            const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
+              allowed_origins: '*',
+            });
             console.log('Attached app interface port: ', attachAppInterfaceResponse);
             appPort = attachAppInterfaceResponse.port;
           }

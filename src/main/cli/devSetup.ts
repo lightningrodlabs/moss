@@ -115,6 +115,9 @@ export async function devSetup(
 
   const appstoreClient = await AppAgentWebsocket.connect(APPSTORE_APP_ID, {
     url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
+    wsClientOptions: {
+      origin: 'moss-admin',
+    },
     defaultTimeout: 4000,
   });
   const appstoreCells = await appstoreClient.appInfo();
@@ -372,6 +375,9 @@ async function joinGroup(
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
   const groupWebsocket = await AppAgentWebsocket.connect(groupAppInfo.installed_app_id, {
     url: new URL(`ws://127.0.0.1:${appPort}`),
+    wsClientOptions: {
+      origin: 'moss-admin',
+    },
   });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
