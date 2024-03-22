@@ -49,7 +49,7 @@ jobs:
           mkdir resources/default-apps
           mkdir resources/bins
           yarn setup:release
-          curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.10.0/we.happ
+          curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.11.0/we.happ
 
       - name: Build zomes
         run: |
