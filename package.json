@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.we-electron-alpha",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "private": true,
   "description": "Moss (Alpha)",
   "main": "./out/main/index.js",
@@ -41,7 +41,7 @@
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "download:kando": "curl -L --output resources/default-apps/kando.webhapp https://github.com/holochain-apps/kando/releases/download/v0.9.1/kando.webhapp",
     "download:appstore": "curl -L --output resources/default-apps/AppstoreLight.happ https://github.com/matthme/appstore-light/releases/download/appstore-light-0.0.5/AppstoreLight.happ",
-    "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.10.0/we.happ",
+    "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.11.0/we.happ",
     "postinstall": "electron-builder install-app-deps",
     "fetch:binaries": "node ./scripts/fetch-binaries.mjs",
     "check:binaries": "node ./scripts/check-binaries.mjs",
