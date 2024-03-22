@@ -15,8 +15,8 @@ import '../groups/elements/group-context.js';
 import '../applets/elements/applet-logo.js';
 import './create-group-dialog.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { appEntryIdFromDistInfo } from '../utils.js';
@@ -24,12 +24,12 @@ import { appEntryIdFromDistInfo } from '../utils.js';
 @localized()
 @customElement('applets-sidebar')
 export class AppletsSidebar extends LitElement {
-  @consume({ context: weStoreContext })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  _mossStore!: MossStore;
 
   _applets = new StoreSubscriber(
     this,
-    () => this._weStore.allRunningApplets,
+    () => this._mossStore.allRunningApplets,
     () => [],
   );
 

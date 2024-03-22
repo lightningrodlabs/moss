@@ -1,19 +1,19 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, sharedStyles } from '@holochain-open-dev/elements';
-import { AnyDhtHash } from '@holochain/client';
+import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 
 import './attachments-list.js';
-import './add-attachment.js';
+import './add-outgoing-link.js';
+import { Wal } from '../attachments-client.js';
 
 @localized()
 @customElement('attachments-card')
 export class AttachmentsCard extends LitElement {
-  @property(hashProperty('hash'))
-  hash!: AnyDhtHash;
+  @property()
+  wal!: Wal;
 
   render() {
     return html`
@@ -22,9 +22,9 @@ export class AttachmentsCard extends LitElement {
           <div class="row" style="align-items: center; margin-bottom: 20px;" slot="header">
             <span style="flex: 1; margin-right: 20px;" class="title">${msg('Attachments')}</span>
 
-            <add-attachment .hash=${this.hash} style="margin-right: 4px;"></add-attachment>
+            <add-outgoing-link .wal=${this.wal} style="margin-right: 4px;"></add-outgoing-link>
           </div>
-          <attachments-list .hash=${this.hash} style="flex: 1"></attachments-list>
+          <attachments-list .wal=${this.wal} style="flex: 1"></attachments-list>
         </div>
       </sl-card>
     `;

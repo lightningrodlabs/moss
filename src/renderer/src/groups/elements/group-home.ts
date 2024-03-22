@@ -41,7 +41,6 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import './group-peers-status.js';
 import './related-groups.js';
-import './add-related-group-dialog.js';
 import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
@@ -56,12 +55,12 @@ import '../../elements/loading-dialog.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppHashes, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
+import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
@@ -82,16 +81,16 @@ type View =
 @localized()
 @customElement('group-home')
 export class GroupHome extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
   updatesAvailable = new StoreSubscriber(
     this,
-    () => this.weStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
-    () => [this.weStore, this.groupStore],
+    () => this.mossStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
+    () => [this.mossStore, this.groupStore],
   );
 
   @state()
@@ -129,7 +128,7 @@ export class GroupHome extends LitElement {
                 const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
                 try {
                   appstoreAppEntry = await toPromise(
-                    this.weStore.appletBundlesStore.appletBundles.get(appEntryId),
+                    this.mossStore.appletBundlesStore.appletBundles.get(appEntryId),
                   );
                 } catch (e) {
                   console.warn(
@@ -139,7 +138,7 @@ export class GroupHome extends LitElement {
                 }
                 try {
                   appletLogo = await toPromise(
-                    this.weStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
+                    this.mossStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
                   );
                 } catch (e) {
                   console.warn('@group-home @unjoined-applets: Failed to get appletLogo: ', e);
@@ -160,13 +159,13 @@ export class GroupHome extends LitElement {
                 string | undefined,
                 AgentPubKey,
                 number,
-                AgentPubKey[],
+                AppletAgent[],
               ];
             },
           ),
         ),
       ),
-    () => [this.groupStore, this.weStore],
+    () => [this.groupStore, this.mossStore],
   );
 
   @state()
@@ -185,7 +184,7 @@ export class GroupHome extends LitElement {
       // (window as any).groupProfileStore = store;
       return store;
     },
-    () => [this.groupStore, this.weStore],
+    () => [this.groupStore, this.mossStore],
   );
 
   async firstUpdated() {
@@ -209,14 +208,14 @@ export class GroupHome extends LitElement {
     console.log('appletId: ', appId);
 
     try {
-      const appEntryEntity = get(this.weStore.updatableApplets())[encodeHashToBase64(e.detail)];
+      const appEntryEntity = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
       if (!appEntryEntity)
         throw new Error('No AppEntry found in We Store for the requested UI update.');
 
       const assetsSource: AssetSource = JSON.parse(appEntryEntity.content.source);
       if (assetsSource.type !== 'https')
         throw new Error("Updating of applets is only implemented for sources of type 'http'");
-      const appstoreDnaHash = await this.weStore.appletBundlesStore.appstoreDnaHash();
+      const appstoreDnaHash = await this.mossStore.appletBundlesStore.appstoreDnaHash();
       const distributionInfo: DistributionInfo = {
         type: 'appstore-light',
         info: {
@@ -238,7 +237,7 @@ export class GroupHome extends LitElement {
         appHashes.ui.sha256,
         appHashes.sha256,
       );
-      await this.weStore.checkForUiUpdates();
+      await this.mossStore.checkForUiUpdates();
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
       notify(msg('Applet UI updated.'));
       window.location.reload();
@@ -258,9 +257,17 @@ export class GroupHome extends LitElement {
     });
     if (confirmation.response === 0) return;
     try {
-      const appId = appIdFromAppletHash(e.detail);
+      const appletHash = e.detail;
+      const appId = appIdFromAppletHash(appletHash);
       await window.electronAPI.uninstallApplet(appId);
-      this.weStore.reloadManualStores();
+      // TODO abandon applet here for all groups this applet is installed in (groupClient.abandonApplet)
+      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
+      await Promise.all(
+        Array.from(groupsForApplet.values()).map((groupStore) =>
+          groupStore.groupClient.abandonApplet(appletHash),
+        ),
+      );
+      this.mossStore.reloadManualStores();
     } catch (e) {
       console.error(`Failed to uninstall Applet instance: ${e}`);
       notifyError(msg('Failed to uninstall Applet instance.'));
@@ -293,11 +300,11 @@ export class GroupHome extends LitElement {
 
   ignoreApplet(appletHash: AppletHash) {
     const groupDnaHashB64 = encodeHashToBase64(this.groupStore.groupDnaHash);
-    let ignoredApplets = this.weStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
+    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
     ignoredApplets.push(encodeHashToBase64(appletHash));
     // deduplicate ignored applets
     ignoredApplets = Array.from(new Set(ignoredApplets));
-    this.weStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
+    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
     this.requestUpdate();
   }
 
@@ -324,7 +331,7 @@ export class GroupHome extends LitElement {
         </div> `;
       case 'complete':
         const timeAgo = new TimeAgo('en-US');
-        const ignoredApplets = this.weStore.persistedStore.ignoredApplets.value(
+        const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
           encodeHashToBase64(this.groupStore.groupDnaHash),
         );
         const filteredApplets = this._unjoinedApplets.value.value
@@ -391,10 +398,10 @@ export class GroupHome extends LitElement {
                     <div class="row" style="align-items: center; margin-top: 20px;">
                       <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
                       ${info.joinedMembers.map(
-                        (agentKey) => html`
+                        (appletAgent) => html`
                           <agent-avatar
                             style="margin-left: 5px;"
-                            .agentPubKey=${agentKey}
+                            .agentPubKey=${appletAgent.group_pubkey}
                           ></agent-avatar>
                         `,
                       )}

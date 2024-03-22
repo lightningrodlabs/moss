@@ -11,8 +11,8 @@ import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import { consume } from '@lit/context';
 import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types.js';
 import {
@@ -44,8 +44,8 @@ enum PageView {
 @localized()
 @customElement('publishing-view')
 export class PublishingView extends LitElement {
-  @consume({ context: weStoreContext })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  mossStore!: MossStore;
 
   @state()
   view: PageView = PageView.Loading;
@@ -103,7 +103,7 @@ export class PublishingView extends LitElement {
   }
 
   async firstUpdated() {
-    const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
+    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
     const myPublishers = await getMyPublishers(appStoreClient);
     console.log('GOT PUBLISHERS: ', myPublishers);
     console.log('myPublishers.length: ', myPublishers.length === 0);
@@ -172,7 +172,7 @@ export class PublishingView extends LitElement {
       throw new Error('Icon is required.');
     }
     this._creatingPublisher = true;
-    const appAgentClient = this.weStore.appletBundlesStore.appstoreClient;
+    const appAgentClient = this.mossStore.appletBundlesStore.appstoreClient;
     const payload: PublisherInput = {
       name: fields.publisher_name,
       location: {
@@ -229,7 +229,7 @@ export class PublishingView extends LitElement {
       throw new Error(`Asset format validation failed: ${e}`);
     }
 
-    const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
+    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
 
     const source: WebHappSource = {
       type: 'https',
@@ -267,7 +267,7 @@ export class PublishingView extends LitElement {
     console.log('IM BEING CALLED:');
     console.log('Requested applet update with fields: ', fields);
 
-    const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
+    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
     if (!this._myPublisher) throw new Error('No publisher registered yet.');
 
     // 1. Fetch app from new source and check happ hash agains previous happ hash.
@@ -367,7 +367,7 @@ export class PublishingView extends LitElement {
   }
 
   async deprecateApplet(actionHash: ActionHash) {
-    const appStoreClient = this.weStore.appletBundlesStore.appstoreClient;
+    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
     await deprecateApp(appStoreClient, {
       base: actionHash,
       message: 'Unkown deprecation reason',

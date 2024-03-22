@@ -21,10 +21,10 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { weStyles } from '../../shared-styles.js';
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import {
   appIdFromAppletHash,
   dnaHashForCell,
@@ -40,22 +40,25 @@ import { dialogMessagebox } from '../../electron-api.js';
 @localized()
 @customElement('applet-detail-card')
 export class AppletDetailCard extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
   _appletUpdatable = new StoreSubscriber(
     this,
-    () => this.weStore.appletUpdatable(this.appletHash),
-    () => [this.weStore],
+    () => this.mossStore.appletUpdatable(this.appletHash),
+    () => [this.mossStore],
   );
 
   _joinedMembers = new StoreSubscriber(
     this,
     () =>
-      lazyLoadAndPoll(() => this.groupStore.groupClient.getAppletAgents(this.appletHash), 10000),
+      lazyLoadAndPoll(
+        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
+        10000,
+      ),
     () => [this.groupStore],
   );
 
@@ -72,10 +75,10 @@ export class AppletDetailCard extends LitElement {
   addedBy: AgentPubKey | undefined;
 
   @state()
-  appInfo: AppInfo | undefined;
+  appInfo: AppInfo | undefined | null;
 
   async firstUpdated() {
-    this.appInfo = await this.weStore.appWebsocket.appInfo({
+    this.appInfo = await this.mossStore.appWebsocket.appInfo({
       installed_app_id: appIdFromAppletHash(this.appletHash),
     });
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
@@ -117,8 +120,11 @@ export class AppletDetailCard extends LitElement {
       case 'complete':
         return html`
           ${this._joinedMembers.value.value.map(
-            (agentKey) => html`
-              <agent-avatar style="margin-left: 5px;" .agentPubKey=${agentKey}></agent-avatar>
+            (appletAgent) => html`
+              <agent-avatar
+                style="margin-left: 5px;"
+                .agentPubKey=${appletAgent.group_pubkey}
+              ></agent-avatar>
             `,
           )}
         `;
@@ -195,14 +201,14 @@ export class AppletDetailCard extends LitElement {
                         buttons: ['Cancel', 'Continue'],
                       });
                       if (confirmation.response === 0) {
-                        await this.weStore.reloadManualStores();
+                        await this.mossStore.reloadManualStores();
                         return;
                       }
                     }
-                    await this.weStore.disableApplet(this.appletHash);
+                    await this.mossStore.disableApplet(this.appletHash);
                     notify(msg('Applet disabled.'));
                   } else if (this.appInfo && !isAppRunning(this.appInfo)) {
-                    await this.weStore.enableApplet(this.appletHash);
+                    await this.mossStore.enableApplet(this.appletHash);
                     notify(msg('Applet enabled.'));
                   }
                 }}

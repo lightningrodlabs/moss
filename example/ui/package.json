@@ -14,11 +14,11 @@
     "package": "yarn package:ui && cd .. && cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
   },
   "dependencies": {
-    "@holochain-open-dev/elements": "^0.8.4",
-    "@holochain-open-dev/profiles": "^0.17.3",
-    "@holochain-open-dev/stores": "^0.8.3",
-    "@holochain-open-dev/utils": "^0.16.3",
-    "@holochain/client": "0.16.6",
+    "@holochain-open-dev/elements": "0.300.0-dev.0",
+    "@holochain-open-dev/profiles": "0.300.0-dev.0",
+    "@holochain-open-dev/stores": "0.300.0-dev.0",
+    "@holochain-open-dev/utils": "0.300.0-dev.0",
+    "@holochain/client": "^0.17.0-dev.7",
     "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
     "@lightningrodlabs/we-elements": "file:../../libs/we-elements",
     "@lightningrodlabs/attachments": "file:../../libs/attachments",

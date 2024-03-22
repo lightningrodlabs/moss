@@ -12,8 +12,8 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { weStyles } from '../shared-styles.js';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 
 /**
  * @element create-group-dialog
@@ -22,8 +22,8 @@ import { WeStore } from '../we-store.js';
 @customElement('create-group-dialog')
 export class CreateGroupDialog extends LitElement {
   /** Dependencies */
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   async open() {
     this._dialog.show();
@@ -45,7 +45,7 @@ export class CreateGroupDialog extends LitElement {
     this.committing = true;
 
     try {
-      const groupAppInfo = await this._weStore.createGroup(fields.name, fields.logo_src);
+      const groupAppInfo = await this._mossStore.createGroup(fields.name, fields.logo_src);
 
       this.dispatchEvent(
         new CustomEvent('group-created', {

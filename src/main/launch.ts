@@ -86,12 +86,7 @@ export async function launch(
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   // APP_PORT = holochainManager.appPort;cd di
 
-  const weRustHandler: WeRustHandler = await rustUtils.WeRustHandler.connect(
-    lairUrl,
-    holochainManager.adminPort,
-    holochainManager.appPort,
-    password,
-  );
+  const weRustHandler: WeRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
 
   // Install default appstore if necessary:
   if (

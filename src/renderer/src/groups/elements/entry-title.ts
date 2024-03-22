@@ -7,31 +7,31 @@ import { encodeHashToBase64 } from '@holochain/client';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { AttachableInfo, HrlWithContext } from '@lightningrodlabs/we-applet';
+import { AssetInfo, WAL } from '@lightningrodlabs/we-applet';
 
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { stringifyHrlWithContext } from '../../utils.js';
+import { stringifyWal } from '../../utils.js';
 
 @customElement('entry-title')
 export class EntryTitle extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   /**
    * REQUIRED. The Hrl of the entry to render
    */
   @property()
-  hrlWithContext!: HrlWithContext;
+  wal!: WAL;
 
-  attachableInfo = new StoreSubscriber(
+  assetInfo = new StoreSubscriber(
     this,
-    () => this._weStore.attachableInfo.get(stringifyHrlWithContext(this.hrlWithContext)),
-    () => [this.hrlWithContext],
+    () => this._mossStore.assetInfo.get(stringifyWal(this.wal)),
+    () => [this.wal],
   );
 
-  renderName(info: AttachableInfo | undefined) {
+  renderName(info: AssetInfo | undefined) {
     if (!info) return html`[Unknown]`;
 
     return html`
@@ -54,18 +54,16 @@ export class EntryTitle extends LitElement {
   }
 
   render() {
-    switch (this.attachableInfo.value.status) {
+    switch (this.assetInfo.value.status) {
       case 'pending':
         return html``;
       case 'complete':
-        return this.renderName(this.attachableInfo.value.value);
+        return this.renderName(this.assetInfo.value.value);
       case 'error':
         console.error(
-          `Failed to get attachable info for HRL '${this.hrlWithContext.hrl.map((hash) =>
+          `Failed to get asset info for WAL '${this.wal.hrl.map((hash) =>
             encodeHashToBase64(hash),
-          )} and context ${JSON.stringify(this.hrlWithContext.context)}': ${
-            this.attachableInfo.value.error
-          }`,
+          )} and context ${JSON.stringify(this.wal.context)}': ${this.assetInfo.value.error}`,
         );
         return html`[Unknown]`;
     }

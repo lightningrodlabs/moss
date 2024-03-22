@@ -75,7 +75,7 @@ async fn create_and_join_applet() {
 
     println!("get unjoined Applet entry...");
     let bobs_maybe_unjoined_applet_record: Option<Record> = conductors[1]
-        .call::<EntryHash, Option<Record>, &str>(
+        .call::<EntryHash, Option<Record>>(
             &bob_zome,
             "get_applet",
             bobs_unjoined_applets.first().unwrap().0.clone(),

@@ -38,18 +38,24 @@ fn get_applet(applet_hash: EntryHash) -> ExternResult<Option<Applet>> {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct RegisterAppletInput {
+    applet: Applet,
+    joining_pubkey: AgentPubKey,
+}
+
 /// First checks whether the same Applet has already been added to the group by someone
 /// else and if not, will advertise it in the group DNA. Then it adds the Applet
 /// entry as a private entry to the source chain.
 #[hdk_extern]
-fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
-    let applet_hash = hash_entry(&applet)?;
+fn register_applet(input: RegisterAppletInput) -> ExternResult<EntryHash> {
+    let applet_hash = hash_entry(&input.applet)?;
 
     // Advertise it in the group DNA if no-one else has done so yet
     match get(applet_hash.clone(), GetOptions::default()) {
         Ok(Some(_record)) => (),
         _ => {
-            create_entry(EntryTypes::Applet(applet.clone()))?;
+            create_entry(EntryTypes::Applet(input.applet.clone()))?;
 
             let path = get_group_applets_path();
             let anchor_hash = path.path_entry_hash()?;
@@ -63,19 +69,46 @@ fn register_applet(applet: Applet) -> ExternResult<EntryHash> {
     }
 
     // Create a link to your own public key for others to see that you joined that applet
+    // The link also contains the public key that you use in the applet as the tag
     create_link(
         applet_hash.clone(),
         agent_info()?.agent_initial_pubkey,
-        LinkTypes::AppletToAgent,
-        (),
+        LinkTypes::AppletToJoinedAgent,
+        LinkTag::new(input.joining_pubkey.get_raw_39()),
     )?;
 
     // Store a local copy of the Applet struct to the source chain as a private entry
-    create_entry(EntryTypes::AppletPrivate(AppletCopy {
+    create_entry(EntryTypes::AppletPrivate(PrivateAppletEntry {
         public_entry_hash: applet_hash.clone(),
-        applet: applet,
+        applet: input.applet,
+        applet_pubkey: input.joining_pubkey,
     }))?;
     Ok(applet_hash)
+}
+
+/// If an agent uninstalls an applet, they shall also mark it "abandoned" by them in the group DHT
+#[hdk_extern]
+fn abandon_applet(applet_hash: EntryHash) -> ExternResult<()> {
+    let joined_agents_links = get_links(
+        GetLinksInputBuilder::try_new(applet_hash.clone(), LinkTypes::AppletToJoinedAgent)?.build(),
+    )?;
+
+    let my_pubkey = agent_info()?.agent_initial_pubkey;
+
+    for link in joined_agents_links {
+        if link.target == AnyLinkableHash::from(my_pubkey.clone()) {
+            // delete link and create abandoned link
+            delete_link(link.create_link_hash)?;
+            create_link(
+                applet_hash.clone(),
+                my_pubkey.clone(),
+                LinkTypes::AppletToAbandonedAgent,
+                LinkTag::new(my_pubkey.get_raw_39()),
+            )?;
+        }
+    }
+
+    Ok(())
 }
 
 /// NOTE: This doesn't seem to affect what get_my_applets returns via source chain
@@ -101,7 +134,7 @@ fn get_public_applet(applet_hash: EntryHash) -> ExternResult<Option<Record>> {
 
 /// Gets the private entry copy for the given public Applet entry.
 #[hdk_extern]
-fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<AppletCopy>> {
+fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<PrivateAppletEntry>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(private_applet_entry_type)
@@ -110,10 +143,10 @@ fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<Applet
     let records = query(filter)?;
     let applet_copies = records
         .into_iter()
-        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .map(|record| record.entry.to_app_option::<PrivateAppletEntry>().ok())
         .filter_map(|ac| ac)
         .filter_map(|ac| ac)
-        .collect::<Vec<AppletCopy>>();
+        .collect::<Vec<PrivateAppletEntry>>();
     Ok(applet_copies
         .into_iter()
         .find(|copy| copy.public_entry_hash == applet_hash))
@@ -121,7 +154,7 @@ fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<Applet
 
 /// Get the Applets that the calling agent has installed
 #[hdk_extern]
-fn get_my_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
+fn get_my_applets(_: ()) -> ExternResult<Vec<PrivateAppletEntry>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(private_applet_entry_type)
@@ -131,16 +164,15 @@ fn get_my_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 
     Ok(records
         .into_iter()
-        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .map(|record| record.entry.to_app_option::<PrivateAppletEntry>().ok())
         .filter_map(|ac| ac)
         .filter_map(|ac| ac)
-        .map(|applet_copy| applet_copy.public_entry_hash)
         .collect())
 }
 
 /// Get the Applets that the calling agent has installed
 #[hdk_extern]
-fn get_my_applet_copies(_: ()) -> ExternResult<Vec<AppletCopy>> {
+fn get_my_applet_copies(_: ()) -> ExternResult<Vec<PrivateAppletEntry>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(private_applet_entry_type)
@@ -149,10 +181,10 @@ fn get_my_applet_copies(_: ()) -> ExternResult<Vec<AppletCopy>> {
     let records = query(filter)?;
     Ok(records
         .into_iter()
-        .map(|record| record.entry.to_app_option::<AppletCopy>().ok())
+        .map(|record| record.entry.to_app_option::<PrivateAppletEntry>().ok())
         .filter_map(|ac| ac)
         .filter_map(|ac| ac)
-        .collect::<Vec<AppletCopy>>())
+        .collect::<Vec<PrivateAppletEntry>>())
 }
 
 /// Get all the Applets that have been registered in the group
@@ -160,7 +192,9 @@ fn get_my_applet_copies(_: ()) -> ExternResult<Vec<AppletCopy>> {
 fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     let entry_hashes = links
         .into_iter()
@@ -182,7 +216,10 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey, Time
         .collect::<Vec<EntryHash>>();
 
     let path = get_group_applets_path();
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     let applet_infos: Vec<(EntryHash, AgentPubKey, Timestamp)> = links
         .into_iter()
@@ -223,15 +260,58 @@ fn get_unjoined_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
         .collect())
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct AppletAgent {
+    group_pubkey: AgentPubKey,
+    applet_pubkey: AgentPubKey,
+}
+
 /// Gets all the agents that joined the given Applet through calling register_applet
 #[hdk_extern]
-fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
-    let links = get_links(applet_hash, LinkTypes::AppletToAgent, None)?;
-    Ok(links
-        .into_iter()
-        .map(|link| AgentPubKey::try_from(link.target).ok())
-        .filter_map(|pubkey| pubkey)
-        .collect())
+fn get_joined_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AppletAgent>> {
+    let links = get_links(
+        GetLinksInputBuilder::try_new(applet_hash, LinkTypes::AppletToJoinedAgent)?.build(),
+    )?;
+
+    let mut applet_agents = Vec::new();
+
+    for link in links {
+        let maybe_group_pubkey = AgentPubKey::try_from(link.target).ok();
+        let maybe_applet_pubkey = AgentPubKey::from_raw_39(link.tag.as_ref().to_owned()).ok();
+        match (maybe_group_pubkey, maybe_applet_pubkey) {
+            (Some(gk), Some(ak)) => applet_agents.push(AppletAgent {
+                group_pubkey: gk,
+                applet_pubkey: ak,
+            }),
+            _ => (),
+        }
+    }
+
+    Ok(applet_agents)
+}
+
+/// Gets all the agents that abandoned the given Applet through calling abandon_applet
+#[hdk_extern]
+fn get_abandoned_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AppletAgent>> {
+    let links = get_links(
+        GetLinksInputBuilder::try_new(applet_hash, LinkTypes::AppletToAbandonedAgent)?.build(),
+    )?;
+
+    let mut applet_agents = Vec::new();
+
+    for link in links {
+        let maybe_group_pubkey = AgentPubKey::try_from(link.target).ok();
+        let maybe_applet_pubkey = AgentPubKey::from_raw_39(link.tag.as_ref().to_owned()).ok();
+        match (maybe_group_pubkey, maybe_applet_pubkey) {
+            (Some(gk), Some(ak)) => applet_agents.push(AppletAgent {
+                group_pubkey: gk,
+                applet_pubkey: ak,
+            }),
+            _ => (),
+        }
+    }
+
+    Ok(applet_agents)
 }
 
 /// The person who registered the applet to the group may also archive it,
@@ -241,7 +321,9 @@ fn get_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AgentPubKey>> {
 fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
     let path = get_group_applets_path();
 
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToApplet)?.build(),
+    )?;
 
     for link in links {
         // TODO Make this an actual validation rule
@@ -280,7 +362,12 @@ fn unarchive_applet(applet_hash: EntryHash) -> ExternResult<()> {
 fn get_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_group_applets_path();
 
-    let links_details = get_link_details(path.path_entry_hash()?, LinkTypes::AnchorToApplet, None)?;
+    let links_details = get_link_details(
+        path.path_entry_hash()?,
+        LinkTypes::AnchorToApplet,
+        None,
+        GetOptions::default(),
+    )?;
 
     let mut links_details_by_target: HashMap<
         EntryHash,
@@ -339,7 +426,10 @@ pub fn register_applet_federation(
 /// not know about ("viral federation").
 #[hdk_extern]
 pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHash>> {
-    let links = get_links(applet_hash, LinkTypes::AppletToInvitedGroup, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(applet_hash, LinkTypes::AppletToInvitedGroup)?.build(),
+    )?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())
@@ -351,7 +441,11 @@ pub fn get_federated_groups(applet_hash: EntryHash) -> ExternResult<Vec<EntryHas
 pub fn get_federated_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
     let path = get_federated_applets_path();
     let anchor_hash = path.path_entry_hash()?;
-    let links = get_links(anchor_hash, LinkTypes::AnchorToFederatedApplet, None)?;
+
+    let links = get_links(
+        GetLinksInputBuilder::try_new(anchor_hash, LinkTypes::AnchorToFederatedApplet)?.build(),
+    )?;
+
     Ok(links
         .into_iter()
         .filter_map(|link| link.target.into_entry_hash())

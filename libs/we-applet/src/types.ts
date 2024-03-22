@@ -16,7 +16,7 @@ export type AppletId = EntryHashB64;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-export type OpenHrlMode = 'front' | 'side';
+export type OpenWalMode = 'front' | 'side';
 
 /**
  * String of the format weave://
@@ -34,7 +34,7 @@ export type WeaveLocation =
     }
   | {
       type: 'asset';
-      hrlWithContext: HrlWithContext;
+      wal: WAL;
     }
   | {
       type: 'invitation';
@@ -42,20 +42,15 @@ export type WeaveLocation =
       secret: string;
     };
 
-// Contextual reference to a Hrl
-// Useful use case: image we want to point to a specific section of a document
+// Weave Asset Locator - an HRL with context
+// Use case: Image we want to point to a specific section of a document
 // The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
-export type HrlWithContext = {
+export type WAL = {
   hrl: Hrl;
   context?: any;
 };
 
-export type HrlB64WithContext = {
-  hrl: HrlB64;
-  context?: any;
-};
-
-export type AttachableInfo = {
+export type AssetInfo = {
   name: string;
   icon_src: string;
 };
@@ -65,7 +60,7 @@ export type GroupProfile = {
   logo_src: string;
 };
 
-export type WeNotification = {
+export type FrameNotification = {
   /**
    * Title of the message.
    */
@@ -122,14 +117,14 @@ export type NotificationCount = {
 export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
-  openHrl(hrlWithContext: HrlWithContext): void;
+  openWal(wal: WAL): void;
   openCrossAppletMain(appletBundleId: ActionHash): void;
   openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
 }
 
-export type AttachableLocationAndInfo = {
+export type AssetLocationAndInfo = {
   appletHash: AppletHash;
-  attachableInfo: AttachableInfo;
+  assetInfo: AssetInfo;
   /**
    * Only set if We is run in applet development mode and the applet is running in hot-reloading mode
    */
@@ -152,21 +147,21 @@ export type AppletView =
   | { type: 'main' }
   | { type: 'block'; block: string; context: any }
   | {
-      type: 'attachable';
+      type: 'asset';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
-      hrlWithContext: HrlWithContext;
+      wal: WAL;
     }
   | {
       type: 'creatable';
       name: CreatableName;
       /**
        * To be called after the creatable has been successfully created. Will close the creatable view.
-       * @param hrlWithContext
+       * @param wal
        * @returns
        */
-      resolve: (hrlWithContext: HrlWithContext) => Promise<void>;
+      resolve: (wal: WAL) => Promise<void>;
       /**
        * To be called if creation fails due to an error
        * @param reason
@@ -205,7 +200,7 @@ export type CreatableName = string;
 export type CreatableResult =
   | {
       type: 'success';
-      hrlWithContext: HrlWithContext;
+      wal: WAL;
     }
   | {
       type: 'cancel';
@@ -256,19 +251,19 @@ export type RenderView =
 
 export type ParentToAppletRequest =
   | {
-      type: 'get-applet-attachable-info';
+      type: 'get-applet-asset-info';
       roleName: string;
       integrityZomeName: string;
       entryType: string;
-      hrlWithContext: HrlWithContext;
+      wal: WAL;
     }
   | {
       type: 'get-block-types';
     }
   | {
       type: 'bind-asset';
-      srcWal: HrlWithContext;
-      dstWal: HrlWithContext;
+      srcWal: WAL;
+      dstWal: WAL;
       dstRoleName: string;
       dstIntegrityZomeName: string;
       dstEntryType: string;
@@ -308,8 +303,8 @@ export type AppletToParentRequest =
       filter: string;
     }
   | {
-      type: 'notify-we';
-      notifications: Array<WeNotification>;
+      type: 'notify-frame';
+      notifications: Array<FrameNotification>;
     }
   | {
       type: 'get-applet-info';
@@ -320,26 +315,26 @@ export type AppletToParentRequest =
       groupId: DnaHash;
     }
   | {
-      type: 'get-global-attachable-info';
-      hrlWithContext: HrlWithContext;
+      type: 'get-global-asset-info';
+      wal: WAL;
     }
   | {
-      type: 'hrl-to-clipboard';
-      hrlWithContext: HrlWithContext;
+      type: 'wal-to-pocket';
+      wal: WAL;
     }
   | {
       type: 'request-bind';
-      srcWal: HrlWithContext;
-      dstWal: HrlWithContext;
+      srcWal: WAL;
+      dstWal: WAL;
     }
   | {
-      type: 'user-select-hrl';
+      type: 'user-select-wal';
     }
   | {
       type: 'user-select-screen';
     }
   | {
-      type: 'toggle-clipboard';
+      type: 'toggle-pocket';
     }
   | {
       type: 'update-creatable-types';
@@ -394,9 +389,9 @@ export type OpenViewRequest =
       context: any;
     }
   | {
-      type: 'hrl';
-      hrlWithContext: HrlWithContext;
-      mode?: OpenHrlMode;
+      type: 'wal';
+      wal: WAL;
+      mode?: OpenWalMode;
     };
 
 export type IframeConfig =

@@ -15,8 +15,8 @@ import '../applets/elements/applet-logo.js';
 import './create-group-dialog.js';
 import './groups-for-applet.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
@@ -24,12 +24,12 @@ import { AppletId } from '@lightningrodlabs/we-applet';
 @localized()
 @customElement('zome-call-panel')
 export class ZomeCallPanel extends LitElement {
-  @consume({ context: weStoreContext })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  _mossStore!: MossStore;
 
   _applets = new StoreSubscriber(
     this,
-    () => this._weStore.allRunningApplets,
+    () => this._mossStore.allRunningApplets,
     () => [],
   );
 

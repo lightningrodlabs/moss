@@ -9,19 +9,19 @@ import {
 } from '@holochain/client';
 import {
   BlockType,
-  AttachableInfo,
-  HrlWithContext,
-  WeNotification,
+  AssetInfo,
+  WAL,
   RenderInfo,
   BlockName,
   AppletHash,
   AppletInfo,
-  AttachableLocationAndInfo,
-  OpenHrlMode,
+  AssetLocationAndInfo,
+  OpenWalMode,
   CreatableType,
   CreatableName,
   Hrl,
   WeaveLocation,
+  FrameNotification,
 } from './types';
 import { postMessage } from './utils';
 import { decode, encode } from '@msgpack/msgpack';
@@ -49,7 +49,7 @@ export const isWeContext = () =>
  * @param webPrefix Whether to make the link work via web browsers. Default is true.
  * @returns
  */
-export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = true) => {
+export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false) => {
   let url: string = '';
   if (webPrefix) {
     url = 'https://lightningrodlabs.org/we?';
@@ -58,7 +58,7 @@ export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = true)
   return url;
 };
 
-export function weaveUrlFromWal(wal: HrlWithContext, webPrefix = true) {
+export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   let url: string = '';
   if (webPrefix) {
     url = 'https://lightningrodlabs.org/we?';
@@ -85,7 +85,7 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
     const contextSplit = split2[2].split('?context=');
     return {
       type: 'asset',
-      hrlWithContext: {
+      wal: {
         hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
         context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
       },
@@ -101,6 +101,14 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
     };
   }
   throw new Error(`Got We url of unknown format: ${url}`);
+}
+
+export function weaveUrlToWAL(url: string): WAL {
+  const weaveLocation = weaveUrlToLocation(url);
+  if (weaveLocation.type !== 'asset') {
+    throw new Error('Passed URL is not a valid asset locator.');
+  }
+  return weaveLocation.wal;
 }
 
 export function stringifyHrl(hrl: Hrl): string {
@@ -133,13 +141,8 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => []),
-      (this.getAttachableInfo = async (
-        _appletClient,
-        _roleName,
-        _integrityZomeName,
-        _entryType,
-        _hrlWithContext,
-      ) => undefined),
+      (this.getAssetInfo = async (_appletClient, _roleName, _integrityZomeName, _entryType, _wal) =>
+        undefined),
       (this.bindAsset = async () => {});
   }
 
@@ -155,13 +158,13 @@ export class AppletServices {
   /**
    * Get info about the specified entry of this Applet
    */
-  getAttachableInfo: (
+  getAssetInfo: (
     appletClient: AppAgentClient,
     roleName: RoleName,
     integrityZomeName: ZomeName,
     entryType: string,
-    hrlWithContext: HrlWithContext,
-  ) => Promise<AttachableInfo | undefined>;
+    wal: WAL,
+  ) => Promise<AssetInfo | undefined>;
   /**
    * Search in this Applet
    */
@@ -170,7 +173,7 @@ export class AppletServices {
     appletHash: AppletHash,
     weServices: WeServices,
     searchFilter: string,
-  ) => Promise<Array<HrlWithContext>>;
+  ) => Promise<Array<WAL>>;
 
   /**
    * Bind an asset (srcWal) to an asset in your applet (dstWal).
@@ -180,11 +183,11 @@ export class AppletServices {
     /**
      * Waeve Asset Locator in the applet requesting the binding
      */
-    srcWal: HrlWithContext,
+    srcWal: WAL,
     /**
      * Weave Asset Locator to which the srcWal should be bound to
      */
-    dstWal: HrlWithContext,
+    dstWal: WAL,
     /**
      * role name of the dna containing the destination WAL
      */
@@ -230,12 +233,12 @@ export interface WeServices {
    */
   openCrossAppletBlock: (appletBundleId: ActionHash, block: string, context: any) => Promise<void>;
   /**
-   * Open the specified HRL as an entry view
-   * @param hrl
+   * Open the specified WAL
+   * @param wal
    * @param context
    * @returns
    */
-  openHrl: (hrlWithContext: HrlWithContext, mode?: OpenHrlMode) => Promise<void>;
+  openWal: (wal: WAL, mode?: OpenWalMode) => Promise<void>;
   /**
    * Get the group profile of the specified group
    * @param groupId
@@ -250,32 +253,30 @@ export interface WeServices {
   appletInfo: (appletHash) => Promise<AppletInfo | undefined>;
   /**
    * Gets information about an entry in any other Applet in We
-   * @param hrl
+   * @param wal
    * @returns
    */
-  attachableInfo: (
-    hrlWithContext: HrlWithContext,
-  ) => Promise<AttachableLocationAndInfo | undefined>;
+  assetInfo: (wal: WAL) => Promise<AssetLocationAndInfo | undefined>;
   /**
    * Adds the specified HRL to the We-internal clipboard
-   * @param hrl
+   * @param wal
    * @returns
    */
-  hrlToClipboard: (hrlWithContext: HrlWithContext) => Promise<void>;
+  walToPocket: (wal: WAL) => Promise<void>;
   /**
-   * Prompts the user with the search bar and We clipboard to select an HRL.
-   * Returns an HrlWithContex as soon as the usser has selected an HRL
+   * Prompts the user with the search bar and We clipboard to select a WAL.
+   * Returns a WAL as soon as the user has selected a WAL
    * or undefined if the user cancels the selection process.
    * @returns
    */
-  userSelectHrl: () => Promise<HrlWithContext | undefined>;
+  userSelectWal: () => Promise<WAL | undefined>;
   /**
    * Sends notifications to We and depending on user settings and urgency level
    * further to the operating system.
    * @param notifications
    * @returns
    */
-  notifyWe: (notifications: Array<WeNotification>) => Promise<any>;
+  notifyFrame: (notifications: Array<FrameNotification>) => Promise<any>;
   /**
    * Let's the user select a Screen or Window and returns the selected id. Useful
    * for screen sharing applications.
@@ -286,7 +287,7 @@ export interface WeServices {
    * WAL (srcWal) to it.
    * The source WAL must belong to the requesting applet.
    */
-  requestBind: (srcWal: HrlWithContext, dstWal: HrlWithContext) => Promise<void>;
+  requestBind: (srcWal: WAL, dstWal: WAL) => Promise<void>;
 }
 
 export class WeClient implements WeServices {
@@ -331,25 +332,22 @@ export class WeClient implements WeServices {
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
     window.__WE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openHrl = (hrlWithContext: HrlWithContext, mode?: OpenHrlMode): Promise<void> =>
-    window.__WE_API__.openHrl(hrlWithContext, mode);
+  openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> => window.__WE_API__.openWal(wal, mode);
 
   groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
 
   appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
 
-  attachableInfo = (hrlWithContext: HrlWithContext) =>
-    window.__WE_API__.attachableInfo(hrlWithContext);
+  assetInfo = (wal: WAL) => window.__WE_API__.assetInfo(wal);
 
-  hrlToClipboard = (hrlWithContext: HrlWithContext) =>
-    window.__WE_API__.hrlToClipboard(hrlWithContext);
+  walToPocket = (wal: WAL) => window.__WE_API__.walToPocket(wal);
 
-  userSelectHrl = () => window.__WE_API__.userSelectHrl();
+  userSelectWal = () => window.__WE_API__.userSelectWal();
 
-  notifyWe = (notifications: Array<WeNotification>) => window.__WE_API__.notifyWe(notifications);
+  notifyFrame = (notifications: Array<FrameNotification>) =>
+    window.__WE_API__.notifyFrame(notifications);
 
   userSelectScreen = () => window.__WE_API__.userSelectScreen();
 
-  requestBind = (srcWal: HrlWithContext, dstWal: HrlWithContext) =>
-    window.__WE_API__.requestBind(srcWal, dstWal);
+  requestBind = (srcWal: WAL, dstWal: WAL) => window.__WE_API__.requestBind(srcWal, dstWal);
 }

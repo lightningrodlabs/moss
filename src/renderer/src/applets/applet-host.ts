@@ -1,17 +1,17 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
   AppletInfo,
-  AttachableInfo,
-  AttachableLocationAndInfo,
+  AssetInfo,
+  AssetLocationAndInfo,
   HrlLocation,
-  HrlWithContext,
-  WeNotification,
+  WAL,
   AppletToParentRequest,
   ParentToAppletRequest,
   IframeConfig,
   BlockType,
   WeServices,
   GroupProfile,
+  FrameNotification,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -22,7 +22,7 @@ import {
   selectScreenOrWindow,
   signZomeCallElectron,
 } from '../electron-api.js';
-import { WeStore } from '../we-store.js';
+import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
@@ -33,7 +33,7 @@ import {
   getNotificationTypeSettings,
   logZomeCall,
   storeAppletNotifications,
-  stringifyHrlWithContext,
+  stringifyWal,
   toOriginalCaseB64,
   validateNotifications,
 } from '../utils.js';
@@ -52,13 +52,13 @@ function getAppletIdFromOrigin(origin: string): AppletId {
   return toOriginalCaseB64(lowercaseB64Id);
 }
 
-export async function setupAppletMessageHandler(weStore: WeStore, openViews: AppOpenViews) {
+export async function setupAppletMessageHandler(mossStore: MossStore, openViews: AppOpenViews) {
   window.addEventListener('message', async (message) => {
     try {
       // console.log('and source: ', message.source);
       let receivedAppletId: AppletId;
       // if origin.startswith(applet://) then get it from the origin
-      // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.weStore.isAppletDev) {
+      // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.mossStore.isAppletDev) {
 
       // }
       if (message.origin.startsWith('applet://')) {
@@ -70,7 +70,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
           message.origin.startsWith('http://localhost')) &&
-        weStore.isAppletDev
+        mossStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
         receivedAppletId = encodeHashToBase64(message.data.appletHash);
@@ -81,7 +81,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
         throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
       }
 
-      const installedApplets = await toPromise(weStore.installedApplets);
+      const installedApplets = await toPromise(mossStore.installedApplets);
 
       const installedAppletHash = installedApplets.find(
         (hash) => encodeHashToBase64(hash) === receivedAppletId,
@@ -105,7 +105,7 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
       }
 
       const result = await handleAppletIframeMessage(
-        weStore,
+        mossStore,
         openViews,
         receivedAppletId,
         message.data.request,
@@ -119,51 +119,45 @@ export async function setupAppletMessageHandler(weStore: WeStore, openViews: App
   });
 }
 
-export function buildHeadlessWeClient(weStore: WeStore): WeServices {
+export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
   return {
-    async attachableInfo(
-      hrlWithContext: HrlWithContext,
-    ): Promise<AttachableLocationAndInfo | undefined> {
-      const maybeCachedInfo = weStore.weCache.attachableInfo.value(hrlWithContext);
+    async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
+      const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
       if (maybeCachedInfo) return maybeCachedInfo;
 
-      const dnaHash = hrlWithContext.hrl[0];
+      const dnaHash = wal.hrl[0];
 
       try {
-        const location = await toPromise(
-          weStore.hrlLocations.get(dnaHash).get(hrlWithContext.hrl[1]),
-        );
+        const location = await toPromise(mossStore.hrlLocations.get(dnaHash).get(wal.hrl[1]));
         if (!location) return undefined;
-        const attachableInfo = await toPromise(
-          weStore.attachableInfo.get(stringifyHrlWithContext(hrlWithContext)),
-        );
+        const assetInfo = await toPromise(mossStore.assetInfo.get(stringifyWal(wal)));
 
-        if (!attachableInfo) return undefined;
+        if (!assetInfo) return undefined;
 
-        const attachableAndAppletInfo: AttachableLocationAndInfo = {
+        const assetAndAppletInfo: AssetLocationAndInfo = {
           appletHash: location.dnaLocation.appletHash,
-          attachableInfo,
+          assetInfo,
         };
 
-        weStore.weCache.attachableInfo.set(attachableAndAppletInfo, hrlWithContext);
+        mossStore.weCache.assetInfo.set(assetAndAppletInfo, wal);
 
-        return attachableAndAppletInfo;
+        return assetAndAppletInfo;
       } catch (e) {
         console.warn(
-          `Failed to get attachableInfo for hrl ${hrlWithContext.hrl.map((hash) =>
+          `Failed to get assetInfo for hrl ${wal.hrl.map((hash) =>
             encodeHashToBase64(hash),
-          )} with context ${hrlWithContext.context}: ${e}`,
+          )} with context ${wal.context}: ${e}`,
         );
         return undefined;
       }
     },
-    async requestBind(srcWal: HrlWithContext, dstWal: HrlWithContext): Promise<void> {
+    async requestBind(srcWal: WAL, dstWal: WAL): Promise<void> {
       const dstLocation = await toPromise(
-        weStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
+        mossStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
       );
       if (!dstLocation) throw new Error('No applet found for the given dstWal');
       const appletStore = await toPromise(
-        weStore.appletStores.get(dstLocation.dnaLocation.appletHash),
+        mossStore.appletStores.get(dstLocation.dnaLocation.appletHash),
       );
       const appletHost = await toPromise(appletStore.host);
       if (!appletHost) throw new Error('No applet host found for applet of dstWal');
@@ -183,7 +177,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
       }
     },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
-      const groupStore = await weStore.groupStore(groupDnaHash);
+      const groupStore = await mossStore.groupStore(groupDnaHash);
       if (groupStore) {
         const groupProfile = await toPromise(groupStore.groupProfile);
         return groupProfile;
@@ -192,12 +186,12 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
     },
     async appletInfo(appletHash: AppletHash) {
       // TODO not caching is more efficient here
-      // const maybeCachedInfo = weStore.weCache.appletInfo.value(appletHash);
+      // const maybeCachedInfo = mossStore.weCache.appletInfo.value(appletHash);
       // if (maybeCachedInfo) return maybeCachedInfo;
 
       let appletStore: AppletStore | undefined;
       try {
-        appletStore = await toPromise(weStore.appletStores.get(appletHash));
+        appletStore = await toPromise(mossStore.appletStores.get(appletHash));
       } catch (e) {
         console.warn(
           'No appletInfo found for applet with id ',
@@ -207,7 +201,7 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         );
       }
       if (!appletStore) return undefined;
-      const groupsForApplet = await toPromise(weStore.groupsForApplet.get(appletHash));
+      const groupsForApplet = await toPromise(mossStore.groupsForApplet.get(appletHash));
       const icon = await toPromise(appletStore.logo);
 
       return {
@@ -217,39 +211,39 @@ export function buildHeadlessWeClient(weStore: WeStore): WeServices {
         groupsIds: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },
-    async notifyWe(_notifications: Array<WeNotification>) {
+    async notifyFrame(_notifications: Array<FrameNotification>) {
       throw new Error('notify is not implemented on headless WeServices.');
     },
     openAppletMain: async () => {},
     openCrossAppletMain: async () => {},
-    openHrl: async () => {},
+    openWal: async () => {},
     openCrossAppletBlock: async () => {},
     openAppletBlock: async () => {},
-    async userSelectHrl() {
-      throw new Error('userSelectHrl is not supported in headless WeServices.');
+    async userSelectWal() {
+      throw new Error('userSelectWal is not supported in headless WeServices.');
     },
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeServices.');
     },
-    async hrlToClipboard(hrlWithContext: HrlWithContext): Promise<void> {
-      weStore.hrlToClipboard(hrlWithContext);
+    async walToPocket(wal: WAL): Promise<void> {
+      mossStore.walToPocket(wal);
     },
   };
 }
 
 export async function handleAppletIframeMessage(
-  weStore: WeStore,
+  mossStore: MossStore,
   openViews: AppOpenViews,
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
-  const weServices = buildHeadlessWeClient(weStore);
+  const weServices = buildHeadlessWeClient(mossStore);
 
   switch (message.type) {
     case 'get-iframe-config':
       const appletHash = decodeHashFromBase64(appletId);
-      const isInstalled = await toPromise(weStore.isInstalled.get(appletHash));
-      const appletStore = await toPromise(weStore.appletStores.get(appletHash));
+      const isInstalled = await toPromise(mossStore.isInstalled.get(appletHash));
+      const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
       if (!isInstalled) {
         const iframeConfig: IframeConfig = {
           type: 'not-installed',
@@ -261,18 +255,18 @@ export async function handleAppletIframeMessage(
       const crossApplet = message.crossApplet;
       if (crossApplet) {
         const applets = await toPromise(
-          weStore.appletsForBundleHash.get(
+          mossStore.appletsForBundleHash.get(
             appEntryIdFromDistInfo(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {
           type: 'cross-applet',
-          appPort: weStore.conductorInfo.app_port,
+          appPort: mossStore.conductorInfo.app_port,
           applets,
         };
         return config;
       } else {
-        const groupsStores = await toPromise(weStore.groupsForApplet.get(appletHash));
+        const groupsStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
 
         const groupProfiles = await Promise.all(
           Array.from(groupsStores.values()).map((store) => toPromise(store.groupProfile)),
@@ -287,7 +281,7 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'applet',
           appletHash,
-          appPort: weStore.conductorInfo.app_port,
+          appPort: mossStore.conductorInfo.app_port,
           profilesLocation: {
             profilesAppId: groupStore.groupClient.appAgentClient.installedAppId,
             profilesRoleName: 'group',
@@ -298,7 +292,7 @@ export async function handleAppletIframeMessage(
       }
     case 'get-hrl-location':
       const location0 = await toPromise(
-        weStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
+        mossStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
       );
       if (!location0) throw new Error('Hrl not found');
 
@@ -326,49 +320,49 @@ export async function handleAppletIframeMessage(
             message.request.block,
             message.request.context,
           );
-        case 'hrl':
-          return openViews.openHrl(message.request.hrlWithContext, message.request.mode);
+        case 'wal':
+          return openViews.openWal(message.request.wal, message.request.mode);
       }
-    case 'hrl-to-clipboard':
-      weStore.hrlToClipboard(message.hrlWithContext);
+    case 'wal-to-pocket':
+      mossStore.walToPocket(message.wal);
       break;
-    case 'user-select-hrl':
-      return openViews.userSelectHrl();
+    case 'user-select-wal':
+      return openViews.userSelectWal();
     case 'user-select-screen':
       return selectScreenOrWindow();
-    case 'toggle-clipboard':
+    case 'toggle-pocket':
       return openViews.toggleClipboard();
-    case 'notify-we': {
+    case 'notify-frame': {
       if (!message.notifications) {
         throw new Error(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
         );
       }
       const appletHash = decodeHashFromBase64(appletId);
-      const appletStore = await toPromise(weStore.appletStores.get(appletHash));
+      const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
 
       // If the applet that the notification is coming from is already open, and the We main window
       // itself is also open, don't do anything
-      const dashboardMode = get(weStore.dashboardState());
-      const attachableViewerState = get(weStore.attachableViewerState());
+      const dashboardMode = get(mossStore.dashboardState());
+      const assetViewerState = get(mossStore.assetViewerState());
 
       const ignoreNotification =
-        !(attachableViewerState.visible && attachableViewerState.position === 'front') &&
+        !(assetViewerState.visible && assetViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
         dashboardMode.appletHash.toString() === appletHash.toString() &&
         mainWindowFocused;
 
       // add notifications to unread messages and store them in the persisted notifications log
-      const notifications: Array<WeNotification> = message.notifications;
+      const notifications: Array<FrameNotification> = message.notifications;
       validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
       const maybeUnreadNotifications = storeAppletNotifications(
         notifications,
         appletId,
         !ignoreNotification ? true : false,
-        weStore.persistedStore,
+        mossStore.persistedStore,
       );
 
       // update the notifications store
@@ -378,8 +372,8 @@ export async function handleAppletIframeMessage(
 
       // Update feed
       const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
-      weStore.updateNotificationFeed(appletId, daysSinceEpoch);
-      weStore.updateNotificationFeed(appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
+      mossStore.updateNotificationFeed(appletId, daysSinceEpoch);
+      mossStore.updateNotificationFeed(appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
 
       // trigger OS notification if allowed by the user and notification is fresh enough (less than 5 minutes old)
       const appletNotificationSettings: AppletNotificationSettings =
@@ -413,20 +407,18 @@ export async function handleAppletIframeMessage(
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
       return weServices.groupProfile(message.groupId);
-    case 'get-global-attachable-info':
-      let attachableInfo = await weServices.attachableInfo(message.hrlWithContext);
-      if (attachableInfo && weStore.isAppletDev) {
-        const appletDevPort = await getAppletDevPort(
-          appIdFromAppletHash(attachableInfo.appletHash),
-        );
+    case 'get-global-asset-info':
+      let assetInfo = await weServices.assetInfo(message.wal);
+      if (assetInfo && mossStore.isAppletDev) {
+        const appletDevPort = await getAppletDevPort(appIdFromAppletHash(assetInfo.appletHash));
         if (appletDevPort) {
-          attachableInfo.appletDevPort = appletDevPort;
+          assetInfo.appletDevPort = appletDevPort;
         }
       }
-      return attachableInfo;
+      return assetInfo;
     case 'request-bind': {
       const srcLocation = await toPromise(
-        weStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
+        mossStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
       );
       if (!srcLocation) throw new Error('No applet found for srcWal.');
       if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
@@ -440,35 +432,35 @@ export async function handleAppletIframeMessage(
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");
-      weStore.setCreatableDialogResult(message.dialogId, message.result);
+      mossStore.setCreatableDialogResult(message.dialogId, message.result);
       break;
     case 'update-creatable-types':
       // TODO validate message content
-      weStore.updateCreatableTypes(appletId, message.value);
+      mossStore.updateCreatableTypes(appletId, message.value);
       break;
     case 'localStorage.setItem': {
-      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
+      const appletLocalStorage = mossStore.persistedStore.appletLocalStorage.value(appletId);
       appletLocalStorage[message.key] = message.value;
-      weStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
+      mossStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
       break;
     }
     case 'localStorage.removeItem': {
-      const appletLocalStorage = weStore.persistedStore.appletLocalStorage.value(appletId);
+      const appletLocalStorage = mossStore.persistedStore.appletLocalStorage.value(appletId);
       const filteredStorage = {};
       Object.keys(appletLocalStorage).forEach((key) => {
         if (key !== message.key) {
           filteredStorage[key] = appletLocalStorage[key];
         }
       });
-      weStore.persistedStore.appletLocalStorage.set(filteredStorage, appletId);
+      mossStore.persistedStore.appletLocalStorage.set(filteredStorage, appletId);
       break;
     }
     case 'localStorage.clear': {
-      weStore.persistedStore.appletLocalStorage.set({}, appletId);
+      mossStore.persistedStore.appletLocalStorage.set({}, appletId);
       break;
     }
     case 'get-localStorage':
-      return weStore.persistedStore.appletLocalStorage.value(appletId);
+      return mossStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
     default:
@@ -486,24 +478,24 @@ export class AppletHost {
     this.appletId = appletId;
   }
 
-  async getAppletAttachableInfo(
+  async getAppletAssetInfo(
     roleName: string,
     integrityZomeName: string,
     entryType: string,
-    hrlWithContext: HrlWithContext,
-  ): Promise<AttachableInfo | undefined> {
+    wal: WAL,
+  ): Promise<AssetInfo | undefined> {
     return this.postMessage({
-      type: 'get-applet-attachable-info',
+      type: 'get-applet-asset-info',
       roleName,
       integrityZomeName,
       entryType,
-      hrlWithContext,
+      wal,
     });
   }
 
   bindAsset(
-    srcWal: HrlWithContext,
-    dstWal: HrlWithContext,
+    srcWal: WAL,
+    dstWal: WAL,
     dstRoleName: string,
     dstIntegrityZomeName: string,
     dstEntryType: string,
@@ -518,7 +510,7 @@ export class AppletHost {
     });
   }
 
-  search(filter: string): Promise<Array<HrlWithContext>> {
+  search(filter: string): Promise<Array<WAL>> {
     return this.postMessage({
       type: 'search',
       filter,

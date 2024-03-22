@@ -77,13 +77,7 @@
                 hrl: [dnaHash, actionHash],
               }));
           },
-          getAttachableInfo: async (
-            appletClient,
-            roleName,
-            integrityZomeName,
-            entryType,
-            hrlWithContext
-          ) => {
+          getAssetInfo: async (appletClient, roleName, integrityZomeName, entryType, wal) => {
             switch (roleName) {
               case 'forum':
                 switch (integrityZomeName) {
@@ -91,7 +85,7 @@
                     switch (entryType) {
                       case 'post':
                         const postsClient = new PostsClient(appletClient, roleName);
-                        const post = await postsClient.getPost(hrlWithContext.hrl[1]);
+                        const post = await postsClient.getPost(wal.hrl[1]);
                         if (!post) return undefined;
                         return {
                           name: post.entry.title,

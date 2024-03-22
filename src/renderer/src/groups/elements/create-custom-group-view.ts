@@ -14,17 +14,17 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '../../custom-views/elements/create-custom-view.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { appletOrigin } from '../../utils.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 
 @localized()
 @customElement('create-custom-group-view')
 export class CreateCustomGroupView extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  weStore!: WeStore;
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   @state()
