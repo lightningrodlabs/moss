@@ -150,9 +150,9 @@ export async function launch(
               // In case that the previous happ sha256 is not the one of KanDo 0.8.100, replace it fully
               const sha256Happ_0_8_100 =
                 'fe4be7f9910b355533951afe33af899dcebe70e6837a2dbe13bf6fbdc5f50c72';
-              if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_8_100) {
+              if (currentAppAssetsInfo.happ.sha256 === sha256Happ_0_8_100) {
                 console.warn(
-                  'Found old KanDo feedback board. Uninstalling it and replacing it with 0.8.100',
+                  'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
                 );
                 console.log(
                   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
