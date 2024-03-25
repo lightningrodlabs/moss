@@ -4,7 +4,7 @@ _Moss_ is a reference implementation of a Frame for [The Weave](https://weave.so
 
 _Moss_ is composed of a group management DNA, together with a defined pattern on how to build _Tool_ DNAs that can be added to a _Moss_ group. Each such group as well as each _Tool_ used within a group is its own private peer-to-peer network.
 
-_Moss_ used to be call _We_, and you can read about it's early instantiation in [this blogpost](https://eric.harris-braun.com/blog/2022/07/26/id-390).
+_Moss_ used to be called _We_, and you can read about it's early instantiation in [this blogpost](https://eric.harris-braun.com/blog/2022/07/26/id-390).
 
 ## Design
 
