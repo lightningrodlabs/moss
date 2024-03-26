@@ -117,21 +117,24 @@ export class InstallAppletBundleDialog extends LitElement {
         fields.network_seed ? fields.network_seed : undefined,
       );
 
-      notify('Installation successful');
-      this.close();
-      this.dispatchEvent(
-        new CustomEvent('applet-installed', {
-          detail: {
-            appletEntryHash,
-            groupDnaHash: this.groupStore.groupDnaHash,
-          },
-          composed: true,
-          bubbles: true,
-        }),
-      );
-      this._appletDialog.hide();
-      this._installing = false;
-      this._installationProgress = undefined;
+      // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
+      setTimeout(() => {
+        notify('Installation successful');
+        this.close();
+        this.dispatchEvent(
+          new CustomEvent('applet-installed', {
+            detail: {
+              appletEntryHash,
+              groupDnaHash: this.groupStore.groupDnaHash,
+            },
+            composed: true,
+            bubbles: true,
+          }),
+        );
+        this._appletDialog.hide();
+        this._installing = false;
+        this._installationProgress = undefined;
+      }, 200);
     } catch (e) {
       this._installationProgress = undefined;
       notifyError('Installation failed! (See console for details)');

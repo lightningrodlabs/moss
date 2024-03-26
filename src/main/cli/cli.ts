@@ -39,9 +39,13 @@ export interface CliOpts {
   agentIdx?: number | undefined;
   networkSeed?: string | undefined;
   holochainPath?: string | undefined;
+  holochainRustLog?: string | undefined;
+  holochainWasmLog?: string | undefined;
+  lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
   forceProductionUrls?: boolean;
+  printHolochainLogs?: boolean;
 }
 
 export interface RunOptions {
@@ -51,6 +55,10 @@ export interface RunOptions {
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
   customBinary: string | undefined;
+  holochainRustLog: string | undefined;
+  holochainWasmLog: string | undefined;
+  lairRustLog: string | undefined;
+  printHolochainLogs: boolean;
 }
 
 export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
@@ -91,7 +99,16 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
       );
   }
   if (args.holochainPath && typeof args.holochainPath !== 'string') {
-    throw new Error('The --holochain-path argument must be of type number.');
+    throw new Error('The --holochain-path argument must be of type string.');
+  }
+  if (args.holochainRustLog && typeof args.holochainRustLog !== 'string') {
+    throw new Error('The --holochain-rust-log argument must be of type string.');
+  }
+  if (args.holochainWasmLog && typeof args.holochainWasmLog !== 'string') {
+    throw new Error('The --holochain-wasm-log argument must be of type string.');
+  }
+  if (args.lairRustLog && typeof args.lairRustLog !== 'string') {
+    throw new Error('The --lair-rust-log argument must be of type string.');
   }
 
   let devInfo: WeAppletDevInfo | undefined;
@@ -127,6 +144,10 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
+    holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
+    holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
+    lairRustLog: args.lairRustLog ? args.lairRustLog : undefined,
+    printHolochainLogs: args.printHolochainLogs ? true : false,
   };
 }
 

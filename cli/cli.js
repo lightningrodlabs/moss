@@ -3,16 +3,19 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-let electronBinary;
-let pathStr = '../node_modules/.bin/electron';
-// recursively look for electron binary in node_modules folder
-for (let i = 0; i < 7; i++) {
-  const maybeElectronBinary = path.resolve(__dirname, pathStr);
-  if (fs.existsSync(maybeElectronBinary)) {
-    electronBinary = maybeElectronBinary;
-    break;
-  } else {
-    pathStr = '../' + pathStr;
+let electronBinary = process.env.ELECTRON_BINARY;
+
+if (!electronBinary) {
+  let pathStr = '../node_modules/.bin/electron';
+  // recursively look for electron binary in node_modules folder
+  for (let i = 0; i < 7; i++) {
+    const maybeElectronBinary = path.resolve(__dirname, pathStr);
+    if (fs.existsSync(maybeElectronBinary)) {
+      electronBinary = maybeElectronBinary;
+      break;
+    } else {
+      pathStr = '../' + pathStr;
+    }
   }
 }
 

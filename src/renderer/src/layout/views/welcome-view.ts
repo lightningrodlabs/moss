@@ -175,7 +175,7 @@ export class WelcomeView extends LitElement {
                     .src=${wrapPathInSvg(mdiViewGridPlus)}
                     style="color: white; height: 40px; width: 40px; margin-right: 10px;"
                   ></sl-icon>
-                  <span>${msg('Applet Library')}</span>
+                  <span>${msg('Add Applet')}</span>
                 </div>
               </button>
               <button
