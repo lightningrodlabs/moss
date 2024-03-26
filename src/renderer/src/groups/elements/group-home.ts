@@ -352,43 +352,43 @@ export class GroupHome extends LitElement {
               (info) => html`
                 <sl-card class="applet-card">
                   <div class="column" style="flex: 1;">
-                    <div style="margin-bottom: 3px; text-align: right; opacity: 0.65;">
-                      ${timeAgo.format(new Date(info.timestamp / 1000))}
+                    <div class="card-header">
+                      <div class="instance-details">
+                        <agent-avatar
+                          .size=${24}
+                          style="margin-right: 5px;"
+                          .agentPubKey=${info.agentKey}
+                        ></agent-avatar>
+                        <span
+                          >${msg('added an instance of ')}</span
+                        >
+                        <span
+                          style="margin-left: 5px; font-weight: bold; ${info.appEntry?.title
+                            ? ''
+                            : 'opacity: 0.6;'}"
+                          >${info.appEntry ? info.appEntry.title : 'unknown'}&nbsp;
+                        </span>
+                      </div>
+                      <div style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;">
+                        ${timeAgo.format(new Date(info.timestamp / 1000))}
+                      </div>
                     </div>
-                    <div class="row" style="align-items: center;">
-                      <agent-avatar
-                        .size=${40}
-                        style="margin-left: 5px;"
-                        .agentPubKey=${info.agentKey}
-                      ></agent-avatar>
-                      <span style="margin-left: 10px; margin-right: 10px;"
-                        >${msg('added a new instance of ')}</span
-                      >
+                    <div class="card-content" style="align-items: center;">
+                     
                       <sl-tooltip
                         style="${info.appEntry ? '' : 'display: none;'}"
                         content="${info.appEntry?.subtitle}"
                       >
-                        <div class="row" style="align-items: center; cursor: help;">
                           ${info.logo
-                            ? html`<img src=${info.logo} alt="Applet logo" style="height: 40px;" />`
+                            ? html`<img src=${info.logo} alt="Applet logo" style="height: 80px; margin-right: 10px;" />`
                             : html``}
-                          <span
-                            style="margin-left: 5px; font-weight: bold; ${info.appEntry?.title
-                              ? ''
-                              : 'opacity: 0.6;'}"
-                            >${info.appEntry ? info.appEntry.title : 'unknown'}&nbsp;</span
-                          >
-                        </div>
                       </sl-tooltip>
-                      <span style="margin-left: 10px; margin-right: 10px;"
-                        >${msg('with the name ')}</span
-                      >
-                      <span style="font-weight: bold;"
+                      <span style="font-weight: bold; font-size: 24px;"
                         >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
                       >
                     </div>
-                    <div class="row" style="align-items: center; margin-top: 20px;">
-                      <span style="margin-right: 5px;"><b>${msg('joined by: ')}</b></span>
+                    <div class="card-footer" style="align-items: center; margin-top: 20px;">
+                      <span style="margin-right: 5px;"><b>${msg('Participants ')}</b></span>
                       ${info.joinedMembers.map(
                         (agentKey) => html`
                           <agent-avatar
@@ -443,11 +443,13 @@ export class GroupHome extends LitElement {
 
           <div class="row" style="align-items: center; margin-bottom: 24px">
             <div class="row" style="align-items: center; flex: 1;">
+              <div style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;">
               <img
                 .src=${groupProfile.logo_src}
-                style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%"
+                style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%;"
                 alt="${groupProfile.name}"
               />
+              </div>
               <span class="title">${groupProfile.name}</span>
             </div>
 
@@ -472,7 +474,7 @@ export class GroupHome extends LitElement {
 
           <!-- NEW APPLETS -->
           <div class="row" style="align-items: center;">
-            <span class="title">${msg('Joinable Applets')}</span>
+            <span class="subtitle">${msg('Joinable Applets')}</span>
             <sl-tooltip content="${msg(
               'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
             )}">
@@ -547,7 +549,7 @@ export class GroupHome extends LitElement {
             <div class="row center-content">
               <sl-icon
                 .src=${wrapPathInSvg(mdiLinkVariantPlus)}
-                style="color: white; height: 25px; width: 25px; margin-right: 12px;"
+                style="color: white; height: 25px; width: 25px; margin-right: 12px; "
               ></sl-icon>
               <div style="font-size: 16px; margin-top: 4px;">${msg('Invite Member')}</div>
             </div>
@@ -698,7 +700,7 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <profile-prompt
+          <profile-prompt 
             ><span slot="hero" style="max-width: 500px; margin-bottom: 32px" class="placeholder"
               >${msg(
                 'Create your personal profile for this group. Only members of this group will be able to see your profile.',
@@ -725,6 +727,37 @@ export class GroupHome extends LitElement {
         padding: 8px;
         border-radius: 5px 0 0 0;
       }
+
+      .agents-list {
+        color: #fff;
+      }
+
+      .card-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .instance-details {
+        display: flex;
+        font-size: 12px;
+        align-items: center;
+      }
+
+      .card-content {
+        display: flex;
+        align-items: center;
+        padding-top: 15px;
+        justify-content: center;
+      }
+
+      .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
       sl-tab-panel::part(base) {
         width: 600px;
       }
@@ -734,6 +767,13 @@ export class GroupHome extends LitElement {
       }
       .title {
         font-size: 25px;
+        font-weight: bold;
+        color: #fff;
+      }
+      .subtitle {
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
       }
       .invite-btn::part(base) {
         background-color: var(--sl-color-secondary-200);
@@ -744,8 +784,8 @@ export class GroupHome extends LitElement {
         margin: 10px;
         --border-radius: 15px;
         border: none;
-        --border-color: transparent;
-        --sl-panel-background-color: var(--sl-color-tertiary-0);
+        --border-color: none;
+        --sl-panel-background-color: #fbffe7;
       }
       .online-status-bar {
         color: var(--sl-color-secondary-100);

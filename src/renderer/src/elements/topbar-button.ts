@@ -81,6 +81,7 @@ export class TopBarButton extends LitElement {
           justify-content: center;
           border-radius: 20% 20% 0 0;
           height: var(--sidebar-width);
+          margin: 0 2px;
           width: var(--sidebar-width);
         }
         .icon-container:hover {
