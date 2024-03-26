@@ -13,6 +13,7 @@ import {
   session,
   desktopCapturer,
   Notification,
+  systemPreferences,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -399,10 +400,60 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler(
     async (_webContents, permission, callback, details) => {
       if (permission === 'media') {
+        const unknownRequested = !details.mediaTypes || details.mediaTypes.length === 0;
+        const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
+        const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
+
+        // On macOS, OS level permission for camera/microhone access needs to be given
+        if (process.platform === 'darwin') {
+          if (audioRequested) {
+            const audioAccess = systemPreferences.getMediaAccessStatus('microphone');
+            if (audioAccess === 'denied') {
+              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                type: 'error',
+                message:
+                  "Audio permission has been denied ealier. You need to allow audio for Moss in your Computer's System Preferences and restart Moss to allow audio.",
+              });
+              return;
+            } else if (audioAccess !== 'granted') {
+              const allowed = await systemPreferences.askForMediaAccess('microphone');
+              if (!allowed) {
+                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                  type: 'error',
+                  message:
+                    "Audio permission has been denied. You need to allow audio for Moss in your Computer's System Preferences and restart Moss if you want to allow audio.",
+                });
+                return;
+              }
+            }
+          }
+          if (videoRequested) {
+            const videoAccess = systemPreferences.getMediaAccessStatus('camera');
+            if (videoAccess === 'denied') {
+              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                type: 'error',
+                message:
+                  "Video permission has been denied ealier. You need to allow video for Moss in your Computer's System Preferences and restart Moss to allow video.",
+              });
+              return;
+            } else if (videoAccess !== 'granted') {
+              const allowed = await systemPreferences.askForMediaAccess('camera');
+              if (!allowed) {
+                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                  type: 'error',
+                  message:
+                    "Video permission has been denied. You need to allow video for Moss in your Computer's System Preferences and restart Moss if you want to allow video.",
+                });
+                return;
+              }
+            }
+          }
+        }
+
         let messageContent = `An Applet wants to access the following:${
           details.mediaTypes?.includes('video') ? '\n* camera' : ''
         }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
-        if (!details.mediaTypes || details.mediaTypes.length === 0) {
+        if (unknownRequested) {
           messageContent =
             'An Applet wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
         }
