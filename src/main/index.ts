@@ -85,11 +85,18 @@ weCli
     '--holochain-path <path>',
     'Runs the Holochain Launcher with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
   )
+  .option('--holochain-rust-log <string>', 'RUST_LOG value to pass to the holochain binary')
+  .option('--holochain-wasm-log <string>', 'WASM_LOG value to pass to the holochain binary')
+  .option('--lair-rust-log <string>', 'RUST_LOG value to pass to the lair keystore binary')
   .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
   .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+  )
+  .option(
+    '--print-holochain-logs',
+    'Print holochain logs directly to the terminal (they will be still written to the logfile as well)',
   )
   .addOption(
     new Option(
@@ -100,20 +107,22 @@ weCli
 
 weCli.parse();
 
-// In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
-// https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
-const rl = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+if (ranViaCli) {
+  // In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
+  // https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
+  const rl = require('readline').createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-rl.on('SIGINT', function () {
-  process.emit('SIGINT');
-});
+  rl.on('SIGINT', function () {
+    process.emit('SIGINT');
+  });
 
-process.on('SIGINT', () => {
-  app.quit();
-});
+  process.on('SIGINT', () => {
+    app.quit();
+  });
+}
 
 const cliOpts = weCli.opts();
 
@@ -178,7 +187,7 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
 
 const WE_EMITTER = new WeEmitter();
 
-setupLogs(WE_EMITTER, WE_FILE_SYSTEM);
+setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -895,10 +904,7 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       SPLASH_SCREEN_WINDOW,
       password,
-      RUN_OPTIONS.bootstrapUrl!,
-      RUN_OPTIONS.signalingUrl!,
-      RUN_OPTIONS.appstoreNetworkSeed,
-      RUN_OPTIONS.devInfo,
+      RUN_OPTIONS,
     );
 
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
@@ -913,10 +919,7 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       undefined,
       'dummy-dev-password :)',
-      RUN_OPTIONS.bootstrapUrl!,
-      RUN_OPTIONS.signalingUrl!,
-      RUN_OPTIONS.appstoreNetworkSeed,
-      RUN_OPTIONS.devInfo,
+      RUN_OPTIONS,
     );
     MAIN_WINDOW = createOrShowMainWindow();
   } else {

@@ -11,7 +11,7 @@ import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './cli/devSetup';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { WeAppletDevInfo } from './cli/cli';
+import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 
@@ -26,10 +26,7 @@ export async function launch(
   weEmitter: WeEmitter,
   splashscreenWindow: BrowserWindow | undefined,
   password: string,
-  bootstrapUrl: string,
-  singalingUrl: string,
-  appstoreNetworkSeed: string,
-  weAppletDevInfo: WeAppletDevInfo | undefined,
+  runOptions: RunOptions,
   customBinary?: string,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
@@ -60,6 +57,7 @@ export async function launch(
     weFileSystem.keystoreDir,
     weEmitter,
     password,
+    runOptions.lairRustLog,
   );
 
   const holochainVersion = MOSS_CONFIG.holochainVersion;
@@ -80,8 +78,10 @@ export async function launch(
     weFileSystem.conductorDir,
     weFileSystem.conductorConfigPath,
     lairUrl,
-    bootstrapUrl,
-    singalingUrl,
+    runOptions.bootstrapUrl!,
+    runOptions.signalingUrl!,
+    runOptions.holochainRustLog,
+    runOptions.holochainWasmLog,
   );
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
@@ -101,13 +101,13 @@ export async function launch(
     await holochainManager.installApp(
       path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
       APPSTORE_APP_ID,
-      appstoreNetworkSeed,
+      runOptions.appstoreNetworkSeed,
     );
 
     console.log('AppstoreLight installed.');
   }
   // Install other default apps if necessary (not in applet-dev mode)
-  if (!weAppletDevInfo) {
+  if (!runOptions.devInfo) {
     await Promise.all(
       Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
         const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
@@ -208,7 +208,7 @@ export async function launch(
       }),
     );
   } else {
-    await devSetup(weAppletDevInfo, holochainManager, weFileSystem);
+    await devSetup(runOptions.devInfo, holochainManager, weFileSystem);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

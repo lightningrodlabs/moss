@@ -35,6 +35,7 @@ export async function launchLairKeystore(
   keystoreDir: string,
   weEmitter: WeEmitter,
   password: string,
+  rustLog?: string,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, string]> {
   // On Unix systems, there is a limit to the path length of a domain socket. Create a symlink to the lair directory from the tempdir
   // instead and overwrite the connectionUrl in the lair-keystore-config.yaml
@@ -60,7 +61,12 @@ export async function launchLairKeystore(
       return Promise.reject(`Failed to create symlinked lair directory: ${e}`);
     }
   }
-  const lairHandle = childProcess.spawn(lairBinary, ['server', '-p'], { cwd: keystoreDir });
+  const lairHandle = childProcess.spawn(lairBinary, ['server', '-p'], {
+    cwd: keystoreDir,
+    env: {
+      RUST_LOGS: rustLog ? rustLog : 'warn',
+    },
+  });
   lairHandle.stdin.write(password);
   lairHandle.stdin.end();
   // Wait for connection url or internal sodium error and return error or EventEmitter
