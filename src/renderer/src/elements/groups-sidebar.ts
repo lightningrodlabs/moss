@@ -230,7 +230,7 @@ export class GroupsSidebar extends LitElement {
         ${this.renderGroupsLoading()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
-          <sl-button
+          <button class="moss-button"
             size="large"
             circle
             @click=${() => {
@@ -241,7 +241,6 @@ export class GroupsSidebar extends LitElement {
                 }),
               );
             }}
-            style="margin-top: 8px;"
           >
             <div class="column center-content" style="height: 100%;">
               <sl-icon
@@ -265,7 +264,6 @@ export class GroupsSidebar extends LitElement {
       }
 
       .sidebar {
-        padding-top: 12px;
         align-items: center;
       }
 
@@ -304,6 +302,27 @@ export class GroupsSidebar extends LitElement {
 
       .active .dropzone-indicator {
         display: block;
+      }
+
+      .sidebar {
+        padding-bottom: 10px;
+      }
+
+      .moss-button {
+        width: 40px;
+        height: 40px;
+        outline: none;
+        border: none;
+        color: #fff;
+        background: linear-gradient(270deg, #394333 0%, #526C44 100%);
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+        border-radius: 5px;
+        margin-top: 15px;
+      }
+
+      .moss-button:hover {
+        background: linear-gradient(270deg, #495542 0%, #67924F 100%);
+        cursor: pointer;
       }
     `,
   ];

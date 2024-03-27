@@ -1009,10 +1009,9 @@ export class MainDashboard extends LitElement {
             ? 'selected'
             : ''}"
         >
-          <sidebar-button
-            style="--size: 58px; --border-radius: 20px; --hover-color: transparent;"
+          <button
+            class="home-button"
             .selected=${false}
-            logoSrc="icon.png"
             .tooltipText=${msg('Home')}
             placement="bottom"
             tabindex="0"
@@ -1032,7 +1031,9 @@ export class MainDashboard extends LitElement {
                 });
               }
             }}
-          ></sidebar-button>
+          >
+            <img class="moss-icon" src="moss-icon.svg" />
+          </button>
         </div>
 
         <groups-sidebar
@@ -1055,36 +1056,45 @@ export class MainDashboard extends LitElement {
         <span style="display: flex; flex: 1;"></span>
 
         <!-- TAB BAR BUTTON -->
-        <div class="row center-content" style="margin-bottom: 5px;">
+        <div class="row center-content" style="margin-bottom: 5px; position: relative;">
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
-            <img
+            <button
               tabindex="0"
-              class="search-button"
+              class="moss-button"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openCreatablePanel();
                 }
               }}
-              style="height: 58px; margin-bottom: 3px; filter: invert(100%) sepia(32%) saturate(3851%) hue-rotate(178deg) brightness(103%) contrast(104%);"
-              src="magic_hat.svg"
-            />
+            >
+              <img
+                tabindex="0"
+                class="moss-button-icon"
+                src="magic-wand.svg"
+                style="width: 24px; height: 24px;"
+              />
+            </button>
           </sl-tooltip>
         </div>
         <div class="row center-content" style="margin-bottom: 5px;">
           <sl-tooltip content="Search" placement="right" hoist>
-            <sl-icon
-              tabindex="0"
-              class="search-button"
+            <button
+              class="moss-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openClipboard();
                 }
               }}
-              .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: var(--sl-color-tertiary-0);"
-            ></sl-icon>
+            >
+              <sl-icon
+                tabindex="0"
+                class="moss-button-icon"
+                .src=${wrapPathInSvg(mdiMagnify)}
+                style="color: #fff; height: 24px; width: 24px"
+              ></sl-icon>
+            </button>
           </sl-tooltip>
         </div>
         <div
@@ -1143,7 +1153,7 @@ export class MainDashboard extends LitElement {
                   ></group-applets-sidebar>
                 </group-context>
               `
-            : html`<div style="font-size: 28px;">Home</div>`}
+            : html``}
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
@@ -1251,14 +1261,25 @@ export class MainDashboard extends LitElement {
         .top-left-corner {
           align-items: center;
           justify-content: center;
-          background: var(--sl-color-primary-950);
           height: var(--sidebar-width);
-          border-radius: 25px 25px 0 0;
+        }
+
+        .home-button {
+          background-color: transparent;
+          border: none;
+          width: 50px;
+          height: 50px;
+          outline: none;
+        }
+
+        .home-button:hover {
+          cursor: pointer;
         }
 
         .top-left-corner:hover {
-          border-radius: 25px 0 0 25px;
-          background: var(--sl-color-primary-300);
+          border-radius: 100% 0 0 100%;
+          background: linear-gradient(90deg, #96d96e 0%, #394333 90.91%);
+          cursor: pointer;
         }
 
         .hover-browser {
@@ -1311,7 +1332,13 @@ export class MainDashboard extends LitElement {
           left: 74px;
           bottom: 0;
           right: 0;
-          background: white;
+          padding-left: 8px;
+          background-color: rgba(57, 67, 50, 1);
+        }
+
+        #group-view-area {
+          overflow: hidden;
+          max-height: calc(100vh - 70px);
         }
 
         .invisible-scrollbars {
@@ -1324,8 +1351,8 @@ export class MainDashboard extends LitElement {
         }
 
         .selected {
-          border-radius: 25px 0 0 25px;
-          background-color: var(--sl-color-primary-300);
+          border-radius: 100% 0 0 100%;
+          background: linear-gradient(90deg, #597448 0%, #394333 90.91%);
         }
 
         .close-tab-button {
@@ -1434,12 +1461,10 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background-color: var(--sl-color-primary-950);
-          width: 74px;
+          background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
         }
 
         .left-group-sidebar {
-          background-color: var(--sl-color-primary-950);
           width: var(--sidebar-width);
           display: flex;
           overflow-y: auto;
@@ -1453,7 +1478,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-bar {
-          background-color: var(--sl-color-primary-300);
+          background: #394333;
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
@@ -1487,18 +1512,34 @@ export class MainDashboard extends LitElement {
           transform: translateX(102%);
         }
 
-        .search-button {
+        .moss-button-icon {
           font-size: 66px;
-          color: var(--sl-color-primary-300);
+          color: #fff;
           cursor: pointer;
         }
 
-        .search-button:hover {
+        .moss-button-icon:hover {
           color: var(--sl-color-primary-50);
         }
 
-        .search-button:focus {
+        .moss-button-icon:focus {
           color: var(--sl-color-primary-50);
+        }
+
+        .moss-button {
+          width: 40px;
+          height: 40px;
+          outline: none;
+          border: none;
+          color: #fff;
+          background: linear-gradient(270deg, #394333 0%, #526c44 100%);
+          box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+          border-radius: 5px;
+        }
+
+        .moss-button:hover {
+          background: linear-gradient(270deg, #495542 0%, #67924f 100%);
+          cursor: pointer;
         }
       `,
     ];

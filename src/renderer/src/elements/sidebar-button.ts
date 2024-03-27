@@ -102,8 +102,8 @@ export class SidebarButton extends LitElement {
           width: var(--size, 48px);
           height: var(--size, 48px);
           border-radius: var(--border-radius, 50%);
-          background: white;
-          /* object-fit: cover; */
+          background: linear-gradient(180deg, #B2C85A 0%, #669D5A 62.38%, #7F6F52 92.41%);          
+          box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         }
         /* .icon:hover {
         box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-200));
@@ -127,66 +127,14 @@ export class SidebarButton extends LitElement {
           justify-content: center;
           height: var(--sidebar-width);
           width: var(--sidebar-width);
+          transition: all .25s ease;
         }
         .icon-container:hover {
-          background-color: var(--hover-color, var(--sl-color-primary-300));
-        }
-        .icon-container:hover::after {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          right: 0;
-          bottom: -50px;
-          height: 50px;
-          width: 80px;
-          border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
-        }
-        .icon-container:hover::before {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          right: 0;
-          top: -50px;
-          height: 50px;
-          width: 80px;
-          border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
+          background: linear-gradient(90deg, #96D96E 0%, #394333 90.91%);
+          cursor: pointer;
         }
         .selected {
-          background-color: var(--hover-color, var(--sl-color-primary-300));
-          /* box-shadow: 0 0 0px 4px var(--hover-color, var(--sl-color-primary-300));
-        background: var(--hover-color, var(--sl-color-primary-200)); */
-        }
-        .selected::after {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          right: 0;
-          bottom: -50px;
-          height: 50px;
-          width: 80px;
-          border-radius: 0 30px 0 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
-        }
-        .selected::before {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          right: 0;
-          top: -50px;
-          height: 50px;
-          width: 80px;
-          border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-300));
+            background: linear-gradient(90deg, #597448 0%, #394333 90.91%);        
         }
 
         .notification-dot {
