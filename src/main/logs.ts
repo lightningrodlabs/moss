@@ -19,7 +19,11 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 // TODO define class LauncherLogger that can log all lair, holochain and launcher-specific stuff
 // with methods logLair, logHolochain, logLauncher, logHapp, ...
 
-export function setupLogs(weEmitter: WeEmitter, launcherFileSystem: WeFileSystem) {
+export function setupLogs(
+  weEmitter: WeEmitter,
+  launcherFileSystem: WeFileSystem,
+  holochainLogsToTerminal: boolean,
+) {
   const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
   // with file rotation set maxsize. But then we require logic to garbage collect old files...
   // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
@@ -37,24 +41,27 @@ export function setupLogs(weEmitter: WeEmitter, launcherFileSystem: WeFileSystem
     lairLogger.log('info', logLine);
   });
   weEmitter.on(HOLOCHAIN_LOG, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFileTransport);
+    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
   });
   weEmitter.on(HOLOCHAIN_ERROR, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFileTransport);
+    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
   });
   weEmitter.on(WASM_LOG, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFileTransport);
+    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
   });
 }
 
 function logHolochain(
   holochainData: HolochainData,
   logFileTransport: winston.transports.FileTransportInstance,
+  printToTerminal: boolean,
 ) {
   const holochainVersion = (holochainData as HolochainData).version;
   const line = (holochainData as HolochainData).data;
-  // const logLine = `[HOLOCHAIN ${holochainVersion}]: ${line}`;
-  // console.log(logLine);
+  if (printToTerminal) {
+    const logLine = `[HOLOCHAIN ${holochainVersion}]: ${line}`;
+    console.log(logLine);
+  }
   let logger = HOLOCHAIN_LOGGERS[holochainVersion];
   if (logger) {
     logger.log('info', line);

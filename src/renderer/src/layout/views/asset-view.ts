@@ -8,35 +8,34 @@ import { mdiHomeImportOutline } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@lightningrodlabs/we-elements/dist/elements/share-hrl.js';
+import '@lightningrodlabs/we-elements/dist/elements/share-wal.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { HrlWithContext } from '@lightningrodlabs/we-applet';
+import { WAL } from '@lightningrodlabs/we-applet';
 
-import { weStoreContext } from '../../context.js';
+import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
 import { weStyles } from '../../shared-styles.js';
-import { WeStore } from '../../we-store.js';
+import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
-import '../../elements/hrl-pocket.js';
+import '../../elements/wal-pocket.js';
 import { buildHeadlessWeClient } from '../../applets/applet-host.js';
 
-@customElement('attachable-view')
-export class AttachableView extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+@customElement('asset-view')
+export class AssetView extends LitElement {
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   /**
    * REQUIRED. The Hrl of the entry to render
    */
   @property()
-  hrlWithContext!: HrlWithContext;
+  wal!: WAL;
 
   location = new StoreSubscriber(
     this,
-    () =>
-      this._weStore.hrlLocations.get(this.hrlWithContext.hrl[0]).get(this.hrlWithContext.hrl[1]),
-    () => [this.hrlWithContext],
+    () => this._mossStore.hrlLocations.get(this.wal.hrl[0]).get(this.wal.hrl[1]),
+    () => [this.wal],
   );
 
   jumpToApplet() {
@@ -59,15 +58,15 @@ export class AttachableView extends LitElement {
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
         .view=${{
-          type: 'attachable',
+          type: 'asset',
           roleName: dnaLocation.roleName,
           integrityZomeName: entryTypeLocation.integrity_zome,
           entryType: entryTypeLocation.entry_def,
-          hrlWithContext: this.hrlWithContext,
+          wal: this.wal,
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
-        <we-client-context .weClient=${buildHeadlessWeClient(this._weStore)}>
+        <we-client-context .weClient=${buildHeadlessWeClient(this._mossStore)}>
           <sl-tooltip content="Jump to parent Applet">
             <div
               class="row btn toolbar-btn"
@@ -82,12 +81,8 @@ export class AttachableView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiHomeImportOutline)}></sl-icon>
             </div>
           </sl-tooltip>
-          <hrl-pocket
-            iconSrc="pocket.png"
-            .hrlWithContext=${this.hrlWithContext}
-            class="toolbar-btn"
-          ></hrl-pocket>
-          <share-hrl .hrlWithContext=${this.hrlWithContext} class="toolbar-btn"></share-hrl>
+          <wal-pocket iconSrc="pocket.png" .wal=${this.wal} class="toolbar-btn"></wal-pocket>
+          <share-wal .wal=${this.wal} class="toolbar-btn"></share-wal>
         </we-client-context>
       </div> `;
   }

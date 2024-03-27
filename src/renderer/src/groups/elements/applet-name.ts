@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { Applet } from '../../applets/types.js';
+import { Applet } from '../../types.js';
 import { weStyles } from '../../shared-styles.js';
 
 @customElement('applet-name')

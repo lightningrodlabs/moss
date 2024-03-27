@@ -7,8 +7,8 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import './elements/all-posts.js';
 import './elements/create-post.js';
 import {
-  type HrlWithContext,
-  type WeNotification,
+  type WAL,
+  type FrameNotification,
   WeClient,
   weaveUrlToLocation,
 } from '@lightningrodlabs/we-applet';
@@ -24,8 +24,8 @@ export class AppletMain extends LitElement {
   @property()
   weClient!: WeClient;
 
-  @query('#hrl-input-field')
-  hrlInputField!: HTMLInputElement;
+  @query('#wal-input-field')
+  walInputField!: HTMLInputElement;
 
   @query('#wal-embed-input-field')
   walEmbedInputField!: HTMLInputElement;
@@ -37,10 +37,10 @@ export class AppletMain extends LitElement {
   highInterval: number | null = null;
 
   @state()
-  selectedHrl: HrlWithContext | undefined = undefined;
+  selectedWal: WAL | undefined = undefined;
 
   @state()
-  hrlLink: string = '';
+  walLink: string = '';
 
   @state()
   walEmbedLink: string = '';
@@ -56,8 +56,8 @@ export class AppletMain extends LitElement {
   //   if (this.unsubscribe) this.unsubscribe();
   // }
 
-  updateHrlLink() {
-    this.hrlLink = this.hrlInputField.value;
+  updateWalLink() {
+    this.walLink = this.walInputField.value;
   }
 
   updateWalEmbedLink() {
@@ -65,7 +65,7 @@ export class AppletMain extends LitElement {
   }
 
   sendUrgentNotification(delay: number) {
-    const notification: WeNotification = {
+    const notification: FrameNotification = {
       title: 'Title',
       body: 'Message body',
       notification_type: 'default',
@@ -85,7 +85,7 @@ export class AppletMain extends LitElement {
 
   sendMediumNotification(delay: number) {
     setTimeout(() => {
-      const notification: WeNotification = {
+      const notification: FrameNotification = {
         title: 'Title',
         body: 'Message body',
         notification_type: 'default',
@@ -103,7 +103,7 @@ export class AppletMain extends LitElement {
   }
 
   sendLowNotification(delay: number) {
-    const notification: WeNotification = {
+    const notification: FrameNotification = {
       title: 'Title',
       body: 'Message body',
       notification_type: 'default',
@@ -121,9 +121,9 @@ export class AppletMain extends LitElement {
     }, delay);
   }
 
-  async userSelectHrl() {
-    const selectedHrl = await this.weClient.userSelectHrl();
-    this.selectedHrl = selectedHrl;
+  async userSelectWal() {
+    const selectedWal = await this.weClient.userSelectWal();
+    this.selectedWal = selectedWal;
   }
 
   render() {
@@ -142,20 +142,20 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
-            <div>Enter Hrl:</div>
+            <div>Enter WAL:</div>
             <textarea
-              id="hrl-input-field"
+              id="wal-input-field"
               type="text"
-              @input=${() => this.updateHrlLink()}
+              @input=${() => this.updateWalLink()}
               rows="4"
               cols="50"
             ></textarea>
-            <button>Update HRL Link</button>
-            <a href="${this.hrlLink}"
-              >${this.hrlLink ? this.hrlLink : 'Paste HRL in field above to update me'}</a
+            <button>Update WAL Link</button>
+            <a href="${this.walLink}"
+              >${this.walLink ? this.walLink : 'Paste WAL in field above to update me'}</a
             >
-            <a href="${this.hrlLink}" target="_blank"
-              >${this.hrlLink ? this.hrlLink : 'Paste HRL in field above to update me'}</a
+            <a href="${this.walLink}" target="_blank"
+              >${this.walLink ? this.walLink : 'Paste WAL in field above to update me'}</a
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
@@ -182,7 +182,7 @@ export class AppletMain extends LitElement {
                   if (srcWal.type !== 'asset') throw new Error('Invalid srcVal.');
                   const dstWal = weaveUrlToLocation(dstWalInput.value);
                   if (dstWal.type !== 'asset') throw new Error('Invalid dstVal.');
-                  await this.weClient.requestBind(srcWal.hrlWithContext, dstWal.hrlWithContext);
+                  await this.weClient.requestBind(srcWal.wal, dstWal.wal);
                 }}
               >
                 Bind!
@@ -190,7 +190,7 @@ export class AppletMain extends LitElement {
             </div>
 
             <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
-              <div><b>Embed Hrl:</b></div>
+              <div><b>Embed WAL:</b></div>
               <div class="row" style="margin-bottom: 10px;">
                 <input id="wal-embed-input-field" type="text" rows="4" cols="50" />
                 <button
@@ -206,8 +206,10 @@ export class AppletMain extends LitElement {
                 ? html`
                     <wal-embed
                       style="margin-top: 20px;"
-                      .weClient=${this.weClient}
                       .src=${this.walEmbedLink}
+                      closable
+                      @open-in-sidebar=${() => console.log('Opening in sidebar')}
+                      @close=${() => console.log('Closing requested')}
                     ></wal-embed>
                   `
                 : html``}

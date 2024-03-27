@@ -13,6 +13,7 @@ import {
   session,
   desktopCapturer,
   Notification,
+  systemPreferences,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -43,7 +44,7 @@ import {
 import { launch } from './launch';
 import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
-import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -80,11 +81,22 @@ weCli
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
+  .option(
+    '--holochain-path <path>',
+    'Runs the Holochain Launcher with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
+  )
+  .option('--holochain-rust-log <string>', 'RUST_LOG value to pass to the holochain binary')
+  .option('--holochain-wasm-log <string>', 'WASM_LOG value to pass to the holochain binary')
+  .option('--lair-rust-log <string>', 'RUST_LOG value to pass to the lair keystore binary')
   .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
   .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+  )
+  .option(
+    '--print-holochain-logs',
+    'Print holochain logs directly to the terminal (they will be still written to the logfile as well)',
   )
   .addOption(
     new Option(
@@ -95,20 +107,22 @@ weCli
 
 weCli.parse();
 
-// In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
-// https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
-const rl = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+if (ranViaCli) {
+  // In nix shell and on Windows SIGINT does not seem to be emitted so it is read from the command line instead.
+  // https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
+  const rl = require('readline').createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-rl.on('SIGINT', function () {
-  process.emit('SIGINT');
-});
+  rl.on('SIGINT', function () {
+    process.emit('SIGINT');
+  });
 
-process.on('SIGINT', () => {
-  app.quit();
-});
+  process.on('SIGINT', () => {
+    app.quit();
+  });
+}
 
 const cliOpts = weCli.opts();
 
@@ -173,7 +187,7 @@ const APPLET_IFRAME_SCRIPT = fs.readFileSync(
 
 const WE_EMITTER = new WeEmitter();
 
-setupLogs(WE_EMITTER, WE_FILE_SYSTEM);
+setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -203,12 +217,12 @@ let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
 
 // icons
-const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32.png'));
+const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
 const SYSTRAY_ICON_HIGH = nativeImage.createFromPath(
-  path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32.png'),
+  path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32@2x.png'),
 );
 const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
-  path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32.png'),
+  path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32@2x.png'),
 );
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
@@ -395,10 +409,60 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler(
     async (_webContents, permission, callback, details) => {
       if (permission === 'media') {
+        const unknownRequested = !details.mediaTypes || details.mediaTypes.length === 0;
+        const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
+        const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
+
+        // On macOS, OS level permission for camera/microhone access needs to be given
+        if (process.platform === 'darwin') {
+          if (audioRequested) {
+            const audioAccess = systemPreferences.getMediaAccessStatus('microphone');
+            if (audioAccess === 'denied') {
+              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                type: 'error',
+                message:
+                  "Audio permission has been denied ealier. You need to allow audio for Moss in your Computer's System Preferences and restart Moss to allow audio.",
+              });
+              return;
+            } else if (audioAccess !== 'granted') {
+              const allowed = await systemPreferences.askForMediaAccess('microphone');
+              if (!allowed) {
+                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                  type: 'error',
+                  message:
+                    "Audio permission has been denied. You need to allow audio for Moss in your Computer's System Preferences and restart Moss if you want to allow audio.",
+                });
+                return;
+              }
+            }
+          }
+          if (videoRequested) {
+            const videoAccess = systemPreferences.getMediaAccessStatus('camera');
+            if (videoAccess === 'denied') {
+              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                type: 'error',
+                message:
+                  "Video permission has been denied ealier. You need to allow video for Moss in your Computer's System Preferences and restart Moss to allow video.",
+              });
+              return;
+            } else if (videoAccess !== 'granted') {
+              const allowed = await systemPreferences.askForMediaAccess('camera');
+              if (!allowed) {
+                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                  type: 'error',
+                  message:
+                    "Video permission has been denied. You need to allow video for Moss in your Computer's System Preferences and restart Moss if you want to allow video.",
+                });
+                return;
+              }
+            }
+          }
+        }
+
         let messageContent = `An Applet wants to access the following:${
           details.mediaTypes?.includes('video') ? '\n* camera' : ''
         }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
-        if (!details.mediaTypes || details.mediaTypes.length === 0) {
+        if (unknownRequested) {
           messageContent =
             'An Applet wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
         }
@@ -477,7 +541,7 @@ app.whenReady().then(async () => {
     'notification',
     (
       _e,
-      notification: WeNotification,
+      notification: FrameNotification,
       showInSystray: boolean,
       notifyOS: boolean,
       appletId: AppletId | undefined,
@@ -840,10 +904,7 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       SPLASH_SCREEN_WINDOW,
       password,
-      RUN_OPTIONS.bootstrapUrl!,
-      RUN_OPTIONS.signalingUrl!,
-      RUN_OPTIONS.appstoreNetworkSeed,
-      RUN_OPTIONS.devInfo,
+      RUN_OPTIONS,
     );
 
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
@@ -858,10 +919,7 @@ app.whenReady().then(async () => {
       WE_EMITTER,
       undefined,
       'dummy-dev-password :)',
-      RUN_OPTIONS.bootstrapUrl!,
-      RUN_OPTIONS.signalingUrl!,
-      RUN_OPTIONS.appstoreNetworkSeed,
-      RUN_OPTIONS.devInfo,
+      RUN_OPTIONS,
     );
     MAIN_WINDOW = createOrShowMainWindow();
   } else {

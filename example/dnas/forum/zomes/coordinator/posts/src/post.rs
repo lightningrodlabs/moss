@@ -17,7 +17,9 @@ pub fn create_post(post: Post) -> ExternResult<Record> {
 }
 #[hdk_extern]
 pub fn get_post(original_post_hash: ActionHash) -> ExternResult<Option<Record>> {
-    let links = get_links(original_post_hash.clone(), LinkTypes::PostUpdates, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(original_post_hash.clone(), LinkTypes::PostUpdates)?.build(),
+    )?;
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_a.timestamp.cmp(&link_b.timestamp));

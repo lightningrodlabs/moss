@@ -15,8 +15,8 @@ import '../groups/elements/group-context.js';
 import { consume } from '@lit/context';
 import { decodeHashFromBase64 } from '@holochain/client';
 import { AppletNotification, GroupDnaHash } from '../types.js';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import TimeAgo from 'javascript-time-ago';
 import { weStyles } from '../shared-styles.js';
 import { stringToMessageParts } from '../utils.js';
@@ -25,9 +25,9 @@ import { toPromise } from '@holochain-open-dev/stores';
 @localized()
 @customElement('feed-element')
 export class FeedElement extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @property()
   notification!: AppletNotification;
@@ -44,7 +44,7 @@ export class FeedElement extends LitElement {
   async firstUpdated() {
     try {
       const groupsForApplet = await toPromise(
-        this._weStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId)),
+        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId)),
       );
       const groupHashes = Array.from(groupsForApplet.keys());
       if (groupHashes.length > 0) {

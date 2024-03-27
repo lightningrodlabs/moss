@@ -18,21 +18,21 @@ import './sidebar-button.js';
 import './group-sidebar-button.js';
 import './create-group-dialog.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { PersistedStore } from '../persisted-store.js';
 
 @localized()
 @customElement('groups-sidebar')
 export class GroupsSidebar extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   _groupsProfiles = new StoreSubscriber(
     this,
-    () => this._weStore.allGroupsProfiles,
-    () => [this._weStore],
+    () => this._mossStore.allGroupsProfiles,
+    () => [this._mossStore],
   );
 
   @property()
@@ -54,18 +54,18 @@ export class GroupsSidebar extends LitElement {
       ([_, groupProfile]) => !groupProfile,
     ) as Array<[DnaHash, GroupProfile]>;
 
-    let customGroupOrder = this._weStore.persistedStore.groupOrder.value();
+    let customGroupOrder = this._mossStore.persistedStore.groupOrder.value();
     if (!customGroupOrder) {
       customGroupOrder = knownGroups
         .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
         .map(([hash, _profile]) => encodeHashToBase64(hash));
-      this._weStore.persistedStore.groupOrder.set(customGroupOrder);
+      this._mossStore.persistedStore.groupOrder.set(customGroupOrder);
     }
     knownGroups.forEach(([hash, _]) => {
       if (!customGroupOrder!.includes(encodeHashToBase64(hash))) {
         customGroupOrder!.splice(0, 0, encodeHashToBase64(hash));
       }
-      this._weStore.persistedStore.groupOrder.set(customGroupOrder!);
+      this._mossStore.persistedStore.groupOrder.set(customGroupOrder!);
       this.requestUpdate();
     });
 

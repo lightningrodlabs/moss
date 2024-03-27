@@ -14,19 +14,16 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
 import { weClientContext } from '../context';
-import { Hrl } from '@lightningrodlabs/we-applet';
+import { WeaveUrl, weaveUrlToWAL } from '@lightningrodlabs/we-applet';
 import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
 import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 @localized()
-@customElement('hrl-link')
-export class HrlLink extends LitElement {
+@customElement('wal-link')
+export class WalLink extends LitElement {
   @property()
-  hrl!: Hrl;
-
-  @property()
-  context: any;
+  wal!: WeaveUrl;
 
   @consume({ context: weClientContext, subscribe: true })
   weClient!: WeClient | WeServices;
@@ -38,24 +35,21 @@ export class HrlLink extends LitElement {
     this,
     () =>
       lazyLoad(async () => {
-        const attachableInfo = await this.weClient.attachableInfo({
-          hrl: this.hrl,
-          context: this.context,
-        });
-        if (!attachableInfo) return undefined;
+        const assetInfo = await window.__WE_API__.assetInfo(weaveUrlToWAL(this.wal));
+        if (!assetInfo) return undefined;
 
         const { groupsProfiles, appletsInfos } = await getAppletsInfosAndGroupsProfiles(
           this.weClient as WeClient,
-          [attachableInfo.appletHash],
+          [assetInfo.appletHash],
         );
 
         return {
-          attachableInfo,
+          assetInfo,
           groupsProfiles,
           appletsInfos,
         };
       }),
-    () => [this.hrl],
+    () => [this.wal],
   );
 
   render() {
@@ -65,22 +59,18 @@ export class HrlLink extends LitElement {
       case 'complete':
         if (this.info.value.value === undefined) return html``; // TODO: what to put here?
 
-        const { appletsInfos, groupsProfiles, attachableInfo } = this.info.value.value;
+        const { appletsInfos, groupsProfiles, assetInfo } = this.info.value.value;
 
         return html`
           <sl-tooltip
             ><div slot="content">
               <div class="row" style="align-items: center">
-                ${this.onlyIcon
-                  ? html` <span>${attachableInfo.attachableInfo.name},&nbsp;</span> `
-                  : html``}
-                <span>
-                  ${appletsInfos.get(attachableInfo.appletHash)?.appletName} ${msg('in')}</span
-                >
-                ${appletsInfos.get(attachableInfo.appletHash)?.groupsIds.map(
+                ${this.onlyIcon ? html` <span>${assetInfo.assetInfo.name},&nbsp;</span> ` : html``}
+                <span> ${appletsInfos.get(assetInfo.appletHash)?.appletName} ${msg('in')}</span>
+                ${appletsInfos.get(assetInfo.appletHash)?.groupsIds.map(
                   (groupId) => html`
                     <img
-                      .src=${groupsProfiles.get(groupId)?.logo_src}
+                      .src=${groupsProfiles.get(groupId)!.logo_src}
                       style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
                     />
                     <span>${groupsProfiles.get(groupId)?.name}</span>
@@ -92,25 +82,24 @@ export class HrlLink extends LitElement {
               pill
               style="cursor: pointer"
               tabindex="0"
-              @click=${() => this.weClient.openHrl({ hrl: this.hrl, context: this.context })}
+              @click=${() => window.__WE_API__.openWal(weaveUrlToWAL(this.wal))}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.weClient.openHrl({ hrl: this.hrl, context: this.context });
+                  window.__WE_API__.openWal(weaveUrlToWAL(this.wal));
                 }
               }}
             >
               <div class="row" style="align-items: center">
-                <sl-icon .src=${attachableInfo.attachableInfo.icon_src}></sl-icon>
+                <sl-icon .src=${assetInfo.assetInfo.icon_src}></sl-icon>
                 ${this.onlyIcon
                   ? html``
-                  : html`
-                      <span style="margin-left: 8px">${attachableInfo.attachableInfo.name}</span>
-                    `}
+                  : html` <span style="margin-left: 8px">${assetInfo.assetInfo.name}</span> `}
               </div>
             </sl-tag>
           </sl-tooltip>
         `;
       case 'error':
+        console.error(this.info.value.error);
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the entry')}

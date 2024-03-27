@@ -8,34 +8,26 @@ import { v4 as uuidv4 } from 'uuid';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
 
-import { EntryHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import {
   AppletHash,
   AppletId,
-  AppletInfo,
-  AttachableLocationAndInfo,
   CreatableResult,
   CreatableName,
   GroupProfile,
-  HrlWithContext,
+  WAL,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
 import { SlDialog } from '@shoelace-style/shoelace';
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
-import './hrl-element.js';
-import './clipboard-search.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
+import './wal-element.js';
+import './pocket-search.js';
 import './creatable-view.js';
 import './group-applets-row.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-
-export interface SearchResult {
-  hrlsWithInfo: Array<[HrlWithContext, AttachableLocationAndInfo]>;
-  groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
-  appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
-}
 
 export type CreatableInfo = {
   appletHash: AppletHash;
@@ -50,9 +42,9 @@ export type CreatableInfo = {
 @localized()
 @customElement('creatable-panel')
 export class CreatablePanel extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @query('#creatable-dialog')
   _dialog!: SlDialog;
@@ -68,14 +60,14 @@ export class CreatablePanel extends LitElement {
 
   _groupsProfiles = new StoreSubscriber(
     this,
-    () => this._weStore.allGroupsProfiles,
-    () => [this._weStore],
+    () => this._mossStore.allGroupsProfiles,
+    () => [this._mossStore],
   );
 
   _allCreatableTypes = new StoreSubscriber(
     this,
-    () => this._weStore.allCreatableTypes(),
-    () => [this._weStore],
+    () => this._mossStore.allCreatableTypes(),
+    () => [this._mossStore],
   );
 
   @state()
@@ -117,12 +109,12 @@ export class CreatablePanel extends LitElement {
         this._showCreatableView = undefined;
         return;
       case 'success':
-        this._weStore.hrlToRecentlyCreated(creatableResult.hrlWithContext);
+        this._mossStore.walToRecentlyCreated(creatableResult.wal);
         notify(`New ${this._showCreatableView?.creatable.label} created.`);
-        this._weStore.clearCreatableDialogResult(this._activeDialogId);
+        this._mossStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
-          new CustomEvent('hrl-selected', {
-            detail: { hrlWithContext: creatableResult.hrlWithContext },
+          new CustomEvent('wal-selected', {
+            detail: { wal: creatableResult.wal },
             bubbles: true,
             composed: true,
           }),
@@ -148,9 +140,9 @@ export class CreatablePanel extends LitElement {
     setTimeout(() => this._creatableViewDialog!.show());
   }
 
-  hrlToClipboard(hrlWithContext: HrlWithContext) {
-    console.log('Adding hrl to clipboard: ', hrlWithContext);
-    this._weStore.hrlToClipboard(hrlWithContext);
+  walToPocket(wal: WAL) {
+    console.log('Adding hrl to clipboard: ', wal);
+    this._mossStore.walToPocket(wal);
   }
 
   renderAppletMatrix() {
@@ -165,18 +157,18 @@ export class CreatablePanel extends LitElement {
           ([_, groupProfile]) => !!groupProfile,
         ) as Array<[DnaHash, GroupProfile]>;
 
-        let customGroupOrder = this._weStore.persistedStore.groupOrder.value();
+        let customGroupOrder = this._mossStore.persistedStore.groupOrder.value();
         if (!customGroupOrder) {
           customGroupOrder = knownGroups
             .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
             .map(([hash, _profile]) => encodeHashToBase64(hash));
-          this._weStore.persistedStore.groupOrder.set(customGroupOrder);
+          this._mossStore.persistedStore.groupOrder.set(customGroupOrder);
         }
         knownGroups.forEach(([hash, _]) => {
           if (!customGroupOrder!.includes(encodeHashToBase64(hash))) {
             customGroupOrder!.splice(0, 0, encodeHashToBase64(hash));
           }
-          this._weStore.persistedStore.groupOrder.set(customGroupOrder!);
+          this._mossStore.persistedStore.groupOrder.set(customGroupOrder!);
           this.requestUpdate();
         });
 

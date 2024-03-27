@@ -1,53 +1,48 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+
+import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 
+import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
+import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { encodeHashToBase64 } from '@holochain/client';
-import { notify, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiShareVariantOutline } from '@mdi/js';
-
-import { HrlWithContext } from '@lightningrodlabs/we-applet';
-import { encodeContext } from '../utils';
+import { WAL } from '@lightningrodlabs/we-applet';
+import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { sharedStyles } from '@holochain-open-dev/elements';
+import { weClientContext } from '@lightningrodlabs/we-elements';
 
 @localized()
-@customElement('share-hrl')
-export class ShareHrl extends LitElement {
+@customElement('wal-pocket')
+export class WalPocket extends LitElement {
   @property()
-  hrlWithContext!: HrlWithContext;
+  wal!: WAL;
 
-  async copyHrl() {
-    let url = `we://hrl/${encodeHashToBase64(this.hrlWithContext.hrl[0])}/${encodeHashToBase64(
-      this.hrlWithContext.hrl[1],
-    )}`;
-    if (this.hrlWithContext.context) {
-      url = `${url}?context=${encodeContext(this.hrlWithContext.context)}`;
-    }
-    await navigator.clipboard.writeText(url);
+  @consume({ context: weClientContext, subscribe: true })
+  weClient!: WeClient | WeServices;
 
-    notify(msg('Link copied.'));
+  async walToPocket() {
+    await this.weClient.walToPocket(this.wal);
   }
 
   render() {
     return html`
-      <sl-tooltip .content=${msg('Share')}>
+      <sl-tooltip content="${msg('Add to Pocket')}">
         <div
           class="row btn"
           tabindex="0"
-          @click=${() => this.copyHrl()}
+          @click=${() => this.walToPocket()}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-              this.copyHrl();
+              this.walToPocket();
             }
           }}
         >
-          <sl-icon
-            .src=${wrapPathInSvg(mdiShareVariantOutline)}
-            style="padding-right: 10%;"
-          ></sl-icon>
+          <img src="pocket_white.png" style="height: 35px; fill-color: white;" />
         </div>
       </sl-tooltip>
     `;

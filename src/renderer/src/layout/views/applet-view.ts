@@ -13,17 +13,17 @@ import { GroupProfile, AppletView, RenderView, AppletHash } from '@lightningrodl
 
 import { weStyles } from '../../shared-styles.js';
 import './view-frame.js';
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
-import { Applet } from '../../applets/types.js';
+import { Applet, RegisterAppletInput } from '../../types.js';
 
 @localized()
 @customElement('applet-view')
 export class AppletViewEl extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
@@ -42,10 +42,10 @@ export class AppletViewEl extends LitElement {
     this,
     () =>
       joinAsync([
-        this.weStore.appletStores.get(this.appletHash),
-        this.weStore.isInstalled.get(this.appletHash),
-        this.weStore.groupsForApplet.get(this.appletHash),
-        this.weStore.allGroupsProfiles,
+        this.mossStore.appletStores.get(this.appletHash),
+        this.mossStore.isInstalled.get(this.appletHash),
+        this.mossStore.groupsForApplet.get(this.appletHash),
+        this.mossStore.allGroupsProfiles,
       ]) as AsyncReadable<
         [
           AppletStore | undefined,
@@ -54,7 +54,7 @@ export class AppletViewEl extends LitElement {
           ReadonlyMap<DnaHash, GroupProfile | undefined>,
         ]
       >,
-    () => [this.appletHash, this.weStore],
+    () => [this.appletHash, this.mossStore],
   );
 
   // @state()
@@ -79,13 +79,13 @@ export class AppletViewEl extends LitElement {
 
   //   this.registering = true;
   //   try {
-  //     const groupStore = await toPromise(this.weStore.groups.get(groupDnaHash));
+  //     const groupStore = await toPromise(this.mossStore.groups.get(groupDnaHash));
 
   //     if (!appletStore) throw new Error("Applet not found");
 
   //     const applet = appletStore.applet;
   //     await groupStore.groupClient.registerApplet(applet);
-  //     await this.weStore.appletBundlesStore.installApplet(
+  //     await this.mossStore.appletBundlesStore.installApplet(
   //       this.appletHash,
   //       appletStore.applet
   //     );
@@ -106,12 +106,15 @@ export class AppletViewEl extends LitElement {
     applet: Applet,
     groupsForApplet: ReadonlyMap<DnaHash, GroupStore>,
   ): Promise<EntryHash> {
-    await this.weStore.installApplet(appletHash, applet);
-
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    const registerAppletInput: RegisterAppletInput = {
+      applet,
+      joining_pubkey: appInfo.agent_pub_key,
+    };
     try {
       await Promise.all(
         Array.from(groupsForApplet.values()).map(async (groupStore) => {
-          await groupStore.groupClient.registerApplet(applet);
+          await groupStore.groupClient.registerApplet(registerAppletInput);
           await groupStore.allMyApplets.reload();
           await groupStore.allMyRunningApplets.reload();
         }),
@@ -121,7 +124,7 @@ export class AppletViewEl extends LitElement {
         `Failed to register Applet in groups after installation. Uninstalling again. Error:\n${e}.`,
       );
       try {
-        await this.weStore.uninstallApplet(appletHash);
+        await this.mossStore.uninstallApplet(appletHash);
         return Promise.reject(
           new Error(`Failed to register Applet: ${e}.\nApplet uninstalled again.`),
         );

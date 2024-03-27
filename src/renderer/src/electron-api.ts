@@ -10,7 +10,7 @@ import {
   InstalledAppId,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
-import { AppletId, WeNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 
 import { ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
@@ -51,7 +51,7 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string) => Promise<AppInfo>;
       notification: (
-        notification: WeNotification,
+        notification: FrameNotification,
         showInSystray: boolean,
         notifyOS: boolean,
         appletId: AppletId | undefined,
@@ -147,7 +147,7 @@ export async function validateHappOrWebhapp(bytes: number[]) {
 // }
 
 export async function notifyElectron(
-  _message: WeNotification,
+  _message: FrameNotification,
   _systray: boolean,
   _os: boolean,
   // appstoreAppHashB64: ActionHashB64 | undefined,

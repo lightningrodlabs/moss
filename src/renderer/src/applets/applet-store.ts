@@ -11,7 +11,7 @@ import { encodeHashToBase64, EntryHash } from '@holochain/client';
 import { BlockType } from '@lightningrodlabs/we-applet';
 
 import { AppletHost } from './applet-host.js';
-import { Applet } from './types.js';
+import { Applet } from '../types.js';
 import {
   appEntryIdFromDistInfo,
   clearAppletNotificationStatus,

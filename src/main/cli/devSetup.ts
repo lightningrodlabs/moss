@@ -113,11 +113,13 @@ export async function devSetup(
     }
   }
 
-  const appstoreClient = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
-    APPSTORE_APP_ID,
-    4000,
-  );
+  const appstoreClient = await AppAgentWebsocket.connect(APPSTORE_APP_ID, {
+    url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
+    wsClientOptions: {
+      origin: 'moss-admin',
+    },
+    defaultTimeout: 4000,
+  });
   const appstoreCells = await appstoreClient.appInfo();
   let appstoreDnaHash: DnaHashB64 | undefined = undefined;
   for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
@@ -286,14 +288,9 @@ export async function devSetup(
           });
 
           const appId = appIdFromAppletHash(appletHash);
+          const appletPubKey = groupWebsocket.myPubKey;
           logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
-          await installHapp(
-            holochainManager,
-            appId,
-            networkSeed,
-            groupWebsocket.myPubKey,
-            happPath,
-          );
+          await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
           storeAppAssetsInfo(
             appletConfig,
             appId,
@@ -310,7 +307,10 @@ export async function devSetup(
             role_name: 'group',
             zome_name: 'group',
             fn_name: 'register_applet',
-            payload: applet,
+            payload: {
+              applet,
+              joining_pubkey: appletPubKey,
+            },
           });
         } else if (isJoiningAgent) {
           const maybeUnjoinedApplet = unjoinedApplets.find(
@@ -327,11 +327,13 @@ export async function devSetup(
             const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
               installableApplets[appletInstallConfig.name];
 
+            const appletPubKey = groupWebsocket.myPubKey;
+
             await installHapp(
               holochainManager,
               appId,
               applet.network_seed!,
-              groupWebsocket.myPubKey,
+              appletPubKey,
               happPath,
             );
             storeAppAssetsInfo(
@@ -349,7 +351,10 @@ export async function devSetup(
               role_name: 'group',
               zome_name: 'group',
               fn_name: 'register_applet',
-              payload: applet,
+              payload: {
+                applet,
+                joining_pubkey: appletPubKey,
+              },
             });
           }
         }
@@ -368,10 +373,12 @@ async function joinGroup(
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
-  const groupWebsocket = await AppAgentWebsocket.connect(
-    new URL(`ws://127.0.0.1:${appPort}`),
-    groupAppInfo.installed_app_id,
-  );
+  const groupWebsocket = await AppAgentWebsocket.connect(groupAppInfo.installed_app_id, {
+    url: new URL(`ws://127.0.0.1:${appPort}`),
+    wsClientOptions: {
+      origin: 'moss-admin',
+    },
+  });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
     await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {

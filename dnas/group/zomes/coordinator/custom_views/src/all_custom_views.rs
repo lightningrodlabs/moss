@@ -3,7 +3,9 @@ use hdk::prelude::*;
 #[hdk_extern]
 pub fn get_all_custom_views(_: ()) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_custom_views");
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AllCustomViews, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllCustomViews)?.build(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
         .filter_map(|link| link.target.into_action_hash())

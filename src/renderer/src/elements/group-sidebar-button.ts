@@ -6,8 +6,8 @@ import { derived, joinMap, pipe, StoreSubscriber } from '@holochain-open-dev/sto
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../groups/context.js';
 import { GroupStore } from '../groups/group-store.js';
-import { WeStore } from '../we-store.js';
-import { weStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
+import { mossStoreContext } from '../context.js';
 import './sidebar-button.js';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiAccountMultiple } from '@mdi/js';
@@ -17,8 +17,8 @@ import { msg } from '@lit/localize';
 
 @customElement('group-sidebar-button')
 export class GroupSidebarButton extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;

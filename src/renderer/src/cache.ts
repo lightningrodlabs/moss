@@ -1,10 +1,5 @@
-import {
-  AppletHash,
-  AppletInfo,
-  AttachableLocationAndInfo,
-  HrlWithContext,
-} from '@lightningrodlabs/we-applet';
-import { stringifyHrlWithContext } from './utils';
+import { AppletHash, AppletInfo, AssetLocationAndInfo, WAL } from '@lightningrodlabs/we-applet';
+import { stringifyWal } from './utils';
 import { SubStore } from './persisted-store';
 import { encodeHashToBase64 } from '@holochain/client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -20,19 +15,12 @@ export class WeCache {
     this.store = store ? store : new SessionStorageStore();
   }
 
-  attachableInfo: SubStore<
-    AttachableLocationAndInfo | undefined,
-    AttachableLocationAndInfo,
-    [HrlWithContext]
-  > = {
-    value: (hrlWithContext: HrlWithContext) => {
-      const stringifiedHrlWithContext = stringifyHrlWithContext(hrlWithContext);
-      return this.store.getItem<AttachableLocationAndInfo>(
-        `attachableInfo#${stringifiedHrlWithContext}`,
-      );
+  assetInfo: SubStore<AssetLocationAndInfo | undefined, AssetLocationAndInfo, [WAL]> = {
+    value: (wal: WAL) => {
+      const stringifiedWAL = stringifyWal(wal);
+      return this.store.getItem<AssetLocationAndInfo>(`assetInfo#${stringifiedWAL}`);
     },
-    set: (value, hrlWithContext: HrlWithContext) =>
-      this.store.setItem(`attachableInfo#${stringifyHrlWithContext(hrlWithContext)}`, value),
+    set: (value, wal: WAL) => this.store.setItem(`assetInfo#${stringifyWal(wal)}`, value),
   };
 
   appletInfo: SubStore<AppletInfo | undefined, AppletInfo, [AppletHash]> = {
@@ -43,14 +31,12 @@ export class WeCache {
       this.store.setItem(`appletInfo#${encodeHashToBase64(appletHash)}`, value),
   };
 
-  searchResults: SubStore<HrlWithContext[] | undefined, HrlWithContext[], [AppletHash, string]> = {
+  searchResults: SubStore<WAL[] | undefined, WAL[], [AppletHash, string]> = {
     value: (appletHash: AppletHash, searchFilter: string) => {
-      return this.store.getItem<HrlWithContext[]>(
-        `search#${encodeHashToBase64(appletHash)}#${searchFilter}}`,
-      );
+      return this.store.getItem<WAL[]>(`search#${encodeHashToBase64(appletHash)}#${searchFilter}}`);
     },
     set: (value, appletHash, searchFilter) => {
-      return this.store.setItem<HrlWithContext[]>(
+      return this.store.setItem<WAL[]>(
         `search#${encodeHashToBase64(appletHash)}#${searchFilter}}`,
         value,
       );

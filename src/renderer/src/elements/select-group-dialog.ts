@@ -15,20 +15,20 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { weStoreContext } from '../context.js';
-import { WeStore } from '../we-store.js';
+import { mossStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 
 @localized()
 @customElement('select-group-dialog')
 export class SelectGroupDialog extends LitElement {
-  @consume({ context: weStoreContext })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext })
+  _mossStore!: MossStore;
 
   _groups = new StoreSubscriber(
     this,
-    () => this._weStore.allGroupsProfiles,
-    () => [this._weStore],
+    () => this._mossStore.allGroupsProfiles,
+    () => [this._mossStore],
   );
 
   show() {

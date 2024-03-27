@@ -14,9 +14,9 @@ import '../../elements/select-group-dialog.js';
 import '../../elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
-import { weStoreContext } from '../../context.js';
+import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
-import { WeStore } from '../../we-store.js';
+import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
 
@@ -26,9 +26,9 @@ enum WelcomePageView {
 @localized()
 @customElement('welcome-view')
 export class WelcomeView extends LitElement {
-  @consume({ context: weStoreContext })
+  @consume({ context: mossStoreContext })
   @state()
-  _weStore!: WeStore;
+  _mossStore!: MossStore;
 
   @state()
   view: WelcomePageView = WelcomePageView.Main;
@@ -38,20 +38,20 @@ export class WelcomeView extends LitElement {
 
   _notificationFeed = new StoreSubscriber(
     this,
-    () => this._weStore.notificationFeed(),
-    () => [this._weStore],
+    () => this._mossStore.notificationFeed(),
+    () => [this._mossStore],
   );
 
   async firstUpdated() {
     try {
       console.log('@ WELCOME-VIEW: loading notifications');
-      const runningApplets = await toPromise(this._weStore.runningApplets);
+      const runningApplets = await toPromise(this._mossStore.runningApplets);
       const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
       // load all notification of past 2 days since epoch
       runningApplets.forEach((appletHash) => {
         const appletId = encodeHashToBase64(appletHash);
-        this._weStore.updateNotificationFeed(appletId, daysSinceEpoch);
-        this._weStore.updateNotificationFeed(appletId, daysSinceEpoch - 1);
+        this._mossStore.updateNotificationFeed(appletId, daysSinceEpoch);
+        this._mossStore.updateNotificationFeed(appletId, daysSinceEpoch - 1);
       });
       this.notificationsLoading = false;
       console.log('Updated notifications.');
@@ -175,7 +175,7 @@ export class WelcomeView extends LitElement {
                     .src=${wrapPathInSvg(mdiViewGridPlus)}
                     style="color: white; height: 40px; width: 40px; margin-right: 10px;"
                   ></sl-icon>
-                  <span>${msg('Applet Library')}</span>
+                  <span>${msg('Add Applet')}</span>
                 </div>
               </button>
               <button

@@ -14,8 +14,8 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
-import { WeStore } from '../we-store.js';
-import { weStoreContext } from '../context.js';
+import { MossStore } from '../moss-store.js';
+import { mossStoreContext } from '../context.js';
 import { weStyles } from '../shared-styles.js';
 
 /**
@@ -25,8 +25,8 @@ import { weStyles } from '../shared-styles.js';
 @customElement('join-group-dialog')
 export class JoinGroupDialog extends LitElement {
   /** Dependencies */
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   async open(networkSeed?: string) {
     if (networkSeed) {
@@ -68,7 +68,7 @@ export class JoinGroupDialog extends LitElement {
     this.joining = true;
 
     try {
-      const groupAppInfo = await this._weStore.joinGroup(networkSeed!);
+      const groupAppInfo = await this._mossStore.joinGroup(networkSeed!);
 
       this.dispatchEvent(
         new CustomEvent('group-joined', {

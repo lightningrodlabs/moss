@@ -91,7 +91,7 @@ export default defineConfig({
       },
       source: {
         type: 'https',
-        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.0.8/notebooks.webhapp',
+        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.2.4/notebooks.webhapp',
       },
     },
   ],

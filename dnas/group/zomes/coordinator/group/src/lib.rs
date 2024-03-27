@@ -14,9 +14,8 @@ pub fn get_group_profile(_: ()) -> ExternResult<Option<Record>> {
     let path = group_info_path()?;
 
     let links = get_links(
-        path.path_entry_hash()?,
-        LinkTypes::AnchorToGroupProfile,
-        None,
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToGroupProfile)?
+            .build(),
     )?;
 
     let latest_group_info_link = links

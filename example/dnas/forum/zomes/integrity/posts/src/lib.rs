@@ -3,7 +3,7 @@ use hdi::prelude::*;
 pub use post::*;
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
-#[hdk_entry_defs]
+#[hdk_entry_types]
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
     Post(Post),
@@ -241,9 +241,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 LinkTypes::AllPosts => {
                     validate_create_link_all_posts(action, base_address, target_address, tag)
                 }
-                LinkTypes::PeerSubscription => {
-                    validate_create_link_peer_subscription(action, base_address, target_address, tag)
-                }
+                LinkTypes::PeerSubscription => validate_create_link_peer_subscription(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             },
             OpRecord::DeleteLink {
                 original_action_hash,

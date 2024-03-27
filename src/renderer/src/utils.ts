@@ -16,7 +16,7 @@ import {
   ActionHash,
   CallZomeRequest,
 } from '@holochain/client';
-import { Hrl, HrlWithContext, RenderView, WeNotification } from '@lightningrodlabs/we-applet';
+import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
@@ -29,7 +29,10 @@ export async function initAppClient(
   appId: string,
   defaultTimeout?: number,
 ): Promise<AppAgentWebsocket> {
-  const client = await AppAgentWebsocket.connect(new URL('ws://UNUSED'), appId, defaultTimeout);
+  const client = await AppAgentWebsocket.connect(appId, {
+    url: new URL('ws://UNUSED'),
+    defaultTimeout,
+  });
   client.installedAppId = appId;
   client.cachedAppInfo = undefined;
   client.appWebsocket.overrideInstalledAppId = appId;
@@ -221,7 +224,7 @@ export function getDisabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
     );
 }
 
-export function validateNotifications(notifications: Array<WeNotification>): void {
+export function validateNotifications(notifications: Array<FrameNotification>): void {
   notifications.forEach((notification) => {
     if (typeof notification.title !== 'string') {
       throw new Error("Received a notification with a title that's not of type string.");
@@ -262,12 +265,12 @@ export function validateNotifications(notifications: Array<WeNotification>): voi
  * @returns
  */
 export function storeAppletNotifications(
-  notifications: Array<WeNotification>,
+  notifications: Array<FrameNotification>,
   appletId: AppletId,
   storeUnread: boolean,
   persistedStore: PersistedStore,
-): Array<WeNotification> | undefined {
-  let unreadNotifications: Array<WeNotification> | undefined;
+): Array<FrameNotification> | undefined {
+  let unreadNotifications: Array<FrameNotification> | undefined;
   if (storeUnread) {
     // store them to unread messages
     unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
@@ -337,7 +340,7 @@ export function loadAllNotificationStates(): Record<
  * @returns
  */
 export function getNotificationState(
-  unreadNotifications: Array<WeNotification>,
+  unreadNotifications: Array<FrameNotification>,
 ): [string | undefined, number | undefined] {
   const notificationCounts = { low: 0, medium: 0, high: 0 };
   unreadNotifications.forEach((notification) => {
@@ -392,12 +395,12 @@ export function getNotificationTypeSettings(
   return appletNotificationSettings.applet;
 }
 
-export function stringifyHrlWithContext(hrlWithContext: HrlWithContext): string {
-  return fromUint8Array(encode(hrlWithContext));
+export function stringifyWal(wal: WAL): string {
+  return fromUint8Array(encode(wal));
 }
 
-export function deStringifyHrlWithContext(hrlWithContextStringified: string): HrlWithContext {
-  return decode(toUint8Array(hrlWithContextStringified)) as HrlWithContext;
+export function deStringifyWal(walStringified: string): WAL {
+  return decode(toUint8Array(walStringified)) as WAL;
 }
 
 export function renderViewToQueryString(
@@ -413,11 +416,11 @@ export function renderViewToQueryString(
     if (renderView.view.type === 'block') {
       base = `${base}&block=${renderView.view.block}`;
     }
-    if (renderView.view.type === 'attachable') {
-      const hrlWithContext = renderView.view.hrlWithContext;
-      base = `${base}&hrl=${stringifyHrl(hrlWithContext.hrl)}`;
-      if (hrlWithContext.context) {
-        const b64context = fromUint8Array(encode(hrlWithContext.context), true);
+    if (renderView.view.type === 'asset') {
+      const wal = renderView.view.wal;
+      base = `${base}&hrl=${stringifyHrl(wal.hrl)}`;
+      if (wal.context) {
+        const b64context = fromUint8Array(encode(wal.context), true);
         base = `${base}&context=${b64context}`;
       }
     }
@@ -500,17 +503,12 @@ export function notifyAndThrow(message: string) {
   throw new Error(message);
 }
 
-export function validateHrlWithContext(hrlWithContext: HrlWithContext): HrlWithContext {
-  if (!hrlWithContext.hrl)
-    throw new Error(`Got invalid HrlWithContext: ${JSON.stringify(hrlWithContext)}`);
-  if (
-    hrlWithContext.hrl.length !== 2 ||
-    hrlWithContext.hrl[0].length !== 39 ||
-    hrlWithContext.hrl[1].length !== 39
-  )
-    throw new Error(`Got invalid HrlWithContext: ${JSON.stringify(hrlWithContext)}`);
+export function validateWal(wal: WAL): WAL {
+  if (!wal.hrl) throw new Error(`Got invalid WAL: ${JSON.stringify(wal)}`);
+  if (wal.hrl.length !== 2 || wal.hrl[0].length !== 39 || wal.hrl[1].length !== 39)
+    throw new Error(`Got invalid WAL: ${JSON.stringify(wal)}`);
   // TODO validate that the right keys are there
-  return hrlWithContext;
+  return wal;
 }
 
 export function stringToMessageParts(input: string): Array<MessageContentPart> {

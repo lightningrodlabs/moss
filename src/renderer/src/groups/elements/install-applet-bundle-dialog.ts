@@ -19,14 +19,14 @@ import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
-import { weStoreContext } from '../../context.js';
-import { WeStore } from '../../we-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 
 @localized()
 @customElement('install-applet-bundle-dialog')
 export class InstallAppletBundleDialog extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
@@ -109,7 +109,7 @@ export class InstallAppletBundleDialog extends LitElement {
     try {
       // Trigger the download of the icon
       this._installationProgress = 'Fetching app icon...';
-      await toPromise(this.weStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
+      await toPromise(this.mossStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
       this._installationProgress = 'Downloading and installing Applet...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._appletInfo!,
@@ -117,21 +117,24 @@ export class InstallAppletBundleDialog extends LitElement {
         fields.network_seed ? fields.network_seed : undefined,
       );
 
-      notify('Installation successful');
-      this.close();
-      this.dispatchEvent(
-        new CustomEvent('applet-installed', {
-          detail: {
-            appletEntryHash,
-            groupDnaHash: this.groupStore.groupDnaHash,
-          },
-          composed: true,
-          bubbles: true,
-        }),
-      );
-      this._appletDialog.hide();
-      this._installing = false;
-      this._installationProgress = undefined;
+      // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
+      setTimeout(() => {
+        notify('Installation successful');
+        this.close();
+        this.dispatchEvent(
+          new CustomEvent('applet-installed', {
+            detail: {
+              appletEntryHash,
+              groupDnaHash: this.groupStore.groupDnaHash,
+            },
+            composed: true,
+            bubbles: true,
+          }),
+        );
+        this._appletDialog.hide();
+        this._installing = false;
+        this._installationProgress = undefined;
+      }, 200);
     } catch (e) {
       this._installationProgress = undefined;
       notifyError('Installation failed! (See console for details)');

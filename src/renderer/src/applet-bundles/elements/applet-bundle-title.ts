@@ -10,15 +10,15 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { ActionHash } from '@holochain/client';
 import { hashProperty } from '@holochain-open-dev/elements';
 
-import { WeStore } from '../../we-store.js';
-import { weStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 
 @customElement('applet-bundle-title')
 export class AppletBundleTitle extends LitElement {
-  @consume({ context: weStoreContext, subscribe: true })
-  _weStore!: WeStore;
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
 
   @property(hashProperty('applet-bundle-hash'))
   appletBundleHash!: ActionHash;
@@ -27,8 +27,8 @@ export class AppletBundleTitle extends LitElement {
     this,
     () =>
       joinAsync([
-        this._weStore.appletBundlesStore.appletBundles.get(this.appletBundleHash),
-        this._weStore.appletBundlesStore.appletBundleLogo.get(this.appletBundleHash),
+        this._mossStore.appletBundlesStore.appletBundles.get(this.appletBundleHash),
+        this._mossStore.appletBundlesStore.appletBundleLogo.get(this.appletBundleHash),
       ]) as AsyncReadable<[Entity<AppEntry> | undefined, string | undefined]>,
     () => [this.appletBundleHash],
   );

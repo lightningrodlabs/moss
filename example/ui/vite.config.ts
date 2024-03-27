@@ -33,6 +33,7 @@ export default defineConfig({
       '@holochain-open-dev/elements/dist/elements/display-error.js',
       '@lightningrodlabs/we-applet',
       '@lightningrodlabs/we-elements',
+      '@lightningrodlabs/attachments',
     ],
   },
   plugins: [

@@ -11,9 +11,8 @@ pub fn get_related_groups(_: ()) -> ExternResult<Vec<Record>> {
     let path = related_groups_path();
 
     let links = get_links(
-        path.path_entry_hash()?,
-        LinkTypes::AnchorToRelatedGroup,
-        None,
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToRelatedGroup)?
+            .build(),
     )?;
 
     let get_input: Vec<GetInput> = links

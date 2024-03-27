@@ -7,8 +7,24 @@ import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
 import tsNode from 'ts-node';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
-export const PRODUCTION_BOOTSTRAP_URLS = ['https://bootstrap.holo.host'];
-export const PRODUCTION_SIGNALING_URLS = ['wss://signal.holo.host'];
+// The first one will be picked by default. But all production bootstrap servers should be listed
+// here since there is a check to prevent accidental use of a production bootstrap server in development
+// mode
+export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap-2.infra.holochain.org',
+  'https://bootstrap-1.infra.holochain.org',
+  'https://bootstrap-0.infra.holochain.org',
+  'https://bootstrap.holo.host',
+];
+// The first one will be picked by default. But all production signaling servers should be listed
+// here since there is a check to prevent accidental use of a production signaling server in development
+// mode
+export const PRODUCTION_SIGNALING_URLS = [
+  'wss://signal-2.infra.holochain.org',
+  'wss://signal-1.infra.holochain.org',
+  'wss://signal-0.infra.holochain.org',
+  'wss://signal.holo.host',
+];
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
 
 export interface WeAppletDevInfo {
@@ -22,9 +38,14 @@ export interface CliOpts {
   devConfig?: string | undefined;
   agentIdx?: number | undefined;
   networkSeed?: string | undefined;
+  holochainPath?: string | undefined;
+  holochainRustLog?: string | undefined;
+  holochainWasmLog?: string | undefined;
+  lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
   forceProductionUrls?: boolean;
+  printHolochainLogs?: boolean;
 }
 
 export interface RunOptions {
@@ -33,6 +54,11 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
+  customBinary: string | undefined;
+  holochainRustLog: string | undefined;
+  holochainWasmLog: string | undefined;
+  lairRustLog: string | undefined;
+  printHolochainLogs: boolean;
 }
 
 export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
@@ -72,6 +98,18 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
         'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
   }
+  if (args.holochainPath && typeof args.holochainPath !== 'string') {
+    throw new Error('The --holochain-path argument must be of type string.');
+  }
+  if (args.holochainRustLog && typeof args.holochainRustLog !== 'string') {
+    throw new Error('The --holochain-rust-log argument must be of type string.');
+  }
+  if (args.holochainWasmLog && typeof args.holochainWasmLog !== 'string') {
+    throw new Error('The --holochain-wasm-log argument must be of type string.');
+  }
+  if (args.lairRustLog && typeof args.lairRustLog !== 'string') {
+    throw new Error('The --lair-rust-log argument must be of type string.');
+  }
 
   let devInfo: WeAppletDevInfo | undefined;
   const devConfig: WeDevConfig | undefined = readAndValidateDevConfig(
@@ -105,6 +143,11 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
+    customBinary: args.holochainPath ? args.holochainPath : undefined,
+    holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
+    holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
+    lairRustLog: args.lairRustLog ? args.lairRustLog : undefined,
+    printHolochainLogs: args.printHolochainLogs ? true : false,
   };
 }
 
