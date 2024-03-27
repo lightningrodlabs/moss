@@ -1009,7 +1009,8 @@ export class MainDashboard extends LitElement {
             ? 'selected'
             : ''}"
         >
-          <button class="home-button"
+          <button
+            class="home-button"
             .selected=${false}
             .tooltipText=${msg('Home')}
             placement="bottom"
@@ -1055,9 +1056,9 @@ export class MainDashboard extends LitElement {
         <span style="display: flex; flex: 1;"></span>
 
         <!-- TAB BAR BUTTON -->
-        <div class="row center-content" style="margin-bottom: 5px;">
+        <div class="row center-content" style="margin-bottom: 5px; position: relative;">
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
-            <img
+            <button
               tabindex="0"
               class="moss-button"
               @click=${() => this.openCreatablePanel()}
@@ -1065,7 +1066,8 @@ export class MainDashboard extends LitElement {
                 if (e.key === 'Enter') {
                   this.openCreatablePanel();
                 }
-              }}>
+              }}
+            >
               <img
                 tabindex="0"
                 class="moss-button-icon"
@@ -1077,19 +1079,21 @@ export class MainDashboard extends LitElement {
         </div>
         <div class="row center-content" style="margin-bottom: 5px;">
           <sl-tooltip content="Search" placement="right" hoist>
-            <button class="moss-button"
+            <button
+              class="moss-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openClipboard();
                 }
-              }}>
-            <sl-icon
-              tabindex="0"
-              class="moss-button-icon"
-              .src=${wrapPathInSvg(mdiMagnify)}
-              style="color: #fff; height: 24px; width: 24px"
-            ></sl-icon>
+              }}
+            >
+              <sl-icon
+                tabindex="0"
+                class="moss-button-icon"
+                .src=${wrapPathInSvg(mdiMagnify)}
+                style="color: #fff; height: 24px; width: 24px"
+              ></sl-icon>
             </button>
           </sl-tooltip>
         </div>
@@ -1274,9 +1278,8 @@ export class MainDashboard extends LitElement {
 
         .top-left-corner:hover {
           border-radius: 100% 0 0 100%;
-          background: linear-gradient(90deg, #96D96E 0%, #394333 90.91%);
+          background: linear-gradient(90deg, #96d96e 0%, #394333 90.91%);
           cursor: pointer;
-
         }
 
         .hover-browser {
@@ -1330,7 +1333,7 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           right: 0;
           padding-left: 8px;
-          background-color: rgba(57, 67, 50, 1.0);
+          background-color: rgba(57, 67, 50, 1);
         }
 
         #group-view-area {
@@ -1458,7 +1461,7 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #101C09 0%, #293C2C 100%);
+          background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
         }
 
         .left-group-sidebar {
@@ -1529,13 +1532,13 @@ export class MainDashboard extends LitElement {
           outline: none;
           border: none;
           color: #fff;
-          background: linear-gradient(270deg, #394333 0%, #526C44 100%);
+          background: linear-gradient(270deg, #394333 0%, #526c44 100%);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-          border-radius: 5px;        
+          border-radius: 5px;
         }
 
         .moss-button:hover {
-          background: linear-gradient(270deg, #495542 0%, #67924F 100%);
+          background: linear-gradient(270deg, #495542 0%, #67924f 100%);
           cursor: pointer;
         }
       `,
