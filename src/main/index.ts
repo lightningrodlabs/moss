@@ -217,12 +217,12 @@ let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
 
 // icons
-const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32.png'));
+const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
 const SYSTRAY_ICON_HIGH = nativeImage.createFromPath(
-  path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32.png'),
+  path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32@2x.png'),
 );
 const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
-  path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32.png'),
+  path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32@2x.png'),
 );
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {

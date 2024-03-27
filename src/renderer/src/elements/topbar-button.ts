@@ -81,65 +81,14 @@ export class TopBarButton extends LitElement {
           justify-content: center;
           border-radius: 20% 20% 0 0;
           height: var(--sidebar-width);
+          margin: 0 2px;
           width: var(--sidebar-width);
         }
         .icon-container:hover {
           background-color: var(--hover-color, var(--sl-color-primary-900));
         }
-        .icon-container:hover::after {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          bottom: 0;
-          right: -60px;
-          height: 30px;
-          width: 60px;
-          border-radius: 0 0 0 30px;
-          box-shadow: -30px 0 0 0 var(--hover-color, var(--sl-color-primary-900));
-        }
-        .icon-container:hover::before {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          bottom: 0;
-          left: -60px;
-          height: 30px;
-          width: 60px;
-          border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-900));
-        }
-        .selected {
-          background-color: var(--hover-color, var(--sl-color-primary-900));
-        }
-        .selected::after {
-          pointer-events: none;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          bottom: 0;
-          right: -60px;
-          height: 30px;
-          width: 60px;
-          border-radius: 0 0 0 30px;
-          box-shadow: -30px 0 0 0 var(--hover-color, var(--sl-color-primary-900));
-        }
-        .selected::before {
-          pointer-events: transparent;
-          content: '';
-          position: absolute;
-          display: block;
-          background-color: transparent;
-          bottom: 0;
-          left: -60px;
-          height: 30px;
-          width: 60px;
-          border-radius: 0 0 30px 0;
-          box-shadow: 30px 0 0 0 var(--hover-color, var(--sl-color-primary-900));
+        .selected, .icon-container:hover {
+          background: linear-gradient(180deg, #67F075 0%, #556F46 100%);          
         }
       `,
     ];

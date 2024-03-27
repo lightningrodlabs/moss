@@ -3,7 +3,7 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, DnaHash } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { html, LitElement } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import '@holochain-open-dev/peer-status/dist/elements/list-agents-by-status.js';
@@ -32,7 +32,7 @@ export class GroupPeersStatus extends LitElement {
   renderPeersStatus(members: AgentPubKey[]) {
     return html`
       <list-agents-by-status
-        style="color: var(--sl-color-secondary-100);"
+        class="agents-list"
         .agents=${members.filter(
           (m) => m.toString() !== this._groupStore.groupClient.appAgentClient.myPubKey.toString(),
         )}
@@ -56,5 +56,14 @@ export class GroupPeersStatus extends LitElement {
     }
   }
 
-  static styles = weStyles;
+  
+
+  static styles = [
+    weStyles,
+    css`
+      .agents-list {
+        color: #fff;
+      }
+    `,
+  ];
 }

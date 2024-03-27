@@ -131,6 +131,7 @@ export class AppletMain extends LitElement {
       <div class="column" style="margin-bottom: 500px;">
         <div class="row">
           <div class="column">
+          asdf
             <create-post style="margin: 16px;"></create-post>
             <button @click=${() => this.sendLowNotification(5000)}>
               Send Low Urgency Notification with 5 seconds delay

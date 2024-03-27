@@ -154,7 +154,7 @@ export class AppletViewEl extends LitElement {
     // console.log("|-- allGroups: ", allGroups);
     if (!appletStore)
       return html`
-        <div class="row center-content" style="flex: 1">
+        <div class="row center-content" style="flex: 1;">
           <sl-card
             ><div class="column center-content">
               <sl-icon
@@ -231,7 +231,8 @@ export class AppletViewEl extends LitElement {
       <view-frame
         .renderView=${renderView}
         .appletHash=${this.appletHash}
-        style="flex: 1"
+        style="flex: 1; border-radius: 5px; overflow: hidden;
+        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));"
       ></view-frame>
     `;
   }
@@ -257,6 +258,9 @@ export class AppletViewEl extends LitElement {
     css`
       :host {
         display: flex;
+        background-color: rgba(86, 113, 71, 1.0);
+        padding: 8px;
+        border-radius: 5px 0 0 0;
       }
     `,
     weStyles,
