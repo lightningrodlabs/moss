@@ -8,6 +8,7 @@ files:
   - moss.config.json
 asarUnpack:
   - resources/**
+afterSign: scripts/notarize.js
 win:
   executableName: lightningrodlabs-we
 nsis:

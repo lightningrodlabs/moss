@@ -1156,6 +1156,15 @@
     fs-extra "^9.0.1"
     promise-retry "^2.0.1"
 
+"@electron/notarize@^2.1.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-2.3.0.tgz#9659cf6c92563dd69411afce229f52f9f7196227"
+  integrity sha512-EiTBU0BwE7HZZjAG1fFWQaiQpCuPrVGn7jPss1kUjD6eTTdXXd29RiZqEqkgN7xqt/Pgn4g3I7Saqovanrfj3w==
+  dependencies:
+    debug "^4.1.1"
+    fs-extra "^9.0.1"
+    promise-retry "^2.0.1"
+
 "@electron/osx-sign@1.0.5":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@electron/osx-sign/-/osx-sign-1.0.5.tgz#0af7149f2fce44d1a8215660fd25a9fb610454d8"
@@ -1740,8 +1749,8 @@
     "@holochain-open-dev/stores" "0.300.0-dev.0"
     "@holochain-open-dev/utils" "0.300.0-dev.0"
     "@holochain/client" "^0.17.0-dev.7"
-    "@lightningrodlabs/we-applet" "file:../../Library/Caches/Yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-6c26cc35-9b44-48d4-940d-cd48437840e8-1711498041488/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../Library/Caches/Yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-6c26cc35-9b44-48d4-940d-cd48437840e8-1711498041488/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-2a1e2bf8-7f78-4ffb-9972-bd4b3d24f390-1711984613971/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-2a1e2bf8-7f78-4ffb-9972-bd4b3d24f390-1711984613971/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1791,7 +1800,7 @@
     "@holochain-open-dev/stores" "0.300.0-dev.0"
     "@holochain-open-dev/utils" "0.300.0-dev.0"
     "@holochain/client" "^0.17.0-dev.7"
-    "@lightningrodlabs/we-applet" "file:../../Library/Caches/Yarn/v6/npm-@lightningrodlabs-we-elements-0.5.0-a6064f05-c084-4b78-8d52-265076db0e2c-1711498041487/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.5.0-10ed9818-49bd-466c-b734-56e764962750-1711984613972/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
