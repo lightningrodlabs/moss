@@ -172,6 +172,10 @@ export class CreatablePanel extends LitElement {
           this.requestUpdate();
         });
 
+        const appletsWithCreatables = Object.entries(this._allCreatableTypes.value)
+          .filter(([_appletId, creatables]) => Object.keys(creatables).length > 0)
+          .map(([appletId, _]) => appletId);
+
         return html`
           <div class="column" style="align-items: flex-start; flex: 1;">
             ${knownGroups
@@ -203,7 +207,7 @@ export class CreatablePanel extends LitElement {
                       </sl-tooltip>
                       <group-applets-row
                         style="display: flex; flex: 1;"
-                        .activeApplets=${Object.keys(this._allCreatableTypes.value)}
+                        .activeApplets=${appletsWithCreatables}
                         @applet-chosen=${(e) => {
                           this._showCreatablesSelection = encodeHashToBase64(e.detail.appletHash);
                           setTimeout(() => this._creatableSelectionDialog!.show());
