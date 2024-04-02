@@ -148,6 +148,14 @@ export class MossPocket extends LitElement {
           e.preventDefault();
           this._searchField.focus();
         }}
+        @sl-hide=${(e: CustomEvent) => {
+          // https://github.com/shoelace-style/shoelace/issues/1161
+          // prevent sl-hide events from contained elements from bubbling since sl-hide is used to
+          // cancel userSelectHrl
+          if (e.target !== e.currentTarget) {
+            e.stopPropagation();
+          }
+        }}
       >
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
           ${

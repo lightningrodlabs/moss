@@ -873,7 +873,7 @@ export class MainDashboard extends LitElement {
             }),
           );
         }}
-        @sl-hide=${() => {
+        @sl-hide=${(e) => {
           this.dispatchEvent(
             new CustomEvent('cancel-select-wal', {
               bubbles: false,
