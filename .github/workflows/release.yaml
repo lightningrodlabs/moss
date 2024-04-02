@@ -76,7 +76,6 @@ jobs:
         run: |
           yarn build:mac
           ls dist
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.dmg" --clobber
 
       - name: build and upload the app (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
@@ -85,7 +84,6 @@ jobs:
         run: |
           yarn build:linux
           ls dist
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}.AppImage" --clobber
 
       - name: build, sign and upload the app (Windows)
         shell: bash
