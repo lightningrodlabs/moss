@@ -10,9 +10,5 @@
     <true/>
     <key>com.apple.security.cs.disable-library-validation</key>
     <true/>
-    <key>NSCameraUsageDescription</key>
-    <string>Moss needs access to your camera for one of your Applets.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Moss needs access to your microphone for one of your Applets.</string>
   </dict>
 </plist>
