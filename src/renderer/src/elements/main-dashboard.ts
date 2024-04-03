@@ -636,6 +636,7 @@ export class MainDashboard extends LitElement {
     } else {
       console.warn('Failed to activate applets for group since group store is not (yet) defined.');
     }
+    this.requestUpdate();
   }
 
   renderAppletMainViews() {
