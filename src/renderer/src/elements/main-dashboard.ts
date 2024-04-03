@@ -168,7 +168,7 @@ export class MainDashboard extends LitElement {
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
         notifyError('Applet not found in any of your groups.');
-        throw new Error('Applet not found in any of the groups.');
+        throw new Error('Applet not found in any of your groups.');
       }
       // pick an arbitrary group this applet is installed in
       const groupDnaHash = groupDnaHashes[0];
@@ -873,7 +873,7 @@ export class MainDashboard extends LitElement {
             }),
           );
         }}
-        @sl-hide=${(e) => {
+        @sl-hide=${(_e) => {
           this.dispatchEvent(
             new CustomEvent('cancel-select-wal', {
               bubbles: false,

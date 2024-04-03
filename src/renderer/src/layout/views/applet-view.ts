@@ -244,9 +244,9 @@ export class AppletViewEl extends LitElement {
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'error':
-        console.error('Error initializing the client for this group: ', this._applet.value.error);
+        console.error('Error initializing the Applet: ', this._applet.value.error);
         return html`<display-error
-          .headline=${msg('Error initializing the client for this group')}
+          .headline=${msg('Error initializing the Applet ("View > Reload" may sometimes fix this)')}
           .error=${this._applet.value.error}
         ></display-error>`;
       case 'complete':
@@ -258,7 +258,7 @@ export class AppletViewEl extends LitElement {
     css`
       :host {
         display: flex;
-        background-color: rgba(86, 113, 71, 1.0);
+        background-color: rgba(86, 113, 71, 1);
         padding: 8px;
         border-radius: 5px 0 0 0;
       }

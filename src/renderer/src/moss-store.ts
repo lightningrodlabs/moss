@@ -703,7 +703,6 @@ export class MossStore {
       appEntry.entry.metadata,
     );
 
-    await this.reloadManualStores();
     return appInfo;
   }
 
@@ -744,15 +743,14 @@ export class MossStore {
 
   async reloadManualStores() {
     await this.groupStores.reload();
-    await this.installedApps.reload();
-    // The stuff below may not be necessary
     // const groupStores = await toPromise(this.groupStores);
     // await Promise.all(
     //   Array.from(groupStores.values()).map(async (store) => {
     //     await store.allMyApplets.reload();
     //     await store.allMyRunningApplets.reload();
-    //   })
+    //   }),
     // );
+    await this.installedApps.reload();
   }
 
   isInstalled = new LazyHoloHashMap((appletHash: EntryHash) => {
