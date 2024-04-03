@@ -87,6 +87,28 @@ export class CreatablePanel extends LitElement {
     this._dialog.hide();
   }
 
+  creatableWidth(width: string | undefined) {
+    switch (width) {
+      case 'medium':
+        return '--width: 600px;';
+      case 'large':
+        return '--width: 800px;';
+      default:
+        return '';
+    }
+  }
+
+  creatableHeight(height: string | undefined) {
+    switch (height) {
+      case 'medium':
+        return 'height: 400px;';
+      case 'large':
+        return 'height: 600px;';
+      default:
+        return '';
+    }
+  }
+
   async handleCreatableResponse(e: CustomEvent) {
     const creatableResult: CreatableResult = e.detail;
     if (this._creatableViewDialog) this._creatableViewDialog.hide();
@@ -172,6 +194,10 @@ export class CreatablePanel extends LitElement {
           this.requestUpdate();
         });
 
+        const appletsWithCreatables = Object.entries(this._allCreatableTypes.value)
+          .filter(([_appletId, creatables]) => Object.keys(creatables).length > 0)
+          .map(([appletId, _]) => appletId);
+
         return html`
           <div class="column" style="align-items: flex-start; flex: 1;">
             ${knownGroups
@@ -203,7 +229,7 @@ export class CreatablePanel extends LitElement {
                       </sl-tooltip>
                       <group-applets-row
                         style="display: flex; flex: 1;"
-                        .activeApplets=${Object.keys(this._allCreatableTypes.value)}
+                        .activeApplets=${appletsWithCreatables}
                         @applet-chosen=${(e) => {
                           this._showCreatablesSelection = encodeHashToBase64(e.detail.appletHash);
                           setTimeout(() => this._creatableSelectionDialog!.show());
@@ -235,12 +261,14 @@ export class CreatablePanel extends LitElement {
               ? html`
                   <sl-dialog
                     id="creatable-view-dialog"
+                    style="${this.creatableWidth(this._showCreatableView.creatable.width)}"
                     label="${msg('Create New')} ${this._showCreatableView.creatable.label}"
                     @sl-hide=${() => {
                       this._showCreatableView = undefined;
                     }}
                   >
                     <creatable-view
+                      style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
                       .creatableInfo=${this._showCreatableView}
                       .dialogId=${this._activeDialogId}
                       @creatable-response-received=${(e) => this.handleCreatableResponse(e)}

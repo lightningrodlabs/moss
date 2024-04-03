@@ -11,8 +11,8 @@ jobs:
       matrix:
         # platform: [windows-2019]
         # platform: [macos-11]
-        # platform: [windows-2019, macos-11, ubuntu-22.04]
-        platform: [windows-2019, ubuntu-22.04]
+        platform: [windows-2019, macos-11, ubuntu-22.04]
+        # platform: [windows-2019, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
 
@@ -102,4 +102,4 @@ jobs:
           # echo "sha512 after code signing"
           # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber

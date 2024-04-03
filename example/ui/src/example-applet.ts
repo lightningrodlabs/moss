@@ -145,6 +145,9 @@ export class ExampleApplet extends LitElement {
                         Create
                       </button>
                     </div>
+                    <div style="margin-top: 200px; width: 600px; background: blue;">
+                      Here is more content to make the dialog require more space.
+                    </div>
                   </div>
                 `;
               default:

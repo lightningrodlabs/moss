@@ -236,7 +236,7 @@ export class SplashScreen extends LitElement {
         <div class="bottom-left">${this.progressState}</div>
         <div class="bottom-right">
           <div class="row" style="align-items: center;">
-            <span style="color: white; margin-left: 6px;">Lightnigrod Labs</span>
+            <span style="color: white; margin-left: 6px;">Lightningrod Labs</span>
             <img src="lightningrodlabs_logo.png" style="height: 30px; margin-left: 6px" />
           </div>
         </div>

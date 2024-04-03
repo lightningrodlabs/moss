@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
-import { derived, joinMap, pipe, StoreSubscriber } from '@holochain-open-dev/stores';
+import { derived, joinMap, pipe, StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../groups/context.js';
@@ -49,6 +49,27 @@ export class GroupSidebarButton extends LitElement {
     () => [this._groupStore],
   );
 
+  _unsubscribe: Unsubscriber | undefined;
+
+  disconnectedCallback(): void {
+    if (this._unsubscribe) this._unsubscribe();
+  }
+
+  firstUpdated() {
+    this._unsubscribe = this._onlineAgents.store.subscribe((value) => {
+      // TODO emit event if first agent comes online
+      if (value.status === 'complete' && value.value.length > 0) {
+        this.dispatchEvent(
+          new CustomEvent('agents-online', {
+            detail: this._groupStore.groupDnaHash,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }
+    });
+  }
+
   @property()
   logoSrc!: string;
 
@@ -79,9 +100,26 @@ export class GroupSidebarButton extends LitElement {
   renderOnlineCount() {
     switch (this._onlineAgents.value.status) {
       case 'pending':
-        return html``;
+        return html`
+          <div
+            class="row center-content online-agents gray"
+            title="${msg('Loading number of online members')}"
+          >
+            <sl-spinner
+              style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
+            ></sl-spinner>
+          </div>
+        `;
       case 'error':
-        return html``;
+        return html`
+          <div
+            class="row center-content online-agents gray"
+            style="color: red; font-weight: bold;"
+            title="${msg('Error while loading number of online members')}"
+          >
+            x
+          </div>
+        `;
       case 'complete':
         const onlineAgentCount = this._onlineAgents.value.value.length;
         setTimeout(() => {
@@ -96,7 +134,7 @@ export class GroupSidebarButton extends LitElement {
           >
             ${this._loadingPeerCount
               ? html`<sl-spinner
-                  style="font-size: 10px; margin-right: 5px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
+                  style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
                 ></sl-spinner>`
               : html`
                   <sl-icon

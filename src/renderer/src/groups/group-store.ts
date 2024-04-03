@@ -137,6 +137,7 @@ export class GroupStore {
         );
       }
     }
+    await this.mossStore.reloadManualStores();
   }
 
   /**
@@ -206,6 +207,8 @@ export class GroupStore {
         );
       }
     }
+
+    await this.mossStore.reloadManualStores();
 
     return appletHash;
   }

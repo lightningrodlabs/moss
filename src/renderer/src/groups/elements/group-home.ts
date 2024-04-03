@@ -267,7 +267,7 @@ export class GroupHome extends LitElement {
           groupStore.groupClient.abandonApplet(appletHash),
         ),
       );
-      this.mossStore.reloadManualStores();
+      await this.mossStore.reloadManualStores();
     } catch (e) {
       console.error(`Failed to uninstall Applet instance: ${e}`);
       notifyError(msg('Failed to uninstall Applet instance.'));
@@ -367,9 +367,7 @@ export class GroupHome extends LitElement {
                           style="margin-right: 5px;"
                           .agentPubKey=${info.agentKey}
                         ></agent-avatar>
-                        <span
-                          >${msg('added an instance of ')}</span
-                        >
+                        <span>${msg('added an instance of ')}</span>
                         <span
                           style="margin-left: 5px; font-weight: bold; ${info.appEntry?.title
                             ? ''
@@ -377,19 +375,24 @@ export class GroupHome extends LitElement {
                           >${info.appEntry ? info.appEntry.title : 'unknown'}&nbsp;
                         </span>
                       </div>
-                      <div style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;">
+                      <div
+                        style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;"
+                      >
                         ${timeAgo.format(new Date(info.timestamp / 1000))}
                       </div>
                     </div>
                     <div class="card-content" style="align-items: center;">
-                     
                       <sl-tooltip
                         style="${info.appEntry ? '' : 'display: none;'}"
                         content="${info.appEntry?.subtitle}"
                       >
-                          ${info.logo
-                            ? html`<img src=${info.logo} alt="Applet logo" style="height: 80px; margin-right: 10px;" />`
-                            : html``}
+                        ${info.logo
+                          ? html`<img
+                              src=${info.logo}
+                              alt="Applet logo"
+                              style="height: 80px; margin-right: 10px;"
+                            />`
+                          : html``}
                       </sl-tooltip>
                       <span style="font-weight: bold; font-size: 24px;"
                         >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
@@ -708,7 +711,7 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <profile-prompt 
+          <profile-prompt
             ><span slot="hero" style="max-width: 500px; margin-bottom: 32px" class="placeholder"
               >${msg(
                 'Create your personal profile for this group. Only members of this group will be able to see your profile.',
@@ -731,7 +734,7 @@ export class GroupHome extends LitElement {
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: rgba(86, 113, 71, 1.0);
+        background-color: rgba(86, 113, 71, 1);
         padding: 8px;
         border-radius: 5px 0 0 0;
       }
