@@ -95,11 +95,11 @@ jobs:
           yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
           ls dist
 
-          dotnet tool install --global --version 4.0.1 AzureSignTool
-          echo "sha512 before code signing"
-          CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
-          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
-          echo "sha512 after code signing"
-          CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          # dotnet tool install --global --version 4.0.1 AzureSignTool
+          # echo "sha512 before code signing"
+          # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          # AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
+          # echo "sha512 after code signing"
+          # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
