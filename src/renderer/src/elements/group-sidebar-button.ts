@@ -79,9 +79,26 @@ export class GroupSidebarButton extends LitElement {
   renderOnlineCount() {
     switch (this._onlineAgents.value.status) {
       case 'pending':
-        return html``;
+        return html`
+          <div
+            class="row center-content online-agents gray"
+            title="${msg('Loading number of online members')}"
+          >
+            <sl-spinner
+              style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
+            ></sl-spinner>
+          </div>
+        `;
       case 'error':
-        return html``;
+        return html`
+          <div
+            class="row center-content online-agents gray"
+            style="color: red; font-weight: bold;"
+            title="${msg('Error while loading number of online members')}"
+          >
+            x
+          </div>
+        `;
       case 'complete':
         const onlineAgentCount = this._onlineAgents.value.value.length;
         setTimeout(() => {
@@ -96,7 +113,7 @@ export class GroupSidebarButton extends LitElement {
           >
             ${this._loadingPeerCount
               ? html`<sl-spinner
-                  style="font-size: 10px; margin-right: 5px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
+                  style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
                 ></sl-spinner>`
               : html`
                   <sl-icon
