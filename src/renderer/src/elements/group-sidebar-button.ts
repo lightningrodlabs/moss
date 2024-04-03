@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
-import { derived, joinMap, pipe, StoreSubscriber } from '@holochain-open-dev/stores';
+import { derived, joinMap, pipe, StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../groups/context.js';
@@ -48,6 +48,27 @@ export class GroupSidebarButton extends LitElement {
       ),
     () => [this._groupStore],
   );
+
+  _unsubscribe: Unsubscriber | undefined;
+
+  disconnectedCallback(): void {
+    if (this._unsubscribe) this._unsubscribe();
+  }
+
+  firstUpdated() {
+    this._unsubscribe = this._onlineAgents.store.subscribe((value) => {
+      // TODO emit event if first agent comes online
+      if (value.status === 'complete' && value.value.length > 0) {
+        this.dispatchEvent(
+          new CustomEvent('agents-online', {
+            detail: this._groupStore.groupDnaHash,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }
+    });
+  }
 
   @property()
   logoSrc!: string;
