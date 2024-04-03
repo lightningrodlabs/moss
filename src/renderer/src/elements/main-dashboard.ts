@@ -132,6 +132,9 @@ export class MainDashboard extends LitElement {
   _openGroups: DnaHash[] = [];
 
   @state()
+  _openApplets: AppletHash[] = [];
+
+  @state()
   _selectedTab: TabInfo | undefined;
 
   _dashboardState = new StoreSubscriber(
@@ -169,6 +172,13 @@ export class MainDashboard extends LitElement {
       if (groupDnaHashes.length === 0) {
         notifyError('Applet not found in any of your groups.');
         throw new Error('Applet not found in any of your groups.');
+      }
+      if (
+        !this._openApplets
+          .map((appletHash) => appletHash.toString())
+          .includes(appletHash.toString())
+      ) {
+        this._openApplets = [...this._openApplets, appletHash];
       }
       // pick an arbitrary group this applet is installed in
       const groupDnaHash = groupDnaHashes[0];
@@ -274,6 +284,13 @@ export class MainDashboard extends LitElement {
                 groupDnaHash: DnaHash;
               };
             }) => {
+              if (
+                !this._openApplets
+                  .map((appletHash) => appletHash.toString())
+                  .includes(e.detail.appletEntryHash.toString())
+              ) {
+                this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+              }
               this._mossStore.setDashboardState({
                 viewType: 'group',
                 groupHash: e.detail.groupDnaHash,
@@ -576,7 +593,7 @@ export class MainDashboard extends LitElement {
         .map((hash) => encodeHashToBase64(hash))
         .includes(encodeHashToBase64(groupDnaHash))
     ) {
-      this._openGroups.push(groupDnaHash);
+      this._openGroups = [...this._openGroups, groupDnaHash];
     }
     this._mossStore.setDashboardState({
       viewType: 'group',
@@ -595,22 +612,41 @@ export class MainDashboard extends LitElement {
     // });
   }
 
-  renderAppletMainViews() {
-    switch (this._runningApplets.value.status) {
-      case 'pending':
-        return html`Loading running applets...`;
-      case 'error':
-        return html`Failed to get running applets: ${this._runningApplets.value.error}`;
-      case 'complete':
-        return html`
-          ${this._runningApplets.value.value.map((appletHash) => {
-            return html`<applet-main
-              .appletHash=${appletHash}
-              style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
-            ></applet-main>`;
-          })}
-        `;
+  async activateAppletsForGroup(groupDnaHash) {
+    console.log('Activating applets for group: ', encodeHashToBase64(groupDnaHash));
+
+    if (
+      !this._openGroups
+        .map((hash) => encodeHashToBase64(hash))
+        .includes(encodeHashToBase64(groupDnaHash))
+    ) {
+      this._openGroups = [...this._openGroups, groupDnaHash];
     }
+
+    const groupStore = await this._mossStore.groupStore(groupDnaHash);
+    if (groupStore) {
+      const runningGroupApplets = await toPromise(groupStore.allMyRunningApplets);
+      const openApplets = this._openApplets;
+      const openAppletsStringified = openApplets.map((appletHash) => appletHash.toString());
+      runningGroupApplets.forEach((appletHash) => {
+        if (!openAppletsStringified.includes(appletHash.toString())) {
+          openApplets.push(appletHash);
+        }
+      });
+    } else {
+      console.warn('Failed to activate applets for group since group store is not (yet) defined.');
+    }
+  }
+
+  renderAppletMainViews() {
+    return this._openApplets.map(
+      (appletHash) => html`
+        <applet-main
+          .appletHash=${appletHash}
+          style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
+        ></applet-main>
+      `,
+    );
   }
 
   renderDashboard() {
@@ -638,6 +674,13 @@ export class MainDashboard extends LitElement {
                   groupDnaHash: DnaHash;
                 };
               }) => {
+                if (
+                  !this._openApplets
+                    .map((appletHash) => appletHash.toString())
+                    .includes(e.detail.appletEntryHash.toString())
+                ) {
+                  this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+                }
                 this._mossStore.setDashboardState({
                   viewType: 'group',
                   groupHash: e.detail.groupDnaHash,
@@ -1051,6 +1094,10 @@ export class MainDashboard extends LitElement {
           }}
           @request-create-group=${() =>
             (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
+          @agents-online=${async (e: CustomEvent) => {
+            /// Only start applet iframes for groups where agents are actually online
+            await this.activateAppletsForGroup(e.detail);
+          }}
         ></groups-sidebar>
 
         <span style="display: flex; flex: 1;"></span>
@@ -1128,6 +1175,13 @@ export class MainDashboard extends LitElement {
                     @applet-selected=${(e: {
                       detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
                     }) => {
+                      if (
+                        !this._openApplets
+                          .map((appletHash) => appletHash.toString())
+                          .includes(e.detail.appletHash.toString())
+                      ) {
+                        this._openApplets = [...this._openApplets, e.detail.appletHash];
+                      }
                       this._mossStore.setDashboardState({
                         viewType: 'group',
                         groupHash: e.detail.groupDnaHash,
