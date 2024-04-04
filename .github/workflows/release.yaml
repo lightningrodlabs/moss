@@ -102,4 +102,7 @@ jobs:
           # echo "sha512 after code signing"
           # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
+          # # Overwrite the latest.yml one with one containing the sha512 of the code signed .exe file
+          # node ./scripts/latest-yaml.js
+          # gh release upload "latest.yml" "latest.yml" --clobber
           # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
