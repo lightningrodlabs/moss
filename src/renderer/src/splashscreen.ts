@@ -369,10 +369,6 @@ export class SplashScreen extends LitElement {
           justify-content: center;
           align-items: center;
           height: 100vh;
-          /* background-color: #331ead;
-          background-size: cover;
-          background-position: center center;
-          background-image: url(moss_mushrooms.jpg); */
         }
       `,
     ];

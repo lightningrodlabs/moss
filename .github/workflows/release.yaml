@@ -95,6 +95,7 @@ jobs:
           yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
           ls dist
 
+          # # Sign the .exe file
           # dotnet tool install --global --version 4.0.1 AzureSignTool
           # echo "sha512 before code signing"
           # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
