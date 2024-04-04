@@ -503,6 +503,22 @@ app.whenReady().then(async () => {
       },
     },
     {
+      label: 'Restart',
+      type: 'normal',
+      click() {
+        let options: Electron.RelaunchOptions = {
+          args: process.argv,
+        };
+        if (process.env.APPIMAGE) {
+          console.log('process.execPath: ', process.execPath);
+          options.args!.unshift('--appimage-extract-and-run');
+          options.execPath = process.env.APPIMAGE;
+        }
+        app.relaunch(options);
+        app.exit(0);
+      },
+    },
+    {
       label: 'Quit',
       type: 'normal',
       click() {
