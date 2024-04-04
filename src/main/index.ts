@@ -509,6 +509,7 @@ app.whenReady().then(async () => {
         let options: Electron.RelaunchOptions = {
           args: process.argv,
         };
+        // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
         if (process.env.APPIMAGE) {
           console.log('process.execPath: ', process.execPath);
           options.args!.unshift('--appimage-extract-and-run');
