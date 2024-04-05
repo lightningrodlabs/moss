@@ -1,4 +1,5 @@
 import { BrowserWindow, shell } from 'electron';
+import semver from 'semver';
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
@@ -56,4 +57,24 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
 
 export function emitToWindow<T>(targetWindow: BrowserWindow, channel: string, payload: T): void {
   targetWindow.webContents.send(channel, payload);
+}
+
+export function breakingVersion(version: string): string {
+  if (!semver.valid(version)) {
+    throw new Error('App has an invalid version number.');
+  }
+  if (semver.prerelease(version)) {
+    return version;
+  }
+  switch (semver.major(version)) {
+    case 0:
+      switch (semver.minor(version)) {
+        case 0:
+          return `0.0.${semver.patch(version)}`;
+        default:
+          return `0.${semver.minor(version)}.x`;
+      }
+    default:
+      return `${semver.major(version)}.x.x`;
+  }
 }

@@ -31,7 +31,7 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { emitToWindow, setLinkOpenHandlers } from './utils';
+import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
@@ -46,6 +46,7 @@ import { InstalledAppId } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
+import { autoUpdater } from 'electron-updater';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -503,6 +504,23 @@ app.whenReady().then(async () => {
       },
     },
     {
+      label: 'Restart',
+      type: 'normal',
+      click() {
+        let options: Electron.RelaunchOptions = {
+          args: process.argv,
+        };
+        // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+        if (process.env.APPIMAGE) {
+          console.log('process.execPath: ', process.execPath);
+          options.args!.unshift('--appimage-extract-and-run');
+          options.execPath = process.env.APPIMAGE;
+        }
+        app.relaunch(options);
+        app.exit(0);
+      },
+    },
+    {
       label: 'Quit',
       type: 'normal',
       click() {
@@ -924,6 +942,46 @@ app.whenReady().then(async () => {
     MAIN_WINDOW = createOrShowMainWindow();
   } else {
     SPLASH_SCREEN_WINDOW = createSplashscreenWindow();
+
+    // Check for updates
+    if (app.isPackaged) {
+      autoUpdater.allowPrerelease = true;
+      autoUpdater.autoDownload = false;
+
+      const updateCheckResult = await autoUpdater.checkForUpdates();
+
+      // We only install semver compatible updates
+      if (
+        updateCheckResult &&
+        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion)
+      ) {
+        const userDecision = await dialog.showMessageBox({
+          title: 'Update Available',
+          type: 'question',
+          buttons: ['Deny', 'Install and Restart'],
+          defaultId: 0,
+          cancelId: 0,
+          message: `A new compatible version of Moss is available (${updateCheckResult.updateInfo.version}). Do you want to install it?\n\nRelease notes can be found at:\nhttps://github.com/lightningrodlabs/we/releases/v${updateCheckResult.updateInfo.version}`,
+        });
+        if (userDecision.response === 1) {
+          // downloading means that with the next start of the application it's automatically going to be installed
+          await autoUpdater.downloadUpdate();
+          let options: Electron.RelaunchOptions = {
+            args: process.argv,
+          };
+          // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+          if (process.env.APPIMAGE) {
+            options.args!.unshift('--appimage-extract-and-run');
+            options.execPath = process.env.APPIMAGE.replace(
+              appVersion,
+              updateCheckResult.updateInfo.version,
+            );
+          }
+          app.relaunch(options);
+          app.exit(0);
+        }
+      }
+    }
   }
 });
 
