@@ -23,6 +23,7 @@ import { createHash } from 'crypto';
 import { Command, Option } from 'commander';
 import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
+import semver from 'semver';
 
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
 import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
@@ -950,10 +951,13 @@ app.whenReady().then(async () => {
 
       const updateCheckResult = await autoUpdater.checkForUpdates();
 
+      console.log('updateCheckResult: ', updateCheckResult);
+
       // We only install semver compatible updates
       if (
         updateCheckResult &&
-        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion)
+        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
+        semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
         const userDecision = await dialog.showMessageBox({
           title: 'Update Available',
