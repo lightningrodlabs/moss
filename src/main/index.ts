@@ -508,7 +508,7 @@ app.whenReady().then(async () => {
       label: 'Restart',
       type: 'normal',
       click() {
-        let options: Electron.RelaunchOptions = {
+        const options: Electron.RelaunchOptions = {
           args: process.argv,
         };
         // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927

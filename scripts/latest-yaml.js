@@ -27,7 +27,7 @@ const latestYaml = {
     {
       url: exeFileName,
       sha512,
-      size: 'unknown',
+      size: fileBytes.length,
     },
   ],
   path: exeFileName,
@@ -38,4 +38,4 @@ const latestYaml = {
 console.log('sha512: ', sha512);
 console.log('modified latest.yaml: ', latestYaml);
 
-fs.writeFileSync('latest.yml', latestYaml, 'utf-8');
+fs.writeFileSync('latest.yml', yaml.dump(latestYaml, { lineWidth: -1 }), 'utf-8');

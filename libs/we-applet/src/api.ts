@@ -23,7 +23,7 @@ import {
   WeaveLocation,
   FrameNotification,
 } from './types';
-import { postMessage } from './utils';
+import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 

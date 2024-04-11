@@ -240,6 +240,8 @@ export class GroupHome extends LitElement {
       await this.mossStore.checkForUiUpdates();
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
       notify(msg('Applet UI updated.'));
+      // Required to have the browser refetch the UI. A nicer approach would be to selectively only
+      // reload the iframes associated to that applet
       window.location.reload();
     } catch (e) {
       console.error(`Failed to update UI: ${e}`);
