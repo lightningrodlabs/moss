@@ -8,7 +8,7 @@ files:
   - moss.config.json
 asarUnpack:
   - resources/**
-  - *.node # https://github.com/electron/packager/issues/217#issuecomment-232376957
+  - '**/*.node'
 afterSign: scripts/notarize.js
 win:
   executableName: lightningrodlabs-we
