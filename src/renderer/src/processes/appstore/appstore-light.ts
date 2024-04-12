@@ -39,6 +39,19 @@ export async function getMyPublishers(
   return responseToPromise(response, 'getMyPublishers');
 }
 
+export async function getAllPublishers(
+  appstoreClient: AppAgentClient,
+): Promise<Entity<PublisherEntry>[]> {
+  const response: DevHubResponse<Entity<PublisherEntry>[]> = await appstoreClient.callZome({
+    role_name: 'appstore',
+    zome_name: 'appstore_api',
+    fn_name: 'get_all_publishers',
+    payload: null,
+  });
+  console.log('FISH', response);
+  return responseToPromise(response, 'get_all_publishers');
+}
+
 export async function createApp(
   appstoreClient: AppAgentClient,
   payload: CreateAppInput,

@@ -3,7 +3,7 @@ import { consume } from '@lit/context';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
+import { DnaHashB64, EntryHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -17,9 +17,11 @@ import './group-context.js';
 import { weStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
+import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
+import { getAllPublishers } from '../../processes/appstore/appstore-light.js';
+import TimeAgo from 'javascript-time-ago';
 
 @localized()
 @customElement('installable-applets')
@@ -45,6 +47,30 @@ export class InstallableApplets extends LitElement {
   @state()
   _selectedAppEntry: Entity<AppEntry> | undefined;
 
+  @state()
+  publishers: Entity<PublisherEntry>[] = [];
+  async firstUpdated() {
+    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
+    this.publishers = await getAllPublishers(appStoreClient);
+    console.log('PUBS', this.publishers);
+  }
+
+  timeAgo = new TimeAgo('en-US');
+
+  renderPublisher(publisherHash: EntryHash) {
+    const hB64 = encodeHashToBase64(publisherHash);
+    const publisher = this.publishers.find((p) => encodeHashToBase64(p.id) == hB64);
+    return html`
+      <div class="row" style="align-items: center;">
+        <img
+          src=${publisher?.content.icon_src}
+          style="width: 40px; height: 40px; border-radius: 10px; margin-left: 10px;"
+        />
+        ${publisher?.content.name}
+      </div>
+    `;
+  }
+
   renderInstallableApplet(appEntry: Entity<AppEntry>) {
     return html`
       <sl-card
@@ -63,17 +89,24 @@ export class InstallableApplets extends LitElement {
         }}
       >
         <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
-          ${appEntry.content.icon_src
-            ? html`<img
-                src=${appEntry.content.icon_src}
-                alt="${appEntry.content.title} applet icon"
-                style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
-              />`
-            : html``}
+          ${
+            appEntry.content.icon_src
+              ? html`<img
+                  src=${appEntry.content.icon_src}
+                  alt="${appEntry.content.title} applet icon"
+                  style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
+                />`
+              : html``
+          }
           <span style="font-size: 18px;">${appEntry.content.title}</span>
         </div>
-        <div class="column" style="flex: 1">
+        <div class="column" style="flex: 1;">
           <span style="flex: 1">${appEntry.content.subtitle}</span>
+          <span style="flex: 1; margin-top:5px"
+            ><span>
+              Published ${this.timeAgo.format(appEntry.content.published_at)} by </span>
+            </span> ${this.renderPublisher(appEntry.content.publisher)}</span
+          >
         </div>
       </sl-card>
     `;
