@@ -20,6 +20,8 @@ import { mossStoreContext } from '../../context.js';
 import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
+import TimeAgo from 'javascript-time-ago';
+import '../../applet-bundles/elements/applet-publisher.js';
 
 @localized()
 @customElement('installable-applets')
@@ -45,6 +47,10 @@ export class InstallableApplets extends LitElement {
   @state()
   _selectedAppEntry: Entity<AppEntry> | undefined;
 
+  async firstUpdated() {}
+
+  timeAgo = new TimeAgo('en-US');
+
   renderInstallableApplet(appEntry: Entity<AppEntry>) {
     return html`
       <sl-card
@@ -63,17 +69,26 @@ export class InstallableApplets extends LitElement {
         }}
       >
         <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
-          ${appEntry.content.icon_src
-            ? html`<img
-                src=${appEntry.content.icon_src}
-                alt="${appEntry.content.title} applet icon"
-                style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
-              />`
-            : html``}
+          ${
+            appEntry.content.icon_src
+              ? html`<img
+                  src=${appEntry.content.icon_src}
+                  alt="${appEntry.content.title} applet icon"
+                  style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
+                />`
+              : html``
+          }
           <span style="font-size: 18px;">${appEntry.content.title}</span>
         </div>
-        <div class="column" style="flex: 1">
+        <div class="column" style="flex: 1;">
           <span style="flex: 1">${appEntry.content.subtitle}</span>
+          <span style="flex: 1; margin-top:5px"
+            >
+            <div style="font-size:90%;margin-bottom:5px;">
+              Published ${this.timeAgo.format(appEntry.content.published_at)} by </span>
+            </div> 
+            <applet-publisher .publisherHash=${appEntry.content.publisher}></applet-publisher>
+          </span>
         </div>
       </sl-card>
     `;
@@ -141,6 +156,10 @@ export class InstallableApplets extends LitElement {
 
   static styles = [
     css`
+      sl-card::part(body) {
+        padding-top: 5px;
+      }
+
       .applet-card {
         width: 300px;
         height: 180px;

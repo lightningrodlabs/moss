@@ -223,11 +223,13 @@ export class WelcomeView extends LitElement {
                 ${
                   this.notificationsLoading
                     ? html``
-                    : this._notificationFeed.value.map(
-                        (appletNotification) => html`
-                          <feed-element .notification=${appletNotification}></feed-element>
-                        `,
-                      )
+                    : this._notificationFeed.value
+                        .map(
+                          (appletNotification) => html`
+                            <feed-element .notification=${appletNotification}></feed-element>
+                          `,
+                        )
+                        .slice(0, 25)
                 }
                 <div style="min-height: 30px;"></div>
               </div>
