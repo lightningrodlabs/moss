@@ -825,7 +825,6 @@ export class PublishingView extends LitElement {
         display: flex;
         flex: 1;
       }
-
       .applet-card {
         border-radius: 20px;
         border: 1px solid black;

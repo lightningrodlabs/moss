@@ -3,7 +3,7 @@ import { consume } from '@lit/context';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { DnaHashB64, EntryHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -17,7 +17,7 @@ import './group-context.js';
 import { weStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types.js';
+import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
 import TimeAgo from 'javascript-time-ago';
@@ -50,20 +50,6 @@ export class InstallableApplets extends LitElement {
   async firstUpdated() {}
 
   timeAgo = new TimeAgo('en-US');
-
-  renderPublisher(publisherHash: EntryHash) {
-    const hB64 = encodeHashToBase64(publisherHash);
-    const publisher = this.publishers.find((p) => encodeHashToBase64(p.id) == hB64);
-    return html`
-      <div class="row" style="align-items: center;">
-        <img
-          src=${publisher?.content.icon_src}
-          style="width: 40px; height: 40px; border-radius: 10px; margin-left: 10px;"
-        />
-        ${publisher?.content.name}
-      </div>
-    `;
-  }
 
   renderInstallableApplet(appEntry: Entity<AppEntry>) {
     return html`
@@ -170,6 +156,10 @@ export class InstallableApplets extends LitElement {
 
   static styles = [
     css`
+      sl-card::part(body) {
+        padding-top: 5px;
+      }
+
       .applet-card {
         width: 300px;
         height: 180px;

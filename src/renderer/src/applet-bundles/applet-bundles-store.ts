@@ -54,16 +54,6 @@ export class AppletBundlesStore {
     lazyLoad(async () => this._getPublisher(publisherHash)),
   );
 
-  private async _getAllPublishers(): Promise<Entity<PublisherEntry>[]> {
-    const response: DevHubResponse<Entity<PublisherEntry>[]> = await this.appstoreClient.callZome({
-      role_name: 'appstore',
-      zome_name: 'appstore_api',
-      fn_name: 'get_all_publishers',
-      payload: null,
-    });
-    return responseToPromise(response, 'get_all_publishers');
-  }
-
   private async _getPublisher(id: ActionHash): Promise<Entity<PublisherEntry>> {
     const response: DevHubResponse<Entity<PublisherEntry>> = await this.appstoreClient.callZome({
       role_name: 'appstore',
