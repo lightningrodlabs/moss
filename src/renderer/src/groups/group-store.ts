@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
@@ -34,7 +34,13 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet, RegisterAppletInput } from '../types.js';
-import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
+import {
+  appIdFromAppletHash,
+  getAllIframes,
+  isAppDisabled,
+  isAppRunning,
+  toLowerCaseB64,
+} from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
@@ -217,7 +223,7 @@ export class GroupStore {
    * Disables all applets of this group and stores which applets had already been disabled
    * in order to not re-enable those when enabling all applets again
    */
-  async disableAllApplets() {
+  async disableAllApplets(): Promise<Array<AppletHash>> {
     const installedApplets = await toPromise(this.allMyInstalledApplets);
     const installedApps = await this.mossStore.adminWebsocket.listApps({});
     const disabledAppIds = installedApps
@@ -230,6 +236,8 @@ export class GroupStore {
     // persist which applets have already been disabled
     this.mossStore.persistedStore.disabledGroupApplets.set(disabledAppletsIds, this.groupDnaHash);
 
+    const appletsToDisable: Array<AppletHash> = [];
+
     for (const appletHash of installedApplets) {
       // federated applets can only be disabled exlicitly
       const federatedGroups = await this.groupClient.getFederatedGroups(appletHash);
@@ -237,9 +245,11 @@ export class GroupStore {
         await this.mossStore.adminWebsocket.disableApp({
           installed_app_id: appIdFromAppletHash(appletHash),
         });
+        appletsToDisable.push(appletHash);
       }
     }
     await this.mossStore.reloadManualStores();
+    return appletsToDisable;
   }
 
   /**
