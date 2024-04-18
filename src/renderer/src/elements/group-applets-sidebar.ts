@@ -55,7 +55,9 @@ export class GroupAppletsSidebar extends LitElement {
           class="row"
           style="align-items: center; font-size: 20px; padding-left: 10px; font-weight: 500;"
         >
-          <span style="color: #fff; font-size: 14px; opacity: .5;"> No applets installed. Join an applet to get started... </span>
+          <span style="color: #fff; font-size: 14px; opacity: .5;">
+            No applets installed or all applets disabled...
+          </span>
         </div>
       `;
     }
