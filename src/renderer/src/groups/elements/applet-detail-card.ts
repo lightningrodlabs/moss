@@ -206,6 +206,13 @@ export class AppletDetailCard extends LitElement {
                       }
                     }
                     await this.mossStore.disableApplet(this.appletHash);
+                    this.dispatchEvent(
+                      new CustomEvent('applets-disabled', {
+                        detail: [this.appletHash],
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
                     notify(msg('Applet disabled.'));
                   } else if (this.appInfo && !isAppRunning(this.appInfo)) {
                     await this.mossStore.enableApplet(this.appletHash);

@@ -35,7 +35,14 @@ export class ExampleApplet extends LitElement {
   @property()
   attachmentsStore!: AttachmentsStore;
 
+  @property()
+  interval: any;
+
   firstUpdated() {
+    // To test whether applet iframe properly gets removed after disabling applet.
+    setInterval(() => {
+      console.log('Hello from the example applet iframe.');
+    }, 3000);
     // if (this.weClient.renderInfo.type === 'applet-view') {
     //   const groupProfiles = this.weClient.renderInfo.groupProfiles;
     //   const appletHash = this.weClient.renderInfo.appletHash;

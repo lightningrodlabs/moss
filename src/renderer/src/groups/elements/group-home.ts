@@ -608,6 +608,15 @@ export class GroupHome extends LitElement {
         html`<group-applets-settings
           @update-ui=${async (e) => this.updateUi(e)}
           @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+          @applets-disabled=${(e) => {
+            this.dispatchEvent(
+              new CustomEvent('applets-disabled', {
+                detail: e.detail,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
           style="display: flex; flex: 1;"
         ></group-applets-settings>`,
       ],

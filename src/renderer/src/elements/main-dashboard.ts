@@ -691,6 +691,13 @@ export class MainDashboard extends LitElement {
                   this._mossStore.setAssetViewerState({ position: 'front', visible: false });
                 }
               }}
+              @applets-disabled=${(e: { detail: Array<AppletHash> }) => {
+                // Make sure applet iframes get removed in the background
+                const disabledApplets = e.detail.map((appletHash) => appletHash.toString());
+                this._openApplets = this._openApplets.filter(
+                  (appletHash) => !disabledApplets.includes(appletHash.toString()),
+                );
+              }}
               @custom-view-selected=${(_e) => {
                 throw new Error('Displaying custom views is currently not implemented.');
               }}

@@ -71,9 +71,6 @@ export class GroupAppletsSettings extends LitElement {
   );
 
   @state(hashState())
-  appletToDisable: EntryHash | undefined;
-
-  @state(hashState())
   appletToUnarchive: EntryHash | undefined;
 
   @state(hashState())
@@ -127,8 +124,14 @@ export class GroupAppletsSettings extends LitElement {
                 @federate-applet=${(e) => {
                   this.appletToFederate = e.detail;
                 }}
-                @disable-applet=${(e) => {
-                  this.appletToDisable = e.detail;
+                @applets-disabled=${(e) => {
+                  this.dispatchEvent(
+                    new CustomEvent('applets-disabled', {
+                      detail: e.detail,
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
                 }}
                 .appletHash=${appletHash}
                 .applet=${applet}
@@ -184,7 +187,14 @@ export class GroupAppletsSettings extends LitElement {
                           await this._groupStore.reEnableAllApplets();
                           notify(msg('Applets re-enabled.'));
                         } else {
-                          await this._groupStore.disableAllApplets();
+                          const disabledApplets = await this._groupStore.disableAllApplets();
+                          this.dispatchEvent(
+                            new CustomEvent('applets-disabled', {
+                              detail: disabledApplets,
+                              bubbles: true,
+                              composed: true,
+                            }),
+                          );
                           notify(msg('All Applets disabled.'));
                         }
                       }}
