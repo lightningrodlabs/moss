@@ -1,5 +1,6 @@
 import winston, { createLogger, transports, format } from 'winston';
 import path from 'path';
+import fs from 'fs';
 import { WeFileSystem } from './filesystem';
 import {
   HOLOCHAIN_ERROR,
@@ -25,9 +26,20 @@ export function setupLogs(
   holochainLogsToTerminal: boolean,
 ) {
   const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
-  // with file rotation set maxsize. But then we require logic to garbage collect old files...
-  // const logFileTransport = new transports.File({ filename: logFilePath, maxsize: 50_000_000, maxfiles: 5 });
-  const logFileTransport = new transports.File({ filename: logFilePath });
+  const stats = fs.statSync(logFilePath);
+  // If logfile is larger than 1GB, delete it
+  if (stats.size > 1e9) {
+    console.log("Found a log file that's larger than 1GB. Deleting it.");
+    fs.rmSync(logFilePath);
+  }
+
+  // Use log file rotation with max size of a single file of 50MB and max 5 total files
+  const logFileTransport = new transports.File({
+    filename: logFilePath,
+    maxsize: 50_000_000,
+    maxFiles: 5,
+  });
+  // const logFileTransport = new transports.File({ filename: logFilePath });
   const lairLogger = createLairLogger(logFileTransport);
 
   weEmitter.on(LAIR_LOG, (log) => {
