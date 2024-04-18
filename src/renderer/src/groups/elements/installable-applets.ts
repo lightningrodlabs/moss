@@ -20,8 +20,8 @@ import { mossStoreContext } from '../../context.js';
 import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
-import { getAllPublishers } from '../../processes/appstore/appstore-light.js';
 import TimeAgo from 'javascript-time-ago';
+import '../../applet-bundles/elements/applet-publisher.js';
 
 @localized()
 @customElement('installable-applets')
@@ -47,13 +47,7 @@ export class InstallableApplets extends LitElement {
   @state()
   _selectedAppEntry: Entity<AppEntry> | undefined;
 
-  @state()
-  publishers: Entity<PublisherEntry>[] = [];
-  async firstUpdated() {
-    const appStoreClient = this.mossStore.appletBundlesStore.appstoreClient;
-    this.publishers = await getAllPublishers(appStoreClient);
-    console.log('PUBS', this.publishers);
-  }
+  async firstUpdated() {}
 
   timeAgo = new TimeAgo('en-US');
 
@@ -103,10 +97,12 @@ export class InstallableApplets extends LitElement {
         <div class="column" style="flex: 1;">
           <span style="flex: 1">${appEntry.content.subtitle}</span>
           <span style="flex: 1; margin-top:5px"
-            ><span>
+            >
+            <div style="font-size:90%;margin-bottom:5px;">
               Published ${this.timeAgo.format(appEntry.content.published_at)} by </span>
-            </span> ${this.renderPublisher(appEntry.content.publisher)}</span
-          >
+            </div> 
+            <applet-publisher .publisherHash=${appEntry.content.publisher}></applet-publisher>
+          </span>
         </div>
       </sl-card>
     `;

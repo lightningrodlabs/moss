@@ -1,4 +1,10 @@
-import { asyncDerived, lazyLoadAndPoll, pipe, retryUntilSuccess } from '@holochain-open-dev/stores';
+import {
+  asyncDerived,
+  lazyLoad,
+  lazyLoadAndPoll,
+  pipe,
+  retryUntilSuccess,
+} from '@holochain-open-dev/stores';
 import { EntryRecord, LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
   ActionHash,
@@ -10,7 +16,7 @@ import {
 } from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
 import { getAllApps, responseToPromise } from '../processes/appstore/appstore-light.js';
-import { AppEntry, DevHubResponse, Entity } from '../processes/appstore/types.js';
+import { AppEntry, DevHubResponse, Entity, PublisherEntry } from '../processes/appstore/types.js';
 
 export class AppletBundlesStore {
   constructor(
@@ -43,6 +49,30 @@ export class AppletBundlesStore {
       }),
     ),
   );
+
+  allPublishers = new LazyHoloHashMap((publisherHash: ActionHash) =>
+    lazyLoad(async () => this._getPublisher(publisherHash)),
+  );
+
+  private async _getAllPublishers(): Promise<Entity<PublisherEntry>[]> {
+    const response: DevHubResponse<Entity<PublisherEntry>[]> = await this.appstoreClient.callZome({
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'get_all_publishers',
+      payload: null,
+    });
+    return responseToPromise(response, 'get_all_publishers');
+  }
+
+  private async _getPublisher(id: ActionHash): Promise<Entity<PublisherEntry>> {
+    const response: DevHubResponse<Entity<PublisherEntry>> = await this.appstoreClient.callZome({
+      role_name: 'appstore',
+      zome_name: 'appstore_api',
+      fn_name: 'get_publisher',
+      payload: { id },
+    });
+    return responseToPromise(response, 'get_publisher');
+  }
 
   async getAppEntry(appActionHash: ActionHash): Promise<EntryRecord<AppEntry>> {
     const record: HolochainRecord | undefined = await this.appstoreClient.callZome({
