@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
@@ -34,13 +34,7 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet, RegisterAppletInput } from '../types.js';
-import {
-  appIdFromAppletHash,
-  getAllIframes,
-  isAppDisabled,
-  isAppRunning,
-  toLowerCaseB64,
-} from '../utils.js';
+import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
