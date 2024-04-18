@@ -130,6 +130,34 @@ export class WelcomeView extends LitElement {
         return html`
           <div class="column" style="align-items: center; flex: 1; overflow: auto;">
             <div class="row" flex-wrap: wrap;">
+            <button
+                class="btn"
+                @click=${(_e) =>
+                  this.dispatchEvent(
+                    new CustomEvent('request-join-group', {
+                      composed: true,
+                      bubbles: true,
+                    }),
+                  )}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this.dispatchEvent(
+                      new CustomEvent('request-join-group', {
+                        composed: true,
+                        bubbles: true,
+                      }),
+                    );
+                  }
+                }}
+              >
+                <div class="row center-content">
+                  <sl-icon
+                    .src=${wrapPathInSvg(mdiAccountLockOpen)}
+                    style="color: white; height: 40px; width: 40px; margin-right: 10px;"
+                  ></sl-icon>
+                  <span>${'Join Group'}</span>
+                </div>
+              </button>
               <button
                 class="btn"
                 @click=${() => {
@@ -178,34 +206,6 @@ export class WelcomeView extends LitElement {
                   <span>${msg('Add Applet')}</span>
                 </div>
               </button>
-              <button
-                class="btn"
-                @click=${(_e) =>
-                  this.dispatchEvent(
-                    new CustomEvent('request-join-group', {
-                      composed: true,
-                      bubbles: true,
-                    }),
-                  )}
-                @keypress=${(e: KeyboardEvent) => {
-                  if (e.key === 'Enter') {
-                    this.dispatchEvent(
-                      new CustomEvent('request-join-group', {
-                        composed: true,
-                        bubbles: true,
-                      }),
-                    );
-                  }
-                }}
-              >
-                <div class="row center-content">
-                  <sl-icon
-                    .src=${wrapPathInSvg(mdiAccountLockOpen)}
-                    style="color: white; height: 40px; width: 40px; margin-right: 10px;"
-                  ></sl-icon>
-                  <span>${'Join Group'}</span>
-                </div>
-              </button>
             </div>
 
             <!-- Notification Feed -->
@@ -220,13 +220,15 @@ export class WelcomeView extends LitElement {
               </div>
               <div class="column feed" style="display:flex; flex: 1;width: 100%;">
                 ${this.notificationsLoading ? html`Loading Notifications...` : html``}
-                ${this.notificationsLoading
-                  ? html``
-                  : this._notificationFeed.value.map(
-                      (appletNotification) => html`
-                        <feed-element .notification=${appletNotification}></feed-element>
-                      `,
-                    )}
+                ${
+                  this.notificationsLoading
+                    ? html``
+                    : this._notificationFeed.value.map(
+                        (appletNotification) => html`
+                          <feed-element .notification=${appletNotification}></feed-element>
+                        `,
+                      )
+                }
                 <div style="min-height: 30px;"></div>
               </div>
             </div>
@@ -240,13 +242,13 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: rgba(57, 67, 51, 1.0);
+        background-color: rgba(57, 67, 51, 1);
         /* opacity: 0.8; */
       }
 
       .recent-activity-header {
         color: #fff;
-        opacity: .5;
+        opacity: 0.5;
         text-align: left;
       }
 
@@ -260,15 +262,15 @@ export class WelcomeView extends LitElement {
         font-size: 16px;
         padding: 10px;
         background: transparent;
-        border: 2px solid #607C02;
+        border: 2px solid #607c02;
         color: white;
         border-radius: 10px;
         cursor: pointer;
-        transition: all .25s ease;
+        transition: all 0.25s ease;
       }
 
       .btn:hover {
-        background: #607C02;
+        background: #607c02;
       }
 
       .btn:active {
@@ -281,11 +283,11 @@ export class WelcomeView extends LitElement {
       }
 
       .feed::-webkit-scrollbar {
-        background-color: rgba(57, 67, 51, 1.0);
+        background-color: rgba(57, 67, 51, 1);
       }
 
       .feed::-webkit-scrollbar-thumb {
-        background: rgba(84, 109, 69, 1.0);
+        background: rgba(84, 109, 69, 1);
         border-radius: 10px;
       }
     `,
