@@ -221,7 +221,7 @@ export class WelcomeView extends LitElement {
                   Please don't expect it to be stable or bug free! That said, we use Moss in-house daily
                   for doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
                   <br><br>
-                  We export data from our tools frequently and sometimes have to recover from these backups.
+                  We export data from our Tools/Applets frequently and sometimes have to recover from these backups.
                   We recommend you do the same.
                   <br><br>
                   What you can/should expect:
@@ -230,15 +230,20 @@ export class WelcomeView extends LitElement {
                       If Moss offers you to install an update on startup, this update will always be compatible with your
                       current version of Moss. Compatible versions of Moss are indicated by the first non-zero number in the version
                       name. If you are using Moss 0.11.5 it is compatible with Moss 0.11.8 but it is <i>not</i> compatible
-                      with 0.12.0.
+                      with Moss 0.12.0.
                     </li>
                     <li>
-                      You cannot expect your current version of Moss to receive ongoing bugfixes until we explicitly say so.
+                      You can <b>not</b> expect your current version of Moss to receive ongoing bugfixes until we explicitly say so.
                       That said, we are targeting to release a version "Moss Sprout" in the coming months
                       that will receive support in the form of bugfixes and UI improvements for a defined period of time.
                       Until that point there will be a succession of breaking releases of Moss (0.12.x, 0.13.x, ...) that
                       are going to be incompatible between each other, meaning that if you decide to go to a newer version,
                       you will not be able to access or join groups created in the previous version.
+                    </li>
+                    <li>
+                      As we are developing Moss and the Weave, we are also continually trying to find the most suitable
+                      naming and terminology. Expect therefore names of things to keep changing in
+                      the near future. One notable change is likely going to be "Applet" to "Tool".
                     </li>
 
                   </ul>
