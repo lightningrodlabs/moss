@@ -24,6 +24,19 @@ export async function createPublisher(
   return responseToPromise(response, 'createPublisher');
 }
 
+export async function updatePublisher(
+  appstoreClient: AppAgentClient,
+  payload: UpdateEntityInput<UpdatePublisherInput>,
+): Promise<Entity<PublisherEntry>> {
+  const response: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome({
+    role_name: 'appstore',
+    zome_name: 'appstore_api',
+    fn_name: 'update_publisher',
+    payload,
+  });
+  return responseToPromise(response, 'updatePublisher');
+}
+
 /** *
  * @param appstoreClient
  */
@@ -152,6 +165,26 @@ export interface PublisherInput {
   };
   icon_src: string;
   description?: string;
+  email?: string;
+  editors?: AgentPubKey[];
+  published_at?: number;
+  last_updated?: number;
+  metadata?: string;
+}
+
+export interface UpdatePublisherInput {
+  name?: string;
+  description?: string;
+  location?: {
+    country: string;
+    region: string;
+    city: string;
+  };
+  website?: {
+    url: string;
+    context?: any;
+  };
+  icon_src?: string;
   email?: string;
   editors?: AgentPubKey[];
   published_at?: number;
