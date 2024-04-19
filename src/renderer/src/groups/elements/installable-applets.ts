@@ -80,13 +80,14 @@ export class InstallableApplets extends LitElement {
           }
           <span style="font-size: 18px;">${appEntry.content.title}</span>
         </div>
-        <div class="column" style="flex: 1;">
+        <div class="column" style="flex: 1; margin-bottom: -5px;">
           <span style="flex: 1">${appEntry.content.subtitle}</span>
+          <span style="display: flex; flex: 1;"></span>
           <span style="flex: 1; margin-top:5px"
             >
-            <div style="font-size:90%;margin-bottom:5px;">
+            <div style="font-size: 80%; margin-bottom: 5px;">
               Published ${this.timeAgo.format(appEntry.content.published_at)} by </span>
-            </div> 
+            </div>
             <applet-publisher .publisherHash=${appEntry.content.publisher}></applet-publisher>
           </span>
         </div>
