@@ -61,16 +61,18 @@ export class GroupSidebarButton extends LitElement {
   firstUpdated() {
     this._unsubscribe = this._onlineAgents.store.subscribe((value) => {
       // TODO emit event if first agent comes online
-      if (value.status === 'complete' && value.value.length > 0) {
-        if (this._previousOnlineAgents === 0) {
-          console.log('NEW AGENTS ONLINE.');
-          this.dispatchEvent(
-            new CustomEvent('agents-online', {
-              detail: this._groupStore.groupDnaHash,
-              bubbles: true,
-              composed: true,
-            }),
-          );
+      if (value.status === 'complete') {
+        if (value.value.length > 0) {
+          if (this._previousOnlineAgents === 0) {
+            console.log('NEW AGENTS ONLINE.');
+            this.dispatchEvent(
+              new CustomEvent('agents-online', {
+                detail: this._groupStore.groupDnaHash,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }
         }
         this._previousOnlineAgents = value.value.length;
       }
