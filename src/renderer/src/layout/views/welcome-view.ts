@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiViewGridPlus } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiAlert, mdiViewGridPlus } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
@@ -210,26 +210,44 @@ export class WelcomeView extends LitElement {
 
             <!-- Notification Feed -->
 
-            <div class="column" style="align-items: center; display:flex; flex: 1; width: 100%;">
-              <div class="row recent-activity-header">
-                <img
-                  src="raindrops.svg"
-                  style="height: 24px; margin-right: 10px; position: relative; bottom: -5px; filter: invert(95%) sepia(42%) saturate(4437%) hue-rotate(178deg) brightness(96%) contrast(95%);"
-                />
-                <h1>Recent Activity</h1>
-              </div>
-              <div class="column feed" style="display:flex; flex: 1;width: 100%;">
-                ${this.notificationsLoading ? html`Loading Notifications...` : html``}
-                ${
-                  this.notificationsLoading
-                    ? html``
-                    : this._notificationFeed.value.map(
-                        (appletNotification) => html`
-                          <feed-element .notification=${appletNotification}></feed-element>
-                        `,
-                      )
-                }
-                <div style="min-height: 30px;"></div>
+            <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 40px;">
+              <div class="disclaimer">
+                <div class="row" style="align-items: center; font-size: 30px;">
+                  <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
+                  <span style="margin-left: 5px;">Moss is Alpha Software</span>
+                </div>
+                <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
+                  Moss development is in pre-alpha. It is best suited for adventurous early-adopters.
+                  Please don't expect it to be stable or bug free! That said, we use Moss in-house daily
+                  for doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
+                  <br><br>
+                  We export data from our Tools/Applets frequently and sometimes have to recover from these backups.
+                  We recommend you do the same.
+                  <br><br>
+                  What you can/should expect:
+                  <ul>
+                    <li>
+                      If Moss offers you to install an update on startup, this update will always be compatible with your
+                      current version of Moss. Compatible versions of Moss are indicated by the first non-zero number in the version
+                      name. If you are using Moss 0.11.5 it is compatible with Moss 0.11.8 but it is <i>not</i> compatible
+                      with Moss 0.12.0.
+                    </li>
+                    <li>
+                      You can <b>not</b> expect your current version of Moss to receive ongoing bugfixes until we explicitly say so.
+                      That said, we are targeting to release a version "Moss Sprout" in the coming months
+                      that will receive support in the form of bugfixes and UI improvements for a defined period of time.
+                      Until that point there will be a succession of breaking releases of Moss (0.12.x, 0.13.x, ...) that
+                      are going to be incompatible between each other, meaning that if you decide to go to a newer version,
+                      you will not be able to access or join groups created in the previous version.
+                    </li>
+                    <li>
+                      As we are developing Moss and the Weave, we are also continually trying to find the most suitable
+                      naming and terminology. Expect therefore names of things to keep changing in
+                      the near future. One notable change is likely going to be "Applet" to "Tool".
+                    </li>
+
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -275,6 +293,19 @@ export class WelcomeView extends LitElement {
 
       .btn:active {
         background: var(--sl-color-secondary-300);
+      }
+
+      li {
+        margin-top: 12px;
+      }
+
+      .disclaimer {
+        color: #fff78e;
+        border: 2px solid #fff78e;
+        padding: 20px;
+        border-radius: 20px;
+        background: #fff78e1f;
+        line-height: 1.2;
       }
 
       .feed {

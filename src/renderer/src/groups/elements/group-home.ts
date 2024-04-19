@@ -466,22 +466,34 @@ export class GroupHome extends LitElement {
               <span class="title">${groupProfile.name}</span>
             </div>
 
-            <div style="position: relative;">
-              ${
-                !!this.updatesAvailable.value
-                  ? html`<div
-                      style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
-                    ></div>`
-                  : html``
-              }
-              <sl-icon-button
-                .src=${wrapPathInSvg(mdiCog)}
-                title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
-                @click=${() => {
+            <div
+              class="row settings-btn"
+              style="align-items: center;"
+              tabindex="0"
+              @click=${() => {
+                this.view = { view: 'settings' };
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
                   this.view = { view: 'settings' };
-                }}
-                style="font-size: 2rem;"
-              ></sl-icon-button>
+                }
+              }}
+            >
+              <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">${msg('Settings')}</div>
+              <div style="position: relative;">
+                ${
+                  !!this.updatesAvailable.value
+                    ? html`<div
+                        style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
+                      ></div>`
+                    : html``
+                }
+                <sl-icon
+                  .src=${wrapPathInSvg(mdiCog)}
+                  title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
+                  style="font-size: 2rem;"
+                ></sl-icon>
+              </div>
             </div>
           </div>
 
@@ -752,6 +764,19 @@ export class GroupHome extends LitElement {
 
       .agents-list {
         color: #fff;
+      }
+
+      .settings-btn {
+        color: white;
+        cursor: pointer;
+      }
+
+      .settings-btn:hover {
+        color: var(--sl-color-tertiary-200);
+      }
+
+      .settings-btn:active {
+        color: var(--sl-color-tertiary-300);
       }
 
       .card-header {
