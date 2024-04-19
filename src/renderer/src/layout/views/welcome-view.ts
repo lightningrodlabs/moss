@@ -217,7 +217,7 @@ export class WelcomeView extends LitElement {
                   <span style="margin-left: 5px;">Moss is Alpha Software</span>
                 </div>
                 <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
-                  Moss development is in pre-alpha. It is best suited for adventurous early-adopters.
+                  Moss development is in alpha stage. It is best suited for adventurous early-adopters.
                   Please don't expect it to be stable or bug free! That said, we use Moss in-house daily
                   for doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
                   <br><br>
