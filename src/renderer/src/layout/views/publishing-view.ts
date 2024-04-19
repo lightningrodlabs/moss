@@ -1,7 +1,7 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
+import { notify, notifyError, onSubmit, wrapPathInSvg } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -20,6 +20,7 @@ import {
   PublisherInput,
   UpdateAppInput,
   UpdateEntityInput,
+  UpdatePublisherInput,
   WebHappSource,
   createApp,
   createPublisher,
@@ -27,16 +28,19 @@ import {
   getMyApps,
   getMyPublishers,
   updateApp,
+  updatePublisher,
 } from '../../processes/appstore/appstore-light.js';
 import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';
+import { mdiPencil } from '@mdi/js';
 
 enum PageView {
   Loading,
   Main,
   CreatePublisher,
+  UpdatePublisher,
   PublishApplet,
   AddApp,
   UpdateApp,
@@ -82,6 +86,9 @@ export class PublishingView extends LitElement {
 
   @state()
   _creatingPublisher = false;
+
+  @state()
+  _updatingPublisher = false;
 
   @state()
   _publishing: string | undefined = undefined;
@@ -185,10 +192,36 @@ export class PublishingView extends LitElement {
       },
       icon_src: this._publisherIconSrc,
     };
-    this._publisherIconSrc = undefined;
     const publisherEntry = await createPublisher(appAgentClient, payload);
     this._myPublisher = publisherEntry;
     this._creatingPublisher = false;
+    this._publisherIconSrc = undefined;
+    this.view = PageView.Main;
+  }
+
+  async updatePublisher(fields: { publisher_name: string; publisher_website: string }) {
+    if (!this._myPublisher) throw new Error('this._myPublisher is undefined.');
+    this._updatingPublisher = true;
+    const appAgentClient = this.mossStore.appletBundlesStore.appstoreClient;
+    const payload: UpdatePublisherInput = {
+      name: fields.publisher_name,
+      location: {
+        country: 'unknown',
+        region: 'unknown',
+        city: 'unknown',
+      },
+      website: {
+        url: fields.publisher_website,
+      },
+      icon_src: this._publisherIconSrc,
+    };
+    const publisherEntry = await updatePublisher(appAgentClient, {
+      base: this._myPublisher.action,
+      properties: payload,
+    });
+    this._myPublisher = publisherEntry;
+    this._updatingPublisher = false;
+    this._publisherIconSrc = undefined;
     this.view = PageView.Main;
   }
 
@@ -384,7 +417,12 @@ export class PublishingView extends LitElement {
         <div style="margin-bottom: 40px;">
           ${msg('Before you can publish applets, you need register yourself as a publisher:')}
         </div>
-        <form id="form" ${onSubmit((fields) => this.createPublisher(fields))}>
+        <form
+          id="form"
+          ${onSubmit(async (fields) => {
+            await this.createPublisher(fields);
+          })}
+        >
           <div class="column" style="align-items: center">
             <input
               type="file"
@@ -430,9 +468,14 @@ export class PublishingView extends LitElement {
                   e.target.setCustomValidity('');
                 }
               }}
+              value=${this._myPublisher ? this._myPublisher.content.name : undefined}
               style="margin-bottom: 10px;"
             ></sl-input>
-            <sl-input name="publisher_website" .placeholder=${msg('Website')}></sl-input>
+            <sl-input
+              name="publisher_website"
+              .placeholder=${msg('Website')}
+              value=${this._myPublisher ? this._myPublisher.content.website : undefined}
+            ></sl-input>
             <sl-button
               variant="primary"
               type="submit"
@@ -441,6 +484,109 @@ export class PublishingView extends LitElement {
             >
               ${msg('Register')}
             </sl-button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  renderUpdatePublisher() {
+    return html`
+      <div class="column" style="margin: 16px; flex: 1; align-items: center;">
+        <div class="title" style="margin-bottom: 20px;">${msg('Edit Publisher')}</div>
+        <form
+          id="form"
+          ${onSubmit(async (fields) => {
+            await this.updatePublisher(fields);
+          })}
+        >
+          <div class="column" style="align-items: center">
+            <input
+              type="file"
+              id="publisher-icon-file-picker"
+              style="display: none"
+              accept="image/*"
+              @change=${this.onPublisherIconUploaded}
+            />
+            ${this._publisherIconSrc
+              ? html`<img
+                  tabindex="0"
+                  @click=${() => this._publisherIconFilePicker.click()}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      this._publisherIconFilePicker.click();
+                    }
+                  }}
+                  src=${this._publisherIconSrc}
+                  alt="Applet Icon"
+                  class="icon-picker"
+                />`
+              : this._myPublisher?.content.icon_src
+                ? html`<img
+                    tabindex="0"
+                    @click=${() => this._publisherIconFilePicker.click()}
+                    @keypress=${(e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        this._publisherIconFilePicker.click();
+                      }
+                    }}
+                    src=${this._myPublisher.content.icon_src}
+                    alt="Applet Icon"
+                    class="icon-picker"
+                  /> `
+                : html`<div
+                    tabindex="0"
+                    @click=${() => this._publisherIconFilePicker.click()}
+                    @keypress=${(e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        this._publisherIconFilePicker.click();
+                      }
+                    }}
+                    class="column center-content icon-picker picker-btn"
+                    style="font-size: 34px;height: 200px; width: 200px; border-radius: 40px;"
+                  >
+                    + Add Icon
+                  </div>`}
+            <span>${msg('Publisher Name')}:</span>
+            <sl-input
+              name="publisher_name"
+              required
+              .placeholder=${msg('Publisher Name')}
+              @input=${(e) => {
+                if (!e.target.value || e.target.value.length < 3) {
+                  e.target.setCustomValidity('Publisher name must be at least 3 characters.');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
+              value=${this._myPublisher ? this._myPublisher.content.name : undefined}
+              style="margin-bottom: 10px;"
+            ></sl-input>
+            <span>${msg('Website')}:</span>
+            <sl-input
+              name="publisher_website"
+              .placeholder=${msg('Website')}
+              value=${this._myPublisher ? this._myPublisher.content.website.url : undefined}
+            ></sl-input>
+            <div class="row" style="align-items: center;">
+              <sl-button
+                variant="danger"
+                style="margin-top: 20px; margin-right: 5px;"
+                @click=${() => {
+                  this.view = PageView.Main;
+                }}
+              >
+                ${msg('Cancel')}
+              </sl-button>
+              <sl-button
+                variant="primary"
+                type="submit"
+                .loading=${this._creatingPublisher}
+                style="margin-top: 20px;"
+              >
+                ${msg('Save')}
+              </sl-button>
+            </div>
           </div>
         </form>
       </div>
@@ -459,6 +605,14 @@ export class PublishingView extends LitElement {
               src=${this._myPublisher?.content.icon_src}
               style="width: 40px; height: 40px; border-radius: 10px; margin-left: 10px;"
             />
+            <sl-tooltip content=${msg('Edit Publisher')}>
+              <sl-icon-button
+                .src=${wrapPathInSvg(mdiPencil)}
+                @click=${() => {
+                  this.view = PageView.UpdatePublisher;
+                }}
+              ></sl-icon-button>
+            </sl-tooltip>
           </div>
         </div>
         <div class="title" style="margin-bottom: 40px; margin-top: 30px;">
@@ -799,6 +953,8 @@ export class PublishingView extends LitElement {
       case PageView.CreatePublisher:
         console.log('Rendering create publisher view');
         return this.renderCreatePublisher();
+      case PageView.UpdatePublisher:
+        return this.renderUpdatePublisher();
       case PageView.PublishApplet:
         return this.renderPublishApplet();
       case PageView.Main:
