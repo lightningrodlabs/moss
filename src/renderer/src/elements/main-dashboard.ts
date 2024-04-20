@@ -517,6 +517,11 @@ export class MainDashboard extends LitElement {
       }
     });
 
+    // setInterval(() => {
+    //   const allIframes = getAllIframes();
+    //   console.log('CURRENT IFRAME COUNT: ', allIframes.length);
+    // }, 10000);
+
     this.appVersion = await getAppVersion();
   }
 
