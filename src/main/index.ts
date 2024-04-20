@@ -963,26 +963,26 @@ app.whenReady().then(async () => {
           title: 'Update Available',
           type: 'question',
           buttons: ['Deny', 'Install and Restart'],
-          defaultId: 0,
+          defaultId: 1,
           cancelId: 0,
-          message: `A new compatible version of Moss is available (${updateCheckResult.updateInfo.version}). Do you want to install it?\n\nRelease notes can be found at:\nhttps://github.com/lightningrodlabs/we/releases/v${updateCheckResult.updateInfo.version}`,
+          message: `A new compatible version of Moss is available (${updateCheckResult.updateInfo.version}). Do you want to install it? You will need to restart Moss for the Update to take effect.\n\nRelease notes can be found at:\nhttps://github.com/lightningrodlabs/we/releases/v${updateCheckResult.updateInfo.version}`,
         });
         if (userDecision.response === 1) {
           // downloading means that with the next start of the application it's automatically going to be installed
           await autoUpdater.downloadUpdate();
-          let options: Electron.RelaunchOptions = {
-            args: process.argv,
-          };
-          // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
-          if (process.env.APPIMAGE) {
-            options.args!.unshift('--appimage-extract-and-run');
-            options.execPath = process.env.APPIMAGE.replace(
-              appVersion,
-              updateCheckResult.updateInfo.version,
-            );
-          }
-          app.relaunch(options);
-          app.exit(0);
+          // let options: Electron.RelaunchOptions = {
+          //   args: process.argv,
+          // };
+          // // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+          // if (process.env.APPIMAGE) {
+          //   options.args!.unshift('--appimage-extract-and-run');
+          //   options.execPath = process.env.APPIMAGE.replace(
+          //     appVersion,
+          //     updateCheckResult.updateInfo.version,
+          //   );
+          // }
+          // app.relaunch(options);
+          // app.exit(0);
         }
       }
     }
