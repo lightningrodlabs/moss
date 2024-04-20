@@ -1,0 +1,8 @@
+{
+  "0.11.x": [
+    {
+      "type": "bug",
+      "message": "Moss versions 0.11.9 and 0.11.10 contain a bug that prevents automatic updates from succeeding on macOS and Windows. To resolve the issue, manually download and install the latest version of Moss from https://theweave.social/moss"
+    }
+  ]
+}
