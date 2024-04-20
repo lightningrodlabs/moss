@@ -290,12 +290,29 @@ export class WelcomeView extends LitElement {
 
             <!-- Moss Update Feed -->
 
-            <div></div>
-
             <div
               class="column"
-              style="align-items: center; display:flex; flex: 1; margin-top: 40px;"
-            ></div>
+              style="align-items: center; display:flex; flex: 1; margin-top: 40px; color: white;"
+            >
+              <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
+              <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
+                >Thank you for surfing the edge of
+                <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
+                relevant updates for early weavers.</span
+              >
+              <div class="column">
+                ${this.updateFeed.length === 0
+                  ? html`No big waves lately...`
+                  : this.updateFeed.map(
+                      (message) => html`
+                        <div class="update-feed-el">
+                          <div class="update-type">${message.type}</div>
+                          ${message.message}
+                        </div>
+                      `,
+                    )}
+              </div>
+            </div>
           </div>
         `;
     }
@@ -371,6 +388,31 @@ export class WelcomeView extends LitElement {
 
       .disclaimer-btn:hover {
         background: linear-gradient(#f2f98e, #b6c027);
+      }
+
+      .update-feed-el {
+        max-width: 800px;
+        position: relative;
+        padding: 20px;
+        padding-top: 40px;
+        border-radius: 10px;
+        background: rgba(22, 35, 17, 1.0);
+        margin: 5px;
+        border: 2px solid
+        cursor: pointer;
+        color: #fff;
+        border: 2px solid rgba(96, 124, 4, .50);
+        transition: all .25s ease;
+        font-size: 18px;
+        line-height: 1.4;
+      }
+
+      .update-type {
+        font-size: 20px;
+        position: absolute;
+        top: 7px;
+        right: 12px;
+        font-weight: bold;
       }
 
       .feed {
