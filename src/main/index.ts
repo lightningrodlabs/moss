@@ -32,7 +32,7 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { emitToWindow, setLinkOpenHandlers } from './utils';
+import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
@@ -956,7 +956,7 @@ app.whenReady().then(async () => {
       // We only install semver compatible updates
       if (
         updateCheckResult &&
-        // breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
+        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
         semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
         const userDecision = await dialog.showMessageBox({
