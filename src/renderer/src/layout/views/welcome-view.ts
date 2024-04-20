@@ -22,6 +22,7 @@ import { MossStore } from '../../moss-store.js';
 import { toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
 import { UpdateFeedMessage } from '../../types.js';
+import TimeAgo from 'javascript-time-ago';
 
 enum WelcomePageView {
   Main,
@@ -44,6 +45,8 @@ export class WelcomeView extends LitElement {
 
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
+
+  timeAgo = new TimeAgo('en-US');
 
   // _notificationFeed = new StoreSubscriber(
   //   this,
@@ -306,6 +309,7 @@ export class WelcomeView extends LitElement {
                   : this.updateFeed.map(
                       (message) => html`
                         <div class="update-feed-el">
+                          <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
                           <div class="update-type">${message.type}</div>
                           ${message.message}
                         </div>
@@ -394,7 +398,7 @@ export class WelcomeView extends LitElement {
         max-width: 800px;
         position: relative;
         padding: 20px;
-        padding-top: 40px;
+        padding-top: 45px;
         border-radius: 10px;
         background: rgba(22, 35, 17, 1.0);
         margin: 5px;
@@ -405,6 +409,14 @@ export class WelcomeView extends LitElement {
         transition: all .25s ease;
         font-size: 18px;
         line-height: 1.4;
+      }
+
+      .update-date {
+        position: absolute;
+        font-size: 14px;
+        top: 12px;
+        left: 20px;
+        opacity: 0.6;
       }
 
       .update-type {

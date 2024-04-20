@@ -148,5 +148,6 @@ export type UpdateFeed = {
 
 export type UpdateFeedMessage = {
   type: string;
+  timestamp: number;
   message: string;
 };

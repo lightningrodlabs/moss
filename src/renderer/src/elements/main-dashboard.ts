@@ -58,7 +58,7 @@ import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import { decodeContext, getAllIframes, stringifyWal } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
-import { UpdateFeed, UpdateFeedMessage } from '../types.js';
+import { UpdateFeedMessage } from '../types.js';
 
 type OpenTab =
   | {
