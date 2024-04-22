@@ -12,7 +12,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
+import { mdiMagnify, mdiPocket, mdiViewGalleryOutline } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -49,8 +49,10 @@ import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './join-group-dialog.js';
 import { CreateGroupDialog } from './create-group-dialog.js';
 
+import './search-dialog.js';
 import './pocket.js';
 import './creatable-panel.js';
+import { SearchDialog } from './search-dialog.js';
 import { MossPocket } from './pocket.js';
 import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
@@ -101,6 +103,9 @@ export class MainDashboard extends LitElement {
   @query('join-group-dialog')
   joinGroupDialog!: JoinGroupDialog;
 
+  @query('#search')
+  _searchDialog!: SearchDialog;
+
   @query('#pocket')
   _pocket!: MossPocket;
 
@@ -120,7 +125,10 @@ export class MainDashboard extends LitElement {
   _resizeDrawerX: number | null = null;
 
   @state()
-  showClipboard: boolean = false;
+  showPocket: boolean = false;
+
+  @state()
+  showSearch: boolean = false;
 
   @state()
   showCreatablePanel: boolean = false;
@@ -243,7 +251,7 @@ export class MainDashboard extends LitElement {
         this.addEventListener('cancel-select-wal', listener);
       });
     },
-    toggleClipboard: () => this.toggleClipboard(),
+    togglePocket: () => this.togglePocket(),
   };
 
   displayApplet(appletHash: AppletHash) {
@@ -500,13 +508,25 @@ export class MainDashboard extends LitElement {
       }
     });
 
-    // add eventlistener for pocket
+    // add eventlistener for search and pocket
     window.addEventListener('keydown', (zEvent) => {
       if (zEvent.altKey && zEvent.key === 's') {
         // case sensitive
-        switch (this.showClipboard) {
+        switch (this.showSearch) {
           case false:
-            this.showClipboard = true;
+            this.showSearch = true;
+            this._searchDialog.show('open');
+            this._searchDialog.focus();
+            break;
+          case true:
+            this._searchDialog.hide();
+            break;
+        }
+      } else if (zEvent.altKey && zEvent.key === 'p') {
+        // case sensitive
+        switch (this.showPocket) {
+          case false:
+            this.showPocket = true;
             this._pocket.show('open');
             this._pocket.focus();
             break;
@@ -515,6 +535,7 @@ export class MainDashboard extends LitElement {
             break;
         }
       }
+
     });
 
     // setInterval(() => {
@@ -525,10 +546,16 @@ export class MainDashboard extends LitElement {
     this.appVersion = await getAppVersion();
   }
 
-  openClipboard() {
-    this.showClipboard = true;
+  openPocket() {
+    this.showPocket = true;
     this._pocket.show('open');
     this._pocket.focus();
+  }
+
+  openSearch() {
+    this.showSearch = true;
+    this._searchDialog.show('open');
+    this._searchDialog.focus();
   }
 
   openCreatablePanel() {
@@ -537,18 +564,23 @@ export class MainDashboard extends LitElement {
     this._creatablePanel.focus();
   }
 
-  closeClipboard() {
-    this.showClipboard = false;
+  closePocket() {
+    this.showPocket = false;
     this._pocket.hide();
   }
 
-  toggleClipboard() {
-    switch (this.showClipboard) {
+  closeSearch() {
+    this.showSearch = false;
+    this._searchDialog.hide();
+  }
+
+  togglePocket() {
+    switch (this.showPocket) {
       case true:
-        this.closeClipboard();
+        this.closePocket();
         break;
       case false:
-        this.openClipboard();
+        this.openPocket();
         break;
     }
   }
@@ -914,12 +946,13 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
-      <moss-pocket
-        id="pocket"
+      <moss-search
+        id="search"
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
         @open-creatable-panel=${() => this._creatablePanel.show()}
+        @added-to-pocket=${() => this._pocket.loadPocketContent()}
         @wal-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('wal-selected', {
@@ -936,9 +969,9 @@ export class MainDashboard extends LitElement {
               composed: false,
             }),
           );
-          this.showClipboard = false;
+          this.showPocket = false;
         }}
-      ></moss-pocket>
+      ></moss-search>
       <creatable-panel
         id="creatable-panel"
         @click=${(e) => e.stopPropagation()}
@@ -965,6 +998,32 @@ export class MainDashboard extends LitElement {
       ></create-group-dialog>
 
       <div class="group-viewer invisible-scrollbars column">
+      <moss-pocket
+        id="pocket"
+        @click=${(e) => e.stopPropagation()}
+        @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
+        @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
+        @open-creatable-panel=${() => this._creatablePanel.show()}
+        @wal-selected=${(e) => {
+          this.dispatchEvent(
+            new CustomEvent('wal-selected', {
+              detail: e.detail,
+              bubbles: false,
+              composed: false,
+            }),
+          );
+        }}
+        @sl-hide=${(_e) => {
+          this.dispatchEvent(
+            new CustomEvent('cancel-select-wal', {
+              bubbles: false,
+              composed: false,
+            }),
+          );
+          this.showPocket = false;
+        }}
+      ></moss-pocket>
+
         <!-- PERSONAL VIEW -->
         <div
           class="row"
@@ -1141,10 +1200,10 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="Search" placement="right" hoist>
             <button
               class="moss-button"
-              @click=${() => this.openClipboard()}
+              @click=${() => this.openSearch()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.openClipboard();
+                  this.openSearch();
                 }
               }}
             >
@@ -1152,6 +1211,26 @@ export class MainDashboard extends LitElement {
                 tabindex="0"
                 class="moss-button-icon"
                 .src=${wrapPathInSvg(mdiMagnify)}
+                style="color: #fff; height: 24px; width: 24px"
+              ></sl-icon>
+            </button>
+          </sl-tooltip>
+        </div>
+        <div class="row center-content" style="margin-bottom: 5px;">
+          <sl-tooltip content="Search" placement="right" hoist>
+            <button
+              class="moss-button"
+              @click=${() => this.openPocket()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.openPocket();
+                }
+              }}
+            >
+              <sl-icon
+                tabindex="0"
+                class="moss-button-icon"
+                .src=${wrapPathInSvg(mdiPocket)}
                 style="color: #fff; height: 24px; width: 24px"
               ></sl-icon>
             </button>

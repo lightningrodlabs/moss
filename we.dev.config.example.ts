@@ -86,12 +86,12 @@ export default defineConfig({
       subtitle: 'Collaborative note taking',
       description: 'Real-time notetaking based on syn',
       icon: {
-        type: 'https',
-        url: 'https://lightningrodlabs.org/projects/notebooks.png',
+        type: 'filesystem',
+        path: '../notebooks/we_dev/notebooks_logo.svg',
       },
       source: {
-        type: 'https',
-        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.2.4/notebooks.webhapp',
+        type: 'filesystem',
+        path: '../notebooks/workdir/notebooks.webhapp',
       },
     },
   ],

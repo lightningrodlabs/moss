@@ -331,7 +331,7 @@ export async function handleAppletIframeMessage(
     case 'user-select-screen':
       return selectScreenOrWindow();
     case 'toggle-pocket':
-      return openViews.toggleClipboard();
+      return openViews.togglePocket();
     case 'notify-frame': {
       console.log(
         '### NOTIFY FRAME ### from applet ',

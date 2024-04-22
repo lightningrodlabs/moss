@@ -8,5 +8,5 @@ export interface AppOpenViews {
   openCrossAppletBlock(appletBundleHash: ActionHash, block: string, context: any): void;
   openWal(wal: WAL, mode?: OpenWalMode): void;
   userSelectWal(): Promise<WAL | undefined>;
-  toggleClipboard(): void;
+  togglePocket(): void;
 }
