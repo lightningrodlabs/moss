@@ -3,7 +3,7 @@ import path from 'path';
 import url from 'url';
 import { WeFileSystem } from './filesystem';
 import { setLinkOpenHandlers } from './utils';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 
 export const createHappWindow = (
   appId: string,
@@ -11,7 +11,7 @@ export const createHappWindow = (
   appPort: number,
 ) => {
   // TODO create mapping between installed-app-id's and window ids
-  const uiAssetsDir = [APPSTORE_APP_ID].includes(appId)
+  const uiAssetsDir = [TOOLS_LIBRARY_APP_ID].includes(appId)
     ? path.join(launcherFileSystem.uisDir, appId, 'assets')
     : launcherFileSystem.appUiAssetsDir(appId);
   if (!uiAssetsDir) {

@@ -14,7 +14,7 @@ import {
   sliceAndJoin,
   toPromise,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, EntryRecord, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
   AppAgentWebsocket,
@@ -32,10 +32,10 @@ import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
-import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet, RegisterAppletInput } from '../types.js';
 import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
+import { Tool } from '../tools-library/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 
@@ -146,7 +146,7 @@ export class GroupStore {
    * installing this specific instance of the Applet.
    */
   async installAndAdvertiseApplet(
-    appEntry: Entity<AppEntry>,
+    toolBundleEntry: EntryRecord<Tool>,
     customName: string,
     networkSeed?: string,
   ): Promise<EntryHash> {
@@ -154,22 +154,21 @@ export class GroupStore {
       networkSeed = uuidv4();
     }
 
-    const appHashes: AppHashes = JSON.parse(appEntry.content.hashes);
-    const appstoreDnaHash = await this.mossStore.appletBundlesStore.appstoreDnaHash();
+    const appHashes: AppHashes = JSON.parse(toolBundleEntry.entry.hashes);
+    const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
 
     const distributionInfo: DistributionInfo = {
-      type: 'appstore-light',
+      type: 'tools-library',
       info: {
-        appstoreDnaHash,
-        appEntryId: encodeHashToBase64(appEntry.id),
-        appEntryActionHash: encodeHashToBase64(appEntry.action),
-        appEntryEntryHash: encodeHashToBase64(appEntry.address),
+        toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+        toolActionHash: encodeHashToBase64(toolBundleEntry.actionHash),
+        toolEntryHash: encodeHashToBase64(toolBundleEntry.entryHash),
       },
     };
 
     const applet: Applet = {
       custom_name: customName,
-      description: appEntry.content.description,
+      description: toolBundleEntry.entry.description,
       sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
       sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
       sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,

@@ -14,7 +14,7 @@ import '../../elements/select-group-dialog.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { consume } from '@lit/context';
-import { AppEntry, Entity, PublisherEntry } from '../../processes/appstore/types.js';
+import { AppEntry, Entity, PublisherEntry } from '../../tools-library/types.js';
 import {
   CreateAppInput,
   PublisherInput,
@@ -29,7 +29,7 @@ import {
   getMyPublishers,
   updateApp,
   updatePublisher,
-} from '../../processes/appstore/appstore-light.js';
+} from '../../processes/tools-library/appstore-light.js';
 import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes } from '../../types.js';

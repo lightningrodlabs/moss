@@ -34,7 +34,7 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
-import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -677,7 +677,7 @@ app.whenReady().then(async () => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
-      appstore_app_id: APPSTORE_APP_ID,
+      tools_library_app_id: TOOLS_LIBRARY_APP_ID,
     };
   });
   ipcMain.handle('lair-setup-required', async () => {
@@ -694,13 +694,15 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       return;
     }
-    const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === APPSTORE_APP_ID);
-    if (!appStoreAppInfo)
-      throw new Error('Appstore must be installed before installing the first group.');
+    const toolsLibraryAppInfo = apps.find(
+      (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
+    );
+    if (!toolsLibraryAppInfo)
+      throw new Error('Tools Library must be installed before installing the first group.');
     const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
       path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
       installed_app_id: appId,
-      agent_key: appStoreAppInfo.agent_pub_key,
+      agent_key: toolsLibraryAppInfo.agent_pub_key,
       network_seed: networkSeed,
       membrane_proofs: {},
     });

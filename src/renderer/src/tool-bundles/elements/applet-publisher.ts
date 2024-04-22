@@ -13,9 +13,10 @@ import { hashProperty, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { Entity, PublisherEntry } from '../../processes/appstore/types.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { mdiInformationVariantCircle } from '@mdi/js';
+import { DeveloperCollective } from '../../tools-library/types.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 @localized()
 @customElement('applet-publisher')
@@ -23,25 +24,26 @@ export class AppletPublisher extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   _mossStore!: MossStore;
 
-  @property(hashProperty('publisher-hash'))
-  publisherHash!: ActionHash;
+  @property(hashProperty('developer-collective-hash'))
+  developerCollectiveHash!: ActionHash;
 
   publisher = new StoreSubscriber(
     this,
-    () => this._mossStore.appletBundlesStore.allPublishers.get(this.publisherHash),
-    () => [this.publisherHash],
+    () =>
+      this._mossStore.toolsLibraryStore.allDeveloperCollectives.get(this.developerCollectiveHash),
+    () => [this.developerCollectiveHash],
   );
 
   get publisherDetailsDialog(): SlDialog {
     return this.shadowRoot?.getElementById('publisher-details-dialog') as SlDialog;
   }
 
-  renderPublisher(publisher: Entity<PublisherEntry>) {
+  renderPublisher(publisher: EntryRecord<DeveloperCollective>) {
     if (!publisher) return html``;
 
     return html` <sl-dialog
         id="publisher-details-dialog"
-        .label=${publisher.content.name}
+        .label=${publisher.entry.name}
         @click=${(e) => {
           e.stopPropagation();
         }}
@@ -53,13 +55,9 @@ export class AppletPublisher extends LitElement {
       >
         <div class="row" style="align-items: center;">
           <span style="margin-right: 5px;">${msg('website')}:</span>
-          ${publisher.content.website.url && publisher.content.website.url !== ''
+          ${publisher.entry.website && publisher.entry.website !== ''
             ? html`
-                <span
-                  ><a href="${publisher.content.website.url}"
-                    >${publisher.content.website.url}</a
-                  ></span
-                >
+                <span><a href="${publisher.entry.website}">${publisher.entry.website}</a></span>
               `
             : html`<span>(no website)</span>`}
         </div>
@@ -67,11 +65,11 @@ export class AppletPublisher extends LitElement {
 
       <div class="row" style="align-items: center;">
         <img
-          alt="${publisher.content.name}"
-          .src=${publisher.content.icon_src}
+          alt="${publisher.entry.name}"
+          .src=${publisher.entry.icon}
           style="width: 35px; height: 35px; border-radius: 50%; margin-left: 5px;"
         />
-        <div style="margin-left:5px">${publisher.content.name}</div>
+        <div style="margin-left:5px">${publisher.entry.name}</div>
         <sl-icon
           tabindex="0"
           class="info-btn"

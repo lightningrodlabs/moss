@@ -52,6 +52,11 @@ export type AppletAgent = {
   applet_pubkey: AgentPubKey;
 };
 
+export type WebHappSource = {
+  type: 'https';
+  url: string;
+};
+
 export type AppHashes =
   | {
       type: 'webhapp';
@@ -70,13 +75,11 @@ export type AppHashes =
 
 export type DistributionInfo =
   | {
-      type: 'appstore-light';
+      type: 'tools-library';
       info: {
-        appstoreDnaHash: DnaHashB64;
-        // according to https://docs.rs/hc_crud_caps/0.10.3/hc_crud/struct.Entity.html
-        appEntryId: ActionHashB64;
-        appEntryActionHash: ActionHashB64;
-        appEntryEntryHash: EntryHashB64;
+        toolsLibraryDnaHash: DnaHashB64;
+        toolActionHash: ActionHashB64;
+        toolEntryHash: EntryHashB64;
       };
     }
   | {

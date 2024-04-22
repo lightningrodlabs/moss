@@ -5,7 +5,7 @@ import mime from 'mime';
 
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID, AppHashes } from '../sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes } from '../sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
@@ -113,7 +113,7 @@ export async function devSetup(
     }
   }
 
-  const appstoreClient = await AppAgentWebsocket.connect(APPSTORE_APP_ID, {
+  const appstoreClient = await AppAgentWebsocket.connect(TOOLS_LIBRARY_APP_ID, {
     url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
     wsClientOptions: {
       origin: 'moss-admin',
@@ -438,7 +438,7 @@ async function installGroup(
   hash.update(networkSeed);
   const hashedSeed = hash.digest('base64');
   const appId = `group#${hashedSeed}`;
-  const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === APPSTORE_APP_ID);
+  const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
   const appInfo = await holochainManager.adminWebsocket.installApp({

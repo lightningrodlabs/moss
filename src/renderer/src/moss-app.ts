@@ -14,8 +14,9 @@ import { weStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
-import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
+import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
 import { getConductorInfo, isAppletDev } from './electron-api.js';
+import { ToolsLibraryClient } from './tools-library/tools-library-client.js';
 
 type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
@@ -103,9 +104,9 @@ export class MossApp extends LitElement {
       url: new URL(`ws://127.0.0.1:${info.app_port}`),
     });
 
-    const appstore_app_id = info.appstore_app_id;
+    const tools_library_app_id = info.tools_library_app_id;
 
-    const appStoreClient = await initAppClient(appstore_app_id);
+    const toolsLibraryAgentClient = await initAppClient(tools_library_app_id);
 
     const isAppletDevMode = await isAppletDev();
 
@@ -113,18 +114,22 @@ export class MossApp extends LitElement {
       adminWebsocket,
       appWebsocket,
       info,
-      new AppletBundlesStore(appStoreClient, adminWebsocket, info),
+      new ToolsLibraryStore(
+        new ToolsLibraryClient(toolsLibraryAgentClient, 'tools', 'library'),
+        adminWebsocket,
+        info,
+      ),
       isAppletDevMode,
     );
 
     const appStoreAppInfo = await appWebsocket.appInfo({
-      installed_app_id: info.appstore_app_id,
+      installed_app_id: info.tools_library_app_id,
     });
-    if (!appStoreAppInfo) throw new Error('Appstore AppInfo null.');
+    if (!appStoreAppInfo) throw new Error('Tools Library AppInfo null.');
     // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
 
     getProvisionedCells(appStoreAppInfo).map(([_roleName, cellInfo]) =>
-      console.log(`Appstore network seed: ${getCellNetworkSeed(cellInfo)}`),
+      console.log(`Tools Library network seed: ${getCellNetworkSeed(cellInfo)}`),
     );
 
     const allApps = await adminWebsocket.listApps({});

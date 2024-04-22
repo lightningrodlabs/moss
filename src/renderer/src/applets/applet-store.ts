@@ -13,13 +13,13 @@ import { BlockType } from '@lightningrodlabs/we-applet';
 import { AppletHost } from './applet-host.js';
 import { Applet } from '../types.js';
 import {
-  appEntryIdFromDistInfo,
   clearAppletNotificationStatus,
   getAllIframes,
   loadAppletNotificationStatus,
+  toolBundleActionHashFromDistInfo,
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
-import { AppletBundlesStore } from '../applet-bundles/applet-bundles-store.js';
+import { ToolsLibraryStore } from '../tools-library/tool-library-store.js';
 
 export class AppletStore {
   isAppletDev: boolean;
@@ -28,7 +28,7 @@ export class AppletStore {
     public appletHash: EntryHash,
     public applet: Applet,
     public conductorInfo: ConductorInfo,
-    public appletBundlesStore: AppletBundlesStore,
+    public toolsLibraryStore: ToolsLibraryStore,
     isAppletDev: boolean,
   ) {
     this._unreadNotifications.set(loadAppletNotificationStatus(encodeHashToBase64(appletHash)));
@@ -63,8 +63,9 @@ export class AppletStore {
     lazyLoadAndPoll(() => (host ? host.getBlocks() : Promise.resolve({})), 10000),
   );
 
-  logo = this.appletBundlesStore.appletBundleLogo.get(
-    appEntryIdFromDistInfo(this.applet.distribution_info),
+  // TODO take this from filesystem instead if available
+  logo = this.toolsLibraryStore.toolLogo.get(
+    toolBundleActionHashFromDistInfo(this.applet.distribution_info),
   );
 
   _unreadNotifications: Writable<[string | undefined, number | undefined]> = writable([

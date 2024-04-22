@@ -17,11 +17,12 @@ import './group-context.js';
 import { weStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
 import TimeAgo from 'javascript-time-ago';
-import '../../applet-bundles/elements/applet-publisher.js';
+import '../../tool-bundles/elements/applet-publisher.js';
+import { Tool } from '../../tools-library/types.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 @localized()
 @customElement('installable-applets')
@@ -31,7 +32,7 @@ export class InstallableApplets extends LitElement {
 
   _installableApplets = new StoreSubscriber(
     this,
-    () => this.mossStore.appletBundlesStore.installableAppletBundles,
+    () => this.mossStore.toolsLibraryStore.allInstallableTools,
     () => [],
   );
 
@@ -45,58 +46,58 @@ export class InstallableApplets extends LitElement {
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
   @state()
-  _selectedAppEntry: Entity<AppEntry> | undefined;
+  _selectedToolRecord: EntryRecord<Tool> | undefined;
 
   async firstUpdated() {}
 
   timeAgo = new TimeAgo('en-US');
 
-  renderInstallableApplet(appEntry: Entity<AppEntry>) {
+  renderInstallableApplet(toolRecord: EntryRecord<Tool>) {
     return html`
       <sl-card
         tabindex="0"
         class="applet-card"
         style="height: 200px"
         @click=${async () => {
-          this._selectedAppEntry = appEntry;
+          this._selectedToolRecord = toolRecord;
           this._selectGroupDialog.show();
         }}
         @keypress=${async (e: KeyboardEvent) => {
           if (e.key === 'Enter') {
-            this._selectedAppEntry = appEntry;
+            this._selectedToolRecord = toolRecord;
             this._selectGroupDialog.show();
           }
         }}
       >
         <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
           ${
-            appEntry.content.icon_src
+            toolRecord.entry.icon
               ? html`<img
-                  src=${appEntry.content.icon_src}
-                  alt="${appEntry.content.title} applet icon"
+                  src=${toolRecord.entry.icon}
+                  alt="${toolRecord.entry.title} applet icon"
                   style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
                 />`
               : html``
           }
-          <span style="font-size: 18px;">${appEntry.content.title}</span>
+          <span style="font-size: 18px;">${toolRecord.entry.title}</span>
         </div>
         <div class="column" style="flex: 1; margin-bottom: -5px;">
-          <span style="flex: 1">${appEntry.content.subtitle}</span>
+          <span style="flex: 1">${toolRecord.entry.subtitle}</span>
           <span style="display: flex; flex: 1;"></span>
           <span style="flex: 1; margin-top:5px"
             >
             <div style="font-size: 80%; margin-bottom: 5px;">
-              Published ${this.timeAgo.format(appEntry.content.published_at)} by </span>
+              Published ${this.timeAgo.format(toolRecord.action.timestamp)} by </span>
             </div>
-            <applet-publisher .publisherHash=${appEntry.content.publisher}></applet-publisher>
+            <applet-publisher .developerCollectiveHash=${toolRecord.entry.developer_collective}></applet-publisher>
           </span>
         </div>
       </sl-card>
     `;
   }
 
-  renderApplets(allApplets: Array<Entity<AppEntry>>) {
-    const nonDeprecatedApplets = allApplets.filter((entity) => !entity.content.deprecation);
+  renderApplets(allApplets: Array<EntryRecord<Tool>>) {
+    const nonDeprecatedApplets = allApplets.filter((record) => !record.entry.deprecation);
     return html`
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
@@ -126,11 +127,11 @@ export class InstallableApplets extends LitElement {
                   <install-applet-bundle-dialog
                     @install-applet-dialog-closed=${() => {
                       this._selectedGroupDnaHash = undefined;
-                      this._selectedAppEntry = undefined;
+                      this._selectedToolRecord = undefined;
                     }}
                     @applet-installed=${() => {
                       this._selectedGroupDnaHash = undefined;
-                      this._selectedAppEntry = undefined;
+                      this._selectedToolRecord = undefined;
                     }}
                     id="applet-dialog"
                   ></install-applet-bundle-dialog>
@@ -142,7 +143,7 @@ export class InstallableApplets extends LitElement {
             @installation-group-selected=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail;
               this._selectGroupDialog.hide();
-              setTimeout(async () => this._installAppletDialog.open(this._selectedAppEntry!), 50);
+              setTimeout(async () => this._installAppletDialog.open(this._selectedToolRecord!), 50);
             }}
           ></select-group-dialog>
           ${this.renderApplets(this._installableApplets.value.value)}

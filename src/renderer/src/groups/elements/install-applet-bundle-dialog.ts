@@ -18,7 +18,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
+import { AppEntry, Entity } from '../../tools-library/types.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 
