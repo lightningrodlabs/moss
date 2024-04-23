@@ -17,7 +17,11 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import './create-developer-collective.js';
 import './developer-collective-view.js';
 import '../../tools-library/developer-collective-context.js';
-import { ActionHash } from '@holochain/client';
+import { ActionHash, encodeHashToBase64 } from '@holochain/client';
+import { mdiHome } from '@mdi/js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { EntryRecord } from '@holochain-open-dev/utils';
+import { DeveloperCollective } from '../../tools-library/types.js';
 
 enum PageView {
   Home,
@@ -58,7 +62,16 @@ export class PublishingView extends LitElement {
   }
 
   renderCreateDeveloperCollective() {
-    return html` <create-developer-collective></create-developer-collective> `;
+    return html`
+      <create-developer-collective
+        @developer-collective-created=${async (e: { detail: EntryRecord<DeveloperCollective> }) => {
+          this.mossStore.toolsLibraryStore.myDeveloperCollectives.reload();
+          this.mossStore.toolsLibraryStore.developerCollectivesWithPermission.reload();
+          this._selectedDeveloperCollective = e.detail.actionHash;
+          this.view = PageView.DeveloperCollective;
+        }}
+      ></create-developer-collective>
+    `;
   }
 
   renderContent() {
@@ -70,13 +83,21 @@ export class PublishingView extends LitElement {
         return this.renderDeveloperCollective();
       case PageView.Home:
         return html`
-          <div class="column center-content" style="text-align: center; flex: 1;">
-            <div style="max-width: 600px; font-size: 20px;">
+          <div class="column center-content" style="text-align: center; flex: 1; font-size: 20px;">
+            <div style="max-width: 600px;">
               To publish Tools you need to be part of a Developer Collective. Create your own
               Developer Collective or ask an owner of a Developer Collective to add you as a
               Contributor.<br /><br />
               As a contributor you are allowed to publish, update and deprecate Tools under the name
               of a Developer Collective.
+            </div>
+            <div style="margin-top: 40px; margin-bottom: 10px;">
+              ${msg('Your developer public key is: ')}
+            </div>
+            <div style="font-size: 18px; background: white; padding: 5px; border-radius: 3px;">
+              <pre style="margin: 0;">
+${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.myPubKey)}</pre
+              >
             </div>
           </div>
         `;
@@ -185,6 +206,26 @@ export class PublishingView extends LitElement {
 
   renderSidebar() {
     return html` <div class="column" style="color: black; left: 260px;">
+      <div
+        tabindex="0"
+        class="sidebar-btn ${this.view === PageView.Home ? 'selected' : ''}"
+        @click=${() => {
+          this.view = PageView.Home;
+        }}
+        @keypress=${(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            this.view = PageView.Home;
+          }
+        }}
+      >
+        <div class="row" style="align-items: center;">
+          <sl-icon
+            style="font-size: 30px; margin-right: 10px;"
+            .src=${wrapPathInSvg(mdiHome)}
+          ></sl-icon>
+          <span>${msg('Home')}</span>
+        </div>
+      </div>
       <div class="sidebar-title">Your Developer Collectives:</div>
       ${this.renderMyDeveloperCollectives()} ${this.renderDeveloperCollectivesWithPermission()}
       <div

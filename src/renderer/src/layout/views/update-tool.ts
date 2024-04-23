@@ -166,8 +166,25 @@ export class UpdateTool extends LitElement {
 
     this._updating = 'Publishing updated app entry...';
 
+    let permissionHash;
+    try {
+      permissionHash = await this.mossStore.toolsLibraryStore.toolsLibraryClient.getMyPermission(
+        this.developerCollectiveHash,
+      );
+    } catch (e) {
+      notifyError(`Failed to get permission status: ${e}`);
+      this._publishing = undefined;
+      throw new Error(`Failed to get my permission status: ${e}`);
+    }
+
+    if (!permissionHash) {
+      notifyError(`Found no valid permission to publish.`);
+      this._publishing = undefined;
+      throw new Error('Found no valid permission to publish.');
+    }
+
     const updatedTool: UpdatedTool = {
-      permission_hash: this.developerCollectiveHash,
+      permission_hash: permissionHash,
       title: fields.title,
       subtitle: fields.subtitle,
       description: fields.description,

@@ -114,11 +114,26 @@ export class PublishTool extends LitElement {
       url: fields.webhapp_url,
     };
 
-    // TODO try to fetch webhapp, check that it's a valid webhapp and compute hashes
+    let permissionHash;
+    try {
+      permissionHash = await this.mossStore.toolsLibraryStore.toolsLibraryClient.getMyPermission(
+        this.developerCollectiveHash,
+      );
+    } catch (e) {
+      notifyError(`Failed to get permission status: ${e}`);
+      this._publishing = undefined;
+      throw new Error(`Failed to get my permission status: ${e}`);
+    }
+
+    if (!permissionHash) {
+      notifyError(`Found no valid permission to publish.`);
+      this._publishing = undefined;
+      throw new Error('Found no valid permission to publish.');
+    }
 
     const payload: Tool = {
       developer_collective: this.developerCollectiveHash,
-      permission_hash: this.developerCollectiveHash, // TODO fix in case of publisher is not owner
+      permission_hash: permissionHash,
       title: fields.title,
       subtitle: fields.subtitle,
       description: fields.description,
@@ -132,10 +147,17 @@ export class PublishTool extends LitElement {
     };
 
     console.log('got payload: ', payload);
-    const _toolRecord =
-      await this.mossStore.toolsLibraryStore.toolsLibraryClient.createTool(payload);
-    this._toolIconSrc = undefined;
+    try {
+      const _toolRecord =
+        await this.mossStore.toolsLibraryStore.toolsLibraryClient.createTool(payload);
+      this._toolIconSrc = undefined;
+    } catch (e) {
+      notifyError(`Failed to publish tool: ${e}`);
+      throw new Error(`Failed to publish tool: ${e}`);
+      this._publishing = undefined;
+    }
     this._publishing = undefined;
+
     notify('Tool published.');
     this.dispatchEvent(new CustomEvent('tool-published', { bubbles: true, composed: true }));
   }

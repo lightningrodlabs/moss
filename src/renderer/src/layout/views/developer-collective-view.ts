@@ -44,10 +44,6 @@ export class DeveloperCollectiveView extends LitElement {
   @property(hashProperty('developer-collective-hash'))
   developerCollectiveHash!: ActionHash;
 
-  async firstUpdated() {
-    console.log('hash: ', this.developerCollectiveHash);
-  }
-
   async willUpdate(changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>) {
     if (changedProperties.has('developerCollectiveHash')) {
       this.loadingStuff = true;
@@ -248,9 +244,8 @@ export class DeveloperCollectiveView extends LitElement {
   }
 
   renderContributors(developerCollective: UpdateableEntity<DeveloperCollective>) {
-    const amIOwner =
-      this.mossStore.toolsLibraryStore.toolsLibraryClient.client.myPubKey.toString() ===
-      developerCollective.record.action.author.toString();
+    const myPubKey = this.mossStore.toolsLibraryStore.toolsLibraryClient.client.myPubKey;
+    const amIOwner = myPubKey.toString() === developerCollective.record.action.author.toString();
     return html` <div class="column" style="align-items: center;">
       <div class="row" style="align-items: center; margin-bottom: 10px;">
         <pre style="font-size: 16px; margin: 0;">
@@ -258,7 +253,7 @@ ${encodeHashToBase64(developerCollective.record.action.author)}</pre
         >
         <span style="margin-left: 10px; font-weight: bold;">(Owner)</span>
         ${amIOwner
-          ? html` <span style="margin-left: 10px; font-weight: bold;">(You)</span> `
+          ? html` <span style="margin-left: 5px; font-weight: bold;">(You)</span> `
           : html``}
       </div>
       ${this.allContributorPermissions.map(
@@ -273,6 +268,9 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
                 ? new Date(permission.entry.expiry / 1000).toISOString()
                 : 'Never'}</span
             >
+            ${myPubKey.toString() === permission.entry.for_agent.toString()
+              ? html` <span style="margin-left: 5px; font-weight: bold;">(You)</span> `
+              : html``}
           </div>
         `,
       )}
