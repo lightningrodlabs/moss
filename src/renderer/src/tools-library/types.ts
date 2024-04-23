@@ -1,3 +1,4 @@
+import { EntryRecord } from '@holochain-open-dev/utils';
 import { ActionHash, AgentPubKey } from '@holochain/client';
 
 export type DeveloperCollective = {
@@ -58,4 +59,15 @@ export type UpdatedTool = {
   changelog: string | undefined;
   meta_data: string | undefined;
   deprecation: string | undefined;
+};
+
+export type UpdateableEntity<T> = {
+  originalActionHash: ActionHash;
+  record: EntryRecord<T>;
+};
+
+export type UpdateToolInput = {
+  original_tool_hash: ActionHash;
+  previous_tool_hash: ActionHash;
+  updated_tool: UpdatedTool;
 };

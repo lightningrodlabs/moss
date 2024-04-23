@@ -12,12 +12,14 @@ import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
 import './publish-tool.js';
+import './update-tool.js';
+
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { consume } from '@lit/context';
 import { ActionHash } from '@holochain/client';
 import { resizeAndExport } from '../../utils.js';
-import { DeveloperCollective, Tool } from '../../tools-library/types.js';
+import { DeveloperCollective, Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
@@ -49,7 +51,7 @@ export class DeveloperCollectiveView extends LitElement {
   @state()
   loadingTools = true;
 
-  allTools: [ActionHash, EntryRecord<Tool>][] = [];
+  allTools: UpdateableEntity<Tool>[] = [];
 
   @state()
   view: PageView = PageView.Main;
@@ -68,6 +70,9 @@ export class DeveloperCollectiveView extends LitElement {
 
   @state()
   _updating: string | undefined = undefined;
+
+  @state()
+  _selectedTool: UpdateableEntity<Tool> | undefined;
 
   @query('#publisher-icon-file-picker')
   private _iconFilePicker!: HTMLInputElement;
@@ -122,12 +127,50 @@ export class DeveloperCollectiveView extends LitElement {
     );
   }
 
+  async deprecateTool(entity: UpdateableEntity<Tool>): Promise<void> {
+    // TODO
+  }
+
   renderTools() {
     if (this.loadingTools) return html`Loading Tools...`;
     if (this.allTools && this.allTools.length === 0) return html`No Tools published yet.`;
     return html`
       ${this.allTools.map(
-        ([_originalHash, toolRecord]) => html` <div>${toolRecord.entry.title}</div> `,
+        (entity) =>
+          html`<sl-card class="applet-card">
+            <div class="row" style="align-items: center; flex: 1;">
+              <span>${entity.record.entry.title}</span>
+              <span style="display: flex; flex: 1;"></span>
+              <sl-button
+                variant="danger"
+                style="margin-right: 10px;"
+                @click=${() => {
+                  this.deprecateTool(entity);
+                }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    this.deprecateTool(entity);
+                  }
+                }}
+                >Deprecate</sl-button
+              >
+              <sl-button
+                @click=${() => {
+                  console.log('toolEntity.content.source: ', entity.record.entry.source);
+                  this._selectedTool = entity;
+                  this.view = PageView.UpdateTool;
+                }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this._selectedTool = entity;
+                    this.view = PageView.UpdateTool;
+                  }
+                }}
+                variant="primary"
+                >Update
+              </sl-button>
+            </div>
+          </sl-card>`,
       )}
     `;
   }
@@ -188,6 +231,21 @@ export class DeveloperCollectiveView extends LitElement {
           }}
           .developerCollectiveHash=${this.developerCollectiveHash}
         ></publish-tool>`;
+      case PageView.UpdateTool:
+        return html`<update-tool
+          @cancel=${() => {
+            this.view = PageView.Main;
+          }}
+          @tool-updated=${async () => {
+            this.allTools =
+              await this.mossStore.toolsLibraryStore.toolsLibraryClient.getToolsForDeveloperCollective(
+                this.developerCollectiveHash,
+              );
+            this.view = PageView.Main;
+          }}
+          .developerCollectiveHash=${this.developerCollectiveHash}
+          .toolEntity=${this._selectedTool}
+        ></update-tool>`;
     }
   }
 

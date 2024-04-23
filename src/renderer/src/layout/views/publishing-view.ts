@@ -51,7 +51,8 @@ export class PublishingView extends LitElement {
       'RENDERING DEV COLLECTIVE FOR B64 HASH: ',
       encodeHashToBase64(this._selectedDeveloperCollective!),
     );
-    return html` <developer-collective-view
+    return html`<developer-collective-view
+      class="flex-scrollable-container"
       .developerCollectiveHash=${this._selectedDeveloperCollective}
     ></developer-collective-view>`;
   }
@@ -74,22 +75,20 @@ export class PublishingView extends LitElement {
 
   renderSidebar(myDeveloperCollectives: [ActionHash, EntryRecord<DeveloperCollective>][]) {
     console.log('MY DEVELOPER COLLECTIVES: ', myDeveloperCollectives);
-    return html`<div class="sidebar">
-      <div class="column" style="color: black;">
-        ${myDeveloperCollectives.map(
-          ([originalHash, collectiveRecord]) =>
-            html`<div
-              class="sidebar-btn"
-              @click=${() => {
-                this._selectedDeveloperCollective = originalHash;
-                this.view = PageView.DeveloperCollective;
-              }}
-            >
-              ${collectiveRecord.entry.name}
-            </div>`,
-        )}
-      </div>
-    </div> `;
+    return html` <div class="column" style="color: black; left: 260px;">
+      ${myDeveloperCollectives.map(
+        ([originalHash, collectiveRecord]) =>
+          html`<div
+            class="sidebar-btn"
+            @click=${() => {
+              this._selectedDeveloperCollective = originalHash;
+              this.view = PageView.DeveloperCollective;
+            }}
+          >
+            ${collectiveRecord.entry.name}
+          </div>`,
+      )}
+    </div>`;
   }
 
   render() {
@@ -107,8 +106,10 @@ export class PublishingView extends LitElement {
       case 'complete':
         return html`
           <div class="row" style="display: flex; flex: 1;">
-            ${this.renderSidebar(this._myDeveloperColletives.value.value)}
-            <div class="column flex-scrollable-y" style="padding: 16px; flex: 1">
+            <div class="sidebar">
+              ${this.renderSidebar(this._myDeveloperColletives.value.value)}
+            </div>
+            <div class="column" style="flex: 1; position: relative; margin: 0;">
               ${this.renderContent()}
             </div>
           </div>
@@ -125,7 +126,7 @@ export class PublishingView extends LitElement {
       }
 
       .sidebar {
-        width: 200px;
+        width: 250px;
         background: green;
         padding: 5px;
         padding-top: 20px;

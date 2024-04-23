@@ -5,6 +5,8 @@ import {
   DeveloperCollective,
   Tool,
   UpdateDeveloperCollectiveInput,
+  UpdateToolInput,
+  UpdateableEntity,
 } from './types';
 import { ActionHash, Link } from '@holochain/client';
 
@@ -89,15 +91,20 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return new EntryRecord(record);
   }
 
+  async updateTool(input: UpdateToolInput): Promise<EntryRecord<Tool>> {
+    const record = await this.callZome('update_tool', input);
+    return new EntryRecord(record);
+  }
+
   async getLatestTool(actionHash: ActionHash): Promise<EntryRecord<Tool> | undefined> {
     const record = await this.callZome('get_latest_tool', actionHash);
     if (record) return new EntryRecord(record);
     return undefined;
   }
 
-  async getTool(actionHash: ActionHash): Promise<[ActionHash, EntryRecord<Tool>] | undefined> {
+  async getTool(actionHash: ActionHash): Promise<UpdateableEntity<Tool> | undefined> {
     const record = await this.callZome('get_latest_tool', actionHash);
-    if (record) return [actionHash, new EntryRecord(record)];
+    if (record) return { originalActionHash: actionHash, record: new EntryRecord(record) };
     return undefined;
   }
 
@@ -106,8 +113,8 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
    */
   async getToolsForDeveloperCollective(
     developerCollectiveHash: ActionHash,
-  ): Promise<[ActionHash, EntryRecord<Tool>][]> {
-    const tools: [ActionHash, EntryRecord<Tool>][] = [];
+  ): Promise<UpdateableEntity<Tool>[]> {
+    const tools: UpdateableEntity<Tool>[] = [];
     const links: Array<Link> = await this.callZome(
       'get_tool_links_for_developer_collective',
       developerCollectiveHash,
