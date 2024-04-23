@@ -8,7 +8,7 @@ import {
   UpdateToolInput,
   UpdateableEntity,
 } from './types';
-import { ActionHash, Link } from '@holochain/client';
+import { ActionHash, Link, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 
 export class ToolsLibraryClient extends ZomeClient<undefined> {
   async createDeveloperCollective(
@@ -61,8 +61,8 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
   /**
    * @returns original action hash and record of latest developer collective
    */
-  async getMyDeveloperCollectives(): Promise<[ActionHash, EntryRecord<DeveloperCollective>][]> {
-    const developerCollectives: [ActionHash, EntryRecord<DeveloperCollective>][] = [];
+  async getMyDeveloperCollectives(): Promise<UpdateableEntity<DeveloperCollective>[]> {
+    const developerCollectives: UpdateableEntity<DeveloperCollective>[] = [];
     const links: Array<Link> = await this.callZome('get_my_developer_collective_links', null);
     await Promise.all(
       links.map(async (link) => {
@@ -73,11 +73,61 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return developerCollectives;
   }
 
+  async getMyContributorPermissions(): Promise<EntryRecord<ContributorPermission>[]> {
+    const contributorPermissions: EntryRecord<ContributorPermission>[] = [];
+    const links: Array<Link> = await this.callZome(
+      'get_contributor_permissions_for_contributor',
+      this.client.myPubKey,
+    );
+    await Promise.all(
+      links.map(async (link) => {
+        const permission = await this.getContributorPermission(link.target);
+        if (permission) contributorPermissions.push(permission);
+      }),
+    );
+    return contributorPermissions;
+  }
+
+  /**
+   * Gets all developer collectives for which I have a ContributorPermission.
+   * If I'm the creator of the DeveloperCOllective I cannot also have a
+   * ContributorPermission (enforced by validation) since I already have full owner
+   * permissions
+   *
+   * @returns
+   */
+  async getDeveloperCollectivesWithPermission(): Promise<UpdateableEntity<DeveloperCollective>[]> {
+    const permissions = await this.getMyContributorPermissions();
+    const collectiveHashesB64 = permissions.map((record) =>
+      encodeHashToBase64(record.entry.for_collective),
+    );
+    // deduplicate hashes since multiple permissions may be granted for the same collective
+    const uniqueCollectiveHashesB64 = [...new Set(collectiveHashesB64)];
+    const collectives: UpdateableEntity<DeveloperCollective>[] = [];
+    await Promise.all(
+      uniqueCollectiveHashesB64.map(async (hashb64) => {
+        const developerCollective = await this.getDeveloperCollective(
+          decodeHashFromBase64(hashb64),
+        );
+        if (developerCollective) collectives.push(developerCollective);
+      }),
+    );
+    return collectives;
+  }
+
+  async getContributorPermission(
+    actionHash: ActionHash,
+  ): Promise<EntryRecord<ContributorPermission> | undefined> {
+    const record = await this.callZome('get_contributor_permission', actionHash);
+    if (record) return new EntryRecord(record);
+    return undefined;
+  }
+
   async getDeveloperCollective(
     actionHash: ActionHash,
-  ): Promise<[ActionHash, EntryRecord<DeveloperCollective>] | undefined> {
+  ): Promise<UpdateableEntity<DeveloperCollective> | undefined> {
     const record = await this.callZome('get_latest_developer_collective', actionHash);
-    if (record) return [actionHash, new EntryRecord(record)];
+    if (record) return { originalActionHash: actionHash, record: new EntryRecord(record) };
     return undefined;
   }
 

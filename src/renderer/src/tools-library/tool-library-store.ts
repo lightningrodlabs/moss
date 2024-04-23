@@ -59,6 +59,10 @@ export class ToolsLibraryStore {
     this.toolsLibraryClient.getMyDeveloperCollectives(),
   );
 
+  developerCollectivesWithPermission = manualReloadStore(async () =>
+    this.toolsLibraryClient.getDeveloperCollectivesWithPermission(),
+  );
+
   async getLatestToolEntry(actionHash: ActionHash): Promise<EntryRecord<Tool>> {
     const toolRecord = await this.toolsLibraryClient.getLatestTool(actionHash);
     if (!toolRecord) throw new Error('Tool not found for action hash.');

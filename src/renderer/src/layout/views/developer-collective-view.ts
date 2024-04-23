@@ -1,4 +1,4 @@
-import { html, LitElement, css } from 'lit';
+import { html, LitElement, css, PropertyValueMap } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import { hashProperty, notifyError } from '@holochain-open-dev/elements';
@@ -17,9 +17,14 @@ import './update-tool.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { consume } from '@lit/context';
-import { ActionHash } from '@holochain/client';
+import { ActionHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { resizeAndExport } from '../../utils.js';
-import { DeveloperCollective, Tool, UpdateableEntity } from '../../tools-library/types.js';
+import {
+  ContributorPermission,
+  DeveloperCollective,
+  Tool,
+  UpdateableEntity,
+} from '../../tools-library/types.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
@@ -41,17 +46,38 @@ export class DeveloperCollectiveView extends LitElement {
 
   async firstUpdated() {
     console.log('hash: ', this.developerCollectiveHash);
+  }
+
+  async willUpdate(changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>) {
+    if (changedProperties.has('developerCollectiveHash')) {
+      this.loadingStuff = true;
+      await this.fetchStuff();
+    }
+  }
+
+  async fetchStuff() {
     this.allTools =
       await this.mossStore.toolsLibraryStore.toolsLibraryClient.getToolsForDeveloperCollective(
         this.developerCollectiveHash,
       );
-    this.loadingTools = false;
+
+    this.allContributorPermissions =
+      await this.mossStore.toolsLibraryStore.toolsLibraryClient.getAllContributorPermissions(
+        this.developerCollectiveHash,
+      );
+
+    this.loadingStuff = false;
   }
 
   @state()
-  loadingTools = true;
+  loadingStuff = true;
+
+  @state()
+  _selectedTab: 'contributors' | 'tools' = 'tools';
 
   allTools: UpdateableEntity<Tool>[] = [];
+
+  allContributorPermissions: EntryRecord<ContributorPermission>[] = [];
 
   @state()
   view: PageView = PageView.Main;
@@ -73,6 +99,9 @@ export class DeveloperCollectiveView extends LitElement {
 
   @state()
   _selectedTool: UpdateableEntity<Tool> | undefined;
+
+  @state()
+  _expirySelected: boolean = false;
 
   @query('#publisher-icon-file-picker')
   private _iconFilePicker!: HTMLInputElement;
@@ -131,8 +160,51 @@ export class DeveloperCollectiveView extends LitElement {
     // TODO
   }
 
+  updateExpirySelectState() {
+    const expiryInput = this.shadowRoot?.getElementById('expiry-checkbox') as HTMLInputElement;
+    if (expiryInput && expiryInput.checked) {
+      this._expirySelected = true;
+    } else {
+      this._expirySelected = false;
+    }
+  }
+
+  async createPermission() {
+    console.log('Creating permission...');
+    let usTimestamp;
+    if (this._expirySelected) {
+      const expiryInput = this.shadowRoot?.getElementById('permission-expiry') as HTMLInputElement;
+      const msTimestamp = new Date(expiryInput.value).getTime();
+      if (msTimestamp < Date.now()) {
+        notifyError('Expiry must be in the future');
+        throw new Error('Expiry must be in the future.');
+      }
+      usTimestamp = msTimestamp * 1000;
+    }
+    const pubkeyInput = this.shadowRoot?.getElementById(
+      'add-contributor-pubkey',
+    ) as HTMLInputElement;
+    let forAgent;
+    try {
+      forAgent = decodeHashFromBase64(pubkeyInput.value);
+      if (forAgent.length !== 39 || !pubkeyInput.value.startsWith('uhCAk')) {
+        throw new Error('Invalid public key.');
+      }
+    } catch (e) {
+      console.error(e);
+      notifyError('Invalid public key.');
+    }
+    await this.mossStore.toolsLibraryStore.toolsLibraryClient.createContributorPermission({
+      for_agent: forAgent,
+      for_collective: this.developerCollectiveHash,
+      expiry: usTimestamp ? usTimestamp : undefined,
+    });
+    await this.fetchStuff();
+    this.requestUpdate();
+  }
+
   renderTools() {
-    if (this.loadingTools) return html`Loading Tools...`;
+    if (this.loadingStuff) return html`Loading Tools...`;
     if (this.allTools && this.allTools.length === 0) return html`No Tools published yet.`;
     return html`
       ${this.allTools.map(
@@ -175,25 +247,121 @@ export class DeveloperCollectiveView extends LitElement {
     `;
   }
 
-  renderContent(developerCollective: [ActionHash, EntryRecord<DeveloperCollective>] | undefined) {
+  renderContributors(developerCollective: UpdateableEntity<DeveloperCollective>) {
+    const amIOwner =
+      this.mossStore.toolsLibraryStore.toolsLibraryClient.client.myPubKey.toString() ===
+      developerCollective.record.action.author.toString();
+    return html` <div class="column" style="align-items: center;">
+      <div class="row" style="align-items: center; margin-bottom: 10px;">
+        <pre style="font-size: 16px; margin: 0;">
+${encodeHashToBase64(developerCollective.record.action.author)}</pre
+        >
+        <span style="margin-left: 10px; font-weight: bold;">(Owner)</span>
+        ${amIOwner
+          ? html` <span style="margin-left: 10px; font-weight: bold;">(You)</span> `
+          : html``}
+      </div>
+      ${this.allContributorPermissions.map(
+        (permission) => html`
+          <div class="row" style="align-items: center; margin-bottom: 10px;">
+            <pre style="font-size: 16px; margin: 0;">
+${encodeHashToBase64(permission.entry.for_agent)}</pre
+            >
+            <span style="margin-left: 10px; font-weight: bold;"
+              >Expires:
+              ${permission.entry.expiry
+                ? new Date(permission.entry.expiry / 1000).toISOString()
+                : 'Never'}</span
+            >
+          </div>
+        `,
+      )}
+      ${amIOwner
+        ? html`
+            <div style="font-weight: bold; margin-top: 50px; margin-bottom: 15px;">
+              Add Contributor:
+            </div>
+            <div>Public key:</div>
+            <input
+              id="add-contributor-pubkey"
+              placeholder="public key"
+              style="width: 600px; height: 20px;"
+            />
+            <div class="row" style="align-items: center; margin: 5px 0;">
+              <input
+                type="checkbox"
+                id="expiry-checkbox"
+                @input=${() => this.updateExpirySelectState()}
+              />
+              <span>expiry</span>
+              <input
+                ?disabled=${!this._expirySelected}
+                type="date"
+                id="permission-expiry"
+                placeholder="expiry"
+              />
+            </div>
+            <button @click=${async () => await this.createPermission()}>Add Contributor</button>
+          `
+        : html``}
+    </div>`;
+  }
+
+  renderContent(developerCollective: UpdateableEntity<DeveloperCollective> | undefined) {
     if (!developerCollective) return html`Developer Collective not found.`;
     return html`
-      <div class="column" style="align-items: center;">
+      <div class="column" style="align-items: center; flex: 1;">
         <div>
           <img
             style="border-radius: 50%; height: 200px; width: 200px;"
-            src=${developerCollective[1].entry.icon}
+            src=${developerCollective.record.entry.icon}
           />
         </div>
-        <h1>${developerCollective[1].entry.name}</h1>
-        ${this.renderTools()}
-        <button
-          @click=${() => {
-            this.view = PageView.PublishTool;
-          }}
-        >
-          Publish Tool
-        </button>
+        <h1>${developerCollective.record.entry.name}</h1>
+        <div class="row tab-bar" style="align-items: center;">
+          <div
+            tabindex="0"
+            class="tab-btn ${this._selectedTab === 'tools' ? 'selected' : ''}"
+            style="border-radius: 30px 0 0 0;"
+            @click=${() => {
+              this._selectedTab = 'tools';
+            }}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                this._selectedTab = 'tools';
+              }
+            }}
+          >
+            Tools
+          </div>
+          <div
+            tabindex="0"
+            class="tab-btn ${this._selectedTab === 'contributors' ? 'selected' : ''}"
+            style=" border-radius: 0 30px 0 0;"
+            @click=${() => {
+              this._selectedTab = 'contributors';
+            }}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                this._selectedTab = 'contributors';
+              }
+            }}
+          >
+            Contributors
+          </div>
+        </div>
+        <div class="tab-section column" style="flex: 1; width: 100%; align-items: center;">
+          ${this._selectedTab === 'tools'
+            ? html` ${this.renderTools()}
+                <button
+                  @click=${() => {
+                    this.view = PageView.PublishTool;
+                  }}
+                >
+                  Publish Tool
+                </button>`
+            : this.renderContributors(developerCollective)}
+        </div>
       </div>
     `;
   }
@@ -212,7 +380,7 @@ export class DeveloperCollectiveView extends LitElement {
             return html`Failed to get developer collective: ${this._developerCollective.value.error}`;
           case 'complete':
             return html`
-              <div class="column flex-scrollable-y" style="padding: 16px; flex: 1">
+              <div class="column flex-scrollable-y" style="flex: 1; padding-top: 50px;">
                 ${this.renderContent(this._developerCollective.value.value)}
               </div>
             `;
@@ -256,6 +424,7 @@ export class DeveloperCollectiveView extends LitElement {
         display: flex;
         flex: 1;
       }
+
       .applet-card {
         border-radius: 20px;
         border: 1px solid black;
@@ -267,6 +436,36 @@ export class DeveloperCollectiveView extends LitElement {
         cursor: pointer;
         border: none;
         --border-color: transparent;
+      }
+
+      .tab-btn {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 22px;
+        font-weight: 600;
+        width: 150px;
+        padding: 16px;
+        background: var(--sl-color-tertiary-100);
+        cursor: pointer;
+      }
+
+      .tab-btn:hover {
+        background: var(--sl-color-tertiary-200);
+      }
+
+      .selected {
+        background: var(--sl-color-tertiary-200);
+      }
+
+      .tab-bar {
+      }
+
+      .tab-section {
+        background: var(--sl-color-tertiary-200);
+        padding-top: 30px;
+        display: flex;
+        flex: 1;
       }
 
       .title {

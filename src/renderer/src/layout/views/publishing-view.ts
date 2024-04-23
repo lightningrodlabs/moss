@@ -17,9 +17,8 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import './create-developer-collective.js';
 import './developer-collective-view.js';
 import '../../tools-library/developer-collective-context.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
-import { DeveloperCollective } from '../../tools-library/types.js';
-import { ActionHash, encodeHashToBase64 } from '@holochain/client';
+import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
+import { ActionHash } from '@holochain/client';
 
 enum PageView {
   DeveloperCollective,
@@ -40,17 +39,18 @@ export class PublishingView extends LitElement {
     () => [],
   );
 
+  _developerCollectivesWithPermission = new StoreSubscriber(
+    this,
+    () => this.mossStore.toolsLibraryStore.developerCollectivesWithPermission,
+    () => [],
+  );
+
   @state()
   _selectedDeveloperCollective: ActionHash | undefined;
 
   async firstUpdated() {}
 
   renderDeveloperCollective() {
-    console.log('RENDERING DEV COLLECTIVE FOR HASH: ', this._selectedDeveloperCollective);
-    console.log(
-      'RENDERING DEV COLLECTIVE FOR B64 HASH: ',
-      encodeHashToBase64(this._selectedDeveloperCollective!),
-    );
     return html`<developer-collective-view
       class="flex-scrollable-container"
       .developerCollectiveHash=${this._selectedDeveloperCollective}
@@ -73,21 +73,30 @@ export class PublishingView extends LitElement {
     }
   }
 
-  renderSidebar(myDeveloperCollectives: [ActionHash, EntryRecord<DeveloperCollective>][]) {
+  renderSidebar(myDeveloperCollectives: UpdateableEntity<DeveloperCollective>[]) {
     console.log('MY DEVELOPER COLLECTIVES: ', myDeveloperCollectives);
     return html` <div class="column" style="color: black; left: 260px;">
-      ${myDeveloperCollectives.map(
-        ([originalHash, collectiveRecord]) =>
-          html`<div
-            class="sidebar-btn"
-            @click=${() => {
-              this._selectedDeveloperCollective = originalHash;
-              this.view = PageView.DeveloperCollective;
-            }}
-          >
-            ${collectiveRecord.entry.name}
-          </div>`,
-      )}
+      <div class="sidebar-title">Your Developer Collectives:</div>
+      ${myDeveloperCollectives
+        .sort((a, b) => a.record.entry.name.localeCompare(b.record.entry.name))
+        .map(
+          (entity) =>
+            html`<div
+              class="sidebar-btn"
+              @click=${() => {
+                this._selectedDeveloperCollective = entity.originalActionHash;
+                this.view = PageView.DeveloperCollective;
+              }}
+            >
+              <div class="row" style="align-items: center;">
+                <img
+                  src=${entity.record.entry.icon}
+                  style="height: 30px; width: 30px; border-radius: 50%;"
+                />
+                <span style="margin-left: 5px;">${entity.record.entry.name}</span>
+              </div>
+            </div>`,
+        )}
     </div>`;
   }
 
@@ -127,20 +136,30 @@ export class PublishingView extends LitElement {
 
       .sidebar {
         width: 250px;
-        background: green;
+        background: var(--sl-color-tertiary-500);
         padding: 5px;
         padding-top: 20px;
       }
 
+      .sidebar-title {
+        color: white;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+
       .sidebar-btn {
-        background: yellow;
+        background: var(--sl-color-tertiary-50);
+        font-size: 18px;
         border-radius: 8px;
-        padding: 5px;
+        padding: 10px;
+        margin-bottom: 6px;
+        font-weight: 500;
         cursor: pointer;
       }
 
       .sidebar-btn:hover {
-        background: #96ed64;
+        background: var(--sl-color-tertiary-100);
       }
 
       .title {

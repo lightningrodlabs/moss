@@ -19,7 +19,6 @@ import { resizeAndExport } from '../../utils.js';
 import { AppHashes, WebHappSource } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';
 import { Tool } from '../../tools-library/types.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @localized()
 @customElement('publish-tool')
@@ -56,12 +55,6 @@ export class PublishTool extends LitElement {
 
   @query('#icon-file-picker')
   private _appletIconFilePicker!: HTMLInputElement;
-
-  _myDeveloperColletives = new StoreSubscriber(
-    this,
-    () => this.mossStore.toolsLibraryStore.myDeveloperCollectives,
-    () => [],
-  );
 
   onAppletIconUploaded() {
     if (this._appletIconFilePicker.files && this._appletIconFilePicker.files[0]) {
@@ -151,7 +144,7 @@ export class PublishTool extends LitElement {
     return html`
       <div class="column" style="align-items: center;">
         <div class="title" style="margin-bottom: 40px; margin-top: 30px;">
-          ${msg('Publish New Applet')}
+          ${msg('Publish New Tool')}
         </div>
         <form id="form" ${onSubmit((fields) => this.publishTool(fields))}>
           <div class="column" style="align-items: center; min-width: 600px;">
