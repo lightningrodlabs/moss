@@ -47,16 +47,35 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return records.map((record) => new EntryRecord(record));
   }
 
+  async getAllDeveloperCollectiveLinks(): Promise<Array<Link>> {
+    return this.callZome('get_all_developer_collective_links', null);
+  }
+
   async getAllDeveloperCollectives(): Promise<EntryRecord<DeveloperCollective>[]> {
     const records = await this.callZome('all_developer_collectives', null);
     return records.map((record) => new EntryRecord(record));
   }
 
+  /**
+   * @returns original action hash and record of latest developer collective
+   */
+  async getMyDeveloperCollectives(): Promise<[ActionHash, EntryRecord<DeveloperCollective>][]> {
+    const developerCollectives: [ActionHash, EntryRecord<DeveloperCollective>][] = [];
+    const links: Array<Link> = await this.callZome('get_my_developer_collective_links', null);
+    await Promise.all(
+      links.map(async (link) => {
+        const collective = await this.getDeveloperCollective(link.target);
+        if (collective) developerCollectives.push(collective);
+      }),
+    );
+    return developerCollectives;
+  }
+
   async getDeveloperCollective(
     actionHash: ActionHash,
-  ): Promise<EntryRecord<DeveloperCollective> | undefined> {
+  ): Promise<[ActionHash, EntryRecord<DeveloperCollective>] | undefined> {
     const record = await this.callZome('get_latest_developer_collective', actionHash);
-    if (record) return new EntryRecord(record);
+    if (record) return [actionHash, new EntryRecord(record)];
     return undefined;
   }
 
@@ -70,29 +89,57 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return new EntryRecord(record);
   }
 
-  async getTool(actionHash: ActionHash): Promise<EntryRecord<Tool> | undefined> {
+  async getLatestTool(actionHash: ActionHash): Promise<EntryRecord<Tool> | undefined> {
     const record = await this.callZome('get_latest_tool', actionHash);
     if (record) return new EntryRecord(record);
     return undefined;
   }
 
-  async getToolsForDeveloperCollective(
-    developerCollectiveHash: ActionHash,
-  ): Promise<EntryRecord<Tool>[]> {
-    const records = await this.callZome(
-      'get_tools_for_developer_collective',
-      developerCollectiveHash,
-    );
-    return records.map((record) => new EntryRecord(record));
+  async getTool(actionHash: ActionHash): Promise<[ActionHash, EntryRecord<Tool>] | undefined> {
+    const record = await this.callZome('get_latest_tool', actionHash);
+    if (record) return [actionHash, new EntryRecord(record)];
+    return undefined;
   }
 
-  async getAllToolLinks(): Promise<Link[]> {
-    return this.callZome('get_tool_links_for_developer_collective', null);
+  /**
+   * @returns original action hash and record of latest developer collective
+   */
+  async getToolsForDeveloperCollective(
+    developerCollectiveHash: ActionHash,
+  ): Promise<[ActionHash, EntryRecord<Tool>][]> {
+    const tools: [ActionHash, EntryRecord<Tool>][] = [];
+    const links: Array<Link> = await this.callZome(
+      'get_tool_links_for_developer_collective',
+      developerCollectiveHash,
+    );
+    await Promise.all(
+      links.map(async (link) => {
+        const tool = await this.getTool(link.target);
+        if (tool) tools.push(tool);
+      }),
+    );
+    return tools;
+  }
+
+  async getAllToolLinks(developerCollective: ActionHash): Promise<Link[]> {
+    return this.callZome('get_tool_links_for_developer_collective', developerCollective);
   }
 
   async getAllToolRecords(): Promise<EntryRecord<Tool>[]> {
-    const links = await this.getAllToolLinks();
-    const maybeToolRecords = await Promise.all(links.map((link) => this.getTool(link.target)));
-    return maybeToolRecords.filter((maybeRecord) => !!maybeRecord) as EntryRecord<Tool>[];
+    let allTools: EntryRecord<Tool>[] = [];
+    const allDeveloperCollectiveLinks = await this.getAllDeveloperCollectiveLinks();
+    await Promise.all(
+      allDeveloperCollectiveLinks.map(async (link) => {
+        const toolLinks = await this.getAllToolLinks(link.target);
+        const maybeToolRecords = await Promise.all(
+          toolLinks.map((link) => this.getLatestTool(link.target)),
+        );
+        const toolRecords = maybeToolRecords.filter(
+          (maybeRecord) => !!maybeRecord,
+        ) as EntryRecord<Tool>[];
+        allTools = [...allTools, ...toolRecords];
+      }),
+    );
+    return allTools;
   }
 }

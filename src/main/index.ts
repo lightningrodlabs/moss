@@ -304,6 +304,8 @@ const createOrShowMainWindow = (): BrowserWindow => {
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
       // autoplayPolicy: 'user-gesture-required',
+      // uncomment this line to get fetch requests working while testing publishing of tools:
+      webSecurity: app.isPackaged ? true : false,
     },
   });
 

@@ -2,6 +2,7 @@ import {
   asyncDerived,
   lazyLoad,
   lazyLoadAndPoll,
+  manualReloadStore,
   pipe,
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
@@ -54,8 +55,12 @@ export class ToolsLibraryStore {
     }),
   );
 
+  myDeveloperCollectives = manualReloadStore(async () =>
+    this.toolsLibraryClient.getMyDeveloperCollectives(),
+  );
+
   async getLatestToolEntry(actionHash: ActionHash): Promise<EntryRecord<Tool>> {
-    const toolRecord = await this.toolsLibraryClient.getTool(actionHash);
+    const toolRecord = await this.toolsLibraryClient.getLatestTool(actionHash);
     if (!toolRecord) throw new Error('Tool not found for action hash.');
     return toolRecord;
   }

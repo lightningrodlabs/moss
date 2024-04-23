@@ -6,7 +6,7 @@ export type DeveloperCollective = {
   website: string;
   contact: string;
   icon: string;
-  meta_data: string;
+  meta_data: string | undefined;
 };
 
 export type UpdateDeveloperCollectiveInput = {
