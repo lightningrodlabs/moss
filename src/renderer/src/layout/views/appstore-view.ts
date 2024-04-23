@@ -39,7 +39,7 @@ export class AppStoreView extends LitElement {
                 this.dispatchEvent(new CustomEvent('open-publishing-view'));
               }
             }}
-            >Publish Applet
+            >Publish Tool
           </sl-button>
         </div>
 

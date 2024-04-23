@@ -1,6 +1,6 @@
 import { html, LitElement, css, PropertyValueMap } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { localized } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { hashProperty, notifyError } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -278,8 +278,8 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
       )}
       ${amIOwner
         ? html`
-            <div style="font-weight: bold; margin-top: 50px; margin-bottom: 15px;">
-              Add Contributor:
+            <div style="font-weight: bold; margin-top: 50px; margin-bottom: 20px;">
+              ${msg('Add Contributor:')}
             </div>
             <div>Public key:</div>
             <input
@@ -301,7 +301,12 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
                 placeholder="expiry"
               />
             </div>
-            <button @click=${async () => await this.createPermission()}>Add Contributor</button>
+            <button
+              @click=${async () => await this.createPermission()}
+              style="margin-bottom: 50px;"
+            >
+              Add Contributor
+            </button>
           `
         : html``}
     </div>`;

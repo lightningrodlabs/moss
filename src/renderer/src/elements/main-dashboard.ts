@@ -260,7 +260,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Publish Applet',
+        title: 'Publisher Panel',
         template: html` <publishing-view></publishing-view> `,
       },
     };

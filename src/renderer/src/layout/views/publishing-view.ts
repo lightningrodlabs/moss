@@ -17,10 +17,10 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import './create-developer-collective.js';
 import './developer-collective-view.js';
 import '../../tools-library/developer-collective-context.js';
-import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
 import { ActionHash } from '@holochain/client';
 
 enum PageView {
+  Home,
   DeveloperCollective,
   CreateDeveloperCollective,
 }
@@ -31,7 +31,7 @@ export class PublishingView extends LitElement {
   mossStore!: MossStore;
 
   @state()
-  view: PageView = PageView.CreateDeveloperCollective;
+  view: PageView = PageView.Home;
 
   _myDeveloperColletives = new StoreSubscriber(
     this,
@@ -68,35 +68,142 @@ export class PublishingView extends LitElement {
         return this.renderCreateDeveloperCollective();
       case PageView.DeveloperCollective:
         return this.renderDeveloperCollective();
+      case PageView.Home:
+        return html`
+          <div class="column center-content" style="text-align: center; flex: 1;">
+            <div style="max-width: 600px; font-size: 20px;">
+              To publish Tools you need to be part of a Developer Collective. Create your own
+              Developer Collective or ask an owner of a Developer Collective to add you as a
+              Contributor.<br /><br />
+              As a contributor you are allowed to publish, update and deprecate Tools under the name
+              of a Developer Collective.
+            </div>
+          </div>
+        `;
       default:
         return html`<div class="column center-content" style="flex: 1;">Error</div>`;
     }
   }
 
-  renderSidebar(myDeveloperCollectives: UpdateableEntity<DeveloperCollective>[]) {
-    console.log('MY DEVELOPER COLLECTIVES: ', myDeveloperCollectives);
+  renderMyDeveloperCollectives() {
+    switch (this._myDeveloperColletives.value.status) {
+      case 'pending':
+        return html`loading...`;
+      case 'error':
+        console.error(
+          'Failed to fetch my developer collectives: ',
+          this._myDeveloperColletives.value.error,
+        );
+        return html`Error.`;
+      case 'complete':
+        return html`
+          ${this._myDeveloperColletives.value.value
+            .sort((a, b) => a.record.entry.name.localeCompare(b.record.entry.name))
+            .map(
+              (entity) =>
+                html`<div
+                  tabindex="0"
+                  class="sidebar-btn ${this._selectedDeveloperCollective?.toString() ===
+                  entity.originalActionHash.toString()
+                    ? 'selected'
+                    : ''}"
+                  @click=${() => {
+                    this._selectedDeveloperCollective = entity.originalActionHash;
+                    this.view = PageView.DeveloperCollective;
+                  }}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      this._selectedDeveloperCollective = entity.originalActionHash;
+                      this.view = PageView.DeveloperCollective;
+                    }
+                  }}
+                >
+                  <span style="position: absolute; top: 2px; right: 6px; font-size: 12px;"
+                    >owner</span
+                  >
+                  <div class="row" style="align-items: center;">
+                    <img
+                      src=${entity.record.entry.icon}
+                      style="height: 30px; width: 30px; border-radius: 50%;"
+                    />
+                    <span style="margin-left: 5px;">${entity.record.entry.name}</span>
+                  </div>
+                </div>`,
+            )}
+        `;
+    }
+  }
+
+  renderDeveloperCollectivesWithPermission() {
+    switch (this._developerCollectivesWithPermission.value.status) {
+      case 'pending':
+        return html`loading...`;
+      case 'error':
+        console.error(
+          'Failed to fetch my developer collectives: ',
+          this._developerCollectivesWithPermission.value.error,
+        );
+        return html`Error.`;
+      case 'complete':
+        return html`
+          ${this._developerCollectivesWithPermission.value.value
+            .sort((a, b) => a.record.entry.name.localeCompare(b.record.entry.name))
+            .map(
+              (entity) =>
+                html`<div
+                  tabindex="0"
+                  class="sidebar-btn ${this._selectedDeveloperCollective?.toString() ===
+                  entity.originalActionHash.toString()
+                    ? 'selected'
+                    : ''}"
+                  @click=${() => {
+                    this._selectedDeveloperCollective = entity.originalActionHash;
+                    this.view = PageView.DeveloperCollective;
+                  }}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      this._selectedDeveloperCollective = entity.originalActionHash;
+                      this.view = PageView.DeveloperCollective;
+                    }
+                  }}
+                >
+                  <span style="position: absolute; top: 2px; right: 6px; font-size: 12px;"
+                    >contributor</span
+                  >
+                  <div class="row" style="align-items: center;">
+                    <img
+                      src=${entity.record.entry.icon}
+                      style="height: 30px; width: 30px; border-radius: 50%;"
+                    />
+                    <span style="margin-left: 5px;">${entity.record.entry.name}</span>
+                  </div>
+                </div>`,
+            )}
+        `;
+    }
+  }
+
+  renderSidebar() {
     return html` <div class="column" style="color: black; left: 260px;">
       <div class="sidebar-title">Your Developer Collectives:</div>
-      ${myDeveloperCollectives
-        .sort((a, b) => a.record.entry.name.localeCompare(b.record.entry.name))
-        .map(
-          (entity) =>
-            html`<div
-              class="sidebar-btn"
-              @click=${() => {
-                this._selectedDeveloperCollective = entity.originalActionHash;
-                this.view = PageView.DeveloperCollective;
-              }}
-            >
-              <div class="row" style="align-items: center;">
-                <img
-                  src=${entity.record.entry.icon}
-                  style="height: 30px; width: 30px; border-radius: 50%;"
-                />
-                <span style="margin-left: 5px;">${entity.record.entry.name}</span>
-              </div>
-            </div>`,
-        )}
+      ${this.renderMyDeveloperCollectives()} ${this.renderDeveloperCollectivesWithPermission()}
+      <div
+        tabindex="0"
+        class="sidebar-btn"
+        style="margin-top: 30px;"
+        @click=${() => {
+          this._selectedDeveloperCollective = undefined;
+          this.view = PageView.CreateDeveloperCollective;
+        }}
+        @keypress=${(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            this._selectedDeveloperCollective = undefined;
+            this.view = PageView.CreateDeveloperCollective;
+          }
+        }}
+      >
+        ${msg('+ Create New')}
+      </div>
     </div>`;
   }
 
@@ -115,9 +222,7 @@ export class PublishingView extends LitElement {
       case 'complete':
         return html`
           <div class="row" style="display: flex; flex: 1;">
-            <div class="sidebar">
-              ${this.renderSidebar(this._myDeveloperColletives.value.value)}
-            </div>
+            <div class="sidebar">${this.renderSidebar()}</div>
             <div class="column" style="flex: 1; position: relative; margin: 0;">
               ${this.renderContent()}
             </div>
@@ -149,17 +254,29 @@ export class PublishingView extends LitElement {
       }
 
       .sidebar-btn {
+        position: relative;
         background: var(--sl-color-tertiary-50);
         font-size: 18px;
         border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
         margin-bottom: 6px;
         font-weight: 500;
         cursor: pointer;
       }
 
       .sidebar-btn:hover {
-        background: var(--sl-color-tertiary-100);
+        background: var(--sl-color-tertiary-800);
+        color: white;
+      }
+
+      .sidebar-btn:active {
+        background: var(--sl-color-tertiary-800);
+        color: white;
+      }
+
+      .selected {
+        background: var(--sl-color-tertiary-800);
+        color: white;
       }
 
       .title {
