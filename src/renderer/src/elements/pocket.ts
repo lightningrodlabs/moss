@@ -152,7 +152,7 @@ export class MossPocket extends LitElement {
             </div>
           </div>
         </div>
-        <sl-icon-button slot="header-actions"
+        <sl-icon-button title="Clear Pocket" slot="header-actions"
           .src=${wrapPathInSvg(mdiDelete)}
                     @click=${() => this.clearPocket()}
         ></sl-icon-button>

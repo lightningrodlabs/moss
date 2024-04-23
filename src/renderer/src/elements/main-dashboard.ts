@@ -1217,10 +1217,10 @@ export class MainDashboard extends LitElement {
           </sl-tooltip>
         </div>
         <div class="row center-content" style="margin-bottom: 5px;">
-          <sl-tooltip content="Search" placement="right" hoist>
+          <sl-tooltip content="Pocket" placement="right" hoist>
             <button
               class="moss-button"
-              @click=${() => this.openPocket()}
+              @click=${() => this.togglePocket()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
                   this.openPocket();
