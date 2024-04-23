@@ -20,7 +20,7 @@ import { mossStoreContext } from '../../context.js';
 import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
 import TimeAgo from 'javascript-time-ago';
-import '../../tool-bundles/elements/applet-publisher.js';
+import '../../tool-bundles/elements/tool-publisher.js';
 import { Tool } from '../../tools-library/types.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
@@ -89,7 +89,7 @@ export class InstallableApplets extends LitElement {
             <div style="font-size: 80%; margin-bottom: 5px;">
               Published ${this.timeAgo.format(toolRecord.action.timestamp)} by </span>
             </div>
-            <applet-publisher .developerCollectiveHash=${toolRecord.entry.developer_collective}></applet-publisher>
+            <tool-publisher .developerCollectiveHash=${toolRecord.entry.developer_collective}></tool-publisher>
           </span>
         </div>
       </sl-card>

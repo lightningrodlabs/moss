@@ -211,10 +211,12 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
         class="sidebar-btn ${this.view === PageView.Home ? 'selected' : ''}"
         @click=${() => {
           this.view = PageView.Home;
+          this._selectedDeveloperCollective = undefined;
         }}
         @keypress=${(e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             this.view = PageView.Home;
+            this._selectedDeveloperCollective = undefined;
           }
         }}
       >
@@ -226,7 +228,7 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
           <span>${msg('Home')}</span>
         </div>
       </div>
-      <div class="sidebar-title">Your Developer Collectives:</div>
+      <div class="sidebar-title" style="margin-top: 15px;">Your Developer Collectives:</div>
       ${this.renderMyDeveloperCollectives()} ${this.renderDeveloperCollectivesWithPermission()}
       <div
         tabindex="0"
@@ -243,7 +245,7 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
           }
         }}
       >
-        ${msg('+ Create New')}
+        ${msg('+ Create New Collective')}
       </div>
     </div>`;
   }
@@ -288,7 +290,7 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
       }
 
       .sidebar-title {
-        color: white;
+        color: black;
         font-size: 18px;
         font-weight: 500;
         margin-bottom: 10px;

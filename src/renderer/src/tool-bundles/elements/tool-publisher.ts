@@ -15,12 +15,12 @@ import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { mdiInformationVariantCircle } from '@mdi/js';
-import { DeveloperCollective } from '../../tools-library/types.js';
+import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
 @localized()
-@customElement('applet-publisher')
-export class AppletPublisher extends LitElement {
+@customElement('tool-publisher')
+export class ToolPublisher extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   _mossStore!: MossStore;
 
@@ -38,12 +38,12 @@ export class AppletPublisher extends LitElement {
     return this.shadowRoot?.getElementById('publisher-details-dialog') as SlDialog;
   }
 
-  renderPublisher(publisher: EntryRecord<DeveloperCollective>) {
+  renderPublisher(publisher: UpdateableEntity<DeveloperCollective>) {
     if (!publisher) return html``;
 
     return html` <sl-dialog
         id="publisher-details-dialog"
-        .label=${publisher.entry.name}
+        .label=${publisher.record.entry.name}
         @click=${(e) => {
           e.stopPropagation();
         }}
@@ -55,9 +55,13 @@ export class AppletPublisher extends LitElement {
       >
         <div class="row" style="align-items: center;">
           <span style="margin-right: 5px;">${msg('website')}:</span>
-          ${publisher.entry.website && publisher.entry.website !== ''
+          ${publisher.record.entry.website && publisher.record.entry.website !== ''
             ? html`
-                <span><a href="${publisher.entry.website}">${publisher.entry.website}</a></span>
+                <span
+                  ><a href="${publisher.record.entry.website}"
+                    >${publisher.record.entry.website}</a
+                  ></span
+                >
               `
             : html`<span>(no website)</span>`}
         </div>
@@ -65,11 +69,11 @@ export class AppletPublisher extends LitElement {
 
       <div class="row" style="align-items: center;">
         <img
-          alt="${publisher.entry.name}"
-          .src=${publisher.entry.icon}
+          alt="${publisher.record.entry.name}"
+          .src=${publisher.record.entry.icon}
           style="width: 35px; height: 35px; border-radius: 50%; margin-left: 5px;"
         />
-        <div style="margin-left:5px">${publisher.entry.name}</div>
+        <div style="margin-left:5px">${publisher.record.entry.name}</div>
         <sl-icon
           tabindex="0"
           class="info-btn"
