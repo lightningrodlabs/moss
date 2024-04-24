@@ -350,6 +350,7 @@ export class GroupHome extends LitElement {
             joinedMembers,
             isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
           }))
+          .filter((info) => !!info.appEntry) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
           .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
@@ -414,6 +415,7 @@ export class GroupHome extends LitElement {
                       <sl-button
                         style="margin-left: 20px;"
                         .loading=${this._joiningNewApplet === encodeHashToBase64(info.appletHash)}
+                        .disabled=${!!this._joiningNewApplet}
                         variant="success"
                         @click=${() => this.joinNewApplet(info.appletHash)}
                         >${msg('Join')}</sl-button

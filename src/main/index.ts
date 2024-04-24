@@ -32,7 +32,7 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { emitToWindow, setLinkOpenHandlers } from './utils';
+import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
 import { createHappWindow } from './windows';
 import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
@@ -82,6 +82,10 @@ weCli
   .option(
     '-c, --dev-config <path>',
     'Runs We in applet developer mode based on the configuration file at the specified path.',
+  )
+  .option(
+    '--dev-data-dir <path>',
+    'Override the directory in which conductor data is stored in dev mode (default is a folder in the temp directory). Data in this directory will be cleaned up automatically.',
   )
   .option(
     '--holochain-path <path>',
@@ -167,12 +171,16 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 
 if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
-  const files = fs.readdirSync(os.tmpdir());
+  const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
   const foldersToDelete = files.filter((file) =>
     file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
   );
   for (const folder of foldersToDelete) {
-    fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
+    fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
+      recursive: true,
+      force: true,
+      maxRetries: 4,
+    });
   }
 }
 
@@ -217,6 +225,7 @@ let SELECT_SCREEN_OR_WINDOW_WINDOW: BrowserWindow | undefined | null;
 let SYSTRAY_ICON_STATE: 'high' | 'medium' | undefined = undefined;
 let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
+let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
 // icons
 const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
@@ -536,10 +545,11 @@ app.whenReady().then(async () => {
   if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
     // in dev mode
     if (RUN_OPTIONS.devInfo) {
-      const [bootstrapUrl, signalingUrl] =
+      const [bootstrapUrl, signalingUrl, localServicesHandle] =
         RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : await readLocalServices();
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl ? RUN_OPTIONS.bootstrapUrl : bootstrapUrl;
       RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl ? RUN_OPTIONS.signalingUrl : signalingUrl;
+      LOCAL_SERVICES_HANDLE = localServicesHandle;
     } else {
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
         ? RUN_OPTIONS.bootstrapUrl
@@ -956,7 +966,7 @@ app.whenReady().then(async () => {
       // We only install semver compatible updates
       if (
         updateCheckResult &&
-        // breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
+        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
         semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
         const userDecision = await dialog.showMessageBox({
@@ -1021,5 +1031,8 @@ app.on('quit', () => {
   }
   if (HOLOCHAIN_MANAGER) {
     HOLOCHAIN_MANAGER.processHandle.kill();
+  }
+  if (LOCAL_SERVICES_HANDLE) {
+    LOCAL_SERVICES_HANDLE.kill();
   }
 });

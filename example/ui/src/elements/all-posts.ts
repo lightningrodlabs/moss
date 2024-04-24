@@ -10,7 +10,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import '@lightningrodlabs/attachments/dist/elements/add-attachment.js';
+//import '@lightningrodlabs/attachments/dist/elements/add-attachment.js';
 
 import './post-summary.js';
 import { PostsStore } from '../posts-store.js';
