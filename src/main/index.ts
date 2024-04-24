@@ -84,7 +84,7 @@ weCli
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
   .option(
-    '-c, --dev-data-dir <path>',
+    '--dev-data-dir <path>',
     'Override the directory in which conductor data is stored in dev mode (default is a folder in the temp directory). Data in this directory will be cleaned up automatically.',
   )
   .option(
