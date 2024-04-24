@@ -138,3 +138,16 @@ export type MessageContentPart =
       type: 'agent';
       pubkey: AgentPubKeyB64;
     };
+
+/**
+ * Notification feed to end-users
+ */
+export type UpdateFeed = {
+  [key: string]: Array<UpdateFeedMessage>;
+};
+
+export type UpdateFeedMessage = {
+  type: string;
+  timestamp: number;
+  message: string;
+};

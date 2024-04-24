@@ -1,10 +1,12 @@
 import { html, LitElement, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiAlert, mdiViewGridPlus } from '@mdi/js';
@@ -17,8 +19,10 @@ import '../../applets/elements/applet-title.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
-import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
+import { UpdateFeedMessage } from '../../types.js';
+import TimeAgo from 'javascript-time-ago';
 
 enum WelcomePageView {
   Main,
@@ -36,11 +40,19 @@ export class WelcomeView extends LitElement {
   @state()
   notificationsLoading = true;
 
-  _notificationFeed = new StoreSubscriber(
-    this,
-    () => this._mossStore.notificationFeed(),
-    () => [this._mossStore],
-  );
+  @query('#disclaimer-dialog')
+  _displaimerDialog!: SlDialog;
+
+  @property()
+  updateFeed!: Array<UpdateFeedMessage>;
+
+  timeAgo = new TimeAgo('en-US');
+
+  // _notificationFeed = new StoreSubscriber(
+  //   this,
+  //   () => this._mossStore.notificationFeed(),
+  //   () => [this._mossStore],
+  // );
 
   async firstUpdated() {
     try {
@@ -124,13 +136,84 @@ export class WelcomeView extends LitElement {
     `;
   }
 
+  renderDisclaimerDialog() {
+    return html` <sl-dialog
+      id="disclaimer-dialog"
+      style="--width: 900px; --sl-panel-background-color: #f0f59d;"
+      no-header
+    >
+      <div class="disclaimer">
+        <div
+          class="row"
+          style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
+        >
+          <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
+          <span style="margin-left: 5px;">Moss is Alpha Software</span>
+        </div>
+        <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
+          Moss development is in alpha stage. It is best suited for
+          <b>adventurous early-adopters</b>. Please
+          <b>don't expect it to be stable or bug free!</b> That said, we use Moss in-house daily for
+          doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
+          <br /><br />
+          We <b>export data from our Tools/Applets frequently</b> and sometimes have to recover from
+          these backups. We recommend you do the same. <br /><br />
+          What you can/should expect:
+          <ul>
+            <li>
+              If Moss offers you to install an update on startup, this update will always be
+              compatible with your current version of Moss. Compatible versions of Moss are
+              indicated by the first non-zero number in the version name. If you are using Moss
+              0.11.5 it is compatible with Moss 0.11.8 but it is <i>not</i> compatible with Moss
+              0.12.0.
+            </li>
+            <li>
+              You can <b>not</b> expect your current version of Moss to receive ongoing bugfixes
+              until we explicitly say so. That said, we are targeting to release a version "Moss
+              Sprout" in the coming months that will receive support in the form of bugfixes and UI
+              improvements for a defined period of time. Until that point there will be a succession
+              of breaking releases of Moss (0.12.x, 0.13.x, ...) that are going to be incompatible
+              between each other, meaning that if you decide to go to a newer version, you will not
+              be able to access or join groups created in the previous version.
+            </li>
+            <li>
+              As we are developing Moss and the Weave, we are also continually trying to find the
+              most suitable naming and terminology. Expect therefore names of things to keep
+              changing in the near future. One notable change is likely going to be "Applet" to
+              "Tool".
+            </li>
+          </ul>
+        </div>
+      </div>
+    </sl-dialog>`;
+  }
+
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
+          ${this.renderDisclaimerDialog()}
           <div class="column" style="align-items: center; flex: 1; overflow: auto;">
-            <div class="row" flex-wrap: wrap;">
-            <button
+            <div
+              class="disclaimer-btn"
+              tabindex="0"
+              @click=${() => this._displaimerDialog.show()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  this._displaimerDialog.show();
+                }
+              }}
+            >
+              <div
+                class="row"
+                style="align-items: center; font-size: 26px; justify-content: center;"
+              >
+                <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
+                <span style="margin-left: 5px;">Disclaimer</span>
+              </div>
+            </div>
+            <div class="row" style="flex-wrap: wrap; margin-top: 80px;">
+              <button
                 class="btn"
                 @click=${(_e) =>
                   this.dispatchEvent(
@@ -208,46 +291,30 @@ export class WelcomeView extends LitElement {
               </button>
             </div>
 
-            <!-- Notification Feed -->
+            <!-- Moss Update Feed -->
 
-            <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 40px;">
-              <div class="disclaimer">
-                <div class="row" style="align-items: center; font-size: 30px;">
-                  <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
-                  <span style="margin-left: 5px;">Moss is Alpha Software</span>
-                </div>
-                <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
-                  Moss development is in alpha stage. It is best suited for adventurous early-adopters.
-                  Please don't expect it to be stable or bug free! That said, we use Moss in-house daily
-                  for doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
-                  <br><br>
-                  We export data from our Tools/Applets frequently and sometimes have to recover from these backups.
-                  We recommend you do the same.
-                  <br><br>
-                  What you can/should expect:
-                  <ul>
-                    <li>
-                      If Moss offers you to install an update on startup, this update will always be compatible with your
-                      current version of Moss. Compatible versions of Moss are indicated by the first non-zero number in the version
-                      name. If you are using Moss 0.11.5 it is compatible with Moss 0.11.8 but it is <i>not</i> compatible
-                      with Moss 0.12.0.
-                    </li>
-                    <li>
-                      You can <b>not</b> expect your current version of Moss to receive ongoing bugfixes until we explicitly say so.
-                      That said, we are targeting to release a version "Moss Sprout" in the coming months
-                      that will receive support in the form of bugfixes and UI improvements for a defined period of time.
-                      Until that point there will be a succession of breaking releases of Moss (0.12.x, 0.13.x, ...) that
-                      are going to be incompatible between each other, meaning that if you decide to go to a newer version,
-                      you will not be able to access or join groups created in the previous version.
-                    </li>
-                    <li>
-                      As we are developing Moss and the Weave, we are also continually trying to find the most suitable
-                      naming and terminology. Expect therefore names of things to keep changing in
-                      the near future. One notable change is likely going to be "Applet" to "Tool".
-                    </li>
-
-                  </ul>
-                </div>
+            <div
+              class="column"
+              style="align-items: center; display:flex; flex: 1; margin-top: 40px; color: white;"
+            >
+              <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
+              <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
+                >Thank you for surfing the edge of
+                <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
+                relevant updates for early weavers.</span
+              >
+              <div class="column">
+                ${this.updateFeed.length === 0
+                  ? html`No big waves lately...`
+                  : this.updateFeed.map(
+                      (message) => html`
+                        <div class="update-feed-el">
+                          <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
+                          <div class="update-type">${message.type}</div>
+                          ${message.message}
+                        </div>
+                      `,
+                    )}
               </div>
             </div>
           </div>
@@ -300,12 +367,64 @@ export class WelcomeView extends LitElement {
       }
 
       .disclaimer {
-        color: #fff78e;
-        border: 2px solid #fff78e;
+        color: #002a00;
+        /* border: 2px solid #fff78e; */
         padding: 20px;
         border-radius: 20px;
-        background: #fff78e1f;
+        /* background: #fff78e1f; */
         line-height: 1.2;
+      }
+
+      .disclaimer-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        /* background: #f4fb86; */
+        background: linear-gradient(#e0e871, #acb520);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        padding: 10px;
+        box-shadow: 0 0 2px 2px #202020;
+        cursor: pointer;
+      }
+
+      .disclaimer-btn:hover {
+        background: linear-gradient(#f2f98e, #b6c027);
+      }
+
+      .update-feed-el {
+        max-width: 800px;
+        position: relative;
+        padding: 20px;
+        padding-top: 45px;
+        border-radius: 10px;
+        background: rgba(22, 35, 17, 1.0);
+        margin: 5px;
+        border: 2px solid
+        cursor: pointer;
+        color: #fff;
+        border: 2px solid rgba(96, 124, 4, .50);
+        transition: all .25s ease;
+        font-size: 18px;
+        line-height: 1.4;
+      }
+
+      .update-date {
+        position: absolute;
+        font-size: 14px;
+        top: 12px;
+        left: 20px;
+        opacity: 0.6;
+      }
+
+      .update-type {
+        font-size: 20px;
+        position: absolute;
+        top: 7px;
+        right: 12px;
+        font-weight: bold;
       }
 
       .feed {

@@ -58,6 +58,7 @@ import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import { decodeContext, getAllIframes, stringifyWal } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
+import { UpdateFeedMessage } from '../types.js';
 
 type OpenTab =
   | {
@@ -136,6 +137,9 @@ export class MainDashboard extends LitElement {
 
   @state()
   _selectedTab: TabInfo | undefined;
+
+  @state()
+  _updateFeed: Array<UpdateFeedMessage> = [];
 
   _dashboardState = new StoreSubscriber(
     this,
@@ -523,6 +527,18 @@ export class MainDashboard extends LitElement {
     // }, 10000);
 
     this.appVersion = await getAppVersion();
+
+    // Fetch Moss update feed
+    try {
+      // TODO change URL to point to main branch before merging
+      const response = await fetch(
+        'https://raw.githubusercontent.com/lightningrodlabs/we/feat/update-feed/news.json',
+      );
+      const updateFeed = await response.json();
+      this._updateFeed = updateFeed['0.11.x'];
+    } catch (e) {
+      console.warn('Failed to fetch update feed: ', e);
+    }
   }
 
   openClipboard() {
@@ -975,6 +991,7 @@ export class MainDashboard extends LitElement {
           <welcome-view
             id="welcome-view"
             @click=${(e) => e.stopPropagation()}
+            .updateFeed=${this._updateFeed}
             style="${this._dashboardState.value.viewType === 'personal'
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
