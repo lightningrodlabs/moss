@@ -84,6 +84,10 @@ weCli
     'Runs We in applet developer mode based on the configuration file at the specified path.',
   )
   .option(
+    '-c, --dev-data-dir <path>',
+    'Override the directory in which conductor data is stored in dev mode (default is a folder in the temp directory). Data in this directory will be cleaned up automatically.',
+  )
+  .option(
     '--holochain-path <path>',
     'Runs the Holochain Launcher with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
   )
@@ -167,12 +171,16 @@ console.log('RUNNING ON PLATFORM: ', process.platform);
 
 if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
-  const files = fs.readdirSync(os.tmpdir());
+  const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
   const foldersToDelete = files.filter((file) =>
     file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
   );
   for (const folder of foldersToDelete) {
-    fs.rmSync(path.join(os.tmpdir(), folder), { recursive: true, force: true, maxRetries: 4 });
+    fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
+      recursive: true,
+      force: true,
+      maxRetries: 4,
+    });
   }
 }
 

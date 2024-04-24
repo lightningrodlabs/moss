@@ -30,12 +30,14 @@ export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
 export interface WeAppletDevInfo {
   config: WeDevConfig;
   tempDir: string;
+  tempDirRoot: string;
   agentIdx: number;
 }
 
 export interface CliOpts {
   profile?: string;
   devConfig?: string | undefined;
+  devDataDir?: string | undefined;
   agentIdx?: number | undefined;
   networkSeed?: string | undefined;
   holochainPath?: string | undefined;
@@ -110,6 +112,16 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
   if (args.lairRustLog && typeof args.lairRustLog !== 'string') {
     throw new Error('The --lair-rust-log argument must be of type string.');
   }
+  if (args.devDataDir) {
+    if (typeof args.devDataDir !== 'string') {
+      throw new Error('The --dev-data-dir argument must be of type string.');
+    }
+    if (!args.devConfig) {
+      throw new Error(
+        'The --dev-data-dir can only be used in conjunction with the --dev-config argument.',
+      );
+    }
+  }
 
   let devInfo: WeAppletDevInfo | undefined;
   const devConfig: WeDevConfig | undefined = readAndValidateDevConfig(
@@ -121,10 +133,13 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
     const agentIdx = args.agentIdx ? args.agentIdx : 1;
     devInfo = {
       config: devConfig,
-      tempDir: path.join(
-        os.tmpdir(),
-        `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
-      ),
+      tempDir: args.devDataDir
+        ? path.join(
+            args.devDataDir,
+            `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
+          )
+        : path.join(os.tmpdir(), `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`),
+      tempDirRoot: args.devDataDir ? args.devDataDir : os.tmpdir(),
       agentIdx,
     };
   }
