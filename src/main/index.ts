@@ -225,6 +225,7 @@ let SELECT_SCREEN_OR_WINDOW_WINDOW: BrowserWindow | undefined | null;
 let SYSTRAY_ICON_STATE: 'high' | 'medium' | undefined = undefined;
 let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
+let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
 // icons
 const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
@@ -544,10 +545,11 @@ app.whenReady().then(async () => {
   if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
     // in dev mode
     if (RUN_OPTIONS.devInfo) {
-      const [bootstrapUrl, signalingUrl] =
+      const [bootstrapUrl, signalingUrl, localServicesHandle] =
         RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : await readLocalServices();
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl ? RUN_OPTIONS.bootstrapUrl : bootstrapUrl;
       RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl ? RUN_OPTIONS.signalingUrl : signalingUrl;
+      LOCAL_SERVICES_HANDLE = localServicesHandle;
     } else {
       RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
         ? RUN_OPTIONS.bootstrapUrl
@@ -1029,5 +1031,8 @@ app.on('quit', () => {
   }
   if (HOLOCHAIN_MANAGER) {
     HOLOCHAIN_MANAGER.processHandle.kill();
+  }
+  if (LOCAL_SERVICES_HANDLE) {
+    LOCAL_SERVICES_HANDLE.kill();
   }
 });

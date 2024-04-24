@@ -49,7 +49,9 @@ export async function readLocalServices(): Promise<[string, string]> {
   }
 }
 
-export async function startLocalServices(): Promise<[string, string]> {
+export async function startLocalServices(): Promise<
+  [string, string, childProcess.ChildProcessWithoutNullStreams]
+> {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
@@ -74,7 +76,8 @@ export async function startLocalServices(): Promise<[string, string]> {
         signalRunnig = true;
       }
       fs.writeFileSync('.hc_local_services', JSON.stringify({ bootstrapUrl, signalingUrl }));
-      if (bootstrapRunning && signalRunnig) resolve([bootstrapUrl, signalingUrl]);
+      if (bootstrapRunning && signalRunnig)
+        resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
