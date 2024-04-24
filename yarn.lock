@@ -1569,7 +1569,23 @@
   resolved "https://registry.npmjs.org/@holochain-playground/cli/-/cli-0.1.1.tgz"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
-"@holochain/client@^0.17.0-dev.7", "@holochain/client@git+https://github.com/matthme/holochain-client-js.git#63274e6463a42ff1ed49eb242eee31f839c8055e":
+"@holochain/client@=0.17.0-dev.9":
+  version "0.17.0-dev.9"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.17.0-dev.9.tgz#acca3f420886025cf1773046d95de09d3eb2bc44"
+  integrity sha512-/s4TiMAliB5XUEgs/lWVfx1xAXsjtkKDSd7cveWuHKUf2BiZ+eqk1Mt1UMXrkILAwpSpdFLknDHM7rNhXlk2nQ==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@holochain/serialization" "^0.1.0-beta-rc.3"
+    "@msgpack/msgpack" "^2.8.0"
+    "@tauri-apps/api" "^1.4.0"
+    emittery "^1.0.1"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.5"
+    libsodium-wrappers "^0.7.13"
+    lodash-es "^4.17.21"
+    ws "^8.14.2"
+
+"@holochain/client@^0.17.0-dev.7":
   version "0.17.0-superdev.8"
   resolved "git+ssh://git@github.com/matthme/holochain-client-js.git#63274e6463a42ff1ed49eb242eee31f839c8055e"
   integrity sha512-HAoQjQsNGh7tsjcx9Ps89QkK2JzTcooA2X1jnaTBxl/SYcn/BgOVnN2Y++wR2C9px9pdXjKrm1UaXQrr++IYgw==
@@ -1691,8 +1707,8 @@
     "@holochain-open-dev/stores" "0.300.0-dev.0"
     "@holochain-open-dev/utils" "0.300.0-dev.0"
     "@holochain/client" "^0.17.0-dev.7"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-fa1d061d-7235-47bd-b414-da122c668b34-1713988837385/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-fa1d061d-7235-47bd-b414-da122c668b34-1713988837385/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e6976b50-6fae-45d3-b74e-38b050342ba8-1713989445984/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e6976b50-6fae-45d3-b74e-38b050342ba8-1713989445984/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1745,7 +1761,7 @@
     "@holochain-open-dev/stores" "0.300.0-dev.0"
     "@holochain-open-dev/utils" "0.300.0-dev.0"
     "@holochain/client" "^0.17.0-dev.7"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.5.0-aba797ff-17e8-4b45-ab2a-5bc59c8e48c7-1713988837382/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.5.0-7f9ef183-3881-4bbf-8b2e-5d7b767c7c6c-1713989445982/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
