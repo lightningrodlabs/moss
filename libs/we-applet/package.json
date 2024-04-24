@@ -24,7 +24,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "^0.17.0-dev.7",
+    "@holochain/client": "=0.17.0-dev.9",
     "@msgpack/msgpack": "^2.8.0",
     "js-base64": "^3.7.2"
   },

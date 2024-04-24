@@ -7,7 +7,7 @@
   "dependencies": {
     "@holochain-open-dev/profiles": "0.300.0-dev.0",
     "@holochain-open-dev/utils": "0.300.0-dev.0",
-    "@holochain/client": "^0.17.0-dev.7",
+    "@holochain/client": "=0.17.0-dev.9",
     "@lightningrodlabs/we-applet": "file:../../libs/we-applet",
     "inline-module": "^0.6.1"
   },
