@@ -264,7 +264,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Publish Applet',
+        title: 'Publisher Panel',
         template: html` <publishing-view></publishing-view> `,
       },
     };
@@ -1546,6 +1546,7 @@ export class MainDashboard extends LitElement {
           top: 0;
           bottom: 0;
           background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
+          width: 74px;
         }
 
         .left-group-sidebar {

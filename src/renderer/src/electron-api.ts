@@ -79,7 +79,7 @@ declare global {
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
-  appstore_app_id: string;
+  tools_library_app_id: string;
 }
 
 export async function joinGroup(networkSeed: string): Promise<AppInfo> {

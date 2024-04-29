@@ -1,4 +1,4 @@
-import { AsyncReadable, joinAsync, StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
@@ -13,53 +13,47 @@ import { hashProperty } from '@holochain-open-dev/elements';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
+import { Tool } from '../../tools-library/types.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
-@customElement('applet-bundle-title')
+@customElement('tool-bundle-title')
 export class AppletBundleTitle extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   _mossStore!: MossStore;
 
-  @property(hashProperty('applet-bundle-hash'))
-  appletBundleHash!: ActionHash;
+  @property(hashProperty('tool-bundle-hash'))
+  toolBundleHash!: ActionHash;
 
-  appletBundle = new StoreSubscriber(
+  toolBundle = new StoreSubscriber(
     this,
-    () =>
-      joinAsync([
-        this._mossStore.appletBundlesStore.appletBundles.get(this.appletBundleHash),
-        this._mossStore.appletBundlesStore.appletBundleLogo.get(this.appletBundleHash),
-      ]) as AsyncReadable<[Entity<AppEntry> | undefined, string | undefined]>,
-    () => [this.appletBundleHash],
+    () => this._mossStore.toolsLibraryStore.installableTools.get(this.toolBundleHash),
+    () => [this.toolBundleHash],
   );
 
-  renderTitle([appletBundle, appletBundleLogo]: [
-    Entity<AppEntry> | undefined,
-    string | undefined,
-  ]) {
-    if (!appletBundle) return html``;
+  renderTitle(toolBundle: EntryRecord<Tool> | undefined) {
+    if (!toolBundle) return html`[Tool Record Not Found]`;
 
     return html` <div class="row">
       <img
-        alt="${appletBundle.content.title}"
-        .src=${appletBundleLogo}
+        alt="${toolBundle.entry.title}"
+        .src=${toolBundle.entry.icon}
         style="height: 16px; width: 16px; display: flex; margin-right: 4px"
       />
-      <span style="color: rgb(119, 119, 119)">${appletBundle.content.title}</span>
+      <span style="color: rgb(119, 119, 119)">${toolBundle.entry.title}</span>
     </div>`;
   }
 
   render() {
-    switch (this.appletBundle.value.status) {
+    switch (this.toolBundle.value.status) {
       case 'pending':
         return html``;
       case 'complete':
-        return this.renderTitle(this.appletBundle.value.value);
+        return this.renderTitle(this.toolBundle.value.value);
       case 'error':
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the information about the applet bundle')}
-          .error=${this.appletBundle.value.error}
+          .error=${this.toolBundle.value.error}
         ></display-error>`;
     }
   }

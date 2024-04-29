@@ -49,7 +49,6 @@ import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
-import '../../applet-bundles/elements/publish-applet-button.js';
 import '../../elements/tab-group.js';
 import '../../elements/loading-dialog.js';
 
@@ -59,11 +58,12 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
+import { Tool } from '../../tools-library/types.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -115,20 +115,21 @@ export class GroupHome extends LitElement {
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
-              let appstoreAppEntry: Entity<AppEntry> | undefined;
-              let appletLogo: string | undefined;
+              let toolsLibraryToolRecord: EntryRecord<Tool> | undefined;
               if (appletEntry) {
                 const distributionInfo: DistributionInfo = JSON.parse(
                   appletEntry.distribution_info,
                 );
-                if (distributionInfo.type !== 'appstore-light')
+                if (distributionInfo.type !== 'tools-library')
                   throw new Error(
-                    "Cannot get unjoined applets from distribution types other than appstore-light'",
+                    "Cannot get unjoined applets from distribution types other than tools-library'",
                   );
-                const appEntryId = decodeHashFromBase64(distributionInfo.info.appEntryId);
+                const toolBundleActionHash = decodeHashFromBase64(
+                  distributionInfo.info.toolActionHash,
+                );
                 try {
-                  appstoreAppEntry = await toPromise(
-                    this.mossStore.appletBundlesStore.appletBundles.get(appEntryId),
+                  toolsLibraryToolRecord = await toPromise(
+                    this.mossStore.toolsLibraryStore.installableTools.get(toolBundleActionHash),
                   );
                 } catch (e) {
                   console.warn(
@@ -136,27 +137,18 @@ export class GroupHome extends LitElement {
                     e,
                   );
                 }
-                try {
-                  appletLogo = await toPromise(
-                    this.mossStore.appletBundlesStore.appletBundleLogo.get(appEntryId),
-                  );
-                } catch (e) {
-                  console.warn('@group-home @unjoined-applets: Failed to get appletLogo: ', e);
-                }
               }
               return [
                 appletHash,
                 appletEntry,
-                appstoreAppEntry?.content ? appstoreAppEntry.content : undefined,
-                appletLogo,
+                toolsLibraryToolRecord?.entry ? toolsLibraryToolRecord.entry : undefined,
                 agentKey,
                 timestamp,
                 joinedMembers,
               ] as [
                 AppletHash,
                 Applet | undefined,
-                AppEntry | undefined,
-                string | undefined,
+                Tool | undefined,
                 AgentPubKey,
                 number,
                 AppletAgent[],
@@ -208,24 +200,23 @@ export class GroupHome extends LitElement {
     console.log('appletId: ', appId);
 
     try {
-      const appEntryEntity = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
-      if (!appEntryEntity)
+      const toolRecord = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
+      if (!toolRecord)
         throw new Error('No AppEntry found in We Store for the requested UI update.');
 
-      const assetsSource: AssetSource = JSON.parse(appEntryEntity.content.source);
+      const assetsSource: AssetSource = JSON.parse(toolRecord.entry.source);
       if (assetsSource.type !== 'https')
         throw new Error("Updating of applets is only implemented for sources of type 'http'");
-      const appstoreDnaHash = await this.mossStore.appletBundlesStore.appstoreDnaHash();
+      const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
       const distributionInfo: DistributionInfo = {
-        type: 'appstore-light',
+        type: 'tools-library',
         info: {
-          appstoreDnaHash,
-          appEntryId: encodeHashToBase64(appEntryEntity.id),
-          appEntryActionHash: encodeHashToBase64(appEntryEntity.action),
-          appEntryEntryHash: encodeHashToBase64(appEntryEntity.address),
+          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+          toolActionHash: encodeHashToBase64(toolRecord.actionHash),
+          toolEntryHash: encodeHashToBase64(toolRecord.entryHash),
         },
       };
-      const appHashes: AppHashes = JSON.parse(appEntryEntity.content.hashes);
+      const appHashes: AppHashes = JSON.parse(toolRecord.entry.hashes);
       if (appHashes.type !== 'webhapp')
         throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
 
@@ -340,17 +331,16 @@ export class GroupHome extends LitElement {
           .filter(
             ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
           )
-          .map(([appletHash, appletEntry, appEntry, logo, agentKey, timestamp, joinedMembers]) => ({
+          .map(([appletHash, appletEntry, toolBundle, agentKey, timestamp, joinedMembers]) => ({
             appletHash,
             appletEntry,
-            appEntry,
-            logo,
+            toolBundle,
             agentKey,
             timestamp,
             joinedMembers,
             isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
           }))
-          .filter((info) => !!info.appEntry) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
+          .filter((info) => !!info.toolBundle) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
           .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
@@ -372,10 +362,10 @@ export class GroupHome extends LitElement {
                         ></agent-avatar>
                         <span>${msg('added an instance of ')}</span>
                         <span
-                          style="margin-left: 5px; font-weight: bold; ${info.appEntry?.title
+                          style="margin-left: 5px; font-weight: bold; ${info.toolBundle?.title
                             ? ''
                             : 'opacity: 0.6;'}"
-                          >${info.appEntry ? info.appEntry.title : 'unknown'}&nbsp;
+                          >${info.toolBundle ? info.toolBundle.title : 'unknown'}&nbsp;
                         </span>
                       </div>
                       <div
@@ -386,12 +376,12 @@ export class GroupHome extends LitElement {
                     </div>
                     <div class="card-content" style="align-items: center;">
                       <sl-tooltip
-                        style="${info.appEntry ? '' : 'display: none;'}"
-                        content="${info.appEntry?.subtitle}"
+                        style="${info.toolBundle ? '' : 'display: none;'}"
+                        content="${info.toolBundle?.subtitle}"
                       >
-                        ${info.logo
+                        ${info.toolBundle?.icon
                           ? html`<img
-                              src=${info.logo}
+                              src=${info.toolBundle.icon}
                               alt="Applet logo"
                               style="height: 80px; margin-right: 10px;"
                             />`

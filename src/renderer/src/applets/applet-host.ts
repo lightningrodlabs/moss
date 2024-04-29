@@ -26,7 +26,6 @@ import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
-  appEntryIdFromDistInfo,
   appIdFromAppletHash,
   getAppletNotificationSettings,
   getNotificationState,
@@ -35,6 +34,7 @@ import {
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
+  toolBundleActionHashFromDistInfo,
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
@@ -205,7 +205,9 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
       const icon = await toPromise(appletStore.logo);
 
       return {
-        appletBundleId: appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+        toolBundleActionHash: toolBundleActionHashFromDistInfo(
+          appletStore.applet.distribution_info,
+        ),
         appletName: appletStore.applet.custom_name,
         appletIcon: icon,
         groupsIds: Array.from(groupsForApplet.keys()),
@@ -256,7 +258,7 @@ export async function handleAppletIframeMessage(
       if (crossApplet) {
         const applets = await toPromise(
           mossStore.appletsForBundleHash.get(
-            appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+            toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {

@@ -15,6 +15,7 @@ import {
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
+  EntryRecord,
   HoloHashMap,
   LazyHoloHashMap,
   LazyMap,
@@ -37,13 +38,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
-import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
+import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
-  appEntryActionHashFromDistInfo,
-  appEntryIdFromDistInfo,
   appIdFromAppletHash,
   appletHashFromAppId,
   appletIdFromAppId,
@@ -52,14 +51,21 @@ import {
   initAppClient,
   isAppRunning,
   stringifyWal,
+  toolBundleActionHashFromDistInfo,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppHashes, AppletHash, AppletId, AppletNotification, DistributionInfo } from './types.js';
+import {
+  AppHashes,
+  AppletHash,
+  AppletId,
+  AppletNotification,
+  DistributionInfo,
+  WebHappSource,
+} from './types.js';
 import { Applet } from './types.js';
 import { GroupClient } from './groups/group-client.js';
-import { WebHappSource } from './processes/appstore/appstore-light.js';
-import { AppEntry, Entity } from './processes/appstore/types.js';
+import { Tool } from './tools-library/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
@@ -73,11 +79,11 @@ export class MossStore {
     public adminWebsocket: AdminWebsocket,
     public appWebsocket: AppWebsocket,
     public conductorInfo: ConductorInfo,
-    public appletBundlesStore: AppletBundlesStore,
+    public toolsLibraryStore: ToolsLibraryStore,
     public isAppletDev: boolean,
   ) {}
 
-  private _updatableApplets: Writable<Record<AppletId, Entity<AppEntry>>> = writable({});
+  private _updatableApplets: Writable<Record<AppletId, EntryRecord<Tool>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
   // here at the MossStore level
@@ -140,25 +146,25 @@ export class MossStore {
 
   async checkForUiUpdates() {
     // 1. Get all AppAssetsInfos
-    const updatableApplets: Record<AppletId, Entity<AppEntry>> = {}; // AppEntry with the new assets by AppletId
+    const updatableApplets: Record<AppletId, EntryRecord<Tool>> = {}; // Tool entry with the new assets by AppletId
     const appAssetsInfos = await getAllAppAssetsInfos();
     // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
-    const allAppEntries = await toPromise(this.appletBundlesStore.installableAppletBundles);
+    const allToolEntries = await this.toolsLibraryStore.toolsLibraryClient.getAllToolRecords();
     // console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
 
     Object.entries(appAssetsInfos).forEach(([appId, appAssetInfo]) => {
       if (
-        appAssetInfo.distributionInfo.type === 'appstore-light' &&
+        appAssetInfo.distributionInfo.type === 'tools-library' &&
         appAssetInfo.type === 'webhapp' &&
         appAssetInfo.sha256
       ) {
         // TODO potentially fetch current AppEntry here and check last_updated field and compare
-        const currentAppEntryId = appAssetInfo.distributionInfo.info.appEntryId;
-        const maybeRelevantAppEntry = allAppEntries.find(
-          (appEntryEntity) => encodeHashToBase64(appEntryEntity.id) === currentAppEntryId,
+        const currentToolActionHash = appAssetInfo.distributionInfo.info.toolActionHash;
+        const maybeRelevantToolRecord = allToolEntries.find(
+          (toolRecord) => encodeHashToBase64(toolRecord.actionHash) === currentToolActionHash,
         );
-        if (maybeRelevantAppEntry) {
-          const appHashes: AppHashes = JSON.parse(maybeRelevantAppEntry.content.hashes);
+        if (maybeRelevantToolRecord) {
+          const appHashes: AppHashes = JSON.parse(maybeRelevantToolRecord.entry.hashes);
           // Check that happ hash is the same but webhapp hash is different
           if (appHashes.type === 'webhapp') {
             if (
@@ -166,7 +172,7 @@ export class MossStore {
               appHashes.sha256 !== appAssetInfo.sha256
             ) {
               const appletId = appletIdFromAppId(appId);
-              updatableApplets[appletId] = maybeRelevantAppEntry;
+              updatableApplets[appletId] = maybeRelevantToolRecord;
             }
           }
         }
@@ -194,7 +200,7 @@ export class MossStore {
     this._updatesAvailableByGroup.set(updatesAvailableByGroup);
   }
 
-  updatableApplets(): Readable<Record<AppletId, Entity<AppEntry>>> {
+  updatableApplets(): Readable<Record<AppletId, EntryRecord<Tool>>> {
     return derived(this._updatableApplets, (store) => store);
   }
 
@@ -474,7 +480,7 @@ export class MossStore {
           appletHash,
           applet,
           this.conductorInfo,
-          this.appletBundlesStore,
+          this.toolsLibraryStore,
           this.isAppletDev,
         ),
       );
@@ -626,7 +632,7 @@ export class MossStore {
 
   appletsForBundleHash = new LazyHoloHashMap(
     (
-      appletBundleHash: ActionHash, // action hash of the AppEntry in the app store
+      toolBundleHash: ActionHash, // action hash of the Tool entry in the tools library
     ) =>
       pipe(
         this.allRunningApplets,
@@ -635,8 +641,9 @@ export class MossStore {
             pickBy(
               runningApplets,
               (appletStore) =>
-                appEntryIdFromDistInfo(appletStore.applet.distribution_info).toString() ===
-                appletBundleHash.toString(),
+                toolBundleActionHashFromDistInfo(
+                  appletStore.applet.distribution_info,
+                ).toString() === toolBundleHash.toString(),
             ),
           ),
         (appletsForThisBundleHash) =>
@@ -674,16 +681,16 @@ export class MossStore {
       );
     }
 
-    const appEntry = await this.appletBundlesStore.getAppEntry(
-      appEntryActionHashFromDistInfo(applet.distribution_info),
+    const toolRecord = await this.toolsLibraryStore.getLatestToolEntry(
+      toolBundleActionHashFromDistInfo(applet.distribution_info),
     );
 
-    console.log('@installApplet: got AppEntry: ', appEntry.entry);
+    console.log('@installApplet: got ToolEntry: ', toolRecord.entry);
     console.log('@installApplet: got Applet: ', applet);
 
-    if (!appEntry) throw new Error('AppEntry not found in AppStore');
+    if (!toolRecord) throw new Error('ToolEntry not found in Tools Library');
 
-    const source: WebHappSource = JSON.parse(appEntry.entry.source);
+    const source: WebHappSource = JSON.parse(toolRecord.entry.source);
     if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
     if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
       throw new Error(`Invalid applet source URL '${source.url}'`);
@@ -694,13 +701,13 @@ export class MossStore {
       appId,
       applet.network_seed!,
       {},
-      encodeHashToBase64(this.appletBundlesStore.appstoreClient.myPubKey),
+      encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       source.url,
       distributionInfo,
       applet.sha256_happ,
       applet.sha256_ui,
       applet.sha256_webhapp,
-      appEntry.entry.metadata,
+      toolRecord.entry.meta_data,
     );
 
     return appInfo;
