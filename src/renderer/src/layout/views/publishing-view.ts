@@ -1,5 +1,5 @@
 import { html, LitElement, css } from 'lit';
-import { customElement, query, state } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';

@@ -19,7 +19,7 @@ import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
-import { appEntryIdFromDistInfo } from '../utils.js';
+import { toolBundleActionHashFromDistInfo } from '../utils.js';
 
 @localized()
 @customElement('applets-sidebar')
@@ -37,9 +37,13 @@ export class AppletsSidebar extends LitElement {
     const appletsByBundleHash: HoloHashMap<ActionHash, AppletStore> = new HoloHashMap();
 
     for (const [_appletHash, appletStore] of Array.from(applets.entries())) {
-      if (!appletsByBundleHash.has(appEntryIdFromDistInfo(appletStore.applet.distribution_info))) {
+      if (
+        !appletsByBundleHash.has(
+          toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
+        )
+      ) {
         appletsByBundleHash.set(
-          appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+          toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
           appletStore,
         );
       }
@@ -58,7 +62,7 @@ export class AppletsSidebar extends LitElement {
                     this.dispatchEvent(
                       new CustomEvent('applet-selected', {
                         detail: {
-                          appletBundleHash: appEntryIdFromDistInfo(
+                          appletBundleHash: toolBundleActionHashFromDistInfo(
                             appletStore.applet.distribution_info,
                           ),
                         },

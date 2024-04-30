@@ -148,13 +148,12 @@ export class PublishTool extends LitElement {
 
     console.log('got payload: ', payload);
     try {
-      const _toolRecord =
-        await this.mossStore.toolsLibraryStore.toolsLibraryClient.createTool(payload);
+      await this.mossStore.toolsLibraryStore.toolsLibraryClient.createTool(payload);
       this._toolIconSrc = undefined;
     } catch (e) {
+      this._publishing = undefined;
       notifyError(`Failed to publish tool: ${e}`);
       throw new Error(`Failed to publish tool: ${e}`);
-      this._publishing = undefined;
     }
     this._publishing = undefined;
 

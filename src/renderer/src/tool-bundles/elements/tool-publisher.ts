@@ -16,7 +16,6 @@ import { weStyles } from '../../shared-styles.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { mdiInformationVariantCircle } from '@mdi/js';
 import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
 
 @localized()
 @customElement('tool-publisher')

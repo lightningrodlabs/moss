@@ -13,8 +13,7 @@ import { hashProperty } from '@holochain-open-dev/elements';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { Tool } from '../../tools-library/types.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
+import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 
 @customElement('tool-bundle-title')
 export class AppletBundleTitle extends LitElement {
@@ -30,16 +29,16 @@ export class AppletBundleTitle extends LitElement {
     () => [this.toolBundleHash],
   );
 
-  renderTitle(toolBundle: EntryRecord<Tool> | undefined) {
+  renderTitle(toolBundle: UpdateableEntity<Tool> | undefined) {
     if (!toolBundle) return html`[Tool Record Not Found]`;
 
     return html` <div class="row">
       <img
-        alt="${toolBundle.entry.title}"
-        .src=${toolBundle.entry.icon}
+        alt="${toolBundle.record.entry.title}"
+        .src=${toolBundle.record.entry.icon}
         style="height: 16px; width: 16px; display: flex; margin-right: 4px"
       />
-      <span style="color: rgb(119, 119, 119)">${toolBundle.entry.title}</span>
+      <span style="color: rgb(119, 119, 119)">${toolBundle.record.entry.title}</span>
     </div>`;
   }
 

@@ -1,13 +1,7 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import {
-  hashProperty,
-  notify,
-  notifyError,
-  onSubmit,
-  wrapPathInSvg,
-} from '@holochain-open-dev/elements';
+import { hashProperty, notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -24,15 +18,7 @@ import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../utils.js';
 import { AppHashes, WebHappSource } from '../../types.js';
 import { validateHappOrWebhapp } from '../../electron-api.js';
-import { mdiPencil } from '@mdi/js';
-import {
-  DeveloperCollective,
-  Tool,
-  UpdateDeveloperCollectiveInput,
-  UpdateToolInput,
-  UpdateableEntity,
-  UpdatedTool,
-} from '../../tools-library/types.js';
+import { Tool, UpdateToolInput, UpdateableEntity, UpdatedTool } from '../../tools-library/types.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @localized()

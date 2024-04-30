@@ -152,7 +152,7 @@ export class DeveloperCollectiveView extends LitElement {
     );
   }
 
-  async deprecateTool(entity: UpdateableEntity<Tool>): Promise<void> {
+  async deprecateTool(_entity: UpdateableEntity<Tool>): Promise<void> {
     // TODO
   }
 
@@ -417,6 +417,8 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
           .developerCollectiveHash=${this.developerCollectiveHash}
           .toolEntity=${this._selectedTool}
         ></update-tool>`;
+      default:
+        return html`This view is not implemented`;
     }
   }
 

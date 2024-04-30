@@ -63,7 +63,6 @@ import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
 
 TimeAgo.addDefaultLocale(en);
 

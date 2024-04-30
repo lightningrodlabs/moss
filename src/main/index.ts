@@ -963,7 +963,13 @@ app.whenReady().then(async () => {
       autoUpdater.allowPrerelease = true;
       autoUpdater.autoDownload = false;
 
-      const updateCheckResult = await autoUpdater.checkForUpdates();
+      let updateCheckResult;
+
+      try {
+        updateCheckResult = await autoUpdater.checkForUpdates();
+      } catch (e) {
+        console.warn('Failed to check for updates: ', e);
+      }
 
       console.log('updateCheckResult: ', updateCheckResult);
 

@@ -15,7 +15,6 @@ import {
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
-  EntryRecord,
   HoloHashMap,
   LazyHoloHashMap,
   LazyMap,
