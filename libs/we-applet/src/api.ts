@@ -241,10 +241,10 @@ export interface WeServices {
   openWal: (wal: WAL, mode?: OpenWalMode) => Promise<void>;
   /**
    * Get the group profile of the specified group
-   * @param groupId
+   * @param groupHash
    * @returns
    */
-  groupProfile: (groupId) => Promise<any>;
+  groupProfile: (groupHash) => Promise<any>;
   /**
    * Returns Applet info of the specified Applet
    * @param appletHash
@@ -334,7 +334,7 @@ export class WeClient implements WeServices {
 
   openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> => window.__WE_API__.openWal(wal, mode);
 
-  groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
+  groupProfile = (groupHash) => window.__WE_API__.groupProfile(groupHash);
 
   appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
 

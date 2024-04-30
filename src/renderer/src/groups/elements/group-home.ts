@@ -62,7 +62,7 @@ import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
-import { Tool } from '../../tools-library/types.js';
+import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
 TimeAgo.addDefaultLocale(en);
@@ -115,7 +115,7 @@ export class GroupHome extends LitElement {
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
-              let toolsLibraryToolRecord: EntryRecord<Tool> | undefined;
+              let toolsLibraryToolEntity: UpdateableEntity<Tool> | undefined;
               if (appletEntry) {
                 const distributionInfo: DistributionInfo = JSON.parse(
                   appletEntry.distribution_info,
@@ -125,10 +125,10 @@ export class GroupHome extends LitElement {
                     "Cannot get unjoined applets from distribution types other than tools-library'",
                   );
                 const toolBundleActionHash = decodeHashFromBase64(
-                  distributionInfo.info.toolActionHash,
+                  distributionInfo.info.originalToolActionHash,
                 );
                 try {
-                  toolsLibraryToolRecord = await toPromise(
+                  toolsLibraryToolEntity = await toPromise(
                     this.mossStore.toolsLibraryStore.installableTools.get(toolBundleActionHash),
                   );
                 } catch (e) {
@@ -141,7 +141,9 @@ export class GroupHome extends LitElement {
               return [
                 appletHash,
                 appletEntry,
-                toolsLibraryToolRecord?.entry ? toolsLibraryToolRecord.entry : undefined,
+                toolsLibraryToolEntity?.record.entry
+                  ? toolsLibraryToolEntity.record.entry
+                  : undefined,
                 agentKey,
                 timestamp,
                 joinedMembers,
@@ -200,11 +202,11 @@ export class GroupHome extends LitElement {
     console.log('appletId: ', appId);
 
     try {
-      const toolRecord = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
-      if (!toolRecord)
+      const toolEntity = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
+      if (!toolEntity)
         throw new Error('No AppEntry found in We Store for the requested UI update.');
 
-      const assetsSource: AssetSource = JSON.parse(toolRecord.entry.source);
+      const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
       if (assetsSource.type !== 'https')
         throw new Error("Updating of applets is only implemented for sources of type 'http'");
       const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
@@ -212,11 +214,12 @@ export class GroupHome extends LitElement {
         type: 'tools-library',
         info: {
           toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-          toolActionHash: encodeHashToBase64(toolRecord.actionHash),
-          toolEntryHash: encodeHashToBase64(toolRecord.entryHash),
+          originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
+          toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
+          toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
         },
       };
-      const appHashes: AppHashes = JSON.parse(toolRecord.entry.hashes);
+      const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
       if (appHashes.type !== 'webhapp')
         throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
 

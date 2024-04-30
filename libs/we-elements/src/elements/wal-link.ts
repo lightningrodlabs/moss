@@ -67,13 +67,13 @@ export class WalLink extends LitElement {
               <div class="row" style="align-items: center">
                 ${this.onlyIcon ? html` <span>${assetInfo.assetInfo.name},&nbsp;</span> ` : html``}
                 <span> ${appletsInfos.get(assetInfo.appletHash)?.appletName} ${msg('in')}</span>
-                ${appletsInfos.get(assetInfo.appletHash)?.groupsIds.map(
-                  (groupId) => html`
+                ${appletsInfos.get(assetInfo.appletHash)?.groupsHashes.map(
+                  (groupHash) => html`
                     <img
-                      .src=${groupsProfiles.get(groupId)!.logo_src}
+                      .src=${groupsProfiles.get(groupHash)!.logo_src}
                       style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
                     />
-                    <span>${groupsProfiles.get(groupId)?.name}</span>
+                    <span>${groupsProfiles.get(groupHash)?.name}</span>
                   `,
                 )}
               </div>

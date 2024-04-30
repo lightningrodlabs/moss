@@ -205,12 +205,10 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
       const icon = await toPromise(appletStore.logo);
 
       return {
-        toolBundleActionHash: toolBundleActionHashFromDistInfo(
-          appletStore.applet.distribution_info,
-        ),
+        appletBundleId: toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
         appletName: appletStore.applet.custom_name,
         appletIcon: icon,
-        groupsIds: Array.from(groupsForApplet.keys()),
+        groupsHashes: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },
     async notifyFrame(_notifications: Array<FrameNotification>) {
@@ -414,7 +412,7 @@ export async function handleAppletIframeMessage(
     case 'get-applet-info':
       return weServices.appletInfo(message.appletHash);
     case 'get-group-profile':
-      return weServices.groupProfile(message.groupId);
+      return weServices.groupProfile(message.groupHash);
     case 'get-global-asset-info':
       let assetInfo = await weServices.assetInfo(message.wal);
       if (assetInfo && mossStore.isAppletDev) {

@@ -92,10 +92,10 @@ const weApi: WeServices = {
       },
     }),
 
-  groupProfile: (groupId) =>
+  groupProfile: (groupHash) =>
     postMessage({
       type: 'get-group-profile',
-      groupId,
+      groupHash,
     }),
 
   appletInfo: (appletHash) =>

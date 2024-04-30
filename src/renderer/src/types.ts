@@ -78,8 +78,15 @@ export type DistributionInfo =
       type: 'tools-library';
       info: {
         toolsLibraryDnaHash: DnaHashB64;
-        toolActionHash: ActionHashB64;
-        toolEntryHash: EntryHashB64;
+        /**
+         * Action Hash B64 of the original Tool entry
+         */
+        originalToolActionHash: ActionHashB64;
+        /**
+         * ActionHashB64 of the (updated) Tool entry this applet has been installed from
+         */
+        toolVersionActionHash: ActionHashB64;
+        toolVersionEntryHash: EntryHashB64;
       };
     }
   | {

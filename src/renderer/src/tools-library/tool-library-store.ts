@@ -6,11 +6,11 @@ import {
   pipe,
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
-import { EntryRecord, LazyHoloHashMap } from '@holochain-open-dev/utils';
+import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import { ActionHash, AdminWebsocket, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
 import { ToolsLibraryClient } from './tools-library-client.js';
-import { Tool } from './types.js';
+import { Tool, UpdateableEntity } from './types.js';
 
 export class ToolsLibraryStore {
   constructor(
@@ -22,27 +22,28 @@ export class ToolsLibraryStore {
   private _toolsLibraryDnaHash: DnaHash | undefined;
 
   allInstallableTools = lazyLoadAndPoll(
-    async () => this.toolsLibraryClient.getAllToolRecords(),
+    async () => this.toolsLibraryClient.getAllToolEntites(),
     30000,
   );
 
-  installableTools = new LazyHoloHashMap((toolActionHash: ActionHash) =>
-    asyncDerived(this.allInstallableTools, async (toolRecords) =>
-      toolRecords.find(
-        (toolRecord) => toolRecord.actionHash.toString() === toolActionHash.toString(),
+  installableTools = new LazyHoloHashMap((orignalToolActionHash: ActionHash) =>
+    asyncDerived(this.allInstallableTools, async (toolEntities) =>
+      toolEntities.find(
+        (toolEntity) =>
+          toolEntity.originalActionHash.toString() === orignalToolActionHash.toString(),
       ),
     ),
   );
 
-  toolLogo = new LazyHoloHashMap((toolActionHash: ActionHash) =>
-    pipe(this.installableTools.get(toolActionHash), (toolEntryRecord) =>
+  toolLogo = new LazyHoloHashMap((orignalToolActionHash: ActionHash) =>
+    pipe(this.installableTools.get(orignalToolActionHash), (toolEntity) =>
       retryUntilSuccess(async () => {
-        if (!toolEntryRecord)
+        if (!toolEntity)
           throw new Error(
-            `Cannot find Tool Record for action hash: ${encodeHashToBase64(toolActionHash)}`,
+            `Cannot find Tool Entity for action hash: ${encodeHashToBase64(orignalToolActionHash)}`,
           );
 
-        return toolEntryRecord.entry.icon;
+        return toolEntity.record.entry.icon;
       }),
     ),
   );
@@ -63,10 +64,10 @@ export class ToolsLibraryStore {
     this.toolsLibraryClient.getDeveloperCollectivesWithPermission(),
   );
 
-  async getLatestToolEntry(actionHash: ActionHash): Promise<EntryRecord<Tool>> {
-    const toolRecord = await this.toolsLibraryClient.getLatestTool(actionHash);
-    if (!toolRecord) throw new Error('Tool not found for action hash.');
-    return toolRecord;
+  async getLatestToolEntry(actionHash: ActionHash): Promise<UpdateableEntity<Tool>> {
+    const toolEntity = await this.toolsLibraryClient.getLatestTool(actionHash);
+    if (!toolEntity) throw new Error('Tool not found for action hash.');
+    return toolEntity;
   }
 
   async toolsLibraryDnaHash(): Promise<DnaHash> {

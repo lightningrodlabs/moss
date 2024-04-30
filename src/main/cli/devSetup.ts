@@ -268,8 +268,9 @@ export async function devSetup(
             type: 'tools-library',
             info: {
               toolsLibraryDnaHash,
-              toolActionHash: encodeHashToBase64(toolRecord.actionHash),
-              toolEntryHash: encodeHashToBase64(toolRecord.entryHash),
+              originalToolActionHash: encodeHashToBase64(toolRecord.actionHash),
+              toolVersionActionHash: encodeHashToBase64(toolRecord.actionHash),
+              toolVersionEntryHash: encodeHashToBase64(toolRecord.entryHash),
             },
           };
 

@@ -21,12 +21,12 @@ export async function getAppletsInfosAndGroupsProfiles(
     if (appletInfo) {
       appletsInfos.set(appletHash, appletInfo);
 
-      for (const groupId of appletInfo.groupsIds) {
-        if (!groupsProfiles.has(groupId)) {
-          const groupProfile = await weClient.groupProfile(groupId);
+      for (const groupHash of appletInfo.groupsHashes) {
+        if (!groupsProfiles.has(groupHash)) {
+          const groupProfile = await weClient.groupProfile(groupHash);
 
           if (groupProfile) {
-            groupsProfiles.set(groupId, groupProfile);
+            groupsProfiles.set(groupHash, groupProfile);
           }
         }
       }
@@ -49,12 +49,12 @@ export async function getAppletInfoAndGroupsProfiles(
   const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
   const appletInfo = await weClient.appletInfo(appletHash);
   if (appletInfo) {
-    for (const groupId of appletInfo.groupsIds) {
-      if (!groupProfiles.has(groupId)) {
-        const groupProfile = await weClient.groupProfile(groupId);
+    for (const groupHash of appletInfo.groupsHashes) {
+      if (!groupProfiles.has(groupHash)) {
+        const groupProfile = await weClient.groupProfile(groupHash);
 
         if (groupProfile) {
-          groupProfiles.set(groupId, groupProfile);
+          groupProfiles.set(groupHash, groupProfile);
         }
       }
     }

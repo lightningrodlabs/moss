@@ -19,7 +19,7 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 export type OpenWalMode = 'front' | 'side';
 
 /**
- * String of the format weave://
+ * String of the format weave-0.12://
  */
 export type WeaveUrl = string;
 
@@ -135,7 +135,7 @@ export type AppletInfo = {
   appletBundleId: ActionHash;
   appletName: string;
   appletIcon: string;
-  groupsIds: Array<DnaHash>;
+  groupsHashes: Array<DnaHash>;
 };
 
 export type AppletClients = {
@@ -314,7 +314,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'get-group-profile';
-      groupId: DnaHash;
+      groupHash: DnaHash;
     }
   | {
       type: 'get-global-asset-info';

@@ -488,7 +488,7 @@ export function toolBundleActionHashFromDistInfo(distributionInfoString: string)
   const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
   if (distributionInfo.type !== 'tools-library')
     throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
-  return decodeHashFromBase64(distributionInfo.info.toolActionHash);
+  return decodeHashFromBase64(distributionInfo.info.originalToolActionHash);
 }
 
 export function notifyAndThrow(message: string) {

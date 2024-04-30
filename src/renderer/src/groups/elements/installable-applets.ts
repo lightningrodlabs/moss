@@ -21,8 +21,7 @@ import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
 import '../../elements/select-group-dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import '../../tool-bundles/elements/tool-publisher.js';
-import { Tool } from '../../tools-library/types.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
+import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 
 @localized()
 @customElement('installable-applets')
@@ -46,58 +45,58 @@ export class InstallableApplets extends LitElement {
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
   @state()
-  _selectedToolRecord: EntryRecord<Tool> | undefined;
+  _selectedToolEntity: UpdateableEntity<Tool> | undefined;
 
   async firstUpdated() {}
 
   timeAgo = new TimeAgo('en-US');
 
-  renderInstallableApplet(toolRecord: EntryRecord<Tool>) {
+  renderInstallableApplet(toolEntity: UpdateableEntity<Tool>) {
     return html`
       <sl-card
         tabindex="0"
         class="applet-card"
         style="height: 200px"
         @click=${async () => {
-          this._selectedToolRecord = toolRecord;
+          this._selectedToolEntity = toolEntity;
           this._selectGroupDialog.show();
         }}
         @keypress=${async (e: KeyboardEvent) => {
           if (e.key === 'Enter') {
-            this._selectedToolRecord = toolRecord;
+            this._selectedToolEntity = toolEntity;
             this._selectGroupDialog.show();
           }
         }}
       >
         <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
           ${
-            toolRecord.entry.icon
+            toolEntity.record.entry.icon
               ? html`<img
-                  src=${toolRecord.entry.icon}
-                  alt="${toolRecord.entry.title} applet icon"
+                  src=${toolEntity.record.entry.icon}
+                  alt="${toolEntity.record.entry.title} applet icon"
                   style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
                 />`
               : html``
           }
-          <span style="font-size: 18px;">${toolRecord.entry.title}</span>
+          <span style="font-size: 18px;">${toolEntity.record.entry.title}</span>
         </div>
         <div class="column" style="flex: 1; margin-bottom: -5px;">
-          <span style="flex: 1">${toolRecord.entry.subtitle}</span>
+          <span style="flex: 1">${toolEntity.record.entry.subtitle}</span>
           <span style="display: flex; flex: 1;"></span>
           <span style="flex: 1; margin-top:5px"
             >
             <div style="font-size: 80%; margin-bottom: 5px;">
-              Published ${this.timeAgo.format(toolRecord.action.timestamp)} by </span>
+              Published ${this.timeAgo.format(toolEntity.record.action.timestamp)} by </span>
             </div>
-            <tool-publisher .developerCollectiveHash=${toolRecord.entry.developer_collective}></tool-publisher>
+            <tool-publisher .developerCollectiveHash=${toolEntity.record.entry.developer_collective}></tool-publisher>
           </span>
         </div>
       </sl-card>
     `;
   }
 
-  renderApplets(allApplets: Array<EntryRecord<Tool>>) {
-    const nonDeprecatedApplets = allApplets.filter((record) => !record.entry.deprecation);
+  renderApplets(allApplets: Array<UpdateableEntity<Tool>>) {
+    const nonDeprecatedApplets = allApplets.filter((record) => !record.record.entry.deprecation);
     return html`
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
@@ -127,11 +126,11 @@ export class InstallableApplets extends LitElement {
                   <install-applet-bundle-dialog
                     @install-applet-dialog-closed=${() => {
                       this._selectedGroupDnaHash = undefined;
-                      this._selectedToolRecord = undefined;
+                      this._selectedToolEntity = undefined;
                     }}
                     @applet-installed=${() => {
                       this._selectedGroupDnaHash = undefined;
-                      this._selectedToolRecord = undefined;
+                      this._selectedToolEntity = undefined;
                     }}
                     id="applet-dialog"
                   ></install-applet-bundle-dialog>
@@ -143,7 +142,7 @@ export class InstallableApplets extends LitElement {
             @installation-group-selected=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail;
               this._selectGroupDialog.hide();
-              setTimeout(async () => this._installAppletDialog.open(this._selectedToolRecord!), 50);
+              setTimeout(async () => this._installAppletDialog.open(this._selectedToolEntity!), 50);
             }}
           ></select-group-dialog>
           ${this.renderApplets(this._installableApplets.value.value)}

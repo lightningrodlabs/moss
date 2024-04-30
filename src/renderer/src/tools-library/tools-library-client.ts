@@ -146,13 +146,7 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return new EntryRecord(record);
   }
 
-  async getLatestTool(actionHash: ActionHash): Promise<EntryRecord<Tool> | undefined> {
-    const record = await this.callZome('get_latest_tool', actionHash);
-    if (record) return new EntryRecord(record);
-    return undefined;
-  }
-
-  async getTool(actionHash: ActionHash): Promise<UpdateableEntity<Tool> | undefined> {
+  async getLatestTool(actionHash: ActionHash): Promise<UpdateableEntity<Tool> | undefined> {
     const record = await this.callZome('get_latest_tool', actionHash);
     if (record) return { originalActionHash: actionHash, record: new EntryRecord(record) };
     return undefined;
@@ -171,7 +165,7 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     );
     await Promise.all(
       links.map(async (link) => {
-        const tool = await this.getTool(link.target);
+        const tool = await this.getLatestTool(link.target);
         if (tool) tools.push(tool);
       }),
     );
@@ -182,8 +176,12 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
     return this.callZome('get_tool_links_for_developer_collective', developerCollective);
   }
 
-  async getAllToolRecords(): Promise<EntryRecord<Tool>[]> {
-    let allTools: EntryRecord<Tool>[] = [];
+  /**
+   * Gets all the latest Tool records
+   * @returns
+   */
+  async getAllToolEntites(): Promise<UpdateableEntity<Tool>[]> {
+    let allTools: UpdateableEntity<Tool>[] = [];
     const allDeveloperCollectiveLinks = await this.getAllDeveloperCollectiveLinks();
     await Promise.all(
       allDeveloperCollectiveLinks.map(async (link) => {
@@ -193,7 +191,7 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
         );
         const toolRecords = maybeToolRecords.filter(
           (maybeRecord) => !!maybeRecord,
-        ) as EntryRecord<Tool>[];
+        ) as UpdateableEntity<Tool>[];
         allTools = [...allTools, ...toolRecords];
       }),
     );
