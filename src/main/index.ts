@@ -704,7 +704,7 @@ app.whenReady().then(async () => {
     console.log('Determined appId for group: ', appId);
     if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-      return;
+      return apps.find((appInfo) => appInfo.installed_app_id === appId);
     }
     const toolsLibraryAppInfo = apps.find(
       (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,

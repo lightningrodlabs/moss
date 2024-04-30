@@ -538,7 +538,7 @@ export class GroupHome extends LitElement {
 
               <div class="row" style="margin-top: 16px">
                 <sl-input
-                  value="https://theweave.social/wal?weave-0.12://group/${networkSeed}"
+                  value="https://theweave.social/wal?weave-0.12://invite/${networkSeed}"
                   style="margin-right: 8px; flex: 1"
                 >
                 </sl-input>
@@ -546,7 +546,7 @@ export class GroupHome extends LitElement {
                   variant="primary"
                   @click=${async () => {
                     await navigator.clipboard.writeText(
-                      `https://theweave.social/wal?weave-0.12://group/${networkSeed}`,
+                      `https://theweave.social/wal?weave-0.12://invite/${networkSeed}`,
                     );
                     notify(msg('Invite link copied to clipboard.'));
                   }}

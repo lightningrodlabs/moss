@@ -370,7 +370,7 @@ export class MainDashboard extends LitElement {
     this._selectedTab = tabInfo;
   }
 
-  async handleOpenGroup(networkSeed: string) {
+  async handleOpenInvite(networkSeed: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
         joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
@@ -385,6 +385,24 @@ export class MainDashboard extends LitElement {
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
       this.joinGroupDialog.open(networkSeed);
+    }
+  }
+
+  async handleOpenGroup(networkSeed: string) {
+    const groups = await toPromise(
+      asyncDeriveStore(this._mossStore.groupStores, (groups) =>
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+      ),
+    );
+
+    const alreadyJoinedGroup = Array.from(groups.entries()).find(
+      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+    );
+
+    if (alreadyJoinedGroup) {
+      this.openGroup(alreadyJoinedGroup[0]);
+    } else {
+      notifyError('The link is for a group you are not part of.');
     }
   }
 
@@ -486,6 +504,8 @@ export class MainDashboard extends LitElement {
             hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
             context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
           });
+        } else if (split2[0] === 'invite') {
+          await this.handleOpenInvite(split2[1]);
         } else if (split2[0] === 'group') {
           await this.handleOpenGroup(split2[1]);
         } else if (split2[0] === 'applet') {

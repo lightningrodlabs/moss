@@ -93,7 +93,7 @@ export class LookingForPeers extends LitElement {
         <h2>${msg('Looking for peers...')}</h2>
         <span style="max-width: 600px; text-align: center"
           >${msg(
-            "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch We so that you can synchronize with them.",
+            "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can synchronize with them.",
           )}</span
         >
         <span style="max-width: 600px; text-align: center; margin-top: 40px;"
