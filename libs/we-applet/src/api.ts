@@ -92,7 +92,7 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
     };
   } else if (split2[0] === 'group') {
     throw new Error(
-      'Needs to be implemented in Moss version 0.11.x by changing group to invitation',
+      'Needs to be implemented in Moss version 0.12.x by changing group to invitation',
     );
   } else if (split2[0] === 'applet') {
     return {

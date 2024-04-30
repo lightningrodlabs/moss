@@ -484,18 +484,11 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   return lowerCaseAppletId.replaceAll('$', '%24');
 }
 
-export function appEntryActionHashFromDistInfo(distributionInfoString: string): ActionHash {
+export function toolBundleActionHashFromDistInfo(distributionInfoString: string): ActionHash {
   const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'appstore-light')
-    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
-  return decodeHashFromBase64(distributionInfo.info.appEntryActionHash);
-}
-
-export function appEntryIdFromDistInfo(distributionInfoString: string): ActionHash {
-  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'appstore-light')
-    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
-  return decodeHashFromBase64(distributionInfo.info.appEntryId);
+  if (distributionInfo.type !== 'tools-library')
+    throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
+  return decodeHashFromBase64(distributionInfo.info.toolActionHash);
 }
 
 export function notifyAndThrow(message: string) {

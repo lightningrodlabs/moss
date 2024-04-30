@@ -5,7 +5,7 @@ import os from 'os';
 import { app, BrowserWindow } from 'electron';
 import { DistributionInfo, WeFileSystem, breakingAppVersion } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
@@ -94,18 +94,18 @@ export async function launch(
   if (
     !holochainManager.installedApps
       .map((appInfo) => appInfo.installed_app_id)
-      .includes(APPSTORE_APP_ID)
+      .includes(TOOLS_LIBRARY_APP_ID)
   ) {
-    console.log('Installing AppStore...');
+    console.log('Installing Tools Library...');
     if (splashscreenWindow)
-      splashscreenWindow.webContents.send('loading-progress-update', 'Installing App Library...');
+      splashscreenWindow.webContents.send('loading-progress-update', 'Installing Tools Library...');
     await holochainManager.installApp(
-      path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
-      APPSTORE_APP_ID,
+      path.join(DEFAULT_APPS_DIRECTORY, 'tools-library.happ'),
+      TOOLS_LIBRARY_APP_ID,
       runOptions.appstoreNetworkSeed,
     );
 
-    console.log('AppstoreLight installed.');
+    console.log('Tools Library installed.');
   }
   // Install other default apps if necessary (not in applet-dev mode)
   if (!runOptions.devInfo) {

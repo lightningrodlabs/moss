@@ -38,7 +38,7 @@ export type WeaveLocation =
     }
   | {
       type: 'invitation';
-      // network seed and membrane proof
+      // network seed and membrane proofs
       secret: string;
     };
 
