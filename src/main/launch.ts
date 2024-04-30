@@ -14,6 +14,7 @@ import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
+import { defaultAppNetworkSeed } from './utils';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -120,9 +121,7 @@ export async function launch(
               'loading-progress-update',
               `Installing default app ${appName}...`,
             );
-          const networkSeed = !app.isPackaged
-            ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-            : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+          const networkSeed = defaultAppNetworkSeed();
 
           const distributionInfo: DistributionInfo = {
             type: 'default-app',
@@ -166,9 +165,7 @@ export async function launch(
                 await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
                 // back up previous assets info
                 weFileSystem.backupAppAssetsInfo(appId);
-                const networkSeed = !app.isPackaged
-                  ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-                  : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+                const networkSeed = defaultAppNetworkSeed();
 
                 const distributionInfo: DistributionInfo = {
                   type: 'default-app',

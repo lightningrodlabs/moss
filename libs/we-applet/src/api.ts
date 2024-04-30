@@ -52,28 +52,28 @@ export const isWeContext = () =>
 export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false) => {
   let url: string = '';
   if (webPrefix) {
-    url = 'https://lightningrodlabs.org/we?';
+    url = 'https://theweave.social/wal?';
   }
-  url = url + `we://applet/${encodeHashToBase64(appletHash)}`;
+  url = url + `weave-0.12://applet/${encodeHashToBase64(appletHash)}`;
   return url;
 };
 
 export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   let url: string = '';
   if (webPrefix) {
-    url = 'https://lightningrodlabs.org/we?';
+    url = 'https://theweave.social/wal?';
   }
   url =
     url +
-    `we://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
+    `weave-0.12://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
       wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
 
 export function weaveUrlToLocation(url: string): WeaveLocation {
-  if (!url.startsWith('we://')) {
-    throw new Error(`Got invalid We url: ${url}`);
+  if (!url.startsWith('weave-0.12://')) {
+    throw new Error(`Got invalid Weave url: ${url}`);
   }
 
   const split = url.split('://');

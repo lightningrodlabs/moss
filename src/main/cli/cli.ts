@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import { breakingAppVersion } from '../filesystem';
 import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
 import tsNode from 'ts-node';
+import { defaultAppNetworkSeed } from '../utils';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // The first one will be picked by default. But all production bootstrap servers should be listed
@@ -25,7 +26,7 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
-export const APPLET_DEV_TMP_FOLDER_PREFIX = 'lightningrodlabs-we-applet-dev';
+export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
 export interface WeAppletDevInfo {
   config: WeDevConfig;
@@ -148,9 +149,7 @@ export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
   // If provided take the one provided, otherwise check whether it's applet dev mode
   const appstoreNetworkSeed = args.networkSeed
     ? args.networkSeed
-    : devConfig || !app.isPackaged
-      ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-      : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+    : defaultAppNetworkSeed(devConfig);
 
   return {
     profile,

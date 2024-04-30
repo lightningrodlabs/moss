@@ -1,5 +1,8 @@
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, app, shell } from 'electron';
 import semver from 'semver';
+import os from 'os';
+import { breakingAppVersion } from './filesystem';
+import { WeDevConfig } from './cli/defineConfig';
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
@@ -9,7 +12,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('we://')) {
+    if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -28,7 +31,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('we://')) {
+    if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -45,7 +48,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('we://')) {
+    if (details.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
@@ -77,4 +80,10 @@ export function breakingVersion(version: string): string {
     default:
       return `${semver.major(version)}.x.x`;
   }
+}
+
+export function defaultAppNetworkSeed(devConfig?: WeDevConfig): string {
+  return devConfig || !app.isPackaged
+    ? `moss-applet-dev-${os.hostname()}`
+    : `moss-${breakingAppVersion(app)}`;
 }
