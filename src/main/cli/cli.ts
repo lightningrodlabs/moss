@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { nanoid } from 'nanoid';
-import { breakingAppVersion } from '../filesystem';
 import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
 import tsNode from 'ts-node';
 import { defaultAppNetworkSeed } from '../utils';
@@ -64,7 +63,7 @@ export interface RunOptions {
   printHolochainLogs: boolean;
 }
 
-export function validateArgs(args: CliOpts, app: Electron.App): RunOptions {
+export function validateArgs(args: CliOpts): RunOptions {
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
   if (args.profile && !allowedProfilePattern.test(args.profile)) {
     throw new Error(

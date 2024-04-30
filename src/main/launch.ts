@@ -1,9 +1,8 @@
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
-import { app, BrowserWindow } from 'electron';
-import { DistributionInfo, WeFileSystem, breakingAppVersion } from './filesystem';
+import { BrowserWindow } from 'electron';
+import { DistributionInfo, WeFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';

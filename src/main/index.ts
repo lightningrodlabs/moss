@@ -140,7 +140,7 @@ if (ranViaCli) {
   cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'we.dev.config.ts';
 }
 
-const RUN_OPTIONS = validateArgs(cliOpts, app);
+const RUN_OPTIONS = validateArgs(cliOpts);
 // app.commandLine.appendSwitch('enable-logging');
 
 const appName = app.getName();
