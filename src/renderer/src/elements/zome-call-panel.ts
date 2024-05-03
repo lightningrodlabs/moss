@@ -3,7 +3,18 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import {
+  AgentPubKey,
+  AppAgentClient,
+  AppWebsocket,
+  CellId,
+  Dna,
+  DnaHash,
+  encodeHashToBase64,
+  EntryHash,
+  NetworkInfoRequest,
+  Timestamp,
+} from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -20,6 +31,7 @@ import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
+import { HoloHashMap } from '@holochain-open-dev/utils';
 
 @localized()
 @customElement('zome-call-panel')
@@ -50,6 +62,49 @@ export class ZomeCallPanel extends LitElement {
       this._refreshInterval = undefined;
     }
   }
+
+  lastTimeQueried: HoloHashMap<AgentPubKey, Timestamp> = new HoloHashMap();
+
+  async networkInfo(client: AppWebsocket, agent_pub_key: AgentPubKey, dnas: DnaHash[]) {
+    let last_time_queried = this.lastTimeQueried.get(agent_pub_key);
+    if (!last_time_queried) last_time_queried = 0;
+    const response = await client.networkInfo({
+      agent_pub_key,
+      dnas,
+      last_time_queried,
+    });
+    this.lastTimeQueried.set(agent_pub_key, Date.now());
+    for (const netInfo of response) {
+      console.log('NETWORK INFO', netInfo);
+    }
+    return response;
+  }
+
+  // async networkInfo(agent: AgentPubKeyB64, dnas: DnaHashB64[]): Promise<Record<DnaHashB64, [Timestamp, NetworkInfo]>> {
+  //   const hashs = dnas.map((b64) => decodeHashFromBase64(b64));
+  //   /* Call networkInfo */
+  //   const response = await this._appWs.networkInfo({
+  //     agent_pub_key: decodeHashFromBase64(agent),
+  //     dnas: hashs,
+  //     last_time_queried: this._lastTimeQueriedMap[agent]} as NetworkInfoRequest);
+  //   this._lastTimeQueriedMap[agent] = Date.now();
+
+  //   /* Convert result */
+  //   let i = 0;
+  //   let result = {}
+  //   for (const netInfo of response) {
+  //     result[dnas[i]] = [this._lastTimeQueriedMap[agent], netInfo];
+  //     /* Store */
+  //     const cellIdStr = CellIdStr(decodeHashFromBase64(dnas[i]), decodeHashFromBase64(agent));
+  //     if (!this._networkInfoLogs[cellIdStr]) {
+  //       this._networkInfoLogs[cellIdStr] = [];
+  //     }
+  //     this._networkInfoLogs[cellIdStr].push([this._lastTimeQueriedMap[agent], netInfo])
+  //     /* */
+  //     i += 1;
+  //   }
+  //   return result;
+  // }
 
   toggleDetails(appletId: AppletId) {
     const appletsWithDetails = this._appletsWithDetails;
@@ -98,7 +153,17 @@ export class ZomeCallPanel extends LitElement {
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row" style="align-items: center; width: 300px;">
+                  <div
+                    @click=${async () => {
+                      console.log('NET INFO', window[`__appletIdCellId_${appletId}`]);
+                      const cell_id = window[`__appletIdCellId_${appletId}`];
+                      await this.networkInfo(this._mossStore.appWebsocket, cell_id[0], [
+                        cell_id[1],
+                      ]);
+                    }}
+                    class="row"
+                    style="align-items: center; width: 300px;"
+                  >
                     <applet-logo
                       .appletHash=${appletHash}
                       style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"

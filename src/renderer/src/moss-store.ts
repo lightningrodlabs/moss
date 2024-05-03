@@ -21,7 +21,7 @@ import {
   pickBy,
   slice,
 } from '@holochain-open-dev/utils';
-import { AppInfo, AppWebsocket, ProvisionedCell } from '@holochain/client';
+import { AppInfo, AppWebsocket, CellId, ProvisionedCell } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
@@ -81,7 +81,7 @@ export class MossStore {
     public toolsLibraryStore: ToolsLibraryStore,
     public isAppletDev: boolean,
   ) {}
-
+  public cellIds: { [key: string]: CellId } = {};
   private _updatableApplets: Writable<Record<AppletId, UpdateableEntity<Tool>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked

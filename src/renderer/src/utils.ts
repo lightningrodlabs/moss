@@ -542,6 +542,7 @@ export function getAllIframes() {
 
 export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
   if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
+    window[`__appletIdCellId_${appletId}`] = request.cell_id;
     const zomeCallCounts = window[`__zomeCallCount_${appletId}`];
     if (zomeCallCounts) {
       zomeCallCounts.totalCounts += 1;
