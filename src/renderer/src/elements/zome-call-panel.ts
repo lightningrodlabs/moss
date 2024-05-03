@@ -66,7 +66,7 @@ export class ZomeCallPanel extends LitElement {
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
 
     const feedbackBoardAppInfo = await this._mossStore.appWebsocket.appInfo({
-      installed_app_id: 'feedback-board',
+      installed_app_id: 'default-app#feedback-board',
     });
     if (!feedbackBoardAppInfo) {
       console.warn('feedback-board appInfo undefined.');
