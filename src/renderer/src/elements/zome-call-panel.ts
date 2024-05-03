@@ -8,11 +8,15 @@ import {
   AppAgentClient,
   AppWebsocket,
   CellId,
+  DhtOp,
   Dna,
   DnaHash,
+  DumpFullStateRequest,
   encodeHashToBase64,
   EntryHash,
   InstalledAppId,
+  FullStateDump,
+  HoloHash,
   NetworkInfoRequest,
   Timestamp,
 } from '@holochain/client';
@@ -34,7 +38,18 @@ import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { appIdFromAppletHash, getCellId } from '../utils.js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiBug, mdiRefresh } from '@mdi/js';
 
+type DumpData = {
+  show: boolean;
+  dump: FullStateDump;
+  newOpsCount: number;
+};
+function dateStr(timestamp: Timestamp) {
+  const date = new Date(timestamp);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+}
 @localized()
 @customElement('zome-call-panel')
 export class ZomeCallPanel extends LitElement {
@@ -75,6 +90,70 @@ export class ZomeCallPanel extends LitElement {
     }
   }
 
+  @state()
+  _appletsWithDumps: { [key: AppletId]: DumpData } = {};
+
+  async toggleDumps(appletId: AppletId) {
+    const dumpData = this._appletsWithDumps[appletId];
+    if (dumpData === undefined || !dumpData.show) {
+      await this.dumpState(appletId);
+      if (dumpData) {
+        dumpData.show = true;
+        this._appletsWithDumps[appletId] = dumpData;
+      }
+    } else {
+      dumpData.show = false;
+    }
+  }
+
+  async dumpState(appletId) {
+    const cell_id = window[`__appletIdCellId_${appletId}`];
+
+    let currentDump = this._appletsWithDumps[appletId];
+
+    const req: DumpFullStateRequest = {
+      cell_id,
+      dht_ops_cursor: currentDump ? currentDump.dump.integration_dump.dht_ops_cursor : 0,
+    };
+    console.log('BEFORE');
+    const resp = await this._mossStore.adminWebsocket.dumpFullState(req);
+    console.log('AFTER');
+    let newOpsCount = 0;
+    if (!currentDump) {
+      newOpsCount = resp.integration_dump.dht_ops_cursor;
+      currentDump = {
+        show: true,
+        dump: resp,
+        newOpsCount,
+      };
+    } else {
+      newOpsCount =
+        resp.integration_dump.dht_ops_cursor - currentDump.dump.integration_dump.dht_ops_cursor;
+      if (newOpsCount > 0) {
+        const currentIntegrated = currentDump.dump.integration_dump.integrated;
+        currentIntegrated.concat([...currentDump.dump.integration_dump.integrated]);
+      }
+      currentDump.dump.peer_dump = resp.peer_dump;
+      currentDump.dump.source_chain_dump = resp.source_chain_dump;
+      currentDump.newOpsCount = newOpsCount;
+    }
+    this._appletsWithDumps[appletId] = currentDump;
+    console.log('NEW OPS COUNT', newOpsCount);
+    console.log('RESP', currentDump);
+  }
+  renderDhtOp(op: DhtOp) {
+    const opName = Object.keys(op)[0];
+    const action = Object.values(op)[0][1];
+    return html`
+      <div class="dht-op">
+        ${opName}: ${action.type} ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
+      </div>
+    `;
+  }
+  renderHash(hash: HoloHash) {
+    const hashB64 = encodeHashToBase64(hash);
+    return html` <span class="hash" title="${hashB64}">${hashB64.slice(0, 8)}</span> `;
+  }
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
       <div
@@ -109,6 +188,8 @@ export class ZomeCallPanel extends LitElement {
             const appletId = encodeHashToBase64(appletHash);
             const zomeCallCount = window[`__zomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
+            const dump = this._appletsWithDumps[appletId];
+            const showDebug = dump && dump.show;
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -134,65 +215,151 @@ export class ZomeCallPanel extends LitElement {
                     class="row"
                     style="align-items: center; width: 300px;"
                   >
-                    <applet-logo
-                      .appletHash=${appletHash}
-                      style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"
-                    ></applet-logo>
-                    <div style="font-weight: bold; font-size: 18px;">
-                      ${appletStore.applet.custom_name}
+                      <applet-logo
+                        .appletHash=${appletHash}
+                        style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"
+                      ></applet-logo>
+                      <div style="font-weight: bold; font-size: 18px;">
+                        ${appletStore.applet.custom_name}
+                      </div>
                     </div>
+                    <div style="display: flex; flex: 1;"></div>
+                    <div
+                      style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    >
+                      ${zomeCallCount ? zomeCallCount.totalCounts : ''}
+                    </div>
+                    <div
+                      style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    >
+                      ${
+                        zomeCallCount
+                          ? Math.round(
+                              zomeCallCount.totalCounts /
+                                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                            )
+                          : ''
+                      }
+                    </div>
+                    <span
+                      style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                      @click=${() => this.toggleDetails(appletId)}
+                      >${showDetails ? 'Hide' : 'Details'}</span
+                    >
+                    <sl-icon-button
+                      @click=${async () => {
+                        this.toggleDumps(appletId);
+
+                        // console.log('NET INFO', window[`__appletIdCellId_${appletId}`]);
+                        // await this.networkInfo(this._mossStore.appWebsocket, cell_id[0], [
+                        //   cell_id[1],
+                        // ]);
+                      }}
+                      .src=${wrapPathInSvg(mdiBug)}
+                    >
+                    </sl-icon-button>
+                    <groups-for-applet
+                      style="margin-left: 10px;"
+                      .appletHash=${appletHash}
+                    ></groups-for-applet>
                   </div>
-                  <div style="display: flex; flex: 1;"></div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-                    ${zomeCallCount ? zomeCallCount.totalCounts : ''}
-                  </div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-                    ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                  ${
+                    showDebug
+                      ? html` <div class="debug-data">
+                          <div style="display:flex;align-items:center;">
+                            <span class="debug-title">Dump Data</span>
+                            <sl-icon-button
+                              title="refresh"
+                              @click=${async () => {
+                                this.dumpState(appletId);
+                              }}
+                              .src=${wrapPathInSvg(mdiRefresh)}
+                            ></sl-icon-button>
+                          </div>
+                          ${dump
+                            ? html`
+                                <div class="debug-dump">
+                                  <span>
+                                    Peers: (${Object.keys(dump.dump.peer_dump.peers).length})
+                                    <div class="long-list">
+                                      ${Object.entries(dump.dump.peer_dump.peers).map(
+                                        (p) =>
+                                          html` <div class="list-item">
+                                            ${p[0]}: ${encodeHashToBase64(p[1].kitsune_agent)}--
+                                            ${p[1].dump}
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </span>
+
+                                  <span> integrated Ops since last Dump: ${dump.newOpsCount}</span>
+                                  <span
+                                    >Integrated Ops: ${dump.dump.integration_dump.dht_ops_cursor}
+                                    <div class="long-list">
+                                      ${dump.dump.integration_dump.integrated.map(
+                                        (p) =>
+                                          html` <div class="list-item">
+                                            ${this.renderDhtOp(p)}
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </span>
+
+                                  <span>
+                                    published ops count:
+                                    ${dump.dump.source_chain_dump.published_ops_count}</span
+                                  >
+                                  <span>
+                                    Source Chain: (${dump.dump.source_chain_dump.records.length}
+                                    records)
+                                    <div class="long-list">
+                                      ${dump.dump.source_chain_dump.records.map(
+                                        (r) =>
+                                          html` <div class="list-item">
+                                            ${this.renderHash(r.action_address)}
+                                            <span class="date">${dateStr(r.action.timestamp)}</span>
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </span>
+                                </div>
+                              `
+                            : ''}
+                        </div>`
+                      : ''
+                  }
+                  ${
+                    showDetails
+                      ? Object.keys(zomeCallCount.functionCalls).map(
+                          (fn_name) => html`
+                            <div
+                              class="row"
+                              style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
+                            >
+                              <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+                                <div>${fn_name}</div>
+                              </div>
+                              <div
+                                style="font-weight: bold; text-align: right; width: 80px; color: blue;"
+                              >
+                                ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
+                              </div>
+                              <div
+                                style="font-weight: bold; text-align: right; width: 80px; color: blue;"
+                              >
+                                ${zomeCallCount
+                                  ? Math.round(
+                                      zomeCallCount.functionCalls[fn_name] /
+                                        ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                                    )
+                                  : ''}
+                              </div>
+                            </div>
+                          `,
                         )
-                      : ''}
-                  </div>
-                  <span
-                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                    @click=${() => this.toggleDetails(appletId)}
-                    >${showDetails ? 'Hide' : 'Details'}</span
-                  >
-                  <groups-for-applet
-                    style="margin-left: 10px;"
-                    .appletHash=${appletHash}
-                  ></groups-for-applet>
+                      : html``
+                  }
                 </div>
-                ${showDetails
-                  ? Object.keys(zomeCallCount.functionCalls).map(
-                      (fn_name) => html`
-                        <div
-                          class="row"
-                          style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
-                        >
-                          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
-                            <div>${fn_name}</div>
-                          </div>
-                          <div
-                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
-                          >
-                            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
-                          </div>
-                          <div
-                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
-                          >
-                            ${zomeCallCount
-                              ? Math.round(
-                                  zomeCallCount.functionCalls[fn_name] /
-                                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                                )
-                              : ''}
-                          </div>
-                        </div>
-                      `,
-                    )
-                  : html``}
               </div>
             `;
           })}
@@ -229,6 +396,37 @@ export class ZomeCallPanel extends LitElement {
     css`
       :host {
         display: flex;
+      }
+      .debug-data {
+        width: 100%;
+        overflow-x: auto;
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        border-radius: 5px;
+        .debug-dump {
+          display: flex;
+          flex-direction: column;
+        }
+        .debug-title {
+          font-weight: bold;
+          font-size: 105%;
+        }
+        .long-list {
+          max-height: 300px;
+          overflow-y: auto;
+        }
+        .list-item {
+          margin-left: 5px;
+          border: solid 1px #aaa;
+          padding: 2px;
+        }
+        .hash {
+          background-color: #aaa;
+          font-size: 80%;
+          border-radius: 5px;
+        }
       }
     `,
   ];
