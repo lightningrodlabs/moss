@@ -8,6 +8,10 @@ import {
   ActionHashB64,
   AgentPubKeyB64,
   InstalledAppId,
+  ZomeName,
+  FunctionName,
+  CellId,
+  DnaHashB64,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
@@ -21,6 +25,7 @@ declare global {
   interface Window {
     electronAPI: {
       signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
+      signZomeCallApplet: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
@@ -28,6 +33,16 @@ declare global {
       isAppletDev: () => Promise<boolean>;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => any;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
+      onZomeCallSigned: (
+        callback: (
+          e: any,
+          payload: {
+            cellIdB64: [DnaHashB64, AgentPubKeyB64];
+            fnName: FunctionName;
+            zomeName: ZomeName;
+          },
+        ) => any,
+      ) => any;
       openApp: (appId: string) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
@@ -187,7 +202,7 @@ interface CallZomeRequestUnsignedElectron
   expiresAt: number;
 }
 
-export const signZomeCallElectron = async (request: CallZomeRequest) => {
+export const signZomeCallApplet = async (request: CallZomeRequest) => {
   const zomeCallUnsigned: CallZomeRequestUnsignedElectron = {
     provenance: Array.from(request.provenance),
     cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
@@ -199,7 +214,7 @@ export const signZomeCallElectron = async (request: CallZomeRequest) => {
   };
 
   const signedZomeCallElectron: ZomeCallNapi =
-    await window.electronAPI.signZomeCall(zomeCallUnsigned);
+    await window.electronAPI.signZomeCallApplet(zomeCallUnsigned);
 
   const signedZomeCall: CallZomeRequestSigned = {
     provenance: Uint8Array.from(signedZomeCallElectron.provenance),
