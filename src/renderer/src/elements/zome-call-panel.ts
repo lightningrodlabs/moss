@@ -12,6 +12,7 @@ import {
   DnaHash,
   encodeHashToBase64,
   EntryHash,
+  InstalledAppId,
   NetworkInfoRequest,
   Timestamp,
 } from '@holochain/client';
@@ -32,6 +33,7 @@ import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
 import { HoloHashMap } from '@holochain-open-dev/utils';
+import { appIdFromAppletHash, getCellId } from '../utils.js';
 
 @localized()
 @customElement('zome-call-panel')
@@ -62,49 +64,6 @@ export class ZomeCallPanel extends LitElement {
       this._refreshInterval = undefined;
     }
   }
-
-  lastTimeQueried: HoloHashMap<AgentPubKey, Timestamp> = new HoloHashMap();
-
-  async networkInfo(client: AppWebsocket, agent_pub_key: AgentPubKey, dnas: DnaHash[]) {
-    let last_time_queried = this.lastTimeQueried.get(agent_pub_key);
-    if (!last_time_queried) last_time_queried = 0;
-    const response = await client.networkInfo({
-      agent_pub_key,
-      dnas,
-      last_time_queried,
-    });
-    this.lastTimeQueried.set(agent_pub_key, Date.now());
-    for (const netInfo of response) {
-      console.log('NETWORK INFO', netInfo);
-    }
-    return response;
-  }
-
-  // async networkInfo(agent: AgentPubKeyB64, dnas: DnaHashB64[]): Promise<Record<DnaHashB64, [Timestamp, NetworkInfo]>> {
-  //   const hashs = dnas.map((b64) => decodeHashFromBase64(b64));
-  //   /* Call networkInfo */
-  //   const response = await this._appWs.networkInfo({
-  //     agent_pub_key: decodeHashFromBase64(agent),
-  //     dnas: hashs,
-  //     last_time_queried: this._lastTimeQueriedMap[agent]} as NetworkInfoRequest);
-  //   this._lastTimeQueriedMap[agent] = Date.now();
-
-  //   /* Convert result */
-  //   let i = 0;
-  //   let result = {}
-  //   for (const netInfo of response) {
-  //     result[dnas[i]] = [this._lastTimeQueriedMap[agent], netInfo];
-  //     /* Store */
-  //     const cellIdStr = CellIdStr(decodeHashFromBase64(dnas[i]), decodeHashFromBase64(agent));
-  //     if (!this._networkInfoLogs[cellIdStr]) {
-  //       this._networkInfoLogs[cellIdStr] = [];
-  //     }
-  //     this._networkInfoLogs[cellIdStr].push([this._lastTimeQueriedMap[agent], netInfo])
-  //     /* */
-  //     i += 1;
-  //   }
-  //   return result;
-  // }
 
   toggleDetails(appletId: AppletId) {
     const appletsWithDetails = this._appletsWithDetails;
@@ -155,11 +114,22 @@ export class ZomeCallPanel extends LitElement {
                 <div class="row" style="align-items: center; flex: 1;">
                   <div
                     @click=${async () => {
-                      console.log('NET INFO', window[`__appletIdCellId_${appletId}`]);
-                      const cell_id = window[`__appletIdCellId_${appletId}`];
-                      await this.networkInfo(this._mossStore.appWebsocket, cell_id[0], [
-                        cell_id[1],
-                      ]);
+                      const appInfo = await this._mossStore.appWebsocket.appInfo({
+                        installed_app_id: appIdFromAppletHash(appletHash),
+                      });
+                      if (!appInfo) throw new Error('AppInfo undefined.');
+                      const cellIds = Object.values(appInfo.cell_info)
+                        .flat()
+                        .map((cellInfo) => getCellId(cellInfo))
+                        .filter((id) => !!id);
+
+                      const networkInfo = await this._mossStore.appWebsocket.networkInfo({
+                        agent_pub_key: cellIds[0]![1],
+                        dnas: cellIds.map((id) => id![0]),
+                        last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
+                      });
+
+                      console.log('networkInfo: ', networkInfo);
                     }}
                     class="row"
                     style="align-items: center; width: 300px;"
