@@ -43,7 +43,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { InstalledAppId } from '@holochain/client';
+import { InstalledAppId, encodeHashToBase64 } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
@@ -237,6 +237,20 @@ const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
 );
 
 const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
+  if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
+  if (MAIN_WINDOW)
+    emitToWindow(MAIN_WINDOW, 'zome-call-signed', {
+      cellIdB64: [
+        encodeHashToBase64(new Uint8Array(zomeCall.cellId[0])),
+        encodeHashToBase64(new Uint8Array(zomeCall.cellId[1])),
+      ],
+      fnName: zomeCall.fnName,
+      zomeName: zomeCall.zomeName,
+    });
+  return WE_RUST_HANDLER.signZomeCall(zomeCall);
+};
+
+const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
   return WE_RUST_HANDLER.signZomeCall(zomeCall);
 };
@@ -629,6 +643,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
+  ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
   ipcMain.handle('open-app', async (_e, appId: string) =>
     createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
   );

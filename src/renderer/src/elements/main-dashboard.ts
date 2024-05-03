@@ -56,7 +56,7 @@ import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, stringifyWal } from '../utils.js';
+import { decodeContext, getAllIframes, logMossZomeCall, stringifyWal } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
@@ -466,6 +466,10 @@ export class MainDashboard extends LitElement {
           this._mossStore.setAssetViewerState({ position: 'front', visible: false });
         }
       }
+    });
+
+    window.electronAPI.onZomeCallSigned((_, { cellIdB64, fnName, zomeName }) => {
+      logMossZomeCall(cellIdB64, fnName, zomeName);
     });
 
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
