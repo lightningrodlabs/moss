@@ -552,7 +552,7 @@ export class MainDashboard extends LitElement {
     try {
       // TODO change URL to point to main branch before merging
       const response = await fetch(
-        'https://raw.githubusercontent.com/lightningrodlabs/we/feat/update-feed/news.json',
+        'https://raw.githubusercontent.com/lightningrodlabs/we/feat/main/news.json',
       );
       const updateFeed = await response.json();
       this._updateFeed = updateFeed['0.11.x'];
