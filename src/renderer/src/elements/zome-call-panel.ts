@@ -1,9 +1,16 @@
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { CellId, DnaHash, DnaHashB64, encodeHashToBase64, EntryHash } from '@holochain/client';
+import {
+  CellId,
+  DnaHash,
+  DnaHashB64,
+  encodeHashToBase64,
+  EntryHash,
+  InstalledAppId,
+} from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -20,7 +27,9 @@ import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
-import { getCellId } from '../utils.js';
+import { appIdFromAppletHash, getCellId } from '../utils.js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiLan } from '@mdi/js';
 
 @localized()
 @customElement('zome-call-panel')
@@ -90,6 +99,23 @@ export class ZomeCallPanel extends LitElement {
         .filter((id) => !!id);
       this._toolsLibraryCellIds = cellIds as CellId[];
     }
+  }
+
+  async logNetworkInfo(appId: InstalledAppId): Promise<void> {
+    const appInfo = await this._mossStore.appWebsocket.appInfo({
+      installed_app_id: appId,
+    });
+    if (!appInfo) throw new Error('AppInfo undefined.');
+    const cellIds = Object.values(appInfo.cell_info)
+      .flat()
+      .map((cellInfo) => getCellId(cellInfo))
+      .filter((id) => !!id);
+    const networkInfo = await this._mossStore.appWebsocket.networkInfo({
+      agent_pub_key: cellIds[0]![1],
+      dnas: cellIds.map((id) => id![0]),
+      last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
+    });
+    console.log('Network Info for app with appId ', appId, ': ', networkInfo);
   }
 
   disconnectedCallback(): void {
@@ -165,6 +191,13 @@ export class ZomeCallPanel extends LitElement {
               }}
               >${this._showToolsLibraryDetails ? 'Hide' : 'Details'}</span
             >
+            <button
+              style="cursor: pointer;"
+              title="Log network info to console"
+              @click=${() => this.logNetworkInfo('AppstoreLight')}
+            >
+              <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
+            </button>
           </div>
           ${this._showToolsLibraryDetails
             ? Object.keys(toolsLibraryZomeCallCount.functionCalls).map(
@@ -216,6 +249,13 @@ export class ZomeCallPanel extends LitElement {
               }}
               >${this._showFeedbackBoardDetails ? 'Hide' : 'Details'}</span
             >
+            <button
+              style="cursor: pointer;"
+              title="Log network info to console"
+              @click=${() => this.logNetworkInfo('default-app#feedback-board')}
+            >
+              <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
+            </button>
           </div>
           ${this._showFeedbackBoardDetails
             ? Object.keys(feedbackBoardZomeCallCount.functionCalls).map(
@@ -307,6 +347,18 @@ export class ZomeCallPanel extends LitElement {
                     @click=${() => this.toggleGroupDetails(groupId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
+                  <button
+                    style="cursor: pointer;"
+                    title="Log network info to console"
+                    @click=${async () => {
+                      const groupStore = await (
+                        await toPromise(this._mossStore.groupStores)
+                      ).get(groupDnaHash);
+                      await this.logNetworkInfo(groupStore.appAgentWebsocket.installedAppId);
+                    }}
+                  >
+                    <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
+                  </button>
                 </div>
                 ${showDetails
                   ? Object.keys(zomeCallCount.functionCalls).map(
@@ -353,7 +405,7 @@ export class ZomeCallPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 80px;">
             avg. zome calls per minute
           </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
+          <div style="font-weight: bold; text-align: right; width: 120px;"></div>
           <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
         </div>
         ${Array.from(applets.entries())
@@ -404,8 +456,15 @@ export class ZomeCallPanel extends LitElement {
                     @click=${() => this.toggleAppletDetails(appletId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
+                  <button
+                    style="cursor: pointer;"
+                    title="Log network info to console"
+                    @click=${() => this.logNetworkInfo(appIdFromAppletHash(appletHash))}
+                  >
+                    <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
+                  </button>
                   <groups-for-applet
-                    style="margin-left: 10px;"
+                    style="margin-left: 15px;"
                     .appletHash=${appletHash}
                   ></groups-for-applet>
                 </div>
