@@ -3,7 +3,7 @@
     {
       "type": "Release",
       "timestamp": 1715010952699,
-      "message": "Moss version 0.11.12 contains mainly invisible changes that to improve performance and adds more functionality to the debugging panel (double-click on the version number in the bottom left to open the debugging panel)."
+      "message": "Moss version 0.11.12 contains mainly invisible changes to improve performance and adds more functionality to the debugging panel (double-click on the version number in the bottom left to open the debugging panel)."
     },
     {
       "type": "🐞 Bug",
