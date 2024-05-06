@@ -20,7 +20,7 @@ import {
   getAppletDevPort,
   getAppletIframeScript,
   selectScreenOrWindow,
-  signZomeCallElectron,
+  signZomeCallApplet,
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
@@ -30,7 +30,7 @@ import {
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
-  logZomeCall,
+  logAppletZomeCall,
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
@@ -433,8 +433,8 @@ export async function handleAppletIframeMessage(
       return weServices.requestBind(message.srcWal, message.dstWal);
     }
     case 'sign-zome-call':
-      logZomeCall(message.request, appletId);
-      return signZomeCallElectron(message.request);
+      logAppletZomeCall(message.request, appletId);
+      return signZomeCallApplet(message.request);
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");
