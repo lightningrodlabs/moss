@@ -3,7 +3,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { CellId, DnaHash, DnaHashB64, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -20,6 +20,7 @@ import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
+import { getCellId } from '../utils.js';
 
 @localized()
 @customElement('zome-call-panel')
@@ -33,15 +34,61 @@ export class ZomeCallPanel extends LitElement {
     () => [],
   );
 
+  _groups = new StoreSubscriber(
+    this,
+    () => this._mossStore.groupsDnaHashes,
+    () => [],
+  );
+
   @state()
   _refreshInterval: number | undefined;
 
   @state()
   _appletsWithDetails: AppletId[] = [];
 
-  firstUpdated() {
+  @state()
+  _groupsWithDetails: DnaHashB64[] = [];
+
+  @state()
+  _feedbackBoardCellIds: CellId[] = [];
+
+  @state()
+  _toolsLibraryCellIds: CellId[] = [];
+
+  @state()
+  _showFeedbackBoardDetails = false;
+
+  @state()
+  _showToolsLibraryDetails = false;
+
+  async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
+    const feedbackBoardAppInfo = await this._mossStore.appWebsocket.appInfo({
+      installed_app_id: 'feedback-board',
+    });
+    if (!feedbackBoardAppInfo) {
+      console.warn('feedback-board appInfo undefined.');
+    } else {
+      const cellIds = Object.values(feedbackBoardAppInfo.cell_info)
+        .flat()
+        .map((cellInfo) => getCellId(cellInfo))
+        .filter((id) => !!id);
+      this._feedbackBoardCellIds = cellIds as CellId[];
+    }
+
+    const toolsLibraryAppInfo = await this._mossStore.appWebsocket.appInfo({
+      installed_app_id: 'ToolsLibrary',
+    });
+    if (!toolsLibraryAppInfo) {
+      console.warn('ToolsLibrary appInfo undefined.');
+    } else {
+      const cellIds = Object.values(toolsLibraryAppInfo.cell_info)
+        .flat()
+        .map((cellInfo) => getCellId(cellInfo))
+        .filter((id) => !!id);
+      this._toolsLibraryCellIds = cellIds as CellId[];
+    }
   }
 
   disconnectedCallback(): void {
@@ -51,7 +98,7 @@ export class ZomeCallPanel extends LitElement {
     }
   }
 
-  toggleDetails(appletId: AppletId) {
+  toggleAppletDetails(appletId: AppletId) {
     const appletsWithDetails = this._appletsWithDetails;
     if (appletsWithDetails.includes(appletId)) {
       this._appletsWithDetails = appletsWithDetails.filter((id) => id !== appletId);
@@ -61,12 +108,244 @@ export class ZomeCallPanel extends LitElement {
     }
   }
 
+  toggleGroupDetails(groupId: DnaHashB64) {
+    const groupWithDetails = this._groupsWithDetails;
+    if (groupWithDetails.includes(groupId)) {
+      this._groupsWithDetails = groupWithDetails.filter((id) => id !== groupId);
+    } else {
+      groupWithDetails.push(groupId);
+      this._groupsWithDetails = Array.from(new Set(groupWithDetails));
+    }
+  }
+
+  renderDefaultApps() {
+    const toolsLibraryZomeCallCount =
+      this._toolsLibraryCellIds.length > 0
+        ? window[`__mossZomeCallCount_${encodeHashToBase64(this._toolsLibraryCellIds[0][0])}`]
+        : undefined;
+    const feedbackBoardZomeCallCount =
+      this._feedbackBoardCellIds.length > 0
+        ? window[`__mossZomeCallCount_${encodeHashToBase64(this._feedbackBoardCellIds[0][0])}`]
+        : undefined;
+    return html`
+      <div class="column" style="align-items: flex-start;">
+        <div class="row" style="align-items: center;">
+          <div style="align-items: center; width: 300px;"></div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            avg. zome calls per minute
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
+        </div>
+        <div class="column">
+          <div
+            class="row"
+            style="align-items: center; flex: 1; margin-bottom: 20px; margin-top: 10px;"
+          >
+            <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
+              Tools Library
+            </div>
+            <div style="display: flex; flex: 1;"></div>
+            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+              ${toolsLibraryZomeCallCount ? toolsLibraryZomeCallCount.totalCounts : ''}
+            </div>
+            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+              ${toolsLibraryZomeCallCount
+                ? Math.round(
+                    toolsLibraryZomeCallCount.totalCounts /
+                      ((Date.now() - toolsLibraryZomeCallCount.firstCall) / (1000 * 60)),
+                  )
+                : ''}
+            </div>
+            <span
+              style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+              @click=${() => {
+                this._showToolsLibraryDetails = !this._showToolsLibraryDetails;
+              }}
+              >${this._showToolsLibraryDetails ? 'Hide' : 'Details'}</span
+            >
+          </div>
+          ${this._showToolsLibraryDetails
+            ? Object.keys(toolsLibraryZomeCallCount.functionCalls).map(
+                (fn_name) => html`
+                  <div
+                    class="row"
+                    style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
+                  >
+                    <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+                      <div>${fn_name}</div>
+                    </div>
+                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+                      ${toolsLibraryZomeCallCount
+                        ? toolsLibraryZomeCallCount.functionCalls[fn_name]
+                        : ''}
+                    </div>
+                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+                      ${toolsLibraryZomeCallCount
+                        ? Math.round(
+                            toolsLibraryZomeCallCount.functionCalls[fn_name] /
+                              ((Date.now() - toolsLibraryZomeCallCount.firstCall) / (1000 * 60)),
+                          )
+                        : ''}
+                    </div>
+                  </div>
+                `,
+              )
+            : html``}
+          <div class="row" style="align-items: center; flex: 1;">
+            <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
+              Feedback Board
+            </div>
+            <div style="display: flex; flex: 1;"></div>
+            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+              ${feedbackBoardZomeCallCount ? feedbackBoardZomeCallCount.totalCounts : ''}
+            </div>
+            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+              ${feedbackBoardZomeCallCount
+                ? Math.round(
+                    feedbackBoardZomeCallCount.totalCounts /
+                      ((Date.now() - feedbackBoardZomeCallCount.firstCall) / (1000 * 60)),
+                  )
+                : ''}
+            </div>
+            <span
+              style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+              @click=${() => {
+                this._showFeedbackBoardDetails = !this._showFeedbackBoardDetails;
+              }}
+              >${this._showFeedbackBoardDetails ? 'Hide' : 'Details'}</span
+            >
+          </div>
+          ${this._showFeedbackBoardDetails
+            ? Object.keys(feedbackBoardZomeCallCount.functionCalls).map(
+                (fn_name) => html`
+                  <div
+                    class="row"
+                    style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
+                  >
+                    <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+                      <div>${fn_name}</div>
+                    </div>
+                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+                      ${feedbackBoardZomeCallCount
+                        ? feedbackBoardZomeCallCount.functionCalls[fn_name]
+                        : ''}
+                    </div>
+                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+                      ${feedbackBoardZomeCallCount
+                        ? Math.round(
+                            feedbackBoardZomeCallCount.functionCalls[fn_name] /
+                              ((Date.now() - feedbackBoardZomeCallCount.firstCall) / (1000 * 60)),
+                          )
+                        : ''}
+                    </div>
+                  </div>
+                `,
+              )
+            : html``}
+        </div>
+      </div>
+    `;
+  }
+
+  renderGroups(groups: DnaHash[]) {
+    return html`
+      <div class="column flex-scrollable-y" style="align-items: flex-start;">
+        <div class="row" style="align-items: center;">
+          <div style="align-items: center; width: 300px;"></div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            avg. zome calls per minute
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
+        </div>
+        ${groups
+          .sort((hash_a, hash_b) => {
+            const id_a = encodeHashToBase64(hash_a);
+            const id_b = encodeHashToBase64(hash_b);
+            const zomeCallCount_a = window[`__mossZomeCallCount_${id_a}`]
+              ? window[`__mossZomeCallCount_${id_a}`].totalCounts
+              : undefined;
+            const zomeCallCount_b = window[`__mossZomeCallCount_${id_b}`]
+              ? window[`__mossZomeCallCount_${id_b}`].totalCounts
+              : undefined;
+            if (zomeCallCount_a && !zomeCallCount_b) return -1;
+            if (!zomeCallCount_a && zomeCallCount_b) return 1;
+            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+            return 0;
+          })
+          .map((groupDnaHash) => {
+            const groupId = encodeHashToBase64(groupDnaHash);
+            const zomeCallCount = window[`__mossZomeCallCount_${groupId}`];
+            const showDetails = this._groupsWithDetails.includes(groupId);
+            return html`
+              <div class="column">
+                <div class="row" style="align-items: center; flex: 1;">
+                  <div class="row" style="align-items: center; width: 300px;">
+                    <group-context .groupDnaHash=${groupDnaHash}>
+                      <group-logo
+                        .groupDnaHash=${groupDnaHash}
+                        style="margin-right: 8px; --size: 40px"
+                      ></group-logo
+                    ></group-context>
+                  </div>
+                  <div style="display: flex; flex: 1;"></div>
+                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                    ${zomeCallCount ? zomeCallCount.totalCounts : ''}
+                  </div>
+                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                    ${zomeCallCount
+                      ? Math.round(
+                          zomeCallCount.totalCounts /
+                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                        )
+                      : ''}
+                  </div>
+                  <span
+                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                    @click=${() => this.toggleGroupDetails(groupId)}
+                    >${showDetails ? 'Hide' : 'Details'}</span
+                  >
+                </div>
+                ${showDetails
+                  ? Object.keys(zomeCallCount.functionCalls).map(
+                      (fn_name) => html`
+                        <div
+                          class="row"
+                          style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
+                        >
+                          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+                            <div>${fn_name}</div>
+                          </div>
+                          <div
+                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
+                          >
+                            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
+                          </div>
+                          <div
+                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
+                          >
+                            ${zomeCallCount
+                              ? Math.round(
+                                  zomeCallCount.functionCalls[fn_name] /
+                                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                                )
+                              : ''}
+                          </div>
+                        </div>
+                      `,
+                    )
+                  : html``}
+              </div>
+            `;
+          })}
+      </div>
+    `;
+  }
+
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
-      <div
-        class="column flex-scrollable-y"
-        style="align-items: flex-start; overflow-y: auto; height: calc(100vh - 140px); padding: 50px;"
-      >
+      <div class="column flex-scrollable-y" style="align-items: flex-start;">
         <div class="row" style="align-items: center;">
           <div style="align-items: center; width: 300px;"></div>
           <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
@@ -80,11 +359,11 @@ export class ZomeCallPanel extends LitElement {
           .sort(([hash_a, _a], [hash_b, _b]) => {
             const id_a = encodeHashToBase64(hash_a);
             const id_b = encodeHashToBase64(hash_b);
-            const zomeCallCount_a = window[`__zomeCallCount_${id_a}`]
-              ? window[`__zomeCallCount_${id_a}`].totalCounts
+            const zomeCallCount_a = window[`__appletZomeCallCount_${id_a}`]
+              ? window[`__appletZomeCallCount_${id_a}`].totalCounts
               : undefined;
-            const zomeCallCount_b = window[`__zomeCallCount_${id_b}`]
-              ? window[`__zomeCallCount_${id_b}`].totalCounts
+            const zomeCallCount_b = window[`__appletZomeCallCount_${id_b}`]
+              ? window[`__appletZomeCallCount_${id_b}`].totalCounts
               : undefined;
             if (zomeCallCount_a && !zomeCallCount_b) return -1;
             if (!zomeCallCount_a && zomeCallCount_b) return 1;
@@ -93,7 +372,7 @@ export class ZomeCallPanel extends LitElement {
           })
           .map(([appletHash, appletStore]) => {
             const appletId = encodeHashToBase64(appletHash);
-            const zomeCallCount = window[`__zomeCallCount_${appletId}`];
+            const zomeCallCount = window[`__appletZomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
             return html`
               <div class="column">
@@ -121,7 +400,7 @@ export class ZomeCallPanel extends LitElement {
                   </div>
                   <span
                     style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                    @click=${() => this.toggleDetails(appletId)}
+                    @click=${() => this.toggleAppletDetails(appletId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
                   <groups-for-applet
@@ -161,9 +440,23 @@ export class ZomeCallPanel extends LitElement {
               </div>
             `;
           })}
-        <div style="min-height: 100px;"></div>
       </div>
     `;
+  }
+
+  renderGroupsLoading() {
+    switch (this._groups.value.status) {
+      case 'pending':
+        return html`Loading...`;
+      case 'error':
+        return html`<display-error
+          .headline=${msg('Failed to get groups.')}
+          tooltip
+          .error=${this._groups.value.error}
+        ></display-error>`;
+      case 'complete':
+        return this.renderGroups(this._groups.value.value);
+    }
   }
 
   renderAppletsLoading() {
@@ -183,8 +476,19 @@ export class ZomeCallPanel extends LitElement {
 
   render() {
     return html`
-      <div class="row" style="flex: 1; padding: 4px; align-items: center;">
-        ${this.renderAppletsLoading()}
+      <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
+        <h2 style="text-align: center;">Global Apps</h2>
+        <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
+          ${this.renderDefaultApps()}
+        </div>
+        <h2 style="text-align: center;">Groups DNAs</h2>
+        <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
+          ${this.renderGroupsLoading()}
+        </div>
+        <h2 style="text-align: center;">Tools</h2>
+        <div class="row" style="padding: 4px; align-items: center; margin-bottom: 100px;">
+          ${this.renderAppletsLoading()}
+        </div>
       </div>
     `;
   }

@@ -15,6 +15,9 @@ import {
   HoloHashB64,
   ActionHash,
   CallZomeRequest,
+  FunctionName,
+  ZomeName,
+  AgentPubKeyB64,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
@@ -540,9 +543,9 @@ export function getAllIframes() {
   return result;
 }
 
-export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
+export function logAppletZomeCall(request: CallZomeRequest, appletId: AppletId) {
   if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    const zomeCallCounts = window[`__zomeCallCount_${appletId}`];
+    const zomeCallCounts = window[`__appletZomeCallCount_${appletId}`];
     if (zomeCallCounts) {
       zomeCallCounts.totalCounts += 1;
       if (zomeCallCounts.functionCalls[request.fn_name]) {
@@ -553,13 +556,50 @@ export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
         }
         zomeCallCounts.functionCalls[request.fn_name] = 1;
       }
-      window[`__zomeCallCount_${appletId}`] = zomeCallCounts;
+      window[`__appletZomeCallCount_${appletId}`] = zomeCallCounts;
     } else {
-      window[`__zomeCallCount_${appletId}`] = {
+      window[`__appletZomeCallCount_${appletId}`] = {
         firstCall: Date.now(),
         totalCounts: 1,
         functionCalls: {
           [request.fn_name]: 1,
+        },
+      };
+    }
+  }
+}
+
+/**
+ * Zome calls made by non-applet dnas
+ *
+ * @param request
+ * @param appletId
+ */
+export function logMossZomeCall(
+  cellId: [DnaHashB64, AgentPubKeyB64],
+  fnName: FunctionName,
+  _zomeName: ZomeName,
+) {
+  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
+    // We assume unique dna hashes for now
+    const zomeCallCounts = window[`__mossZomeCallCount_${cellId[0]}`];
+    if (zomeCallCounts) {
+      zomeCallCounts.totalCounts += 1;
+      if (zomeCallCounts.functionCalls[fnName]) {
+        zomeCallCounts.functionCalls[fnName] += 1;
+      } else {
+        if (!zomeCallCounts.functionCalls) {
+          zomeCallCounts.functionCalls = {};
+        }
+        zomeCallCounts.functionCalls[fnName] = 1;
+      }
+      window[`__mossZomeCallCount_${cellId[0]}`] = zomeCallCounts;
+    } else {
+      window[`__mossZomeCallCount_${cellId[0]}`] = {
+        firstCall: Date.now(),
+        totalCounts: 1,
+        functionCalls: {
+          [fnName]: 1,
         },
       };
     }
