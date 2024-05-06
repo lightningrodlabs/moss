@@ -1,6 +1,6 @@
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import {
@@ -19,6 +19,11 @@ import {
   HoloHash,
   NetworkInfoRequest,
   Timestamp,
+  NetworkInfo,
+  Entry,
+  SourceChainJsonRecord,
+  CreateLink,
+  Action,
 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -36,13 +41,13 @@ import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
-import { HoloHashMap } from '@holochain-open-dev/utils';
 import { appIdFromAppletHash, getCellId } from '../utils.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug, mdiRefresh } from '@mdi/js';
+import { decode } from '@msgpack/msgpack';
+import { json } from 'stream/consumers';
 
 type DumpData = {
-  show: boolean;
   dump: FullStateDump;
   newOpsCount: number;
 };
@@ -91,23 +96,27 @@ export class ZomeCallPanel extends LitElement {
   }
 
   @state()
+  _appletsWithDebug: AppletId[] = [];
+
+  @state()
   _appletsWithDumps: { [key: AppletId]: DumpData } = {};
 
-  async toggleDumps(appletId: AppletId) {
-    const dumpData = this._appletsWithDumps[appletId];
-    if (dumpData === undefined || !dumpData.show) {
-      await this.dumpState(appletId);
-      if (dumpData) {
-        dumpData.show = true;
-        this._appletsWithDumps[appletId] = dumpData;
-      }
+  @state()
+  _appletsWithNetInfo: { [key: AppletId]: NetworkInfo } = {};
+
+  toggleDebug(appletId: AppletId) {
+    const appletsWithDebug = this._appletsWithDebug;
+    if (appletsWithDebug.includes(appletId)) {
+      this._appletsWithDebug = appletsWithDebug.filter((id) => id !== appletId);
     } else {
-      dumpData.show = false;
+      appletsWithDebug.push(appletId);
+      this._appletsWithDebug = Array.from(new Set(appletsWithDebug));
     }
   }
 
-  async dumpState(appletId) {
-    const cell_id = window[`__appletIdCellId_${appletId}`];
+  async dumpState(appletId, appletHash) {
+    const cellIds = await this.getCellIds(appletHash);
+    const cell_id = cellIds[0]!;
 
     let currentDump = this._appletsWithDumps[appletId];
 
@@ -115,14 +124,11 @@ export class ZomeCallPanel extends LitElement {
       cell_id,
       dht_ops_cursor: currentDump ? currentDump.dump.integration_dump.dht_ops_cursor : 0,
     };
-    console.log('BEFORE');
     const resp = await this._mossStore.adminWebsocket.dumpFullState(req);
-    console.log('AFTER');
     let newOpsCount = 0;
     if (!currentDump) {
       newOpsCount = resp.integration_dump.dht_ops_cursor;
       currentDump = {
-        show: true,
         dump: resp,
         newOpsCount,
       };
@@ -141,19 +147,139 @@ export class ZomeCallPanel extends LitElement {
     console.log('NEW OPS COUNT', newOpsCount);
     console.log('RESP', currentDump);
   }
+
+  async getCellIds(appletHash) {
+    const appInfo = await this._mossStore.appWebsocket.appInfo({
+      installed_app_id: appIdFromAppletHash(appletHash),
+    });
+    if (!appInfo) throw new Error('AppInfo undefined.');
+    const cellIds = Object.values(appInfo.cell_info)
+      .flat()
+      .map((cellInfo) => getCellId(cellInfo))
+      .filter((id) => !!id);
+    return cellIds;
+  }
+
+  async networkInfo(appletId, appletHash) {
+    const cellIds = await this.getCellIds(appletHash);
+    const networkInfo = await this._mossStore.appWebsocket.networkInfo({
+      agent_pub_key: cellIds[0]![1],
+      dnas: cellIds.map((id) => id![0]),
+      last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
+    });
+    this._appletsWithNetInfo[appletId] = networkInfo[0];
+
+    console.log('networkInfo: ', networkInfo);
+  }
+
+  renderCreateLink(createLink: CreateLink) {
+    return html` Base: ${this.renderHash(createLink.base_address)}; Target:
+    ${this.renderHash(createLink.target_address)}`;
+  }
+
   renderDhtOp(op: DhtOp) {
     const opName = Object.keys(op)[0];
-    const action = Object.values(op)[0][1];
+    const opValue = Object.values(op)[0];
+    const action: Action = opValue[1];
+
+    let entry: Entry | undefined;
+    if (opName == 'StoreEntry') {
+      entry = opValue[2];
+    } else if (opName == 'StoreRecord' && action.type == 'Create') {
+      if (opValue[2]['Present']) {
+        entry = opValue[2]['Present'];
+      }
+    }
+
     return html`
       <div class="dht-op">
         ${opName}: ${action.type} ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
+        ${action.type == 'CreateLink' ? this.renderCreateLink(action) : ''}
+        ${entry ? this.renderEntry(entry) : ''}
+        ${opName == 'RegisterAddLink' ? this.renderCreateLink(action as CreateLink) : ''}
       </div>
     `;
   }
+
   renderHash(hash: HoloHash) {
     const hashB64 = encodeHashToBase64(hash);
     return html` <span class="hash" title="${hashB64}">${hashB64.slice(0, 8)}</span> `;
   }
+
+  renderObjectWithHashes(object: Object) {
+    return Object.entries(object).map(
+      ([key, value]) =>
+        html`${key}:${value && value['0'] === 132 && value['1'] == '32' && value['2'] == 36
+          ? this.renderHash(value)
+          : JSON.stringify(value)}; `,
+    );
+  }
+
+  renderUnknownSerializedObject(object: Object) {
+    try {
+      // @ts-ignore
+      return JSON.stringify(decode(object));
+    } catch (e) {
+      // @ts-ignore
+      const x = Array.from(object);
+      // @ts-ignore
+      return String.fromCharCode.apply(null, x);
+    }
+  }
+
+  renderEntry(entry: Entry) {
+    const entry_type = Object.keys(entry.entry_type)[0]; // Fixme in version 0.4
+    const entry_data = entry.entry;
+    let entryHtml: undefined | TemplateResult;
+    if (entry_type === 'App') {
+      const decoded = decode(entry_data as Uint8Array) as Object;
+      if (decoded['document_hash'] && decoded['name'])
+        entryHtml = html`<span class="syn"
+          >Syn-Workspace Doc:${this.renderHash(decoded['document_hash'])}: ${decoded['name']}</span
+        >`;
+      else if (decoded['initial_state'] && decoded['meta']) {
+        const state = decode(decoded['initial_state']) as Object;
+        const meta = decode(decoded['meta']) as Object;
+        entryHtml = html`<span class="syn"
+          >Syn-Document
+          Meta->${this.renderObjectWithHashes(
+            meta,
+          )}--InitialState:${this.renderUnknownSerializedObject(state)}</span
+        >`;
+      } else if (decoded['document_hash'] && decoded['state']) {
+        const state = decode(decoded['state']) as object;
+        entryHtml = html` <div class="syn">
+          Syn-Commit Doc:${this.renderHash(decoded['document_hash'])}---
+          <span
+            >previous commits:
+            ${decoded['previous_commit_hashes'].map((h) => this.renderHash(h))}</span
+          >
+          <div>${this.renderUnknownSerializedObject(state)}</div>
+        </div>`;
+      } else {
+        entryHtml = html`<span class="app-entry">${JSON.stringify(decoded)}</span>`;
+      }
+    }
+    return html`
+      <div class="entry">
+        ${entry_type}--${entry_type == 'Agent' ? this.renderHash(entry_data as AgentPubKey) : ''}
+        ${entryHtml ? entryHtml : ''}
+        ${entry_type === 'App' && !entryHtml ? JSON.stringify(entry_data) : ''}
+      </div>
+    `;
+  }
+  renderRecord(record: SourceChainJsonRecord) {
+    return html`
+      <span class="record">
+        <span class="action-type">${record.action.type}</span>
+        ${this.renderHash(record.action_address)}
+        <span class="date">${dateStr(record.action.timestamp)}</span>
+        ${record.entry ? this.renderEntry(record.entry) : ''}
+        ${record.action.type == 'CreateLink' ? this.renderCreateLink(record.action) : ''}
+      </span>
+    `;
+  }
+
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
       <div
@@ -189,29 +315,12 @@ export class ZomeCallPanel extends LitElement {
             const zomeCallCount = window[`__zomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
             const dump = this._appletsWithDumps[appletId];
-            const showDebug = dump && dump.show;
+            const netInfo = this._appletsWithNetInfo[appletId];
+            const showDebug = this._appletsWithDebug.includes(appletId);
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
                   <div
-                    @click=${async () => {
-                      const appInfo = await this._mossStore.appWebsocket.appInfo({
-                        installed_app_id: appIdFromAppletHash(appletHash),
-                      });
-                      if (!appInfo) throw new Error('AppInfo undefined.');
-                      const cellIds = Object.values(appInfo.cell_info)
-                        .flat()
-                        .map((cellInfo) => getCellId(cellInfo))
-                        .filter((id) => !!id);
-
-                      const networkInfo = await this._mossStore.appWebsocket.networkInfo({
-                        agent_pub_key: cellIds[0]![1],
-                        dnas: cellIds.map((id) => id![0]),
-                        last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
-                      });
-
-                      console.log('networkInfo: ', networkInfo);
-                    }}
                     class="row"
                     style="align-items: center; width: 300px;"
                   >
@@ -248,12 +357,7 @@ export class ZomeCallPanel extends LitElement {
                     >
                     <sl-icon-button
                       @click=${async () => {
-                        this.toggleDumps(appletId);
-
-                        // console.log('NET INFO', window[`__appletIdCellId_${appletId}`]);
-                        // await this.networkInfo(this._mossStore.appWebsocket, cell_id[0], [
-                        //   cell_id[1],
-                        // ]);
+                        this.toggleDebug(appletId);
                       }}
                       .src=${wrapPathInSvg(mdiBug)}
                     >
@@ -263,71 +367,6 @@ export class ZomeCallPanel extends LitElement {
                       .appletHash=${appletHash}
                     ></groups-for-applet>
                   </div>
-                  ${
-                    showDebug
-                      ? html` <div class="debug-data">
-                          <div style="display:flex;align-items:center;">
-                            <span class="debug-title">Dump Data</span>
-                            <sl-icon-button
-                              title="refresh"
-                              @click=${async () => {
-                                this.dumpState(appletId);
-                              }}
-                              .src=${wrapPathInSvg(mdiRefresh)}
-                            ></sl-icon-button>
-                          </div>
-                          ${dump
-                            ? html`
-                                <div class="debug-dump">
-                                  <span>
-                                    Peers: (${Object.keys(dump.dump.peer_dump.peers).length})
-                                    <div class="long-list">
-                                      ${Object.entries(dump.dump.peer_dump.peers).map(
-                                        (p) =>
-                                          html` <div class="list-item">
-                                            ${p[0]}: ${encodeHashToBase64(p[1].kitsune_agent)}--
-                                            ${p[1].dump}
-                                          </div>`,
-                                      )}
-                                    </div>
-                                  </span>
-
-                                  <span> integrated Ops since last Dump: ${dump.newOpsCount}</span>
-                                  <span
-                                    >Integrated Ops: ${dump.dump.integration_dump.dht_ops_cursor}
-                                    <div class="long-list">
-                                      ${dump.dump.integration_dump.integrated.map(
-                                        (p) =>
-                                          html` <div class="list-item">
-                                            ${this.renderDhtOp(p)}
-                                          </div>`,
-                                      )}
-                                    </div>
-                                  </span>
-
-                                  <span>
-                                    published ops count:
-                                    ${dump.dump.source_chain_dump.published_ops_count}</span
-                                  >
-                                  <span>
-                                    Source Chain: (${dump.dump.source_chain_dump.records.length}
-                                    records)
-                                    <div class="long-list">
-                                      ${dump.dump.source_chain_dump.records.map(
-                                        (r) =>
-                                          html` <div class="list-item">
-                                            ${this.renderHash(r.action_address)}
-                                            <span class="date">${dateStr(r.action.timestamp)}</span>
-                                          </div>`,
-                                      )}
-                                    </div>
-                                  </span>
-                                </div>
-                              `
-                            : ''}
-                        </div>`
-                      : ''
-                  }
                   ${
                     showDetails
                       ? Object.keys(zomeCallCount.functionCalls).map(
@@ -358,6 +397,106 @@ export class ZomeCallPanel extends LitElement {
                           `,
                         )
                       : html``
+                  }
+                  ${
+                    showDebug
+                      ? html` <div class="debug-data">
+                          <div style="display:flex;align-items:center;">
+                            <span class="debug-title">Network Info</span>
+                            <sl-button
+                              size="small"
+                              style="margin-left:5px;"
+                              @click=${async () => {
+                                this.networkInfo(appletId, appletHash);
+                              }}
+                              >Query</sl-button
+                            >
+                          </div>
+                          ${netInfo
+                            ? html`
+                                <span> Arc Size: ${netInfo.arc_size}</span>
+                                <span> Current peer count: ${netInfo.current_number_of_peers}</span>
+                                <span> Total network peers: ${netInfo.total_network_peers}</span>
+                                <span>
+                                  Bytes since last query:
+                                  ${netInfo.bytes_since_last_time_queried}</span
+                                >
+                                <span>
+                                  Rounds since last query:
+                                  ${netInfo.completed_rounds_since_last_time_queried}</span
+                                >
+
+                                <span>
+                                  Fetch-pool ops to fetch:
+                                  ${netInfo.fetch_pool_info.num_ops_to_fetch}</span
+                                >
+                                <span>
+                                  Fetch-pool bytes to fetch:
+                                  ${netInfo.fetch_pool_info.op_bytes_to_fetch}</span
+                                >
+                              `
+                            : ''}
+                          <div style="display:flex;align-items:center;">
+                            <span class="debug-title">State Dump</span>
+                            <sl-button
+                              size="small"
+                              style="margin-left:5px;"
+                              @click=${async () => {
+                                this.dumpState(appletId, appletHash);
+                              }}
+                              >Query</sl-button
+                            >
+                          </div>
+                          ${dump
+                            ? html`
+                                <div class="debug-dump">
+                                  <span>
+                                    Peers: (${Object.keys(dump.dump.peer_dump.peers).length})
+                                    <div class="long-list">
+                                      ${Object.entries(dump.dump.peer_dump.peers).map(
+                                        (p) =>
+                                          html` <div class="list-item">
+                                            ${p[0]}: ${this.renderHash(p[1].kitsune_agent)}--
+                                            ${p[1].dump}
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </span>
+
+                                  <span> integrated Ops since last Dump: ${dump.newOpsCount}</span>
+                                  <span
+                                    >Integrated Ops: ${dump.dump.integration_dump.dht_ops_cursor}
+                                    <div class="long-list">
+                                      ${dump.dump.integration_dump.integrated.map(
+                                        (p) =>
+                                          html` <div class="list-item">
+                                            ${this.renderDhtOp(p)}
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </span>
+
+                                  <span>
+                                    published ops count:
+                                    ${dump.dump.source_chain_dump.published_ops_count}</span
+                                  >
+                                  <div>
+                                    Source Chain: (${dump.dump.source_chain_dump.records.length}
+                                    records)
+                                    <div class="long-list">
+                                      ${dump.dump.source_chain_dump.records.map(
+                                        (r) =>
+                                          html` <div class="list-item">
+                                            ${this.renderRecord(r)}
+                                          </div>`,
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              `
+                            : ''}
+                        </div>`
+                      : ''
                   }
                 </div>
               </div>
@@ -398,8 +537,6 @@ export class ZomeCallPanel extends LitElement {
         display: flex;
       }
       .debug-data {
-        width: 100%;
-        overflow-x: auto;
         padding: 5px;
         display: flex;
         flex-direction: column;
@@ -414,18 +551,37 @@ export class ZomeCallPanel extends LitElement {
           font-size: 105%;
         }
         .long-list {
+          border: solid 1px #aaa;
           max-height: 300px;
           overflow-y: auto;
+          border-radius: 5px;
         }
         .list-item {
           margin-left: 5px;
-          border: solid 1px #aaa;
+          border-bottom: solid 1px #ddd;
           padding: 2px;
+          overflow-x: auto;
+          width: 2000px;
         }
         .hash {
-          background-color: #aaa;
+          background-color: #ccc;
           font-size: 80%;
           border-radius: 5px;
+          padding: 2px;
+        }
+        .action-type {
+          font-weight: bold;
+        }
+        .entry {
+          margin-left: 10px;
+        }
+        .syn {
+          padding: 4px;
+          background-color: lightcoral;
+        }
+        .app-entry {
+          padding: 4px;
+          background-color: lightblue;
         }
       }
     `,
