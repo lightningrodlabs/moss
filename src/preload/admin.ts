@@ -4,20 +4,22 @@
 import {
   ActionHashB64,
   AgentPubKeyB64,
-  CellId,
+  CallZomeRequest,
   DnaHashB64,
   FunctionName,
   ZomeName,
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 
+contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
+  signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
+});
+
 contextBridge.exposeInMainWorld('electronAPI', {
-  signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
-  signZomeCallApplet: (zomeCall: ZomeCallUnsignedNapi) =>
-    ipcRenderer.invoke('sign-zome-call-applet', zomeCall),
+  signZomeCallApplet: (request: CallZomeRequest) =>
+    ipcRenderer.invoke('sign-zome-call-applet', request),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>

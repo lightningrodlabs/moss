@@ -2,13 +2,13 @@ import { ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-ut
 
 declare global {
   interface Window {
-    electronAPI: {
+    __HC_ZOME_CALL_SIGNER__: {
       signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
     };
   }
 }
 
-window.electronAPI = {
+window.__HC_ZOME_CALL_SIGNER__ = {
   signZomeCall: async (zomeCall: ZomeCallUnsignedNapi) => {
     return postMessage({
       type: 'sign-zome-call',

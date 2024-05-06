@@ -32,7 +32,7 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
+import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow } from './windows';
 import { TOOLS_LIBRARY_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
@@ -43,7 +43,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { InstalledAppId, encodeHashToBase64 } from '@holochain/client';
+import { CallZomeRequest, InstalledAppId, encodeHashToBase64 } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
@@ -236,29 +236,24 @@ const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
   path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32@2x.png'),
 );
 
-const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
+const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
   if (MAIN_WINDOW)
     emitToWindow(MAIN_WINDOW, 'zome-call-signed', {
       cellIdB64: [
-        encodeHashToBase64(new Uint8Array(zomeCall.cellId[0])),
-        encodeHashToBase64(new Uint8Array(zomeCall.cellId[1])),
+        encodeHashToBase64(new Uint8Array(zomeCall.cell_id[0])),
+        encodeHashToBase64(new Uint8Array(zomeCall.cell_id[1])),
       ],
-      fnName: zomeCall.fnName,
-      zomeName: zomeCall.zomeName,
+      fnName: zomeCall.fn_name,
+      zomeName: zomeCall.zome_name,
     });
-  return WE_RUST_HANDLER.signZomeCall(zomeCall);
+  return signZomeCall(zomeCall, WE_RUST_HANDLER);
 };
 
-const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
+const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-  return WE_RUST_HANDLER.signZomeCall(zomeCall);
+  return signZomeCall(zomeCall, WE_RUST_HANDLER);
 };
-
-// // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-// if (require('electron-squirrel-startup')) {
-//   app.quit();
-// }
 
 const createSplashscreenWindow = (): BrowserWindow => {
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
