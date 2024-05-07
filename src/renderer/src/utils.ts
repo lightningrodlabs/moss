@@ -18,6 +18,7 @@ import {
   FunctionName,
   ZomeName,
   AgentPubKeyB64,
+  Timestamp,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
@@ -604,4 +605,9 @@ export function logMossZomeCall(
       };
     }
   }
+}
+
+export function dateStr(timestamp: Timestamp) {
+  const date = new Date(timestamp);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }

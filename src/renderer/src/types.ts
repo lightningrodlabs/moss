@@ -6,6 +6,7 @@ import {
   DnaHashB64,
   EntryHash,
   EntryHashB64,
+  FullStateDump,
 } from '@holochain/client';
 import { FrameNotification } from '@lightningrodlabs/we-applet';
 
@@ -160,4 +161,9 @@ export type UpdateFeedMessage = {
   type: string;
   timestamp: number;
   message: string;
+};
+
+export type DumpData = {
+  dump: FullStateDump;
+  newOpsCount: number;
 };
