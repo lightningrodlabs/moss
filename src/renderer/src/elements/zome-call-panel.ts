@@ -1,4 +1,4 @@
-import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -33,7 +33,7 @@ import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
 import { appIdFromAppletHash, getCellId } from '../utils.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiBug, mdiLan } from '@mdi/js';
+import { mdiBug } from '@mdi/js';
 import { DumpData } from '../types.js';
 
 const TOOLS_LIBRARY_APP_ID = 'AppstoreLight';
