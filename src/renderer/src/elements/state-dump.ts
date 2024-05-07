@@ -1,4 +1,3 @@
-import { consume } from '@lit/context';
 import { css, html, LitElement, TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
@@ -196,7 +195,7 @@ export class StateDump extends LitElement {
         border-bottom: solid 1px #ddd;
         padding: 2px;
         overflow-x: auto;
-        /* width: 2000px; */
+        line-break: anywhere;
       }
 
       .action-type {

@@ -1,4 +1,4 @@
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -35,6 +35,9 @@ import { appIdFromAppletHash, getCellId } from '../utils.js';
 import { DumpData } from '../types.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
+
+const TOOLS_LIBRARY_APP_ID = 'ToolsLibrary';
+const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
 
 @localized()
 @customElement('zome-call-panel')
@@ -88,14 +91,14 @@ export class ZomeCallPanel extends LitElement {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
     try {
-      const cellIds = await this.getCellIds('default-app#feedback-board');
+      const cellIds = await this.getCellIds(FEEDBACK_BOARD_APP_ID);
       this._feedbackBoardCellIds = cellIds;
     } catch (e) {
       console.warn('Failed to get feedback-board cellIds: ', e);
     }
 
     try {
-      const cellIds = await this.getCellIds('ToolsLibrary');
+      const cellIds = await this.getCellIds(TOOLS_LIBRARY_APP_ID);
       this._toolsLibraryCellIds = cellIds;
     } catch (e) {
       console.warn('Failed to get ToolsLibrary cellIds: ', e);
@@ -258,6 +261,15 @@ export class ZomeCallPanel extends LitElement {
       this._feedbackBoardCellIds.length > 0
         ? window[`__mossZomeCallCount_${encodeHashToBase64(this._feedbackBoardCellIds[0][0])}`]
         : undefined;
+
+    const showToolsLibraryDebug = this._appsWithDebug.includes(TOOLS_LIBRARY_APP_ID);
+    const toolsLibraryNetInfo = this._appsWithNetInfo[TOOLS_LIBRARY_APP_ID];
+    const toolsLibraryDump = this._appsWithDumps[TOOLS_LIBRARY_APP_ID];
+
+    const showfeedbackBoardDebug = this._appsWithDebug.includes(FEEDBACK_BOARD_APP_ID);
+    const feedbackBoardNetInfo = this._appsWithNetInfo[FEEDBACK_BOARD_APP_ID];
+    const feedbackBoardDump = this._appsWithDumps[FEEDBACK_BOARD_APP_ID];
+
     return html`
       <div class="column" style="align-items: flex-start;">
         <div class="row" style="align-items: center;">
@@ -269,10 +281,7 @@ export class ZomeCallPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 90px;"></div>
         </div>
         <div class="column">
-          <div
-            class="row"
-            style="align-items: center; flex: 1; margin-bottom: 20px; margin-top: 10px;"
-          >
+          <div class="row" style="align-items: center; flex: 1; margin-top: 10px;">
             <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
               Tools Library
             </div>
@@ -295,10 +304,24 @@ export class ZomeCallPanel extends LitElement {
               }}
               >${this._showToolsLibraryDetails ? 'Hide' : 'Details'}</span
             >
+
+            <sl-icon-button
+              @click=${async () => {
+                this.toggleDebug(TOOLS_LIBRARY_APP_ID);
+              }}
+              .src=${wrapPathInSvg(mdiBug)}
+            >
+            </sl-icon-button>
           </div>
           ${this._showToolsLibraryDetails
             ? this.renderZomeCallDetails(toolsLibraryZomeCallCount)
             : html``}
+        </div>
+        ${showToolsLibraryDebug
+          ? this.renderDebugInfo(TOOLS_LIBRARY_APP_ID, toolsLibraryNetInfo, toolsLibraryDump)
+          : html``}
+
+        <div class="column" style="margin-top: 20px;">
           <div class="row" style="align-items: center; flex: 1;">
             <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
               Feedback Board
@@ -324,6 +347,13 @@ export class ZomeCallPanel extends LitElement {
                     }}
                     >${this._showFeedbackBoardDetails ? 'Hide' : 'Details'}</span
                   >
+                  <sl-icon-button
+                    @click=${async () => {
+                      this.toggleDebug(TOOLS_LIBRARY_APP_ID);
+                    }}
+                    .src=${wrapPathInSvg(mdiBug)}
+                  >
+                  </sl-icon-button>
                 `
               : html``}
           </div>
@@ -331,6 +361,9 @@ export class ZomeCallPanel extends LitElement {
             ? this.renderZomeCallDetails(feedbackBoardZomeCallCount)
             : html``}
         </div>
+        ${showToolsLibraryDebug
+          ? this.renderDebugInfo(FEEDBACK_BOARD_APP_ID, feedbackBoardNetInfo, feedbackBoardDump)
+          : html``}
       </div>
     `;
   }
