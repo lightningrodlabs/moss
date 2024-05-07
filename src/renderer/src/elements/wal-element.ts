@@ -137,7 +137,7 @@ export class WalElement extends LitElement {
             </div>
           `;
         } else {
-          return html`AssetInfo undefined.`;
+          return html`AssetInfo undefined`;
         }
       default:
         return html`<div>Invalid AsyncStatus: ${(this.assetInfo.value as any).status}</div>`;
