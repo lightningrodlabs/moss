@@ -1,4 +1,4 @@
-import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -361,7 +361,7 @@ export class ZomeCallPanel extends LitElement {
             ? this.renderZomeCallDetails(feedbackBoardZomeCallCount)
             : html``}
         </div>
-        ${showToolsLibraryDebug
+        ${showfeedbackBoardDebug
           ? this.renderDebugInfo(FEEDBACK_BOARD_APP_ID, feedbackBoardNetInfo, feedbackBoardDump)
           : html``}
       </div>
