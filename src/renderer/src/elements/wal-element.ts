@@ -63,6 +63,7 @@ export class WalElement extends LitElement {
       case 'pending':
         return html`<div class="row element" style="height: 30px;"><span>loading...</span></div>`;
       case 'error':
+        console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);
         return html`<div>Error</div>`;
       case 'complete':
         if (this.assetInfo.value.value) {
@@ -135,9 +136,11 @@ export class WalElement extends LitElement {
               </sl-tooltip>
             </div>
           `;
+        } else {
+          return html`AssetInfo undefined`;
         }
       default:
-        return html`<div>Error</div>`;
+        return html`<div>Invalid AsyncStatus: ${(this.assetInfo.value as any).status}</div>`;
     }
   }
 
