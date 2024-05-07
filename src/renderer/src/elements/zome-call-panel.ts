@@ -7,9 +7,11 @@ import {
   CellId,
   DnaHash,
   DnaHashB64,
+  DumpFullStateRequest,
   encodeHashToBase64,
   EntryHash,
   InstalledAppId,
+  NetworkInfo,
 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -21,6 +23,8 @@ import '../groups/elements/group-context.js';
 import '../applets/elements/applet-logo.js';
 import './create-group-dialog.js';
 import './groups-for-applet.js';
+import './state-dump.js';
+import './net-info.js';
 
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
@@ -29,7 +33,11 @@ import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
 import { appIdFromAppletHash, getCellId } from '../utils.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiLan } from '@mdi/js';
+import { mdiBug, mdiLan } from '@mdi/js';
+import { DumpData } from '../types.js';
+
+const TOOLS_LIBRARY_APP_ID = 'AppstoreLight';
+const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
 
 @localized()
 @customElement('zome-call-panel')
@@ -70,52 +78,88 @@ export class ZomeCallPanel extends LitElement {
   @state()
   _showToolsLibraryDetails = false;
 
+  @state()
+  _appsWithDebug: InstalledAppId[] = [];
+
+  @state()
+  _appsWithDumps: { [key: InstalledAppId]: DumpData } = {};
+
+  @state()
+  _appsWithNetInfo: { [key: InstalledAppId]: NetworkInfo } = {};
+
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
 
-    const feedbackBoardAppInfo = await this._mossStore.appWebsocket.appInfo({
-      installed_app_id: 'default-app#feedback-board',
-    });
-    if (!feedbackBoardAppInfo) {
-      console.warn('feedback-board appInfo undefined.');
-    } else {
-      const cellIds = Object.values(feedbackBoardAppInfo.cell_info)
-        .flat()
-        .map((cellInfo) => getCellId(cellInfo))
-        .filter((id) => !!id);
-      this._feedbackBoardCellIds = cellIds as CellId[];
+    try {
+      const cellIds = await this.getCellIds(FEEDBACK_BOARD_APP_ID);
+      this._feedbackBoardCellIds = cellIds;
+    } catch (e) {
+      console.warn('Failed to get feedback-board cellIds: ', e);
     }
 
-    const toolsLibraryAppInfo = await this._mossStore.appWebsocket.appInfo({
-      installed_app_id: 'AppstoreLight',
-    });
-    if (!toolsLibraryAppInfo) {
-      console.warn('AppstoreLight appInfo undefined.');
-    } else {
-      const cellIds = Object.values(toolsLibraryAppInfo.cell_info)
-        .flat()
-        .map((cellInfo) => getCellId(cellInfo))
-        .filter((id) => !!id);
-      this._toolsLibraryCellIds = cellIds as CellId[];
+    try {
+      const cellIds = await this.getCellIds(TOOLS_LIBRARY_APP_ID);
+      this._toolsLibraryCellIds = cellIds;
+    } catch (e) {
+      console.warn('Failed to get AppstoreLight cellIds: ', e);
     }
   }
 
-  async logNetworkInfo(appId: InstalledAppId): Promise<void> {
+  async getCellIds(appId: InstalledAppId): Promise<CellId[]> {
     const appInfo = await this._mossStore.appWebsocket.appInfo({
       installed_app_id: appId,
     });
-    if (!appInfo) throw new Error('AppInfo undefined.');
+    if (!appInfo) throw new Error(`AppInfo of app '${appId}' undefined.`);
     const cellIds = Object.values(appInfo.cell_info)
       .flat()
       .map((cellInfo) => getCellId(cellInfo))
       .filter((id) => !!id);
+    return cellIds as CellId[];
+  }
+
+  async dumpState(appId: InstalledAppId) {
+    const cellIds = await this.getCellIds(appId);
+    const cell_id = cellIds[0]!;
+
+    let currentDump = this._appsWithDumps[appId];
+
+    const req: DumpFullStateRequest = {
+      cell_id,
+      dht_ops_cursor: currentDump ? currentDump.dump.integration_dump.dht_ops_cursor : 0,
+    };
+    const resp = await this._mossStore.adminWebsocket.dumpFullState(req);
+    let newOpsCount = 0;
+    if (!currentDump) {
+      newOpsCount = resp.integration_dump.dht_ops_cursor;
+      currentDump = {
+        dump: resp,
+        newOpsCount,
+      };
+    } else {
+      newOpsCount =
+        resp.integration_dump.dht_ops_cursor - currentDump.dump.integration_dump.dht_ops_cursor;
+      if (newOpsCount > 0) {
+        const currentIntegrated = currentDump.dump.integration_dump.integrated;
+        currentIntegrated.concat([...currentDump.dump.integration_dump.integrated]);
+      }
+      currentDump.dump.peer_dump = resp.peer_dump;
+      currentDump.dump.source_chain_dump = resp.source_chain_dump;
+      currentDump.newOpsCount = newOpsCount;
+    }
+    this._appsWithDumps[appId] = currentDump;
+  }
+
+  async networkInfo(appId: InstalledAppId) {
+    const cellIds = await this.getCellIds(appId);
     const networkInfo = await this._mossStore.appWebsocket.networkInfo({
       agent_pub_key: cellIds[0]![1],
       dnas: cellIds.map((id) => id![0]),
       last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
     });
-    console.log('Network Info for app with appId ', appId, ': ', networkInfo);
+    this._appsWithNetInfo[appId] = networkInfo[0];
+
+    console.log('networkInfo: ', networkInfo);
   }
 
   disconnectedCallback(): void {
@@ -145,6 +189,70 @@ export class ZomeCallPanel extends LitElement {
     }
   }
 
+  toggleDebug(appId: InstalledAppId) {
+    const appsWithDebug = this._appsWithDebug;
+    if (appsWithDebug.includes(appId)) {
+      this._appsWithDebug = appsWithDebug.filter((id) => id !== appId);
+    } else {
+      appsWithDebug.push(appId);
+      this._appsWithDebug = Array.from(new Set(appsWithDebug));
+    }
+  }
+
+  renderZomeCallDetails(zomeCallCount: any) {
+    return Object.keys(zomeCallCount.functionCalls).map(
+      (fn_name) => html`
+        <div class="row" style="align-items: center; margin-top: 5px; margin-bottom: 10px;">
+          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+            <div>${fn_name}</div>
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${zomeCallCount
+              ? Math.round(
+                  zomeCallCount.functionCalls[fn_name] /
+                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                )
+              : ''}
+          </div>
+        </div>
+      `,
+    );
+  }
+
+  renderDebugInfo(appId: InstalledAppId, netInfo: NetworkInfo, dump: DumpData) {
+    return html`
+      <div class="debug-data">
+        <div class="row" style="align-items: center;">
+          <span class="debug-title">Network Info</span>
+          <sl-button
+            size="small"
+            style="margin-left:5px;"
+            @click=${async () => {
+              this.networkInfo(appId);
+            }}
+            >Query</sl-button
+          >
+        </div>
+        ${netInfo ? html`<net-info .networkInfo=${netInfo}></net-info>` : html``}
+        <div style="display:flex;align-items:center;">
+          <span class="debug-title">State Dump</span>
+          <sl-button
+            size="small"
+            style="margin-left:5px;"
+            @click=${async () => {
+              this.dumpState(appId);
+            }}
+            >Query</sl-button
+          >
+        </div>
+        ${dump ? html`<state-dump .dump=${dump}></state-dump>` : html``}
+      </div>
+    `;
+  }
+
   renderDefaultApps() {
     const toolsLibraryZomeCallCount =
       this._toolsLibraryCellIds.length > 0
@@ -154,6 +262,14 @@ export class ZomeCallPanel extends LitElement {
       this._feedbackBoardCellIds.length > 0
         ? window[`__mossZomeCallCount_${encodeHashToBase64(this._feedbackBoardCellIds[0][0])}`]
         : undefined;
+
+    const showToolsLibraryDebug = this._appsWithDebug.includes(TOOLS_LIBRARY_APP_ID);
+    const toolsLibraryNetInfo = this._appsWithNetInfo[TOOLS_LIBRARY_APP_ID];
+    const toolsLibraryDump = this._appsWithDumps[TOOLS_LIBRARY_APP_ID];
+
+    const showfeedbackBoardDebug = this._appsWithDebug.includes(FEEDBACK_BOARD_APP_ID);
+    const feedbackBoardNetInfo = this._appsWithNetInfo[FEEDBACK_BOARD_APP_ID];
+    const feedbackBoardDump = this._appsWithDumps[FEEDBACK_BOARD_APP_ID];
     return html`
       <div class="column" style="align-items: flex-start;">
         <div class="row" style="align-items: center;">
@@ -165,10 +281,7 @@ export class ZomeCallPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 90px;"></div>
         </div>
         <div class="column">
-          <div
-            class="row"
-            style="align-items: center; flex: 1; margin-bottom: 20px; margin-top: 10px;"
-          >
+          <div class="row" style="align-items: center; flex: 1; margin-top: 10px;">
             <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
               Applet Library
             </div>
@@ -191,41 +304,23 @@ export class ZomeCallPanel extends LitElement {
               }}
               >${this._showToolsLibraryDetails ? 'Hide' : 'Details'}</span
             >
-            <button
-              style="cursor: pointer;"
-              title="Log network info to console"
-              @click=${() => this.logNetworkInfo('AppstoreLight')}
+            <sl-icon-button
+              @click=${async () => {
+                this.toggleDebug(TOOLS_LIBRARY_APP_ID);
+              }}
+              .src=${wrapPathInSvg(mdiBug)}
             >
-              <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
-            </button>
+            </sl-icon-button>
           </div>
           ${this._showToolsLibraryDetails
-            ? Object.keys(toolsLibraryZomeCallCount.functionCalls).map(
-                (fn_name) => html`
-                  <div
-                    class="row"
-                    style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
-                  >
-                    <div style="font-weight: bold; width: 280px; padding-left: 20px;">
-                      <div>${fn_name}</div>
-                    </div>
-                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
-                      ${toolsLibraryZomeCallCount
-                        ? toolsLibraryZomeCallCount.functionCalls[fn_name]
-                        : ''}
-                    </div>
-                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
-                      ${toolsLibraryZomeCallCount
-                        ? Math.round(
-                            toolsLibraryZomeCallCount.functionCalls[fn_name] /
-                              ((Date.now() - toolsLibraryZomeCallCount.firstCall) / (1000 * 60)),
-                          )
-                        : ''}
-                    </div>
-                  </div>
-                `,
-              )
+            ? this.renderZomeCallDetails(toolsLibraryZomeCallCount)
             : html``}
+        </div>
+        ${showToolsLibraryDebug
+          ? this.renderDebugInfo(TOOLS_LIBRARY_APP_ID, toolsLibraryNetInfo, toolsLibraryDump)
+          : html``}
+
+        <div class="column" style="margin-top: 20px;">
           <div class="row" style="align-items: center; flex: 1;">
             <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
               Feedback Board
@@ -249,42 +344,21 @@ export class ZomeCallPanel extends LitElement {
               }}
               >${this._showFeedbackBoardDetails ? 'Hide' : 'Details'}</span
             >
-            <button
-              style="cursor: pointer;"
-              title="Log network info to console"
-              @click=${() => this.logNetworkInfo('default-app#feedback-board')}
+            <sl-icon-button
+              @click=${async () => {
+                this.toggleDebug(FEEDBACK_BOARD_APP_ID);
+              }}
+              .src=${wrapPathInSvg(mdiBug)}
             >
-              <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
-            </button>
+            </sl-icon-button>
           </div>
           ${this._showFeedbackBoardDetails
-            ? Object.keys(feedbackBoardZomeCallCount.functionCalls).map(
-                (fn_name) => html`
-                  <div
-                    class="row"
-                    style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
-                  >
-                    <div style="font-weight: bold; width: 280px; padding-left: 20px;">
-                      <div>${fn_name}</div>
-                    </div>
-                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
-                      ${feedbackBoardZomeCallCount
-                        ? feedbackBoardZomeCallCount.functionCalls[fn_name]
-                        : ''}
-                    </div>
-                    <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
-                      ${feedbackBoardZomeCallCount
-                        ? Math.round(
-                            feedbackBoardZomeCallCount.functionCalls[fn_name] /
-                              ((Date.now() - feedbackBoardZomeCallCount.firstCall) / (1000 * 60)),
-                          )
-                        : ''}
-                    </div>
-                  </div>
-                `,
-              )
+            ? this.renderZomeCallDetails(feedbackBoardZomeCallCount)
             : html``}
         </div>
+        ${showfeedbackBoardDebug
+          ? this.renderDebugInfo(FEEDBACK_BOARD_APP_ID, feedbackBoardNetInfo, feedbackBoardDump)
+          : html``}
       </div>
     `;
   }
@@ -347,18 +421,6 @@ export class ZomeCallPanel extends LitElement {
                     @click=${() => this.toggleGroupDetails(groupId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
-                  <button
-                    style="cursor: pointer;"
-                    title="Log network info to console"
-                    @click=${async () => {
-                      const groupStore = await (
-                        await toPromise(this._mossStore.groupStores)
-                      ).get(groupDnaHash);
-                      await this.logNetworkInfo(groupStore.appAgentWebsocket.installedAppId);
-                    }}
-                  >
-                    <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
-                  </button>
                 </div>
                 ${showDetails
                   ? Object.keys(zomeCallCount.functionCalls).map(
@@ -425,8 +487,12 @@ export class ZomeCallPanel extends LitElement {
           })
           .map(([appletHash, appletStore]) => {
             const appletId = encodeHashToBase64(appletHash);
+            const appId = appIdFromAppletHash(appletHash);
             const zomeCallCount = window[`__appletZomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
+            const dump = this._appsWithDumps[appId];
+            const netInfo = this._appsWithNetInfo[appId];
+            const showDebug = this._appsWithDebug.includes(appId);
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -456,48 +522,21 @@ export class ZomeCallPanel extends LitElement {
                     @click=${() => this.toggleAppletDetails(appletId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
-                  <button
-                    style="cursor: pointer;"
-                    title="Log network info to console"
-                    @click=${() => this.logNetworkInfo(appIdFromAppletHash(appletHash))}
+                  <sl-icon-button
+                    @click=${async () => {
+                      this.toggleDebug(appId);
+                    }}
+                    .src=${wrapPathInSvg(mdiBug)}
                   >
-                    <sl-icon .src=${wrapPathInSvg(mdiLan)}></sl-icon>
-                  </button>
+                  </sl-icon-button>
                   <groups-for-applet
                     style="margin-left: 15px;"
                     .appletHash=${appletHash}
                   ></groups-for-applet>
                 </div>
-                ${showDetails
-                  ? Object.keys(zomeCallCount.functionCalls).map(
-                      (fn_name) => html`
-                        <div
-                          class="row"
-                          style="align-items: center; margin-top: 5px; margin-bottom: 10px;"
-                        >
-                          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
-                            <div>${fn_name}</div>
-                          </div>
-                          <div
-                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
-                          >
-                            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
-                          </div>
-                          <div
-                            style="font-weight: bold; text-align: right; width: 80px; color: blue;"
-                          >
-                            ${zomeCallCount
-                              ? Math.round(
-                                  zomeCallCount.functionCalls[fn_name] /
-                                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                                )
-                              : ''}
-                          </div>
-                        </div>
-                      `,
-                    )
-                  : html``}
+                ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
+              ${showDebug ? this.renderDebugInfo(appId, netInfo, dump) : html``}
             `;
           })}
         <div style="min-height: 100px;"></div>
@@ -559,6 +598,18 @@ export class ZomeCallPanel extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .debug-data {
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+        border-radius: 5px;
+      }
+      .debug-title {
+        font-weight: bold;
+        font-size: 105%;
       }
     `,
   ];
