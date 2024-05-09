@@ -40,7 +40,7 @@
     "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "download:kando": "curl -L --output resources/default-apps/kando.webhapp https://github.com/holochain-apps/kando/releases/download/v0.9.2/kando.webhapp",
-    "download:tools-library": "curl -L --output resources/default-apps/tools-library.happ https://github.com/lightningrodlabs/tools-library/releases/download/v0.0.1/tools-library.happ",
+    "download:tools-library": "curl -L --output resources/default-apps/tools-library.happ https://github.com/lightningrodlabs/tools-library/releases/download/v0.0.2/tools-library.happ",
     "download:we-happ": "curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.11.0/we.happ",
     "postinstall": "electron-builder install-app-deps",
     "fetch:binaries": "node ./scripts/fetch-binaries.mjs",
