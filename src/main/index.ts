@@ -497,10 +497,12 @@ app.whenReady().then(async () => {
         });
         if (response.response === 1) {
           callback(true);
+          return;
         }
       }
       if (permission === 'clipboard-sanitized-write') {
         callback(true);
+        return;
       }
       callback(false);
     },
