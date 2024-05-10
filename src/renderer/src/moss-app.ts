@@ -1,6 +1,6 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
-import { AdminWebsocket, AppWebsocket } from '@holochain/client';
+import { AdminWebsocket } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -93,42 +93,45 @@ export class MossApp extends LitElement {
       APP_INTERFACE_PORT: info.app_port,
       ADMIN_INTERFACE_PORT: info.admin_port,
       INSTALLED_APP_ID: '',
-      FRAMEWORK: 'electron',
     };
 
     const adminWebsocket = await AdminWebsocket.connect({
       url: new URL(`ws://127.0.0.1:${info.admin_port}`),
     });
 
-    const appWebsocket = await AppWebsocket.connect({
-      url: new URL(`ws://127.0.0.1:${info.app_port}`),
-    });
+    const toolsLibraryAppId = info.tools_library_app_id;
 
-    const tools_library_app_id = info.tools_library_app_id;
+    const toolsLibraryToken = (
+      await adminWebsocket.issueAppAuthenticationToken({
+        installed_app_id: toolsLibraryAppId,
+        single_use: false,
+        expiry_seconds: 99999999,
+      })
+    ).token;
 
-    const toolsLibraryAgentClient = await initAppClient(tools_library_app_id);
+    const toolsLibraryAppClient = await initAppClient(toolsLibraryToken);
 
     const isAppletDevMode = await isAppletDev();
 
     this._mossStore = new MossStore(
       adminWebsocket,
-      appWebsocket,
       info,
       new ToolsLibraryStore(
-        new ToolsLibraryClient(toolsLibraryAgentClient, 'tools', 'library'),
-        adminWebsocket,
+        new ToolsLibraryClient(toolsLibraryAppClient, 'tools', 'library'),
         info,
       ),
       isAppletDevMode,
+      {
+        toolsLibraryAppId: toolsLibraryToken,
+      },
     );
 
-    const appStoreAppInfo = await appWebsocket.appInfo({
-      installed_app_id: info.tools_library_app_id,
-    });
-    if (!appStoreAppInfo) throw new Error('Tools Library AppInfo null.');
+    const toolsLibraryAppInfo = await toolsLibraryAppClient.appInfo();
+
+    if (!toolsLibraryAppInfo) throw new Error('Tools Library AppInfo null.');
     // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
 
-    getProvisionedCells(appStoreAppInfo).map(([_roleName, cellInfo]) =>
+    getProvisionedCells(toolsLibraryAppInfo).map(([_roleName, cellInfo]) =>
       console.log(`Tools Library network seed: ${getCellNetworkSeed(cellInfo)}`),
     );
 
@@ -136,13 +139,6 @@ export class MossApp extends LitElement {
     console.log('ALL INSTALLED APPS: ', allApps);
 
     this.state = { state: 'running' };
-
-    // try {
-    // console.log('Fetching available UI updates');
-    //   await this._mossStore.fetchAvailableUiUpdates();
-    // } catch (e) {
-    //   console.error('Failed to fetch available applet updates: ', e);
-    // }
   }
 
   renderFeedbackBoard() {

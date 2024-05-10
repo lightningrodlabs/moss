@@ -12,14 +12,14 @@ import {
   WeClient,
   weaveUrlToLocation,
 } from '@lightningrodlabs/we-applet';
-import { AppAgentClient } from '@holochain/client';
+import { AppClient } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
 
 @localized()
 @customElement('applet-main')
 export class AppletMain extends LitElement {
   @property()
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @property()
   weClient!: WeClient;

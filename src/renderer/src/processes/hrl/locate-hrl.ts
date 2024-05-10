@@ -1,4 +1,4 @@
-import { AdminWebsocket, AppInfo, EntryHash } from '@holochain/client';
+import { AdminWebsocket, AppClient, AppInfo, EntryHash } from '@holochain/client';
 import { Hrl } from '@lightningrodlabs/we-applet';
 import { initAppClient } from '../../utils.js';
 import { hrlLocatorZome } from './hrl_locator.js';
@@ -22,14 +22,13 @@ export const HRL_LOCATOR_GET_FN_NAME = 'locate_hrl';
 // and then call "entry_defs" in the given integrity zome to retrieve the appropriate entry def id
 export async function locateHrl(
   adminWebsocket: AdminWebsocket,
+  appClient: AppClient,
   dnaLocation: DnaLocation,
   hrl: Hrl,
 ): Promise<EntryDefLocation | undefined> {
-  const client = await initAppClient(dnaLocation.appInfo.installed_app_id);
-
   let location;
   try {
-    location = await client.callZome({
+    location = await appClient.callZome({
       role_name: dnaLocation.roleName,
       zome_name: HRL_LOCATOR_COORDINATOR_ZOME,
       payload: hrl[1],
@@ -42,7 +41,7 @@ export async function locateHrl(
       ...(await hrlLocatorZome()),
     });
 
-    location = await client.callZome({
+    location = await appClient.callZome({
       role_name: dnaLocation.roleName,
       zome_name: HRL_LOCATOR_COORDINATOR_ZOME,
       payload: hrl[1],
@@ -53,7 +52,7 @@ export async function locateHrl(
   const integrity_zome = location.integrity_zome;
   const entryDefIndex = location.entry_def_index;
 
-  const entryDefs = await client.callZome({
+  const entryDefs = await appClient.callZome({
     role_name: dnaLocation.roleName,
     zome_name: integrity_zome,
     payload: null,

@@ -1,4 +1,4 @@
-import { ActionHash, AppAgentClient, DnaHash } from '@holochain/client';
+import { ActionHash, AppClient, DnaHash } from '@holochain/client';
 import { ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
 
 type LinkingInput = {
@@ -10,7 +10,7 @@ export type Wal = string;
 
 export class AttachmentsClient extends ZomeClient<{}> {
   constructor(
-    public client: AppAgentClient,
+    public client: AppClient,
     public roleName: string,
     public zomeName = 'attachments',
   ) {

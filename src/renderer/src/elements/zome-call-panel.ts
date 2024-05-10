@@ -4,6 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import {
+  AppClient,
   CellId,
   DnaHash,
   DnaHashB64,
@@ -91,14 +92,16 @@ export class ZomeCallPanel extends LitElement {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
     try {
-      const cellIds = await this.getCellIds(FEEDBACK_BOARD_APP_ID);
+      const feedbackAppClient = await this._mossStore.getAppClient(FEEDBACK_BOARD_APP_ID);
+      const cellIds = await this.getCellIds(feedbackAppClient);
       this._feedbackBoardCellIds = cellIds;
     } catch (e) {
       console.warn('Failed to get feedback-board cellIds: ', e);
     }
 
     try {
-      const cellIds = await this.getCellIds(TOOLS_LIBRARY_APP_ID);
+      const toolsLibraryAppClient = await this._mossStore.getAppClient(TOOLS_LIBRARY_APP_ID);
+      const cellIds = await this.getCellIds(toolsLibraryAppClient);
       this._toolsLibraryCellIds = cellIds;
     } catch (e) {
       console.warn('Failed to get ToolsLibrary cellIds: ', e);
@@ -112,12 +115,10 @@ export class ZomeCallPanel extends LitElement {
     }
   }
 
-  async getCellIds(appId: InstalledAppId): Promise<CellId[]> {
-    const appInfo = await this._mossStore.appWebsocket.appInfo({
-      installed_app_id: appId,
-    });
-    if (!appInfo) throw new Error(`AppInfo of app '${appId}' undefined.`);
-    const cellIds = Object.values(appInfo.cell_info)
+  async getCellIds(appClient: AppClient): Promise<CellId[]> {
+    const appInfo = await appClient.appInfo();
+    // if (!appInfo) throw new Error(`AppInfo of app '${appClient}' undefined.`);
+    const cellIds = Object.values(appInfo!.cell_info)
       .flat()
       .map((cellInfo) => getCellId(cellInfo))
       .filter((id) => !!id);
@@ -125,10 +126,11 @@ export class ZomeCallPanel extends LitElement {
   }
 
   async dumpState(appId: InstalledAppId) {
-    const cellIds = await this.getCellIds(appId);
+    const appClient = await this._mossStore.getAppClient(appId);
+    const cellIds = await this.getCellIds(appClient);
     const cell_id = cellIds[0]!;
 
-    let currentDump = this._appsWithDumps[appId];
+    let currentDump = this._appsWithDumps[appClient.installedAppId];
 
     const req: DumpFullStateRequest = {
       cell_id,
@@ -153,17 +155,17 @@ export class ZomeCallPanel extends LitElement {
       currentDump.dump.source_chain_dump = resp.source_chain_dump;
       currentDump.newOpsCount = newOpsCount;
     }
-    this._appsWithDumps[appId] = currentDump;
+    this._appsWithDumps[appClient.installedAppId] = currentDump;
   }
 
   async networkInfo(appId: InstalledAppId) {
-    const cellIds = await this.getCellIds(appId);
-    const networkInfo = await this._mossStore.appWebsocket.networkInfo({
-      agent_pub_key: cellIds[0]![1],
+    const appClient = await this._mossStore.getAppClient(appId);
+    const cellIds = await this.getCellIds(appClient);
+    const networkInfo = await appClient.networkInfo({
       dnas: cellIds.map((id) => id![0]),
       last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
     });
-    this._appsWithNetInfo[appId] = networkInfo[0];
+    this._appsWithNetInfo[appClient.installedAppId] = networkInfo[0];
 
     console.log('networkInfo: ', networkInfo);
   }

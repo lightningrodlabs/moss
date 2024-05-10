@@ -1,12 +1,12 @@
 import { Post } from './types';
 
-import { AppAgentClient, Record, ActionHash, DnaHash } from '@holochain/client';
+import { AppClient, Record, ActionHash, DnaHash } from '@holochain/client';
 import { EntryRecord, ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
 
 import { PostsSignal } from './types.js';
 
 export class PostsClient extends ZomeClient<PostsSignal> {
-  constructor(public client: AppAgentClient, public roleName: string, public zomeName = 'posts') {
+  constructor(public client: AppClient, public roleName: string, public zomeName = 'posts') {
     super(client, roleName, zomeName);
   }
 

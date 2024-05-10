@@ -44,31 +44,81 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             _ => Ok(ValidateCallbackResult::Valid),
         },
         FlatOp::RegisterUpdate(update_entry) => match update_entry {
-            OpUpdate::Entry {
-                original_action,
-                original_app_entry,
-                app_entry,
-                action,
-            } => match (app_entry, original_app_entry) {
-                (EntryTypes::Post(post), EntryTypes::Post(original_post)) => {
-                    validate_update_post(action, post, original_action, original_post)
+            OpUpdate::Entry { app_entry, action } => {
+                let original_action = must_get_action(action.clone().original_action_address)?
+                    .action()
+                    .to_owned();
+                let original_create_action = match EntryCreationAction::try_from(original_action) {
+                    Ok(action) => action,
+                    Err(e) => {
+                        return Ok(ValidateCallbackResult::Invalid(format!(
+                            "Expected to get EntryCreationAction from Action: {e:?}"
+                        )));
+                    }
+                };
+                match app_entry {
+                    EntryTypes::Post(post) => {
+                        let original_app_entry =
+                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_post = match Post::try_from(original_app_entry) {
+                            Ok(entry) => entry,
+                            Err(e) => {
+                                return Ok(ValidateCallbackResult::Invalid(format!(
+                                    "Expected to get Post from Record: {e:?}"
+                                )));
+                            }
+                        };
+                        validate_update_post(action, post, original_create_action, original_post)
+                    }
                 }
-                _ => Ok(ValidateCallbackResult::Invalid(
-                    "Original and updated entry types must be the same".to_string(),
-                )),
-            },
+            }
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterDelete(delete_entry) => match delete_entry {
-            OpDelete::Entry {
-                original_action,
-                original_app_entry,
-                action,
-            } => match original_app_entry {
-                EntryTypes::Post(post) => validate_delete_post(action, original_action, post),
-            },
-            _ => Ok(ValidateCallbackResult::Valid),
-        },
+        FlatOp::RegisterDelete(delete_entry) => {
+            let original_action_hash = delete_entry.clone().action.deletes_address;
+            let original_record = must_get_valid_record(original_action_hash)?;
+            let original_record_action = original_record.action().clone();
+            let original_action = match EntryCreationAction::try_from(original_record_action) {
+                Ok(action) => action,
+                Err(e) => {
+                    return Ok(ValidateCallbackResult::Invalid(format!(
+                        "Expected to get EntryCreationAction from Action: {e:?}"
+                    )));
+                }
+            };
+            let app_entry_type = match original_action.entry_type() {
+                EntryType::App(app_entry_type) => app_entry_type,
+                _ => {
+                    return Ok(ValidateCallbackResult::Valid);
+                }
+            };
+            let entry = match original_record.entry().as_option() {
+                Some(entry) => entry,
+                None => {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original record for a delete must contain an entry".to_string(),
+                    ));
+                }
+            };
+            let original_app_entry = match EntryTypes::deserialize_from_type(
+                app_entry_type.zome_index,
+                app_entry_type.entry_index,
+                entry,
+            )? {
+                Some(app_entry) => app_entry,
+                None => {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original app entry must be one of the defined entry types for this zome"
+                            .to_string(),
+                    ));
+                }
+            };
+            match original_app_entry {
+                EntryTypes::Post(post) => {
+                    validate_delete_post(delete_entry.action, original_action, post)
+                }
+            }
+        }
         FlatOp::RegisterCreateLink {
             link_type,
             base_address,

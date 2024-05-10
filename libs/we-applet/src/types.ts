@@ -1,6 +1,6 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import {
-  AppAgentClient,
+  AppClient,
   ActionHash,
   EntryHash,
   DnaHash,
@@ -8,6 +8,7 @@ import {
   ActionHashB64,
   DnaHashB64,
   CallZomeRequest,
+  AppAuthenticationToken,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -139,7 +140,7 @@ export type AppletInfo = {
 };
 
 export type AppletClients = {
-  appletClient: AppAgentClient;
+  appletClient: AppClient;
   profilesClient: ProfilesClient;
 };
 
@@ -224,7 +225,7 @@ export type RenderInfo =
   | {
       type: 'applet-view';
       view: AppletView;
-      appletClient: AppAgentClient;
+      appletClient: AppClient;
       profilesClient: ProfilesClient;
       appletHash: AppletHash;
       /**
@@ -401,13 +402,14 @@ export type IframeConfig =
       type: 'applet';
       appPort: number;
       appletHash: EntryHash;
+      authenticationToken: AppAuthenticationToken;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
     }
   | {
       type: 'cross-applet';
       appPort: number;
-      applets: Record<EntryHashB64, ProfilesLocation>;
+      applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
     }
   | {
       type: 'not-installed';
@@ -415,7 +417,7 @@ export type IframeConfig =
     };
 
 export type ProfilesLocation = {
-  profilesAppId: string;
+  authenticationToken: AppAuthenticationToken;
   profilesRoleName: string;
 };
 

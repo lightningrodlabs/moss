@@ -46,7 +46,7 @@ jobs:
           allowUpdates: true
           artifacts: 'workdir/we.happ'
           body: 'See assets below to download and install this version.'
-          name: We happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.3.0-beta-dev.42-1ddfd2d
+          name: We happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.4.0-dev.2
           tag: we-alpha-happ-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           draft: true

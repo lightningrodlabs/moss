@@ -4,7 +4,7 @@ import {
   CellInfo,
   DisabledAppReason,
   AppInfo,
-  AppAgentWebsocket,
+  AppWebsocket,
   ListAppsResponse,
   DnaHash,
   CellType,
@@ -19,6 +19,7 @@ import {
   ZomeName,
   AgentPubKeyB64,
   Timestamp,
+  AppAuthenticationToken,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
@@ -30,16 +31,15 @@ import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 
 export async function initAppClient(
-  appId: string,
+  token: AppAuthenticationToken,
   defaultTimeout?: number,
-): Promise<AppAgentWebsocket> {
-  const client = await AppAgentWebsocket.connect(appId, {
+): Promise<AppWebsocket> {
+  const client = await AppWebsocket.connect({
     url: new URL('ws://UNUSED'),
+    token,
     defaultTimeout,
   });
-  client.installedAppId = appId;
   client.cachedAppInfo = undefined;
-  client.appWebsocket.overrideInstalledAppId = appId;
   await client.appInfo();
   return client;
 }
@@ -113,7 +113,7 @@ export function getStatus(app: AppInfo): string {
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('running');
+  return app.status === 'running';
 }
 export function isAppDisabled(app: AppInfo): boolean {
   return Object.keys(app.status).includes('disabled');

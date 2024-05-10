@@ -1,11 +1,11 @@
-import { AppAgentClient, Record, ActionHash } from '@holochain/client';
+import { AppClient, Record, ActionHash } from '@holochain/client';
 import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
 
 import { CustomView, CustomViewsSignal } from './types.js';
 
 export class CustomViewsClient extends ZomeClient<CustomViewsSignal> {
   constructor(
-    public client: AppAgentClient,
+    public client: AppClient,
     public roleName: string,
     public zomeName = 'custom_views',
   ) {
