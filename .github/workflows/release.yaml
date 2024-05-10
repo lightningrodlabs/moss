@@ -41,11 +41,8 @@ jobs:
         id: version
         shell: bash
 
-      - name: install Rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          toolchain: 1.75.0
+      - name: install Rust
+        uses: dtolnay/rust-toolchain@1.75.0
 
       - name: install Go stable
         uses: actions/setup-go@v4
