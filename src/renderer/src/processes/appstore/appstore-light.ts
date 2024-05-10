@@ -106,7 +106,7 @@ export async function deprecateApp(
 export function responseToPromise<T>(response: DevHubResponse<T>, caller: string): Promise<T> {
   switch (response.type) {
     case 'failure':
-      return Promise.reject(`${caller} failed: ${response.payload}`);
+      return Promise.reject(`${caller} failed: ${JSON.stringify(response.payload)}`);
     case 'success':
       return Promise.resolve(response.payload);
     default:

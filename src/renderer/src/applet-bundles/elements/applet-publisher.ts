@@ -99,6 +99,7 @@ export class AppletPublisher extends LitElement {
       case 'complete':
         return this.renderPublisher(this.publisher.value.value);
       case 'error':
+        console.error(this.publisher.value.error);
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the publisher information')}
