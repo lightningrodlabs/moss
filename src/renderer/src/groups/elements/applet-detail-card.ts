@@ -78,9 +78,8 @@ export class AppletDetailCard extends LitElement {
   appInfo: AppInfo | undefined | null;
 
   async firstUpdated() {
-    this.appInfo = await this.mossStore.appWebsocket.appInfo({
-      installed_app_id: appIdFromAppletHash(this.appletHash),
-    });
+    const appletClient = await this.mossStore.getAppClient(appIdFromAppletHash(this.appletHash));
+    this.appInfo = await appletClient.appInfo();
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
     if (appletRecord) {
       this.addedBy = appletRecord.action.author;

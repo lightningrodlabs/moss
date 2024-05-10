@@ -1,6 +1,11 @@
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { ActionHash, decodeHashFromBase64, EntryHashB64 } from '@holochain/client';
+import {
+  ActionHash,
+  AppAuthenticationToken,
+  decodeHashFromBase64,
+  EntryHashB64,
+} from '@holochain/client';
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { ProfilesLocation, RenderView } from '@lightningrodlabs/we-applet';
@@ -36,7 +41,7 @@ export class CrossAppletBlock extends LitElement {
     () => [this.appletBundleHash],
   );
 
-  renderBlock(applets: Record<EntryHashB64, ProfilesLocation>) {
+  renderBlock(applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>) {
     const renderView: RenderView = {
       type: 'cross-applet-view',
       view: {

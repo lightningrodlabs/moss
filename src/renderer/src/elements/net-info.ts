@@ -1,18 +1,7 @@
-import { consume } from '@lit/context';
-import { css, html, LitElement, TemplateResult } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import {
-  Action,
-  AgentPubKey,
-  CreateLink,
-  DhtOp,
-  encodeHashToBase64,
-  Entry,
-  HoloHash,
-  NetworkInfo,
-  SourceChainJsonRecord,
-} from '@holochain/client';
+import { NetworkInfo } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
