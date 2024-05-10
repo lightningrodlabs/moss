@@ -21,7 +21,14 @@ import {
   pickBy,
   slice,
 } from '@holochain-open-dev/utils';
-import { AppInfo, AppWebsocket, ProvisionedCell } from '@holochain/client';
+import {
+  AppAuthenticationToken,
+  AppClient,
+  AppInfo,
+  AppWebsocket,
+  InstalledAppId,
+  ProvisionedCell,
+} from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
 import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
@@ -76,11 +83,13 @@ export type SearchStatus = 'complete' | 'loading';
 export class MossStore {
   constructor(
     public adminWebsocket: AdminWebsocket,
-    public appWebsocket: AppWebsocket,
     public conductorInfo: ConductorInfo,
     public toolsLibraryStore: ToolsLibraryStore,
     public isAppletDev: boolean,
-  ) {}
+    authenticationTokens: Record<InstalledAppId, AppAuthenticationToken>,
+  ) {
+    this._authenticationTokens = authenticationTokens;
+  }
 
   private _updatableApplets: Writable<Record<AppletId, UpdateableEntity<Tool>>> = writable({});
   private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
@@ -119,6 +128,10 @@ export class MossStore {
 
   // Contains a record of CreatableContextRestult ordered by dialog id.
   _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
+
+  _authenticationTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
+
+  _appClients: Record<InstalledAppId, AppClient> = {};
 
   setCreatableDialogResult(dialogId: string, result: CreatableResult) {
     this._creatableDialogResults.update((store) => {
@@ -409,17 +422,27 @@ export class MossStore {
   groupStores = manualReloadStore(async () => {
     const groupStores = new DnaHashMap<GroupStore>();
     const apps = await this.adminWebsocket.listApps({});
+    console.log(
+      'APPS: ',
+      apps.filter((app) => app.installed_app_id.startsWith('group#')),
+    );
+    console.log(
+      'APPS STATUS: ',
+      apps.filter((app) => app.installed_app_id.startsWith('group#')).map((info) => info.status),
+    );
     const runningGroupsApps = apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppRunning(app));
 
+    console.log('RUNNING GROUP APPS: ', runningGroupsApps);
     await Promise.all(
       runningGroupsApps.map(async (app) => {
         const groupDnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
 
-        const groupAppAgentWebsocket = await initAppClient(app.installed_app_id);
+        const token = await this.getAuthenticationToken(app.installed_app_id);
+        const groupAppWebsocket = await initAppClient(token);
 
-        groupStores.set(groupDnaHash, new GroupStore(groupAppAgentWebsocket, groupDnaHash, this));
+        groupStores.set(groupDnaHash, new GroupStore(groupAppWebsocket, token, groupDnaHash, this));
       }),
     );
 
@@ -475,11 +498,14 @@ export class MossStore {
 
       if (!applet) throw new Error('Applet not found yet');
 
+      const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+
       set(
         new AppletStore(
           appletHash,
           applet,
           this.conductorInfo,
+          token,
           this.toolsLibraryStore,
           this.isAppletDev,
         ),
@@ -522,9 +548,10 @@ export class MossStore {
     const groupsWithApplet: Array<DnaHash> = [];
     await Promise.all(
       groupApps.map(async (app) => {
-        const groupAppAgentWebsocket = await initAppClient(app.installed_app_id);
+        const token = await this.getAuthenticationToken(app.installed_app_id);
+        const groupAppWebsocket = await initAppClient(token);
         const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
-        const groupClient = new GroupClient(groupAppAgentWebsocket, 'group');
+        const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
         const allMyAppletDatas = await groupClient.getMyAppletsHashes();
         if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
           groupsWithApplet.push(groupDnaHash);
@@ -593,7 +620,9 @@ export class MossStore {
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
         return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
-          const entryDefLocation = await locateHrl(this.adminWebsocket, dnaLocation, [
+          const appToken = await this.getAuthenticationToken(dnaLocation.appInfo.installed_app_id);
+          const appClient = await initAppClient(appToken);
+          const entryDefLocation = await locateHrl(this.adminWebsocket, appClient, dnaLocation, [
             dnaHash,
             hash,
           ]);
@@ -650,20 +679,24 @@ export class MossStore {
           mapAndJoin(appletsForThisBundleHash, (_, appletHash) =>
             this.groupsForApplet.get(appletHash),
           ),
-        (groupsByApplets) => {
-          const appletsB64: Record<EntryHashB64, ProfilesLocation> = {};
+        async (groupsByApplets) => {
+          const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
 
           for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
+            const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
             if (groups.size > 0) {
-              const firstGroupAppId = Array.from(groups.values())[0].groupClient.appAgentClient
-                .installedAppId;
-              appletsB64[encodeHashToBase64(appletHash)] = {
-                profilesAppId: firstGroupAppId,
-                profilesRoleName: 'group',
-              };
+              const firstGroupToken = Array.from(groups.values())[0].groupClient
+                .authenticationToken;
+              appletsB64[encodeHashToBase64(appletHash)] = [
+                appletToken,
+                {
+                  authenticationToken: firstGroupToken,
+                  profilesRoleName: 'group',
+                },
+              ];
             }
           }
-          return completed(appletsB64);
+          return appletsB64;
         },
       ),
   );
@@ -856,5 +889,29 @@ export class MossStore {
 
     // Do this async and return function immediately.
     setTimeout(async () => await Promise.all(promises));
+  }
+
+  async getAuthenticationToken(appId: InstalledAppId): Promise<AppAuthenticationToken> {
+    let token = this._authenticationTokens[appId];
+    if (!token) {
+      token = (
+        await this.adminWebsocket.issueAppAuthenticationToken({
+          installed_app_id: appId,
+          single_use: false,
+          expiry_seconds: 99999999,
+        })
+      ).token;
+      this._authenticationTokens[appId] = token;
+    }
+    return token;
+  }
+
+  async getAppClient(appId: InstalledAppId): Promise<AppClient> {
+    let appClient = this._appClients[appId];
+    if (appClient) return appClient;
+    const token = await this.getAuthenticationToken(appId);
+    return AppWebsocket.connect({
+      token,
+    });
   }
 }

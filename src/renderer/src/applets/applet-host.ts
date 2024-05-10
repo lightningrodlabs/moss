@@ -281,9 +281,10 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'applet',
           appletHash,
+          authenticationToken: appletStore.authenticationToken,
           appPort: mossStore.conductorInfo.app_port,
           profilesLocation: {
-            profilesAppId: groupStore.groupClient.appAgentClient.installedAppId,
+            authenticationToken: groupStore.groupClient.authenticationToken,
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,

@@ -17,7 +17,8 @@ import {
 import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
-  AppAgentWebsocket,
+  AppAuthenticationToken,
+  AppWebsocket,
   CellType,
   DnaHash,
   EntryHash,
@@ -54,18 +55,16 @@ export class GroupStore {
   private constructed: boolean;
 
   constructor(
-    public appAgentWebsocket: AppAgentWebsocket,
+    public appWebsocket: AppWebsocket,
+    public authenticationToken: AppAuthenticationToken,
     public groupDnaHash: DnaHash,
     public mossStore: MossStore,
   ) {
-    this.groupClient = new GroupClient(appAgentWebsocket, 'group');
+    this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
-    this.peerStatusStore = new PeerStatusStore(
-      new PeerStatusClient(appAgentWebsocket, 'group'),
-      {},
-    );
-    this.profilesStore = new ProfilesStore(new ProfilesClient(appAgentWebsocket, 'group'));
-    this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appAgentWebsocket, 'group'));
+    this.peerStatusStore = new PeerStatusStore(new PeerStatusClient(appWebsocket, 'group'), {});
+    this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
+    this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
 
     this.constructed = true;
@@ -92,7 +91,7 @@ export class GroupStore {
   }
 
   async groupDnaModifiers(): Promise<DnaModifiers> {
-    const appInfo = await this.appAgentWebsocket.appInfo();
+    const appInfo = await this.appWebsocket.appInfo();
     const cellInfo = appInfo.cell_info['group'].find(
       (cellInfo) => CellType.Provisioned in cellInfo,
     );

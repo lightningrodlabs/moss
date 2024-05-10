@@ -3,7 +3,6 @@
 #![allow(unused_imports)]
 
 use hdk::prelude::*;
-use holochain::test_utils::consistency_10s;
 use holochain::{conductor::config::ConductorConfig, sweettest::*};
 
 mod common;
@@ -32,7 +31,9 @@ async fn create_a_custom_view_and_get_all_custom_views() {
     // Alice creates a CustomView
     let record: Record = create_custom_view(&conductors[0], &alice_zome, sample.clone()).await;
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let get_records: Vec<Record> = conductors[1]
         .call(&bob_zome, "get_all_custom_views", ())

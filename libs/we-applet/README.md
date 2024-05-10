@@ -76,7 +76,7 @@ const appletServices: Appletservices = {
         }
     },
     getAssetInfo: async (
-        appletClient: AppAgentClient,
+        appletClient: AppClient,
         roleName: RoleName,
         integrityZomeName: ZomeName,
         entryType: string,
@@ -93,7 +93,7 @@ const appletServices: Appletservices = {
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe'
         };
     },
-    search: async (appletClient: AppAgentClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<WAL>> => {
+    search: async (appletClient: AppClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<WAL>> => {
         // Your search logic here. For example
         let searchResults: Array<Record> = await appletClient.callZome({
             zome_name: 'search_posts',

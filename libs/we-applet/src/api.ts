@@ -1,6 +1,6 @@
 import {
   ActionHash,
-  AppAgentClient,
+  AppClient,
   EntryHash,
   RoleName,
   ZomeName,
@@ -159,7 +159,7 @@ export class AppletServices {
    * Get info about the specified entry of this Applet
    */
   getAssetInfo: (
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     roleName: RoleName,
     integrityZomeName: ZomeName,
     entryType: string,
@@ -169,7 +169,7 @@ export class AppletServices {
    * Search in this Applet
    */
   search: (
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     appletHash: AppletHash,
     weServices: WeServices,
     searchFilter: string,
@@ -179,7 +179,7 @@ export class AppletServices {
    * Bind an asset (srcWal) to an asset in your applet (dstWal).
    */
   bindAsset: (
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     /**
      * Waeve Asset Locator in the applet requesting the binding
      */

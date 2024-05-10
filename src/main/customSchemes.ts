@@ -89,6 +89,8 @@ export async function handleDefaultAppsProtocol(
         url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
       );
       const content = await indexHtmlResponse.text();
+      const token = await holochainManager.getAppToken(installedAppId);
+
       // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
       // needs to happen a bit cumbersomely
       const htmlComponents = content.split('<head>');
@@ -96,7 +98,7 @@ export async function handleDefaultAppsProtocol(
       htmlComponents.splice(
         2,
         0,
-        `<script type="module">${HAPP_IFRAME_SCRIPT};window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, FRAMEWORK: "electron" }</script>`,
+        `<script type="module">${HAPP_IFRAME_SCRIPT};window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, APP_INTERFACE_TOKEN: [${token}] }</script>`,
       );
       let modifiedContent = htmlComponents.join('');
 

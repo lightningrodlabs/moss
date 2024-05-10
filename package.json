@@ -53,11 +53,14 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain/client": "=0.17.0-dev.9",
-    "@holochain-open-dev/utils": "0.300.0-dev.0",
+    "@holochain/client": "0.18.0-dev.0",
+    "@holochain-open-dev/elements": "0.400.0-dev.0",
+    "@holochain-open-dev/profiles": "0.400.0-dev.1",
+    "@holochain-open-dev/stores": "0.400.0-dev.0",
+    "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@holochain-playground/cli": "^0.1.1",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "^0.300.1-dev.2",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.2",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
@@ -67,6 +70,7 @@
     "nanoid": "5.0.4",
     "split": "1.0.1",
     "ts-node": "10.9.2",
+    "utf-8-validate": "^6.0.3",
     "winston": "3.11.0"
   },
   "devDependencies": {
@@ -93,7 +97,6 @@
     "new-port-cli": "^1.0.0",
     "prettier": "^3.0.2",
     "typescript": "^5.2.2",
-    "utf-8-validate": "^6.0.3",
     "rimraf": "5.0.5",
     "run-singleton-cli": "^0.0.7",
     "vite": "^4.4.9",

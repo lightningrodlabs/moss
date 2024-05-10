@@ -7,7 +7,7 @@ import {
   pipe,
   writable,
 } from '@holochain-open-dev/stores';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochain/client';
 import { BlockType } from '@lightningrodlabs/we-applet';
 
 import { AppletHost } from './applet-host.js';
@@ -28,6 +28,7 @@ export class AppletStore {
     public appletHash: EntryHash,
     public applet: Applet,
     public conductorInfo: ConductorInfo,
+    public authenticationToken: AppAuthenticationToken,
     public toolsLibraryStore: ToolsLibraryStore,
     isAppletDev: boolean,
   ) {

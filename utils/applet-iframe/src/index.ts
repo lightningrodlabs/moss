@@ -2,8 +2,9 @@ import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   ActionHash,
-  AppAgentClient,
-  AppAgentWebsocket,
+  AppAuthenticationToken,
+  AppClient,
+  AppWebsocket,
   CallZomeRequest,
   CallZomeRequestSigned,
   EntryHash,
@@ -187,10 +188,10 @@ const weApi: WeServices = {
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(
         iframeConfig.appPort,
-        iframeConfig.profilesLocation.profilesAppId,
+        iframeConfig.profilesLocation.authenticationToken,
         iframeConfig.profilesLocation.profilesRoleName,
       ),
-      setupAppletClient(iframeConfig.appPort, iframeConfig.appletHash),
+      setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
 
     const appletHash = window.__WE_APPLET_HASH__;
@@ -205,7 +206,7 @@ const weApi: WeServices = {
     };
   } else if (view.type === 'cross-applet-view') {
     const applets: EntryHashMap<{
-      appletClient: AppAgentClient;
+      appletClient: AppClient;
       profilesClient: ProfilesClient;
     }> = new HoloHashMap();
 
@@ -213,10 +214,10 @@ const weApi: WeServices = {
 
     await Promise.all(
       Object.entries(iframeConfig.applets).map(
-        async ([appletId, { profilesAppId, profilesRoleName }]) => {
+        async ([appletId, [token, { authenticationToken, profilesRoleName }]]) => {
           const [appletClient, profilesClient] = await Promise.all([
-            setupAppletClient(iframeConfig.appPort, decodeHashFromBase64(appletId)),
-            setupProfilesClient(iframeConfig.appPort, profilesAppId, profilesRoleName),
+            setupAppletClient(iframeConfig.appPort, token),
+            setupProfilesClient(iframeConfig.appPort, authenticationToken, profilesRoleName),
           ]);
           applets.set(decodeHashFromBase64(appletId), {
             appletClient,
@@ -266,7 +267,7 @@ async function fetchLocalStorage() {
 }
 
 const handleMessage = async (
-  appletClient: AppAgentClient,
+  appletClient: AppClient,
   appletHash: AppletHash,
   request: ParentToAppletRequest,
 ) => {
@@ -324,30 +325,37 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
   });
 }
 
-async function setupAppAgentClient(appPort: number, installedAppId: string) {
-  const appletClient = await AppAgentWebsocket.connect(installedAppId, {
+async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
+  const appletClient = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${appPort}`),
+    token,
+    callZomeTransform: {
+      input: async (request) => signZomeCall(request),
+      output: (o) => decode(o as any),
+    },
   });
 
   window.addEventListener('beforeunload', () => {
     // close websocket connection again to prevent insufficient resources error
-    appletClient.appWebsocket.client.close();
-  });
-
-  appletClient.appWebsocket.callZome = appletClient.appWebsocket._requester('call_zome', {
-    input: async (request) => signZomeCall(request),
-    output: (o) => decode(o as any),
+    appletClient.client.close();
   });
 
   return appletClient;
 }
 
-async function setupAppletClient(appPort: number, appletHash: EntryHash): Promise<AppAgentClient> {
-  return setupAppAgentClient(appPort, appIdFromAppletHash(appletHash));
+async function setupAppletClient(
+  appPort: number,
+  token: AppAuthenticationToken,
+): Promise<AppClient> {
+  return setupAppClient(appPort, token);
 }
 
-async function setupProfilesClient(appPort: number, appId: string, roleName: string) {
-  const client = await setupAppAgentClient(appPort, appId);
+async function setupProfilesClient(
+  appPort: number,
+  token: AppAuthenticationToken,
+  roleName: string,
+) {
+  const client = await setupAppClient(appPort, token);
 
   return new ProfilesClient(client, roleName);
 }

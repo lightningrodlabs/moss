@@ -7,7 +7,7 @@ import {
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash, AdminWebsocket, DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { ActionHash, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { ConductorInfo } from '../electron-api.js';
 import { ToolsLibraryClient } from './tools-library-client.js';
 import { Tool, UpdateableEntity } from './types.js';
@@ -15,7 +15,6 @@ import { Tool, UpdateableEntity } from './types.js';
 export class ToolsLibraryStore {
   constructor(
     public toolsLibraryClient: ToolsLibraryClient,
-    public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
   ) {}
 

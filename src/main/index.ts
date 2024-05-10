@@ -26,7 +26,7 @@ import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
-import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';

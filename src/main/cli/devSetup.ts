@@ -10,7 +10,7 @@ import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
   AgentPubKey,
-  AppAgentWebsocket,
+  AppWebsocket,
   AppInfo,
   DnaHashB64,
   EntryHash,
@@ -18,6 +18,7 @@ import {
   Link,
   encodeHashToBase64,
   Record as HolochainRecord,
+  GrantedFunctionsType,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem } from '../filesystem';
@@ -119,19 +120,28 @@ export async function devSetup(
     }
   }
 
-  const toolsLibraryClient = await AppAgentWebsocket.connect(TOOLS_LIBRARY_APP_ID, {
+  const toolsLibraryAuthenticationResponse =
+    await holochainManager.adminWebsocket.issueAppAuthenticationToken({
+      installed_app_id: TOOLS_LIBRARY_APP_ID,
+      single_use: false,
+      expiry_seconds: 99999999,
+    });
+
+  const toolsLibraryClient = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
     wsClientOptions: {
       origin: 'moss-admin',
     },
+    token: toolsLibraryAuthenticationResponse.token,
     defaultTimeout: 4000,
   });
   const toolsLibraryCells = await toolsLibraryClient.appInfo();
   let toolsLibraryDnaHash: DnaHashB64 | undefined = undefined;
   for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
-      All: null,
-    });
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(
+      cell['provisioned'].cell_id,
+      GrantedFunctionsType.All,
+    );
     toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
   }
 
@@ -374,22 +384,30 @@ async function joinGroup(
   holochainManager: HolochainManager,
   group: GroupConfig,
   agentProfile: AgentProfile,
-): Promise<AppAgentWebsocket> {
+): Promise<AppWebsocket> {
   // Create the group
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
-  const groupWebsocket = await AppAgentWebsocket.connect(groupAppInfo.installed_app_id, {
+  const groupAuthenticationTokenResponse =
+    await holochainManager.adminWebsocket.issueAppAuthenticationToken({
+      installed_app_id: groupAppInfo.installed_app_id,
+      single_use: false,
+      expiry_seconds: 99999999,
+    });
+  const groupWebsocket = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${appPort}`),
     wsClientOptions: {
       origin: 'moss-admin',
     },
+    token: groupAuthenticationTokenResponse.token,
   });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
-      All: null,
-    });
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(
+      cell['provisioned'].cell_id,
+      GrantedFunctionsType.All,
+    );
   }
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   await groupWebsocket.callZome({
@@ -528,7 +546,7 @@ async function installHapp(
 }
 
 async function publishApplet(
-  appstoreClient: AppAgentWebsocket,
+  appstoreClient: AppWebsocket,
   appletConfig: AppletConfig,
   happOrWebHappPath: string,
   appHashes: AppHashes,

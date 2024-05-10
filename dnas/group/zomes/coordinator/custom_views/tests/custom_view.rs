@@ -3,7 +3,6 @@
 #![allow(unused_imports)]
 
 use hdk::prelude::*;
-use holochain::test_utils::consistency_10s;
 use holochain::{conductor::config::ConductorConfig, sweettest::*};
 
 use custom_views_integrity::*;
@@ -61,7 +60,9 @@ async fn create_and_read_custom_view() {
     // Alice creates a CustomView
     let record: Record = create_custom_view(&conductors[0], &alice_zome, sample.clone()).await;
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let get_record: Option<Record> = conductors[1]
         .call(
@@ -98,7 +99,9 @@ async fn create_and_update_custom_view() {
     let record: Record = create_custom_view(&conductors[0], &alice_zome, sample_1.clone()).await;
     let original_action_hash = record.signed_action.hashed.hash.clone();
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let sample_2 = sample_custom_view_2(&conductors[0], &alice_zome).await;
     let input = UpdateCustomViewInput {
@@ -114,7 +117,9 @@ async fn create_and_update_custom_view() {
     let entry: CustomView = update_record.entry().to_app_option().unwrap().unwrap();
     assert_eq!(sample_2, entry);
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let get_record: Option<Record> = conductors[1]
         .call(&bob_zome, "get_custom_view", original_action_hash.clone())
@@ -135,7 +140,9 @@ async fn create_and_update_custom_view() {
     let entry: CustomView = update_record.entry().to_app_option().unwrap().unwrap();
     assert_eq!(sample_1, entry);
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let get_record: Option<Record> = conductors[1]
         .call(&bob_zome, "get_custom_view", original_action_hash.clone())
@@ -177,7 +184,9 @@ async fn create_and_delete_custom_view() {
         )
         .await;
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let get_record: Option<Record> = conductors[1]
         .call(&bob_zome, "get_custom_view", original_action_hash.clone())
