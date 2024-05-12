@@ -21,7 +21,7 @@
     "@holochain-open-dev/profiles": "0.400.0-dev.1",
     "@holochain-open-dev/stores": "0.400.0-dev.0",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
-    "@holochain/client": "0.18.0-dev.0",
+    "@holochain/client": "0.18.0-dev.1",
     "@lightningrodlabs/we-applet": "file:../we-applet",
     "@lit/context": "^1.0.1",
     "@lit/localize": "^0.12.0",

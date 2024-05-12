@@ -17,7 +17,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain/client": "0.18.0-dev.0",
+    "@holochain/client": "0.18.0-dev.1",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "0.16.0",
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.2",
