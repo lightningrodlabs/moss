@@ -9,7 +9,7 @@ import {
   ParentToAppletRequest,
   IframeConfig,
   BlockType,
-  WeServices,
+  WeaveServices,
   GroupProfile,
   FrameNotification,
 } from '@lightningrodlabs/we-applet';
@@ -119,7 +119,7 @@ export async function setupAppletMessageHandler(mossStore: MossStore, openViews:
   });
 }
 
-export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
+export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
     async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
       const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
@@ -212,7 +212,7 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
       } as AppletInfo;
     },
     async notifyFrame(_notifications: Array<FrameNotification>) {
-      throw new Error('notify is not implemented on headless WeServices.');
+      throw new Error('notify is not implemented on headless WeaveServices.');
     },
     openAppletMain: async () => {},
     openCrossAppletMain: async () => {},
@@ -220,10 +220,10 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
     openCrossAppletBlock: async () => {},
     openAppletBlock: async () => {},
     async userSelectWal() {
-      throw new Error('userSelectWal is not supported in headless WeServices.');
+      throw new Error('userSelectWal is not supported in headless WeaveServices.');
     },
     async userSelectScreen() {
-      throw new Error('userSelectScreen is not supported in headless WeServices.');
+      throw new Error('userSelectScreen is not supported in headless WeaveServices.');
     },
     async walToPocket(wal: WAL): Promise<void> {
       mossStore.walToPocket(wal);
@@ -237,7 +237,7 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
-  const weServices = buildHeadlessWeClient(mossStore);
+  const weaveServices = buildHeadlessWeaveClient(mossStore);
 
   switch (message.type) {
     case 'get-iframe-config':
@@ -411,11 +411,11 @@ export async function handleAppletIframeMessage(
       return;
     }
     case 'get-applet-info':
-      return weServices.appletInfo(message.appletHash);
+      return weaveServices.appletInfo(message.appletHash);
     case 'get-group-profile':
-      return weServices.groupProfile(message.groupHash);
+      return weaveServices.groupProfile(message.groupHash);
     case 'get-global-asset-info':
-      let assetInfo = await weServices.assetInfo(message.wal);
+      let assetInfo = await weaveServices.assetInfo(message.wal);
       if (assetInfo && mossStore.isAppletDev) {
         const appletDevPort = await getAppletDevPort(appIdFromAppletHash(assetInfo.appletHash));
         if (appletDevPort) {
@@ -431,7 +431,7 @@ export async function handleAppletIframeMessage(
       if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
         throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
 
-      return weServices.requestBind(message.srcWal, message.dstWal);
+      return weaveServices.requestBind(message.srcWal, message.dstWal);
     }
     case 'sign-zome-call':
       logAppletZomeCall(message.request, appletId);

@@ -5,7 +5,7 @@ import { localized, msg } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
@@ -13,7 +13,7 @@ import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@lightningr
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
-import { buildHeadlessWeClient } from '../applets/applet-host.js';
+import { buildHeadlessWeaveClient } from '../applets/applet-host.js';
 import './wal-element.js';
 import './wal-created-element.js';
 import './pocket-search.js';
@@ -179,8 +179,8 @@ export class MossPocket extends LitElement {
               : html``
           }
 
-          <we-client-context
-            .weClient=${buildHeadlessWeClient(this._mossStore)}
+          <weave-client-context
+            .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}
           >
             <pocket-search
               id="pocket-search"
@@ -190,7 +190,7 @@ export class MossPocket extends LitElement {
               @wal-to-pocket=${(e) => this.walToPocket(e.detail.wal)}
               @open-wurl=${(e) => this.handleOpenWurl(e)}
             ></pocket-search>
-          </we-client-context>
+          </weave-client-context>
           ${
             this.mode === 'select'
               ? html`

@@ -21,21 +21,21 @@ The differences between a Weave Tool and a normal Holochain App are:
 ### Implementing a most basic applet UI
 
 ```typescript=
-import { WeClient, isWeContext } from '@lightningrodlabs/we-applet';
+import { WeaveClient, isWeContext } from '@lightningrodlabs/we-applet';
 
 if (!isWeContext) {
   // do non-the Frame related rendering logic (launcher, kangaroo, electron, ...)
 }
 
-const weClient = await WeClient.connect();
+const weaveClient = await WeaveClient.connect();
 
 if (
-  (weClient.renderInfo.type !== "applet-view")
-  || (weClient.renderInfo.view.type !== "main")
+  (weaveClient.renderInfo.type !== "applet-view")
+  || (weaveClient.renderInfo.view.type !== "main")
 ) throw new Error("This Tool only implements the applet main view.");
 
-const appAgentClient = weClient.renderInfo.appletClient;
-const profilesClient = weClient.renderInfo.profilesClient;
+const appAgentClient = weaveClient.renderInfo.appletClient;
+const profilesClient = weaveClient.renderInfo.profilesClient;
 
 // Your normal rendering logic here...
 
@@ -44,7 +44,7 @@ const profilesClient = weClient.renderInfo.profilesClient;
 ### Implementing an (almost) full-fletched Weave Tool
 
 ```typescript=
-import { WeClient, AppletServices, WAL, AssetInfo } from '@lightningrodlabs/we-applet';
+import { WeaveClient, AppletServices, WAL, AssetInfo } from '@lightningrodlabs/we-applet';
 
 // First define your AppletServices that the Frame can call on your applet
 // to do things like search your applet or get information
@@ -93,7 +93,7 @@ const appletServices: Appletservices = {
             icon_src: 'data:image/png;base64,iVBORasdwsfvawe'
         };
     },
-    search: async (appletClient: AppClient, appletHash: AppletHash, weServices: WeServices, searchFilter: string): Promise<Array<WAL>> => {
+    search: async (appletClient: AppClient, appletHash: AppletHash, weaveServices: WeaveServices, searchFilter: string): Promise<Array<WAL>> => {
         // Your search logic here. For example
         let searchResults: Array<Record> = await appletClient.callZome({
             zome_name: 'search_posts',
@@ -116,17 +116,17 @@ const appletServices: Appletservices = {
 }
 
 
-// Now connect to the WeClient by passing your appletServices
-const weClient = await WeClient.connect(appletServices);
+// Now connect to the WeaveClient by passing your appletServices
+const weaveClient = await WeaveClient.connect(appletServices);
 
 // Then handle all the different types of views that you offer
-switch (weClient.renderInfo.type) {
+switch (weaveClient.renderInfo.type) {
   case "applet-view":
-    switch (weClient.renderInfo.view.type) {
+    switch (weaveClient.renderInfo.view.type) {
       case "main":
         // here comes your rendering logic for the main view
       case "block":
-        switch(weClient.renderInfo.view.block) {
+        switch(weaveClient.renderInfo.view.block) {
           case "most_recent_posts":
             // your rendering logic to display this block type
           case "bookmarked_posts":
@@ -135,11 +135,11 @@ switch (weClient.renderInfo.type) {
              throw new Error("Unknown applet-view block type");
         }
       case "asset":
-        switch (weClient.renderInfo.view.roleName) {
+        switch (weaveClient.renderInfo.view.roleName) {
           case "forum":
-            switch (weClient.renderInfo.view.integrityZomeName) {
+            switch (weaveClient.renderInfo.view.integrityZomeName) {
               case "posts_integrity":
-                switch (weClient.renderInfo.view.entryType) {
+                switch (weaveClient.renderInfo.view.entryType) {
                   case "post":
                         // here comes your rendering logic for that specific entry type
                   default:
@@ -153,15 +153,15 @@ switch (weClient.renderInfo.type) {
         }
 
       case "creatable":
-        switch (weClient.renderInfo.view.creatableName) {
+        switch (weaveClient.renderInfo.view.creatableName) {
           case "post":
             // here comes your rendering logic to create this creatable type.
             // Once created, you need to call
-            // weClient.renderInfo.view.resolve(${WAL of your created creatable here});
+            // weaveClient.renderInfo.view.resolve(${WAL of your created creatable here});
             // or if there's an error:
-            // weClient.renderInfo.view.reject("Failed to create asset.");
+            // weaveClient.renderInfo.view.reject("Failed to create asset.");
             // or if the user cancelled the creation:
-            // weClient.renderInfo.view.cancel();
+            // weaveClient.renderInfo.view.cancel();
         }
 
       default:
@@ -169,7 +169,7 @@ switch (weClient.renderInfo.type) {
     }
 
   case "cross-applet-view":
-    switch (this.weClient.renderInfo.view.type) {
+    switch (this.weaveClient.renderInfo.view.type) {
       case "main":
         // here comes your rendering logic for the cross-applet main view
       case "block":

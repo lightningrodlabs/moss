@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import {
   type WAL,
   type FrameNotification,
-  WeClient,
+  WeaveClient,
   weaveUrlToLocation,
 } from '@lightningrodlabs/we-applet';
 import { AppClient } from '@holochain/client';
@@ -22,7 +22,7 @@ export class AppletMain extends LitElement {
   client!: AppClient;
 
   @property()
-  weClient!: WeClient;
+  weaveClient!: WeaveClient;
 
   @query('#wal-input-field')
   walInputField!: HTMLInputElement;
@@ -122,7 +122,7 @@ export class AppletMain extends LitElement {
   }
 
   async userSelectWal() {
-    const selectedWal = await this.weClient.userSelectWal();
+    const selectedWal = await this.weaveClient.userSelectWal();
     this.selectedWal = selectedWal;
   }
 
@@ -188,7 +188,7 @@ export class AppletMain extends LitElement {
                   if (srcWal.type !== 'asset') throw new Error('Invalid srcVal.');
                   const dstWal = weaveUrlToLocation(dstWalInput.value);
                   if (dstWal.type !== 'asset') throw new Error('Invalid dstVal.');
-                  await this.weClient.requestBind(srcWal.wal, dstWal.wal);
+                  await this.weaveClient.requestBind(srcWal.wal, dstWal.wal);
                 }}
               >
                 Bind!
