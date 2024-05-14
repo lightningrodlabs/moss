@@ -1,4 +1,4 @@
 import { createContext } from '@lit/context';
-import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
 
-export const weClientContext = createContext<WeClient | WeServices>('we_client');
+export const weaveClientContext = createContext<WeaveClient | WeaveServices>('we_client');

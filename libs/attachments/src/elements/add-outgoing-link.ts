@@ -28,8 +28,8 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { WeClient, WeServices, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
-import { weClientContext } from '@lightningrodlabs/we-elements';
+import { WeaveClient, WeaveServices, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
+import { weaveClientContext } from '@lightningrodlabs/we-elements';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';
@@ -46,7 +46,7 @@ export class AddOutgoingLink extends LitElement {
 
   async createOutgoingLink() {
     try {
-      const dstWAL = await window.__WE_API__.userSelectWal();
+      const dstWAL = await window.__WEAVE_API__.userSelectWal();
       if (dstWAL) {
         const linkingInput = {
           src_wal: this.wal,

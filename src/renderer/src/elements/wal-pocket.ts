@@ -12,9 +12,9 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { WAL } from '@lightningrodlabs/we-applet';
-import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
 import { sharedStyles } from '@holochain-open-dev/elements';
-import { weClientContext } from '@lightningrodlabs/we-elements';
+import { weaveClientContext } from '@lightningrodlabs/we-elements';
 
 @localized()
 @customElement('wal-pocket')
@@ -22,11 +22,11 @@ export class WalPocket extends LitElement {
   @property()
   wal!: WAL;
 
-  @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient | WeServices;
+  @consume({ context: weaveClientContext, subscribe: true })
+  weaveClient!: WeaveClient | WeaveServices;
 
   async walToPocket() {
-    await this.weClient.walToPocket(this.wal);
+    await this.weaveClient.walToPocket(this.wal);
   }
 
   render() {

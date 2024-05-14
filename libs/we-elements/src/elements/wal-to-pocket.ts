@@ -11,9 +11,9 @@ import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { weClientContext } from '../context';
+import { weaveClientContext } from '../context';
 import { WAL } from '@lightningrodlabs/we-applet';
-import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiNotePlusOutline } from '@mdi/js';
 
@@ -23,11 +23,11 @@ export class WalToPocket extends LitElement {
   @property()
   wal!: WAL;
 
-  @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient | WeServices;
+  @consume({ context: weaveClientContext, subscribe: true })
+  weaveClient!: WeaveClient | WeaveServices;
 
   async walToPocket() {
-    await this.weClient.walToPocket(this.wal);
+    await this.weaveClient.walToPocket(this.wal);
   }
 
   render() {

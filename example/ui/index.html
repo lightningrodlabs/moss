@@ -14,15 +14,15 @@
   </head>
 
   <body>
-    <we-client-context id="provider">
+    <weave-client-context id="provider">
       <example-applet id="example-applet"></example-applet>
-    </we-client-context>
+    </weave-client-context>
     <script type="module">
       import '@shoelace-style/shoelace/dist/themes/light.css';
       // import './src/example-applet.ts';
       import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
-      import { WeClient, isWeContext, initializeHotReload } from '@lightningrodlabs/we-applet';
-      import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+      import { WeaveClient, isWeContext, initializeHotReload } from '@lightningrodlabs/we-applet';
+      import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
       import { AttachmentsClient, AttachmentsStore } from '@lightningrodlabs/attachments';
       import { CellType, encodeHashToBase64 } from '@holochain/client';
       import { wrapPathInSvg } from '@holochain-open-dev/elements';
@@ -48,7 +48,7 @@
       }
       console.log('Hot reload initialized.');
 
-      console.log('window.__WE_API__: ', window.__WE_API__);
+      console.log('window.__WEAVE_API__: ', window.__WEAVE_API__);
 
       console.log('isWeContext? ', isWeContext());
 
@@ -70,8 +70,8 @@
               "@example-applet: Not binding asset because it's not implemented. But I could if I wanted to :)"
             );
           },
-          search: async (appletClient, _appletHash, _weServices, searchFilter) => {
-            const postsClient = new PostsClient(weClient.renderInfo.appletClient, 'forum');
+          search: async (appletClient, _appletHash, _weaveServices, searchFilter) => {
+            const postsClient = new PostsClient(weaveClient.renderInfo.appletClient, 'forum');
             const appInfo = await appletClient.appInfo();
             const dnaHash = appInfo.cell_info.forum[0][CellType.Provisioned].cell_id[0];
             const allPosts = await postsClient.getAllPosts();
@@ -110,17 +110,17 @@
           },
         };
 
-        const weClient = await WeClient.connect(appletServices);
+        const weaveClient = await WeaveClient.connect(appletServices);
         const provider = document.getElementById('provider');
-        provider.weClient = weClient;
+        provider.weaveClient = weaveClient;
 
         customElements.define('example-applet', ExampleApplet);
         const exampleApplet = document.getElementById('example-applet');
         exampleApplet.postsStore = new PostsStore(
-          new PostsClient(weClient.renderInfo.appletClient, 'forum')
+          new PostsClient(weaveClient.renderInfo.appletClient, 'forum')
         );
         exampleApplet.attachmentsStore = new AttachmentsStore(
-          new AttachmentsClient(weClient.renderInfo.appletClient, 'forum')
+          new AttachmentsClient(weaveClient.renderInfo.appletClient, 'forum')
         );
       })();
     </script>

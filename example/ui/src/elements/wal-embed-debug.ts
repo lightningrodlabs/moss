@@ -10,7 +10,7 @@ import {
   WeaveLocation,
   WeaveUrl,
   weaveUrlToLocation,
-  WeClient,
+  WeaveClient,
 } from '@lightningrodlabs/we-applet';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { appletOrigin, urlFromAppletHash } from '@lightningrodlabs/we-elements';
@@ -39,7 +39,7 @@ type AssetStatus =
 @customElement('wal-embed')
 export class WalEmbed extends LitElement {
   @property()
-  weClient!: WeClient;
+  weaveClient!: WeaveClient;
 
   @property()
   src!: WeaveUrl;
@@ -71,11 +71,11 @@ export class WalEmbed extends LitElement {
       this.assetStatus = { type: 'invalid url' };
     } else {
       this.wal = weaveLocation.wal;
-      const assetInfo = await this.weClient.assetInfo(weaveLocation.wal);
+      const assetInfo = await this.weaveClient.assetInfo(weaveLocation.wal);
       this.assetStatus = assetInfo ? { type: 'success', assetInfo } : { type: 'not found' };
       if (assetInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
-          this.weClient,
+          this.weaveClient,
           assetInfo?.appletHash
         );
         this.appletInfo = appletInfo;
@@ -197,11 +197,11 @@ export class WalEmbed extends LitElement {
             <sl-tooltip .content=${msg('Open in sidebar')}>
           <div class="column center-content open-btn" tabindex="0"
             @click=${async () => {
-              if (this.wal) await this.weClient.openWal(this.wal, 'side');
+              if (this.wal) await this.weaveClient.openWal(this.wal, 'side');
             }}
             @keypress=${async (e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                if (this.wal) await this.weClient.openWal(this.wal, 'side');
+                if (this.wal) await this.weaveClient.openWal(this.wal, 'side');
               }
             }}>
             <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
@@ -247,18 +247,18 @@ export class WalEmbed extends LitElement {
 }
 
 export async function getAppletInfoAndGroupsProfiles(
-  weClient: WeClient,
+  weaveClient: WeaveClient,
   appletHash: EntryHash
 ): Promise<{
   appletInfo: AppletInfo | undefined;
   groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
 }> {
   const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
-  const appletInfo = await weClient.appletInfo(appletHash);
+  const appletInfo = await weaveClient.appletInfo(appletHash);
   if (appletInfo) {
     for (const groupHash of appletInfo.groupsHashes) {
       if (!groupProfiles.has(groupHash)) {
-        const groupProfile = await weClient.groupProfile(groupHash);
+        const groupProfile = await weaveClient.groupProfile(groupHash);
 
         if (groupProfile) {
           groupProfiles.set(groupHash, groupProfile);

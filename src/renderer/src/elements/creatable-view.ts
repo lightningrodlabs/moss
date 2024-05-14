@@ -5,7 +5,7 @@ import { localized } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';

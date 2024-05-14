@@ -9,10 +9,10 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeClient, FrameNotification } from '@lightningrodlabs/we-applet';
-import { weClientContext } from '@lightningrodlabs/we-elements';
+import { WeaveClient, FrameNotification } from '@lightningrodlabs/we-applet';
+import { weaveClientContext } from '@lightningrodlabs/we-elements';
 
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/attachments/dist/elements/attachments-context.js';
 
 import './applet-main.js';
@@ -26,8 +26,8 @@ import { PostsClient } from './posts-client.js';
 @localized()
 // @customElement("example-applet")
 export class ExampleApplet extends LitElement {
-  @consume({ context: weClientContext as { __context__: WeClient } })
-  weClient!: WeClient;
+  @consume({ context: weaveClientContext as { __context__: WeaveClient } })
+  weaveClient!: WeaveClient;
 
   @property()
   postsStore!: PostsStore;
@@ -43,37 +43,37 @@ export class ExampleApplet extends LitElement {
     setInterval(() => {
       console.log('Hello from the example applet iframe.');
     }, 3000);
-    // if (this.weClient.renderInfo.type === 'applet-view') {
-    //   const groupProfiles = this.weClient.renderInfo.groupProfiles;
-    //   const appletHash = this.weClient.renderInfo.appletHash;
+    // if (this.weaveClient.renderInfo.type === 'applet-view') {
+    //   const groupProfiles = this.weaveClient.renderInfo.groupProfiles;
+    //   const appletHash = this.weaveClient.renderInfo.appletHash;
     //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
     // }
   }
 
   async notifyWe(notifications: FrameNotification[]) {
-    this.weClient.notifyFrame(notifications);
+    this.weaveClient.notifyFrame(notifications);
   }
 
   render() {
-    if (!this.weClient.renderInfo) return html`loading...`;
-    switch (this.weClient.renderInfo.type) {
+    if (!this.weaveClient.renderInfo) return html`loading...`;
+    switch (this.weaveClient.renderInfo.type) {
       case 'applet-view':
-        switch (this.weClient.renderInfo.view.type) {
+        switch (this.weaveClient.renderInfo.view.type) {
           case 'main':
-            const client = this.weClient.renderInfo.appletClient;
+            const client = this.weaveClient.renderInfo.appletClient;
             return html`
               <posts-context .store=${this.postsStore}>
                 <attachments-context .store=${this.attachmentsStore}>
                   <applet-main
-                    .client=${this.weClient.renderInfo.appletClient}
-                    .weClient=${this.weClient}
+                    .client=${this.weaveClient.renderInfo.appletClient}
+                    .weaveClient=${this.weaveClient}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
                       const appInfo = await client.appInfo();
                       if (!appInfo) throw new Error('AppInfo is null.');
                       const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                         .cell_id[0];
-                      this.weClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
+                      this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
                     }}
                   ></applet-main>
                 </attachments-context>
@@ -82,41 +82,43 @@ export class ExampleApplet extends LitElement {
           case 'block':
             throw new Error('Block view is not implemented.');
           case 'asset':
-            switch (this.weClient.renderInfo.view.roleName) {
+            switch (this.weaveClient.renderInfo.view.roleName) {
               case 'forum':
-                switch (this.weClient.renderInfo.view.integrityZomeName) {
+                switch (this.weaveClient.renderInfo.view.integrityZomeName) {
                   case 'posts_integrity':
-                    switch (this.weClient.renderInfo.view.entryType) {
+                    switch (this.weaveClient.renderInfo.view.entryType) {
                       case 'post':
                         return html`
                           <posts-context .store=${this.postsStore}>
                             <attachments-context .store=${this.attachmentsStore}>
                               <post-detail
-                                .postHash=${this.weClient.renderInfo.view.wal.hrl[1]}
+                                .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
                               ></post-detail>
                             </attachments-context>
                           </posts-context>
                         `;
                       default:
                         throw new Error(
-                          `Unknown entry type ${this.weClient.renderInfo.view.entryType}.`
+                          `Unknown entry type ${this.weaveClient.renderInfo.view.entryType}.`
                         );
                     }
                   default:
                     throw new Error(
-                      `Unknown zome '${this.weClient.renderInfo.view.integrityZomeName}'.`
+                      `Unknown zome '${this.weaveClient.renderInfo.view.integrityZomeName}'.`
                     );
                 }
               default:
-                throw new Error(`Unknown role name '${this.weClient.renderInfo.view.roleName}'.`);
+                throw new Error(
+                  `Unknown role name '${this.weaveClient.renderInfo.view.roleName}'.`
+                );
             }
           case 'creatable':
-            switch (this.weClient.renderInfo.view.name) {
+            switch (this.weaveClient.renderInfo.view.name) {
               case 'post':
-                const reject = this.weClient.renderInfo.view.reject;
-                const resolve = this.weClient.renderInfo.view.resolve;
-                const cancel = this.weClient.renderInfo.view.cancel;
-                const appletClient = this.weClient.renderInfo.appletClient;
+                const reject = this.weaveClient.renderInfo.view.reject;
+                const resolve = this.weaveClient.renderInfo.view.resolve;
+                const cancel = this.weaveClient.renderInfo.view.cancel;
+                const appletClient = this.weaveClient.renderInfo.appletClient;
                 const postsClient = new PostsClient(appletClient, 'forum');
                 return html`
                   <div class="column" style="align-items: center; flex: 1;">
@@ -158,14 +160,16 @@ export class ExampleApplet extends LitElement {
                   </div>
                 `;
               default:
-                throw new Error(`Unknown creatable type '${this.weClient.renderInfo.view.name}'.`);
+                throw new Error(
+                  `Unknown creatable type '${this.weaveClient.renderInfo.view.name}'.`
+                );
             }
           default:
             throw new Error(`Unknown applet-view type.`);
         }
       case 'cross-applet-view':
         return html`
-          <cross-applet-main .applets=${this.weClient.renderInfo.applets}></cross-applet-main>
+          <cross-applet-main .applets=${this.weaveClient.renderInfo.applets}></cross-applet-main>
         `;
       default:
         throw new Error('Unknown render view type');

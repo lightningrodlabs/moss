@@ -9,8 +9,8 @@
 // import { consume } from '@lit/context';
 // import { AttachmentsStore } from '../attachments-store.js';
 // import { attachmentsStoreContext } from '../context.js';
-// import { weClientContext } from '@lightningrodlabs/we-elements';
-// import { WAL, WeClient, WeServices } from '@lightningrodlabs/we-applet';
+// import { weaveClientContext } from '@lightningrodlabs/we-elements';
+// import { WAL, WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
 // import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 // @localized()
@@ -22,8 +22,8 @@
 //   @consume({ context: attachmentsStoreContext, subscribe: true })
 //   attachmentsStore!: AttachmentsStore;
 
-//   @consume({ context: weClientContext, subscribe: true })
-//   weClient!: WeClient | WeServices;
+//   @consume({ context: weaveClientContext, subscribe: true })
+//   weaveClient!: WeaveClient | WeaveServices;
 
 //   attachments = new StoreSubscriber(
 //     this,

@@ -15,7 +15,7 @@ import {
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
 import {
-  WeServices,
+  WeaveServices,
   IframeConfig,
   Hrl,
   WAL,
@@ -35,14 +35,14 @@ import {
 
 declare global {
   interface Window {
-    __WE_API__: WeServices;
-    __WE_APPLET_SERVICES__: AppletServices;
+    __WEAVE_API__: WeaveServices;
+    __WEAVE_APPLET_SERVICES__: AppletServices;
     __WE_RENDER_INFO__: RenderInfo;
-    __WE_APPLET_HASH__: AppletHash;
+    __WEAVE_APPLET_HASH__: AppletHash;
   }
 }
 
-const weApi: WeServices = {
+const weaveApi: WeaveServices = {
   openAppletMain: async (appletHash: EntryHash): Promise<void> =>
     postMessage({
       type: 'open-view',
@@ -142,9 +142,9 @@ const weApi: WeServices = {
 };
 
 (async () => {
-  window.__WE_APPLET_HASH__ = readAppletHash();
-  window.__WE_API__ = weApi;
-  window.__WE_APPLET_SERVICES__ = new AppletServices();
+  window.__WEAVE_APPLET_HASH__ = readAppletHash();
+  window.__WEAVE_API__ = weaveApi;
+  window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
   const [_, view] = await Promise.all([fetchLocalStorage(), getRenderView()]);
 
@@ -194,7 +194,7 @@ const weApi: WeServices = {
       setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
 
-    const appletHash = window.__WE_APPLET_HASH__;
+    const appletHash = window.__WEAVE_APPLET_HASH__;
 
     window.__WE_RENDER_INFO__ = {
       type: 'applet-view',
@@ -235,14 +235,14 @@ const weApi: WeServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-  document.addEventListener('we-client-connected', async () => {
-    // Once the WeClient of the applet has connected, we can update stuff from the AppletServices
+  document.addEventListener('weave-client-connected', async () => {
+    // Once the WeaveClient of the applet has connected, we can update stuff from the AppletServices
     let creatables: Record<CreatableName, CreatableType> = {};
-    creatables = window.__WE_APPLET_SERVICES__.creatables;
+    creatables = window.__WEAVE_APPLET_SERVICES__.creatables;
     // validate that it
     if (!creatables) {
       console.warn(
-        `Creatables undefined. The AppletServices passed to the WeClient may contain an invalid 'creatables' property.`,
+        `Creatables undefined. The AppletServices passed to the WeaveClient may contain an invalid 'creatables' property.`,
       );
       creatables = {};
     }
@@ -273,7 +273,7 @@ const handleMessage = async (
 ) => {
   switch (request.type) {
     case 'get-applet-asset-info':
-      return window.__WE_APPLET_SERVICES__.getAssetInfo(
+      return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
         request.roleName,
         request.integrityZomeName,
@@ -281,9 +281,9 @@ const handleMessage = async (
         request.wal,
       );
     case 'get-block-types':
-      return window.__WE_APPLET_SERVICES__.blockTypes;
+      return window.__WEAVE_APPLET_SERVICES__.blockTypes;
     case 'bind-asset':
-      return window.__WE_APPLET_SERVICES__.bindAsset(
+      return window.__WEAVE_APPLET_SERVICES__.bindAsset(
         appletClient,
         request.srcWal,
         request.dstWal,
@@ -292,10 +292,10 @@ const handleMessage = async (
         request.dstEntryType,
       );
     case 'search':
-      return window.__WE_APPLET_SERVICES__.search(
+      return window.__WEAVE_APPLET_SERVICES__.search(
         appletClient,
         appletHash,
-        window.__WE_API__,
+        window.__WEAVE_API__,
         request.filter,
       );
     default:
@@ -309,7 +309,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletHash: window.__WE_APPLET_HASH__,
+      appletHash: window.__WEAVE_APPLET_HASH__,
     };
 
     // eslint-disable-next-line no-restricted-globals

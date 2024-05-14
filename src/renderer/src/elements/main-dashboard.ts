@@ -28,7 +28,7 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
 import '../layout/views/welcome-view.js';

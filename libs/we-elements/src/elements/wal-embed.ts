@@ -10,7 +10,7 @@ import {
   WeaveLocation,
   WeaveUrl,
   weaveUrlToLocation,
-  WeClient,
+  WeaveClient,
 } from '@lightningrodlabs/we-applet';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { appletOrigin, urlFromAppletHash } from '../utils';
@@ -71,11 +71,11 @@ export class WalEmbed extends LitElement {
       this.assetStatus = { type: 'invalid url' };
     } else {
       this.wal = weaveLocation.wal;
-      const assetInfo = await window.__WE_API__.assetInfo(weaveLocation.wal);
+      const assetInfo = await window.__WEAVE_API__.assetInfo(weaveLocation.wal);
       this.assetStatus = assetInfo ? { type: 'success', assetInfo } : { type: 'not found' };
       if (assetInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
-          window.__WE_API__ as WeClient,
+          window.__WEAVE_API__ as WeaveClient,
           assetInfo?.appletHash,
         );
         this.appletInfo = appletInfo;
@@ -86,7 +86,7 @@ export class WalEmbed extends LitElement {
   }
 
   async openInSidebar() {
-    if (this.wal) await window.__WE_API__.openWal(this.wal, 'side');
+    if (this.wal) await window.__WEAVE_API__.openWal(this.wal, 'side');
     this.dispatchEvent(
       new CustomEvent('open-in-sidebar', {
         detail: this.wal,
