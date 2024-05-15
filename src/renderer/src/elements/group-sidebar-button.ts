@@ -59,7 +59,7 @@ export class GroupSidebarButton extends LitElement {
   }
 
   firstUpdated() {
-    this._unsubscribe = this._onlineAgents.store.subscribe(async (value) => {
+    this._unsubscribe = this._onlineAgents.store.subscribe((value) => {
       // TODO emit event if first agent comes online
       if (value.status === 'complete') {
         if (value.value.length > 0) {
