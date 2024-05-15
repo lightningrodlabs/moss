@@ -39,6 +39,7 @@ import {
   WAL,
   ProfilesLocation,
   CreatableType,
+  NULL_HASH,
 } from '@lightningrodlabs/we-applet';
 import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
@@ -620,6 +621,12 @@ export class MossStore {
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
         return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
+          if (hash.toString() === NULL_HASH.toString()) {
+            return {
+              dnaLocation,
+              entryDefLocation: undefined,
+            };
+          }
           const appToken = await this.getAuthenticationToken(dnaLocation.appInfo.installed_app_id);
           const appClient = await initAppClient(appToken);
           const entryDefLocation = await locateHrl(this.adminWebsocket, appClient, dnaLocation, [
@@ -647,10 +654,14 @@ export class MossStore {
               lazyLoad(() =>
                 host
                   ? host.getAppletAssetInfo(
-                      location.dnaLocation.roleName,
-                      location.entryDefLocation.integrity_zome,
-                      location.entryDefLocation.entry_def,
                       wal,
+                      location.entryDefLocation
+                        ? {
+                            roleName: location.dnaLocation.roleName,
+                            integrityZomeName: location.entryDefLocation.integrity_zome,
+                            entryType: location.entryDefLocation.entry_def,
+                          }
+                        : undefined,
                     )
                   : Promise.resolve(undefined),
               ),

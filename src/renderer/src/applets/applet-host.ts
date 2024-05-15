@@ -3,7 +3,6 @@ import {
   AppletInfo,
   AssetInfo,
   AssetLocationAndInfo,
-  HrlLocation,
   WAL,
   AppletToParentRequest,
   ParentToAppletRequest,
@@ -12,6 +11,7 @@ import {
   WeaveServices,
   GroupProfile,
   FrameNotification,
+  RecordLocation,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -165,9 +165,13 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         const result = await appletHost.bindAsset(
           srcWal,
           dstWal,
-          dstLocation.dnaLocation.roleName,
-          dstLocation.entryDefLocation.integrity_zome,
-          dstLocation.entryDefLocation.entry_def,
+          dstLocation.entryDefLocation
+            ? {
+                roleName: dstLocation.dnaLocation.roleName,
+                integrityZomeName: dstLocation.entryDefLocation.integrity_zome,
+                entryType: dstLocation.entryDefLocation.entry_def,
+              }
+            : undefined,
         );
         // TODO sanitize result format
         return result;
@@ -291,18 +295,19 @@ export async function handleAppletIframeMessage(
         };
         return config;
       }
-    case 'get-hrl-location':
-      const location0 = await toPromise(
+    case 'get-record-location': {
+      const location = await toPromise(
         mossStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
       );
-      if (!location0) throw new Error('Hrl not found');
+      if (!location || !location.entryDefLocation) throw new Error('Record not found');
 
-      const hrlLocation: HrlLocation = {
-        roleName: location0.dnaLocation.roleName,
-        integrityZomeName: location0.entryDefLocation.integrity_zome,
-        entryType: location0.entryDefLocation.entry_def,
+      const recordLocation: RecordLocation = {
+        roleName: location.dnaLocation.roleName,
+        integrityZomeName: location.entryDefLocation.integrity_zome,
+        entryType: location.entryDefLocation.entry_def,
       };
-      return hrlLocation;
+      return recordLocation;
+    }
     case 'open-view':
       switch (message.request.type) {
         case 'applet-main':
@@ -486,34 +491,22 @@ export class AppletHost {
   }
 
   async getAppletAssetInfo(
-    roleName: string,
-    integrityZomeName: string,
-    entryType: string,
     wal: WAL,
+    recordLocation?: RecordLocation,
   ): Promise<AssetInfo | undefined> {
     return this.postMessage({
       type: 'get-applet-asset-info',
-      roleName,
-      integrityZomeName,
-      entryType,
       wal,
+      recordLocation,
     });
   }
 
-  bindAsset(
-    srcWal: WAL,
-    dstWal: WAL,
-    dstRoleName: string,
-    dstIntegrityZomeName: string,
-    dstEntryType: string,
-  ): Promise<void> {
+  bindAsset(srcWal: WAL, dstWal: WAL, dstRecordLocation?: RecordLocation): Promise<void> {
     return this.postMessage({
       type: 'bind-asset',
       srcWal,
       dstWal,
-      dstRoleName,
-      dstIntegrityZomeName,
-      dstEntryType,
+      dstRecordLocation,
     });
   }
 

@@ -24,13 +24,14 @@ import {
   RenderInfo,
   AppletToParentRequest,
   AppletToParentMessage,
-  HrlLocation,
   ParentToAppletRequest,
   AppletHash,
   AppletServices,
   OpenWalMode,
   CreatableName,
   CreatableType,
+  RecordLocation,
+  NULL_HASH,
 } from '@lightningrodlabs/we-applet';
 
 declare global {
@@ -275,10 +276,8 @@ const handleMessage = async (
     case 'get-applet-asset-info':
       return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
-        request.roleName,
-        request.integrityZomeName,
-        request.entryType,
         request.wal,
+        request.recordLocation,
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
@@ -287,9 +286,7 @@ const handleMessage = async (
         appletClient,
         request.srcWal,
         request.dstWal,
-        request.dstRoleName,
-        request.dstIntegrityZomeName,
-        request.dstEntryType,
+        request.dstRecordLocation,
       );
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
@@ -457,18 +454,29 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
-      const hrlLocation: HrlLocation = await postMessage({
-        type: 'get-hrl-location',
+      if (hrl[1].toString() === NULL_HASH.toString()) {
+        return {
+          type: view,
+          view: {
+            type: 'asset',
+            wal: { hrl, context },
+          },
+        };
+      }
+      const recordLocation: RecordLocation = await postMessage({
+        type: 'get-record-location',
         hrl,
       });
       return {
         type: view,
         view: {
           type: 'asset',
-          roleName: hrlLocation.roleName,
-          integrityZomeName: hrlLocation.integrityZomeName,
-          entryType: hrlLocation.entryType,
           wal: { hrl, context },
+          recordLocation: {
+            roleName: recordLocation.roleName,
+            integrityZomeName: recordLocation.integrityZomeName,
+            entryType: recordLocation.entryType,
+          },
         },
       };
     case 'creatable':

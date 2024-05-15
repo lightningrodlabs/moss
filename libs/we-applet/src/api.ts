@@ -22,6 +22,7 @@ import {
   Hrl,
   WeaveLocation,
   FrameNotification,
+  RecordLocation,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -35,6 +36,12 @@ declare global {
     __isWe__: boolean | undefined;
   }
 }
+
+/**
+ * The null hash is used in case a WAL is to address a DNA only, not specific
+ * DHT content
+ */
+export const NULL_HASH = new Uint8Array(39);
 
 /**
  *
@@ -141,8 +148,7 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _roleName, _integrityZomeName, _entryType, _wal) =>
-        undefined),
+      (this.getAssetInfo = async (_appletClient, _wal, _recordLocation) => undefined),
       (this.bindAsset = async () => {});
   }
 
@@ -160,10 +166,8 @@ export class AppletServices {
    */
   getAssetInfo: (
     appletClient: AppClient,
-    roleName: RoleName,
-    integrityZomeName: ZomeName,
-    entryType: string,
     wal: WAL,
+    recordLocation?: RecordLocation,
   ) => Promise<AssetInfo | undefined>;
   /**
    * Search in this Applet
@@ -189,17 +193,9 @@ export class AppletServices {
      */
     dstWal: WAL,
     /**
-     * role name of the dna containing the destination WAL
+     * Record location of the dna containing the destination WAL
      */
-    dstRoleName: RoleName,
-    /**
-     * integrity zome containing the destination WAL
-     */
-    dstIntegrityZomeName: ZomeName,
-    /**
-     * entry type of the destination WAL
-     */
-    dstEntryType: string,
+    dstRecordLocation?: RecordLocation,
   ) => Promise<void>;
 }
 
