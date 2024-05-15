@@ -31,7 +31,7 @@ declare global {
   interface Window {
     __WEAVE_API__: WeaveServices;
     __WEAVE_APPLET_SERVICES__: AppletServices;
-    __WE_RENDER_INFO__: RenderInfo;
+    __WEAVE_RENDER_INFO__: RenderInfo;
     __isWe__: boolean | undefined;
   }
 }
@@ -292,13 +292,13 @@ export interface WeaveServices {
 
 export class WeaveClient implements WeaveServices {
   get renderInfo(): RenderInfo {
-    return window.__WE_RENDER_INFO__;
+    return window.__WEAVE_RENDER_INFO__;
   }
 
   private constructor() {}
 
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
-    if (window.__WE_RENDER_INFO__) {
+    if (window.__WEAVE_RENDER_INFO__) {
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }

@@ -37,7 +37,7 @@ declare global {
   interface Window {
     __WEAVE_API__: WeaveServices;
     __WEAVE_APPLET_SERVICES__: AppletServices;
-    __WE_RENDER_INFO__: RenderInfo;
+    __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_APPLET_HASH__: AppletHash;
   }
 }
@@ -196,7 +196,7 @@ const weaveApi: WeaveServices = {
 
     const appletHash = window.__WEAVE_APPLET_HASH__;
 
-    window.__WE_RENDER_INFO__ = {
+    window.__WEAVE_RENDER_INFO__ = {
       type: 'applet-view',
       view: view.view,
       appletClient,
@@ -227,7 +227,7 @@ const weaveApi: WeaveServices = {
       ),
     );
 
-    window.__WE_RENDER_INFO__ = {
+    window.__WEAVE_RENDER_INFO__ = {
       type: 'cross-applet-view',
       view: view.view,
       applets,
