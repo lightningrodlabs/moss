@@ -334,10 +334,45 @@ async function setupAppAgentClient(appPort: number, installedAppId: string) {
     appletClient.appWebsocket.client.close();
   });
 
-  appletClient.appWebsocket.callZome = appletClient.appWebsocket._requester('call_zome', {
-    input: async (request) => signZomeCall(request),
-    output: (o) => decode(o as any),
-  });
+  appletClient.appWebsocket.callZome = async (req) => {
+    let duration;
+    let response;
+    const start = Date.now();
+    try {
+      response = await appletClient.appWebsocket._requester('call_zome', {
+        input: async (request) => signZomeCall(request as any),
+        output: (o) => decode(o as any),
+      })(req);
+      duration = Date.now() - start;
+    } catch (e) {
+      await postMessage({
+        type: 'zome-call-metric',
+        payload: {
+          cellId: req.cell_id,
+          fnName: req.fn_name,
+          timestamp: start,
+          response: {
+            type: 'error',
+            error: e,
+          },
+        },
+      });
+      return Promise.reject(`Zome call failed: ${e}`);
+    }
+    await postMessage({
+      type: 'zome-call-metric',
+      payload: {
+        cellId: req.cell_id,
+        fnName: req.fn_name,
+        timestamp: start,
+        response: {
+          type: 'success',
+          duration,
+        },
+      },
+    });
+    return response;
+  };
 
   return appletClient;
 }

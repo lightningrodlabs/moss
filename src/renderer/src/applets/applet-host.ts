@@ -433,8 +433,10 @@ export async function handleAppletIframeMessage(
       return weServices.requestBind(message.srcWal, message.dstWal);
     }
     case 'sign-zome-call':
-      logAppletZomeCall(message.request, appletId);
       return signZomeCallApplet(message.request);
+    case 'zome-call-metric':
+      logAppletZomeCall(message.payload, appletId);
+      break;
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");

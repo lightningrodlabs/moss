@@ -1,4 +1,4 @@
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, uniquify } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -31,7 +31,7 @@ import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletStore } from '../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
-import { appIdFromAppletHash, getCellId } from '../utils.js';
+import { appIdFromAppletHash, getCellId, ZomeCallLog } from '../utils.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { DumpData } from '../types.js';
@@ -220,6 +220,42 @@ export class ZomeCallPanel extends LitElement {
         </div>
       `,
     );
+  }
+
+  renderAppletZomeCallDetails(zomeCallLog: ZomeCallLog) {
+    const callsPerFunction: any = zomeCallLog.lastMinuteCalls.reduce((acc, obj) => {
+      acc[obj.fnName] = acc[obj.fnName] || [];
+      acc[obj.fnName].push(obj);
+      return acc;
+    }, {});
+
+    return Object.keys(callsPerFunction).map((fnName) => {
+      const totalTime = callsPerFunction[fnName].reduce((acc, obj) => {
+        if (obj.response.type === 'success') {
+          acc += obj.response.duration;
+        }
+        return acc;
+      }, 0);
+      const avgDuration = totalTime / callsPerFunction[fnName].length;
+      return html`
+        <div class="row" style="align-items: center; margin-top: 5px; margin-bottom: 10px;">
+          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+            <div>${fnName}</div>
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${zomeCallLog.functionCallTotalCounts[fnName]
+              ? zomeCallLog.functionCallTotalCounts[fnName]
+              : 0}
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${callsPerFunction[fnName].length}
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${Math.round(avgDuration)} ms
+          </div>
+        </div>
+      `;
+    });
   }
 
   renderDebugInfo(appId: InstalledAppId, netInfo: NetworkInfo, dump: DumpData) {
@@ -465,7 +501,10 @@ export class ZomeCallPanel extends LitElement {
           <div style="align-items: center; width: 300px;"></div>
           <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
           <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
+            # zome calls in the last minute
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            avg. zome call duration in the last minute
           </div>
           <div style="font-weight: bold; text-align: right; width: 120px;"></div>
           <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
@@ -488,11 +527,18 @@ export class ZomeCallPanel extends LitElement {
           .map(([appletHash, appletStore]) => {
             const appletId = encodeHashToBase64(appletHash);
             const appId = appIdFromAppletHash(appletHash);
-            const zomeCallCount = window[`__appletZomeCallCount_${appletId}`];
+            const zomeCallLog: ZomeCallLog = window[`__appletZomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
             const dump = this._appsWithDumps[appId];
             const netInfo = this._appsWithNetInfo[appId];
             const showDebug = this._appsWithDebug.includes(appId);
+            const totalTime = zomeCallLog.lastMinuteCalls.reduce((acc, obj) => {
+              if (obj.response.type === 'success') {
+                acc += obj.response.duration;
+              }
+              return acc;
+            }, 0);
+            const avgDuration = totalTime / zomeCallLog.lastMinuteCalls.length;
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -507,15 +553,13 @@ export class ZomeCallPanel extends LitElement {
                   </div>
                   <div style="display: flex; flex: 1;"></div>
                   <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-                    ${zomeCallCount ? zomeCallCount.totalCounts : ''}
+                    ${zomeCallLog ? zomeCallLog.totalCounts : ''}
                   </div>
                   <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-                    ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                        )
-                      : ''}
+                    ${zomeCallLog ? zomeCallLog.lastMinuteCalls.length : ''}
+                  </div>
+                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                    ${zomeCallLog ? `${Math.round(avgDuration)} ms` : ''}
                   </div>
                   <span
                     style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
@@ -534,7 +578,7 @@ export class ZomeCallPanel extends LitElement {
                     .appletHash=${appletHash}
                   ></groups-for-applet>
                 </div>
-                ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                ${showDetails ? this.renderAppletZomeCallDetails(zomeCallLog) : html``}
               </div>
               ${showDebug ? this.renderDebugInfo(appId, netInfo, dump) : html``}
             `;

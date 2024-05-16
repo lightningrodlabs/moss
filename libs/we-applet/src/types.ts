@@ -8,6 +8,8 @@ import {
   ActionHashB64,
   DnaHashB64,
   CallZomeRequest,
+  CellId,
+  FunctionName,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -297,6 +299,10 @@ export type AppletToParentRequest =
       request: CallZomeRequest;
     }
   | {
+      type: 'zome-call-metric';
+      payload: ZomeCallMetric;
+    }
+  | {
       type: 'open-view';
       request: OpenViewRequest;
     }
@@ -423,4 +429,19 @@ export type HrlLocation = {
   roleName: string;
   integrityZomeName: string;
   entryType: string;
+};
+
+export type ZomeCallMetric = {
+  cellId: CellId;
+  fnName: FunctionName;
+  timestamp: number;
+  response:
+    | {
+        type: 'error';
+        error: any;
+      }
+    | {
+        type: 'success';
+        duration: number;
+      };
 };

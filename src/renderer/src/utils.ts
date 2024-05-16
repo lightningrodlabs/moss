@@ -14,13 +14,18 @@ import {
   decodeHashFromBase64,
   HoloHashB64,
   ActionHash,
-  CallZomeRequest,
   AgentPubKeyB64,
   FunctionName,
   ZomeName,
   Timestamp,
 } from '@holochain/client';
-import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  Hrl,
+  WAL,
+  RenderView,
+  FrameNotification,
+  ZomeCallMetric,
+} from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
@@ -551,26 +556,39 @@ export function getAllIframes() {
   return result;
 }
 
-export function logAppletZomeCall(request: CallZomeRequest, appletId: AppletId) {
+export type ZomeCallLog = {
+  firstCall: number;
+  totalCounts: number;
+  lastMinuteCalls: ZomeCallMetric[];
+  functionCallTotalCounts: Record<string, number>;
+};
+
+export function logAppletZomeCall(payload: ZomeCallMetric, appletId: AppletId) {
   if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    const zomeCallCounts = window[`__appletZomeCallCount_${appletId}`];
-    if (zomeCallCounts) {
-      zomeCallCounts.totalCounts += 1;
-      if (zomeCallCounts.functionCalls[request.fn_name]) {
-        zomeCallCounts.functionCalls[request.fn_name] += 1;
+    const zomeCallLogs: ZomeCallLog = window[`__appletZomeCallCount_${appletId}`];
+    if (zomeCallLogs) {
+      const now = Date.now();
+      zomeCallLogs.totalCounts += 1;
+      zomeCallLogs.lastMinuteCalls.push(payload);
+      zomeCallLogs.lastMinuteCalls = zomeCallLogs.lastMinuteCalls.filter(
+        (call) => now - call.timestamp < 60000,
+      );
+      if (zomeCallLogs.functionCallTotalCounts[payload.fnName]) {
+        zomeCallLogs.functionCallTotalCounts[payload.fnName] += 1;
       } else {
-        if (!zomeCallCounts.functionCalls) {
-          zomeCallCounts.functionCalls = {};
+        if (!zomeCallLogs.functionCallTotalCounts) {
+          zomeCallLogs.functionCallTotalCounts = {};
         }
-        zomeCallCounts.functionCalls[request.fn_name] = 1;
+        zomeCallLogs.functionCallTotalCounts[payload.fnName] = 1;
       }
-      window[`__appletZomeCallCount_${appletId}`] = zomeCallCounts;
+      window[`__appletZomeCallCount_${appletId}`] = zomeCallLogs;
     } else {
       window[`__appletZomeCallCount_${appletId}`] = {
         firstCall: Date.now(),
         totalCounts: 1,
-        functionCalls: {
-          [request.fn_name]: 1,
+        lastMinuteCalls: [payload],
+        functionCallTotalCounts: {
+          [payload.fnName]: 1,
         },
       };
     }
