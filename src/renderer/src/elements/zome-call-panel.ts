@@ -1,4 +1,4 @@
-import { StoreSubscriber, uniquify } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -223,6 +223,10 @@ export class ZomeCallPanel extends LitElement {
   }
 
   renderAppletZomeCallDetails(zomeCallLog: ZomeCallLog) {
+    const now = Date.now();
+    zomeCallLog.lastMinuteCalls = zomeCallLog.lastMinuteCalls.filter(
+      (metric) => now - metric.timestamp < 60000,
+    );
     const callsPerFunction: any = zomeCallLog.lastMinuteCalls.reduce((acc, obj) => {
       acc[obj.fnName] = acc[obj.fnName] || [];
       acc[obj.fnName].push(obj);
@@ -532,13 +536,17 @@ export class ZomeCallPanel extends LitElement {
             const dump = this._appsWithDumps[appId];
             const netInfo = this._appsWithNetInfo[appId];
             const showDebug = this._appsWithDebug.includes(appId);
-            const totalTime = zomeCallLog.lastMinuteCalls.reduce((acc, obj) => {
-              if (obj.response.type === 'success') {
-                acc += obj.response.duration;
-              }
-              return acc;
-            }, 0);
-            const avgDuration = totalTime / zomeCallLog.lastMinuteCalls.length;
+
+            let avgDuration;
+            if (zomeCallLog) {
+              const totalTime = zomeCallLog.lastMinuteCalls.reduce((acc, obj) => {
+                if (obj.response.type === 'success') {
+                  acc += obj.response.duration;
+                }
+                return acc;
+              }, 0);
+              avgDuration = totalTime / zomeCallLog.lastMinuteCalls.length;
+            }
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -559,7 +567,7 @@ export class ZomeCallPanel extends LitElement {
                     ${zomeCallLog ? zomeCallLog.lastMinuteCalls.length : ''}
                   </div>
                   <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-                    ${zomeCallLog ? `${Math.round(avgDuration)} ms` : ''}
+                    ${avgDuration ? `${Math.round(avgDuration)} ms` : ''}
                   </div>
                   <span
                     style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
