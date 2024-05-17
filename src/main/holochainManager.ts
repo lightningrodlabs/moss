@@ -248,6 +248,7 @@ export class HolochainManager {
       single_use: false,
       expiry_seconds: 99999999,
     });
+    this.appTokens[appId] = response.token;
     return response.token;
   }
 }
