@@ -23,6 +23,18 @@ import { toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
 import { UpdateFeedMessage } from '../../types.js';
 import TimeAgo from 'javascript-time-ago';
+import { Marked } from '@ts-stack/markdown';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+
+Marked.setOptions({
+  gfm: true,
+  tables: true,
+  breaks: false,
+  pedantic: false,
+  sanitize: true,
+  smartLists: true,
+  smartypants: false,
+});
 
 enum WelcomePageView {
   Main,
@@ -311,7 +323,7 @@ export class WelcomeView extends LitElement {
                         <div class="update-feed-el">
                           <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
                           <div class="update-type">${message.type}</div>
-                          ${message.message}
+                          ${unsafeHTML(Marked.parse(message.message))}
                         </div>
                       `,
                     )}
@@ -400,13 +412,12 @@ export class WelcomeView extends LitElement {
         padding: 20px;
         padding-top: 45px;
         border-radius: 10px;
-        background: rgba(22, 35, 17, 1.0);
+        background: rgba(22, 35, 17, 1);
         margin: 5px;
-        border: 2px solid
-        cursor: pointer;
+        border: 2px solid;
         color: #fff;
-        border: 2px solid rgba(96, 124, 4, .50);
-        transition: all .25s ease;
+        border: 2px solid rgba(96, 124, 4, 0.5);
+        transition: all 0.25s ease;
         font-size: 18px;
         line-height: 1.4;
       }

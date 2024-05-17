@@ -1,6 +1,6 @@
 {
   "name": "moss-alpha",
-  "version": "0.11.0",
+  "version": "0.11.16",
   "scripts": {
     "start": "vite --force --clearScreen false --port 1420",
     "build": "vite build",
@@ -22,6 +22,7 @@
     "@mdi/js": "^7.2.96",
     "@msgpack/msgpack": "^2.7.2",
     "@scoped-elements/golden-layout": "https://github.com/matthme/scoped-golden-layout.git#build",
+    "@ts-stack/markdown": "^1.5.0",
     "golden-layout": "^2.6.0",
     "grapes-editor": "^0.1.0",
     "javascript-time-ago": "2.5.9",
