@@ -163,12 +163,24 @@ export class MossPocket extends LitElement {
           }
         }}
       >
-        <sl-icon-button slot="header-actions"
-            .src=${wrapPathInSvg(mdiDelete)}
-                      @click=${() => this.clearPocket()}
-          ></sl-icon-button>
-
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
+          ${
+            this.pocketContent.length > 0
+              ? html`
+                  <div style="position: absolute; bottom: -10px; left: -10px; ">
+                    <sl-button
+                      class="clear-pocket"
+                      variant="text"
+                      size="small"
+                      @click=${() => this.clearPocket()}
+                      ><sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDelete)}></sl-icon> Clear
+                      Pocket</sl-button
+                    >
+                  </div>
+                `
+              : ``
+          }
+
           ${
             this.mode === 'select'
               ? html`<div style="font-size: 25px; margin-bottom: 30px;">
@@ -286,6 +298,14 @@ export class MossPocket extends LitElement {
 
         sl-dialog {
           --sl-panel-background-color: var(--sl-color-tertiary-0);
+        }
+
+        sl-button.clear-pocket::part(base) {
+          color: var(--sl-color-primary-600);
+        }
+
+        sl-button.clear-pocket::part(base):hover {
+          color: var(--sl-color-primary-900);
         }
       `,
     ];
