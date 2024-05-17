@@ -315,7 +315,7 @@ export class WelcomeView extends LitElement {
                 <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
                 relevant updates for early weavers.</span
               >
-              <div class="column">
+              <div class="column" style="margin-bottom: 80px;">
                 ${this.updateFeed.length === 0
                   ? html`No big waves lately...`
                   : this.updateFeed.map(

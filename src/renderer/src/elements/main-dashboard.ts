@@ -996,7 +996,8 @@ export class MainDashboard extends LitElement {
             id="welcome-view"
             @click=${(e) => e.stopPropagation()}
             .updateFeed=${this._updateFeed}
-            style="${this._dashboardState.value.viewType === 'personal'
+            style="max-height: calc(100vh - 74px); ${this._dashboardState.value.viewType ===
+            'personal'
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
               ? 'pointer-events: none; user-select: none;'
