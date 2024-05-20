@@ -1,5 +1,5 @@
 import { css, html, LitElement, TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import {
   Action,
@@ -27,6 +27,8 @@ import { dateStr } from '../utils.js';
 import { DumpData } from '../types.js';
 import { decode } from '@msgpack/msgpack';
 
+const PAGE_SIZE = 10;
+
 @localized()
 @customElement('state-dump')
 export class StateDump extends LitElement {
@@ -36,6 +38,21 @@ export class StateDump extends LitElement {
   renderCreateLink(createLink: CreateLink) {
     return html` Base: ${this.renderHash(createLink.base_address)}; Target:
     ${this.renderHash(createLink.target_address)}`;
+  }
+
+  @state()
+  opsPage = 0;
+
+  renderDhtOps() {
+    const start = this.dump.dump.integration_dump.integrated.length - 1 - PAGE_SIZE * this.opsPage;
+    const end = start - PAGE_SIZE;
+    const opsHtml = [];
+    for (let i = start; i > end && i >= 0; i -= 1) {
+      const r = this.dump.dump.integration_dump.integrated[i];
+      // @ts-ignore
+      opsHtml.push(html` <div class="list-item">${this.renderDhtOp(r)}</div>`);
+    }
+    return opsHtml;
   }
 
   renderDhtOp(op: DhtOp) {
@@ -54,7 +71,9 @@ export class StateDump extends LitElement {
 
     return html`
       <div class="dht-op">
-        ${opName}: ${action.type} ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
+        ${opName}: ${action.type}
+        <span class="date">${dateStr(action.timestamp)}</span>
+        ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
         ${action.type == 'CreateLink' ? this.renderCreateLink(action) : ''}
         ${entry ? this.renderEntry(entry) : ''}
         ${opName == 'RegisterAddLink' ? this.renderCreateLink(action as CreateLink) : ''}
@@ -141,6 +160,20 @@ export class StateDump extends LitElement {
     `;
   }
 
+  @state()
+  recordPage = 0;
+
+  renderRecords() {
+    const start = this.dump.dump.source_chain_dump.records.length - 1 - PAGE_SIZE * this.recordPage;
+    const end = start - PAGE_SIZE;
+    const recordsHtml = [];
+    for (let i = start; i > end && i >= 0; i -= 1) {
+      const r = this.dump.dump.source_chain_dump.records[i];
+      // @ts-ignore
+      recordsHtml.push(html` <div class="list-item">${this.renderRecord(r)}</div>`);
+    }
+    return recordsHtml;
+  }
   render() {
     return html`
       <div class="column">
@@ -156,22 +189,54 @@ export class StateDump extends LitElement {
           </div>
         </span>
         <span> integrated Ops since last Dump: ${this.dump.newOpsCount}</span>
-        <span
-          >Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor}
-          <div class="long-list">
-            ${this.dump.dump.integration_dump.integrated.map(
-              (p) => html` <div class="list-item">${this.renderDhtOp(p)}</div>`,
-            )}
+        <div>
+          <div style="display:flex">
+            Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor} Page:
+            <div
+              class="pager"
+              @click=${() => {
+                if (this.opsPage > 0) this.opsPage -= 1;
+              }}
+            >
+              -
+            </div>
+            ${this.opsPage}
+            <div
+              class="pager"
+              @click=${() => {
+                if (this.opsPage < this.dump.dump.integration_dump.integrated.length / PAGE_SIZE)
+                  this.opsPage += 1;
+              }}
+            >
+              +
+            </div>
           </div>
-        </span>
+          <div class="long-list">${this.renderDhtOps()}</div>
+        </div>
         <span> published ops count: ${this.dump.dump.source_chain_dump.published_ops_count}</span>
         <div>
-          Source Chain: (${this.dump.dump.source_chain_dump.records.length} records)
-          <div class="long-list">
-            ${this.dump.dump.source_chain_dump.records.map(
-              (r) => html` <div class="list-item">${this.renderRecord(r)}</div>`,
-            )}
+          <div style="display:flex">
+            Source Chain: (${this.dump.dump.source_chain_dump.records.length} records) Page:
+            <div
+              class="pager"
+              @click=${() => {
+                if (this.recordPage > 0) this.recordPage -= 1;
+              }}
+            >
+              -
+            </div>
+            ${this.recordPage}
+            <div
+              class="pager"
+              @click=${() => {
+                if (this.recordPage < this.dump.dump.source_chain_dump.records.length / PAGE_SIZE)
+                  this.recordPage += 1;
+              }}
+            >
+              +
+            </div>
           </div>
+          <div class="long-list">${this.renderRecords()}</div>
         </div>
       </div>
     `;
@@ -186,7 +251,7 @@ export class StateDump extends LitElement {
 
       .long-list {
         border: solid 1px #aaa;
-        max-height: 300px;
+        max-height: 1000px;
         overflow-y: auto;
         border-radius: 5px;
       }
@@ -197,7 +262,22 @@ export class StateDump extends LitElement {
         overflow-x: auto;
         line-break: anywhere;
       }
-
+      .pager {
+        margin-left: 5px;
+        margin-right: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: lightgreen;
+        border-radius: 50%;
+        cursor: pointer;
+        height: 15px;
+        width: 15px;
+      }
+      .pager:hover {
+        background-color: green;
+        border-color: green;
+      }
       .action-type {
         font-weight: bold;
       }
