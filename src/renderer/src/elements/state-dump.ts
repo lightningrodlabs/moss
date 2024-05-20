@@ -190,50 +190,56 @@ export class StateDump extends LitElement {
         </span>
         <span> integrated Ops since last Dump: ${this.dump.newOpsCount}</span>
         <div>
-          <div style="display:flex">
-            Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor} Page:
-            <div
-              class="pager"
-              @click=${() => {
-                if (this.opsPage > 0) this.opsPage -= 1;
-              }}
-            >
-              -
-            </div>
-            ${this.opsPage}
-            <div
-              class="pager"
-              @click=${() => {
-                if (this.opsPage < this.dump.dump.integration_dump.integrated.length / PAGE_SIZE)
-                  this.opsPage += 1;
-              }}
-            >
-              +
+          <div style="display:flex; flex-direction:column;">
+            <span>Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor}</span>
+            <div style="display:flex;">
+              Page:
+              <div
+                class="pager"
+                @click=${() => {
+                  if (this.opsPage > 0) this.opsPage -= 1;
+                }}
+              >
+                -
+              </div>
+              ${this.opsPage}
+              <div
+                class="pager"
+                @click=${() => {
+                  if (this.opsPage < this.dump.dump.integration_dump.integrated.length / PAGE_SIZE)
+                    this.opsPage += 1;
+                }}
+              >
+                +
+              </div>
             </div>
           </div>
           <div class="long-list">${this.renderDhtOps()}</div>
         </div>
         <span> published ops count: ${this.dump.dump.source_chain_dump.published_ops_count}</span>
         <div>
-          <div style="display:flex">
-            Source Chain: (${this.dump.dump.source_chain_dump.records.length} records) Page:
-            <div
-              class="pager"
-              @click=${() => {
-                if (this.recordPage > 0) this.recordPage -= 1;
-              }}
-            >
-              -
-            </div>
-            ${this.recordPage}
-            <div
-              class="pager"
-              @click=${() => {
-                if (this.recordPage < this.dump.dump.source_chain_dump.records.length / PAGE_SIZE)
-                  this.recordPage += 1;
-              }}
-            >
-              +
+          <div style="display:flex; flex-direction:column;">
+            <span>Source Chain: (${this.dump.dump.source_chain_dump.records.length} records) </span>
+            <div style="display:flex;">
+              Page:
+              <div
+                class="pager"
+                @click=${() => {
+                  if (this.recordPage > 0) this.recordPage -= 1;
+                }}
+              >
+                -
+              </div>
+              ${this.recordPage}
+              <div
+                class="pager"
+                @click=${() => {
+                  if (this.recordPage < this.dump.dump.source_chain_dump.records.length / PAGE_SIZE)
+                    this.recordPage += 1;
+                }}
+              >
+                +
+              </div>
             </div>
           </div>
           <div class="long-list">${this.renderRecords()}</div>
