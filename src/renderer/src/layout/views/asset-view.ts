@@ -60,7 +60,7 @@ export class AssetView extends LitElement {
         .view=${{
           type: 'asset',
           wal: this.wal,
-          recordLocation: entryTypeLocation
+          recordInfo: entryTypeLocation
             ? {
                 roleName: dnaLocation.roleName,
                 integrityZomeName: entryTypeLocation.integrity_zome,

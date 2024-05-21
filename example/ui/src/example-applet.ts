@@ -82,16 +82,16 @@ export class ExampleApplet extends LitElement {
           case 'block':
             throw new Error('Block view is not implemented.');
           case 'asset':
-            if (!this.weaveClient.renderInfo.view.recordLocation) {
+            if (!this.weaveClient.renderInfo.view.recordInfo) {
               throw new Error(
                 'The example applet does not implement asset views pointing to DNAs instead of Records.'
               );
             } else {
-              switch (this.weaveClient.renderInfo.view.recordLocation.roleName) {
+              switch (this.weaveClient.renderInfo.view.recordInfo.roleName) {
                 case 'forum':
-                  switch (this.weaveClient.renderInfo.view.recordLocation.integrityZomeName) {
+                  switch (this.weaveClient.renderInfo.view.recordInfo.integrityZomeName) {
                     case 'posts_integrity':
-                      switch (this.weaveClient.renderInfo.view.recordLocation.entryType) {
+                      switch (this.weaveClient.renderInfo.view.recordInfo.entryType) {
                         case 'post':
                           return html`
                             <posts-context .store=${this.postsStore}>
@@ -104,17 +104,17 @@ export class ExampleApplet extends LitElement {
                           `;
                         default:
                           throw new Error(
-                            `Unknown entry type ${this.weaveClient.renderInfo.view.recordLocation.entryType}.`
+                            `Unknown entry type ${this.weaveClient.renderInfo.view.recordInfo.entryType}.`
                           );
                       }
                     default:
                       throw new Error(
-                        `Unknown zome '${this.weaveClient.renderInfo.view.recordLocation.integrityZomeName}'.`
+                        `Unknown zome '${this.weaveClient.renderInfo.view.recordInfo.integrityZomeName}'.`
                       );
                   }
                 default:
                   throw new Error(
-                    `Unknown role name '${this.weaveClient.renderInfo.view.recordLocation.roleName}'.`
+                    `Unknown role name '${this.weaveClient.renderInfo.view.recordInfo.roleName}'.`
                   );
               }
             }

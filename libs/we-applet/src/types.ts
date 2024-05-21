@@ -155,10 +155,10 @@ export type AppletView =
   | {
       type: 'asset';
       /**
-       * If the WAL points to a Record (AnyDhtHash) recordLocation will be defined, if the WAL
-       * points to a DNA (i.e. null hash for the AnyDhtHash) then recordLocation is not defined
+       * If the WAL points to a Record (AnyDhtHash) recordInfo will be defined, if the WAL
+       * points to a DNA (i.e. null hash for the AnyDhtHash) then recordInfo is not defined
        */
-      recordLocation?: RecordLocation;
+      recordInfo?: RecordInfo;
       wal: WAL;
     }
   | {
@@ -263,7 +263,7 @@ export type ParentToAppletRequest =
   | {
       type: 'get-applet-asset-info';
       wal: WAL;
-      recordLocation?: RecordLocation;
+      recordInfo?: RecordInfo;
     }
   | {
       type: 'get-block-types';
@@ -272,7 +272,7 @@ export type ParentToAppletRequest =
       type: 'bind-asset';
       srcWal: WAL;
       dstWal: WAL;
-      dstRecordLocation?: RecordLocation;
+      dstRecordInfo?: RecordInfo;
     }
   | {
       type: 'search';
@@ -293,7 +293,7 @@ export type AppletToParentRequest =
       crossApplet: boolean;
     }
   | {
-      type: 'get-record-location';
+      type: 'get-record-info';
       hrl: Hrl;
     }
   | {
@@ -424,7 +424,7 @@ export type ProfilesLocation = {
   profilesRoleName: string;
 };
 
-export type RecordLocation = {
+export type RecordInfo = {
   roleName: string;
   integrityZomeName: string;
   entryType: string;

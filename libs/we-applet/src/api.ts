@@ -22,7 +22,7 @@ import {
   Hrl,
   WeaveLocation,
   FrameNotification,
-  RecordLocation,
+  RecordInfo,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -148,7 +148,7 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _wal, _recordLocation) => undefined),
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined),
       (this.bindAsset = async () => {});
   }
 
@@ -167,7 +167,7 @@ export class AppletServices {
   getAssetInfo: (
     appletClient: AppClient,
     wal: WAL,
-    recordLocation?: RecordLocation,
+    recordInfo?: RecordInfo,
   ) => Promise<AssetInfo | undefined>;
   /**
    * Search in this Applet
@@ -195,7 +195,7 @@ export class AppletServices {
     /**
      * Record location of the dna containing the destination WAL
      */
-    dstRecordLocation?: RecordLocation,
+    dstRecordInfo?: RecordInfo,
   ) => Promise<void>;
 }
 

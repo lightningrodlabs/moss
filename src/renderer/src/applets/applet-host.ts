@@ -11,7 +11,7 @@ import {
   WeaveServices,
   GroupProfile,
   FrameNotification,
-  RecordLocation,
+  RecordInfo,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -295,18 +295,18 @@ export async function handleAppletIframeMessage(
         };
         return config;
       }
-    case 'get-record-location': {
+    case 'get-record-info': {
       const location = await toPromise(
         mossStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
       );
       if (!location || !location.entryDefLocation) throw new Error('Record not found');
 
-      const recordLocation: RecordLocation = {
+      const recordInfo: RecordInfo = {
         roleName: location.dnaLocation.roleName,
         integrityZomeName: location.entryDefLocation.integrity_zome,
         entryType: location.entryDefLocation.entry_def,
       };
-      return recordLocation;
+      return recordInfo;
     }
     case 'open-view':
       switch (message.request.type) {
@@ -490,23 +490,20 @@ export class AppletHost {
     this.appletId = appletId;
   }
 
-  async getAppletAssetInfo(
-    wal: WAL,
-    recordLocation?: RecordLocation,
-  ): Promise<AssetInfo | undefined> {
+  async getAppletAssetInfo(wal: WAL, recordInfo?: RecordInfo): Promise<AssetInfo | undefined> {
     return this.postMessage({
       type: 'get-applet-asset-info',
       wal,
-      recordLocation,
+      recordInfo,
     });
   }
 
-  bindAsset(srcWal: WAL, dstWal: WAL, dstRecordLocation?: RecordLocation): Promise<void> {
+  bindAsset(srcWal: WAL, dstWal: WAL, dstRecordInfo?: RecordInfo): Promise<void> {
     return this.postMessage({
       type: 'bind-asset',
       srcWal,
       dstWal,
-      dstRecordLocation,
+      dstRecordInfo,
     });
   }
 

@@ -30,7 +30,7 @@ import {
   OpenWalMode,
   CreatableName,
   CreatableType,
-  RecordLocation,
+  RecordInfo,
   NULL_HASH,
 } from '@lightningrodlabs/we-applet';
 
@@ -277,7 +277,7 @@ const handleMessage = async (
       return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
         request.wal,
-        request.recordLocation,
+        request.recordInfo,
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
@@ -286,7 +286,7 @@ const handleMessage = async (
         appletClient,
         request.srcWal,
         request.dstWal,
-        request.dstRecordLocation,
+        request.dstRecordInfo,
       );
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
@@ -463,8 +463,8 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
           },
         };
       }
-      const recordLocation: RecordLocation = await postMessage({
-        type: 'get-record-location',
+      const recordInfo: RecordInfo = await postMessage({
+        type: 'get-record-info',
         hrl,
       });
       return {
@@ -472,10 +472,10 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
         view: {
           type: 'asset',
           wal: { hrl, context },
-          recordLocation: {
-            roleName: recordLocation.roleName,
-            integrityZomeName: recordLocation.integrityZomeName,
-            entryType: recordLocation.entryType,
+          recordInfo: {
+            roleName: recordInfo.roleName,
+            integrityZomeName: recordInfo.integrityZomeName,
+            entryType: recordInfo.entryType,
           },
         },
       };
