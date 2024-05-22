@@ -2,6 +2,11 @@
   "0.11.x": [
     {
       "type": "🗓️ Event",
+      "timestamp": 1716383769436,
+      "message": "On May 30th at 9 am EST (3 pm CET) we will host a \"Play-date\" where we will explore using the Weave by focusing on the Gamez a tool that allows groups to create arbitrary types of games.\n\n As we play, we can talk about what type of games we can make and use the collaborative documents, kanban and chat functionalities to jam on the ideas. We think this will be a fun way for us to get to play with the Weave that will spark creative connection. \n\n Join the [open Weavers group](https://lightningrodlabs.org/we?we://group/d86f59b5-def4-4fbb-961e-be487d87df74) ahead of time so your node has time to syncronize. \n\n The event will be live on Zoom at [this link](https://us06web.zoom.us/j/82751356671?pwd=hC3DTPti3aB0IIMuVLDnQlLB4LZNu8.1)"
+    },
+    {
+      "type": "🗓️ Event",
       "timestamp": 1715868450114,
       "message": "Hi Weavers! Thanks for joining us at the first Weave Community Gathering!  The next one will be held on June 15th.  Watch this space for links and time."
     },
