@@ -1,7 +1,8 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { EntryHashMap, HoloHashMap, LazyHoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   ActionHash,
+  AgentPubKey,
   AppAuthenticationToken,
   AppClient,
   AppWebsocket,
@@ -11,6 +12,7 @@ import {
   HoloHashB64,
   decodeHashFromBase64,
   encodeHashToBase64,
+  fakeAgentPubKey,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -25,13 +27,17 @@ import {
   AppletToParentRequest,
   AppletToParentMessage,
   HrlLocation,
-  ParentToAppletRequest,
+  ParentToAppletMessage,
   AppletHash,
   AppletServices,
   OpenWalMode,
   CreatableName,
   CreatableType,
+  PeerStatusUpdate,
+  PeerStatus,
+  ReadonlyPeerStatusStore,
 } from '@lightningrodlabs/we-applet';
+import { readable } from '@holochain-open-dev/stores';
 
 declare global {
   interface Window {
@@ -40,9 +46,18 @@ declare global {
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_APPLET_HASH__: AppletHash;
   }
+
+  interface WindowEventMap {
+    'peer-status-update': CustomEvent<PeerStatusUpdate>;
+  }
 }
 
 const weaveApi: WeaveServices = {
+  onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
+    const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
+    window.addEventListener('peer-status-update', listener);
+    return () => window.removeEventListener('peer-status-update', listener);
+  },
   openAppletMain: async (appletHash: EntryHash): Promise<void> =>
     postMessage({
       type: 'open-view',
@@ -185,6 +200,19 @@ const weaveApi: WeaveServices = {
       }
     });
 
+    const peerStatusStore: ReadonlyPeerStatusStore = {
+      agentsStatus: new LazyHoloHashMap((agent: AgentPubKey) =>
+        readable<PeerStatus>(PeerStatus.Offline, (set) => {
+          window.addEventListener('peer-status-update', (e: CustomEvent<PeerStatusUpdate>) => {
+            const maybeAgentStatus = e.detail.find(
+              ([agentKey, _]) => agentKey.toString() === agent.toString(),
+            );
+            if (maybeAgentStatus) set(maybeAgentStatus[1]);
+          });
+        }),
+      ),
+    };
+
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(
         iframeConfig.appPort,
@@ -201,6 +229,7 @@ const weaveApi: WeaveServices = {
       view: view.view,
       appletClient,
       profilesClient,
+      peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
     };
@@ -235,7 +264,7 @@ const weaveApi: WeaveServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-  document.addEventListener('weave-client-connected', async () => {
+  window.addEventListener('weave-client-connected', async () => {
     // Once the WeaveClient of the applet has connected, we can update stuff from the AppletServices
     let creatables: Record<CreatableName, CreatableType> = {};
     creatables = window.__WEAVE_APPLET_SERVICES__.creatables;
@@ -252,7 +281,7 @@ const weaveApi: WeaveServices = {
       value: creatables,
     });
   });
-  document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
+  window.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 })();
 
 async function fetchLocalStorage() {
@@ -269,37 +298,43 @@ async function fetchLocalStorage() {
 const handleMessage = async (
   appletClient: AppClient,
   appletHash: AppletHash,
-  request: ParentToAppletRequest,
+  message: ParentToAppletMessage,
 ) => {
-  switch (request.type) {
+  switch (message.type) {
     case 'get-applet-asset-info':
       return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
-        request.roleName,
-        request.integrityZomeName,
-        request.entryType,
-        request.wal,
+        message.roleName,
+        message.integrityZomeName,
+        message.entryType,
+        message.wal,
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
     case 'bind-asset':
       return window.__WEAVE_APPLET_SERVICES__.bindAsset(
         appletClient,
-        request.srcWal,
-        request.dstWal,
-        request.dstRoleName,
-        request.dstIntegrityZomeName,
-        request.dstEntryType,
+        message.srcWal,
+        message.dstWal,
+        message.dstRoleName,
+        message.dstIntegrityZomeName,
+        message.dstEntryType,
       );
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
         appletClient,
         appletHash,
         window.__WEAVE_API__,
-        request.filter,
+        message.filter,
+      );
+    case 'peer-status-update':
+      window.dispatchEvent(
+        new CustomEvent('peer-status-update', {
+          detail: message.payload,
+        }),
       );
     default:
-      throw new Error('Unknown ParentToAppletRequest');
+      throw new Error('Unknown ParentToAppletMessage');
   }
 };
 

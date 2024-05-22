@@ -22,6 +22,8 @@ import {
   Hrl,
   WeaveLocation,
   FrameNotification,
+  PeerStatusUpdate,
+  UnsubscribeFunction,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -41,7 +43,7 @@ declare global {
  * @returns bool: Returns whether this function is being called in a We context.
  */
 export const isWeContext = () =>
-  window.location.protocol === 'applet:' || window.__WEAVE_API__ || window.__isWe__;
+  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
 
 /**
  *
@@ -205,6 +207,13 @@ export class AppletServices {
 
 export interface WeaveServices {
   /**
+   * Event handler for peer status updates.
+   *
+   * @param callback Callback that gets called if a peer status update event is emitted
+   * @returns
+   */
+  onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
+  /**
    * Open the main view of the specified Applet
    * @param appletHash
    * @returns
@@ -302,23 +311,27 @@ export class WeaveClient implements WeaveServices {
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('weave-client-connected'));
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
       return new WeaveClient();
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
-          document.removeEventListener('applet-iframe-ready', listener);
+          window.removeEventListener('applet-iframe-ready', listener);
           resolve(null);
         };
-        document.addEventListener('applet-iframe-ready', listener);
+        window.addEventListener('applet-iframe-ready', listener);
       });
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('weave-client-connected'));
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
       return new WeaveClient();
     }
   }
+
+  onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
+    return window.__WEAVE_API__.onPeerStatusUpdate(callback);
+  };
 
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
     window.__WEAVE_API__.openAppletMain(appletHash);

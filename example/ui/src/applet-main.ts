@@ -11,9 +11,14 @@ import {
   type FrameNotification,
   WeaveClient,
   weaveUrlToLocation,
+  ReadonlyPeerStatusStore,
 } from '@lightningrodlabs/we-applet';
-import { AppClient } from '@holochain/client';
+import { AppClient, encodeHashToBase64 } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
+import { consume } from '@lit/context';
+import './elements/agent-status.js';
 
 @localized()
 @customElement('applet-main')
@@ -23,6 +28,13 @@ export class AppletMain extends LitElement {
 
   @property()
   weaveClient!: WeaveClient;
+
+  @property()
+  peerStatusStore!: ReadonlyPeerStatusStore;
+
+  @consume({ context: profilesStoreContext, subscribe: true })
+  @property()
+  profilesStore!: ProfilesStore;
 
   @query('#wal-input-field')
   walInputField!: HTMLInputElement;
@@ -55,6 +67,12 @@ export class AppletMain extends LitElement {
   // disconnectedCallback(): void {
   //   if (this.unsubscribe) this.unsubscribe();
   // }
+
+  _allProfiles = new StoreSubscriber(
+    this,
+    () => this.profilesStore.allProfiles,
+    () => [this.profilesStore]
+  );
 
   updateWalLink() {
     this.walLink = this.walInputField.value;
@@ -126,9 +144,32 @@ export class AppletMain extends LitElement {
     this.selectedWal = selectedWal;
   }
 
+  renderPeers() {
+    switch (this._allProfiles.value.status) {
+      case 'pending':
+        return html`Loading peer profiles...`;
+      case 'error':
+        console.error('Failed to get peer profiles: ', this._allProfiles.value.error);
+        return html`Failed to get peer profiles. See console for details.`;
+      case 'complete':
+        return html`
+          ${Array.from(this._allProfiles.value.value.keys()).map(
+            (agent) =>
+              html`
+                <agent-status
+                  .agent=${agent}
+                  .peerStatusStore=${this.peerStatusStore}
+                ></agent-status>
+              `
+          )}
+        `;
+    }
+  }
+
   render() {
     return html`
       <div class="column" style="margin-bottom: 500px;">
+        <div class="row" style="justify-content: flex-start;">${this.renderPeers()}</div>
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>

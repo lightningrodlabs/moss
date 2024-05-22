@@ -12,8 +12,11 @@ import {
 import {
   AsyncReadable,
   StoreSubscriber,
+  Unsubscriber,
+  derived,
   get,
   joinAsync,
+  joinMap,
   pipe,
   toPromise,
 } from '@holochain-open-dev/stores';
@@ -63,6 +66,7 @@ import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
+import { slice } from '@holochain-open-dev/utils';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -92,6 +96,21 @@ export class GroupHome extends LitElement {
     () => [this.mossStore, this.groupStore],
   );
 
+  _peersStatus = new StoreSubscriber(
+    this,
+    () =>
+      pipe(this.groupStore.members, (members) =>
+        derived(
+          joinMap(slice(this.groupStore.peerStatusStore.agentsStatus, members)),
+          (agentsStatus) =>
+            Array.from(agentsStatus).filter(
+              (pubKey) => pubKey.toString() !== this.groupStore.groupClient.myPubKey.toString(),
+            ),
+        ),
+      ),
+    () => [this.groupStore],
+  );
+
   @state()
   _peerStatusLoading = true;
 
@@ -100,6 +119,8 @@ export class GroupHome extends LitElement {
 
   @state()
   _showIgnoredApplets = false;
+
+  _unsubscribe: Unsubscriber | undefined;
 
   _unjoinedApplets = new StoreSubscriber(
     this,
@@ -167,6 +188,8 @@ export class GroupHome extends LitElement {
   @state()
   _joiningNewApplet: string | undefined;
 
+  _peerStatusInterval: number | null | undefined;
+
   groupProfile = new StoreSubscriber(
     this,
     () => {
@@ -181,10 +204,24 @@ export class GroupHome extends LitElement {
   );
 
   async firstUpdated() {
+    this._peerStatusInterval = window.setInterval(async () => {
+      if (this._peersStatus.value.status === 'complete') {
+        await this.groupStore.emitToAppletHosts({
+          type: 'peer-status-update',
+          payload: this._peersStatus.value.value as any,
+        });
+      }
+    }, 5000);
+
     // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
     setTimeout(() => {
       this._peerStatusLoading = false;
     }, 2500);
+  }
+
+  disconnectedCallback(): void {
+    if (this._unsubscribe) this._unsubscribe();
+    if (this._peerStatusInterval) clearInterval(this._peerStatusInterval);
   }
 
   async updateUi(e: CustomEvent) {
