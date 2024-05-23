@@ -154,6 +154,12 @@ contextMenu({
   showSaveImageAs: true,
   showSearchWithGoogle: false,
   showInspectElement: true,
+  append: (_defaultActions, _parameters, browserWindow) => [
+    {
+      label: 'Reload Moss',
+      click: () => (browserWindow as BrowserWindow).reload(),
+    },
+  ],
 });
 
 console.log('APP PATH: ', app.getAppPath());

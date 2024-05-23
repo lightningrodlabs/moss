@@ -244,7 +244,7 @@ export class ZomeCallPanel extends LitElement {
             size="small"
             style="margin-left:5px;"
             @click=${async () => {
-              this.dumpState(appId);
+              await this.dumpState(appId);
             }}
             >Query</sl-button
           >

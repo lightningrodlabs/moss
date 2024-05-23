@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeaveClient, FrameNotification } from '@lightningrodlabs/we-applet';
+import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@lightningrodlabs/we-applet';
 import { weaveClientContext } from '@lightningrodlabs/we-elements';
 
 import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
@@ -22,6 +22,8 @@ import { ActionHash, CellType, DnaHash } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
 import { PostsClient } from './posts-client.js';
+import { ProfilesStore } from '@holochain-open-dev/profiles';
+import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 
 @localized()
 // @customElement("example-applet")
@@ -38,6 +40,8 @@ export class ExampleApplet extends LitElement {
   @property()
   interval: any;
 
+  peerStatusUnsubscribe: UnsubscribeFunction | undefined;
+
   firstUpdated() {
     // To test whether applet iframe properly gets removed after disabling applet.
     setInterval(() => {
@@ -48,6 +52,10 @@ export class ExampleApplet extends LitElement {
     //   const appletHash = this.weaveClient.renderInfo.appletHash;
     //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
     // }
+
+    this.peerStatusUnsubscribe = this.weaveClient.onPeerStatusUpdate((payload) => {
+      console.log('Got peer status update: ', payload);
+    });
   }
 
   async notifyWe(notifications: FrameNotification[]) {
@@ -61,21 +69,25 @@ export class ExampleApplet extends LitElement {
         switch (this.weaveClient.renderInfo.view.type) {
           case 'main':
             const client = this.weaveClient.renderInfo.appletClient;
+            const profilesStore = new ProfilesStore(this.weaveClient.renderInfo.profilesClient);
             return html`
               <posts-context .store=${this.postsStore}>
                 <attachments-context .store=${this.attachmentsStore}>
-                  <applet-main
-                    .client=${this.weaveClient.renderInfo.appletClient}
-                    .weaveClient=${this.weaveClient}
-                    @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
-                    @post-selected=${async (e: CustomEvent) => {
-                      const appInfo = await client.appInfo();
-                      if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
-                        .cell_id[0];
-                      this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
-                    }}
-                  ></applet-main>
+                  <profiles-context .store=${profilesStore}>
+                    <applet-main
+                      .client=${this.weaveClient.renderInfo.appletClient}
+                      .weaveClient=${this.weaveClient}
+                      .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
+                      @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
+                      @post-selected=${async (e: CustomEvent) => {
+                        const appInfo = await client.appInfo();
+                        if (!appInfo) throw new Error('AppInfo is null.');
+                        const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
+                          .cell_id[0];
+                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
+                      }}
+                    ></applet-main>
+                  </profiles-context>
                 </attachments-context>
               </posts-context>
             `;

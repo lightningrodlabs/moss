@@ -835,6 +835,12 @@ export class MossStore {
     document.dispatchEvent(new CustomEvent('added-to-pocket'));
   }
 
+  clearPocket() {
+    this.persistedStore.pocket.set([]);
+    notify(msg('Pocket cleared.'));
+    document.dispatchEvent(new CustomEvent('pocket-cleared'));
+  }
+
   walToRecentlyCreated(wal: WAL) {
     wal = validateWal(wal);
     let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();

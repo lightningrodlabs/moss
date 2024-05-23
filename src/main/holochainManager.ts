@@ -241,13 +241,14 @@ export class HolochainManager {
   }
 
   async getAppToken(appId): Promise<AppAuthenticationToken> {
-    let token = this.appTokens[appId];
+    const token = this.appTokens[appId];
     if (token) return token;
     const response = await this.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: appId,
       single_use: false,
       expiry_seconds: 99999999,
     });
+    this.appTokens[appId] = response.token;
     return response.token;
   }
 }

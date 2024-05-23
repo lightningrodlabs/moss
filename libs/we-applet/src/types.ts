@@ -1,4 +1,6 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
+import { Readable } from '@holochain-open-dev/stores';
+import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
   AppClient,
   ActionHash,
@@ -9,6 +11,7 @@ import {
   DnaHashB64,
   CallZomeRequest,
   AppAuthenticationToken,
+  AgentPubKey,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -234,6 +237,7 @@ export type RenderInfo =
       view: AppletView;
       appletClient: AppClient;
       profilesClient: ProfilesClient;
+      peerStatusStore: ReadonlyPeerStatusStore;
       appletHash: AppletHash;
       /**
        * Non-exhaustive array of profiles of the groups the given applet is shared with.
@@ -259,7 +263,7 @@ export type RenderView =
       view: CrossAppletView;
     };
 
-export type ParentToAppletRequest =
+export type ParentToAppletMessage =
   | {
       type: 'get-applet-asset-info';
       wal: WAL;
@@ -277,6 +281,10 @@ export type ParentToAppletRequest =
   | {
       type: 'search';
       filter: string;
+    }
+  | {
+      type: 'peer-status-update';
+      payload: PeerStatusUpdate;
     };
 
 export type AppletToParentMessage = {
@@ -429,3 +437,22 @@ export type RecordInfo = {
   integrityZomeName: string;
   entryType: string;
 };
+
+/**
+ *
+ * Events
+ *
+ */
+
+export type UnsubscribeFunction = () => void;
+
+export enum PeerStatus {
+  Online = 'online',
+  Offline = 'offline',
+}
+
+export type PeerStatusUpdate = Array<[AgentPubKey, PeerStatus]>;
+
+export interface ReadonlyPeerStatusStore {
+  agentsStatus: LazyHoloHashMap<Uint8Array, Readable<PeerStatus>>;
+}

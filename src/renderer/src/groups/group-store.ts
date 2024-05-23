@@ -27,7 +27,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, GroupProfile, ParentToAppletMessage } from '@lightningrodlabs/we-applet';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
@@ -454,6 +454,23 @@ export class GroupStore {
       return completed([undefined, undefined] as [string | undefined, number | undefined]);
     },
   );
+
+  /**
+   * Emits an iframe message to all applet hosts. Will not return the response if
+   * one is expected.
+   * @param message
+   */
+  async emitToAppletHosts(message: ParentToAppletMessage): Promise<void> {
+    const appletStores = await toPromise(this.activeAppletStores);
+    await Promise.allSettled(
+      Array.from(appletStores.values()).map(async (appletStore) => {
+        const appletHost = await toPromise(appletStore.host);
+        if (appletHost) {
+          await appletHost.postMessage(message);
+        }
+      }),
+    );
+  }
 }
 
 async function retryUntilResolved<T>(

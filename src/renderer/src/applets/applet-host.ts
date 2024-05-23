@@ -5,13 +5,14 @@ import {
   AssetLocationAndInfo,
   WAL,
   AppletToParentRequest,
-  ParentToAppletRequest,
+  ParentToAppletMessage,
   IframeConfig,
   BlockType,
   WeaveServices,
   GroupProfile,
   FrameNotification,
   RecordInfo,
+  PeerStatusUpdate,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -121,6 +122,9 @@ export async function setupAppletMessageHandler(mossStore: MossStore, openViews:
 
 export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
+    onPeerStatusUpdate(_) {
+      return () => undefined;
+    },
     async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
       const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
       if (maybeCachedInfo) return maybeCachedInfo;
@@ -520,11 +524,18 @@ export class AppletHost {
     });
   }
 
-  private async postMessage<T>(request: ParentToAppletRequest) {
+  peerStatusUpdate(payload: PeerStatusUpdate) {
+    return this.postMessage({
+      type: 'peer-status-update',
+      payload,
+    });
+  }
+
+  async postMessage<T>(message: ParentToAppletMessage) {
     return new Promise<T>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
 
-      this.iframe.contentWindow!.postMessage(request, '*', [port2]);
+      this.iframe.contentWindow!.postMessage(message, '*', [port2]);
 
       port1.onmessage = (m) => {
         if (m.data.type === 'success') {

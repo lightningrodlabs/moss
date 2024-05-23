@@ -23,6 +23,8 @@ import {
   WeaveLocation,
   FrameNotification,
   RecordInfo,
+  PeerStatusUpdate,
+  UnsubscribeFunction,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -32,7 +34,7 @@ declare global {
   interface Window {
     __WEAVE_API__: WeaveServices;
     __WEAVE_APPLET_SERVICES__: AppletServices;
-    __WE_RENDER_INFO__: RenderInfo;
+    __WEAVE_RENDER_INFO__: RenderInfo;
     __isWe__: boolean | undefined;
   }
 }
@@ -48,7 +50,7 @@ export const NULL_HASH = new Uint8Array(39);
  * @returns bool: Returns whether this function is being called in a We context.
  */
 export const isWeContext = () =>
-  window.location.protocol === 'applet:' || window.__WEAVE_API__ || window.__isWe__;
+  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
 
 /**
  *
@@ -201,6 +203,13 @@ export class AppletServices {
 
 export interface WeaveServices {
   /**
+   * Event handler for peer status updates.
+   *
+   * @param callback Callback that gets called if a peer status update event is emitted
+   * @returns
+   */
+  onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
+  /**
    * Open the main view of the specified Applet
    * @param appletHash
    * @returns
@@ -288,33 +297,37 @@ export interface WeaveServices {
 
 export class WeaveClient implements WeaveServices {
   get renderInfo(): RenderInfo {
-    return window.__WE_RENDER_INFO__;
+    return window.__WEAVE_RENDER_INFO__;
   }
 
   private constructor() {}
 
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
-    if (window.__WE_RENDER_INFO__) {
+    if (window.__WEAVE_RENDER_INFO__) {
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('weave-client-connected'));
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
       return new WeaveClient();
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
-          document.removeEventListener('applet-iframe-ready', listener);
+          window.removeEventListener('applet-iframe-ready', listener);
           resolve(null);
         };
-        document.addEventListener('applet-iframe-ready', listener);
+        window.addEventListener('applet-iframe-ready', listener);
       });
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('weave-client-connected'));
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
       return new WeaveClient();
     }
   }
+
+  onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
+    return window.__WEAVE_API__.onPeerStatusUpdate(callback);
+  };
 
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
     window.__WEAVE_API__.openAppletMain(appletHash);

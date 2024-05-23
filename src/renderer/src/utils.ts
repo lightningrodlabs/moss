@@ -608,6 +608,6 @@ export function logMossZomeCall(
 }
 
 export function dateStr(timestamp: Timestamp) {
-  const date = new Date(timestamp);
+  const date = new Date(timestamp / 1000);
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }
