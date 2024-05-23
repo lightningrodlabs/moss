@@ -43,7 +43,6 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import './group-peers-status.js';
-import './related-groups.js';
 import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
@@ -480,7 +479,7 @@ export class GroupHome extends LitElement {
         <div class="column" style="flex: 1; padding: 16px; overflow-y: auto; position: relative;">
 
         <div style=" background-image: url(${
-          groupProfile.logo_src
+          groupProfile.icon_src
         }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"></div>
 
           <!-- Top Row -->
@@ -489,7 +488,7 @@ export class GroupHome extends LitElement {
             <div class="row" style="align-items: center; flex: 1;">
               <div style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;">
               <img
-                .src=${groupProfile.logo_src}
+                .src=${groupProfile.icon_src}
                 style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%;"
                 alt="${groupProfile.name}"
               />

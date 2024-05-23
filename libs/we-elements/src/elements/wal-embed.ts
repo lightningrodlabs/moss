@@ -195,7 +195,7 @@ export class WalEmbed extends LitElement {
                   (groupProfile) => html`
                     <sl-tooltip .content=${groupProfile.name}>
                       <img
-                        src=${groupProfile.logo_src}
+                        src=${groupProfile.icon_src}
                         style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
                       />
                     </sl-tooltip>

@@ -1,4 +1,4 @@
-import { AgentPubKey, AppInfo, DnaHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64 } from '@holochain/client';
 import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -67,9 +67,6 @@ export class AppletDetailCard extends LitElement {
 
   @property()
   applet!: Applet;
-
-  @property()
-  federatedGroups!: ReadonlyMap<EntryHash, Array<DnaHash>>;
 
   @state()
   addedBy: AgentPubKey | undefined;
@@ -153,30 +150,6 @@ export class AppletDetailCard extends LitElement {
                   >Install Update</sl-button
                 >`
               : html``}
-            <sl-tooltip .content=${msg('Federate')}>
-              <sl-icon-button
-                .src=${wrapPathInSvg(mdiShareVariant)}
-                style="font-size: 38px; margin-right: 10px;"
-                @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('federate-applet', {
-                      detail: this.appletHash,
-                      bubbles: true,
-                    }),
-                  );
-                }}
-                @keypress=${(e: KeyboardEvent) => {
-                  if (e.key === 'Enter') {
-                    this.dispatchEvent(
-                      new CustomEvent('federate-applet', {
-                        detail: this.appletHash,
-                        bubbles: true,
-                      }),
-                    );
-                  }
-                }}
-              ></sl-icon-button>
-            </sl-tooltip>
             <sl-tooltip
               .content=${this.appInfo && isAppRunning(this.appInfo)
                 ? msg('Disable')
@@ -189,21 +162,6 @@ export class AppletDetailCard extends LitElement {
                 ?disabled=${!this.appInfo}
                 @sl-change=${async () => {
                   if (this.appInfo && isAppRunning(this.appInfo)) {
-                    const federatedGroups = await this.groupStore.groupClient.getFederatedGroups(
-                      this.appletHash,
-                    );
-                    if (federatedGroups.length > 0) {
-                      const confirmation = await dialogMessagebox({
-                        message:
-                          'WARNING: This Applet is federated with at least one other group. Disabling it will disable it for all groups.',
-                        type: 'warning',
-                        buttons: ['Cancel', 'Continue'],
-                      });
-                      if (confirmation.response === 0) {
-                        await this.mossStore.reloadManualStores();
-                        return;
-                      }
-                    }
                     await this.mossStore.disableApplet(this.appletHash);
                     this.dispatchEvent(
                       new CustomEvent('applets-disabled', {
@@ -226,10 +184,6 @@ export class AppletDetailCard extends LitElement {
             <span><b>appletHash:&nbsp;</b></span
             ><span>${encodeHashToBase64(this.appletHash)}</span>
             <span style="flex: 1;"></span>
-            ${this.federatedGroups.get(this.appletHash) &&
-            this.federatedGroups.get(this.appletHash)!.length > 0
-              ? html`<span style="margin-right: 5px; margin-bottom: 5px;">Federated with:</span>`
-              : html`<div style="height: 30px;"></div>`}
 
             <div class="row" style="align-items: center;">
               <span><b>added by&nbsp;</b></span>
@@ -244,18 +198,6 @@ export class AppletDetailCard extends LitElement {
           <div class="row" style="align-items: center; margin-top: 4px;">
             <span><b>joined by:&nbsp;</b></span>
             ${this.renderJoinedMembers()}
-          </div>
-          <div class="row" style="justify-content: flex-end">
-            ${Array.from(this.federatedGroups.get(this.appletHash)!).map(
-              (groupDnaHash) => html`
-                <group-context .groupDnaHash=${groupDnaHash}>
-                  <group-logo
-                    .groupDnaHash=${groupDnaHash}
-                    style="margin-right: 8px; --size: 40px"
-                  ></group-logo
-                ></group-context>
-              `,
-            )}
           </div>
           <!-- Cells -->
           <div style="margin-top: 5px; margin-bottom: 3px;font-size: 20px;">

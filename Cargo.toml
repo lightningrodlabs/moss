@@ -33,3 +33,10 @@ kitsune_p2p_timestamp = "0.4.0-dev.2"
 lair_keystore_api = "0.4.4"
 
 serde = "1"
+
+
+[workspace.dependencies.group]
+path = "dnas/group/zomes/coordinator/group"
+
+[workspace.dependencies.group_integrity]
+path = "dnas/group/zomes/integrity/group"

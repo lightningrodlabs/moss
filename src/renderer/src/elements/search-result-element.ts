@@ -119,7 +119,7 @@ export class SearchResultElement extends LitElement {
                         (profile) => html`
                           <sl-tooltip content="${profile.name}" hoist position="top">
                             <img
-                              .src=${profile.logo_src}
+                              .src=${profile.icon_src}
                               alt=${`Group icon of group ${profile.name}`}
                               style="height: 24px; width: 24px; margin-right: 4px; border-radius: 50%" />
                             <sl-tooltip> </sl-tooltip

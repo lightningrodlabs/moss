@@ -1,19 +1,10 @@
-import {
-  asyncDeriveAndJoin,
-  AsyncReadable,
-  joinAsync,
-  mapAndJoin,
-  pipe,
-  sliceAndJoin,
-  StoreSubscriber,
-} from '@holochain-open-dev/stores';
+import { pipe, sliceAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { DnaHash, EntryHash } from '@holochain/client';
+import { EntryHash } from '@holochain/client';
 import { hashState, notify } from '@holochain-open-dev/elements';
-import { AppletHash } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -24,7 +15,6 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 
-import './federate-applet-dialog.js';
 import './applet-detail-card.js';
 import './group-context.js';
 import './group-logo.js';
@@ -37,7 +27,6 @@ import { weStyles } from '../../shared-styles.js';
 import { Applet } from '../../types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { GroupDnaHash } from '../../types.js';
 
 @localized()
 @customElement('group-applets-settings')
@@ -51,30 +40,14 @@ export class GroupAppletsSettings extends LitElement {
   _groupApplets = new StoreSubscriber(
     this,
     () =>
-      joinAsync([
-        asyncDeriveAndJoin(
-          pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
-            sliceAndJoin(this._groupStore.applets, myInstalledApplets),
-          ),
-          (applets) =>
-            mapAndJoin(applets, (_applet, appletHash) =>
-              this._groupStore.appletFederatedGroups.get(appletHash),
-            ),
-        ),
-      ]) as AsyncReadable<
-        [
-          ReadonlyMap<AppletHash, Applet>,
-          ReadonlyMap<AppletHash, Array<GroupDnaHash>>, // Groups the Applet has been federated with
-        ]
-      >,
+      pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
+        sliceAndJoin(this._groupStore.applets, myInstalledApplets),
+      ),
     () => [this._groupStore, this._mossStore],
   );
 
   @state(hashState())
   appletToUnarchive: EntryHash | undefined;
-
-  @state(hashState())
-  appletToFederate: EntryHash | undefined;
 
   @state()
   archiving = false;
@@ -82,21 +55,7 @@ export class GroupAppletsSettings extends LitElement {
   @state()
   unarchiving = false;
 
-  renderFederateDialog() {
-    if (!this.appletToFederate) return html``;
-
-    return html`<federate-applet-dialog
-      .appletHash=${this.appletToFederate}
-      @sl-hide=${() => {
-        this.appletToFederate = undefined;
-      }}
-    ></federate-applet-dialog>`;
-  }
-
-  renderInstalledApplets(
-    applets: ReadonlyMap<EntryHash, Applet>,
-    federatedGroups: ReadonlyMap<EntryHash, Array<DnaHash>>,
-  ) {
+  renderInstalledApplets(applets: ReadonlyMap<EntryHash, Applet>) {
     const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
       this._groupStore.groupDnaHash,
     );
@@ -113,7 +72,6 @@ export class GroupAppletsSettings extends LitElement {
         </div>
       `;
     return html`
-      ${this.renderFederateDialog()}
       <div class="column" style="flex: 1;">
         ${Array.from(applets.entries())
           .sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name))
@@ -121,9 +79,6 @@ export class GroupAppletsSettings extends LitElement {
             ([appletHash, applet]) => html`
               <applet-detail-card
                 style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
-                @federate-applet=${(e) => {
-                  this.appletToFederate = e.detail;
-                }}
                 @applets-disabled=${(e) => {
                   this.dispatchEvent(
                     new CustomEvent('applets-disabled', {
@@ -135,7 +90,6 @@ export class GroupAppletsSettings extends LitElement {
                 }}
                 .appletHash=${appletHash}
                 .applet=${applet}
-                .federatedGroups=${federatedGroups}
               ></applet-detail-card>
             `,
           )}
@@ -202,10 +156,7 @@ export class GroupAppletsSettings extends LitElement {
                     </sl-switch>
                   </div>
                 `}
-            ${this.renderInstalledApplets(
-              this._groupApplets.value.value[0][0],
-              this._groupApplets.value.value[0][1],
-            )}
+            ${this.renderInstalledApplets(this._groupApplets.value.value)}
           </div>
         `;
     }

@@ -172,7 +172,7 @@ export async function devSetup(
           fn_name: 'set_group_profile',
           payload: {
             name: group.name,
-            logo_src: icon_src,
+            icon_src: icon_src,
           },
         });
       }

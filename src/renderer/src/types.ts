@@ -1,4 +1,5 @@
 import {
+  ActionHash,
   ActionHashB64,
   AgentPubKey,
   AgentPubKeyB64,
@@ -25,8 +26,54 @@ export type AppletHash = EntryHash;
  */
 export type GroupDnaHash = DnaHash;
 
+export type StewardPermission = {
+  /**
+   * ActionHash of the StewardPermission based on which this permission has been issued
+   */
+  permission_hash?: ActionHash;
+  for_agent: AgentPubKey;
+  expiry?: number;
+};
+
+export type StewardPermissionClaim = {
+  /**
+   * Action hash of the steward permission
+   */
+  permission_hash: ActionHash;
+  permission: StewardPermission;
+};
+
+export type PermissionLevel =
+  | {
+      type: 'progenitor';
+    }
+  | {
+      type: 'steward';
+      content: StewardPermissionClaim;
+    }
+  | {
+      type: 'member';
+    };
+
+export type GroupProfile = {
+  /**
+   * ActionHash of the StewardPermission based on which the profile has been created/edited
+   */
+  permission_hash?: ActionHash;
+  name: string;
+  icon_src: string;
+  meta_data?: string;
+};
+
 export type Applet = {
-  custom_name: string; // name of the applet instance as chosen by the person adding it to the group,
+  /**
+   * ActionHash of the StewardPermission based on which the Applet entry has been created
+   */
+  permission_hash?: ActionHash;
+  /**
+   * name of the applet instance as chosen by the person adding it to the group
+   */
+  custom_name: string;
   description: string;
   sha256_happ: string;
   sha256_ui: string | undefined;
@@ -43,7 +90,7 @@ export type PrivateAppletEntry = {
   applet_pubkey: AgentPubKey;
 };
 
-export type RegisterAppletInput = {
+export type JoinAppletInput = {
   applet: Applet;
   joining_pubkey: AgentPubKey;
 };

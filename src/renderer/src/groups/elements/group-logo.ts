@@ -33,7 +33,7 @@ export class GroupLogo extends LitElement {
 
     return html`
       <img
-        .src=${groupProfile.logo_src}
+        .src=${groupProfile.icon_src}
         alt="${groupProfile.name}"
         title="${groupProfile.name}"
         style="border-radius: 50%"

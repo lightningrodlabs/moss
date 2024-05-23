@@ -61,7 +61,8 @@ export type AssetInfo = {
 
 export type GroupProfile = {
   name: string;
-  logo_src: string;
+  icon_src: string;
+  meta_data?: string;
 };
 
 export type FrameNotification = {

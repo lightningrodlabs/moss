@@ -45,7 +45,7 @@ export class CreateGroupDialog extends LitElement {
     this.committing = true;
 
     try {
-      const groupAppInfo = await this._mossStore.createGroup(fields.name, fields.logo_src);
+      const groupAppInfo = await this._mossStore.createGroup(fields.name, fields.icon_src);
 
       this.dispatchEvent(
         new CustomEvent('group-created', {
@@ -79,7 +79,7 @@ export class CreateGroupDialog extends LitElement {
       >
         <form class="column" ${onSubmit((f) => this.createGroup(f))}>
           <div class="row" style="justify-content: center">
-            <select-avatar required name="logo_src"></select-avatar>
+            <select-avatar required name="icon_src"></select-avatar>
 
             <sl-input
               name="name"
