@@ -12,7 +12,6 @@ import {
   HoloHashB64,
   decodeHashFromBase64,
   encodeHashToBase64,
-  fakeAgentPubKey,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -25,7 +24,6 @@ import {
   RenderView,
   RenderInfo,
   AppletToParentMessage,
-  HrlLocation,
   ParentToAppletMessage,
   AppletHash,
   AppletServices,
@@ -37,6 +35,7 @@ import {
   PeerStatusUpdate,
   PeerStatus,
   ReadonlyPeerStatusStore,
+  AppletToParentRequest,
 } from '@lightningrodlabs/we-applet';
 import { readable } from '@holochain-open-dev/stores';
 
@@ -305,8 +304,8 @@ const handleMessage = async (
     case 'get-applet-asset-info':
       return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
-        message.recordInfo,
         message.wal,
+        message.recordInfo,
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
