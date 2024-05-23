@@ -17,6 +17,11 @@ import {
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
 
+/**
+ * Hash of Holohash lenght but all zeroes
+ */
+export type NullHash = Uint8Array;
+
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
@@ -152,9 +157,11 @@ export type AppletView =
   | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
-      roleName: string;
-      integrityZomeName: string;
-      entryType: string;
+      /**
+       * If the WAL points to a Record (AnyDhtHash) recordInfo will be defined, if the WAL
+       * points to a DNA (i.e. null hash for the AnyDhtHash) then recordInfo is not defined
+       */
+      recordInfo?: RecordInfo;
       wal: WAL;
     }
   | {
@@ -259,10 +266,8 @@ export type RenderView =
 export type ParentToAppletMessage =
   | {
       type: 'get-applet-asset-info';
-      roleName: string;
-      integrityZomeName: string;
-      entryType: string;
       wal: WAL;
+      recordInfo?: RecordInfo;
     }
   | {
       type: 'get-block-types';
@@ -271,9 +276,7 @@ export type ParentToAppletMessage =
       type: 'bind-asset';
       srcWal: WAL;
       dstWal: WAL;
-      dstRoleName: string;
-      dstIntegrityZomeName: string;
-      dstEntryType: string;
+      dstRecordInfo?: RecordInfo;
     }
   | {
       type: 'search';
@@ -298,7 +301,7 @@ export type AppletToParentRequest =
       crossApplet: boolean;
     }
   | {
-      type: 'get-hrl-location';
+      type: 'get-record-info';
       hrl: Hrl;
     }
   | {
@@ -429,7 +432,7 @@ export type ProfilesLocation = {
   profilesRoleName: string;
 };
 
-export type HrlLocation = {
+export type RecordInfo = {
   roleName: string;
   integrityZomeName: string;
   entryType: string;

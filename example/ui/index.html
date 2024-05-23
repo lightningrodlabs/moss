@@ -84,14 +84,15 @@
                 hrl: [dnaHash, actionHash],
               }));
           },
-          getAssetInfo: async (appletClient, roleName, integrityZomeName, entryType, wal) => {
-            switch (roleName) {
+          getAssetInfo: async (appletClient, wal, recordInfo) => {
+            console.log('Got getAssetInfo request: ', wal, recordInfo);
+            switch (recordInfo.roleName) {
               case 'forum':
-                switch (integrityZomeName) {
+                switch (recordInfo.integrityZomeName) {
                   case 'posts_integrity':
-                    switch (entryType) {
+                    switch (recordInfo.entryType) {
                       case 'post':
-                        const postsClient = new PostsClient(appletClient, roleName);
+                        const postsClient = new PostsClient(appletClient, recordInfo.roleName);
                         const post = await postsClient.getPost(wal.hrl[1]);
                         if (!post) return undefined;
                         return {
@@ -99,13 +100,13 @@
                           icon_src: wrapPathInSvg(mdiPost),
                         };
                       default:
-                        throw new Error(`Unknown entry type ${entryType}.`);
+                        throw new Error(`Unknown entry type ${recordInfo.entryType}.`);
                     }
                   default:
-                    throw new Error(`Unknown zome '${integrityZomeName}'.`);
+                    throw new Error(`Unknown zome '${recordInfo.integrityZomeName}'.`);
                 }
               default:
-                throw new Error(`Unknown role name '${roleName}'.`);
+                throw new Error(`Unknown role name '${recordInfo.roleName}'.`);
             }
           },
         };
