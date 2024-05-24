@@ -44,10 +44,8 @@ jobs:
       - name: (TEST) Merge latest-mac.yml mac release files
         if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-11'
         run: |
-          ls ./scripts
-          ls
           yarn
-          node ./sripts/merge-mac-yamls.mjs
+          node ./scripts/merge-mac-yamls.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -131,6 +129,6 @@ jobs:
       - name: Merge latest-mac.yml mac release files
         if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-11'
         run: |
-          node ./sripts/merge-mac-yamls.mjs
+          node ./scripts/merge-mac-yamls.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
