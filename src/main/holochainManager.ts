@@ -124,7 +124,7 @@ export class HolochainManager {
           console.log('Got appInterfaces: ', appInterfaces);
           let appPort;
           if (appInterfaces.length > 0) {
-            appPort = appInterfaces[0];
+            appPort = appInterfaces[0].port;
           } else {
             const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
               allowed_origins: '*',

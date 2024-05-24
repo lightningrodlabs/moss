@@ -147,42 +147,41 @@ export async function launch(
             console.log('READ uiHash: ', uiHash);
             if (happHash !== currentAppAssetsInfo.happ.sha256) {
               // In case that the previous happ sha256 is not the one of KanDo 0.9.1, replace it fully
-              const sha256Happ_0_9_1 =
-                'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
-              if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
-                console.warn(
-                  'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
-                );
-                console.log(
-                  `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
-                );
-                if (splashscreenWindow)
-                  splashscreenWindow.webContents.send(
-                    'loading-progress-update',
-                    'Replacing feedback board with new version...',
-                  );
-                await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
-                // back up previous assets info
-                weFileSystem.backupAppAssetsInfo(appId);
-                const networkSeed = defaultAppNetworkSeed();
-
-                const distributionInfo: DistributionInfo = {
-                  type: 'default-app',
-                };
-                // Install new app
-                await holochainManager.installWebApp(
-                  path.join(DEFAULT_APPS_DIRECTORY, fileName),
-                  appId,
-                  distributionInfo,
-                  networkSeed,
-                );
-                return;
-              } else {
-                console.warn(
-                  'Got new default app with the same name but a different happ hash. Aborted UI update process.',
-                );
-                return;
-              }
+              // const sha256Happ_0_9_1 =
+              //   'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
+              // if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
+              // console.warn(
+              //   'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
+              // );
+              // console.log(
+              //   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
+              // );
+              // if (splashscreenWindow)
+              //   splashscreenWindow.webContents.send(
+              //     'loading-progress-update',
+              //     'Replacing feedback board with new version...',
+              //   );
+              // await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
+              // // back up previous assets info
+              // weFileSystem.backupAppAssetsInfo(appId);
+              // const networkSeed = defaultAppNetworkSeed();
+              // const distributionInfo: DistributionInfo = {
+              //   type: 'default-app',
+              // };
+              // // Install new app
+              // await holochainManager.installWebApp(
+              //   path.join(DEFAULT_APPS_DIRECTORY, fileName),
+              //   appId,
+              //   distributionInfo,
+              //   networkSeed,
+              // );
+              // return;
+              // } else {
+              console.warn(
+                'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+              );
+              return;
+              // }
             }
             if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
               // TODO emit this to the logs
