@@ -206,7 +206,7 @@ const getPlatformFromLatestMacYml = (content) => {
   // cleanup
   const updatedRelease = await client.request(`GET ${URL}`);
   const updatedCurrentRelease = updatedRelease.data.find((release) => {
-    return release.name === VERSION;
+    return release.tag_name === `v${VERSION}`;
   });
 
   const assetsToClean = updatedCurrentRelease.assets.filter((asset) => {
