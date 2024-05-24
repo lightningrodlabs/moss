@@ -41,6 +41,14 @@ jobs:
         id: version
         shell: bash
 
+      - name: (TEST) Merge latest-mac.yml mac release files
+        if: contains(matrix.os, 'macos')
+        run: |
+          yarn
+          node ./sripts/merge-mac-yamls.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: install Rust
         uses: dtolnay/rust-toolchain@1.75.0
 
@@ -55,13 +63,6 @@ jobs:
           mkdir resources/bins
           yarn setup:release
           curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.11.0/we.happ
-
-      - name: (TEST) Merge latest-mac.yml mac release files
-        if: contains(matrix.os, 'macos')
-        run: |
-          node ./sripts/merge-mac-yamls.mjs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build zomes
         run: |
