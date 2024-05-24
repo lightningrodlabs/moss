@@ -2,7 +2,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiClose, mdiExitRun } from '@mdi/js';
+import { mdiClose } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 // import { ipcRenderer } from 'electron';
 
