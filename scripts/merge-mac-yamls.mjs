@@ -21,7 +21,7 @@ const REPO = 'we';
 const URL = `/repos/${OWNER}/${REPO}/releases`;
 const VERSION = pkg.version;
 const FILE_NAME = 'latest-mac.yml';
-const LOCAL_FILE_PATH = FILE_NAME;
+const LOCAL_FILE_PATH = `dist/${FILE_NAME}`;
 
 const mergeFiles = (intel, arm) => {
   const intelObject = yaml.load(intel);
@@ -43,7 +43,7 @@ const mergeFiles = (intel, arm) => {
 };
 
 const getPlatformFromLatestMacYml = (content) => {
-  const intelRe = `org.lightningrodlabs.we-electron-alpha-${VERSION}.dmg`;
+  const intelRe = `org.lightningrodlabs.we-electron-alpha-${VERSION}-x64.dmg`;
   const armRe = `org.lightningrodlabs.we-electron-alpha-${VERSION}-arm64.dmg`;
   const isIntel = content.includes(intelRe);
   const isArm = content.includes(armRe);
@@ -58,7 +58,7 @@ const getPlatformFromLatestMacYml = (content) => {
 (async () => {
   const allReleases = await client.request(`GET ${URL}`);
   console.log('VERSION: ', VERSION);
-  console.log('ALL RELEASES: ', allReleases);
+  // console.log('ALL RELEASES: ', allReleases);
   const currentRelease = allReleases.data.find((release) => {
     return release.tag_name === `v${VERSION}`;
   });
@@ -67,7 +67,7 @@ const getPlatformFromLatestMacYml = (content) => {
     console.log('No release found. Skipping merge');
     return;
   } else {
-    console.log('Release found: ', release.name);
+    console.log('Release found: ', currentRelease.name);
   }
 
   const localLatestMacYmlExists = fs.existsSync(LOCAL_FILE_PATH);
