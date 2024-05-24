@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import https from 'https';
 import * as path from 'path';
 
-const mossConfigJSON = fs.readFileSync(path.join('dist', 'main', 'moss.config.json'));
+const mossConfigJSON = fs.readFileSync('moss.config.json');
 const mossConfig = JSON.parse(mossConfigJSON);
 
 const binariesDir = path.join('dist', 'main', 'resources', 'bins');
