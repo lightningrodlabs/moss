@@ -703,6 +703,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
+  ipcMain.handle('get-profile', () => RUN_OPTIONS.profile);
   ipcMain.handle('get-conductor-info', async () => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,

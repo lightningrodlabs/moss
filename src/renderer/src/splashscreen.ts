@@ -20,6 +20,9 @@ export class SplashScreen extends LitElement {
   progressState: string = '';
 
   @state()
+  profile: string | undefined;
+
+  @state()
   passwordsDontMatch = false;
 
   @state()
@@ -49,6 +52,7 @@ export class SplashScreen extends LitElement {
     } else {
       this.view = SplashScreenMode.EnterPassword;
     }
+    this.profile = await (window as any).electronAPI.getProfile();
   }
 
   async setupAndLaunch() {
@@ -225,6 +229,7 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="background">
         ${this.renderContent()} ${this.progressState === '' ? this.renderExitButton() : html``}
+        ${this.profile ? html`<span class="bottom-left">profile: ${this.profile}</span>` : html``}
         <img
           class="top-left"
           src="icon.png"
