@@ -466,7 +466,7 @@ async function installGroup(
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
   const appInfo = await holochainManager.adminWebsocket.installApp({
-    path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+    path: path.join(DEFAULT_APPS_DIRECTORY, 'group.happ'),
     installed_app_id: appId,
     agent_key: appStoreAppInfo.agent_pub_key,
     network_seed: networkSeed,

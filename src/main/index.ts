@@ -730,7 +730,7 @@ app.whenReady().then(async () => {
     if (!toolsLibraryAppInfo)
       throw new Error('Tools Library must be installed before installing the first group.');
     const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-      path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+      path: path.join(DEFAULT_APPS_DIRECTORY, 'group.happ'),
       installed_app_id: appId,
       agent_key: toolsLibraryAppInfo.agent_pub_key,
       network_seed: networkSeed,
