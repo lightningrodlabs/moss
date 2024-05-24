@@ -42,7 +42,7 @@ jobs:
         shell: bash
 
       - name: (TEST) Merge latest-mac.yml mac release files
-        if: contains(matrix.os, 'macos')
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-11'
         run: |
           yarn
           node ./sripts/merge-mac-yamls.mjs
@@ -127,7 +127,7 @@ jobs:
           # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
 
       - name: Merge latest-mac.yml mac release files
-        if: contains(matrix.os, 'macos')
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-11'
         run: |
           node ./sripts/merge-mac-yamls.mjs
         env:
