@@ -57,6 +57,8 @@ const getPlatformFromLatestMacYml = (content) => {
 
 (async () => {
   const allReleases = await client.request(`GET ${URL}`);
+  console.log('VERSION: ', VERSION);
+  console.log('ALL RELEASES: ', allReleases);
   const currentRelease = allReleases.data.find((release) => {
     return release.name === VERSION;
   });
