@@ -41,11 +41,8 @@ jobs:
         id: version
         shell: bash
 
-      - name: install Rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          toolchain: stable
+      - name: install Rust
+        uses: dtolnay/rust-toolchain@1.75.0
 
       - name: install Go stable
         uses: actions/setup-go@v4
@@ -57,7 +54,7 @@ jobs:
           mkdir resources/default-apps
           mkdir resources/bins
           yarn setup:release
-          curl -L --output resources/default-apps/we.happ https://github.com/lightningrodlabs/we/releases/download/we-alpha-happ-v0.11.0/we.happ
+          curl -L --output resources/default-apps/group.happ https://github.com/lightningrodlabs/we/releases/download/group-happ-v0.12.0-dev.0/group.happ
 
       - name: Build zomes
         run: |
@@ -98,12 +95,12 @@ jobs:
           # # Sign the .exe file
           # dotnet tool install --global --version 4.0.1 AzureSignTool
           # echo "sha512 before code signing"
-          # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
-          # AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
+          # CertUtil -hashfile "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          # AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
           # echo "sha512 after code signing"
-          # CertUtil -hashfile "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          # CertUtil -hashfile "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
           # # Overwrite the latest.yml one with one containing the sha512 of the code signed .exe file
           # node ./scripts/latest-yaml.js
           # gh release upload "latest.yml" "latest.yml" --clobber
-          # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber

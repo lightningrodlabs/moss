@@ -34,7 +34,7 @@ export class GroupPeersStatus extends LitElement {
       <list-agents-by-status
         class="agents-list"
         .agents=${members.filter(
-          (m) => m.toString() !== this._groupStore.groupClient.appAgentClient.myPubKey.toString(),
+          (m) => m.toString() !== this._groupStore.groupClient.appClient.myPubKey.toString(),
         )}
       ></list-agents-by-status>
     `;
@@ -55,8 +55,6 @@ export class GroupPeersStatus extends LitElement {
         ></display-error>`;
     }
   }
-
-  
 
   static styles = [
     weStyles,

@@ -52,13 +52,18 @@ export type AssetSource =
  */
 export type DistributionInfo =
   | {
-      type: 'appstore-light';
+      type: 'tools-library';
       info: {
-        appstoreDnaHash: DnaHashB64;
-        // according to https://docs.rs/hc_crud_caps/0.10.3/hc_crud/struct.Entity.html
-        appEntryId: ActionHashB64;
-        appEntryActionHash: ActionHashB64;
-        appEntryEntryHash: EntryHashB64;
+        toolsLibraryDnaHash: DnaHashB64;
+        /**
+         * Action Hash B64 of the original Tool entry
+         */
+        originalToolActionHash: ActionHashB64;
+        /**
+         * ActionHashB64 of the (updated) Tool entry this applet has been installed from
+         */
+        toolVersionActionHash: ActionHashB64;
+        toolVersionEntryHash: EntryHashB64;
       };
     }
   | {

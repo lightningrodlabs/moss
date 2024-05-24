@@ -17,7 +17,8 @@ import {
 import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
-  AppAgentWebsocket,
+  AppAuthenticationToken,
+  AppWebsocket,
   CellType,
   DnaHash,
   EntryHash,
@@ -26,16 +27,16 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, GroupProfile, ParentToAppletMessage } from '@lightningrodlabs/we-applet';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
-import { AppEntry, Entity } from '../processes/appstore/types.js';
 import { Applet, RegisterAppletInput } from '../types.js';
 import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
+import { Tool, UpdateableEntity } from '../tools-library/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 
@@ -54,18 +55,16 @@ export class GroupStore {
   private constructed: boolean;
 
   constructor(
-    public appAgentWebsocket: AppAgentWebsocket,
+    public appWebsocket: AppWebsocket,
+    public authenticationToken: AppAuthenticationToken,
     public groupDnaHash: DnaHash,
     public mossStore: MossStore,
   ) {
-    this.groupClient = new GroupClient(appAgentWebsocket, 'group');
+    this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
-    this.peerStatusStore = new PeerStatusStore(
-      new PeerStatusClient(appAgentWebsocket, 'group'),
-      {},
-    );
-    this.profilesStore = new ProfilesStore(new ProfilesClient(appAgentWebsocket, 'group'));
-    this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appAgentWebsocket, 'group'));
+    this.peerStatusStore = new PeerStatusStore(new PeerStatusClient(appWebsocket, 'group'), {});
+    this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
+    this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
 
     this.constructed = true;
@@ -92,7 +91,7 @@ export class GroupStore {
   }
 
   async groupDnaModifiers(): Promise<DnaModifiers> {
-    const appInfo = await this.appAgentWebsocket.appInfo();
+    const appInfo = await this.appWebsocket.appInfo();
     const cellInfo = appInfo.cell_info['group'].find(
       (cellInfo) => CellType.Provisioned in cellInfo,
     );
@@ -146,7 +145,7 @@ export class GroupStore {
    * installing this specific instance of the Applet.
    */
   async installAndAdvertiseApplet(
-    appEntry: Entity<AppEntry>,
+    toolBundleEntity: UpdateableEntity<Tool>,
     customName: string,
     networkSeed?: string,
   ): Promise<EntryHash> {
@@ -154,22 +153,22 @@ export class GroupStore {
       networkSeed = uuidv4();
     }
 
-    const appHashes: AppHashes = JSON.parse(appEntry.content.hashes);
-    const appstoreDnaHash = await this.mossStore.appletBundlesStore.appstoreDnaHash();
+    const appHashes: AppHashes = JSON.parse(toolBundleEntity.record.entry.hashes);
+    const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
 
     const distributionInfo: DistributionInfo = {
-      type: 'appstore-light',
+      type: 'tools-library',
       info: {
-        appstoreDnaHash,
-        appEntryId: encodeHashToBase64(appEntry.id),
-        appEntryActionHash: encodeHashToBase64(appEntry.action),
-        appEntryEntryHash: encodeHashToBase64(appEntry.address),
+        toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+        originalToolActionHash: encodeHashToBase64(toolBundleEntity.originalActionHash),
+        toolVersionActionHash: encodeHashToBase64(toolBundleEntity.record.actionHash),
+        toolVersionEntryHash: encodeHashToBase64(toolBundleEntity.record.entryHash),
       },
     };
 
     const applet: Applet = {
       custom_name: customName,
-      description: appEntry.content.description,
+      description: toolBundleEntity.record.entry.description,
       sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
       sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
       sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,
@@ -455,6 +454,23 @@ export class GroupStore {
       return completed([undefined, undefined] as [string | undefined, number | undefined]);
     },
   );
+
+  /**
+   * Emits an iframe message to all applet hosts. Will not return the response if
+   * one is expected.
+   * @param message
+   */
+  async emitToAppletHosts(message: ParentToAppletMessage): Promise<void> {
+    const appletStores = await toPromise(this.activeAppletStores);
+    await Promise.allSettled(
+      Array.from(appletStores.values()).map(async (appletStore) => {
+        const appletHost = await toPromise(appletStore.host);
+        if (appletHost) {
+          await appletHost.postMessage(message);
+        }
+      }),
+    );
+  }
 }
 
 async function retryUntilResolved<T>(

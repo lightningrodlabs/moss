@@ -3,11 +3,13 @@ import {
   ActionHash,
   DnaHash,
   EntryHash,
-  AppAgentCallZomeRequest,
+  AppCallZomeRequest,
   Record,
-  AppAgentWebsocket,
+  AppWebsocket,
   AgentPubKey,
   encodeHashToBase64,
+  InstalledAppId,
+  AppAuthenticationToken,
 } from '@holochain/client';
 import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 
@@ -17,13 +19,18 @@ import { RegisterAppletInput } from '../types.js';
 
 export class GroupClient {
   constructor(
-    public appAgentClient: AppAgentWebsocket,
+    public appClient: AppWebsocket,
+    public authenticationToken: AppAuthenticationToken,
     public roleName: string,
     public zomeName: string = 'group',
   ) {}
 
   get myPubKey(): AgentPubKey {
-    return this.appAgentClient.myPubKey;
+    return this.appClient.myPubKey;
+  }
+
+  get installedAppId(): InstalledAppId {
+    return this.appClient.installedAppId;
   }
 
   /** GroupProfile */
@@ -167,12 +174,12 @@ export class GroupClient {
   }
 
   private callZome(fn_name: string, payload: any) {
-    const req: AppAgentCallZomeRequest = {
+    const req: AppCallZomeRequest = {
       role_name: this.roleName,
       zome_name: this.zomeName,
       fn_name,
       payload,
     };
-    return this.appAgentClient.callZome(req);
+    return this.appClient.callZome(req);
   }
 }

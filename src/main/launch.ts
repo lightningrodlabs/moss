@@ -1,11 +1,10 @@
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
-import { app, BrowserWindow } from 'electron';
-import { DistributionInfo, WeFileSystem, breakingAppVersion } from './filesystem';
+import { BrowserWindow } from 'electron';
+import { DistributionInfo, WeFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { APPSTORE_APP_ID } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
@@ -14,6 +13,7 @@ import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
+import { defaultAppNetworkSeed } from './utils';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -93,18 +93,18 @@ export async function launch(
   if (
     !holochainManager.installedApps
       .map((appInfo) => appInfo.installed_app_id)
-      .includes(APPSTORE_APP_ID)
+      .includes(TOOLS_LIBRARY_APP_ID)
   ) {
-    console.log('Installing AppStore...');
+    console.log('Installing Tools Library...');
     if (splashscreenWindow)
-      splashscreenWindow.webContents.send('loading-progress-update', 'Installing App Library...');
+      splashscreenWindow.webContents.send('loading-progress-update', 'Installing Tools Library...');
     await holochainManager.installApp(
-      path.join(DEFAULT_APPS_DIRECTORY, 'AppstoreLight.happ'),
-      APPSTORE_APP_ID,
+      path.join(DEFAULT_APPS_DIRECTORY, 'tools-library.happ'),
+      TOOLS_LIBRARY_APP_ID,
       runOptions.appstoreNetworkSeed,
     );
 
-    console.log('AppstoreLight installed.');
+    console.log('Tools Library installed.');
   }
   // Install other default apps if necessary (not in applet-dev mode)
   if (!runOptions.devInfo) {
@@ -120,9 +120,7 @@ export async function launch(
               'loading-progress-update',
               `Installing default app ${appName}...`,
             );
-          const networkSeed = !app.isPackaged
-            ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-            : `lightningrodlabs-we-${breakingAppVersion(app)}`;
+          const networkSeed = defaultAppNetworkSeed();
 
           const distributionInfo: DistributionInfo = {
             type: 'default-app',
@@ -149,44 +147,41 @@ export async function launch(
             console.log('READ uiHash: ', uiHash);
             if (happHash !== currentAppAssetsInfo.happ.sha256) {
               // In case that the previous happ sha256 is not the one of KanDo 0.9.1, replace it fully
-              const sha256Happ_0_9_1 =
-                'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
-              if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
-                console.warn(
-                  'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
-                );
-                console.log(
-                  `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
-                );
-                if (splashscreenWindow)
-                  splashscreenWindow.webContents.send(
-                    'loading-progress-update',
-                    'Replacing feedback board with new version...',
-                  );
-                await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
-                // back up previous assets info
-                weFileSystem.backupAppAssetsInfo(appId);
-                const networkSeed = !app.isPackaged
-                  ? `lightningrodlabs-we-applet-dev-${os.hostname()}`
-                  : `lightningrodlabs-we-${breakingAppVersion(app)}`;
-
-                const distributionInfo: DistributionInfo = {
-                  type: 'default-app',
-                };
-                // Install new app
-                await holochainManager.installWebApp(
-                  path.join(DEFAULT_APPS_DIRECTORY, fileName),
-                  appId,
-                  distributionInfo,
-                  networkSeed,
-                );
-                return;
-              } else {
-                console.warn(
-                  'Got new default app with the same name but a different happ hash. Aborted UI update process.',
-                );
-                return;
-              }
+              // const sha256Happ_0_9_1 =
+              //   'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
+              // if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
+              // console.warn(
+              //   'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
+              // );
+              // console.log(
+              //   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
+              // );
+              // if (splashscreenWindow)
+              //   splashscreenWindow.webContents.send(
+              //     'loading-progress-update',
+              //     'Replacing feedback board with new version...',
+              //   );
+              // await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
+              // // back up previous assets info
+              // weFileSystem.backupAppAssetsInfo(appId);
+              // const networkSeed = defaultAppNetworkSeed();
+              // const distributionInfo: DistributionInfo = {
+              //   type: 'default-app',
+              // };
+              // // Install new app
+              // await holochainManager.installWebApp(
+              //   path.join(DEFAULT_APPS_DIRECTORY, fileName),
+              //   appId,
+              //   distributionInfo,
+              //   networkSeed,
+              // );
+              // return;
+              // } else {
+              console.warn(
+                'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+              );
+              return;
+              // }
             }
             if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
               // TODO emit this to the logs

@@ -4,7 +4,7 @@ import {
   CellInfo,
   DisabledAppReason,
   AppInfo,
-  AppAgentWebsocket,
+  AppWebsocket,
   ListAppsResponse,
   DnaHash,
   CellType,
@@ -15,6 +15,11 @@ import {
   HoloHashB64,
   ActionHash,
   CallZomeRequest,
+  FunctionName,
+  ZomeName,
+  AgentPubKeyB64,
+  Timestamp,
+  AppAuthenticationToken,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
@@ -26,16 +31,14 @@ import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 
 export async function initAppClient(
-  appId: string,
+  token: AppAuthenticationToken,
   defaultTimeout?: number,
-): Promise<AppAgentWebsocket> {
-  const client = await AppAgentWebsocket.connect(appId, {
-    url: new URL('ws://UNUSED'),
+): Promise<AppWebsocket> {
+  const client = await AppWebsocket.connect({
+    token,
     defaultTimeout,
   });
-  client.installedAppId = appId;
   client.cachedAppInfo = undefined;
-  client.appWebsocket.overrideInstalledAppId = appId;
   await client.appInfo();
   return client;
 }
@@ -109,7 +112,7 @@ export function getStatus(app: AppInfo): string {
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('running');
+  return app.status === 'running';
 }
 export function isAppDisabled(app: AppInfo): boolean {
   return Object.keys(app.status).includes('disabled');
@@ -484,18 +487,11 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   return lowerCaseAppletId.replaceAll('$', '%24');
 }
 
-export function appEntryActionHashFromDistInfo(distributionInfoString: string): ActionHash {
+export function toolBundleActionHashFromDistInfo(distributionInfoString: string): ActionHash {
   const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'appstore-light')
-    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
-  return decodeHashFromBase64(distributionInfo.info.appEntryActionHash);
-}
-
-export function appEntryIdFromDistInfo(distributionInfoString: string): ActionHash {
-  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'appstore-light')
-    throw new Error("Cannot get AppEntry action hash from type other than 'appstore-light'.");
-  return decodeHashFromBase64(distributionInfo.info.appEntryId);
+  if (distributionInfo.type !== 'tools-library')
+    throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
+  return decodeHashFromBase64(distributionInfo.info.originalToolActionHash);
 }
 
 export function notifyAndThrow(message: string) {
@@ -547,9 +543,9 @@ export function getAllIframes() {
   return result;
 }
 
-export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
+export function logAppletZomeCall(request: CallZomeRequest, appletId: AppletId) {
   if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    const zomeCallCounts = window[`__zomeCallCount_${appletId}`];
+    const zomeCallCounts = window[`__appletZomeCallCount_${appletId}`];
     if (zomeCallCounts) {
       zomeCallCounts.totalCounts += 1;
       if (zomeCallCounts.functionCalls[request.fn_name]) {
@@ -560,9 +556,9 @@ export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
         }
         zomeCallCounts.functionCalls[request.fn_name] = 1;
       }
-      window[`__zomeCallCount_${appletId}`] = zomeCallCounts;
+      window[`__appletZomeCallCount_${appletId}`] = zomeCallCounts;
     } else {
-      window[`__zomeCallCount_${appletId}`] = {
+      window[`__appletZomeCallCount_${appletId}`] = {
         firstCall: Date.now(),
         totalCounts: 1,
         functionCalls: {
@@ -571,4 +567,46 @@ export function logZomeCall(request: CallZomeRequest, appletId: AppletId) {
       };
     }
   }
+}
+
+/**
+ * Zome calls made by non-applet dnas
+ *
+ * @param request
+ * @param appletId
+ */
+export function logMossZomeCall(
+  cellId: [DnaHashB64, AgentPubKeyB64],
+  fnName: FunctionName,
+  _zomeName: ZomeName,
+) {
+  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
+    // We assume unique dna hashes for now
+    const zomeCallCounts = window[`__mossZomeCallCount_${cellId[0]}`];
+    if (zomeCallCounts) {
+      zomeCallCounts.totalCounts += 1;
+      if (zomeCallCounts.functionCalls[fnName]) {
+        zomeCallCounts.functionCalls[fnName] += 1;
+      } else {
+        if (!zomeCallCounts.functionCalls) {
+          zomeCallCounts.functionCalls = {};
+        }
+        zomeCallCounts.functionCalls[fnName] = 1;
+      }
+      window[`__mossZomeCallCount_${cellId[0]}`] = zomeCallCounts;
+    } else {
+      window[`__mossZomeCallCount_${cellId[0]}`] = {
+        firstCall: Date.now(),
+        totalCounts: 1,
+        functionCalls: {
+          [fnName]: 1,
+        },
+      };
+    }
+  }
+}
+
+export function dateStr(timestamp: Timestamp) {
+  const date = new Date(timestamp / 1000);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }

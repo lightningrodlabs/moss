@@ -6,6 +6,7 @@ import {
   DnaHashB64,
   EntryHash,
   EntryHashB64,
+  FullStateDump,
 } from '@holochain/client';
 import { FrameNotification } from '@lightningrodlabs/we-applet';
 
@@ -52,6 +53,11 @@ export type AppletAgent = {
   applet_pubkey: AgentPubKey;
 };
 
+export type WebHappSource = {
+  type: 'https';
+  url: string;
+};
+
 export type AppHashes =
   | {
       type: 'webhapp';
@@ -70,13 +76,18 @@ export type AppHashes =
 
 export type DistributionInfo =
   | {
-      type: 'appstore-light';
+      type: 'tools-library';
       info: {
-        appstoreDnaHash: DnaHashB64;
-        // according to https://docs.rs/hc_crud_caps/0.10.3/hc_crud/struct.Entity.html
-        appEntryId: ActionHashB64;
-        appEntryActionHash: ActionHashB64;
-        appEntryEntryHash: EntryHashB64;
+        toolsLibraryDnaHash: DnaHashB64;
+        /**
+         * Action Hash B64 of the original Tool entry
+         */
+        originalToolActionHash: ActionHashB64;
+        /**
+         * ActionHashB64 of the (updated) Tool entry this applet has been installed from
+         */
+        toolVersionActionHash: ActionHashB64;
+        toolVersionEntryHash: EntryHashB64;
       };
     }
   | {
@@ -150,4 +161,9 @@ export type UpdateFeedMessage = {
   type: string;
   timestamp: number;
   message: string;
+};
+
+export type DumpData = {
+  dump: FullStateDump;
+  newOpsCount: number;
 };

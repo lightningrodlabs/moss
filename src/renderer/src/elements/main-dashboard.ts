@@ -28,7 +28,7 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
 import '../layout/views/welcome-view.js';
@@ -56,7 +56,7 @@ import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, stringifyWal } from '../utils.js';
+import { decodeContext, getAllIframes, logMossZomeCall, stringifyWal } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
@@ -264,7 +264,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Publish Applet',
+        title: 'Publisher Panel',
         template: html` <publishing-view></publishing-view> `,
       },
     };
@@ -370,7 +370,7 @@ export class MainDashboard extends LitElement {
     this._selectedTab = tabInfo;
   }
 
-  async handleOpenGroup(networkSeed: string) {
+  async handleOpenInvite(networkSeed: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
         joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
@@ -385,6 +385,24 @@ export class MainDashboard extends LitElement {
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
       this.joinGroupDialog.open(networkSeed);
+    }
+  }
+
+  async handleOpenGroup(networkSeed: string) {
+    const groups = await toPromise(
+      asyncDeriveStore(this._mossStore.groupStores, (groups) =>
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+      ),
+    );
+
+    const alreadyJoinedGroup = Array.from(groups.entries()).find(
+      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+    );
+
+    if (alreadyJoinedGroup) {
+      this.openGroup(alreadyJoinedGroup[0]);
+    } else {
+      notifyError('The link is for a group you are not part of.');
     }
   }
 
@@ -468,6 +486,10 @@ export class MainDashboard extends LitElement {
       }
     });
 
+    window.electronAPI.onZomeCallSigned((_, { cellIdB64, fnName, zomeName }) => {
+      logMossZomeCall(cellIdB64, fnName, zomeName);
+    });
+
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
       console.log('Received deeplink: ', deepLink);
       try {
@@ -486,6 +508,8 @@ export class MainDashboard extends LitElement {
             hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
             context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
           });
+        } else if (split2[0] === 'invite') {
+          await this.handleOpenInvite(split2[1]);
         } else if (split2[0] === 'group') {
           await this.handleOpenGroup(split2[1]);
         } else if (split2[0] === 'applet') {
@@ -532,10 +556,10 @@ export class MainDashboard extends LitElement {
     try {
       // TODO change URL to point to main branch before merging
       const response = await fetch(
-        'https://raw.githubusercontent.com/lightningrodlabs/we/feat/update-feed/news.json',
+        'https://raw.githubusercontent.com/lightningrodlabs/we/main/news.json',
       );
       const updateFeed = await response.json();
-      this._updateFeed = updateFeed['0.11.x'];
+      this._updateFeed = updateFeed['0.12.x'];
     } catch (e) {
       console.warn('Failed to fetch update feed: ', e);
     }
@@ -1546,6 +1570,7 @@ export class MainDashboard extends LitElement {
           top: 0;
           bottom: 0;
           background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
+          width: 74px;
         }
 
         .left-group-sidebar {

@@ -1,14 +1,25 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import { ActionHashB64, AgentPubKeyB64 } from '@holochain/client';
+import {
+  ActionHashB64,
+  AgentPubKeyB64,
+  CallZomeRequest,
+  DnaHashB64,
+  FunctionName,
+  ZomeName,
+} from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 
+contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
+  signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
+});
+
 contextBridge.exposeInMainWorld('electronAPI', {
-  signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => ipcRenderer.invoke('sign-zome-call', zomeCall),
+  signZomeCallApplet: (request: CallZomeRequest) =>
+    ipcRenderer.invoke('sign-zome-call-applet', request),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
@@ -18,6 +29,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('deep-link-received', callback),
   onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
     ipcRenderer.on('switch-to-applet', callback),
+  onZomeCallSigned: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      payload: {
+        cellIdB64: [DnaHashB64, AgentPubKeyB64];
+        fnName: FunctionName;
+        zomeName: ZomeName;
+      },
+    ) => any,
+  ) => ipcRenderer.on('zome-call-signed', callback),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openDevHub: () => ipcRenderer.invoke('open-devhub'),

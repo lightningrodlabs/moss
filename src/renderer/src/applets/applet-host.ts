@@ -3,15 +3,16 @@ import {
   AppletInfo,
   AssetInfo,
   AssetLocationAndInfo,
-  HrlLocation,
   WAL,
   AppletToParentRequest,
-  ParentToAppletRequest,
+  ParentToAppletMessage,
   IframeConfig,
   BlockType,
-  WeServices,
+  WeaveServices,
   GroupProfile,
   FrameNotification,
+  RecordInfo,
+  PeerStatusUpdate,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -20,21 +21,21 @@ import {
   getAppletDevPort,
   getAppletIframeScript,
   selectScreenOrWindow,
-  signZomeCallElectron,
+  signZomeCallApplet,
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId } from '../types.js';
 import {
-  appEntryIdFromDistInfo,
   appIdFromAppletHash,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
-  logZomeCall,
+  logAppletZomeCall,
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
+  toolBundleActionHashFromDistInfo,
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
@@ -119,8 +120,11 @@ export async function setupAppletMessageHandler(mossStore: MossStore, openViews:
   });
 }
 
-export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
+export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
+    onPeerStatusUpdate(_) {
+      return () => undefined;
+    },
     async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
       const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
       if (maybeCachedInfo) return maybeCachedInfo;
@@ -165,9 +169,13 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
         const result = await appletHost.bindAsset(
           srcWal,
           dstWal,
-          dstLocation.dnaLocation.roleName,
-          dstLocation.entryDefLocation.integrity_zome,
-          dstLocation.entryDefLocation.entry_def,
+          dstLocation.entryDefLocation
+            ? {
+                roleName: dstLocation.dnaLocation.roleName,
+                integrityZomeName: dstLocation.entryDefLocation.integrity_zome,
+                entryType: dstLocation.entryDefLocation.entry_def,
+              }
+            : undefined,
         );
         // TODO sanitize result format
         return result;
@@ -205,14 +213,14 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
       const icon = await toPromise(appletStore.logo);
 
       return {
-        appletBundleId: appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+        appletBundleId: toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
         appletName: appletStore.applet.custom_name,
         appletIcon: icon,
-        groupsIds: Array.from(groupsForApplet.keys()),
+        groupsHashes: Array.from(groupsForApplet.keys()),
       } as AppletInfo;
     },
     async notifyFrame(_notifications: Array<FrameNotification>) {
-      throw new Error('notify is not implemented on headless WeServices.');
+      throw new Error('notify is not implemented on headless WeaveServices.');
     },
     openAppletMain: async () => {},
     openCrossAppletMain: async () => {},
@@ -220,10 +228,10 @@ export function buildHeadlessWeClient(mossStore: MossStore): WeServices {
     openCrossAppletBlock: async () => {},
     openAppletBlock: async () => {},
     async userSelectWal() {
-      throw new Error('userSelectWal is not supported in headless WeServices.');
+      throw new Error('userSelectWal is not supported in headless WeaveServices.');
     },
     async userSelectScreen() {
-      throw new Error('userSelectScreen is not supported in headless WeServices.');
+      throw new Error('userSelectScreen is not supported in headless WeaveServices.');
     },
     async walToPocket(wal: WAL): Promise<void> {
       mossStore.walToPocket(wal);
@@ -237,7 +245,7 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
-  const weServices = buildHeadlessWeClient(mossStore);
+  const weaveServices = buildHeadlessWeaveClient(mossStore);
 
   switch (message.type) {
     case 'get-iframe-config':
@@ -256,7 +264,7 @@ export async function handleAppletIframeMessage(
       if (crossApplet) {
         const applets = await toPromise(
           mossStore.appletsForBundleHash.get(
-            appEntryIdFromDistInfo(appletStore.applet.distribution_info),
+            toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {
@@ -281,27 +289,29 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'applet',
           appletHash,
+          authenticationToken: appletStore.authenticationToken,
           appPort: mossStore.conductorInfo.app_port,
           profilesLocation: {
-            profilesAppId: groupStore.groupClient.appAgentClient.installedAppId,
+            authenticationToken: groupStore.groupClient.authenticationToken,
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
         };
         return config;
       }
-    case 'get-hrl-location':
-      const location0 = await toPromise(
+    case 'get-record-info': {
+      const location = await toPromise(
         mossStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
       );
-      if (!location0) throw new Error('Hrl not found');
+      if (!location || !location.entryDefLocation) throw new Error('Record not found');
 
-      const hrlLocation: HrlLocation = {
-        roleName: location0.dnaLocation.roleName,
-        integrityZomeName: location0.entryDefLocation.integrity_zome,
-        entryType: location0.entryDefLocation.entry_def,
+      const recordInfo: RecordInfo = {
+        roleName: location.dnaLocation.roleName,
+        integrityZomeName: location.entryDefLocation.integrity_zome,
+        entryType: location.entryDefLocation.entry_def,
       };
-      return hrlLocation;
+      return recordInfo;
+    }
     case 'open-view':
       switch (message.request.type) {
         case 'applet-main':
@@ -410,11 +420,11 @@ export async function handleAppletIframeMessage(
       return;
     }
     case 'get-applet-info':
-      return weServices.appletInfo(message.appletHash);
+      return weaveServices.appletInfo(message.appletHash);
     case 'get-group-profile':
-      return weServices.groupProfile(message.groupId);
+      return weaveServices.groupProfile(message.groupHash);
     case 'get-global-asset-info':
-      let assetInfo = await weServices.assetInfo(message.wal);
+      let assetInfo = await weaveServices.assetInfo(message.wal);
       if (assetInfo && mossStore.isAppletDev) {
         const appletDevPort = await getAppletDevPort(appIdFromAppletHash(assetInfo.appletHash));
         if (appletDevPort) {
@@ -430,11 +440,11 @@ export async function handleAppletIframeMessage(
       if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
         throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
 
-      return weServices.requestBind(message.srcWal, message.dstWal);
+      return weaveServices.requestBind(message.srcWal, message.dstWal);
     }
     case 'sign-zome-call':
-      logZomeCall(message.request, appletId);
-      return signZomeCallElectron(message.request);
+      logAppletZomeCall(message.request, appletId);
+      return signZomeCallApplet(message.request);
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");
@@ -484,35 +494,20 @@ export class AppletHost {
     this.appletId = appletId;
   }
 
-  async getAppletAssetInfo(
-    roleName: string,
-    integrityZomeName: string,
-    entryType: string,
-    wal: WAL,
-  ): Promise<AssetInfo | undefined> {
+  async getAppletAssetInfo(wal: WAL, recordInfo?: RecordInfo): Promise<AssetInfo | undefined> {
     return this.postMessage({
       type: 'get-applet-asset-info',
-      roleName,
-      integrityZomeName,
-      entryType,
       wal,
+      recordInfo,
     });
   }
 
-  bindAsset(
-    srcWal: WAL,
-    dstWal: WAL,
-    dstRoleName: string,
-    dstIntegrityZomeName: string,
-    dstEntryType: string,
-  ): Promise<void> {
+  bindAsset(srcWal: WAL, dstWal: WAL, dstRecordInfo?: RecordInfo): Promise<void> {
     return this.postMessage({
       type: 'bind-asset',
       srcWal,
       dstWal,
-      dstRoleName,
-      dstIntegrityZomeName,
-      dstEntryType,
+      dstRecordInfo,
     });
   }
 
@@ -529,11 +524,18 @@ export class AppletHost {
     });
   }
 
-  private async postMessage<T>(request: ParentToAppletRequest) {
+  peerStatusUpdate(payload: PeerStatusUpdate) {
+    return this.postMessage({
+      type: 'peer-status-update',
+      payload,
+    });
+  }
+
+  async postMessage<T>(message: ParentToAppletMessage) {
     return new Promise<T>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
 
-      this.iframe.contentWindow!.postMessage(request, '*', [port2]);
+      this.iframe.contentWindow!.postMessage(message, '*', [port2]);
 
       port1.onmessage = (m) => {
         if (m.data.type === 'success') {

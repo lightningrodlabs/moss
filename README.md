@@ -1,6 +1,6 @@
 # Moss
 
-_Moss_ is a reference implementation of a Frame for [The Weave](https://weave.social), which can also be understood as a Holochain runtime that makes it trivially easy for groups to build collaboration spaces by composing custom "Tool" suites to meet their collaboration needs.
+_Moss_ is a reference implementation of a Frame for [The Weave](https://theweave.social), which can also be understood as a Holochain runtime that makes it trivially easy for groups to build collaboration spaces by composing custom "Tool" suites to meet their collaboration needs.
 
 _Moss_ is composed of a group management DNA, together with a defined pattern on how to build _Tool_ DNAs that can be added to a _Moss_ group. Each such group as well as each _Tool_ used within a group is its own private peer-to-peer network.
 

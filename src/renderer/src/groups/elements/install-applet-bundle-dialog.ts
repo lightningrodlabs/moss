@@ -18,9 +18,9 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
-import { AppEntry, Entity } from '../../processes/appstore/types.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
+import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 
 @localized()
 @customElement('install-applet-bundle-dialog')
@@ -65,14 +65,14 @@ export class InstallAppletBundleDialog extends LitElement {
   _installationProgress: string | undefined;
 
   @state()
-  _appletInfo: Entity<AppEntry> | undefined;
+  _appletInfo: UpdateableEntity<Tool> | undefined;
 
   @state()
   _showAdvanced: boolean = false;
 
   // _unlisten: UnlistenFn | undefined;
 
-  async open(appletInfo: Entity<AppEntry>) {
+  async open(appletInfo: UpdateableEntity<Tool>) {
     console.log('OPENING WITH APPLETINFO: ', appletInfo);
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
@@ -109,7 +109,9 @@ export class InstallAppletBundleDialog extends LitElement {
     try {
       // Trigger the download of the icon
       this._installationProgress = 'Fetching app icon...';
-      await toPromise(this.mossStore.appletBundlesStore.appletBundleLogo.get(this._appletInfo!.id));
+      await toPromise(
+        this.mossStore.toolsLibraryStore.toolLogo.get(this._appletInfo!.originalActionHash),
+      );
       this._installationProgress = 'Downloading and installing Applet...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._appletInfo!,
@@ -165,7 +167,10 @@ export class InstallAppletBundleDialog extends LitElement {
             ${ref((input) => {
               if (!input) return;
               setTimeout(() => {
-                if (this._appletInfo && allAppletsNames.includes(this._appletInfo!.content.title)) {
+                if (
+                  this._appletInfo &&
+                  allAppletsNames.includes(this._appletInfo!.record.entry.title)
+                ) {
                   (input as HTMLInputElement).setCustomValidity('Name already exists');
                 } else {
                   (input as HTMLInputElement).setCustomValidity('');
@@ -181,7 +186,7 @@ export class InstallAppletBundleDialog extends LitElement {
                 e.target.setCustomValidity('');
               }
             }}
-            .defaultValue=${this._appletInfo.content.title}
+            .defaultValue=${this._appletInfo.record.entry.title}
           ></sl-input>
 
           <span

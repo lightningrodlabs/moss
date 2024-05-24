@@ -1,5 +1,5 @@
-appId: org.lightningrodlabs.we-alpha-electron
-productName: Lightningrod Labs We
+appId: org.lightningrodlabs.moss-0.12
+productName: Lightningrod Labs Moss
 directories:
   buildResources: build
 files:
@@ -11,7 +11,7 @@ asarUnpack:
   - '**/*.node'
 afterSign: scripts/notarize.js
 win:
-  executableName: lightningrodlabs-we
+  executableName: moss
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

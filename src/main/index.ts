@@ -26,15 +26,15 @@ import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
-import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { breakingVersion, emitToWindow, setLinkOpenHandlers } from './utils';
+import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow } from './windows';
-import { APPSTORE_APP_ID, AppHashes } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -43,7 +43,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { InstalledAppId } from '@holochain/client';
+import { CallZomeRequest, InstalledAppId, encodeHashToBase64 } from '@holochain/client';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
@@ -140,7 +140,7 @@ if (ranViaCli) {
   cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'we.dev.config.ts';
 }
 
-const RUN_OPTIONS = validateArgs(cliOpts, app);
+const RUN_OPTIONS = validateArgs(cliOpts);
 // app.commandLine.appendSwitch('enable-logging');
 
 const appName = app.getName();
@@ -154,6 +154,12 @@ contextMenu({
   showSaveImageAs: true,
   showSearchWithGoogle: false,
   showInspectElement: true,
+  append: (_defaultActions, _parameters, browserWindow) => [
+    {
+      label: 'Reload Moss',
+      click: () => (browserWindow as BrowserWindow).reload(),
+    },
+  ],
 });
 
 console.log('APP PATH: ', app.getAppPath());
@@ -236,15 +242,24 @@ const SYSTRAY_ICON_MEDIUM = nativeImage.createFromPath(
   path.join(ICONS_DIRECTORY, 'icon_priority_medium_32x32@2x.png'),
 );
 
-const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: ZomeCallUnsignedNapi) => {
+const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-  return WE_RUST_HANDLER.signZomeCall(zomeCall);
+  if (MAIN_WINDOW)
+    emitToWindow(MAIN_WINDOW, 'zome-call-signed', {
+      cellIdB64: [
+        encodeHashToBase64(new Uint8Array(zomeCall.cell_id[0])),
+        encodeHashToBase64(new Uint8Array(zomeCall.cell_id[1])),
+      ],
+      fnName: zomeCall.fn_name,
+      zomeName: zomeCall.zome_name,
+    });
+  return signZomeCall(zomeCall, WE_RUST_HANDLER);
 };
 
-// // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-// if (require('electron-squirrel-startup')) {
-//   app.quit();
-// }
+const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
+  if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
+  return signZomeCall(zomeCall, WE_RUST_HANDLER);
+};
 
 const createSplashscreenWindow = (): BrowserWindow => {
   const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
@@ -313,6 +328,8 @@ const createOrShowMainWindow = (): BrowserWindow => {
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/admin.js'),
       // autoplayPolicy: 'user-gesture-required',
+      // uncomment this line to get fetch requests working while testing publishing of tools:
+      webSecurity: app.isPackaged ? true : false,
     },
   });
 
@@ -486,10 +503,12 @@ app.whenReady().then(async () => {
         });
         if (response.response === 1) {
           callback(true);
+          return;
         }
       }
       if (permission === 'clipboard-sanitized-write') {
         callback(true);
+        return;
       }
       callback(false);
     },
@@ -629,6 +648,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
+  ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
   ipcMain.handle('open-app', async (_e, appId: string) =>
     createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
   );
@@ -683,11 +703,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('get-installed-apps', async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
+  ipcMain.handle('get-profile', () => RUN_OPTIONS.profile);
   ipcMain.handle('get-conductor-info', async () => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
-      appstore_app_id: APPSTORE_APP_ID,
+      tools_library_app_id: TOOLS_LIBRARY_APP_ID,
     };
   });
   ipcMain.handle('lair-setup-required', async () => {
@@ -702,15 +723,17 @@ app.whenReady().then(async () => {
     console.log('Determined appId for group: ', appId);
     if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-      return;
+      return apps.find((appInfo) => appInfo.installed_app_id === appId);
     }
-    const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === APPSTORE_APP_ID);
-    if (!appStoreAppInfo)
-      throw new Error('Appstore must be installed before installing the first group.');
+    const toolsLibraryAppInfo = apps.find(
+      (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
+    );
+    if (!toolsLibraryAppInfo)
+      throw new Error('Tools Library must be installed before installing the first group.');
     const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-      path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+      path: path.join(DEFAULT_APPS_DIRECTORY, 'group.happ'),
       installed_app_id: appId,
-      agent_key: appStoreAppInfo.agent_pub_key,
+      agent_key: toolsLibraryAppInfo.agent_pub_key,
       network_seed: networkSeed,
       membrane_proofs: {},
     });
@@ -959,7 +982,13 @@ app.whenReady().then(async () => {
       autoUpdater.allowPrerelease = true;
       autoUpdater.autoDownload = false;
 
-      const updateCheckResult = await autoUpdater.checkForUpdates();
+      let updateCheckResult;
+
+      try {
+        updateCheckResult = await autoUpdater.checkForUpdates();
+      } catch (e) {
+        console.warn('Failed to check for updates: ', e);
+      }
 
       console.log('updateCheckResult: ', updateCheckResult);
 

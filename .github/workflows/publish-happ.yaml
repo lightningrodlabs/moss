@@ -33,7 +33,7 @@ jobs:
       - name: Install and test
         run: |
           nix-store --gc
-          nix develop --command bash -c "yarn build:happ"
+          nix develop --command bash -c "holochain --version && yarn build:happ"
 
       - name: Retrieve version
         run: |
@@ -44,9 +44,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: 'workdir/we.happ'
+          artifacts: 'workdir/group.happ'
           body: 'See assets below to download and install this version.'
-          name: We happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.3.0-beta-dev.42-1ddfd2d
-          tag: we-alpha-happ-v${{ steps.version.outputs.APP_VERSION }}
+          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.4.0-dev.4
+          tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           draft: true

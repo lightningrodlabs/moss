@@ -1,5 +1,16 @@
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, app, shell } from 'electron';
 import semver from 'semver';
+import os from 'os';
+import { breakingAppVersion } from './filesystem';
+import { WeDevConfig } from './cli/defineConfig';
+import {
+  CallZomeRequest,
+  CallZomeRequestSigned,
+  getNonceExpiration,
+  randomNonce,
+} from '@holochain/client';
+import { WeRustHandler, ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { encode } from '@msgpack/msgpack';
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
@@ -9,7 +20,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('we://')) {
+    if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -28,7 +39,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('we://')) {
+    if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -45,7 +56,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('we://')) {
+    if (details.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
@@ -77,4 +88,44 @@ export function breakingVersion(version: string): string {
     default:
       return `${semver.major(version)}.x.x`;
   }
+}
+
+export function defaultAppNetworkSeed(devConfig?: WeDevConfig): string {
+  return devConfig || !app.isPackaged
+    ? `moss-applet-dev-${os.hostname()}`
+    : `moss-${breakingAppVersion(app)}`;
+}
+
+export async function signZomeCall(
+  request: CallZomeRequest,
+  handler: WeRustHandler,
+): Promise<CallZomeRequestSigned> {
+  const zomeCallUnsignedNapi: ZomeCallUnsignedNapi = {
+    provenance: Array.from(request.provenance),
+    cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
+    zomeName: request.zome_name,
+    fnName: request.fn_name,
+    payload: Array.from(encode(request.payload)),
+    nonce: Array.from(await randomNonce()),
+    expiresAt: getNonceExpiration(),
+  };
+
+  const zomeCallSignedNapi: ZomeCallNapi = await handler.signZomeCall(zomeCallUnsignedNapi);
+
+  const zomeCallSigned: CallZomeRequestSigned = {
+    provenance: Uint8Array.from(zomeCallSignedNapi.provenance),
+    cap_secret: null,
+    cell_id: [
+      Uint8Array.from(zomeCallSignedNapi.cellId[0]),
+      Uint8Array.from(zomeCallSignedNapi.cellId[1]),
+    ],
+    zome_name: zomeCallSignedNapi.zomeName,
+    fn_name: zomeCallSignedNapi.fnName,
+    payload: Uint8Array.from(zomeCallSignedNapi.payload),
+    signature: Uint8Array.from(zomeCallSignedNapi.signature),
+    expires_at: zomeCallSignedNapi.expiresAt,
+    nonce: Uint8Array.from(zomeCallSignedNapi.nonce),
+  };
+
+  return zomeCallSigned;
 }

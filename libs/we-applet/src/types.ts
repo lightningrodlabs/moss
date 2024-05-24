@@ -1,6 +1,8 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
+import { Readable } from '@holochain-open-dev/stores';
+import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
-  AppAgentClient,
+  AppClient,
   ActionHash,
   EntryHash,
   DnaHash,
@@ -8,10 +10,17 @@ import {
   ActionHashB64,
   DnaHashB64,
   CallZomeRequest,
+  AppAuthenticationToken,
+  AgentPubKey,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
+
+/**
+ * Hash of Holohash lenght but all zeroes
+ */
+export type NullHash = Uint8Array;
 
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
@@ -19,7 +28,7 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 export type OpenWalMode = 'front' | 'side';
 
 /**
- * String of the format weave://
+ * String of the format weave-0.12://
  */
 export type WeaveUrl = string;
 
@@ -38,7 +47,7 @@ export type WeaveLocation =
     }
   | {
       type: 'invitation';
-      // network seed and membrane proof
+      // network seed and membrane proofs
       secret: string;
     };
 
@@ -135,11 +144,11 @@ export type AppletInfo = {
   appletBundleId: ActionHash;
   appletName: string;
   appletIcon: string;
-  groupsIds: Array<DnaHash>;
+  groupsHashes: Array<DnaHash>;
 };
 
 export type AppletClients = {
-  appletClient: AppAgentClient;
+  appletClient: AppClient;
   profilesClient: ProfilesClient;
 };
 
@@ -148,9 +157,11 @@ export type AppletView =
   | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
-      roleName: string;
-      integrityZomeName: string;
-      entryType: string;
+      /**
+       * If the WAL points to a Record (AnyDhtHash) recordInfo will be defined, if the WAL
+       * points to a DNA (i.e. null hash for the AnyDhtHash) then recordInfo is not defined
+       */
+      recordInfo?: RecordInfo;
       wal: WAL;
     }
   | {
@@ -224,8 +235,9 @@ export type RenderInfo =
   | {
       type: 'applet-view';
       view: AppletView;
-      appletClient: AppAgentClient;
+      appletClient: AppClient;
       profilesClient: ProfilesClient;
+      peerStatusStore: ReadonlyPeerStatusStore;
       appletHash: AppletHash;
       /**
        * Non-exhaustive array of profiles of the groups the given applet is shared with.
@@ -251,13 +263,11 @@ export type RenderView =
       view: CrossAppletView;
     };
 
-export type ParentToAppletRequest =
+export type ParentToAppletMessage =
   | {
       type: 'get-applet-asset-info';
-      roleName: string;
-      integrityZomeName: string;
-      entryType: string;
       wal: WAL;
+      recordInfo?: RecordInfo;
     }
   | {
       type: 'get-block-types';
@@ -266,13 +276,15 @@ export type ParentToAppletRequest =
       type: 'bind-asset';
       srcWal: WAL;
       dstWal: WAL;
-      dstRoleName: string;
-      dstIntegrityZomeName: string;
-      dstEntryType: string;
+      dstRecordInfo?: RecordInfo;
     }
   | {
       type: 'search';
       filter: string;
+    }
+  | {
+      type: 'peer-status-update';
+      payload: PeerStatusUpdate;
     };
 
 export type AppletToParentMessage = {
@@ -289,7 +301,7 @@ export type AppletToParentRequest =
       crossApplet: boolean;
     }
   | {
-      type: 'get-hrl-location';
+      type: 'get-record-info';
       hrl: Hrl;
     }
   | {
@@ -314,7 +326,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'get-group-profile';
-      groupId: DnaHash;
+      groupHash: DnaHash;
     }
   | {
       type: 'get-global-asset-info';
@@ -401,13 +413,14 @@ export type IframeConfig =
       type: 'applet';
       appPort: number;
       appletHash: EntryHash;
+      authenticationToken: AppAuthenticationToken;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
     }
   | {
       type: 'cross-applet';
       appPort: number;
-      applets: Record<EntryHashB64, ProfilesLocation>;
+      applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
     }
   | {
       type: 'not-installed';
@@ -415,12 +428,31 @@ export type IframeConfig =
     };
 
 export type ProfilesLocation = {
-  profilesAppId: string;
+  authenticationToken: AppAuthenticationToken;
   profilesRoleName: string;
 };
 
-export type HrlLocation = {
+export type RecordInfo = {
   roleName: string;
   integrityZomeName: string;
   entryType: string;
 };
+
+/**
+ *
+ * Events
+ *
+ */
+
+export type UnsubscribeFunction = () => void;
+
+export enum PeerStatus {
+  Online = 'online',
+  Offline = 'offline',
+}
+
+export type PeerStatusUpdate = Array<[AgentPubKey, PeerStatus]>;
+
+export interface ReadonlyPeerStatusStore {
+  agentsStatus: LazyHoloHashMap<Uint8Array, Readable<PeerStatus>>;
+}

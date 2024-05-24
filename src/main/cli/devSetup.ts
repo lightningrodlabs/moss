@@ -5,17 +5,20 @@ import mime from 'mime';
 
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { APPSTORE_APP_ID, AppHashes } from '../sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes, Tool, DeveloperCollective } from '../sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
   AgentPubKey,
-  AppAgentWebsocket,
+  AppWebsocket,
   AppInfo,
   DnaHashB64,
   EntryHash,
   HoloHashB64,
+  Link,
   encodeHashToBase64,
+  Record as HolochainRecord,
+  GrantedFunctionsType,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem } from '../filesystem';
@@ -31,6 +34,7 @@ import {
   ResourceLocation,
   WebHappLocation,
 } from './defineConfig';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -92,7 +96,7 @@ export async function devSetup(
 ): Promise<void> {
   const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
-  const publishedApplets: Record<string, Entity<AppEntry>> = {};
+  const publishedApplets: Record<string, EntryRecord<Tool>> = {};
   const installableApplets: Record<
     string,
     [string, string, string | undefined, string | undefined, string | undefined]
@@ -116,23 +120,32 @@ export async function devSetup(
     }
   }
 
-  const appstoreClient = await AppAgentWebsocket.connect(APPSTORE_APP_ID, {
+  const toolsLibraryAuthenticationResponse =
+    await holochainManager.adminWebsocket.issueAppAuthenticationToken({
+      installed_app_id: TOOLS_LIBRARY_APP_ID,
+      single_use: false,
+      expiry_seconds: 99999999,
+    });
+
+  const toolsLibraryClient = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
     wsClientOptions: {
       origin: 'moss-admin',
     },
+    token: toolsLibraryAuthenticationResponse.token,
     defaultTimeout: 4000,
   });
-  const appstoreCells = await appstoreClient.appInfo();
-  let appstoreDnaHash: DnaHashB64 | undefined = undefined;
-  for (const [_role_name, [cell]] of Object.entries(appstoreCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
-      All: null,
-    });
-    appstoreDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+  const toolsLibraryCells = await toolsLibraryClient.appInfo();
+  let toolsLibraryDnaHash: DnaHashB64 | undefined = undefined;
+  for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(
+      cell['provisioned'].cell_id,
+      GrantedFunctionsType.All,
+    );
+    toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
   }
 
-  if (!appstoreDnaHash) throw new Error('Failed to determine appstore DNA hash.');
+  if (!toolsLibraryDnaHash) throw new Error('Failed to determine appstore DNA hash.');
 
   for (const group of config.config.groups) {
     // If the running agent is supposed to create the group
@@ -250,24 +263,24 @@ export async function devSetup(
           // Check whether applet is already published to the appstore - if not publish it
           if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
             logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
-            const appletEntryResponse = await publishApplet(
-              appstoreClient,
+            const toolRecord = await publishApplet(
+              toolsLibraryClient,
               appletConfig,
               maybeWebHappPath ? maybeWebHappPath : happPath,
               appHashes,
             );
-            publishedApplets[appletConfig.name] = appletEntryResponse.payload;
+            publishedApplets[appletConfig.name] = toolRecord;
           }
 
-          const appEntryEntity = publishedApplets[appletConfig.name];
+          const toolRecord = publishedApplets[appletConfig.name];
 
           const distributionInfo: DistributionInfo = {
-            type: 'appstore-light',
+            type: 'tools-library',
             info: {
-              appstoreDnaHash,
-              appEntryId: encodeHashToBase64(appEntryEntity.id),
-              appEntryActionHash: encodeHashToBase64(appEntryEntity.action),
-              appEntryEntryHash: encodeHashToBase64(appEntryEntity.address),
+              toolsLibraryDnaHash,
+              originalToolActionHash: encodeHashToBase64(toolRecord.actionHash),
+              toolVersionActionHash: encodeHashToBase64(toolRecord.actionHash),
+              toolVersionEntryHash: encodeHashToBase64(toolRecord.entryHash),
             },
           };
 
@@ -371,22 +384,30 @@ async function joinGroup(
   holochainManager: HolochainManager,
   group: GroupConfig,
   agentProfile: AgentProfile,
-): Promise<AppAgentWebsocket> {
+): Promise<AppWebsocket> {
   // Create the group
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
-  const groupWebsocket = await AppAgentWebsocket.connect(groupAppInfo.installed_app_id, {
+  const groupAuthenticationTokenResponse =
+    await holochainManager.adminWebsocket.issueAppAuthenticationToken({
+      installed_app_id: groupAppInfo.installed_app_id,
+      single_use: false,
+      expiry_seconds: 99999999,
+    });
+  const groupWebsocket = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${appPort}`),
     wsClientOptions: {
       origin: 'moss-admin',
     },
+    token: groupAuthenticationTokenResponse.token,
   });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(cell['provisioned'].cell_id, {
-      All: null,
-    });
+    await holochainManager.adminWebsocket.authorizeSigningCredentials(
+      cell['provisioned'].cell_id,
+      GrantedFunctionsType.All,
+    );
   }
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   await groupWebsocket.callZome({
@@ -441,11 +462,11 @@ async function installGroup(
   hash.update(networkSeed);
   const hashedSeed = hash.digest('base64');
   const appId = `group#${hashedSeed}`;
-  const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === APPSTORE_APP_ID);
+  const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
   const appInfo = await holochainManager.adminWebsocket.installApp({
-    path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+    path: path.join(DEFAULT_APPS_DIRECTORY, 'group.happ'),
     installed_app_id: appId,
     agent_key: appStoreAppInfo.agent_pub_key,
     network_seed: networkSeed,
@@ -525,31 +546,44 @@ async function installHapp(
 }
 
 async function publishApplet(
-  appstoreClient: AppAgentWebsocket,
+  appstoreClient: AppWebsocket,
   appletConfig: AppletConfig,
   happOrWebHappPath: string,
   appHashes: AppHashes,
-): Promise<DevHubResponse<Entity<AppEntry>>> {
-  const publisher: DevHubResponse<Entity<PublisherEntry>> = await appstoreClient.callZome(
-    {
-      role_name: 'appstore',
-      zome_name: 'appstore_api',
-      fn_name: 'create_publisher',
-      payload: {
-        name: 'applet-developer',
-        location: {
-          country: 'in',
-          region: 'frontof',
-          city: 'myscreen',
-        },
-        website: {
-          url: 'https://duckduckgo.com',
-        },
-        icon_src: 'unnecessary',
+): Promise<EntryRecord<Tool>> {
+  // Check whether developer collective has already been created, if not create one
+  let developerCollectiveHash: ActionHash;
+  const links: Array<Link> = await appstoreClient.callZome({
+    role_name: 'tools',
+    zome_name: 'library',
+    fn_name: 'get_my_developer_collective_links',
+    payload: null,
+  });
+
+  if (links.length === 0) {
+    const payload: DeveloperCollective = {
+      name: 'Dummy Developer Collective',
+      description: 'Just a dummy collective created in dev mode',
+      website: 'https://dummycollective.dev',
+      contact: 'void',
+      icon: 'invalid icon',
+      meta_data: undefined,
+    };
+    const record: HolochainRecord = await appstoreClient.callZome(
+      {
+        role_name: 'tools',
+        zome_name: 'library',
+        fn_name: 'create_developer_collective',
+        payload,
       },
-    },
-    10000,
-  );
+      10000,
+    );
+    developerCollectiveHash = record.signed_action.hashed.hash;
+  } else {
+    developerCollectiveHash = links[0].target;
+  }
+
+  // Create Tool entry
 
   // TODO: Potentially change this to be taken from the original source or a local cache
   // Instead of pointing to local temp files
@@ -560,26 +594,31 @@ async function publishApplet(
 
   const appletIcon = await readIcon(appletConfig.icon);
 
-  const payload = {
+  const payload: Tool = {
+    developer_collective: developerCollectiveHash,
+    permission_hash: developerCollectiveHash,
     title: appletConfig.name,
     subtitle: appletConfig.subtitle,
     description: appletConfig.description,
-    icon_src: appletIcon,
-    publisher: publisher.payload.id,
+    icon: appletIcon,
+    version: '0.1.0',
     source,
     hashes: JSON.stringify(appHashes),
-    metadata:
+    changelog: undefined,
+    meta_data:
       appletConfig.source.type === 'localhost'
         ? JSON.stringify({ uiPort: appletConfig.source.uiPort })
         : undefined,
+    deprecation: undefined,
   };
 
-  return appstoreClient.callZome({
-    role_name: 'appstore',
-    zome_name: 'appstore_api',
-    fn_name: 'create_app',
+  const toolRecord = await appstoreClient.callZome({
+    role_name: 'tools',
+    zome_name: 'library',
+    fn_name: 'create_tool',
     payload,
   });
+  return new EntryRecord<Tool>(toolRecord);
 }
 
 function storeAppAssetsInfo(

@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 use group_integrity::Applet;
 use hdk::prelude::holo_hash::*;
 use hdk::prelude::Record;
-use holochain::test_utils::consistency_10s;
 use holochain::{conductor::config::ConductorConfig, sweettest::*};
 
 #[tokio::test(flavor = "multi_thread")]
@@ -28,7 +27,7 @@ async fn create_and_join_applet() {
         custom_name: String::from("custom name"),
         description: String::from("description"),
         distribution_info: String::from(
-            "\"type\": \"appstore-light\",
+            "\"type\": \"tools-library\",
             \"info\": {
                 \"appstoreDnaHash\": \"uhC0kSYZ2EzJD-lfMU7fIGeG0TTaEHfp_MzLynCdKMB1saA-WQGbx\",
                 \"appEntryId\": \"uhCkkkI4uY-a8vldReWpwkm-lx8_9yMBj_GW1OELlWqGdQ6_q-msE\",
@@ -56,7 +55,9 @@ async fn create_and_join_applet() {
         .call(&alice_zome, "register_applet", applet.clone())
         .await;
 
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     println!("getting group applets...");
 
@@ -141,7 +142,9 @@ async fn create_and_join_applet() {
 
     println!("Registered second applet by Alice...");
 
-    consistency_60s([&alice, &bobbo]).await;
+    await_consistency(60, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let bobs_unjoined_applets: Vec<(EntryHash, AgentPubKey)> = conductors[1]
         .call(&bob_zome, "get_unjoined_applets", ())
@@ -161,7 +164,9 @@ async fn create_and_join_applet() {
 
     // Do it one more time since there have been issues in practice to get unjoined applets
     // after the first time
-    consistency_10s([&alice, &bobbo]).await;
+    await_consistency(10, [&alice, &bobbo])
+        .await
+        .expect("Failed to await consistency");
 
     let bobs_unjoined_applets: Vec<(EntryHash, AgentPubKey)> = conductors[1]
         .call(&bob_zome, "get_unjoined_applets", ())

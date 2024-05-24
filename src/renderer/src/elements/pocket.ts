@@ -2,10 +2,10 @@ import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { sharedStyles } from '@holochain-open-dev/elements';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
@@ -13,12 +13,13 @@ import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@lightningr
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
-import { buildHeadlessWeClient } from '../applets/applet-host.js';
+import { buildHeadlessWeaveClient } from '../applets/applet-host.js';
 import './wal-element.js';
 import './wal-created-element.js';
 import './pocket-search.js';
 import { PocketSearch } from './pocket-search.js';
 import { deStringifyWal } from '../utils.js';
+import { mdiDelete } from '@mdi/js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;
@@ -76,6 +77,11 @@ export class MossPocket extends LitElement {
 
   loadPocketContent() {
     this.pocketContent = this._mossStore.persistedStore.pocket.value();
+  }
+
+  clearPocket() {
+    this._mossStore.clearPocket();
+    this.pocketContent = [];
   }
 
   removeWalFromPocket(wal: WAL) {
@@ -159,6 +165,23 @@ export class MossPocket extends LitElement {
       >
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
           ${
+            this.pocketContent.length > 0
+              ? html`
+                  <div style="position: absolute; bottom: -10px; left: -10px; ">
+                    <sl-button
+                      class="clear-pocket"
+                      variant="text"
+                      size="small"
+                      @click=${() => this.clearPocket()}
+                      ><sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDelete)}></sl-icon> Clear
+                      Pocket</sl-button
+                    >
+                  </div>
+                `
+              : ``
+          }
+
+          ${
             this.mode === 'select'
               ? html`<div style="font-size: 25px; margin-bottom: 30px;">
                   ${msg('Select Attachment:')}
@@ -179,8 +202,8 @@ export class MossPocket extends LitElement {
               : html``
           }
 
-          <we-client-context
-            .weClient=${buildHeadlessWeClient(this._mossStore)}
+          <weave-client-context
+            .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}
           >
             <pocket-search
               id="pocket-search"
@@ -190,7 +213,7 @@ export class MossPocket extends LitElement {
               @wal-to-pocket=${(e) => this.walToPocket(e.detail.wal)}
               @open-wurl=${(e) => this.handleOpenWurl(e)}
             ></pocket-search>
-          </we-client-context>
+          </weave-client-context>
           ${
             this.mode === 'select'
               ? html`
@@ -275,6 +298,14 @@ export class MossPocket extends LitElement {
 
         sl-dialog {
           --sl-panel-background-color: var(--sl-color-tertiary-0);
+        }
+
+        sl-button.clear-pocket::part(base) {
+          color: var(--sl-color-primary-600);
+        }
+
+        sl-button.clear-pocket::part(base):hover {
+          color: var(--sl-color-primary-900);
         }
       `,
     ];

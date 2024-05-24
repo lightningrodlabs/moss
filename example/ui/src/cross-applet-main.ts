@@ -4,8 +4,11 @@ import { localized } from '@lit/localize';
 
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
-import { WeClient, type AppletClients, WeServices } from '@lightningrodlabs/we-applet';
-import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
+import { WeaveClient, type AppletClients, WeaveServices } from '@lightningrodlabs/we-applet';
+import {
+  getAppletsInfosAndGroupsProfiles,
+  weaveClientContext,
+} from '@lightningrodlabs/we-elements';
 import { consume } from '@lit/context';
 import { EntryHash } from '@holochain/client';
 
@@ -15,14 +18,17 @@ export class CrossAppletMain extends LitElement {
   @property()
   applets!: ReadonlyMap<EntryHash, AppletClients>;
 
-  @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient | WeServices;
+  @consume({ context: weaveClientContext, subscribe: true })
+  weaveClient!: WeaveClient | WeaveServices;
 
   appletsInfo = new StoreSubscriber(
     this,
     () =>
       lazyLoad(async () =>
-        getAppletsInfosAndGroupsProfiles(this.weClient as WeClient, Array.from(this.applets.keys()))
+        getAppletsInfosAndGroupsProfiles(
+          this.weaveClient as WeaveClient,
+          Array.from(this.applets.keys())
+        )
       ),
     () => []
   );

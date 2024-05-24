@@ -1,6 +1,6 @@
 ---
 manifest_version: '1'
-name: we
+name: group
 description: ~
 roles:
   - name: group

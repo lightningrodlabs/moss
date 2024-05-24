@@ -1,6 +1,6 @@
 {
   "name": "@lightningrodlabs/we-applet",
-  "version": "0.16.2",
+  "version": "0.17.0-dev.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -24,7 +24,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "=0.17.0-dev.9",
+    "@holochain/client": "0.18.0-dev.1",
+    "@holochain-open-dev/profiles": "0.400.0-dev.1",
     "@msgpack/msgpack": "^2.8.0",
     "js-base64": "^3.7.2"
   },

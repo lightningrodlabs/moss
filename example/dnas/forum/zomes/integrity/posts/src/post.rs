@@ -1,6 +1,5 @@
 use hdi::prelude::*;
 
-use crate::LinkTypes;
 #[hdk_entry_helper]
 #[derive(Clone, PartialEq)]
 pub struct Post {

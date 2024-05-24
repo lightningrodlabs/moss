@@ -13,9 +13,9 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
-import { weClientContext } from '../context';
+import { weaveClientContext } from '../context';
 import { WeaveUrl, weaveUrlToWAL } from '@lightningrodlabs/we-applet';
-import { WeClient, WeServices } from '@lightningrodlabs/we-applet';
+import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
 import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
@@ -25,8 +25,8 @@ export class WalLink extends LitElement {
   @property()
   wal!: WeaveUrl;
 
-  @consume({ context: weClientContext, subscribe: true })
-  weClient!: WeClient | WeServices;
+  @consume({ context: weaveClientContext, subscribe: true })
+  weaveClient!: WeaveClient | WeaveServices;
 
   @property()
   onlyIcon = false;
@@ -35,11 +35,11 @@ export class WalLink extends LitElement {
     this,
     () =>
       lazyLoad(async () => {
-        const assetInfo = await window.__WE_API__.assetInfo(weaveUrlToWAL(this.wal));
+        const assetInfo = await window.__WEAVE_API__.assetInfo(weaveUrlToWAL(this.wal));
         if (!assetInfo) return undefined;
 
         const { groupsProfiles, appletsInfos } = await getAppletsInfosAndGroupsProfiles(
-          this.weClient as WeClient,
+          this.weaveClient as WeaveClient,
           [assetInfo.appletHash],
         );
 
@@ -67,13 +67,13 @@ export class WalLink extends LitElement {
               <div class="row" style="align-items: center">
                 ${this.onlyIcon ? html` <span>${assetInfo.assetInfo.name},&nbsp;</span> ` : html``}
                 <span> ${appletsInfos.get(assetInfo.appletHash)?.appletName} ${msg('in')}</span>
-                ${appletsInfos.get(assetInfo.appletHash)?.groupsIds.map(
-                  (groupId) => html`
+                ${appletsInfos.get(assetInfo.appletHash)?.groupsHashes.map(
+                  (groupHash) => html`
                     <img
-                      .src=${groupsProfiles.get(groupId)!.logo_src}
+                      .src=${groupsProfiles.get(groupHash)!.logo_src}
                       style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
                     />
-                    <span>${groupsProfiles.get(groupId)?.name}</span>
+                    <span>${groupsProfiles.get(groupHash)?.name}</span>
                   `,
                 )}
               </div>
@@ -82,10 +82,10 @@ export class WalLink extends LitElement {
               pill
               style="cursor: pointer"
               tabindex="0"
-              @click=${() => window.__WE_API__.openWal(weaveUrlToWAL(this.wal))}
+              @click=${() => window.__WEAVE_API__.openWal(weaveUrlToWAL(this.wal))}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  window.__WE_API__.openWal(weaveUrlToWAL(this.wal));
+                  window.__WEAVE_API__.openWal(weaveUrlToWAL(this.wal));
                 }
               }}
             >

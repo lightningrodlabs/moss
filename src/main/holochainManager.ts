@@ -5,7 +5,7 @@ import path from 'path';
 import * as childProcess from 'child_process';
 import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
-import { AdminWebsocket, AppInfo } from '@holochain/client';
+import { AdminWebsocket, AppAuthenticationToken, AppInfo, InstalledAppId } from '@holochain/client';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -22,6 +22,7 @@ export class HolochainManager {
   installedApps: AppInfo[];
   weEmitter: WeEmitter;
   version: HolochainVersion;
+  appTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
 
   constructor(
     processHandle: childProcess.ChildProcessWithoutNullStreams,
@@ -123,7 +124,7 @@ export class HolochainManager {
           console.log('Got appInterfaces: ', appInterfaces);
           let appPort;
           if (appInterfaces.length > 0) {
-            appPort = appInterfaces[0];
+            appPort = appInterfaces[0].port;
           } else {
             const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
               allowed_origins: '*',
@@ -237,5 +238,17 @@ export class HolochainManager {
         `Failed to enable appstore: ${e}.\nIf you encounter this in dev mode your local bootstrap server may not be running or at a different port than the one specified.`,
       );
     }
+  }
+
+  async getAppToken(appId): Promise<AppAuthenticationToken> {
+    const token = this.appTokens[appId];
+    if (token) return token;
+    const response = await this.adminWebsocket.issueAppAuthenticationToken({
+      installed_app_id: appId,
+      single_use: false,
+      expiry_seconds: 99999999,
+    });
+    this.appTokens[appId] = response.token;
+    return response.token;
   }
 }

@@ -2,12 +2,12 @@ import { HoloHashMap } from '@holochain-open-dev/utils';
 import { EntryHash, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletHash, AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
-import { WeClient } from '@lightningrodlabs/we-applet';
+import { WeaveClient } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
 export async function getAppletsInfosAndGroupsProfiles(
-  weClient: WeClient,
+  weaveClient: WeaveClient,
   appletsHashes: EntryHash[],
 ): Promise<{
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
@@ -17,16 +17,16 @@ export async function getAppletsInfosAndGroupsProfiles(
   const appletsInfos = new HoloHashMap<EntryHash, AppletInfo>();
 
   for (const appletHash of appletsHashes) {
-    const appletInfo = await weClient.appletInfo(appletHash);
+    const appletInfo = await weaveClient.appletInfo(appletHash);
     if (appletInfo) {
       appletsInfos.set(appletHash, appletInfo);
 
-      for (const groupId of appletInfo.groupsIds) {
-        if (!groupsProfiles.has(groupId)) {
-          const groupProfile = await weClient.groupProfile(groupId);
+      for (const groupHash of appletInfo.groupsHashes) {
+        if (!groupsProfiles.has(groupHash)) {
+          const groupProfile = await weaveClient.groupProfile(groupHash);
 
           if (groupProfile) {
-            groupsProfiles.set(groupId, groupProfile);
+            groupsProfiles.set(groupHash, groupProfile);
           }
         }
       }
@@ -40,21 +40,21 @@ export async function getAppletsInfosAndGroupsProfiles(
 }
 
 export async function getAppletInfoAndGroupsProfiles(
-  weClient: WeClient,
+  weaveClient: WeaveClient,
   appletHash: EntryHash,
 ): Promise<{
   appletInfo: AppletInfo | undefined;
   groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
 }> {
   const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
-  const appletInfo = await weClient.appletInfo(appletHash);
+  const appletInfo = await weaveClient.appletInfo(appletHash);
   if (appletInfo) {
-    for (const groupId of appletInfo.groupsIds) {
-      if (!groupProfiles.has(groupId)) {
-        const groupProfile = await weClient.groupProfile(groupId);
+    for (const groupHash of appletInfo.groupsHashes) {
+      if (!groupProfiles.has(groupHash)) {
+        const groupProfile = await weaveClient.groupProfile(groupHash);
 
         if (groupProfile) {
-          groupProfiles.set(groupId, groupProfile);
+          groupProfiles.set(groupHash, groupProfile);
         }
       }
     }

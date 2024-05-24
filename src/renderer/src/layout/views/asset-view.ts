@@ -9,7 +9,7 @@ import { mdiHomeImportOutline } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-wal.js';
-import '@lightningrodlabs/we-elements/dist/elements/we-client-context.js';
+import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 
 import { WAL } from '@lightningrodlabs/we-applet';
 
@@ -19,7 +19,7 @@ import { weStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/wal-pocket.js';
-import { buildHeadlessWeClient } from '../../applets/applet-host.js';
+import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
 
 @customElement('asset-view')
 export class AssetView extends LitElement {
@@ -53,20 +53,24 @@ export class AssetView extends LitElement {
     }
   }
 
-  renderGroupView(dnaLocation: DnaLocation, entryTypeLocation: EntryDefLocation) {
+  renderGroupView(dnaLocation: DnaLocation, entryTypeLocation?: EntryDefLocation) {
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
         .view=${{
           type: 'asset',
-          roleName: dnaLocation.roleName,
-          integrityZomeName: entryTypeLocation.integrity_zome,
-          entryType: entryTypeLocation.entry_def,
           wal: this.wal,
+          recordInfo: entryTypeLocation
+            ? {
+                roleName: dnaLocation.roleName,
+                integrityZomeName: entryTypeLocation.integrity_zome,
+                entryType: entryTypeLocation.entry_def,
+              }
+            : undefined,
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
-        <we-client-context .weClient=${buildHeadlessWeClient(this._mossStore)}>
+        <weave-client-context .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}>
           <sl-tooltip content="Jump to parent Applet">
             <div
               class="row btn toolbar-btn"
@@ -83,7 +87,7 @@ export class AssetView extends LitElement {
           </sl-tooltip>
           <wal-pocket iconSrc="pocket.png" .wal=${this.wal} class="toolbar-btn"></wal-pocket>
           <share-wal .wal=${this.wal} class="toolbar-btn"></share-wal>
-        </we-client-context>
+        </weave-client-context>
       </div> `;
   }
 

@@ -19,12 +19,15 @@ import {
   AssetLocationAndInfo,
   GroupProfile,
   WAL,
-  WeClient,
-  WeServices,
+  WeaveClient,
+  WeaveServices,
 } from '@lightningrodlabs/we-applet';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrodlabs/we-elements';
+import {
+  getAppletsInfosAndGroupsProfiles,
+  weaveClientContext,
+} from '@lightningrodlabs/we-elements';
 
 /**
  * @element search-entry
@@ -35,9 +38,9 @@ import { getAppletsInfosAndGroupsProfiles, weClientContext } from '@lightningrod
 export class SearchResultElement extends LitElement {
   /** Form field properties */
 
-  @consume({ context: weClientContext, subscribe: true })
+  @consume({ context: weaveClientContext, subscribe: true })
   @property()
-  weClient!: WeClient | WeServices;
+  weaveClient!: WeaveClient | WeaveServices;
 
   /**
    * @internal
@@ -61,12 +64,12 @@ export class SearchResultElement extends LitElement {
   // _appletStore: StoreSubscriber<AsyncStatus<AppletStore>> | undefined;
 
   async firstUpdated() {
-    const assetInfo = await this.weClient.assetInfo(this.wal);
+    const assetInfo = await this.weaveClient.assetInfo(this.wal);
     this._assetInfo = assetInfo;
     this._loading = false;
     if (assetInfo) {
       const { appletsInfos, groupsProfiles } = await getAppletsInfosAndGroupsProfiles(
-        this.weClient as WeClient,
+        this.weaveClient as WeaveClient,
         [assetInfo.appletHash],
       );
       this._appletsInfos = appletsInfos;

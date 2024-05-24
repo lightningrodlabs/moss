@@ -1,6 +1,6 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
-import { AdminWebsocket, AppWebsocket } from '@holochain/client';
+import { AdminWebsocket } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -14,8 +14,9 @@ import { weStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
-import { AppletBundlesStore } from './applet-bundles/applet-bundles-store.js';
+import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
 import { getConductorInfo, isAppletDev } from './electron-api.js';
+import { ToolsLibraryClient } from './tools-library/tools-library-client.js';
 
 type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
 
@@ -92,52 +93,52 @@ export class MossApp extends LitElement {
       APP_INTERFACE_PORT: info.app_port,
       ADMIN_INTERFACE_PORT: info.admin_port,
       INSTALLED_APP_ID: '',
-      FRAMEWORK: 'electron',
     };
 
     const adminWebsocket = await AdminWebsocket.connect({
       url: new URL(`ws://127.0.0.1:${info.admin_port}`),
     });
 
-    const appWebsocket = await AppWebsocket.connect({
-      url: new URL(`ws://127.0.0.1:${info.app_port}`),
-    });
+    const toolsLibraryAppId = info.tools_library_app_id;
 
-    const appstore_app_id = info.appstore_app_id;
+    const toolsLibraryToken = (
+      await adminWebsocket.issueAppAuthenticationToken({
+        installed_app_id: toolsLibraryAppId,
+        single_use: false,
+        expiry_seconds: 99999999,
+      })
+    ).token;
 
-    const appStoreClient = await initAppClient(appstore_app_id);
+    const toolsLibraryAppClient = await initAppClient(toolsLibraryToken);
 
     const isAppletDevMode = await isAppletDev();
 
     this._mossStore = new MossStore(
       adminWebsocket,
-      appWebsocket,
       info,
-      new AppletBundlesStore(appStoreClient, adminWebsocket, info),
+      new ToolsLibraryStore(
+        new ToolsLibraryClient(toolsLibraryAppClient, 'tools', 'library'),
+        info,
+      ),
       isAppletDevMode,
+      {
+        toolsLibraryAppId: toolsLibraryToken,
+      },
     );
 
-    const appStoreAppInfo = await appWebsocket.appInfo({
-      installed_app_id: info.appstore_app_id,
-    });
-    if (!appStoreAppInfo) throw new Error('Appstore AppInfo null.');
+    const toolsLibraryAppInfo = await toolsLibraryAppClient.appInfo();
+
+    if (!toolsLibraryAppInfo) throw new Error('Tools Library AppInfo null.');
     // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
 
-    getProvisionedCells(appStoreAppInfo).map(([_roleName, cellInfo]) =>
-      console.log(`Appstore network seed: ${getCellNetworkSeed(cellInfo)}`),
+    getProvisionedCells(toolsLibraryAppInfo).map(([_roleName, cellInfo]) =>
+      console.log(`Tools Library network seed: ${getCellNetworkSeed(cellInfo)}`),
     );
 
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);
 
     this.state = { state: 'running' };
-
-    // try {
-    // console.log('Fetching available UI updates');
-    //   await this._mossStore.fetchAvailableUiUpdates();
-    // } catch (e) {
-    //   console.error('Failed to fetch available applet updates: ', e);
-    // }
   }
 
   renderFeedbackBoard() {
@@ -306,7 +307,9 @@ const handleHappMessage = async (message: MessageEvent<any>) => {
   if (!message.origin.startsWith('default-app://')) return null;
   if (message.data.type === 'sign-zome-call') {
     try {
-      const signedZomeCall = await window.electronAPI.signZomeCall(message.data.payload);
+      const signedZomeCall = await window.__HC_ZOME_CALL_SIGNER__.signZomeCall(
+        message.data.payload,
+      );
       message.ports[0].postMessage({ type: 'success', result: signedZomeCall });
     } catch (e) {
       return Promise.reject(`Failed to sign zome call: ${e}`);

@@ -1,9 +1,11 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { EntryHashMap, HoloHashMap, LazyHoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   ActionHash,
-  AppAgentClient,
-  AppAgentWebsocket,
+  AgentPubKey,
+  AppAuthenticationToken,
+  AppClient,
+  AppWebsocket,
   CallZomeRequest,
   CallZomeRequestSigned,
   EntryHash,
@@ -14,34 +16,48 @@ import {
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
 import {
-  WeServices,
+  WeaveServices,
   IframeConfig,
   Hrl,
   WAL,
   FrameNotification,
   RenderView,
   RenderInfo,
-  AppletToParentRequest,
   AppletToParentMessage,
-  HrlLocation,
-  ParentToAppletRequest,
+  ParentToAppletMessage,
   AppletHash,
   AppletServices,
   OpenWalMode,
   CreatableName,
   CreatableType,
+  RecordInfo,
+  NULL_HASH,
+  PeerStatusUpdate,
+  PeerStatus,
+  ReadonlyPeerStatusStore,
+  AppletToParentRequest,
 } from '@lightningrodlabs/we-applet';
+import { readable } from '@holochain-open-dev/stores';
 
 declare global {
   interface Window {
-    __WE_API__: WeServices;
-    __WE_APPLET_SERVICES__: AppletServices;
-    __WE_RENDER_INFO__: RenderInfo;
-    __WE_APPLET_HASH__: AppletHash;
+    __WEAVE_API__: WeaveServices;
+    __WEAVE_APPLET_SERVICES__: AppletServices;
+    __WEAVE_RENDER_INFO__: RenderInfo;
+    __WEAVE_APPLET_HASH__: AppletHash;
+  }
+
+  interface WindowEventMap {
+    'peer-status-update': CustomEvent<PeerStatusUpdate>;
   }
 }
 
-const weApi: WeServices = {
+const weaveApi: WeaveServices = {
+  onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
+    const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
+    window.addEventListener('peer-status-update', listener);
+    return () => window.removeEventListener('peer-status-update', listener);
+  },
   openAppletMain: async (appletHash: EntryHash): Promise<void> =>
     postMessage({
       type: 'open-view',
@@ -92,10 +108,10 @@ const weApi: WeServices = {
       },
     }),
 
-  groupProfile: (groupId) =>
+  groupProfile: (groupHash) =>
     postMessage({
       type: 'get-group-profile',
-      groupId,
+      groupHash,
     }),
 
   appletInfo: (appletHash) =>
@@ -141,9 +157,9 @@ const weApi: WeServices = {
 };
 
 (async () => {
-  window.__WE_APPLET_HASH__ = readAppletHash();
-  window.__WE_API__ = weApi;
-  window.__WE_APPLET_SERVICES__ = new AppletServices();
+  window.__WEAVE_APPLET_HASH__ = readAppletHash();
+  window.__WEAVE_API__ = weaveApi;
+  window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
   const [_, view] = await Promise.all([fetchLocalStorage(), getRenderView()]);
 
@@ -184,28 +200,42 @@ const weApi: WeServices = {
       }
     });
 
+    const peerStatusStore: ReadonlyPeerStatusStore = {
+      agentsStatus: new LazyHoloHashMap((agent: AgentPubKey) =>
+        readable<PeerStatus>(PeerStatus.Offline, (set) => {
+          window.addEventListener('peer-status-update', (e: CustomEvent<PeerStatusUpdate>) => {
+            const maybeAgentStatus = e.detail.find(
+              ([agentKey, _]) => agentKey.toString() === agent.toString(),
+            );
+            if (maybeAgentStatus) set(maybeAgentStatus[1]);
+          });
+        }),
+      ),
+    };
+
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(
         iframeConfig.appPort,
-        iframeConfig.profilesLocation.profilesAppId,
+        iframeConfig.profilesLocation.authenticationToken,
         iframeConfig.profilesLocation.profilesRoleName,
       ),
-      setupAppletClient(iframeConfig.appPort, iframeConfig.appletHash),
+      setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
 
-    const appletHash = window.__WE_APPLET_HASH__;
+    const appletHash = window.__WEAVE_APPLET_HASH__;
 
-    window.__WE_RENDER_INFO__ = {
+    window.__WEAVE_RENDER_INFO__ = {
       type: 'applet-view',
       view: view.view,
       appletClient,
       profilesClient,
+      peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
     };
   } else if (view.type === 'cross-applet-view') {
     const applets: EntryHashMap<{
-      appletClient: AppAgentClient;
+      appletClient: AppClient;
       profilesClient: ProfilesClient;
     }> = new HoloHashMap();
 
@@ -213,10 +243,10 @@ const weApi: WeServices = {
 
     await Promise.all(
       Object.entries(iframeConfig.applets).map(
-        async ([appletId, { profilesAppId, profilesRoleName }]) => {
+        async ([appletId, [token, { authenticationToken, profilesRoleName }]]) => {
           const [appletClient, profilesClient] = await Promise.all([
-            setupAppletClient(iframeConfig.appPort, decodeHashFromBase64(appletId)),
-            setupProfilesClient(iframeConfig.appPort, profilesAppId, profilesRoleName),
+            setupAppletClient(iframeConfig.appPort, token),
+            setupProfilesClient(iframeConfig.appPort, authenticationToken, profilesRoleName),
           ]);
           applets.set(decodeHashFromBase64(appletId), {
             appletClient,
@@ -226,7 +256,7 @@ const weApi: WeServices = {
       ),
     );
 
-    window.__WE_RENDER_INFO__ = {
+    window.__WEAVE_RENDER_INFO__ = {
       type: 'cross-applet-view',
       view: view.view,
       applets,
@@ -234,14 +264,14 @@ const weApi: WeServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-  document.addEventListener('we-client-connected', async () => {
-    // Once the WeClient of the applet has connected, we can update stuff from the AppletServices
+  window.addEventListener('weave-client-connected', async () => {
+    // Once the WeaveClient of the applet has connected, we can update stuff from the AppletServices
     let creatables: Record<CreatableName, CreatableType> = {};
-    creatables = window.__WE_APPLET_SERVICES__.creatables;
+    creatables = window.__WEAVE_APPLET_SERVICES__.creatables;
     // validate that it
     if (!creatables) {
       console.warn(
-        `Creatables undefined. The AppletServices passed to the WeClient may contain an invalid 'creatables' property.`,
+        `Creatables undefined. The AppletServices passed to the WeaveClient may contain an invalid 'creatables' property.`,
       );
       creatables = {};
     }
@@ -251,7 +281,7 @@ const weApi: WeServices = {
       value: creatables,
     });
   });
-  document.dispatchEvent(new CustomEvent('applet-iframe-ready'));
+  window.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 })();
 
 async function fetchLocalStorage() {
@@ -266,39 +296,41 @@ async function fetchLocalStorage() {
 }
 
 const handleMessage = async (
-  appletClient: AppAgentClient,
+  appletClient: AppClient,
   appletHash: AppletHash,
-  request: ParentToAppletRequest,
+  message: ParentToAppletMessage,
 ) => {
-  switch (request.type) {
+  switch (message.type) {
     case 'get-applet-asset-info':
-      return window.__WE_APPLET_SERVICES__.getAssetInfo(
+      return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
-        request.roleName,
-        request.integrityZomeName,
-        request.entryType,
-        request.wal,
+        message.wal,
+        message.recordInfo,
       );
     case 'get-block-types':
-      return window.__WE_APPLET_SERVICES__.blockTypes;
+      return window.__WEAVE_APPLET_SERVICES__.blockTypes;
     case 'bind-asset':
-      return window.__WE_APPLET_SERVICES__.bindAsset(
+      return window.__WEAVE_APPLET_SERVICES__.bindAsset(
         appletClient,
-        request.srcWal,
-        request.dstWal,
-        request.dstRoleName,
-        request.dstIntegrityZomeName,
-        request.dstEntryType,
+        message.srcWal,
+        message.dstWal,
+        message.dstRecordInfo,
       );
     case 'search':
-      return window.__WE_APPLET_SERVICES__.search(
+      return window.__WEAVE_APPLET_SERVICES__.search(
         appletClient,
         appletHash,
-        window.__WE_API__,
-        request.filter,
+        window.__WEAVE_API__,
+        message.filter,
+      );
+    case 'peer-status-update':
+      window.dispatchEvent(
+        new CustomEvent('peer-status-update', {
+          detail: message.payload,
+        }),
       );
     default:
-      throw new Error('Unknown ParentToAppletRequest');
+      throw new Error('Unknown ParentToAppletMessage');
   }
 };
 
@@ -308,7 +340,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletHash: window.__WE_APPLET_HASH__,
+      appletHash: window.__WEAVE_APPLET_HASH__,
     };
 
     // eslint-disable-next-line no-restricted-globals
@@ -324,30 +356,37 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
   });
 }
 
-async function setupAppAgentClient(appPort: number, installedAppId: string) {
-  const appletClient = await AppAgentWebsocket.connect(installedAppId, {
+async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
+  const appletClient = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${appPort}`),
+    token,
+    callZomeTransform: {
+      input: async (request) => signZomeCall(request),
+      output: (o) => decode(o as any),
+    },
   });
 
   window.addEventListener('beforeunload', () => {
     // close websocket connection again to prevent insufficient resources error
-    appletClient.appWebsocket.client.close();
-  });
-
-  appletClient.appWebsocket.callZome = appletClient.appWebsocket._requester('call_zome', {
-    input: async (request) => signZomeCall(request),
-    output: (o) => decode(o as any),
+    appletClient.client.close();
   });
 
   return appletClient;
 }
 
-async function setupAppletClient(appPort: number, appletHash: EntryHash): Promise<AppAgentClient> {
-  return setupAppAgentClient(appPort, appIdFromAppletHash(appletHash));
+async function setupAppletClient(
+  appPort: number,
+  token: AppAuthenticationToken,
+): Promise<AppClient> {
+  return setupAppClient(appPort, token);
 }
 
-async function setupProfilesClient(appPort: number, appId: string, roleName: string) {
-  const client = await setupAppAgentClient(appPort, appId);
+async function setupProfilesClient(
+  appPort: number,
+  token: AppAuthenticationToken,
+  roleName: string,
+) {
+  const client = await setupAppClient(appPort, token);
 
   return new ProfilesClient(client, roleName);
 }
@@ -449,18 +488,29 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
-      const hrlLocation: HrlLocation = await postMessage({
-        type: 'get-hrl-location',
+      if (hrl[1].toString() === NULL_HASH.toString()) {
+        return {
+          type: view,
+          view: {
+            type: 'asset',
+            wal: { hrl, context },
+          },
+        };
+      }
+      const recordInfo: RecordInfo = await postMessage({
+        type: 'get-record-info',
         hrl,
       });
       return {
         type: view,
         view: {
           type: 'asset',
-          roleName: hrlLocation.roleName,
-          integrityZomeName: hrlLocation.integrityZomeName,
-          entryType: hrlLocation.entryType,
           wal: { hrl, context },
+          recordInfo: {
+            roleName: recordInfo.roleName,
+            integrityZomeName: recordInfo.integrityZomeName,
+            entryType: recordInfo.entryType,
+          },
         },
       };
     case 'creatable':

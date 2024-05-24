@@ -141,8 +141,10 @@ export class JoinGroupDialog extends LitElement {
 
 function networkSeedFromInviteLink(inviteLink: string): string | undefined {
   const split = inviteLink.trim().split('://');
-  const split2 = split[2].split('/');
-  if (split2[0] === 'group') {
+  const split2 = inviteLink.startsWith('https')
+    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.12://invite/aljsfkajsf
+    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.12://invite/aljsfkajsf
+  if (split2[0] === 'invite') {
     return split2[1];
   } else {
     return undefined;

@@ -1,6 +1,6 @@
 import {
   ActionHash,
-  AppAgentClient,
+  AppClient,
   EntryHash,
   RoleName,
   ZomeName,
@@ -22,6 +22,9 @@ import {
   Hrl,
   WeaveLocation,
   FrameNotification,
+  RecordInfo,
+  PeerStatusUpdate,
+  UnsubscribeFunction,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -29,19 +32,25 @@ import { fromUint8Array, toUint8Array } from 'js-base64';
 
 declare global {
   interface Window {
-    __WE_API__: WeServices;
-    __WE_APPLET_SERVICES__: AppletServices;
-    __WE_RENDER_INFO__: RenderInfo;
+    __WEAVE_API__: WeaveServices;
+    __WEAVE_APPLET_SERVICES__: AppletServices;
+    __WEAVE_RENDER_INFO__: RenderInfo;
     __isWe__: boolean | undefined;
   }
 }
+
+/**
+ * The null hash is used in case a WAL is to address a DNA only, not specific
+ * DHT content
+ */
+export const NULL_HASH = new Uint8Array(39);
 
 /**
  *
  * @returns bool: Returns whether this function is being called in a We context.
  */
 export const isWeContext = () =>
-  window.location.protocol === 'applet:' || window.__WE_API__ || window.__isWe__;
+  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
 
 /**
  *
@@ -52,28 +61,28 @@ export const isWeContext = () =>
 export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false) => {
   let url: string = '';
   if (webPrefix) {
-    url = 'https://lightningrodlabs.org/we?';
+    url = 'https://theweave.social/wal?';
   }
-  url = url + `we://applet/${encodeHashToBase64(appletHash)}`;
+  url = url + `weave-0.12://applet/${encodeHashToBase64(appletHash)}`;
   return url;
 };
 
 export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   let url: string = '';
   if (webPrefix) {
-    url = 'https://lightningrodlabs.org/we?';
+    url = 'https://theweave.social/wal?';
   }
   url =
     url +
-    `we://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
+    `weave-0.12://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
       wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
 
 export function weaveUrlToLocation(url: string): WeaveLocation {
-  if (!url.startsWith('we://')) {
-    throw new Error(`Got invalid We url: ${url}`);
+  if (!url.startsWith('weave-0.12://')) {
+    throw new Error(`Got invalid Weave url: ${url}`);
   }
 
   const split = url.split('://');
@@ -92,7 +101,7 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
     };
   } else if (split2[0] === 'group') {
     throw new Error(
-      'Needs to be implemented in Moss version 0.11.x by changing group to invitation',
+      'Needs to be implemented in Moss version 0.12.x by changing group to invitation',
     );
   } else if (split2[0] === 'applet') {
     return {
@@ -140,9 +149,8 @@ export class AppletServices {
   constructor() {
     (this.creatables = {}),
       (this.blockTypes = {}),
-      (this.search = async (_appletClient, _appletHash, _weServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _roleName, _integrityZomeName, _entryType, _wal) =>
-        undefined),
+      (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined),
       (this.bindAsset = async () => {});
   }
 
@@ -159,19 +167,17 @@ export class AppletServices {
    * Get info about the specified entry of this Applet
    */
   getAssetInfo: (
-    appletClient: AppAgentClient,
-    roleName: RoleName,
-    integrityZomeName: ZomeName,
-    entryType: string,
+    appletClient: AppClient,
     wal: WAL,
+    recordInfo?: RecordInfo,
   ) => Promise<AssetInfo | undefined>;
   /**
    * Search in this Applet
    */
   search: (
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     appletHash: AppletHash,
-    weServices: WeServices,
+    weaveServices: WeaveServices,
     searchFilter: string,
   ) => Promise<Array<WAL>>;
 
@@ -179,7 +185,7 @@ export class AppletServices {
    * Bind an asset (srcWal) to an asset in your applet (dstWal).
    */
   bindAsset: (
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     /**
      * Waeve Asset Locator in the applet requesting the binding
      */
@@ -189,21 +195,20 @@ export class AppletServices {
      */
     dstWal: WAL,
     /**
-     * role name of the dna containing the destination WAL
+     * Record location of the dna containing the destination WAL
      */
-    dstRoleName: RoleName,
-    /**
-     * integrity zome containing the destination WAL
-     */
-    dstIntegrityZomeName: ZomeName,
-    /**
-     * entry type of the destination WAL
-     */
-    dstEntryType: string,
+    dstRecordInfo?: RecordInfo,
   ) => Promise<void>;
 }
 
-export interface WeServices {
+export interface WeaveServices {
+  /**
+   * Event handler for peer status updates.
+   *
+   * @param callback Callback that gets called if a peer status update event is emitted
+   * @returns
+   */
+  onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
   /**
    * Open the main view of the specified Applet
    * @param appletHash
@@ -241,10 +246,10 @@ export interface WeServices {
   openWal: (wal: WAL, mode?: OpenWalMode) => Promise<void>;
   /**
    * Get the group profile of the specified group
-   * @param groupId
+   * @param groupHash
    * @returns
    */
-  groupProfile: (groupId) => Promise<any>;
+  groupProfile: (groupHash) => Promise<any>;
   /**
    * Returns Applet info of the specified Applet
    * @param appletHash
@@ -290,64 +295,69 @@ export interface WeServices {
   requestBind: (srcWal: WAL, dstWal: WAL) => Promise<void>;
 }
 
-export class WeClient implements WeServices {
+export class WeaveClient implements WeaveServices {
   get renderInfo(): RenderInfo {
-    return window.__WE_RENDER_INFO__;
+    return window.__WEAVE_RENDER_INFO__;
   }
 
   private constructor() {}
 
-  static async connect(appletServices?: AppletServices): Promise<WeClient> {
-    if (window.__WE_RENDER_INFO__) {
+  static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
+    if (window.__WEAVE_RENDER_INFO__) {
       if (appletServices) {
-        window.__WE_APPLET_SERVICES__ = appletServices;
+        window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('we-client-connected'));
-      return new WeClient();
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
+      return new WeaveClient();
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
-          document.removeEventListener('applet-iframe-ready', listener);
+          window.removeEventListener('applet-iframe-ready', listener);
           resolve(null);
         };
-        document.addEventListener('applet-iframe-ready', listener);
+        window.addEventListener('applet-iframe-ready', listener);
       });
       if (appletServices) {
-        window.__WE_APPLET_SERVICES__ = appletServices;
+        window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
-      document.dispatchEvent(new CustomEvent('we-client-connected'));
-      return new WeClient();
+      window.dispatchEvent(new CustomEvent('weave-client-connected'));
+      return new WeaveClient();
     }
   }
 
+  onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
+    return window.__WEAVE_API__.onPeerStatusUpdate(callback);
+  };
+
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
-    window.__WE_API__.openAppletMain(appletHash);
+    window.__WEAVE_API__.openAppletMain(appletHash);
 
   openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
-    window.__WE_API__.openAppletBlock(appletHash, block, context);
+    window.__WEAVE_API__.openAppletBlock(appletHash, block, context);
 
   openCrossAppletMain = (appletBundleId: ActionHash): Promise<void> =>
-    window.__WE_API__.openCrossAppletMain(appletBundleId);
+    window.__WEAVE_API__.openCrossAppletMain(appletBundleId);
 
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
-    window.__WE_API__.openCrossAppletBlock(appletBundleId, block, context);
+    window.__WEAVE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> => window.__WE_API__.openWal(wal, mode);
+  openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> =>
+    window.__WEAVE_API__.openWal(wal, mode);
 
-  groupProfile = (groupId) => window.__WE_API__.groupProfile(groupId);
+  groupProfile = (groupHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
-  appletInfo = (appletHash) => window.__WE_API__.appletInfo(appletHash);
+  appletInfo = (appletHash) => window.__WEAVE_API__.appletInfo(appletHash);
 
-  assetInfo = (wal: WAL) => window.__WE_API__.assetInfo(wal);
+  assetInfo = (wal: WAL) => window.__WEAVE_API__.assetInfo(wal);
 
-  walToPocket = (wal: WAL) => window.__WE_API__.walToPocket(wal);
+  walToPocket = (wal: WAL) => window.__WEAVE_API__.walToPocket(wal);
 
-  userSelectWal = () => window.__WE_API__.userSelectWal();
+  userSelectWal = () => window.__WEAVE_API__.userSelectWal();
 
   notifyFrame = (notifications: Array<FrameNotification>) =>
-    window.__WE_API__.notifyFrame(notifications);
+    window.__WEAVE_API__.notifyFrame(notifications);
 
-  userSelectScreen = () => window.__WE_API__.userSelectScreen();
+  userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
 
-  requestBind = (srcWal: WAL, dstWal: WAL) => window.__WE_API__.requestBind(srcWal, dstWal);
+  requestBind = (srcWal: WAL, dstWal: WAL) => window.__WEAVE_API__.requestBind(srcWal, dstWal);
 }
