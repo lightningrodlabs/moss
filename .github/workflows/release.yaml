@@ -10,8 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         # platform: [windows-2019]
-        # platform: [macos-11]
-        platform: [windows-2019, macos-11, ubuntu-22.04]
+        # platform: [macos-latest]
+        platform: [windows-2019, macos-11, macos-latest, ubuntu-22.04]
         # platform: [windows-2019, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup for macOS code signing
-        if: matrix.platform == 'macos-11'
+        if: matrix.platform == 'macos-latest'
         uses: matthme/import-codesign-certs@5565bb656f60c98c8fc515f3444dd8db73545dc2
         with:
           p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
@@ -61,7 +61,20 @@ jobs:
           rustup target add wasm32-unknown-unknown
           yarn build:zomes
 
-      - name: build and upload the app (macOS)
+      - name: build and upload the app (macOS arm64)
+        if: matrix.platform == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*
+        run: |
+          yarn build:mac
+          ls dist
+
+      - name: build and upload the app (macOS x86)
         if: matrix.platform == 'macos-11'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,3 +117,10 @@ jobs:
           # node ./scripts/latest-yaml.js
           # gh release upload "latest.yml" "latest.yml" --clobber
           # gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.we-electron-alpha-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+
+      - name: Merge latest-mac.yml mac release files
+        if: contains(matrix.os, 'macos')
+        run: |
+          node ./sripts/merge-mac-yamls.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
