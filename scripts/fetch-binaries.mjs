@@ -5,7 +5,7 @@ import * as path from 'path';
 const mossConfigJSON = fs.readFileSync('moss.config.json');
 const mossConfig = JSON.parse(mossConfigJSON);
 
-const binariesDir = path.join('dist', 'main', 'resources', 'bins');
+const binariesDir = path.join('resources', 'bins');
 fs.mkdirSync(binariesDir, { recursive: true });
 
 let targetEnding;
