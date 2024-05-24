@@ -60,7 +60,7 @@ const getPlatformFromLatestMacYml = (content) => {
   console.log('VERSION: ', VERSION);
   console.log('ALL RELEASES: ', allReleases);
   const currentRelease = allReleases.data.find((release) => {
-    return release.name === VERSION;
+    return release.tag_name === `v${VERSION}`;
   });
 
   if (!currentRelease) {
