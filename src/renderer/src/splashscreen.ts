@@ -2,7 +2,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiExitRun } from '@mdi/js';
+import { mdiClose, mdiExitRun } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 // import { ipcRenderer } from 'electron';
 
@@ -204,7 +204,7 @@ export class SplashScreen extends LitElement {
 
   renderExitButton() {
     return html`
-      <div class="bottom-left row" style="align-items: center;">
+      <div class="top-right row" style="align-items: center;">
         <sl-icon
           tabindex="0"
           @click=${() => (window as any).electronAPI.exit()}
@@ -213,9 +213,9 @@ export class SplashScreen extends LitElement {
               (window as any).electronAPI.exit();
             }
           }}
-          title="Exit"
+          title="Quit"
           class="exit-icon"
-          .src=${wrapPathInSvg(mdiExitRun)}
+          .src=${wrapPathInSvg(mdiClose)}
         ></sl-icon>
       </div>
     `;
@@ -225,7 +225,6 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="background">
         ${this.renderContent()} ${this.progressState === '' ? this.renderExitButton() : html``}
-
         <img
           class="top-left"
           src="icon.png"
@@ -318,13 +317,9 @@ export class SplashScreen extends LitElement {
         }
 
         .exit-icon {
-          font-size: 24px;
+          font-size: 30px;
           color: white;
           cursor: pointer;
-        }
-
-        .exit-icon:hover {
-          color: #1cb717;
         }
 
         .loader {
