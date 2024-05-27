@@ -205,7 +205,7 @@ export class WelcomeView extends LitElement {
       case WelcomePageView.Main:
         return html`
           ${this.renderDisclaimerDialog()}
-          <div class="column" style="align-items: center; flex: 1; overflow: auto;">
+          <div class="column" style="align-items: center; flex: 1;">
             <div
               class="disclaimer-btn"
               tabindex="0"
@@ -315,18 +315,26 @@ export class WelcomeView extends LitElement {
                 <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
                 relevant updates for early weavers.</span
               >
-              <div class="column" style="margin-bottom: 80px;">
-                ${this.updateFeed.length === 0
-                  ? html`No big waves lately...`
-                  : this.updateFeed.map(
-                      (message) => html`
-                        <div class="update-feed-el">
-                          <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
-                          <div class="update-type">${message.type}</div>
-                          ${unsafeHTML(Marked.parse(message.message))}
-                        </div>
-                      `,
-                    )}
+              <div class="flex-scrollable-parent" style="width: 870px;">
+                <div class="flex-scrollable-container">
+                  <div class="flex-scrollable-y">
+                    <div class="column flex-scrollable-y" style="margin-bottom: 80px;">
+                      ${this.updateFeed.length === 0
+                        ? html`No big waves lately...`
+                        : this.updateFeed.map(
+                            (message) => html`
+                              <div class="update-feed-el">
+                                <div class="update-date">
+                                  ${this.timeAgo.format(message.timestamp)}
+                                </div>
+                                <div class="update-type">${message.type}</div>
+                                ${unsafeHTML(Marked.parse(message.message))}
+                              </div>
+                            `,
+                          )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
