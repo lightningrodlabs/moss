@@ -122,7 +122,7 @@ export class GroupAppletsSettings extends LitElement {
                 ${msg('Joined Applets')}
               </div>
             </div>
-            ${this._groupApplets.value.value[0][0].size === 0
+            ${this._groupApplets.value.value.size === 0
               ? html``
               : html`
                   <div

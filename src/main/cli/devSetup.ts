@@ -35,8 +35,10 @@ import {
   WebHappLocation,
 } from './defineConfig';
 import { EntryRecord } from '@holochain-open-dev/utils';
+import * as rustUtils from '@lightningrodlabs/we-rust-utils';
+import * as yaml from 'js-yaml';
 
-const rustUtils = require('@lightningrodlabs/we-rust-utils');
+// const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function readLocalServices(): Promise<[string, string]> {
   if (!fs.existsSync('.hc_local_services')) {
@@ -101,6 +103,9 @@ export async function devSetup(
     string,
     [string, string, string | undefined, string | undefined, string | undefined]
   > = {};
+
+  // progenitor pubkeys to be used by joining agents
+  const groupProgenitors: Record<string, AgentPubKey> = {};
 
   for (const installableApplet of config.config.applets) {
     if (
@@ -322,7 +327,7 @@ export async function devSetup(
           await groupWebsocket.callZome({
             role_name: 'group',
             zome_name: 'group',
-            fn_name: 'register_applet',
+            fn_name: 'register_and_join_applet',
             payload: {
               applet,
               joining_pubkey: appletPubKey,
@@ -366,7 +371,7 @@ export async function devSetup(
             await groupWebsocket.callZome({
               role_name: 'group',
               zome_name: 'group',
-              fn_name: 'register_applet',
+              fn_name: 'join_applet',
               payload: {
                 applet,
                 joining_pubkey: appletPubKey,
@@ -384,11 +389,12 @@ async function joinGroup(
   holochainManager: HolochainManager,
   group: GroupConfig,
   agentProfile: AgentProfile,
+  progenitor?: AgentPubKey,
 ): Promise<AppWebsocket> {
   // Create the group
   const appPort = holochainManager.appPort;
   // Install group cell
-  const groupAppInfo = await installGroup(holochainManager, group.networkSeed);
+  const groupAppInfo = await installGroup(holochainManager, group.networkSeed, progenitor);
   const groupAuthenticationTokenResponse =
     await holochainManager.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: groupAppInfo.installed_app_id,
@@ -456,6 +462,7 @@ async function readIcon(location: ResourceLocation) {
 async function installGroup(
   holochainManager: HolochainManager,
   networkSeed: string,
+  progenitor?: AgentPubKey,
 ): Promise<AppInfo> {
   const apps = await holochainManager.adminWebsocket.listApps({});
   const hash = createHash('sha256');
@@ -465,13 +472,37 @@ async function installGroup(
   const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
+
+  //
+  const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'we.happ');
+  const dnaPropertiesMap = progenitor
+    ? {
+        group: yaml.dump({ progenitor }),
+      }
+    : {
+        group: yaml.dump({
+          progenitor: null,
+        }),
+      };
+
+  console.log('Dna properties map: ', dnaPropertiesMap);
+  const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
+    groupHappPath,
+    dnaPropertiesMap,
+  );
+
+  const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
+
+  fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+
   const appInfo = await holochainManager.adminWebsocket.installApp({
-    path: path.join(DEFAULT_APPS_DIRECTORY, 'we.happ'),
+    path: modifiedHappPath,
     installed_app_id: appId,
     agent_key: appStoreAppInfo.agent_pub_key,
     network_seed: networkSeed,
     membrane_proofs: {},
   });
+  fs.rmSync(modifiedHappPath);
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
   return appInfo;
 }
@@ -754,8 +785,15 @@ export interface AppEntry {
   };
 }
 
-export interface Applet {
-  custom_name: string; // name of the applet instance as chosen by the person adding it to the group,
+export type Applet = {
+  /**
+   * ActionHash of the StewardPermission based on which the Applet entry has been created
+   */
+  permission_hash?: ActionHash;
+  /**
+   * name of the applet instance as chosen by the person adding it to the group
+   */
+  custom_name: string;
   description: string;
   sha256_happ: string;
   sha256_ui: string | undefined;
@@ -764,7 +802,7 @@ export interface Applet {
   network_seed: string | undefined;
   properties: Record<string, Uint8Array>; // Segmented by RoleId
   meta_data?: string;
-}
+};
 
 export interface WebAddress {
   url: string;

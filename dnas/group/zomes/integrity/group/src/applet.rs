@@ -47,8 +47,7 @@ pub fn validate_delete_applet(
 }
 /// Rules
 /// 1. Link must point away from the all_applets anchor
-/// 2. Link must point to a valid Applet entry
-/// 3. The creator of the link must be the one that created the Applet entry
+/// 2. Link must point to an entry hash
 pub fn validate_create_link_all_applets(
     action: CreateLink,
     base_address: AnyLinkableHash,
@@ -68,24 +67,12 @@ pub fn validate_create_link_all_applets(
         ));
     }
     // Check the entry type for the given action hash
-    let action_hash =
+    let _entry_hash =
         target_address
-            .into_action_hash()
+            .into_entry_hash()
             .ok_or(wasm_error!(WasmErrorInner::Guest(
-                "No action hash associated with link".to_string()
+                "No entry hash associated with link".to_string()
             )))?;
-    let record = must_get_valid_record(action_hash)?;
-    let _applet: Applet = record
-        .entry()
-        .to_app_option()
-        .map_err(|e| wasm_error!(e))?
-        .ok_or(wasm_error!(WasmErrorInner::Guest(
-            "Linked action must reference an entry".to_string()
-        )))?;
-
-    if record.action().author() != &action.author {
-        return Ok(ValidateCallbackResult::Invalid("Only the creator of an Applet entry can create a link from the Applet to the all_applets anchor".into()));
-    }
     Ok(ValidateCallbackResult::Valid)
 }
 
