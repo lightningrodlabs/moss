@@ -624,7 +624,6 @@ export function dateStr(timestamp: Timestamp) {
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  console.log('@modifiersToInviteUrl: decoded properties: ', groupDnaProperties);
   return `https://theweave.social/wal?weave-0.12://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 

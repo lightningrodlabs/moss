@@ -722,7 +722,6 @@ export class GroupHome extends LitElement {
       ],
     ];
 
-    console.log('this.permissionType: ', this.permissionType);
     if (this.permissionType.value.status === 'complete') {
       if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
         tabs.splice(2, 0, [
