@@ -361,7 +361,7 @@ export class WelcomeView extends LitElement {
 
             <div
               class="column"
-              style="align-items: center; display:flex; flex: 1; margin-top: 40px; color: white;"
+              style="align-items: center; display:flex; flex: 1; margin-top: 10px; color: white;"
             >
               <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
               <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
@@ -369,18 +369,24 @@ export class WelcomeView extends LitElement {
                 <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
                 relevant updates for early weavers.</span
               >
-              <div class="column">
-                ${this.updateFeed.length === 0
-                  ? html`No big waves lately...`
-                  : this.updateFeed.map(
-                      (message) => html`
-                        <div class="update-feed-el">
-                          <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
-                          <div class="update-type">${message.type}</div>
-                          ${unsafeHTML(Marked.parse(message.message))}
-                        </div>
-                      `,
-                    )}
+              <div class="flex-scrollable-parent" style="width: 870px;">
+                <div class="flex-scrollable-container">
+                  <div class="column flex-scrollable-y">
+                    ${this.updateFeed.length === 0
+                      ? html`No big waves lately...`
+                      : this.updateFeed.map(
+                          (message) => html`
+                            <div class="update-feed-el">
+                              <div class="update-date">
+                                ${this.timeAgo.format(message.timestamp)}
+                              </div>
+                              <div class="update-type">${message.type}</div>
+                              ${unsafeHTML(Marked.parse(message.message))}
+                            </div>
+                          `,
+                        )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -464,7 +470,7 @@ export class WelcomeView extends LitElement {
         align-items: center;
         color: white;
         background: #ffffff1a;
-        margin: 40px;
+        margin: 30px;
         padding: 30px;
         border-radius: 15px;
       }
