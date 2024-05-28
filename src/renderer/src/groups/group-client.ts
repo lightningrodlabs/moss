@@ -15,7 +15,7 @@ import {
   Applet,
   AppletAgent,
   JoinAppletInput,
-  PermissionLevel,
+  PermissionType,
   PrivateAppletEntry,
   StewardPermission,
 } from '../types.js';
@@ -185,16 +185,16 @@ export class GroupClient {
     return undefined;
   }
 
-  async getMyPermissionLevel(): Promise<PermissionLevel> {
-    return this.callZome('get_my_permission_level', null);
+  async getMyPermissionType(): Promise<PermissionType> {
+    return this.callZome('get_my_permission_type', null);
   }
 
-  async getAgentPermissionLevel(agent: AgentPubKey): Promise<PermissionLevel> {
-    return this.callZome('get_agent_permission_level', agent);
+  async getAgentPermissionType(agent: AgentPubKey): Promise<PermissionType> {
+    return this.callZome('get_agent_permission_type', agent);
   }
 
-  async getAllAgentPermissionLevels(): Promise<Array<[AgentPubKey, PermissionLevel]> | undefined> {
-    return this.callZome('get_all_agent_permission_levels', null);
+  async getAllAgentPermissionTypes(): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
+    return this.callZome('get_all_agent_permission_types', null);
   }
 
   private callZome(fn_name: string, payload: any) {

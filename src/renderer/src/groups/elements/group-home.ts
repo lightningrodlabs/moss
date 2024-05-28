@@ -97,9 +97,9 @@ export class GroupHome extends LitElement {
     () => [this.mossStore, this.groupStore],
   );
 
-  permissionLevel = new StoreSubscriber(
+  permissionType = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionLevel,
+    () => this.groupStore.permissionType,
     () => [this.groupStore],
   );
 
@@ -722,9 +722,9 @@ export class GroupHome extends LitElement {
       ],
     ];
 
-    console.log('this.permissionLevel: ', this.permissionLevel);
-    if (this.permissionLevel.value.status === 'complete') {
-      if (['Progenitor', 'Steward'].includes(this.permissionLevel.value.value.type)) {
+    console.log('this.permissionType: ', this.permissionType);
+    if (this.permissionType.value.status === 'complete') {
+      if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
         tabs.splice(2, 0, [
           'Group Stewards',
           html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,

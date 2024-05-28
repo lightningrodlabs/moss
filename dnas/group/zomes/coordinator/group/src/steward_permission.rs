@@ -46,14 +46,14 @@ pub fn get_steward_permissions_for_agent(agent: AgentPubKey) -> ExternResult<Vec
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "content")]
-pub enum PermissionLevel {
+pub enum PermissionType {
     Progenitor,
     Steward(StewardPermissionClaim),
     Member,
 }
 
 #[hdk_extern]
-pub fn get_my_permission_level() -> ExternResult<PermissionLevel> {
+pub fn get_my_permission_type() -> ExternResult<PermissionType> {
     let dna_properties =
         GroupDnaProperties::try_from(dna_info()?.modifiers.properties).map_err(|e| {
             wasm_error!(WasmErrorInner::Guest(format!(
@@ -62,12 +62,12 @@ pub fn get_my_permission_level() -> ExternResult<PermissionLevel> {
         })?;
 
     match dna_properties.progenitor {
-        None => Ok(PermissionLevel::Progenitor),
+        None => Ok(PermissionType::Progenitor),
         Some(progenitor_b64) => {
             let progenitor = AgentPubKey::from(progenitor_b64);
             let my_pub_key = agent_info()?.agent_initial_pubkey;
             if my_pub_key == progenitor {
-                return Ok(PermissionLevel::Progenitor);
+                return Ok(PermissionType::Progenitor);
             }
             // query local chain for unlimited StewardPermissionClaims
             let permission_claim_entry_type: EntryType =
@@ -85,16 +85,16 @@ pub fn get_my_permission_level() -> ExternResult<PermissionLevel> {
                 .collect::<Vec<StewardPermissionClaim>>();
 
             match claims.into_iter().find(|c| c.permission.expiry.is_none()) {
-                Some(claim) => Ok(PermissionLevel::Steward(claim)),
+                Some(claim) => Ok(PermissionType::Steward(claim)),
                 // If no unlimited permission claim is found locally check the DHT
-                None => network_get_agent_permission_level(my_pub_key),
+                None => network_get_agent_permission_type(my_pub_key),
             }
         }
     }
 }
 
 #[hdk_extern]
-pub fn get_agent_permission_level(agent: AgentPubKey) -> ExternResult<PermissionLevel> {
+pub fn get_agent_permission_type(agent: AgentPubKey) -> ExternResult<PermissionType> {
     let dna_properties =
         GroupDnaProperties::try_from(dna_info()?.modifiers.properties).map_err(|e| {
             wasm_error!(WasmErrorInner::Guest(format!(
@@ -103,20 +103,20 @@ pub fn get_agent_permission_level(agent: AgentPubKey) -> ExternResult<Permission
         })?;
 
     match dna_properties.progenitor {
-        None => Ok(PermissionLevel::Progenitor),
+        None => Ok(PermissionType::Progenitor),
         Some(progenitor_b64) => {
             let progenitor = AgentPubKey::from(progenitor_b64);
             if agent == progenitor {
-                return Ok(PermissionLevel::Progenitor);
+                return Ok(PermissionType::Progenitor);
             }
 
-            network_get_agent_permission_level(agent)
+            network_get_agent_permission_type(agent)
         }
     }
 }
 
 #[hdk_extern]
-pub fn get_all_agent_permission_levels() -> ExternResult<Option<Vec<(AgentPubKey, PermissionLevel)>>>
+pub fn get_all_agent_permission_types() -> ExternResult<Option<Vec<(AgentPubKey, PermissionType)>>>
 {
     let dna_properties =
         GroupDnaProperties::try_from(dna_info()?.modifiers.properties).map_err(|e| {
@@ -128,9 +128,9 @@ pub fn get_all_agent_permission_levels() -> ExternResult<Option<Vec<(AgentPubKey
     match dna_properties.progenitor {
         None => Ok(None),
         Some(progenitor_b64) => {
-            let mut permission_levels = Vec::new();
+            let mut permission_types = Vec::new();
             let progenitor = AgentPubKey::from(progenitor_b64);
-            permission_levels.push((progenitor, PermissionLevel::Progenitor));
+            permission_types.push((progenitor, PermissionType::Progenitor));
             let all_permission_links = get_all_steward_permissions(())?;
             let mut pubkeys = all_permission_links
                 .iter()
@@ -142,15 +142,15 @@ pub fn get_all_agent_permission_levels() -> ExternResult<Option<Vec<(AgentPubKey
             pubkeys.retain(|pk| seen.insert(pk.clone()));
 
             for agent in pubkeys {
-                let permission_level = network_get_agent_permission_level(agent.clone())?;
-                permission_levels.push((agent, permission_level));
+                let permission_type = network_get_agent_permission_type(agent.clone())?;
+                permission_types.push((agent, permission_type));
             }
-            Ok(Some(permission_levels))
+            Ok(Some(permission_types))
         }
     }
 }
 
-pub fn network_get_agent_permission_level(agent: AgentPubKey) -> ExternResult<PermissionLevel> {
+pub fn network_get_agent_permission_type(agent: AgentPubKey) -> ExternResult<PermissionType> {
     // If no unlimited permission claim is found locally, then check the DHT
     let links_to_agent_permissions = get_steward_permissions_for_agent(agent)?;
 
@@ -176,7 +176,7 @@ pub fn network_get_agent_permission_level(agent: AgentPubKey) -> ExternResult<Pe
                                     create_entry(EntryTypes::StewardPermissionClaim(
                                         claim.clone(),
                                     ))?;
-                                    return Ok(PermissionLevel::Steward(claim));
+                                    return Ok(PermissionType::Steward(claim));
                                 }
                                 Some(expiry) => {
                                     expiring_permissions.push((
@@ -206,11 +206,11 @@ pub fn network_get_agent_permission_level(agent: AgentPubKey) -> ExternResult<Pe
         Some((expiry, claim)) => {
             let now = sys_time()?;
             if now > expiry {
-                Ok(PermissionLevel::Member)
+                Ok(PermissionType::Member)
             } else {
-                Ok(PermissionLevel::Steward(claim))
+                Ok(PermissionType::Steward(claim))
             }
         }
-        None => Ok(PermissionLevel::Member),
+        None => Ok(PermissionType::Member),
     }
 }

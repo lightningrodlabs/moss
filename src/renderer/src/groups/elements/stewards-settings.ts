@@ -16,7 +16,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64 } from '@holochain/client';
-import { PermissionLevel } from '../../types.js';
+import { PermissionType } from '../../types.js';
 import { weStyles } from '../../shared-styles.js';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
@@ -35,23 +35,23 @@ export class StewardsSettings extends LitElement {
   @state()
   _expirySelected: boolean = false;
 
-  allAgentPermissionLevels = new StoreSubscriber(
+  allAgentPermissionTypes = new StoreSubscriber(
     this,
-    () => this.groupStore.allAgentPermissionLevels,
+    () => this.groupStore.allAgentPermissionTypes,
     () => [this.groupStore],
   );
 
-  myPermissionLevel = new StoreSubscriber(
+  myPermissionType = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionLevel,
+    () => this.groupStore.permissionType,
     () => [this.groupStore],
   );
 
   async firstUpdated() {
-    await this.groupStore.permissionLevel.reload();
+    await this.groupStore.permissionType.reload();
   }
 
-  validityDuration(level: PermissionLevel) {
+  validityDuration(level: PermissionType) {
     if (level.type === 'Steward' && level.content.permission.expiry) {
       return `expires ${new Date(level.content.permission.expiry / 1000).toISOString()}`;
     }
@@ -59,7 +59,7 @@ export class StewardsSettings extends LitElement {
     return 'no expiry';
   }
 
-  canICreatePermissions(level: PermissionLevel): boolean {
+  canICreatePermissions(level: PermissionType): boolean {
     if (level.type === 'Progenitor') return true;
     if (level.type === 'Steward' && !level.content.permission.expiry) return true;
     return false;
@@ -121,21 +121,21 @@ export class StewardsSettings extends LitElement {
     const expiryInput = this.shadowRoot?.getElementById('expiry-checkbox') as HTMLInputElement;
     expiryInput.checked = false;
     this._expirySelected = false;
-    await this.groupStore.allAgentPermissionLevels.reload();
+    await this.groupStore.allAgentPermissionTypes.reload();
     notify('New Steward Added.');
     this.requestUpdate();
   }
 
   renderAddPermission() {
-    switch (this.myPermissionLevel.value.status) {
+    switch (this.myPermissionType.value.status) {
       case 'pending':
         return html``;
       case 'error':
-        console.error('Failed to get my permission level: ', this.myPermissionLevel.value.error);
+        console.error('Failed to get my permission level: ', this.myPermissionType.value.error);
         return html``;
       case 'complete': {
-        const permissionLevel = this.myPermissionLevel.value.value;
-        if (this.canICreatePermissions(permissionLevel)) {
+        const permissionType = this.myPermissionType.value.value;
+        if (this.canICreatePermissions(permissionType)) {
           return html`
             <h3>${msg('Add Steward:')}</h3>
             <div>Public key:</div>
@@ -171,7 +171,7 @@ export class StewardsSettings extends LitElement {
     }
   }
 
-  renderPermissionLevels(levels: Array<[AgentPubKey, PermissionLevel]>) {
+  renderPermissionTypes(levels: Array<[AgentPubKey, PermissionType]>) {
     return html`
       ${levels.map(
         ([pubkey, level]) => html`
@@ -196,20 +196,20 @@ export class StewardsSettings extends LitElement {
   }
 
   renderAllAgentPermissions() {
-    switch (this.allAgentPermissionLevels.value.status) {
+    switch (this.allAgentPermissionTypes.value.status) {
       case 'pending':
         return html`loading...`;
       case 'error':
         console.error(
           'Failed to get all agent permission levels: ',
-          this.allAgentPermissionLevels.value.error,
+          this.allAgentPermissionTypes.value.error,
         );
         return html`Failed to get all agent permission levels:
-        ${this.allAgentPermissionLevels.value.error}`;
+        ${this.allAgentPermissionTypes.value.error}`;
       case 'complete':
         return html`
-          ${this.allAgentPermissionLevels.value.value
-            ? this.renderPermissionLevels(this.allAgentPermissionLevels.value.value)
+          ${this.allAgentPermissionTypes.value.value
+            ? this.renderPermissionTypes(this.allAgentPermissionTypes.value.value)
             : html`This group has no Stewards. All members have unrestricted permissions.`}
         `;
     }
