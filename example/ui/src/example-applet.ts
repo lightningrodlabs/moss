@@ -94,35 +94,41 @@ export class ExampleApplet extends LitElement {
           case 'block':
             throw new Error('Block view is not implemented.');
           case 'asset':
-            switch (this.weaveClient.renderInfo.view.roleName) {
-              case 'forum':
-                switch (this.weaveClient.renderInfo.view.integrityZomeName) {
-                  case 'posts_integrity':
-                    switch (this.weaveClient.renderInfo.view.entryType) {
-                      case 'post':
-                        return html`
-                          <posts-context .store=${this.postsStore}>
-                            <attachments-context .store=${this.attachmentsStore}>
-                              <post-detail
-                                .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
-                              ></post-detail>
-                            </attachments-context>
-                          </posts-context>
-                        `;
-                      default:
-                        throw new Error(
-                          `Unknown entry type ${this.weaveClient.renderInfo.view.entryType}.`
-                        );
-                    }
-                  default:
-                    throw new Error(
-                      `Unknown zome '${this.weaveClient.renderInfo.view.integrityZomeName}'.`
-                    );
-                }
-              default:
-                throw new Error(
-                  `Unknown role name '${this.weaveClient.renderInfo.view.roleName}'.`
-                );
+            if (!this.weaveClient.renderInfo.view.recordInfo) {
+              throw new Error(
+                'The example applet does not implement asset views pointing to DNAs instead of Records.'
+              );
+            } else {
+              switch (this.weaveClient.renderInfo.view.recordInfo.roleName) {
+                case 'forum':
+                  switch (this.weaveClient.renderInfo.view.recordInfo.integrityZomeName) {
+                    case 'posts_integrity':
+                      switch (this.weaveClient.renderInfo.view.recordInfo.entryType) {
+                        case 'post':
+                          return html`
+                            <posts-context .store=${this.postsStore}>
+                              <attachments-context .store=${this.attachmentsStore}>
+                                <post-detail
+                                  .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
+                                ></post-detail>
+                              </attachments-context>
+                            </posts-context>
+                          `;
+                        default:
+                          throw new Error(
+                            `Unknown entry type ${this.weaveClient.renderInfo.view.recordInfo.entryType}.`
+                          );
+                      }
+                    default:
+                      throw new Error(
+                        `Unknown zome '${this.weaveClient.renderInfo.view.recordInfo.integrityZomeName}'.`
+                      );
+                  }
+                default:
+                  throw new Error(
+                    `Unknown role name '${this.weaveClient.renderInfo.view.recordInfo.roleName}'.`
+                  );
+              }
             }
           case 'creatable':
             switch (this.weaveClient.renderInfo.view.name) {

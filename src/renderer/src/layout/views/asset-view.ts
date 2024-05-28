@@ -53,16 +53,20 @@ export class AssetView extends LitElement {
     }
   }
 
-  renderGroupView(dnaLocation: DnaLocation, entryTypeLocation: EntryDefLocation) {
+  renderGroupView(dnaLocation: DnaLocation, entryTypeLocation?: EntryDefLocation) {
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
         .view=${{
           type: 'asset',
-          roleName: dnaLocation.roleName,
-          integrityZomeName: entryTypeLocation.integrity_zome,
-          entryType: entryTypeLocation.entry_def,
           wal: this.wal,
+          recordInfo: entryTypeLocation
+            ? {
+                roleName: dnaLocation.roleName,
+                integrityZomeName: entryTypeLocation.integrity_zome,
+                entryType: entryTypeLocation.entry_def,
+              }
+            : undefined,
         }}
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">

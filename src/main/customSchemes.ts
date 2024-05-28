@@ -98,7 +98,7 @@ export async function handleDefaultAppsProtocol(
       htmlComponents.splice(
         2,
         0,
-        `<script type="module">${HAPP_IFRAME_SCRIPT};window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, APP_INTERFACE_TOKEN: [${token}] }</script>`,
+        `<script type="module">${HAPP_IFRAME_SCRIPT};window.__USING_FEEDBACK=true;window.__HC_LAUNCHER_ENV__={ INSTALLED_APP_ID: "${installedAppId}", APP_INTERFACE_PORT: ${holochainManager.appPort}, APP_INTERFACE_TOKEN: [${token}] }</script>`,
       );
       let modifiedContent = htmlComponents.join('');
 

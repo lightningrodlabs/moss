@@ -45,7 +45,6 @@ export async function initAppClient(
   defaultTimeout?: number,
 ): Promise<AppWebsocket> {
   const client = await AppWebsocket.connect({
-    url: new URL('ws://UNUSED'),
     token,
     defaultTimeout,
   });

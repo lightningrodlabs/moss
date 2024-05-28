@@ -12,7 +12,6 @@ import {
   HoloHashB64,
   decodeHashFromBase64,
   encodeHashToBase64,
-  fakeAgentPubKey,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -24,18 +23,19 @@ import {
   FrameNotification,
   RenderView,
   RenderInfo,
-  AppletToParentRequest,
   AppletToParentMessage,
-  HrlLocation,
   ParentToAppletMessage,
   AppletHash,
   AppletServices,
   OpenWalMode,
   CreatableName,
   CreatableType,
+  RecordInfo,
+  NULL_HASH,
   PeerStatusUpdate,
   PeerStatus,
   ReadonlyPeerStatusStore,
+  AppletToParentRequest,
 } from '@lightningrodlabs/we-applet';
 import { readable } from '@holochain-open-dev/stores';
 
@@ -304,10 +304,8 @@ const handleMessage = async (
     case 'get-applet-asset-info':
       return window.__WEAVE_APPLET_SERVICES__.getAssetInfo(
         appletClient,
-        message.roleName,
-        message.integrityZomeName,
-        message.entryType,
         message.wal,
+        message.recordInfo,
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
@@ -316,9 +314,7 @@ const handleMessage = async (
         appletClient,
         message.srcWal,
         message.dstWal,
-        message.dstRoleName,
-        message.dstIntegrityZomeName,
-        message.dstEntryType,
+        message.dstRecordInfo,
       );
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
@@ -492,18 +488,29 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
-      const hrlLocation: HrlLocation = await postMessage({
-        type: 'get-hrl-location',
+      if (hrl[1].toString() === NULL_HASH.toString()) {
+        return {
+          type: view,
+          view: {
+            type: 'asset',
+            wal: { hrl, context },
+          },
+        };
+      }
+      const recordInfo: RecordInfo = await postMessage({
+        type: 'get-record-info',
         hrl,
       });
       return {
         type: view,
         view: {
           type: 'asset',
-          roleName: hrlLocation.roleName,
-          integrityZomeName: hrlLocation.integrityZomeName,
-          entryType: hrlLocation.entryType,
           wal: { hrl, context },
+          recordInfo: {
+            roleName: recordInfo.roleName,
+            integrityZomeName: recordInfo.integrityZomeName,
+            entryType: recordInfo.entryType,
+          },
         },
       };
     case 'creatable':
