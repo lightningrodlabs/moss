@@ -20,8 +20,8 @@ import { PermissionLevel } from '../../types.js';
 import { weStyles } from '../../shared-styles.js';
 
 @localized()
-@customElement('admin-settings')
-export class AdminSettings extends LitElement {
+@customElement('stewards-settings')
+export class StewardsSettings extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
@@ -81,7 +81,7 @@ export class AdminSettings extends LitElement {
         return html`
           ${this.allAgentPermissionLevels.value.value
             ? this.renderPermissionLevels(this.allAgentPermissionLevels.value.value)
-            : html`This group has unrestricted permissions for any member.`}
+            : html`This group has no Stewards. All members have unrestricted permissions.`}
         `;
     }
   }

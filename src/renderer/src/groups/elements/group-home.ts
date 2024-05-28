@@ -47,7 +47,7 @@ import './group-peers-status.js';
 import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
-import './admin-settings.js';
+import './stewards-settings.js';
 import './your-settings.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
@@ -481,11 +481,12 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
-      <span style="position: absolute; bottom: 5px; left: 10px;"
-        >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
-      >
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div class="column" style="flex: 1; padding: 16px; overflow-y: auto; position: relative;">
+        <div class="column" style="position: absolute; bottom: 5px; left: 10px;">
+          <span>${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span>
+          <span>${msg('Your Public Key: ')}${encodeHashToBase64(this.groupStore.groupClient.myPubKey)}</span>
+        </div>
 
         <div style=" background-image: url(${
           groupProfile.icon_src
@@ -725,8 +726,8 @@ export class GroupHome extends LitElement {
     if (this.permissionLevel.value.status === 'complete') {
       if (['Progenitor', 'Steward'].includes(this.permissionLevel.value.value.type)) {
         tabs.splice(2, 0, [
-          'Admin',
-          html`<admin-settings style="display: flex; flex: 1;"></admin-settings>`,
+          'Group Stewards',
+          html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
         ]);
       }
     }
