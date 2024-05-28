@@ -8,6 +8,8 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
+import { mdiTools } from '@mdi/js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
 
 enum WelcomePageView {
   Main,
@@ -26,21 +28,11 @@ export class AppStoreView extends LitElement {
   renderAppLibrary() {
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1">
-        <div class="row" style="margin-bottom: 16px; align-items: center">
-          <span class="title" style="flex: 1; color: var(--sl-color-secondary-950);"
-            >${msg('Applet Library')}</span
+        <div class="row" style="margin-bottom: 16px; align-items: center; font-size: 26px;">
+          <sl-icon .src=${wrapPathInSvg(mdiTools)}></sl-icon>
+          <span style="flex: 1; color: var(--sl-color-secondary-950); margin-left: 10px;"
+            >${msg('Tool Library')}</span
           >
-          <sl-button
-            @click=${() => {
-              this.dispatchEvent(new CustomEvent('open-publishing-view'));
-            }}
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this.dispatchEvent(new CustomEvent('open-publishing-view'));
-              }
-            }}
-            >Publish Tool
-          </sl-button>
         </div>
 
         <installable-applets

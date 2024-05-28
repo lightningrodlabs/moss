@@ -268,6 +268,7 @@ export class MainDashboard extends LitElement {
         template: html` <publishing-view></publishing-view> `,
       },
     };
+    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -281,7 +282,6 @@ export class MainDashboard extends LitElement {
         template: html`
           <appstore-view
             style="display: flex; flex: 1;"
-            @open-publishing-view=${() => this.openPublishingView()}
             @applet-installed=${(e: {
               detail: {
                 appletEntryHash: AppletHash;
@@ -1022,6 +1022,7 @@ export class MainDashboard extends LitElement {
               ? 'pointer-events: none; user-select: none;'
               : ''}"
             @open-appstore=${() => this.openAppStore()}
+            @open-publishing-view=${() => this.openPublishingView()}
             @request-create-group=${() =>
               (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
             @request-join-group=${(_e) => this.joinGroupDialog.open()}
