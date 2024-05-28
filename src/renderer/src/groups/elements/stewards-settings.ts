@@ -180,7 +180,9 @@ export class StewardsSettings extends LitElement {
               <profile-detail .agentPubKey=${pubkey}></profile-detail>
               <span style="display: flex; flex: 1;"></span>
               <div class="column" style="align-items: flex-end;">
-                <div style="font-weight: bold;">${level.type}</div>
+                <div style="font-weight: bold;">
+                  ${level.type === 'Progenitor' ? 'Steward (Progenitor)' : level.type}
+                </div>
                 <div style="opacity: 0.8; font-size: 0.86rem; font-style: italic;">
                   ${this.validityDuration(level)}
                 </div>

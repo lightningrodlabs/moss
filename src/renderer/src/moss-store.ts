@@ -309,10 +309,10 @@ export class MossStore {
   /**
    * Clones the group DNA with a new unique network seed, and creates a group info entry in that DNA
    */
-  public async createGroup(name: string, logo: string): Promise<AppInfo> {
+  public async createGroup(name: string, logo: string, useProgenitor: boolean): Promise<AppInfo> {
     if (!logo) throw new Error('No logo provided.');
 
-    const appInfo = await createGroup(true);
+    const appInfo = await createGroup(useProgenitor);
     await this.reloadManualStores();
 
     const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
