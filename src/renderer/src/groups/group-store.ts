@@ -34,7 +34,13 @@ import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import { Applet, JoinAppletInput } from '../types.js';
-import { appIdFromAppletHash, isAppDisabled, isAppRunning, toLowerCaseB64 } from '../utils.js';
+import {
+  appIdFromAppletHash,
+  isAppDisabled,
+  isAppRunning,
+  lazyReloadableStore,
+  toLowerCaseB64,
+} from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 import { Tool, UpdateableEntity } from '../tools-library/types.js';
 
@@ -86,9 +92,11 @@ export class GroupStore {
     return dnaModifiers;
   });
 
-  permissionLevel = lazyLoad(async () => this.groupClient.getMyPermissionLevel());
+  permissionLevel = lazyReloadableStore(async () => this.groupClient.getMyPermissionLevel());
 
-  allAgentPermissionLevels = lazyLoad(async () => this.groupClient.getAllAgentPermissionLevels());
+  allAgentPermissionLevels = lazyReloadableStore(async () =>
+    this.groupClient.getAllAgentPermissionLevels(),
+  );
 
   groupProfile = lazyLoadAndPoll(async () => {
     // only poll in case groupProfile is not yet defined

@@ -38,6 +38,7 @@ import {
 } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
+import { AsyncReadable, AsyncStatus, readable, writable } from '@holochain-open-dev/stores';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -646,4 +647,37 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   } else {
     return undefined;
   }
+}
+
+export function lazyReloadableStore<T>(
+  load: () => Promise<T>,
+): AsyncReadable<T> & { reload: () => Promise<void> } {
+  const store = writable<AsyncStatus<T>>({ status: 'pending' }, (set) => {
+    load()
+      .then((v) => {
+        set({ status: 'complete', value: v });
+      })
+      .catch((e) => set({ status: 'error', error: e }));
+
+    return () => {
+      set({ status: 'pending' });
+    };
+  });
+
+  const reload = async () => {
+    try {
+      const value = await load();
+      store.set({
+        status: 'complete',
+        value,
+      });
+    } catch (error) {
+      store.set({ status: 'error', error });
+    }
+  };
+
+  return {
+    subscribe: store.subscribe,
+    reload,
+  };
 }
