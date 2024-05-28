@@ -45,14 +45,14 @@ export type StewardPermissionClaim = {
 
 export type PermissionLevel =
   | {
-      type: 'progenitor';
+      type: 'Progenitor';
     }
   | {
-      type: 'steward';
+      type: 'Steward';
       content: StewardPermissionClaim;
     }
   | {
-      type: 'member';
+      type: 'Member';
     };
 
 export type GroupProfile = {

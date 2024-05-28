@@ -1,6 +1,8 @@
 use group_integrity::*;
 use hdk::prelude::*;
 
+use crate::all_steward_permissions::get_all_steward_permissions;
+
 #[hdk_extern]
 pub fn create_steward_permission(steward_permission: StewardPermission) -> ExternResult<Record> {
     let steward_permission_hash =
@@ -109,6 +111,41 @@ pub fn get_agent_permission_level(agent: AgentPubKey) -> ExternResult<Permission
             }
 
             network_get_agent_permission_level(agent)
+        }
+    }
+}
+
+#[hdk_extern]
+pub fn get_all_agent_permission_levels() -> ExternResult<Option<Vec<(AgentPubKey, PermissionLevel)>>>
+{
+    let dna_properties =
+        GroupDnaProperties::try_from(dna_info()?.modifiers.properties).map_err(|e| {
+            wasm_error!(WasmErrorInner::Guest(format!(
+                "Failed to deserialize DNA properties: {e}"
+            )))
+        })?;
+
+    match dna_properties.progenitor {
+        None => Ok(None),
+        Some(progenitor_b64) => {
+            let mut permission_levels = Vec::new();
+            let progenitor = AgentPubKey::from(progenitor_b64);
+            permission_levels.push((progenitor, PermissionLevel::Progenitor));
+            let all_permission_links = get_all_steward_permissions(())?;
+            let mut pubkeys = all_permission_links
+                .iter()
+                .map(|l| AgentPubKey::from_raw_39(l.tag.0.clone()).ok())
+                .filter_map(|pk| pk)
+                .collect::<Vec<AgentPubKey>>();
+
+            let mut seen = HashSet::new();
+            pubkeys.retain(|pk| seen.insert(pk.clone()));
+
+            for agent in pubkeys {
+                let permission_level = network_get_agent_permission_level(agent.clone())?;
+                permission_levels.push((agent, permission_level));
+            }
+            Ok(Some(permission_levels))
         }
     }
 }

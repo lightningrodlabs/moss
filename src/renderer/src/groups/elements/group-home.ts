@@ -47,6 +47,7 @@ import './group-peers-status.js';
 import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
+import './admin-settings.js';
 import './your-settings.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
@@ -67,7 +68,6 @@ import { appIdFromAppletHash, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { slice } from '@holochain-open-dev/utils';
-import { encode } from 'js-base64';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -95,6 +95,12 @@ export class GroupHome extends LitElement {
     this,
     () => this.mossStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
     () => [this.mossStore, this.groupStore],
+  );
+
+  permissionLevel = new StoreSubscriber(
+    this,
+    () => this.groupStore.permissionLevel,
+    () => [this.groupStore],
   );
 
   _peersStatus = new StoreSubscriber(
@@ -714,6 +720,16 @@ export class GroupHome extends LitElement {
         `,
       ],
     ];
+
+    console.log('this.permissionLevel: ', this.permissionLevel);
+    if (this.permissionLevel.value.status === 'complete') {
+      if (['Progenitor', 'Steward'].includes(this.permissionLevel.value.value.type)) {
+        tabs.splice(2, 0, [
+          'Admin',
+          html`<admin-settings style="display: flex; flex: 1;"></admin-settings>`,
+        ]);
+      }
+    }
 
     return html`
       <loading-dialog id="loading-dialog" loadingText="Updating UI..."></loading-dialog>

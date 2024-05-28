@@ -86,7 +86,12 @@ export class GroupStore {
     return dnaModifiers;
   });
 
+  permissionLevel = lazyLoad(async () => this.groupClient.getMyPermissionLevel());
+
+  allAgentPermissionLevels = lazyLoad(async () => this.groupClient.getAllAgentPermissionLevels());
+
   groupProfile = lazyLoadAndPoll(async () => {
+    // only poll in case groupProfile is not yet defined
     const entryRecord = await this.groupClient.getGroupProfile();
     return entryRecord?.entry;
   }, 4000);

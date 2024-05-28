@@ -193,6 +193,10 @@ export class GroupClient {
     return this.callZome('get_agent_permission_level', agent);
   }
 
+  async getAllAgentPermissionLevels(): Promise<Array<[AgentPubKey, PermissionLevel]> | undefined> {
+    return this.callZome('get_all_agent_permission_levels', null);
+  }
+
   private callZome(fn_name: string, payload: any) {
     const req: AppCallZomeRequest = {
       role_name: this.roleName,
