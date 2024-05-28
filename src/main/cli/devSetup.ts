@@ -473,11 +473,10 @@ async function installGroup(
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
 
-  //
   const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'we.happ');
   const dnaPropertiesMap = progenitor
     ? {
-        group: yaml.dump({ progenitor }),
+        group: yaml.dump({ progenitor: encodeHashToBase64(progenitor) }),
       }
     : {
         group: yaml.dump({

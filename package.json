@@ -70,6 +70,7 @@
     "nanoid": "5.0.4",
     "split": "1.0.1",
     "ts-node": "10.9.2",
+    "uuid": "9.0.1",
     "utf-8-validate": "^6.0.3",
     "winston": "3.11.0"
   },

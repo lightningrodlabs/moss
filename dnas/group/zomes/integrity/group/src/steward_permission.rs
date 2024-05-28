@@ -23,7 +23,8 @@ pub fn validate_create_steward_permission(
                 "Failed to deserialize DNA properties: {e}"
             )))
         })?;
-    if let Some(progenitor) = dna_properties.progenitor {
+    if let Some(progenitor_b64) = dna_properties.progenitor {
+        let progenitor = AgentPubKey::from(progenitor_b64);
         if progenitor == steward_permission.for_agent {
             return Ok(ValidateCallbackResult::Invalid(
                 "StewardPermission entries cannot be created for the progenitor.".into(),
@@ -212,7 +213,8 @@ pub fn validate_steward_permission(
         })?;
 
     match dna_properties.progenitor {
-        Some(progenitor) => {
+        Some(progenitor_b64) => {
+            let progenitor = AgentPubKey::from(progenitor_b64);
             if &progenitor == agent {
                 Ok(ValidateCallbackResult::Valid)
             } else {
@@ -270,7 +272,7 @@ pub fn validate_steward_permission(
                         Ok(ValidateCallbackResult::Valid)
                     }
                     None => Ok(ValidateCallbackResult::Invalid(
-                        "No valid permission hash provided and agent is not the progenitor.".into(),
+                        "No valid permission hash provided and agent is not the progenitor".into(),
                     )),
                 }
             }

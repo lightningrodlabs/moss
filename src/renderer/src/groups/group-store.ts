@@ -81,9 +81,9 @@ export class GroupStore {
     return cellInfo[CellType.Provisioned].dna_modifiers;
   }
 
-  networkSeed = lazyLoad(async () => {
+  modifiers = lazyLoad(async () => {
     const dnaModifiers = await this.groupDnaModifiers();
-    return dnaModifiers.network_seed;
+    return dnaModifiers;
   });
 
   groupProfile = lazyLoadAndPoll(async () => {

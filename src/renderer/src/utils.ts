@@ -20,13 +20,22 @@ import {
   AgentPubKeyB64,
   Timestamp,
   AppAuthenticationToken,
+  DnaModifiers,
+  AgentPubKey,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
-import { fromUint8Array, toUint8Array } from 'js-base64';
+import { fromUint8Array, toUint8Array, encode as encodeB64, decode as decodeB64 } from 'js-base64';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { AppletHash, AppletId, DistributionInfo, MessageContentPart } from './types.js';
+import {
+  AppletHash,
+  AppletId,
+  DistributionInfo,
+  GroupDnaProperties,
+  MessageContentPart,
+  PartialModifiers,
+} from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 
@@ -610,4 +619,31 @@ export function logMossZomeCall(
 export function dateStr(timestamp: Timestamp) {
   const date = new Date(timestamp / 1000);
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+}
+
+export function modifiersToInviteUrl(modifiers: DnaModifiers) {
+  const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
+  console.log('@modifiersToInviteUrl: decoded properties: ', groupDnaProperties);
+  return `https://theweave.social/wal?weave-0.12://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+}
+
+export function invitePropsToPartialModifiers(props: string): PartialModifiers {
+  const [networkSeed, progenitor] = props.split('&progenitor=');
+  if (!progenitor) throw new Error('Invite string does not contain progenitor.');
+  return {
+    networkSeed,
+    progenitor,
+  };
+}
+
+export function partialModifiersFromInviteLink(inviteLink: string): PartialModifiers | undefined {
+  const split = inviteLink.trim().split('://');
+  const split2 = inviteLink.startsWith('https')
+    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.12://invite/aljsfkajsf
+    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.12://invite/aljsfkajsf
+  if (split2[0] === 'invite') {
+    return invitePropsToPartialModifiers(split2[1]);
+  } else {
+    return undefined;
+  }
 }

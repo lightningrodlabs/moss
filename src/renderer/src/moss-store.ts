@@ -22,6 +22,7 @@ import {
   slice,
 } from '@holochain-open-dev/utils';
 import {
+  AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
   AppInfo,
@@ -39,14 +40,13 @@ import {
   ProfilesLocation,
   CreatableType,
 } from '@lightningrodlabs/we-applet';
-import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
 import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
-import { ConductorInfo, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
+import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
   appIdFromAppletHash,
   appletHashFromAppId,
@@ -312,10 +312,8 @@ export class MossStore {
   public async createGroup(name: string, logo: string): Promise<AppInfo> {
     if (!logo) throw new Error('No logo provided.');
 
-    // generate random network seed (maybe use random words instead later, e.g. https://www.npmjs.com/package/generate-passphrase)
-    const networkSeed = uuidv4();
-
-    const appInfo = await this.joinGroup(networkSeed); // this line also updates the matrix store
+    const appInfo = await createGroup(true);
+    await this.reloadManualStores();
 
     const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
 
@@ -342,9 +340,9 @@ export class MossStore {
     return appInfo;
   }
 
-  public async joinGroup(networkSeed: string): Promise<AppInfo> {
+  public async joinGroup(networkSeed: string, progenitor: AgentPubKeyB64 | null): Promise<AppInfo> {
     try {
-      const appInfo = await joinGroup(networkSeed);
+      const appInfo = await joinGroup(networkSeed, progenitor);
       await this.reloadManualStores();
       return appInfo;
     } catch (e) {

@@ -16,7 +16,7 @@ pub use steward_permission_claim::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct GroupDnaProperties {
-    pub progenitor: Option<AgentPubKey>,
+    pub progenitor: Option<AgentPubKeyB64>,
 }
 
 #[derive(Serialize, Deserialize)]

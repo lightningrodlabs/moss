@@ -61,7 +61,8 @@ pub fn get_my_permission_level() -> ExternResult<PermissionLevel> {
 
     match dna_properties.progenitor {
         None => Ok(PermissionLevel::Progenitor),
-        Some(progenitor) => {
+        Some(progenitor_b64) => {
+            let progenitor = AgentPubKey::from(progenitor_b64);
             let my_pub_key = agent_info()?.agent_initial_pubkey;
             if my_pub_key == progenitor {
                 return Ok(PermissionLevel::Progenitor);
@@ -101,7 +102,8 @@ pub fn get_agent_permission_level(agent: AgentPubKey) -> ExternResult<Permission
 
     match dna_properties.progenitor {
         None => Ok(PermissionLevel::Progenitor),
-        Some(progenitor) => {
+        Some(progenitor_b64) => {
+            let progenitor = AgentPubKey::from(progenitor_b64);
             if agent == progenitor {
                 return Ok(PermissionLevel::Progenitor);
             }

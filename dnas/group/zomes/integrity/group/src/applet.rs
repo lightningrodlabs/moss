@@ -95,7 +95,8 @@ pub fn validate_delete_link_all_applets(
         })?;
 
     match dna_properties.progenitor {
-        Some(progenitor) => {
+        Some(progenitor_b64) => {
+            let progenitor = AgentPubKey::from(progenitor_b64);
             if progenitor == action.author {
                 return Ok(ValidateCallbackResult::Valid);
             }

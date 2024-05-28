@@ -5,6 +5,7 @@ import { customElement, state } from 'lit/decorators.js';
 import {
   ActionHash,
   AgentPubKey,
+  DnaModifiers,
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
@@ -62,10 +63,11 @@ import { weStyles } from '../../shared-styles.js';
 import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
-import { appIdFromAppletHash } from '../../utils.js';
+import { appIdFromAppletHash, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { slice } from '@holochain-open-dev/utils';
+import { encode } from 'js-base64';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -194,8 +196,8 @@ export class GroupHome extends LitElement {
     () => {
       const store = joinAsync([
         this.groupStore.groupProfile,
-        this.groupStore.networkSeed,
-      ]) as AsyncReadable<[GroupProfile | undefined, string]>;
+        this.groupStore.modifiers,
+      ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
       // (window as any).groupProfileStore = store;
       return store;
     },
@@ -470,7 +472,8 @@ export class GroupHome extends LitElement {
     }
   }
 
-  renderMain(groupProfile: GroupProfile, networkSeed: string) {
+  renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
+    const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
       <span style="position: absolute; bottom: 5px; left: 10px;"
         >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
@@ -576,16 +579,14 @@ export class GroupHome extends LitElement {
 
               <div class="row" style="margin-top: 16px">
                 <sl-input
-                  value="https://theweave.social/wal?weave-0.12://invite/${networkSeed}"
+                  value=${invitationUrl}
                   style="margin-right: 8px; flex: 1"
                 >
                 </sl-input>
                 <sl-button
                   variant="primary"
                   @click=${async () => {
-                    await navigator.clipboard.writeText(
-                      `https://theweave.social/wal?weave-0.12://invite/${networkSeed}`,
-                    );
+                    await navigator.clipboard.writeText(invitationUrl);
                     notify(msg('Invite link copied to clipboard.'));
                   }}
                   >${msg('Copy')}</sl-button
@@ -737,10 +738,10 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderContent(groupProfile: GroupProfile, networkSeed: string) {
+  renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
-        return this.renderMain(groupProfile, networkSeed);
+        return this.renderMain(groupProfile, modifiers);
       case 'settings':
         return this.renderNewSettings();
       case 'create-custom-view':
@@ -758,7 +759,7 @@ export class GroupHome extends LitElement {
         </div>`;
       case 'complete':
         const groupProfile = this.groupProfile.value.value[0];
-        const networkSeed = this.groupProfile.value.value[1];
+        const modifiers = this.groupProfile.value.value[1];
 
         if (!groupProfile)
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
@@ -770,7 +771,7 @@ export class GroupHome extends LitElement {
                 'Create your personal profile for this group. Only members of this group will be able to see your profile.',
               )}</span
             >
-            ${this.renderContent(groupProfile, networkSeed)}
+            ${this.renderContent(groupProfile, modifiers)}
           </profile-prompt>
         `;
       case 'error':
