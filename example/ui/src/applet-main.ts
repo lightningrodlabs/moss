@@ -12,6 +12,7 @@ import {
   WeaveClient,
   weaveUrlToLocation,
   ReadonlyPeerStatusStore,
+  GroupPermissionType,
 } from '@lightningrodlabs/we-applet';
 import { AppClient, encodeHashToBase64 } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
@@ -56,13 +57,15 @@ export class AppletMain extends LitElement {
 
   @state()
   walEmbedLink: string = '';
+
+  @state()
+  groupPermissionType: GroupPermissionType | undefined;
   // @state()
   // unsubscribe: undefined | (() => void);
 
-  // firstUpdated() {
-  //   // console.log("@firstUpdated in example applet: Hello.");
-  //   this.unsubscribe = this.client.on("signal", (signal) => console.log("Received signal: ", signal));
-  // }
+  async firstUpdated() {
+    this.groupPermissionType = await this.weaveClient.myGroupPermissionType();
+  }
 
   // disconnectedCallback(): void {
   //   if (this.unsubscribe) this.unsubscribe();
@@ -170,6 +173,7 @@ export class AppletMain extends LitElement {
     return html`
       <div class="column" style="margin-bottom: 500px;">
         <div class="row" style="justify-content: flex-start;">${this.renderPeers()}</div>
+        <div><b>My Group Permission Type: </b>${JSON.stringify(this.groupPermissionType)}</div>
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>

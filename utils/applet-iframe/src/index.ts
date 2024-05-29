@@ -154,6 +154,11 @@ const weaveApi: WeaveServices = {
       srcWal,
       dstWal,
     }),
+
+  myGroupPermissionType: () =>
+    postMessage({
+      type: 'my-group-permission-type',
+    }),
 };
 
 (async () => {

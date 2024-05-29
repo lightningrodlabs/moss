@@ -118,8 +118,12 @@ export class StewardsSettings extends LitElement {
       return;
     }
     pubkeyInput.value = '';
-    const expiryInput = this.shadowRoot?.getElementById('expiry-checkbox') as HTMLInputElement;
-    expiryInput.checked = false;
+    const expiryCheckedInput = this.shadowRoot?.getElementById(
+      'expiry-checkbox',
+    ) as HTMLInputElement;
+    expiryCheckedInput.checked = false;
+    const expiryInput = this.shadowRoot?.getElementById('permission-expiry') as HTMLInputElement;
+    expiryInput.value = '';
     this._expirySelected = false;
     await this.groupStore.allAgentPermissionTypes.reload();
     notify('New Steward Added.');

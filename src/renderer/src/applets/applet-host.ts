@@ -25,7 +25,7 @@ import {
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
-import { AppletHash, AppletId } from '../types.js';
+import { AppletHash, AppletId, PermissionType } from '../types.js';
 import {
   appIdFromAppletHash,
   getAppletNotificationSettings,
@@ -236,6 +236,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async walToPocket(wal: WAL): Promise<void> {
       mossStore.walToPocket(wal);
     },
+    async myGroupPermissionType() {
+      throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
+    },
   };
 }
 
@@ -441,6 +444,41 @@ export async function handleAppletIframeMessage(
         throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
 
       return weaveServices.requestBind(message.srcWal, message.dstWal);
+    }
+    case 'my-group-permission-type': {
+      const appletHash = decodeHashFromBase64(appletId);
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      if (groupStores.size === 0) throw new Error('No group store found for applet.');
+      const groupPermissions: PermissionType[] = [];
+      await Promise.all(
+        Array.from(groupStores.values()).map(async (store) => {
+          const permission = await toPromise(store.permissionType);
+          groupPermissions.push(permission);
+        }),
+      );
+
+      if (groupPermissions.length > 1)
+        return {
+          type: 'Ambiguous',
+        };
+
+      switch (groupPermissions[0].type) {
+        case 'Member':
+          return {
+            type: 'Member',
+          };
+        case 'Progenitor':
+          return {
+            type: 'Steward',
+          };
+        case 'Steward': {
+          const expiry = groupPermissions[0].content.permission.expiry;
+          return {
+            type: 'Steward',
+            expiry: expiry ? expiry / 1000 : undefined,
+          };
+        }
+      }
     }
     case 'sign-zome-call':
       logAppletZomeCall(message.request, appletId);

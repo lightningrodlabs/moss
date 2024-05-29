@@ -25,6 +25,7 @@ import {
   RecordInfo,
   PeerStatusUpdate,
   UnsubscribeFunction,
+  GroupPermissionType,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -293,6 +294,11 @@ export interface WeaveServices {
    * The source WAL must belong to the requesting applet.
    */
   requestBind: (srcWal: WAL, dstWal: WAL) => Promise<void>;
+  /**
+   * Gets the group permission type. May be used to restrict certain actions in the UI.
+   * @returns
+   */
+  myGroupPermissionType: () => Promise<GroupPermissionType>;
 }
 
 export class WeaveClient implements WeaveServices {
@@ -360,4 +366,6 @@ export class WeaveClient implements WeaveServices {
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
 
   requestBind = (srcWal: WAL, dstWal: WAL) => window.__WEAVE_API__.requestBind(srcWal, dstWal);
+
+  myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
 }
