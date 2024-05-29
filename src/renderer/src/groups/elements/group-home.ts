@@ -44,7 +44,6 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import './group-peers-status.js';
-import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
 import './stewards-settings.js';
