@@ -54,8 +54,6 @@ jobs:
           mkdir resources/default-apps
           mkdir resources/bins
           yarn setup:release
-          holochain --version
-          lair-keystore --version
           curl -L --output resources/default-apps/group.happ https://github.com/lightningrodlabs/we/releases/download/group-happ-v0.12.0-dev.1/group.happ
 
       - name: Build zomes
