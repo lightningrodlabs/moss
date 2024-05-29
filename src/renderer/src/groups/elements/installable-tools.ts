@@ -103,7 +103,9 @@ export class InstallableTools extends LitElement {
         ${nonDeprecatedApplets.length === 0
           ? html`
               <div class="column center-content" style="flex: 1;">
-                <span class="placeholder">${msg('No applets available yet.')}</span>
+                <span class="placeholder"
+                  >${msg('No Tools available yet or waiting to synchronize with peers.')}</span
+                >
               </div>
             `
           : nonDeprecatedApplets.map((applet) => this.renderInstallableTool(applet))}
