@@ -1,5 +1,5 @@
 import { css, html, LitElement } from 'lit';
-import { state, query, property, customElement } from 'lit/decorators.js';
+import { state, query, customElement } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';

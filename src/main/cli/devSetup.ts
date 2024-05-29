@@ -104,9 +104,6 @@ export async function devSetup(
     [string, string, string | undefined, string | undefined, string | undefined]
   > = {};
 
-  // progenitor pubkeys to be used by joining agents
-  const groupProgenitors: Record<string, AgentPubKey> = {};
-
   for (const installableApplet of config.config.applets) {
     if (
       config.config.groups

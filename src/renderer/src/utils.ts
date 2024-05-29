@@ -21,11 +21,10 @@ import {
   Timestamp,
   AppAuthenticationToken,
   DnaModifiers,
-  AgentPubKey,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
-import { fromUint8Array, toUint8Array, encode as encodeB64, decode as decodeB64 } from 'js-base64';
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
 import {
@@ -38,7 +37,7 @@ import {
 } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
-import { AsyncReadable, AsyncStatus, readable, writable } from '@holochain-open-dev/stores';
+import { AsyncReadable, AsyncStatus, writable } from '@holochain-open-dev/stores';
 
 export async function initAppClient(
   token: AppAuthenticationToken,

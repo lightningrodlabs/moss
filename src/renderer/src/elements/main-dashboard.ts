@@ -1,13 +1,7 @@
 import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
-import {
-  encodeHashToBase64,
-  DnaHash,
-  decodeHashFromBase64,
-  DnaHashB64,
-  DnaModifiers,
-} from '@holochain/client';
+import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -71,7 +65,6 @@ import {
 } from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
-import { decode } from 'js-base64';
 
 type OpenTab =
   | {

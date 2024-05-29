@@ -14,11 +14,9 @@ import {
   mdiAccountMultiple,
   mdiAccountMultiplePlus,
   mdiAlert,
-  mdiPublish,
   mdiStoreSearch,
   mdiTools,
   mdiUpload,
-  mdiViewGridPlus,
 } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
