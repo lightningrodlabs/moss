@@ -738,6 +738,7 @@ app.whenReady().then(async () => {
       throw new Error('Tools Library must be installed before installing the first group.');
 
     const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
+
     const dnaPropertiesMap = withProgenitor
       ? {
           group: yaml.dump({ progenitor: encodeHashToBase64(toolsLibraryAppInfo.agent_pub_key) }),
@@ -788,6 +789,8 @@ app.whenReady().then(async () => {
       if (!toolsLibraryAppInfo)
         throw new Error('Tools Library must be installed before installing the first group.');
 
+      console.log('got progenitor: ', progenitor);
+      console.log('got networkSeed: ', networkSeed);
       const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
       const dnaPropertiesMap = {
         group: yaml.dump({ progenitor }),
