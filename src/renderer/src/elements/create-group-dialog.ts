@@ -10,6 +10,8 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
+import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
 import { weStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -39,13 +41,28 @@ export class CreateGroupDialog extends LitElement {
   @state()
   committing = false;
 
-  private async createGroup(fields: any) {
+  private async createGroup(fields: { icon_src: string; name: string; option: '1' | '0' }) {
     if (this.committing) return;
 
     this.committing = true;
 
     try {
-      const groupAppInfo = await this._mossStore.createGroup(fields.name, fields.logo_src);
+      let useProgenitor;
+      switch (fields.option) {
+        case '0':
+          useProgenitor = false;
+          break;
+        case '1':
+          useProgenitor = true;
+          break;
+        default:
+          throw new Error('Invalid value for permission policy');
+      }
+      const groupAppInfo = await this._mossStore.createGroup(
+        fields.name,
+        fields.icon_src,
+        useProgenitor,
+      );
 
       this.dispatchEvent(
         new CustomEvent('group-created', {
@@ -70,7 +87,7 @@ export class CreateGroupDialog extends LitElement {
     return html`
       <sl-dialog
         id="dialog"
-        .label=${msg('Create Group')}
+        .label=${msg('Create New Group')}
         @sl-request-close=${(e) => {
           if (this.committing) {
             e.preventDefault();
@@ -79,7 +96,7 @@ export class CreateGroupDialog extends LitElement {
       >
         <form class="column" ${onSubmit((f) => this.createGroup(f))}>
           <div class="row" style="justify-content: center">
-            <select-avatar required name="logo_src"></select-avatar>
+            <select-avatar required name="icon_src"></select-avatar>
 
             <sl-input
               name="name"
@@ -88,6 +105,24 @@ export class CreateGroupDialog extends LitElement {
               required
             ></sl-input>
           </div>
+
+          <sl-radio-group
+            style="margin-left: 50px; margin-top: 30px;"
+            label="🔑${msg(' Group Type:')}"
+            value="1"
+          >
+            <sl-radio style="margin-top: 5px;" value="1"
+              ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
+                >The group creator is the initial Steward. Only Stewards can edit the group profile,
+                add and remove Tools and add additional Stewards.</span
+              ></sl-radio
+            >
+            <sl-radio style="margin-top: 5px;" value="0"
+              ><b>${msg('Unstewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
+                >All members have full permissions.</span
+              ></sl-radio
+            >
+          </sl-radio-group>
 
           <sl-button
             style="margin-top: 24px"

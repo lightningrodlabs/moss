@@ -1,15 +1,12 @@
 [package]
-authors = ["eric@harris-braun.com"]
-edition = "2021"
 name = "group_integrity"
-version = "0.0.1-alpha.2"
+version = "0.0.1"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 name = "group_integrity"
 
 [dependencies]
-hdk = { workspace = true }
 hdi = { workspace = true }
 serde = { workspace = true }
-we_types = { workspace = true }

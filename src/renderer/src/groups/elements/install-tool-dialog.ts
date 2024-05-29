@@ -23,8 +23,8 @@ import { MossStore } from '../../moss-store.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 
 @localized()
-@customElement('install-applet-bundle-dialog')
-export class InstallAppletBundleDialog extends LitElement {
+@customElement('install-tool-dialog')
+export class InstallToolDialog extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
@@ -65,18 +65,18 @@ export class InstallAppletBundleDialog extends LitElement {
   _installationProgress: string | undefined;
 
   @state()
-  _appletInfo: UpdateableEntity<Tool> | undefined;
+  _toolEntity: UpdateableEntity<Tool> | undefined;
 
   @state()
   _showAdvanced: boolean = false;
 
   // _unlisten: UnlistenFn | undefined;
 
-  async open(appletInfo: UpdateableEntity<Tool>) {
-    console.log('OPENING WITH APPLETINFO: ', appletInfo);
+  async open(toolEntity: UpdateableEntity<Tool>) {
+    console.log('OPENING Tool APPLETINFO: ', toolEntity);
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
-    this._appletInfo = appletInfo;
+    this._toolEntity = toolEntity;
     setTimeout(() => {
       this.form.reset();
       this._appletDialog.show();
@@ -85,10 +85,10 @@ export class InstallAppletBundleDialog extends LitElement {
 
   close() {
     this.form.reset();
-    this._appletInfo = undefined;
+    this._toolEntity = undefined;
     this._appletDialog.hide();
     this.dispatchEvent(
-      new CustomEvent('install-applet-dialog-closed', {
+      new CustomEvent('install-tool-dialog-closed', {
         composed: true,
         bubbles: true,
       }),
@@ -110,13 +110,24 @@ export class InstallAppletBundleDialog extends LitElement {
       // Trigger the download of the icon
       this._installationProgress = 'Fetching app icon...';
       await toPromise(
-        this.mossStore.toolsLibraryStore.toolLogo.get(this._appletInfo!.originalActionHash),
+        this.mossStore.toolsLibraryStore.toolLogo.get(this._toolEntity!.originalActionHash),
       );
-      this._installationProgress = 'Downloading and installing Applet...';
+      this._installationProgress = 'Checking permission type...';
+      const permissionType = await toPromise(this.groupStore.permissionType);
+      if (permissionType.type === 'Member') {
+        console.error('No valid permission to add a Tool to this group.');
+        notifyError('No valid permission to add a Tool to this group.');
+        this._appletDialog.hide();
+        this._installing = false;
+        this._installationProgress = undefined;
+        return;
+      }
+      this._installationProgress = 'Downloading and installing Tool...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
-        this._appletInfo!,
+        this._toolEntity!,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
+        permissionType.type === 'Steward' ? permissionType.content.permission_hash : undefined,
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
@@ -146,7 +157,7 @@ export class InstallAppletBundleDialog extends LitElement {
   }
 
   renderForm() {
-    if (!this._appletInfo) return html`Error.`;
+    if (!this._toolEntity) return html`Error.`;
 
     switch (this._registeredApplets.value.status) {
       case 'pending':
@@ -168,8 +179,8 @@ export class InstallAppletBundleDialog extends LitElement {
               if (!input) return;
               setTimeout(() => {
                 if (
-                  this._appletInfo &&
-                  allAppletsNames.includes(this._appletInfo!.record.entry.title)
+                  this._toolEntity &&
+                  allAppletsNames.includes(this._toolEntity!.record.entry.title)
                 ) {
                   (input as HTMLInputElement).setCustomValidity('Name already exists');
                 } else {
@@ -181,12 +192,12 @@ export class InstallAppletBundleDialog extends LitElement {
               if (allAppletsNames.includes(e.target.value)) {
                 e.target.setCustomValidity('Name already exists');
               } else if (e.target.value === '') {
-                e.target.setCustomValidity('You need to choose a name for the Applet.');
+                e.target.setCustomValidity('You need to choose a name for the Tool instance.');
               } else {
                 e.target.setCustomValidity('');
               }
             }}
-            .defaultValue=${this._appletInfo.record.entry.title}
+            .defaultValue=${this._toolEntity.record.entry.title}
           ></sl-input>
 
           <span
@@ -226,13 +237,13 @@ export class InstallAppletBundleDialog extends LitElement {
     return html`
       <sl-dialog
         id="applet-dialog"
-        .label=${msg('Add New Applet to Group')}
+        .label=${msg('Add New Tool to Group')}
         @sl-request-close=${(e) => {
           if (this._installing) {
             e.preventDefault();
           } else {
             this.dispatchEvent(
-              new CustomEvent('install-applet-dialog-closed', {
+              new CustomEvent('install-tool-dialog-closed', {
                 composed: true,
                 bubbles: true,
               }),
@@ -242,13 +253,13 @@ export class InstallAppletBundleDialog extends LitElement {
       >
         <div style="margin-top: -20px; margin-bottom: 30px;">
           <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span>${msg(
-            'Adding a new Applet to a group ',
+            'Adding a new Tool to a group ',
           )}<b>${msg('creates a new unique instance ')}</b>${msg(
-            "of that Applet which other group members may join directly from the group's main page.",
+            "of that Tool which other group members may join directly from the group's main page.",
           )}
           <sl-tooltip
             content=${msg(
-              `Each time you add an applet to a group via the Applet Library, you create a new unique peer-to-peer network specifically for that instance of the Applet. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Applets" section. If two members each add the same Applet from the Applet Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Applet.`,
+              `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
             )}
           >
             <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"

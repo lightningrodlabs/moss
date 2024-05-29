@@ -10,8 +10,8 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { InstallAppletBundleDialog } from './install-applet-bundle-dialog.js';
-import './install-applet-bundle-dialog.js';
+import { InstallToolDialog } from './install-tool-dialog.js';
+import './install-tool-dialog.js';
 import './group-context.js';
 
 import { weStyles } from '../../shared-styles.js';
@@ -24,19 +24,19 @@ import '../../tool-bundles/elements/tool-publisher.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 
 @localized()
-@customElement('installable-applets')
-export class InstallableApplets extends LitElement {
+@customElement('installable-tools')
+export class InstallableTools extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
-  _installableApplets = new StoreSubscriber(
+  _installableTools = new StoreSubscriber(
     this,
     () => this.mossStore.toolsLibraryStore.allInstallableTools,
     () => [],
   );
 
   @query('#applet-dialog')
-  _installAppletDialog!: InstallAppletBundleDialog;
+  _installToolDialog!: InstallToolDialog;
 
   @query('#select-group-dialog')
   _selectGroupDialog!: SelectGroupDialog;
@@ -51,45 +51,44 @@ export class InstallableApplets extends LitElement {
 
   timeAgo = new TimeAgo('en-US');
 
-  renderInstallableApplet(toolEntity: UpdateableEntity<Tool>) {
+  renderInstallableTool(toolEntity: UpdateableEntity<Tool>) {
     return html`
       <sl-card
         tabindex="0"
-        class="applet-card"
-        style="height: 200px"
+        class="tool-card"
         @click=${async () => {
-          this._selectedToolEntity = toolEntity;
-          this._selectGroupDialog.show();
+          this.dispatchEvent(
+            new CustomEvent('open-tool-detail', {
+              detail: toolEntity,
+              composed: true,
+            }),
+          );
         }}
         @keypress=${async (e: KeyboardEvent) => {
-          if (e.key === 'Enter') {
-            this._selectedToolEntity = toolEntity;
-            this._selectGroupDialog.show();
+          if (e.key === 'Enter' || e.key === ' ') {
+            this.dispatchEvent(
+              new CustomEvent('open-tool-detail', {
+                detail: toolEntity,
+                composed: true,
+              }),
+            );
           }
         }}
       >
-        <div slot="header" class="row" style="align-items: center; padding-top: 9px;">
-          ${
-            toolEntity.record.entry.icon
-              ? html`<img
-                  src=${toolEntity.record.entry.icon}
-                  alt="${toolEntity.record.entry.title} applet icon"
-                  style="height: 50px; width: 50px; border-radius: 5px; margin-right: 15px;"
-                />`
-              : html``
-          }
-          <span style="font-size: 18px;">${toolEntity.record.entry.title}</span>
-        </div>
-        <div class="column" style="flex: 1; margin-bottom: -5px;">
-          <span style="flex: 1">${toolEntity.record.entry.subtitle}</span>
-          <span style="display: flex; flex: 1;"></span>
-          <span style="flex: 1; margin-top:5px"
-            >
-            <div style="font-size: 80%; margin-bottom: 5px;">
-              Published ${this.timeAgo.format(toolEntity.record.action.timestamp)} by </span>
+        <div class="row" style="flex: 1;">
+          ${toolEntity.record.entry.icon
+            ? html`<img
+                src=${toolEntity.record.entry.icon}
+                alt="${toolEntity.record.entry.title} tool icon"
+                style="height: 80px; width: 80px; border-radius: 10px; margin-right: 15px;"
+              />`
+            : html``}
+          <div class="column">
+            <div style="font-size: 18px; margin-top: 10px; font-weight: bold;">
+              ${toolEntity.record.entry.title}
             </div>
-            <tool-publisher .developerCollectiveHash=${toolEntity.record.entry.developer_collective}></tool-publisher>
-          </span>
+            <div style="margin-top: 3px;">${toolEntity.record.entry.subtitle}</div>
+          </div>
         </div>
       </sl-card>
     `;
@@ -104,16 +103,18 @@ export class InstallableApplets extends LitElement {
         ${nonDeprecatedApplets.length === 0
           ? html`
               <div class="column center-content" style="flex: 1;">
-                <span class="placeholder">${msg('No applets available yet.')}</span>
+                <span class="placeholder"
+                  >${msg('No Tools available yet or waiting to synchronize with peers.')}</span
+                >
               </div>
             `
-          : nonDeprecatedApplets.map((applet) => this.renderInstallableApplet(applet))}
+          : nonDeprecatedApplets.map((applet) => this.renderInstallableTool(applet))}
       </div>
     `;
   }
 
   render() {
-    switch (this._installableApplets.value?.status) {
+    switch (this._installableTools.value?.status) {
       case 'pending':
         return html`<div class="row center-content" style="flex: 1;">
           <sl-spinner style="font-size: 2rem"></sl-spinner>
@@ -124,7 +125,7 @@ export class InstallableApplets extends LitElement {
             ? html`
                 <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
                   <install-applet-bundle-dialog
-                    @install-applet-dialog-closed=${() => {
+                    @install-tool-dialog-closed=${() => {
                       this._selectedGroupDnaHash = undefined;
                       this._selectedToolEntity = undefined;
                     }}
@@ -142,15 +143,15 @@ export class InstallableApplets extends LitElement {
             @installation-group-selected=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail;
               this._selectGroupDialog.hide();
-              setTimeout(async () => this._installAppletDialog.open(this._selectedToolEntity!), 50);
+              setTimeout(async () => this._installToolDialog.open(this._selectedToolEntity!), 50);
             }}
           ></select-group-dialog>
-          ${this.renderApplets(this._installableApplets.value.value)}
+          ${this.renderApplets(this._installableTools.value.value)}
         `;
       case 'error':
         return html`<display-error
           .headline=${msg('Error fetching the applets available for installation')}
-          .error=${this._installableApplets.value.error}
+          .error=${this._installableTools.value.error}
         ></display-error>`;
     }
   }
@@ -158,12 +159,11 @@ export class InstallableApplets extends LitElement {
   static styles = [
     css`
       sl-card::part(body) {
-        padding-top: 5px;
+        /* padding-top: 5px; */
       }
 
-      .applet-card {
-        width: 300px;
-        height: 180px;
+      .tool-card {
+        width: 400px;
         margin: 10px;
         color: black;
         --border-radius: 15px;
@@ -174,11 +174,11 @@ export class InstallableApplets extends LitElement {
         --sl-shadow-x-small: 1px 1px 2px 0 var(--sl-color-tertiary-700);
       }
 
-      .applet-card:hover {
+      .tool-card:hover {
         --sl-panel-background-color: var(--sl-color-tertiary-400);
       }
 
-      .applet-card:focus {
+      .tool-card:focus {
         --sl-panel-background-color: var(--sl-color-tertiary-400);
       }
     `,

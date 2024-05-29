@@ -37,7 +37,7 @@ import './groups-sidebar.js';
 import './group-applets-sidebar.js';
 import './join-group-dialog.js';
 import '../layout/views/applet-main.js';
-import '../layout/views/appstore-view.js';
+import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-home.js';
@@ -56,7 +56,13 @@ import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, logMossZomeCall, stringifyWal } from '../utils.js';
+import {
+  decodeContext,
+  getAllIframes,
+  invitePropsToPartialModifiers,
+  logMossZomeCall,
+  stringifyWal,
+} from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
@@ -268,6 +274,7 @@ export class MainDashboard extends LitElement {
         template: html` <publishing-view></publishing-view> `,
       },
     };
+    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -279,9 +286,8 @@ export class MainDashboard extends LitElement {
         type: 'html',
         title: 'Applet Library',
         template: html`
-          <appstore-view
+          <tool-library
             style="display: flex; flex: 1;"
-            @open-publishing-view=${() => this.openPublishingView()}
             @applet-installed=${(e: {
               detail: {
                 appletEntryHash: AppletHash;
@@ -304,7 +310,7 @@ export class MainDashboard extends LitElement {
                 this._mossStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
-          ></appstore-view>
+          ></tool-library>
         `,
       },
     };
@@ -370,33 +376,35 @@ export class MainDashboard extends LitElement {
     this._selectedTab = tabInfo;
   }
 
-  async handleOpenInvite(networkSeed: string) {
+  async handleOpenInvite(inviteProps: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
-        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.modifiers)),
       ),
     );
 
+    const modifiers = invitePropsToPartialModifiers(inviteProps);
+
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+      ([_, groupModifiers]) => groupModifiers.network_seed === modifiers.networkSeed,
     );
 
     if (alreadyJoinedGroup) {
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
-      this.joinGroupDialog.open(networkSeed);
+      this.joinGroupDialog.open(modifiers);
     }
   }
 
   async handleOpenGroup(networkSeed: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
-        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.modifiers)),
       ),
     );
 
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+      ([_, groupModifiers]) => groupModifiers.network_seed === networkSeed,
     );
 
     if (alreadyJoinedGroup) {
@@ -1022,6 +1030,7 @@ export class MainDashboard extends LitElement {
               ? 'pointer-events: none; user-select: none;'
               : ''}"
             @open-appstore=${() => this.openAppStore()}
+            @open-publishing-view=${() => this.openPublishingView()}
             @request-create-group=${() =>
               (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
             @request-join-group=${(_e) => this.joinGroupDialog.open()}

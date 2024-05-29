@@ -76,7 +76,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
-  joinGroup: (networkSeed: string) => ipcRenderer.invoke('join-group', networkSeed),
+  joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
+    ipcRenderer.invoke('join-group', networkSeed, progenitor),
+  createGroup: (useProgenitor: boolean) => ipcRenderer.invoke('create-group', useProgenitor),
   notification: (
     notification: FrameNotification,
     showInSystray: boolean,

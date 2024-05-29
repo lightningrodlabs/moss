@@ -66,7 +66,8 @@ export type AssetInfo = {
 
 export type GroupProfile = {
   name: string;
-  logo_src: string;
+  icon_src: string;
+  meta_data?: string;
 };
 
 export type FrameNotification = {
@@ -342,6 +343,9 @@ export type AppletToParentRequest =
       dstWal: WAL;
     }
   | {
+      type: 'my-group-permission-type';
+    }
+  | {
       type: 'user-select-wal';
     }
   | {
@@ -456,3 +460,21 @@ export type PeerStatusUpdate = Array<[AgentPubKey, PeerStatus]>;
 export interface ReadonlyPeerStatusStore {
   agentsStatus: LazyHoloHashMap<Uint8Array, Readable<PeerStatus>>;
 }
+
+export type GroupPermissionType =
+  | {
+      type: 'Steward';
+      /**
+       * Expiry date in ms since Unix epoch time
+       */
+      expiry?: number;
+    }
+  | {
+      type: 'Member';
+    }
+  | {
+      /**
+       * Can only occur if the applet belongs to more than one group
+       */
+      type: 'Ambiguous';
+    };

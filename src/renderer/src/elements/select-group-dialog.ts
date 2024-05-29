@@ -87,7 +87,7 @@ export class SelectGroupDialog extends LitElement {
                 <sl-option .value=${encodeHashToBase64(groupDnaHash)}>
                   <img
                     slot="prefix"
-                    .src=${groupProfile?.logo_src}
+                    .src=${groupProfile?.icon_src}
                     alt="${groupProfile?.name}"
                     style="height: 16px; width: 16px"
                   />${groupProfile?.name}</sl-option
@@ -107,7 +107,7 @@ export class SelectGroupDialog extends LitElement {
 
   render() {
     return html`<sl-dialog id="dialog" .label=${msg('Select Group')}>
-      <div>${msg('Select the Group to which you would like to add the Applet:')}</div>
+      <div>${msg('Select the Group to which to add an instance of this Tool:')}</div>
       <div class="column" style="margin-top: 10px;">
         ${this.renderDialogContent()}
         <sl-button

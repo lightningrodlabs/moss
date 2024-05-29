@@ -128,7 +128,7 @@ export class GroupsSidebar extends LitElement {
                   .indicated=${this.indicatedGroupDnaHashes.includes(
                     encodeHashToBase64(groupDnaHash),
                   )}
-                  .logoSrc=${groupProfile.logo_src}
+                  .logoSrc=${groupProfile.icon_src}
                   .tooltipText=${groupProfile.name}
                   @click=${() => {
                     this.dispatchEvent(
