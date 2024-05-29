@@ -626,8 +626,25 @@ export function modifiersToInviteUrl(modifiers: DnaModifiers) {
 }
 
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
-  const [networkSeed, progenitor] = props.split('&progenitor=');
-  if (!progenitor) throw new Error('Invite string does not contain progenitor.');
+  const [networkSeed, progenitorString] = props.split('&progenitor=');
+  if (!progenitorString) throw new Error('Invite string does not contain progenitor.');
+  let progenitor;
+  if (progenitorString === 'null') {
+    progenitor = null;
+  } else {
+    try {
+      const rawKey = decodeHashFromBase64(progenitorString);
+      if (rawKey.length !== 39) {
+        throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
+      }
+    } catch (e) {
+      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
+    }
+    if (!progenitorString.startsWith('uhCAk')) {
+      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
+    }
+    progenitor = progenitorString;
+  }
   return {
     networkSeed,
     progenitor,

@@ -221,5 +221,5 @@ export type GroupDnaProperties = {
 
 export type PartialModifiers = {
   networkSeed: string;
-  progenitor: AgentPubKeyB64;
+  progenitor: AgentPubKeyB64 | null;
 };

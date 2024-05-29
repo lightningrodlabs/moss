@@ -64,8 +64,8 @@ export class JoinGroupDialog extends LitElement {
       try {
         modifiers = partialModifiersFromInviteLink(fields.link);
       } catch (e) {
-        notifyError(msg('Invalid invite link.'));
-        console.error('Error: Failed to join group: Invite link is invalid.');
+        notifyError(`Invalid invite link: ${e}`);
+        console.error('Error: Failed to join group: Invite link is invalid: ', e);
         return;
       }
     } else {
@@ -79,6 +79,8 @@ export class JoinGroupDialog extends LitElement {
     }
 
     this.joining = true;
+
+    console.log('Joining with modifiers: ', modifiers);
 
     try {
       const groupAppInfo = await this._mossStore.joinGroup(
