@@ -37,7 +37,7 @@ import { DumpData } from '../types.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 
-const TOOLS_LIBRARY_APP_ID = 'ToolsLibrary';
+const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
 const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
 
 @localized()

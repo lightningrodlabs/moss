@@ -1,6 +1,6 @@
 import { ActionHash } from '@holochain/client';
 
-export const TOOLS_LIBRARY_APP_ID = 'ToolsLibrary';
+export const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
 
 // ATTENTION: If this type is changed, the same type in src/renderer/types needs to be changed as well.
 export type AppHashes =
