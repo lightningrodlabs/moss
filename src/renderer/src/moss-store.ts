@@ -22,6 +22,7 @@ import {
   slice,
 } from '@holochain-open-dev/utils';
 import {
+  AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
   AppInfo,
@@ -35,20 +36,18 @@ import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holoc
 import {
   CreatableResult,
   CreatableName,
-  GroupProfile,
   WAL,
   ProfilesLocation,
   CreatableType,
   NULL_HASH,
 } from '@lightningrodlabs/we-applet';
-import { v4 as uuidv4 } from 'uuid';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
 import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
-import { ConductorInfo, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
+import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
   appIdFromAppletHash,
   appletHashFromAppId,
@@ -68,6 +67,7 @@ import {
   AppletId,
   AppletNotification,
   DistributionInfo,
+  GroupProfile,
   WebHappSource,
 } from './types.js';
 import { Applet } from './types.js';
@@ -310,13 +310,11 @@ export class MossStore {
   /**
    * Clones the group DNA with a new unique network seed, and creates a group info entry in that DNA
    */
-  public async createGroup(name: string, logo: string): Promise<AppInfo> {
+  public async createGroup(name: string, logo: string, useProgenitor: boolean): Promise<AppInfo> {
     if (!logo) throw new Error('No logo provided.');
 
-    // generate random network seed (maybe use random words instead later, e.g. https://www.npmjs.com/package/generate-passphrase)
-    const networkSeed = uuidv4();
-
-    const appInfo = await this.joinGroup(networkSeed); // this line also updates the matrix store
+    const appInfo = await createGroup(useProgenitor);
+    await this.reloadManualStores();
 
     const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
 
@@ -326,7 +324,7 @@ export class MossStore {
       if (!groupStore) throw new Error('GroupStore still undefined after joining group.');
 
       const groupProfile: GroupProfile = {
-        logo_src: logo,
+        icon_src: logo,
         name,
       };
       await groupStore.groupClient.setGroupProfile(groupProfile);
@@ -343,9 +341,9 @@ export class MossStore {
     return appInfo;
   }
 
-  public async joinGroup(networkSeed: string): Promise<AppInfo> {
+  public async joinGroup(networkSeed: string, progenitor: AgentPubKeyB64 | null): Promise<AppInfo> {
     try {
-      const appInfo = await joinGroup(networkSeed);
+      const appInfo = await joinGroup(networkSeed, progenitor);
       await this.reloadManualStores();
       return appInfo;
     } catch (e) {
@@ -388,7 +386,7 @@ export class MossStore {
       );
 
     // We get all Applets here already before we uninstall anything, in case it fails.
-    const applets = await groupStore.groupClient.getMyAppletsHashes();
+    const applets = await groupStore.groupClient.getMyJoinedAppletsHashes();
 
     await this.adminWebsocket.uninstallApp({
       installed_app_id: appToLeave.installed_app_id,
@@ -553,7 +551,7 @@ export class MossStore {
         const groupAppWebsocket = await initAppClient(token);
         const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
         const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
-        const allMyAppletDatas = await groupClient.getMyAppletsHashes();
+        const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
         if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
           groupsWithApplet.push(groupDnaHash);
         }

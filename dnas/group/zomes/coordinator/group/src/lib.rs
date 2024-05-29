@@ -1,54 +1,142 @@
+pub mod all_group_profiles;
+
+pub mod group_profile;
+
+pub mod all_applets;
+
+pub mod applet;
+
+pub mod all_steward_permissions;
+
+pub mod steward_permission;
 use group_integrity::*;
 use hdk::prelude::*;
-
-pub mod applets;
-pub mod related_groups;
-
-pub fn group_info_path() -> ExternResult<TypedPath> {
-    Path::from("group_profile").typed(LinkTypes::GroupInfoPath)
-}
-
-// If this function returns None, it means that we haven't synced up yet
 #[hdk_extern]
-pub fn get_group_profile(_: ()) -> ExternResult<Option<Record>> {
-    let path = group_info_path()?;
-
-    let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AnchorToGroupProfile)?
-            .build(),
-    )?;
-
-    let latest_group_info_link = links
-        .into_iter()
-        .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
-
-    match latest_group_info_link {
-        None => Ok(None),
-        Some(link) => {
-            let record = get(
-                // ActionHash::from(link.target),
-                ActionHash::try_from(link.target)
-                    .map_err(|e| wasm_error!(WasmErrorInner::from(e)))?,
-                GetOptions::default(),
-            )?;
-
-            Ok(record)
+pub fn init() -> ExternResult<InitCallbackResult> {
+    Ok(InitCallbackResult::Pass)
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum Signal {
+    LinkCreated {
+        action: SignedActionHashed,
+        link_type: LinkTypes,
+    },
+    LinkDeleted {
+        action: SignedActionHashed,
+        create_link_action: SignedActionHashed,
+        link_type: LinkTypes,
+    },
+    EntryCreated {
+        action: SignedActionHashed,
+        app_entry: EntryTypes,
+    },
+    EntryUpdated {
+        action: SignedActionHashed,
+        app_entry: EntryTypes,
+        original_app_entry: EntryTypes,
+    },
+    EntryDeleted {
+        action: SignedActionHashed,
+        original_app_entry: EntryTypes,
+    },
+}
+#[hdk_extern(infallible)]
+pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
+    for action in committed_actions {
+        if let Err(err) = signal_action(action) {
+            error!("Error signaling new action: {:?}", err);
         }
     }
 }
-
-#[hdk_extern]
-pub fn set_group_profile(group_profile: GroupProfile) -> ExternResult<()> {
-    let path = group_info_path()?;
-
-    let action_hash = create_entry(EntryTypes::GroupProfile(group_profile))?;
-
-    create_link(
-        path.path_entry_hash()?,
-        action_hash,
-        LinkTypes::AnchorToGroupProfile,
-        (),
-    )?;
-
-    Ok(())
+fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
+    match action.hashed.content.clone() {
+        Action::CreateLink(create_link) => {
+            if let Ok(Some(link_type)) =
+                LinkTypes::from_type(create_link.zome_index, create_link.link_type)
+            {
+                emit_signal(Signal::LinkCreated { action, link_type })?;
+            }
+            Ok(())
+        }
+        Action::DeleteLink(delete_link) => {
+            let record = get(delete_link.link_add_address.clone(), GetOptions::default())?.ok_or(
+                wasm_error!(WasmErrorInner::Guest(
+                    "Failed to fetch CreateLink action".to_string()
+                )),
+            )?;
+            match record.action() {
+                Action::CreateLink(create_link) => {
+                    if let Ok(Some(link_type)) =
+                        LinkTypes::from_type(create_link.zome_index, create_link.link_type)
+                    {
+                        emit_signal(Signal::LinkDeleted {
+                            action,
+                            link_type,
+                            create_link_action: record.signed_action.clone(),
+                        })?;
+                    }
+                    Ok(())
+                }
+                _ => Err(wasm_error!(WasmErrorInner::Guest(
+                    "Create Link should exist".to_string()
+                ))),
+            }
+        }
+        Action::Create(_create) => {
+            if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
+                emit_signal(Signal::EntryCreated { action, app_entry })?;
+            }
+            Ok(())
+        }
+        Action::Update(update) => {
+            if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
+                if let Ok(Some(original_app_entry)) =
+                    get_entry_for_action(&update.original_action_address)
+                {
+                    emit_signal(Signal::EntryUpdated {
+                        action,
+                        app_entry,
+                        original_app_entry,
+                    })?;
+                }
+            }
+            Ok(())
+        }
+        Action::Delete(delete) => {
+            if let Ok(Some(original_app_entry)) = get_entry_for_action(&delete.deletes_address) {
+                emit_signal(Signal::EntryDeleted {
+                    action,
+                    original_app_entry,
+                })?;
+            }
+            Ok(())
+        }
+        _ => Ok(()),
+    }
+}
+fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTypes>> {
+    let record = match get_details(action_hash.clone(), GetOptions::default())? {
+        Some(Details::Record(record_details)) => record_details.record,
+        _ => {
+            return Ok(None);
+        }
+    };
+    let entry = match record.entry().as_option() {
+        Some(entry) => entry,
+        None => {
+            return Ok(None);
+        }
+    };
+    let (zome_index, entry_index) = match record.action().entry_type() {
+        Some(EntryType::App(AppEntryDef {
+            zome_index,
+            entry_index,
+            ..
+        })) => (zome_index, entry_index),
+        _ => {
+            return Ok(None);
+        }
+    };
+    EntryTypes::deserialize_from_type(*zome_index, *entry_index, entry)
 }

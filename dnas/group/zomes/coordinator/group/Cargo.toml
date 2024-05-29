@@ -1,22 +1,13 @@
 [package]
-authors = ["eric@harris-braun.com"]
+name = "group"
+version = "0.0.1"
 edition = "2021"
-name = "group_coordinator"
-version = "0.0.1-alpha.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-name = "group_coordinator"
+name = "group"
 
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
-
-group_integrity = { path = "../../integrity/group" }
-
-[dev-dependencies]
-fixt = "*"
-futures = { version = "0.3.1", default-features = false }
-hdk = { workspace = true, features = ["encoding", "test_utils"] }
-holochain = { workspace = true, features = ["test_utils"] }
-tokio = { version = "1.36.0", features = ["full"] }
+group_integrity = { workspace = true }

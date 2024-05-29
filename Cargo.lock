@@ -2028,26 +2028,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "group_coordinator"
-version = "0.0.1-alpha.1"
+name = "group"
+version = "0.0.1"
 dependencies = [
- "fixt 0.2.2",
- "futures",
  "group_integrity",
  "hdk",
- "holochain",
  "serde",
- "tokio",
 ]
 
 [[package]]
 name = "group_integrity"
-version = "0.0.1-alpha.2"
+version = "0.0.1"
 dependencies = [
  "hdi",
- "hdk",
  "serde",
- "we_types",
 ]
 
 [[package]]
@@ -8085,14 +8079,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53253d920ab413fca1c7dc2161d601c79b4fdf631d0ba51dd4343bf9b556c3f6"
 dependencies = [
  "wast",
-]
-
-[[package]]
-name = "we_types"
-version = "0.1.0"
-dependencies = [
- "hdk",
- "serde",
 ]
 
 [[package]]

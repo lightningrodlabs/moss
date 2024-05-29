@@ -170,6 +170,10 @@ export class DeveloperCollectiveView extends LitElement {
     let usTimestamp;
     if (this._expirySelected) {
       const expiryInput = this.shadowRoot?.getElementById('permission-expiry') as HTMLInputElement;
+      if (!expiryInput.value) {
+        notifyError('No expiry date selected. Uncheck expiry or select date.');
+        return;
+      }
       const msTimestamp = new Date(expiryInput.value).getTime();
       if (msTimestamp < Date.now()) {
         notifyError('Expiry must be in the future');
@@ -189,6 +193,7 @@ export class DeveloperCollectiveView extends LitElement {
     } catch (e) {
       console.error(e);
       notifyError('Invalid public key.');
+      return;
     }
     await this.mossStore.toolsLibraryStore.toolsLibraryClient.createContributorPermission({
       for_agent: forAgent,

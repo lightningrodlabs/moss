@@ -1,7 +1,5 @@
-import { EntryRecord, HashType, retype } from '@holochain-open-dev/utils';
+import { EntryRecord } from '@holochain-open-dev/utils';
 import {
-  ActionHash,
-  DnaHash,
   EntryHash,
   AppCallZomeRequest,
   Record,
@@ -13,9 +11,14 @@ import {
 } from '@holochain/client';
 import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 
-import { Applet, AppletAgent, PrivateAppletEntry } from '../types.js';
-import { RelatedGroup } from './types.js';
-import { RegisterAppletInput } from '../types.js';
+import {
+  Applet,
+  AppletAgent,
+  JoinAppletInput,
+  PermissionType,
+  PrivateAppletEntry,
+  StewardPermission,
+} from '../types.js';
 
 export class GroupClient {
   constructor(
@@ -44,18 +47,6 @@ export class GroupClient {
     await this.callZome('set_group_profile', groupProfile);
   }
 
-  /** Related Groups */
-
-  async addRelatedGroup(relatedGroup: RelatedGroup): Promise<void> {
-    return this.callZome('add_related_group', relatedGroup);
-  }
-
-  async getRelatedGroups(): Promise<Array<EntryRecord<RelatedGroup>>> {
-    const records: Record[] = await this.callZome('get_related_groups', null);
-
-    return records.map((r) => new EntryRecord(r));
-  }
-
   /** Applets */
 
   async getPublicApplet(appletHash: AppletHash): Promise<EntryRecord<Applet> | undefined> {
@@ -74,16 +65,16 @@ export class GroupClient {
    * Gets all the private Applet entries from the source chain
    * @returns
    */
-  async getMyApplets(): Promise<Array<PrivateAppletEntry>> {
-    return this.callZome('get_my_applets', null);
+  async getMyJoinedApplets(): Promise<Array<PrivateAppletEntry>> {
+    return this.callZome('get_my_joined_applets', null);
   }
 
   /**
    * Gets all the private Applet entries from the source chain
    * @returns
    */
-  async getMyAppletsHashes(): Promise<Array<AppletHash>> {
-    const applets: Array<PrivateAppletEntry> = await this.callZome('get_my_applets', null);
+  async getMyJoinedAppletsHashes(): Promise<Array<AppletHash>> {
+    const applets: Array<PrivateAppletEntry> = await this.callZome('get_my_joined_applets', null);
     return applets.map((applet) => applet.public_entry_hash);
   }
 
@@ -125,13 +116,32 @@ export class GroupClient {
   }
 
   /**
-   * First checks whether the same Applet has already been added to the group by someone
-   * else and if not, will advertise it in the group DNA. Then it adds the Applet
-   * entry as a private entry to the source chain.
+   * Advertises the Applet in the group DNA, adds the Applet entry as a private
+   * entry to the source chain and creates links from the applet to the public
+   * key.
+   * Can only be called by the Progenitor or Stewards.
    * @param applet
    */
-  async registerApplet(input: RegisterAppletInput): Promise<EntryHash> {
+  async registerAndJoinApplet(input: JoinAppletInput): Promise<EntryHash> {
+    return this.callZome('register_and_join_applet', input);
+  }
+
+  /**
+   * Advertises the Applet in the group DNA. Can only be called by the Progenitor or
+   * Stewards.
+   * @param applet
+   */
+  async registerApplet(input: Applet): Promise<EntryHash> {
     return this.callZome('register_applet', input);
+  }
+
+  /**
+   * Adds the Applet entry as a private entry to the source chain and creates
+   * links from the applet to the public key.
+   * @param applet
+   */
+  async joinApplet(input: JoinAppletInput): Promise<EntryHash> {
+    return this.callZome('join_applet', input);
   }
 
   /**
@@ -157,20 +167,34 @@ export class GroupClient {
     return this.callZome('unarchive_applet', appletHash);
   }
 
-  async registerAppletFederation(
-    appletHash: EntryHash,
-    groupDnaHash: DnaHash,
-  ): Promise<ActionHash> {
-    return this.callZome('register_applet_federation', {
-      applet_hash: appletHash,
-      group_dna_hash: retype(groupDnaHash, HashType.ENTRY),
-    });
+  async createStewardPermission(input: StewardPermission): Promise<EntryRecord<StewardPermission>> {
+    const response: Record = await this.callZome('create_steward_permission', input);
+    return new EntryRecord(response);
   }
 
-  async getFederatedGroups(appletHash: EntryHash): Promise<DnaHash[]> {
-    const groups: EntryHash[] = await this.callZome('get_federated_groups', appletHash);
+  async getStewardPermission(
+    permissionHash: AppletHash,
+  ): Promise<EntryRecord<StewardPermission> | undefined> {
+    const response: Record | undefined = await this.callZome(
+      'get_steward_permission',
+      permissionHash,
+    );
+    if (response) {
+      return new EntryRecord(response);
+    }
+    return undefined;
+  }
 
-    return groups.map((groupEntryHash) => retype(groupEntryHash, HashType.DNA));
+  async getMyPermissionType(): Promise<PermissionType> {
+    return this.callZome('get_my_permission_type', null);
+  }
+
+  async getAgentPermissionType(agent: AgentPubKey): Promise<PermissionType> {
+    return this.callZome('get_agent_permission_type', agent);
+  }
+
+  async getAllAgentPermissionTypes(): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
+    return this.callZome('get_all_agent_permission_types', null);
   }
 
   private callZome(fn_name: string, payload: any) {

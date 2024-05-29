@@ -223,7 +223,7 @@ export class CreatablePanel extends LitElement {
                     >
                       <sl-tooltip content="${groupProfile.name}" placement="left" hoist>
                         <img
-                          src="${groupProfile.logo_src}"
+                          src="${groupProfile.icon_src}"
                           style="height: 50px; width: 50px; border-radius: 50%; margin-right: 5px;"
                         />
                       </sl-tooltip>

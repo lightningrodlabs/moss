@@ -54,7 +54,7 @@ export class GroupsForApplet extends LitElement {
               if (groupProfile) {
                 return html`
                   <img
-                    src=${groupProfile.logo_src}
+                    src=${groupProfile.icon_src}
                     .title=${groupProfile.name}
                     style="margin-right: 3px; border-radius: 50%; height: ${this.size
                       ? `${this.size}px`

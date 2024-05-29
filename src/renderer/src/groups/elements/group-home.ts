@@ -5,6 +5,7 @@ import { customElement, state } from 'lit/decorators.js';
 import {
   ActionHash,
   AgentPubKey,
+  DnaModifiers,
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
@@ -43,10 +44,10 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import './group-peers-status.js';
-import './related-groups.js';
 import './installable-applets.js';
 import './group-applets.js';
 import './group-applets-settings.js';
+import './stewards-settings.js';
 import './your-settings.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
@@ -63,7 +64,7 @@ import { weStyles } from '../../shared-styles.js';
 import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
-import { appIdFromAppletHash } from '../../utils.js';
+import { appIdFromAppletHash, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { slice } from '@holochain-open-dev/utils';
@@ -94,6 +95,12 @@ export class GroupHome extends LitElement {
     this,
     () => this.mossStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
     () => [this.mossStore, this.groupStore],
+  );
+
+  permissionType = new StoreSubscriber(
+    this,
+    () => this.groupStore.permissionType,
+    () => [this.groupStore],
   );
 
   _peersStatus = new StoreSubscriber(
@@ -195,8 +202,8 @@ export class GroupHome extends LitElement {
     () => {
       const store = joinAsync([
         this.groupStore.groupProfile,
-        this.groupStore.networkSeed,
-      ]) as AsyncReadable<[GroupProfile | undefined, string]>;
+        this.groupStore.modifiers,
+      ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
       // (window as any).groupProfileStore = store;
       return store;
     },
@@ -471,16 +478,18 @@ export class GroupHome extends LitElement {
     }
   }
 
-  renderMain(groupProfile: GroupProfile, networkSeed: string) {
+  renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
+    const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
-      <span style="position: absolute; bottom: 5px; left: 10px;"
-        >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
-      >
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div class="column" style="flex: 1; padding: 16px; overflow-y: auto; position: relative;">
+        <div class="column" style="position: absolute; bottom: 5px; left: 10px;">
+          <span>${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span>
+          <span>${msg('Your Public Key: ')}${encodeHashToBase64(this.groupStore.groupClient.myPubKey)}</span>
+        </div>
 
         <div style=" background-image: url(${
-          groupProfile.logo_src
+          groupProfile.icon_src
         }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"></div>
 
           <!-- Top Row -->
@@ -489,7 +498,7 @@ export class GroupHome extends LitElement {
             <div class="row" style="align-items: center; flex: 1;">
               <div style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;">
               <img
-                .src=${groupProfile.logo_src}
+                .src=${groupProfile.icon_src}
                 style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%;"
                 alt="${groupProfile.name}"
               />
@@ -577,16 +586,14 @@ export class GroupHome extends LitElement {
 
               <div class="row" style="margin-top: 16px">
                 <sl-input
-                  value="https://theweave.social/wal?weave-0.12://invite/${networkSeed}"
+                  value=${invitationUrl}
                   style="margin-right: 8px; flex: 1"
                 >
                 </sl-input>
                 <sl-button
                   variant="primary"
                   @click=${async () => {
-                    await navigator.clipboard.writeText(
-                      `https://theweave.social/wal?weave-0.12://invite/${networkSeed}`,
-                    );
+                    await navigator.clipboard.writeText(invitationUrl);
                     notify(msg('Invite link copied to clipboard.'));
                   }}
                   >${msg('Copy')}</sl-button
@@ -715,6 +722,15 @@ export class GroupHome extends LitElement {
       ],
     ];
 
+    if (this.permissionType.value.status === 'complete') {
+      if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
+        tabs.splice(2, 0, [
+          'Group Stewards',
+          html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
+        ]);
+      }
+    }
+
     return html`
       <loading-dialog id="loading-dialog" loadingText="Updating UI..."></loading-dialog>
       <div class="column" style="flex: 1; position: relative;">
@@ -738,10 +754,10 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderContent(groupProfile: GroupProfile, networkSeed: string) {
+  renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
-        return this.renderMain(groupProfile, networkSeed);
+        return this.renderMain(groupProfile, modifiers);
       case 'settings':
         return this.renderNewSettings();
       case 'create-custom-view':
@@ -759,7 +775,7 @@ export class GroupHome extends LitElement {
         </div>`;
       case 'complete':
         const groupProfile = this.groupProfile.value.value[0];
-        const networkSeed = this.groupProfile.value.value[1];
+        const modifiers = this.groupProfile.value.value[1];
 
         if (!groupProfile)
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
@@ -771,7 +787,7 @@ export class GroupHome extends LitElement {
                 'Create your personal profile for this group. Only members of this group will be able to see your profile.',
               )}</span
             >
-            ${this.renderContent(groupProfile, networkSeed)}
+            ${this.renderContent(groupProfile, modifiers)}
           </profile-prompt>
         `;
       case 'error':

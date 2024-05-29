@@ -70,7 +70,7 @@ export class WalLink extends LitElement {
                 ${appletsInfos.get(assetInfo.appletHash)?.groupsHashes.map(
                   (groupHash) => html`
                     <img
-                      .src=${groupsProfiles.get(groupHash)!.logo_src}
+                      .src=${groupsProfiles.get(groupHash)!.icon_src}
                       style="height: 16px; width: 16px; margin-right: 4px; border-radius: 50%"
                     />
                     <span>${groupsProfiles.get(groupHash)?.name}</span>

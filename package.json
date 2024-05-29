@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.12",
-  "version": "0.12.0-dev.0",
+  "version": "0.12.0-dev.1",
   "private": true,
   "description": "Moss (Alpha)",
   "main": "./out/main/index.js",
@@ -59,7 +59,7 @@
     "@holochain-open-dev/stores": "0.400.0-dev.0",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.3",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.4",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
@@ -69,6 +69,7 @@
     "nanoid": "5.0.4",
     "split": "1.0.1",
     "ts-node": "10.9.2",
+    "uuid": "9.0.1",
     "utf-8-validate": "^6.0.3",
     "winston": "3.11.0"
   },
@@ -80,6 +81,7 @@
     "@holochain-playground/cli": "^0.1.1",
     "@lightningrodlabs/we-dev-cli": "^0.11.11-dev.3",
     "@types/commander": "2.12.2",
+    "@types/js-yaml": "4.0.9",
     "@types/nanoid": "3.0.0",
     "@types/node": "^18.17.5",
     "@types/mime": "3.0.4",

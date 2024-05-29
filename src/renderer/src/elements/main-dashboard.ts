@@ -1,7 +1,13 @@
 import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
-import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
+import {
+  encodeHashToBase64,
+  DnaHash,
+  decodeHashFromBase64,
+  DnaHashB64,
+  DnaModifiers,
+} from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -56,9 +62,16 @@ import { CreatablePanel } from './creatable-panel.js';
 import { setupAppletMessageHandler } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, logMossZomeCall, stringifyWal } from '../utils.js';
+import {
+  decodeContext,
+  getAllIframes,
+  invitePropsToPartialModifiers,
+  logMossZomeCall,
+  stringifyWal,
+} from '../utils.js';
 import { getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
+import { decode } from 'js-base64';
 
 type OpenTab =
   | {
@@ -370,33 +383,35 @@ export class MainDashboard extends LitElement {
     this._selectedTab = tabInfo;
   }
 
-  async handleOpenInvite(networkSeed: string) {
+  async handleOpenInvite(inviteProps: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
-        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.modifiers)),
       ),
     );
 
+    const modifiers = invitePropsToPartialModifiers(inviteProps);
+
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+      ([_, groupModifiers]) => groupModifiers.network_seed === modifiers.networkSeed,
     );
 
     if (alreadyJoinedGroup) {
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
-      this.joinGroupDialog.open(networkSeed);
+      this.joinGroupDialog.open(modifiers);
     }
   }
 
   async handleOpenGroup(networkSeed: string) {
     const groups = await toPromise(
       asyncDeriveStore(this._mossStore.groupStores, (groups) =>
-        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.networkSeed)),
+        joinAsyncMap(mapValues(groups, (groupStore) => groupStore.modifiers)),
       ),
     );
 
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupNetworkSeed]) => groupNetworkSeed === networkSeed,
+      ([_, groupModifiers]) => groupModifiers.network_seed === networkSeed,
     );
 
     if (alreadyJoinedGroup) {

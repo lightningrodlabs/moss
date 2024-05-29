@@ -43,11 +43,18 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { CallZomeRequest, InstalledAppId, encodeHashToBase64 } from '@holochain/client';
+import {
+  AgentPubKeyB64,
+  CallZomeRequest,
+  InstalledAppId,
+  encodeHashToBase64,
+} from '@holochain/client';
+import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from 'electron-updater';
+import * as yaml from 'js-yaml';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -714,32 +721,99 @@ app.whenReady().then(async () => {
   ipcMain.handle('lair-setup-required', async () => {
     return !WE_FILE_SYSTEM.keystoreInitialized();
   });
-  ipcMain.handle('join-group', async (_e, networkSeed: string) => {
-    const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+  ipcMain.handle('create-group', async (_e, withProgenitor: boolean) => {
+    // generate random network seed
+    const networkSeed = uuidv4();
     const hash = createHash('sha256');
     hash.update(networkSeed);
     const hashedSeed = hash.digest('base64');
     const appId = `group#${hashedSeed}`;
     console.log('Determined appId for group: ', appId);
-    if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
-      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-      return apps.find((appInfo) => appInfo.installed_app_id === appId);
-    }
+
+    const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
     const toolsLibraryAppInfo = apps.find(
       (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
     );
     if (!toolsLibraryAppInfo)
       throw new Error('Tools Library must be installed before installing the first group.');
+
+    const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'we.happ');
+    const dnaPropertiesMap = withProgenitor
+      ? {
+          group: yaml.dump({ progenitor: encodeHashToBase64(toolsLibraryAppInfo.agent_pub_key) }),
+        }
+      : {
+          group: yaml.dump({
+            progenitor: null,
+          }),
+        };
+
+    console.log('Dna properties map: ', dnaPropertiesMap);
+    const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
+      groupHappPath,
+      dnaPropertiesMap,
+    );
+
+    const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
+
+    fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+
     const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-      path: path.join(DEFAULT_APPS_DIRECTORY, 'group.happ'),
+      path: modifiedHappPath,
       installed_app_id: appId,
       agent_key: toolsLibraryAppInfo.agent_pub_key,
       network_seed: networkSeed,
       membrane_proofs: {},
     });
+    fs.rmSync(modifiedHappPath);
     await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
     return appInfo;
   });
+  ipcMain.handle(
+    'join-group',
+    async (_e, networkSeed: string, progenitor: AgentPubKeyB64 | null) => {
+      const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      const hash = createHash('sha256');
+      hash.update(networkSeed);
+      const hashedSeed = hash.digest('base64');
+      const appId = `group#${hashedSeed}`;
+      console.log('Determined appId for group: ', appId);
+      if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
+        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        return apps.find((appInfo) => appInfo.installed_app_id === appId);
+      }
+      const toolsLibraryAppInfo = apps.find(
+        (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
+      );
+      if (!toolsLibraryAppInfo)
+        throw new Error('Tools Library must be installed before installing the first group.');
+
+      const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'we.happ');
+      const dnaPropertiesMap = {
+        group: yaml.dump({ progenitor }),
+      };
+
+      console.log('Dna properties map: ', dnaPropertiesMap);
+      const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
+        groupHappPath,
+        dnaPropertiesMap,
+      );
+
+      const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
+
+      fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+      const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+        path: modifiedHappPath,
+        installed_app_id: appId,
+        agent_key: toolsLibraryAppInfo.agent_pub_key,
+        network_seed: networkSeed,
+        membrane_proofs: {},
+      });
+      fs.rmSync(modifiedHappPath);
+      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      return appInfo;
+    },
+  );
   ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
     const hashResult = await rustUtils.validateHappOrWebhapp(bytes);
     const [happHash, uiHash, webHappHash] = hashResult.split('$');

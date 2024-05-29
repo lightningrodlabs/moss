@@ -87,7 +87,7 @@ export class SelectGroupDialog extends LitElement {
                 <sl-option .value=${encodeHashToBase64(groupDnaHash)}>
                   <img
                     slot="prefix"
-                    .src=${groupProfile?.logo_src}
+                    .src=${groupProfile?.icon_src}
                     alt="${groupProfile?.name}"
                     style="height: 16px; width: 16px"
                   />${groupProfile?.name}</sl-option
