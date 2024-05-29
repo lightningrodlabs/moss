@@ -9,9 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # platform: [windows-2019]
+        platform: [windows-2019]
         # platform: [macos-11]
-        platform: [windows-2019, macos-11, ubuntu-22.04]
+        # platform: [windows-2019, macos-11, ubuntu-22.04]
         # platform: [windows-2019, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
@@ -54,6 +54,8 @@ jobs:
           mkdir resources/default-apps
           mkdir resources/bins
           yarn setup:release
+          holochain --version
+          lair-keystore --version
           curl -L --output resources/default-apps/group.happ https://github.com/lightningrodlabs/we/releases/download/group-happ-v0.12.0-dev.1/group.happ
 
       - name: Build zomes
