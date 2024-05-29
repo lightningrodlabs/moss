@@ -37,7 +37,7 @@ import './groups-sidebar.js';
 import './group-applets-sidebar.js';
 import './join-group-dialog.js';
 import '../layout/views/applet-main.js';
-import '../layout/views/appstore-view.js';
+import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-home.js';
@@ -280,7 +280,7 @@ export class MainDashboard extends LitElement {
         type: 'html',
         title: 'Applet Library',
         template: html`
-          <appstore-view
+          <tool-library
             style="display: flex; flex: 1;"
             @applet-installed=${(e: {
               detail: {
@@ -304,7 +304,7 @@ export class MainDashboard extends LitElement {
                 this._mossStore.setAssetViewerState({ position: 'front', visible: false });
               }
             }}
-          ></appstore-view>
+          ></tool-library>
         `,
       },
     };
