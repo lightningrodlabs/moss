@@ -112,11 +112,22 @@ export class InstallToolDialog extends LitElement {
       await toPromise(
         this.mossStore.toolsLibraryStore.toolLogo.get(this._toolEntity!.originalActionHash),
       );
+      this._installationProgress = 'Checking permission type...';
+      const permissionType = await toPromise(this.groupStore.permissionType);
+      if (permissionType.type === 'Member') {
+        console.error('No valid permission to add a Tool to this group.');
+        notifyError('No valid permission to add a Tool to this group.');
+        this._appletDialog.hide();
+        this._installing = false;
+        this._installationProgress = undefined;
+        return;
+      }
       this._installationProgress = 'Downloading and installing Tool...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._toolEntity!,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
+        permissionType.type === 'Steward' ? permissionType.content.permission_hash : undefined,
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs

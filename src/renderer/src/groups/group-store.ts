@@ -16,6 +16,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
+  ActionHash,
   AgentPubKey,
   AppAuthenticationToken,
   AppWebsocket,
@@ -143,6 +144,7 @@ export class GroupStore {
     toolBundleEntity: UpdateableEntity<Tool>,
     customName: string,
     networkSeed?: string,
+    permissionHash?: ActionHash,
   ): Promise<EntryHash> {
     if (!networkSeed) {
       networkSeed = uuidv4();
@@ -162,6 +164,7 @@ export class GroupStore {
     };
 
     const applet: Applet = {
+      permission_hash: permissionHash,
       custom_name: customName,
       description: toolBundleEntity.record.entry.description,
       sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
