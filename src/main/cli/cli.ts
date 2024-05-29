@@ -11,10 +11,10 @@ const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap.holo.host',
   'https://bootstrap-2.infra.holochain.org',
   'https://bootstrap-1.infra.holochain.org',
   'https://bootstrap-0.infra.holochain.org',
-  'https://bootstrap.holo.host',
 ];
 // The first one will be picked by default. But all production signaling servers should be listed
 // here since there is a check to prevent accidental use of a production signaling server in development
