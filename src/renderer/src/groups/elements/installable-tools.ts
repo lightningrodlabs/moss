@@ -10,8 +10,8 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { InstallAppletBundleDialog } from './install-applet-bundle-dialog.js';
-import './install-applet-bundle-dialog.js';
+import { InstallToolDialog } from './install-tool-dialog.js';
+import './install-tool-dialog.js';
 import './group-context.js';
 
 import { weStyles } from '../../shared-styles.js';
@@ -36,7 +36,7 @@ export class InstallableTools extends LitElement {
   );
 
   @query('#applet-dialog')
-  _installAppletDialog!: InstallAppletBundleDialog;
+  _installToolDialog!: InstallToolDialog;
 
   @query('#select-group-dialog')
   _selectGroupDialog!: SelectGroupDialog;
@@ -123,7 +123,7 @@ export class InstallableTools extends LitElement {
             ? html`
                 <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
                   <install-applet-bundle-dialog
-                    @install-applet-dialog-closed=${() => {
+                    @install-tool-dialog-closed=${() => {
                       this._selectedGroupDnaHash = undefined;
                       this._selectedToolEntity = undefined;
                     }}
@@ -141,7 +141,7 @@ export class InstallableTools extends LitElement {
             @installation-group-selected=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail;
               this._selectGroupDialog.hide();
-              setTimeout(async () => this._installAppletDialog.open(this._selectedToolEntity!), 50);
+              setTimeout(async () => this._installToolDialog.open(this._selectedToolEntity!), 50);
             }}
           ></select-group-dialog>
           ${this.renderApplets(this._installableTools.value.value)}

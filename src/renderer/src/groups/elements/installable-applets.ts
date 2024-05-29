@@ -10,8 +10,8 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { InstallAppletBundleDialog } from './install-applet-bundle-dialog.js';
-import './install-applet-bundle-dialog.js';
+import { InstallToolDialog } from './install-tool-dialog';
+import './install-tool-dialog.js';
 import './group-context.js';
 
 import { weStyles } from '../../shared-styles.js';
@@ -36,7 +36,7 @@ export class InstallableApplets extends LitElement {
   );
 
   @query('#applet-dialog')
-  _installAppletDialog!: InstallAppletBundleDialog;
+  _installAppletDialog!: InstallToolDialog;
 
   @query('#select-group-dialog')
   _selectGroupDialog!: SelectGroupDialog;
@@ -123,8 +123,8 @@ export class InstallableApplets extends LitElement {
           ${this._selectedGroupDnaHash
             ? html`
                 <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
-                  <install-applet-bundle-dialog
-                    @install-applet-dialog-closed=${() => {
+                  <install-tool-dialog
+                    @install-tool-dialog-closed=${() => {
                       this._selectedGroupDnaHash = undefined;
                       this._selectedToolEntity = undefined;
                     }}
@@ -133,7 +133,7 @@ export class InstallableApplets extends LitElement {
                       this._selectedToolEntity = undefined;
                     }}
                     id="applet-dialog"
-                  ></install-applet-bundle-dialog>
+                  ></install-tool-dialog>
                 </group-context>
               `
             : html``}

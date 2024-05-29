@@ -14,7 +14,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
-import { mdiEmail, mdiEmailOutline, mdiWeb } from '@mdi/js';
+import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 
 @localized()
 @customElement('tool-publisher-detail')

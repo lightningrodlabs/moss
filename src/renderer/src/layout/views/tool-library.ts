@@ -1,5 +1,5 @@
 import { html, LitElement, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -13,6 +13,15 @@ import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import '../../groups/elements/installable-tools.js';
 import '../../tool-bundles/elements/tool-publisher-detail.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
+import { mossStoreContext } from '../../context.js';
+import { consume } from '@lit/context';
+import { MossStore } from '../../moss-store.js';
+import { groupStoreContext } from '../../groups/context.js';
+import { GroupStore } from '../../groups/group-store.js';
+import { SelectGroupDialog } from '../../elements/select-group-dialog.js';
+import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
+import { InstallToolDialog } from '../../groups/elements/install-tool-dialog.js';
+import '../../groups/elements/install-tool-dialog.js';
 
 enum ToolLibraryView {
   Main,
@@ -28,14 +37,29 @@ enum ToolDetailView {
 @localized()
 @customElement('tool-library')
 export class ToolLibrary extends LitElement {
+  @consume({ context: mossStoreContext, subscribe: true })
+  mossStore!: MossStore;
+
+  @consume({ context: groupStoreContext, subscribe: true })
+  groupStore: GroupStore | undefined; // will only be defined if the tools library is being accessed from within a group
+
   @state()
   view: ToolLibraryView = ToolLibraryView.Main;
 
   @state()
   detailView: ToolDetailView = ToolDetailView.Description;
 
+  @query('#install-tool-dialog')
+  _installToolDialog!: InstallToolDialog;
+
+  @query('#select-group-dialog')
+  _selectGroupDialog!: SelectGroupDialog;
+
   @state()
   _selectedTool: UpdateableEntity<Tool> | undefined;
+
+  @state()
+  _selectedGroupDnaHash: DnaHashB64 | undefined;
 
   resetView() {
     this.view = ToolLibraryView.Main;
@@ -53,6 +77,7 @@ export class ToolLibrary extends LitElement {
           @applet-installed=${(_e) => {
             // console.log("@group-home: GOT APPLET INSTALLED EVENT.");
             this.view = ToolLibraryView.Main;
+            this.detailView = ToolDetailView.Description;
             // re-dispatch event since for some reason it doesn't bubble further
             // this.dispatchEvent(
             //   new CustomEvent("applet-installed", {
@@ -89,6 +114,15 @@ export class ToolLibrary extends LitElement {
               </div>
               <div style="font-size: 24px;">${this._selectedTool.record.entry.subtitle}</div>
             </div>
+            <span style="display: flex; flex: 1;"></span>
+            <button
+              class="install-btn"
+              @click=${async () => {
+                this._selectGroupDialog.show();
+              }}
+            >
+              Install
+            </button>
           </div>
         </div>
         <div class="body">${this.renderDetailBody()}</div>
@@ -128,6 +162,49 @@ export class ToolLibrary extends LitElement {
 
   render() {
     return html`
+      <select-group-dialog
+        id="select-group-dialog"
+        @installation-group-selected=${(e: CustomEvent) => {
+          this._selectedGroupDnaHash = e.detail;
+          this._selectGroupDialog.hide();
+          setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+        }}
+      ></select-group-dialog>
+      ${this._selectedGroupDnaHash
+        ? html`
+            <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
+              <install-tool-dialog
+                @install-tool-dialog-closed=${() => {
+                  this._selectedGroupDnaHash = undefined;
+                  this._selectedTool = undefined;
+                }}
+                @applet-installed=${() => {
+                  this._selectedGroupDnaHash = undefined;
+                  this._selectedTool = undefined;
+                  this.view = ToolLibraryView.Main;
+                  this.detailView = ToolDetailView.Description;
+                }}
+                id="install-tool-dialog"
+              ></install-tool-dialog>
+            </group-context>
+          `
+        : this.groupStore
+          ? html`
+              <install-tool-dialog
+                @install-tool-dialog-closed=${() => {
+                  this._selectedGroupDnaHash = undefined;
+                  this._selectedTool = undefined;
+                }}
+                @applet-installed=${() => {
+                  this._selectedGroupDnaHash = undefined;
+                  this._selectedTool = undefined;
+                  this.view = ToolLibraryView.Main;
+                  this.detailView = ToolDetailView.Description;
+                }}
+                id="install-tool-dialog"
+              ></install-tool-dialog>
+            `
+          : html``}
       <div class="column" style="flex: 1;">
         <div class="header column center-content">
           <sl-icon-button
@@ -194,6 +271,26 @@ export class ToolLibrary extends LitElement {
 
       .back-btn:hover {
         color: black;
+      }
+
+      .install-btn {
+        all: unset;
+        cursor: pointer;
+        font-size: 1.5rem;
+        background: var(--sl-color-tertiary-50);
+        height: 50px;
+        border-radius: 30px;
+        padding: 0 50px;
+        color: var(--sl-color-tertiary-950);
+      }
+
+      .install-btn:hover {
+        background: var(--sl-color-tertiary-200);
+      }
+
+      .install-btn:focus {
+        background: var(--sl-color-tertiary-200);
+        outline: 2px solid var(--sl-color-tertiary-950);
       }
 
       .btn {
