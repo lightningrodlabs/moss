@@ -121,7 +121,7 @@ export class ToolLibrary extends LitElement {
                 this._selectGroupDialog.show();
               }}
             >
-              Install
+              ${msg('+ Add to Group')}
             </button>
           </div>
         </div>
@@ -176,7 +176,6 @@ export class ToolLibrary extends LitElement {
               <install-tool-dialog
                 @install-tool-dialog-closed=${() => {
                   this._selectedGroupDnaHash = undefined;
-                  this._selectedTool = undefined;
                 }}
                 @applet-installed=${() => {
                   this._selectedGroupDnaHash = undefined;
@@ -280,7 +279,7 @@ export class ToolLibrary extends LitElement {
         background: var(--sl-color-tertiary-50);
         height: 50px;
         border-radius: 30px;
-        padding: 0 50px;
+        padding: 0 30px;
         color: var(--sl-color-tertiary-950);
       }
 
