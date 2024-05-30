@@ -102,66 +102,6 @@ export class WelcomeView extends LitElement {
     this.view = WelcomePageView.Main;
   }
 
-  renderExplanationCard() {
-    return html`
-      <sl-card style="flex: 1">
-        <span class="title" slot="header">${msg('What is We?')}</span>
-        <div class="column" style="text-align: left; font-size: 1.15em;">
-          <span>${msg('We is a group collaboration OS.')}</span>
-          <br />
-          <span
-            >${msg(
-              'In We, first you create a group, and then you install applets to that group.',
-            )}</span
-          >
-          <br />
-          <span>${msg('You can see all the groups you are part of in the left sidebar.')}</span>
-          <br />
-          <span
-            >${msg(
-              'You can also see all the applets that you have installed in the top sidebar, if you have any.',
-            )}</span
-          >
-          <br />
-          <span
-            >${msg(
-              'WARNING! We is in alpha version, which means that is not ready for production use yet. Expect bugs, breaking changes, and to lose all the data for all groups when you upgrade to a new version of We.',
-            )}</span
-          >
-        </div>
-      </sl-card>
-    `;
-  }
-
-  renderManagingGroupsCard() {
-    return html`
-      <sl-card style="flex: 1; margin-left: 16px">
-        <span class="title" slot="header">${msg('Managing Groups')}</span>
-        <div style="text-align: left; font-size: 1.15em;">
-          <ol style="line-height: 180%; margin: 0;">
-            <li>
-              ${msg('To create a new group, click on the "Add Group"')}
-              <sl-icon
-                style="position: relative; top: 0.25em;"
-                .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
-              ></sl-icon>
-              ${msg('button in the left sidebar.')}
-            </li>
-            <li>
-              ${msg(
-                'After creating a group, create a profile for this group. Only the members of that group are going to be able to see your profile.',
-              )}
-            </li>
-            <li>
-              ${msg('Invite other members to the group by sharing the group link with them.')}
-            </li>
-            <li>${msg('Install applets that you want to use as a group.')}</li>
-          </ol>
-        </div>
-      </sl-card>
-    `;
-  }
-
   renderDisclaimerDialog() {
     return html` <sl-dialog
       id="disclaimer-dialog"
@@ -238,7 +178,7 @@ export class WelcomeView extends LitElement {
                 <span style="margin-left: 5px;">Disclaimer</span>
               </div>
             </div>
-            <div class="row" style="flex-wrap: wrap; margin-top: 60px;">
+            <div class="row" style="flex-wrap: wrap; margin-top: 60px;justify-content: center;">
               <!-- Group section -->
               <div class="column button-section">
                 <div class="row" style="align-items: center; font-size: 30px;">
