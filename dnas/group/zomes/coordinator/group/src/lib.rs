@@ -1,20 +1,18 @@
-pub mod all_group_profiles;
-
-pub mod group_profile;
-
 pub mod all_applets;
-
-pub mod applet;
-
+pub mod all_group_profiles;
 pub mod all_steward_permissions;
-
+pub mod applet;
+pub mod group_meta_data;
+pub mod group_profile;
 pub mod steward_permission;
 use group_integrity::*;
 use hdk::prelude::*;
+
 #[hdk_extern]
 pub fn init() -> ExternResult<InitCallbackResult> {
     Ok(InitCallbackResult::Pass)
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Signal {
@@ -41,6 +39,7 @@ pub enum Signal {
         original_app_entry: EntryTypes,
     },
 }
+
 #[hdk_extern(infallible)]
 pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
     for action in committed_actions {
@@ -49,6 +48,7 @@ pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
         }
     }
 }
+
 fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     match action.hashed.content.clone() {
         Action::CreateLink(create_link) => {
@@ -115,6 +115,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
         _ => Ok(()),
     }
 }
+
 fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTypes>> {
     let record = match get_details(action_hash.clone(), GetOptions::default())? {
         Some(Details::Record(record_details)) => record_details.record,
