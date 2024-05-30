@@ -121,17 +121,18 @@ export class AppletTopBarButton extends LitElement {
       }
 
       .applet-icon {
-        box-shadow: 0 0 2px 3px var(--sl-color-primary-400);
+        /* box-shadow: 0 0 2px 3px var(--sl-color-primary-400); */
+        box-shadow: 1px 2px 10px 0px #102520ab;
         border-radius: 12px;
       }
 
-      .applet-icon:hover {
+      /* .applet-icon:hover {
         box-shadow: none;
-      }
+      } */
 
-      .no-shadow {
+      /* .no-shadow {
         box-shadow: none;
-      }
+      } */
     `,
   ];
 }

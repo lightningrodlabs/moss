@@ -102,7 +102,7 @@ export class SidebarButton extends LitElement {
           width: var(--size, 48px);
           height: var(--size, 48px);
           border-radius: var(--border-radius, 50%);
-          background: linear-gradient(180deg, #B2C85A 0%, #669D5A 62.38%, #7F6F52 92.41%);          
+          background: linear-gradient(180deg, #b2c85a 0%, #669d5a 62.38%, #7f6f52 92.41%);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         }
         /* .icon:hover {
@@ -127,14 +127,14 @@ export class SidebarButton extends LitElement {
           justify-content: center;
           height: var(--sidebar-width);
           width: var(--sidebar-width);
-          transition: all .25s ease;
+          transition: all 0.25s ease;
         }
         .icon-container:hover {
-          background: linear-gradient(90deg, #96D96E 0%, #394333 90.91%);
+          background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%);
           cursor: pointer;
         }
         .selected {
-            background: linear-gradient(90deg, #597448 0%, #394333 90.91%);        
+          background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%);
         }
 
         .notification-dot {
