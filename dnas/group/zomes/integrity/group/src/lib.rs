@@ -1,5 +1,7 @@
 pub mod group_profile;
 pub use group_profile::*;
+pub mod group_meta_data;
+pub use group_meta_data::*;
 pub mod applet;
 pub use applet::*;
 pub mod applet_private;
@@ -31,6 +33,7 @@ pub enum EntryTypes {
     #[entry_type(visibility = "private")]
     AppletPrivate(PrivateAppletEntry),
     GroupProfile(GroupProfile),
+    GroupMetaData(GroupMetaData),
 }
 #[derive(Serialize, Deserialize)]
 #[hdk_link_types]
@@ -41,6 +44,7 @@ pub enum LinkTypes {
     AllGroupProfiles,
     AppletToJoinedAgent,
     AppletToAbandonedAgent,
+    GroupMetaDataToAnchor,
 }
 #[hdk_extern]
 pub fn genesis_self_check(_data: GenesisSelfCheckData) -> ExternResult<ValidateCallbackResult> {
@@ -70,6 +74,10 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     EntryCreationAction::Create(action),
                     group_profile,
                 ),
+                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
+                    EntryCreationAction::Create(action),
+                    group_meta_data,
+                ),
                 EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
                     EntryCreationAction::Create(action),
                     applet_private,
@@ -96,6 +104,10 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
                     EntryCreationAction::Update(action),
                     group_profile,
+                ),
+                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
+                    EntryCreationAction::Update(action),
+                    group_meta_data,
                 ),
                 EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
                     EntryCreationAction::Update(action),
@@ -141,6 +153,25 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             group_profile,
                             original_create_action,
                             original_group_profile,
+                        )
+                    }
+                    EntryTypes::GroupMetaData(group_meta_data) => {
+                        let original_app_entry =
+                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_group_meta_data =
+                            match GroupMetaData::try_from(original_app_entry) {
+                                Ok(entry) => entry,
+                                Err(e) => {
+                                    return Ok(ValidateCallbackResult::Invalid(format!(
+                                        "Expected to get GroupMetaData from Record: {e:?}"
+                                    )));
+                                }
+                            };
+                        validate_update_group_meta_data(
+                            action,
+                            group_meta_data,
+                            original_create_action,
+                            original_group_meta_data,
                         )
                     }
                     EntryTypes::Applet(applet) => {
@@ -295,6 +326,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             LinkTypes::AppletToAbandonedAgent => {
                 validate_create_link_abandoned_agent(action, base_address, target_address, tag)
             }
+            LinkTypes::GroupMetaDataToAnchor => validate_create_link_group_meta_data_to_anchor(
+                action,
+                base_address,
+                target_address,
+                tag,
+            ),
         },
         FlatOp::RegisterDeleteLink {
             link_type,
@@ -348,6 +385,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 target_address,
                 tag,
             ),
+            LinkTypes::GroupMetaDataToAnchor => validate_delete_link_group_meta_data_to_anchor(
+                action,
+                original_action,
+                base_address,
+                target_address,
+                tag,
+            ),
         },
         FlatOp::StoreRecord(store_record) => match store_record {
             OpRecord::CreateEntry { app_entry, action } => match app_entry {
@@ -363,6 +407,10 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
                     EntryCreationAction::Create(action),
                     group_profile,
+                ),
+                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
+                    EntryCreationAction::Create(action),
+                    group_meta_data,
                 ),
                 EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
                     EntryCreationAction::Create(action),
@@ -478,6 +526,37 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 group_profile,
                                 original_action,
                                 original_group_profile,
+                            )
+                        } else {
+                            Ok(result)
+                        }
+                    }
+                    EntryTypes::GroupMetaData(group_meta_data) => {
+                        let result = validate_create_group_meta_data(
+                            EntryCreationAction::Update(action.clone()),
+                            group_meta_data.clone(),
+                        )?;
+                        if let ValidateCallbackResult::Valid = result {
+                            let original_group_meta_data: Option<GroupMetaData> = original_record
+                                .entry()
+                                .to_app_option()
+                                .map_err(|e| wasm_error!(e))?;
+                            let original_group_meta_data = match original_group_meta_data {
+                                Some(group_meta_data) => group_meta_data,
+                                None => {
+                                    return Ok(
+                                            ValidateCallbackResult::Invalid(
+                                                "The updated entry type must be the same as the original entry type"
+                                                    .to_string(),
+                                            ),
+                                        );
+                                }
+                            };
+                            validate_update_group_meta_data(
+                                action,
+                                group_meta_data,
+                                original_action,
+                                original_group_meta_data,
                             )
                         } else {
                             Ok(result)
@@ -606,6 +685,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 LinkTypes::AppletToAbandonedAgent => {
                     validate_create_link_abandoned_agent(action, base_address, target_address, tag)
                 }
+                LinkTypes::GroupMetaDataToAnchor => validate_create_link_group_meta_data_to_anchor(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             },
             OpRecord::DeleteLink {
                 original_action_hash,
@@ -675,6 +760,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         create_link.target_address,
                         create_link.tag,
                     ),
+                    LinkTypes::GroupMetaDataToAnchor => {
+                        validate_delete_link_group_meta_data_to_anchor(
+                            action,
+                            create_link.clone(),
+                            base_address,
+                            create_link.target_address,
+                            create_link.tag,
+                        )
+                    }
                 }
             }
             OpRecord::CreatePrivateEntry { .. } => Ok(ValidateCallbackResult::Valid),

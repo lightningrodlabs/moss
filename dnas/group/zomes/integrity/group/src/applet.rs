@@ -49,7 +49,7 @@ pub fn validate_delete_applet(
 /// 1. Link must point away from the all_applets anchor
 /// 2. Link must point to an entry hash
 pub fn validate_create_link_all_applets(
-    action: CreateLink,
+    _action: CreateLink,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
