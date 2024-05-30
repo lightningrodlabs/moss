@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
 import { encodeHashToBase64, EntryHash } from '@holochain/client';
-import { hashState, notify } from '@holochain-open-dev/elements';
+import { hashState } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
