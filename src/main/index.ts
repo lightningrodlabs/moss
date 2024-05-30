@@ -45,6 +45,7 @@ import {
 import { launch } from './launch';
 import {
   AgentPubKeyB64,
+  AppInfo,
   CallZomeRequest,
   InstalledAppId,
   encodeHashToBase64,
@@ -928,13 +929,13 @@ app.whenReady().then(async () => {
       sha256Ui?: string,
       sha256Webhapp?: string,
       metadata?: string,
-    ) => {
+    ): Promise<AppInfo> => {
       console.log('INSTALLING APPLET BUNDLE. metadata: ', metadata);
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        return;
+        return alreadyInstalled;
       }
       // Check if .happ and ui assets are already installed on the filesystem and don't need to get fetched from the source
       let happAlreadyInstalledPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
