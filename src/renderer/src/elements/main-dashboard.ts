@@ -1,6 +1,7 @@
 import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
@@ -40,7 +41,7 @@ import '../layout/views/applet-main.js';
 import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
-import '../groups/elements/group-home.js';
+import '../groups/elements/group-container.js';
 import '../elements/zome-call-panel.js';
 
 import { weStyles } from '../shared-styles.js';
@@ -63,7 +64,7 @@ import {
   logMossZomeCall,
   stringifyWal,
 } from '../utils.js';
-import { getAppVersion } from '../electron-api.js';
+import { dialogMessagebox, getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
 type OpenTab =
@@ -632,7 +633,7 @@ export class MainDashboard extends LitElement {
   //   if (this._unlisten) this._unlisten();
   // }
 
-  displayGroupHome(groupHash: DnaHash) {
+  displayGroupContainer(groupHash: DnaHash) {
     return (
       this._dashboardState.value.viewType === 'group' &&
       !this._dashboardState.value.appletHash &&
@@ -693,7 +694,9 @@ export class MainDashboard extends LitElement {
   }
 
   renderAppletMainViews() {
-    return this._openApplets.map(
+    return repeat(
+      this._openApplets,
+      (appletHash) => encodeHashToBase64(appletHash),
       (appletHash) => html`
         <applet-main
           .appletHash=${appletHash}
@@ -706,15 +709,34 @@ export class MainDashboard extends LitElement {
   renderDashboard() {
     return html`
       ${this.renderAppletMainViews()}
-      ${this._openGroups.map(
+      ${repeat(
+        this._openGroups,
+        (group) => encodeHashToBase64(group),
         (groupHash) => html`
           <group-context .groupDnaHash=${groupHash}>
-            <group-home
-              style="flex: 1; position: relative; ${this.displayGroupHome(groupHash)
+            <group-container
+              .groupDnaHash=${groupHash}
+              style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
                 this._mossStore.setDashboardState({ viewType: 'personal' });
+              }}
+              @disable-group=${async (e: CustomEvent) => {
+                const confirmation = await dialogMessagebox({
+                  message:
+                    'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+                  type: 'warning',
+                  buttons: ['Cancel', 'Continue'],
+                });
+                if (confirmation.response === 0) return;
+                try {
+                  await this._mossStore.disableGroup(e.detail);
+                  window.location.reload();
+                } catch (e) {
+                  console.error(`Failed to disable Group: ${e}`);
+                  notifyError(msg('Failed to disable Group.'));
+                }
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
@@ -757,7 +779,7 @@ export class MainDashboard extends LitElement {
               @custom-view-created=${(_e) => {
                 throw new Error('Displaying custom views is currently not implemented.');
               }}
-            ></group-home>
+            ></group-container>
           </group-context>
         `,
       )}

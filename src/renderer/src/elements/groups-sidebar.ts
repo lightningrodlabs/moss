@@ -6,7 +6,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { GroupProfile } from '@lightningrodlabs/we-applet';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { mdiAccountMultiplePlus, mdiTimerSand } from '@mdi/js';
+import { mdiAccountMultiplePlus, mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -35,6 +35,12 @@ export class GroupsSidebar extends LitElement {
     () => [this._mossStore],
   );
 
+  _disabledGroups = new StoreSubscriber(
+    this,
+    () => this._mossStore.disabledGroups,
+    () => [this._mossStore],
+  );
+
   @property()
   selectedGroupDnaHash?: DnaHash;
 
@@ -46,7 +52,7 @@ export class GroupsSidebar extends LitElement {
 
   firstUpdated() {}
 
-  renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>) {
+  renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>, disabledGroups: DnaHash[]) {
     const knownGroups = Array.from(groups.entries()).filter(
       ([_, groupProfile]) => !!groupProfile,
     ) as Array<[DnaHash, GroupProfile]>;
@@ -192,6 +198,30 @@ export class GroupsSidebar extends LitElement {
           ></sidebar-button>
         `,
       )}
+      ${disabledGroups.map(
+        (groupDnaHash) => html`
+          <sidebar-button
+            style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
+            .selected=${this.selectedGroupDnaHash &&
+            groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+            .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
+            .logoSrc=${wrapPathInSvg(mdiPowerPlugOffOutline)}
+            .slIcon=${true}
+            .tooltipText=${msg('Disabled Group')}
+            @click=${() => {
+              this.dispatchEvent(
+                new CustomEvent('group-selected', {
+                  detail: {
+                    groupDnaHash,
+                  },
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
+          ></sidebar-button>
+        `,
+      )}
     `;
   }
 
@@ -220,7 +250,18 @@ export class GroupsSidebar extends LitElement {
           .error=${this._groupsProfiles.value.error}
         ></display-error>`;
       case 'complete':
-        return this.renderGroups(this._groupsProfiles.value.value);
+        switch (this._disabledGroups.value.status) {
+          case 'error':
+            console.error('Failed to load disabled groups: ', this._disabledGroups.value.error);
+            return this.renderGroups(this._groupsProfiles.value.value, []);
+          case 'pending':
+            return this.renderGroups(this._groupsProfiles.value.value, []);
+          case 'complete':
+            return this.renderGroups(
+              this._groupsProfiles.value.value,
+              this._disabledGroups.value.value,
+            );
+        }
     }
   }
 
