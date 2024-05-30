@@ -504,14 +504,6 @@ export class MossStore {
 
   disabledGroups = manualReloadStore(async () => {
     const apps = await this.adminWebsocket.listApps({});
-    console.log(
-      '@disabledGroups GROUP APPS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')),
-    );
-    console.log(
-      '@disabledGroups GROUP APPS STATUS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')).map((info) => info.status),
-    );
     return apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppDisabled(app))
@@ -521,14 +513,6 @@ export class MossStore {
   groupStores = manualReloadStore(async () => {
     const groupStores = new DnaHashMap<GroupStore>();
     const apps = await this.adminWebsocket.listApps({});
-    console.log(
-      '@groupStores GROUP APPS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')),
-    );
-    console.log(
-      '@groupStores GROUP APPS STATUS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')).map((info) => info.status),
-    );
     const runningGroupsApps = apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppRunning(app));
