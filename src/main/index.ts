@@ -34,7 +34,7 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow } from './windows';
-import { TOOLS_LIBRARY_APP_ID, AppHashes } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -592,7 +592,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('exit', () => {
     app.exit(0);
   });
-  ipcMain.handle('is-main-window-focused', () => MAIN_WINDOW?.isFocused());
+  ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
   ipcMain.handle(
     'notification',
     (
@@ -602,7 +602,7 @@ app.whenReady().then(async () => {
       notifyOS: boolean,
       appletId: AppletId | undefined,
       appletName: string | undefined,
-    ) => {
+    ): void => {
       if (showInSystray && notification.urgency === 'high') {
         SYSTRAY_ICON_STATE = 'high';
         SYSTRAY!.setImage(SYSTRAY_ICON_HIGH);
@@ -630,14 +630,17 @@ app.whenReady().then(async () => {
       }
     },
   );
-  ipcMain.handle('get-app-version', () => app.getVersion());
-  ipcMain.handle('dialog-messagebox', async (_e, options: Electron.MessageBoxOptions) => {
-    if (MAIN_WINDOW) {
-      return dialog.showMessageBox(MAIN_WINDOW, options);
-    } else {
-      return Promise.reject('Main window does not exist.');
-    }
-  });
+  ipcMain.handle('get-app-version', (): string => app.getVersion());
+  ipcMain.handle(
+    'dialog-messagebox',
+    async (_e, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {
+      if (MAIN_WINDOW) {
+        return dialog.showMessageBox(MAIN_WINDOW, options);
+      } else {
+        return Promise.reject('Main window does not exist.');
+      }
+    },
+  );
   ipcMain.handle('get-media-sources', async () => {
     const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
     return sources.map((source) => {
@@ -657,12 +660,14 @@ app.whenReady().then(async () => {
   ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
-  ipcMain.handle('open-app', async (_e, appId: string) =>
-    createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
+  ipcMain.handle(
+    'open-app',
+    async (_e, appId: string): Promise<void> =>
+      createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
   );
   ipcMain.handle(
     'install-app',
-    async (_e, filePath: string, appId: string, networkSeed: string) => {
+    async (_e, filePath: string, appId: string, networkSeed: string): Promise<void> => {
       if (filePath === '#####REQUESTED_KANDO_INSTALLATION#####') {
         console.log('Got request to install KanDo.');
         filePath = path.join(DEFAULT_APPS_DIRECTORY, 'kando.webhapp');
@@ -673,7 +678,7 @@ app.whenReady().then(async () => {
       await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
     },
   );
-  ipcMain.handle('is-applet-dev', (_e) => !!RUN_OPTIONS.devInfo);
+  ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
   ipcMain.handle(
     'get-all-app-assets-infos',
     async (): Promise<Record<InstalledAppId, AppAssetsInfo>> => {
@@ -697,32 +702,32 @@ app.whenReady().then(async () => {
       return allAppAssetsInfos;
     },
   );
-  ipcMain.handle('get-applet-dev-port', (_e, appId: string) => {
+  ipcMain.handle('get-applet-dev-port', (_e, appId: string): number | undefined => {
     const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
     if (appAssetsInfo.type === 'webhapp' && appAssetsInfo.ui.location.type === 'localhost') {
       return appAssetsInfo.ui.location.port;
     }
     return undefined;
   });
-  ipcMain.handle('get-applet-iframe-script', () => {
+  ipcMain.handle('get-applet-iframe-script', (): string => {
     // TODO make sure we is in dev mode (e.g. not return iframe script if We is in production mode)
     return APPLET_IFRAME_SCRIPT;
   });
-  ipcMain.handle('get-installed-apps', async () => {
+  ipcMain.handle('get-installed-apps', async (): Promise<Array<AppInfo>> => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
-  ipcMain.handle('get-profile', () => RUN_OPTIONS.profile);
-  ipcMain.handle('get-conductor-info', async () => {
+  ipcMain.handle('get-profile', (): string | undefined => RUN_OPTIONS.profile);
+  ipcMain.handle('get-conductor-info', (): ConductorInfo => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
       tools_library_app_id: TOOLS_LIBRARY_APP_ID,
     };
   });
-  ipcMain.handle('lair-setup-required', async () => {
+  ipcMain.handle('lair-setup-required', (): boolean => {
     return !WE_FILE_SYSTEM.keystoreInitialized();
   });
-  ipcMain.handle('create-group', async (_e, withProgenitor: boolean) => {
+  ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
     // generate random network seed
     const networkSeed = uuidv4();
     const hash = createHash('sha256');
@@ -773,7 +778,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle(
     'join-group',
-    async (_e, networkSeed: string, progenitor: AgentPubKeyB64 | null) => {
+    async (_e, networkSeed: string, progenitor: AgentPubKeyB64 | null): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const hash = createHash('sha256');
       hash.update(networkSeed);
@@ -782,7 +787,9 @@ app.whenReady().then(async () => {
       console.log('Determined appId for group: ', appId);
       if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        return apps.find((appInfo) => appInfo.installed_app_id === appId);
+        const appInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
+        if (!appInfo) throw new Error('AppInfo undefined.');
+        return appInfo;
       }
       const toolsLibraryAppInfo = apps.find(
         (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
@@ -849,7 +856,7 @@ app.whenReady().then(async () => {
       sha256Happ: string,
       sha256Ui: string,
       sha256Webhapp: string,
-    ) => {
+    ): Promise<void> => {
       // Check if UI assets need to be downloaded at all
       const uiAlreadyInstalled = fs.existsSync(
         path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'),
@@ -909,7 +916,7 @@ app.whenReady().then(async () => {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     },
   );
-  ipcMain.handle('uninstall-applet', async (_e, appId: string) => {
+  ipcMain.handle('uninstall-applet', async (_e, appId: string): Promise<void> => {
     await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
       installed_app_id: appId,
     });
