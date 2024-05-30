@@ -355,14 +355,14 @@ export class GroupsSidebar extends LitElement {
         outline: none;
         border: none;
         color: #fff;
-        background: linear-gradient(270deg, #394333 0%, #526c44 100%);
+        background: linear-gradient(0deg, #203923 0%, #527a22 100%);
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         border-radius: 5px;
         margin-top: 15px;
       }
 
       .moss-button:hover {
-        background: linear-gradient(270deg, #495542 0%, #67924f 100%);
+        background: linear-gradient(0deg, #203923 0%, #63912a 100%);
         cursor: pointer;
       }
     `,

@@ -1404,10 +1404,11 @@ export class MainDashboard extends LitElement {
         }
 
         .home-button {
-          background-color: transparent;
+          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
+          border-radius: 15px;
           border: none;
-          width: 50px;
-          height: 50px;
+          width: 58px;
+          height: 58px;
           outline: none;
         }
 
@@ -1416,8 +1417,8 @@ export class MainDashboard extends LitElement {
         }
 
         .top-left-corner:hover {
-          border-radius: 100% 0 0 100%;
-          background: linear-gradient(90deg, #96d96e 0%, #394333 90.91%);
+          border-radius: 20px 0 0 20px;
+          background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%);
           cursor: pointer;
         }
 
@@ -1472,7 +1473,7 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           right: 0;
           padding-left: 8px;
-          background-color: rgba(57, 67, 50, 1);
+          background-color: #224b21;
         }
 
         #group-view-area {
@@ -1490,8 +1491,8 @@ export class MainDashboard extends LitElement {
         }
 
         .selected {
-          border-radius: 100% 0 0 100%;
-          background: linear-gradient(90deg, #597448 0%, #394333 90.91%);
+          border-radius: 20px 0 0 20px;
+          background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%);
         }
 
         .close-tab-button {
@@ -1600,7 +1601,7 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
+          background: linear-gradient(270deg, #102520 0%, #3a622d 100%);
           width: 74px;
         }
 
@@ -1618,7 +1619,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-bar {
-          background: #394333;
+          background: #224b21;
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
@@ -1672,13 +1673,13 @@ export class MainDashboard extends LitElement {
           outline: none;
           border: none;
           color: #fff;
-          background: linear-gradient(270deg, #394333 0%, #526c44 100%);
+          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
           border-radius: 5px;
         }
 
         .moss-button:hover {
-          background: linear-gradient(270deg, #495542 0%, #67924f 100%);
+          background: linear-gradient(0deg, #203923 0%, #63912a 100%);
           cursor: pointer;
         }
       `,

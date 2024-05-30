@@ -397,7 +397,8 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: rgba(57, 67, 51, 1);
+        background-color: #588121;
+        border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }
 
@@ -456,7 +457,7 @@ export class WelcomeView extends LitElement {
         align-items: center;
         flex-direction: row;
         padding: 10px;
-        box-shadow: 0 0 2px 2px #202020;
+        box-shadow: 0 0 2px 2px #3a622d;
         cursor: pointer;
       }
 
@@ -467,9 +468,12 @@ export class WelcomeView extends LitElement {
       .button-section {
         align-items: center;
         color: white;
-        background: #ffffff1a;
+        /* background: #224b21; */
+        /* background: #102520; */
+        background: #1e3b25;
         margin: 30px;
         padding: 30px;
+        box-shadow: 0 0 2px 2px #3a622d;
         border-radius: 15px;
       }
 
@@ -479,12 +483,12 @@ export class WelcomeView extends LitElement {
         padding: 20px;
         padding-top: 45px;
         border-radius: 10px;
-        background: rgba(22, 35, 17, 1);
+        background: #193423;
         margin: 5px;
-        border: 2px solid;
         cursor: pointer;
         color: #fff;
-        border: 2px solid rgba(96, 124, 4, 0.5);
+        box-shadow: 0 0 2px 2px #193423;
+        /* border: 2px solid #102520; */
         transition: all 0.25s ease;
         font-size: 18px;
         line-height: 1.4;

@@ -833,7 +833,7 @@ export class GroupHome extends LitElement {
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: rgba(86, 113, 71, 1);
+        background-color: #588121;
         padding: 8px;
         border-radius: 5px 0 0 0;
       }
