@@ -55,6 +55,7 @@ import {
   deStringifyWal,
   findAppForDnaHash,
   initAppClient,
+  isAppDisabled,
   isAppRunning,
   stringifyWal,
   toolBundleActionHashFromDistInfo,
@@ -418,17 +419,100 @@ export class MossStore {
     await this.reloadManualStores();
   }
 
+  /**
+   * Disables all applets in the group, then disables the group dna itself.
+   *
+   * @param groupDnaHash
+   */
+  public async disableGroup(groupDnaHash: DnaHash): Promise<AppletHash[]> {
+    const groupStore = await this.groupStore(groupDnaHash);
+    if (!groupStore) throw new Error('No group store found for group.');
+
+    // 1. disable all applets of that group
+    try {
+      await groupStore.disableAllApplets();
+    } catch (e) {
+      throw new Error(`Failed to disable applets of the group: ${e}`);
+    }
+
+    // 2. disable the group app itself
+    const allApps = await this.adminWebsocket.listApps({});
+    const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
+
+    const appToDisable = groupApps.find(
+      (app) =>
+        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        groupDnaHash.toString(),
+    );
+
+    if (!appToDisable) throw new Error('Group with this DNA hash not found in the conductor.');
+
+    await this.adminWebsocket.disableApp({
+      installed_app_id: appToDisable.installed_app_id,
+    });
+    // Remove applet iframes
+    const applets = await toPromise(groupStore.allMyRunningApplets);
+
+    applets.forEach((applet) => {
+      const backgroundIframe = document.getElementById(encodeHashToBase64(applet)) as
+        | HTMLIFrameElement
+        | undefined;
+      if (backgroundIframe) {
+        console.log('REMOVING IFRAME');
+        backgroundIframe.remove();
+      }
+    });
+
+    return applets;
+  }
+
+  /**
+   * Enables the group app then enables all the applets within the group.
+   *
+   * @param groupDnaHash
+   */
+  public async enableGroup(groupDnaHash: DnaHash) {
+    // 1. enable the group app
+    const allApps = await this.adminWebsocket.listApps({});
+    const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
+
+    const appToDisable = groupApps.find(
+      (app) =>
+        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        groupDnaHash.toString(),
+    );
+
+    if (!appToDisable) throw new Error('Group with this DNA hash not found in the conductor.');
+
+    await this.adminWebsocket.enableApp({
+      installed_app_id: appToDisable.installed_app_id,
+    });
+
+    await this.disabledGroups.reload();
+    await this.groupStores.reload();
+
+    const groupStore = await this.groupStore(groupDnaHash);
+    if (!groupStore) throw new Error('No group store found for group after enabling group.');
+
+    // 2. enable all applets of that group
+    try {
+      await groupStore.reEnableAllApplets();
+    } catch (e) {
+      throw new Error(`Failed to re-enable applets of the group: ${e}`);
+    }
+  }
+
+  disabledGroups = manualReloadStore(async () => {
+    const apps = await this.adminWebsocket.listApps({});
+    return apps
+      .filter((app) => app.installed_app_id.startsWith('group#'))
+      .filter((app) => isAppDisabled(app))
+      .map((app) => app.cell_info['group'][0][CellType.Provisioned].cell_id[0] as DnaHash);
+  });
+
   groupStores = manualReloadStore(async () => {
     const groupStores = new DnaHashMap<GroupStore>();
     const apps = await this.adminWebsocket.listApps({});
-    console.log(
-      'APPS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')),
-    );
-    console.log(
-      'APPS STATUS: ',
-      apps.filter((app) => app.installed_app_id.startsWith('group#')).map((info) => info.status),
-    );
     const runningGroupsApps = apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppRunning(app));
@@ -791,6 +875,7 @@ export class MossStore {
   }
 
   async reloadManualStores() {
+    await this.disabledGroups.reload();
     await this.groupStores.reload();
     // const groupStores = await toPromise(this.groupStores);
     // await Promise.all(

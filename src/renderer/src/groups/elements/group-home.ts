@@ -23,7 +23,13 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
-import { mdiArrowLeft, mdiCog, mdiHelpCircle, mdiLinkVariantPlus } from '@mdi/js';
+import {
+  mdiArrowLeft,
+  mdiCog,
+  mdiHelpCircle,
+  mdiLinkVariantPlus,
+  mdiPowerPlugOffOutline,
+} from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
@@ -289,7 +295,7 @@ export class GroupHome extends LitElement {
   async uninstallApplet(e: CustomEvent) {
     const confirmation = await dialogMessagebox({
       message:
-        'WARNING: Uninstalling an Applet instance is permanent. You will not be able to re-join the same Applet instance at a later point and all your local data associated to that Applet instance will be deleted. Other group members can keep using the Applet instance normally.',
+        'WARNING: Uninstalling a Tool instance is permanent. You will not be able to re-join the same Applet instance at a later point and all your local data associated to that Applet instance will be deleted. Other group members can keep using the Applet instance normally.',
       type: 'warning',
       buttons: ['Cancel', 'Continue'],
     });
@@ -390,7 +396,7 @@ export class GroupHome extends LitElement {
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
         if (filteredApplets.length === 0) {
-          return html`${msg('No new applets to install.')}`;
+          return html`${msg('No new Tools to install.')}`;
         }
         return html`
           <div class="row" style="flex-wrap: wrap;">
@@ -538,7 +544,7 @@ export class GroupHome extends LitElement {
 
           <!-- NEW APPLETS -->
           <div class="row" style="align-items: center;">
-            <span class="subtitle">${msg('Joinable Applets')}</span>
+            <span class="subtitle">${msg('Joinable Tools')}</span>
             <sl-tooltip content="${msg(
               'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
             )}">
@@ -551,7 +557,7 @@ export class GroupHome extends LitElement {
           <div class="row" style="align-items: center; justify-content: flex-end; margin-top: -10px;">
             <input @input=${() =>
               this.toggleIgnoredApplets()} id="show-ignored-applets-checkbox" type="checkbox">
-            <span>${msg('Show ignored Applets')}</span>
+            <span>${msg('Show ignored Tools')}</span>
           </div>
           ${this.renderNewApplets()}
         </div>
@@ -653,7 +659,7 @@ export class GroupHome extends LitElement {
   renderNewSettings() {
     const tabs = [
       [
-        'Applets',
+        'Tools',
         html`<group-applets-settings
           @update-ui=${async (e) => this.updateUi(e)}
           @uninstall-applet=${async (e) => this.uninstallApplet(e)}
@@ -733,7 +739,10 @@ export class GroupHome extends LitElement {
     return html`
       <loading-dialog id="loading-dialog" loadingText="Updating UI..."></loading-dialog>
       <div class="column" style="flex: 1; position: relative;">
-        <div class="row" style="height: 68px; align-items: center; background: var(--sl-color-primary-200)">
+        <div
+          class="row"
+          style="height: 68px; align-items: center; background: var(--sl-color-primary-200)"
+        >
           <sl-icon-button
             .src=${wrapPathInSvg(mdiArrowLeft)}
             @click=${() => {
@@ -742,13 +751,34 @@ export class GroupHome extends LitElement {
             style="margin-left: 20px; font-size: 30px;"
           ></sl-icon-button>
           <span style="display: flex; flex: 1;"></span>
-          <span class="title" style="margin-right: 20px; font-weight: bold;">${msg(
-            'Group Settings',
-          )}</span>
+          <span class="title" style="margin-right: 20px; font-weight: bold;"
+            >${msg('Group Settings')}</span
+          >
         </div>
 
-        <tab-group .tabs=${tabs} style="display: flex; flex: 1;">
-        <tab-group>
+        <tab-group .tabs=${tabs} style="display: flex; flex: 1;"> </tab-group>
+
+        <sl-button
+          variant="warning"
+          style="position: absolute; bottom: 10px; right: 10px;"
+          @click=${async () => {
+            this.dispatchEvent(
+              new CustomEvent('disable-group', {
+                detail: this.groupStore.groupDnaHash,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="row" style="align-items: center;">
+            <sl-icon
+              style="margin-right: 5px; font-size: 1.3rem;"
+              .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
+            ></sl-icon>
+            <div>${msg('Disable group')}</div>
+          </div></sl-button
+        >
       </div>
     `;
   }

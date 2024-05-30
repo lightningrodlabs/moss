@@ -30,7 +30,7 @@ export class GroupAppletsSidebar extends LitElement {
   mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  _groupStore!: GroupStore;
+  _groupStore: GroupStore | undefined;
 
   @property()
   selectedAppletHash?: AppletHash;
@@ -42,9 +42,11 @@ export class GroupAppletsSidebar extends LitElement {
   _groupApplets = new StoreSubscriber(
     this,
     () =>
-      pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-        sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
-      ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>,
+      this._groupStore
+        ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
+            sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+          ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
+        : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],
   );
 
@@ -81,7 +83,7 @@ export class GroupAppletsSidebar extends LitElement {
                   this.dispatchEvent(
                     new CustomEvent('applet-selected', {
                       detail: {
-                        groupDnaHash: this._groupStore.groupDnaHash,
+                        groupDnaHash: this._groupStore!.groupDnaHash,
                         appletHash: appletStore.appletHash,
                       },
                       bubbles: true,
@@ -99,6 +101,7 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   renderAppletsLoading() {
+    if (!this._groupStore) return html``;
     switch (this._groupApplets.value.status) {
       case 'pending':
         return html`<sl-skeleton
