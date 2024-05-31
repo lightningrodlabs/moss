@@ -1418,8 +1418,15 @@ export class MainDashboard extends LitElement {
 
         .top-left-corner:hover {
           border-radius: 20px 0 0 20px;
-          background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%);
+          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
           cursor: pointer;
+        }
+
+        .selected {
+          border-radius: 20px 0 0 20px;
+          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
         }
 
         .hover-browser {
@@ -1488,11 +1495,6 @@ export class MainDashboard extends LitElement {
 
         .invisible-scrollbars::-webkit-scrollbar {
           display: none;
-        }
-
-        .selected {
-          border-radius: 20px 0 0 20px;
-          background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%);
         }
 
         .close-tab-button {
@@ -1601,7 +1603,7 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #102520 0%, #3a622d 100%);
+          background: linear-gradient(270deg, #142510 0%, #3a622d 100%);
           width: 74px;
         }
 

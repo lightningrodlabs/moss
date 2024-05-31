@@ -424,14 +424,17 @@ export class WelcomeView extends LitElement {
         padding-top: 45px;
         border-radius: 10px;
         background: #193423;
-        margin: 5px;
-        cursor: pointer;
+        margin: 6px;
         color: #fff;
         box-shadow: 0 0 2px 2px #193423;
         /* border: 2px solid #102520; */
         transition: all 0.25s ease;
         font-size: 18px;
         line-height: 1.4;
+      }
+
+      .update-feed-el a {
+        color: #07cd07;
       }
 
       .update-date {
