@@ -4,7 +4,7 @@ use hdk::prelude::*;
 pub fn set_group_meta_data(group_meta_data: GroupMetaData) -> ExternResult<Record> {
     let group_meta_data_hash = create_entry(&EntryTypes::GroupMetaData(group_meta_data.clone()))?;
     let record = get(group_meta_data_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
-        WasmErrorInner::Guest("Could not find the newly created GroupProfile".to_string())
+        WasmErrorInner::Guest("Could not find the newly created GroupMetaData".to_string())
     ))?;
     let path = Path::from(group_meta_data.name.as_str());
     create_link(
@@ -27,7 +27,7 @@ pub fn get_group_meta_data(name: String) -> ExternResult<Option<Record>> {
 
     let latest_group_meta_data_link = links
         .into_iter()
-        .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
+        .max_by(|link_a, link_b| link_a.timestamp.cmp(&link_b.timestamp));
 
     // This might be brittle in case the link has propagated but not yet the entry
     match latest_group_meta_data_link {
