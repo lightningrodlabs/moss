@@ -91,6 +91,7 @@ export class MossStore {
     authenticationTokens: Record<InstalledAppId, AppAuthenticationToken>,
   ) {
     this._authenticationTokens = authenticationTokens;
+    this.myLatestActivity = Date.now();
   }
 
   private _updatableApplets: Writable<Record<AppletId, UpdateableEntity<Tool>>> = writable({});
@@ -134,6 +135,8 @@ export class MossStore {
   _authenticationTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
 
   _appClients: Record<InstalledAppId, AppClient> = {};
+
+  myLatestActivity: number;
 
   setCreatableDialogResult(dialogId: string, result: CreatableResult) {
     this._creatableDialogResults.update((store) => {

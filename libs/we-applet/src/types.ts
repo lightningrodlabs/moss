@@ -12,6 +12,7 @@ import {
   CallZomeRequest,
   AppAuthenticationToken,
   AgentPubKey,
+  AgentPubKeyB64,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -450,16 +451,14 @@ export type RecordInfo = {
 
 export type UnsubscribeFunction = () => void;
 
-export enum PeerStatus {
-  Online = 'online',
-  Offline = 'offline',
-}
+export type PeerStatus = {
+  lastSeen: number;
+  status: string;
+};
 
-export type PeerStatusUpdate = Array<[AgentPubKey, PeerStatus]>;
+export type PeerStatusUpdate = Record<AgentPubKeyB64, PeerStatus>;
 
-export interface ReadonlyPeerStatusStore {
-  agentsStatus: LazyHoloHashMap<Uint8Array, Readable<PeerStatus>>;
-}
+export type ReadonlyPeerStatusStore = Readable<Record<AgentPubKeyB64, PeerStatus>>;
 
 export type GroupPermissionType =
   | {
