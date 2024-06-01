@@ -186,6 +186,9 @@ export class GroupStore {
     const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
+      if (!statuses) {
+        statuses = {};
+      }
       if (statuses) {
         Object.keys(statuses).forEach((agent) => {
           if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
