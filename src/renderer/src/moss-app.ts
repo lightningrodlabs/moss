@@ -126,6 +126,20 @@ export class MossApp extends LitElement {
       },
     );
 
+    // Listen for general activity to set the latest activity timestamp
+    document.addEventListener('mousemove', () => {
+      this._mossStore.myLatestActivity = Date.now();
+    });
+    document.addEventListener('mousedown', () => {
+      this._mossStore.myLatestActivity = Date.now();
+    });
+    document.addEventListener('keypress', () => {
+      this._mossStore.myLatestActivity = Date.now();
+    });
+    document.addEventListener('touchmove', () => {
+      this._mossStore.myLatestActivity = Date.now();
+    });
+
     const toolsLibraryAppInfo = await toolsLibraryAppClient.appInfo();
 
     if (!toolsLibraryAppInfo) throw new Error('Tools Library AppInfo null.');

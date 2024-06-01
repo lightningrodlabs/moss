@@ -14,10 +14,8 @@ import {
   AsyncReadable,
   StoreSubscriber,
   Unsubscriber,
-  derived,
   get,
   joinAsync,
-  joinMap,
   pipe,
   toPromise,
 } from '@holochain-open-dev/stores';
@@ -112,16 +110,7 @@ export class GroupHome extends LitElement {
 
   _peersStatus = new StoreSubscriber(
     this,
-    () =>
-      pipe(this.groupStore.members, (members) =>
-        derived(
-          joinMap(slice(this.groupStore.peerStatusStore.agentsStatus, members)),
-          (agentsStatus) =>
-            Array.from(agentsStatus).filter(
-              (pubKey) => pubKey.toString() !== this.groupStore.groupClient.myPubKey.toString(),
-            ),
-        ),
-      ),
+    () => this.groupStore.peerStatuses(),
     () => [this.groupStore],
   );
 
@@ -231,12 +220,10 @@ export class GroupHome extends LitElement {
 
   async firstUpdated() {
     this._peerStatusInterval = window.setInterval(async () => {
-      if (this._peersStatus.value.status === 'complete') {
-        await this.groupStore.emitToAppletHosts({
-          type: 'peer-status-update',
-          payload: this._peersStatus.value.value as any,
-        });
-      }
+      await this.groupStore.emitToAppletHosts({
+        type: 'peer-status-update',
+        payload: this._peersStatus.value,
+      });
     }, 5000);
 
     // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();

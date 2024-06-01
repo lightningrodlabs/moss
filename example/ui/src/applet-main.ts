@@ -14,7 +14,7 @@ import {
   ReadonlyPeerStatusStore,
   GroupPermissionType,
 } from '@lightningrodlabs/we-applet';
-import { AppClient, encodeHashToBase64 } from '@holochain/client';
+import { AppClient } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';

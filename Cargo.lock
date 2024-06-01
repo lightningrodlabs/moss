@@ -2185,15 +2185,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hc_zome_peer_status_coordinator"
-version = "0.2.0"
-source = "git+https://github.com/holochain-open-dev/peer-status?rev=3eba1adcbb3f2260ba707d79523c7ff2042e0967#3eba1adcbb3f2260ba707d79523c7ff2042e0967"
-dependencies = [
- "hdk",
- "serde",
-]
-
-[[package]]
 name = "hc_zome_profiles_coordinator"
 version = "0.2.0"
 source = "git+https://github.com/holochain-open-dev/profiles?rev=1e6c553edef5b7070ea46496dc19c7a789161db5#1e6c553edef5b7070ea46496dc19c7a789161db5"
@@ -4850,7 +4841,8 @@ dependencies = [
 name = "peer_status_coordinator"
 version = "0.0.1"
 dependencies = [
- "hc_zome_peer_status_coordinator",
+ "hdk",
+ "serde",
 ]
 
 [[package]]

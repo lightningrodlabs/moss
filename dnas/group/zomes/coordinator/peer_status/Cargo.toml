@@ -9,4 +9,5 @@ crate-type = ["cdylib", "rlib"]
 name = "peer_status_coordinator"
 
 [dependencies]
-hc_zome_peer_status_coordinator = { git = "https://github.com/holochain-open-dev/peer-status", rev = "3eba1adcbb3f2260ba707d79523c7ff2042e0967" }
+hdk = { workspace = true }
+serde = { workspace = true }
