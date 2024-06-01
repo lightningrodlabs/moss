@@ -38,6 +38,8 @@ import {
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import { AsyncReadable, AsyncStatus, writable } from '@holochain-open-dev/stores';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -661,6 +663,11 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   } else {
     return undefined;
   }
+}
+
+export function markdownParseSafe(input: string) {
+  const markedData = marked.parse(input) as string;
+  return DOMPurify.sanitize(markedData);
 }
 
 export function lazyReloadableStore<T>(

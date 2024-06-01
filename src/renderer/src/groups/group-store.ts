@@ -105,6 +105,12 @@ export class GroupStore {
     return entryRecord?.entry;
   }, 4000);
 
+  groupDescription = lazyReloadableStore(async () => {
+    const entryRecord = await this.groupClient.getGroupMetaData('description');
+    console.log('GOT METADATA: ', entryRecord?.entry);
+    return entryRecord?.entry;
+  });
+
   // Installs an applet instance that already exists in this group into this conductor
   async installApplet(appletHash: EntryHash) {
     const applet = await this.groupClient.getApplet(appletHash);
