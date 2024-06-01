@@ -1117,6 +1117,10 @@ export class GroupHome extends LitElement {
         overflow-y: auto;
       }
 
+      .main-panel a {
+        color: #07cd07;
+      }
+
       .online-status-bar {
         color: var(--sl-color-secondary-100);
         width: 230px;
