@@ -54,8 +54,8 @@ import { Tool, UpdateableEntity } from '../tools-library/types.js';
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
-export const OFFLINE_THRESHOLD = 20000;
-export const IDLE_THRESHOLD = 40000;
+export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
+export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -95,7 +95,7 @@ export class GroupStore {
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
 
-    this._peerStatuses = writable({});
+    this._peerStatuses = writable(undefined);
 
     this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
@@ -112,30 +112,12 @@ export class GroupStore {
       }
     });
 
+    setTimeout(async () => {
+      await this.pingAgentsAndCleanPeerStatuses();
+    });
+
     setInterval(async () => {
-      const now = Date.now();
-      const myStatus =
-        now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-      // Set unresponsive agents to offline
-      this._peerStatuses.update((statuses) => {
-        if (!statuses) {
-          statuses = {};
-        }
-        Object.keys(statuses).forEach((agent) => {
-          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
-            statuses[agent] = {
-              lastSeen: statuses[agent].lastSeen,
-              status: 'offline',
-            };
-          }
-        });
-        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
-          lastSeen: now,
-          status: myStatus,
-        };
-        return statuses;
-      });
-      await this.pingAgents();
+      await this.pingAgentsAndCleanPeerStatuses();
     }, PING_AGENTS_FREQUENCY_MS);
 
     this.constructed = true;
@@ -199,19 +181,43 @@ export class GroupStore {
     });
   }
 
+  async pingAgentsAndCleanPeerStatuses() {
+    const now = Date.now();
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    // Set unresponsive agents to offline
+    this._peerStatuses.update((statuses) => {
+      if (statuses) {
+        Object.keys(statuses).forEach((agent) => {
+          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+            statuses[agent] = {
+              lastSeen: statuses[agent].lastSeen,
+              status: 'offline',
+            };
+          }
+        });
+        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
+          lastSeen: now,
+          status: myStatus,
+        };
+      }
+      return statuses;
+    });
+    await this.pingAgents();
+  }
+
   /**
    * Pings all agents, provided that they need to be pinged based on the needsPinging function
    */
   async pingAgents(): Promise<void> {
     const now = Date.now();
-    const status = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
       const agentsThatNeedPinging = this.allAgents.filter(
         (agent) =>
           agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
       );
       return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, status)
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
         : Promise.resolve();
     } else {
       const allAgents = await this.profilesStore.client.getAgentsWithProfile();
@@ -222,7 +228,7 @@ export class GroupStore {
       );
       this._agentsRefetchCounter = 0;
       return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, status)
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
         : Promise.resolve();
     }
   }
