@@ -67,7 +67,7 @@ export class GroupAppletsSettings extends LitElement {
             class="placeholder"
             style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
             >${msg(
-              "You don't have any applets installed in this group. Go to the applet library to install applets to this group.",
+              "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
             )}
           </span>
         </div>

@@ -285,7 +285,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Applet Library',
+        title: 'Tool Library',
         template: html`
           <tool-library
             style="display: flex; flex: 1;"
