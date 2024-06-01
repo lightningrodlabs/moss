@@ -40,6 +40,7 @@ import {
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
+  reloadableLazyLoadAndPollUntil,
   toLowerCaseB64,
 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
@@ -99,17 +100,24 @@ export class GroupStore {
     this.groupClient.getAllAgentPermissionTypes(),
   );
 
-  groupProfile = lazyLoadAndPoll(async () => {
-    // only poll in case groupProfile is not yet defined
-    const entryRecord = await this.groupClient.getGroupProfile();
-    return entryRecord?.entry;
-  }, 4000);
+  groupProfile = reloadableLazyLoadAndPollUntil(
+    async () => {
+      // only poll in case groupProfile is not yet defined
+      const entryRecord = await this.groupClient.getGroupProfile();
+      return entryRecord?.entry;
+    },
+    undefined,
+    3000,
+  );
 
-  groupDescription = lazyReloadableStore(async () => {
-    const entryRecord = await this.groupClient.getGroupMetaData('description');
-    console.log('GOT METADATA: ', entryRecord?.entry);
-    return entryRecord?.entry;
-  });
+  groupDescription = reloadableLazyLoadAndPollUntil(
+    async () => {
+      const entryRecord = await this.groupClient.getGroupMetaData('description');
+      return entryRecord?.entry;
+    },
+    undefined,
+    10000,
+  );
 
   // Installs an applet instance that already exists in this group into this conductor
   async installApplet(appletHash: EntryHash) {

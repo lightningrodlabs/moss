@@ -27,7 +27,7 @@ pub fn get_group_meta_data(name: String) -> ExternResult<Option<Record>> {
 
     let latest_group_meta_data_link = links
         .into_iter()
-        .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
+        .max_by(|link_a, link_b| link_a.timestamp.cmp(&link_b.timestamp));
 
     // This might be brittle in case the link has propagated but not yet the entry
     match latest_group_meta_data_link {

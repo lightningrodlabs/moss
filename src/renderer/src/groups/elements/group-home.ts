@@ -1065,6 +1065,7 @@ export class GroupHome extends LitElement {
       .applet-card {
         width: 100%;
         margin: 10px;
+        color: black;
         --border-radius: 15px;
         border: none;
         --border-color: none;
