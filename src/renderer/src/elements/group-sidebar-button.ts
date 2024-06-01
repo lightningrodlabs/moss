@@ -100,10 +100,11 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
+    console.log('this._peerStatuses.value: ', this._peerStatuses.value);
     const onlineAgentCount = this._peerStatuses.value
       ? Object.entries(this._peerStatuses.value).filter(
           ([pubkey, status]) =>
-            status.status === 'online' &&
+            ['online', 'inactive'].includes(status.status) &&
             pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
         ).length
       : undefined;
@@ -117,17 +118,17 @@ export class GroupSidebarButton extends LitElement {
           ? msg('Loading number of online members')
           : `${onlineAgentCount} ${msg('member(s) online')}`}"
       >
-        ${!onlineAgentCount
-          ? html`<sl-spinner
-              style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
-            ></sl-spinner>`
-          : html`
+        ${onlineAgentCount || onlineAgentCount === 0
+          ? html`
               <sl-icon
                 .src=${wrapPathInSvg(mdiAccountMultiple)}
                 style="font-size: 20px; font-weight: bold;"
               ></sl-icon>
               <span>${onlineAgentCount}</span>
-            `}
+            `
+          : html`<sl-spinner
+              style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
+            ></sl-spinner>`}
       </div>
     `;
   }
