@@ -27,6 +27,7 @@ import {
   mdiArrowLeft,
   mdiCog,
   mdiHelpCircle,
+  mdiHomeOutline,
   mdiLinkVariantPlus,
   mdiPowerPlugOffOutline,
 } from '@mdi/js';
@@ -69,10 +70,11 @@ import { weStyles } from '../../shared-styles.js';
 import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
 import { LoadingDialog } from '../../elements/loading-dialog.js';
-import { appIdFromAppletHash, modifiersToInviteUrl } from '../../utils.js';
+import { appIdFromAppletHash, markdownParseSafe, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
 import { slice } from '@holochain-open-dev/utils';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -132,7 +134,19 @@ export class GroupHome extends LitElement {
   @state()
   _showIgnoredApplets = false;
 
+  @state()
+  _selectedTab: 'home' | 'unjoined tools' = 'home';
+
+  @state()
+  _editGroupDescription = false;
+
   _unsubscribe: Unsubscriber | undefined;
+
+  _groupDescription = new StoreSubscriber(
+    this,
+    () => this.groupStore.groupDescription,
+    () => [this.groupStore],
+  );
 
   _unjoinedApplets = new StoreSubscriber(
     this,
@@ -229,11 +243,19 @@ export class GroupHome extends LitElement {
     setTimeout(() => {
       this._peerStatusLoading = false;
     }, 2500);
+    await this.groupStore.groupDescription.reload();
   }
 
   disconnectedCallback(): void {
     if (this._unsubscribe) this._unsubscribe();
     if (this._peerStatusInterval) clearInterval(this._peerStatusInterval);
+  }
+
+  hasStewardPermission(): boolean {
+    return (
+      this.permissionType.value.status === 'complete' &&
+      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
+    );
   }
 
   async updateUi(e: CustomEvent) {
@@ -483,30 +505,144 @@ export class GroupHome extends LitElement {
     }
   }
 
+  renderHomeContent() {
+    switch (this._groupDescription.value.status) {
+      case 'pending':
+        return html` <div class="column center-content" style="flex: 1;">Loading...</div> `;
+      case 'error':
+        console.error(this._groupDescription.value.error);
+        return html`
+          <div class="column center-content" style="flex: 1;">
+            Error. Failed to fetch group description.
+          </div>
+        `;
+      case 'complete':
+        if (this._editGroupDescription) {
+          return html`
+            <div class="row" style="justify-content: flex-end;">
+              <button
+                @click=${() => {
+                  this._editGroupDescription = false;
+                }}
+              >
+                ${msg('Cancel')}
+              </button>
+              <button
+                @click=${async () => {
+                  const descriptionInput = this.shadowRoot!.getElementById(
+                    'group-description-input',
+                  ) as HTMLTextAreaElement;
+                  const myPermission = await toPromise(this.groupStore.permissionType);
+                  if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
+                    this._editGroupDescription = false;
+                    notifyError('No permission to edit group profile.');
+                    return;
+                  } else {
+                    console.log('Saving decription...');
+                    console.log('Value: ', descriptionInput.value);
+                    const result = await this.groupStore.groupClient.setGroupMetaData({
+                      permission_hash:
+                        myPermission.type === 'Steward'
+                          ? myPermission.content.permission_hash
+                          : undefined,
+                      name: 'description',
+                      data: descriptionInput.value,
+                    });
+                    console.log('decription saved: ', result.entry);
+
+                    await this.groupStore.groupDescription.reload();
+                    this._editGroupDescription = false;
+                  }
+                }}
+              >
+                Save
+              </button>
+            </div>
+
+            <sl-textarea
+              id="group-description-input"
+              value=${this._groupDescription.value.value?.data}
+            ></sl-textarea>
+          `;
+        }
+        if (!this._groupDescription.value.value) {
+          return html`
+            <div class="column center-content" style="flex: 1;">
+              No group description.
+              <button
+                style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
+                @click=${() => {
+                  this._editGroupDescription = true;
+                }}
+              >
+                Add Description
+              </button>
+            </div>
+          `;
+        } else {
+          return html`
+            <div class="column">
+              <div class="row" style="justify-content: flex-end;">
+                <button
+                  style="${this.hasStewardPermission() ? '' : 'display: none;'}"
+                  @click=${() => {
+                    this._editGroupDescription = true;
+                  }}
+                >
+                  Edit Description
+                </button>
+              </div>
+            </div>
+            <div>${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}</div>
+          `;
+        }
+    }
+  }
+
+  renderMainPanelContent() {
+    switch (this._selectedTab) {
+      case 'home':
+        return this.renderHomeContent();
+      case 'unjoined tools':
+        return this.renderNewApplets();
+    }
+  }
+
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
-        <div class="column" style="flex: 1; padding: 16px; overflow-y: auto; position: relative;">
-        <div class="column" style="position: absolute; bottom: 5px; left: 10px;">
-          <span>${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span>
-          <span>${msg('Your Public Key: ')}${encodeHashToBase64(this.groupStore.groupClient.myPubKey)}</span>
-        </div>
+        <div
+          class="column"
+          style="flex: 1; padding: 16px 16px 0 16px; overflow-y: auto; position: relative;"
+        >
+          <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
+            <span
+              >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
+            >
+            <span
+              >${msg('Your Public Key: ')}${encodeHashToBase64(
+                this.groupStore.groupClient.myPubKey,
+              )}</span
+            >
+          </div>
 
-        <div style=" background-image: url(${
-          groupProfile.icon_src
-        }); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"></div>
+          <div
+            style=" background-image: url(${groupProfile.icon_src}); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"
+          ></div>
 
           <!-- Top Row -->
 
           <div class="row" style="align-items: center; margin-bottom: 24px">
             <div class="row" style="align-items: center; flex: 1;">
-              <div style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;">
-              <img
-                .src=${groupProfile.icon_src}
-                style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%;"
-                alt="${groupProfile.name}"
-              />
+              <div
+                style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;"
+              >
+                <img
+                  .src=${groupProfile.icon_src}
+                  style="height: 64px; width: 64px; margin-right: 16px; border-radius: 50%;"
+                  alt="${groupProfile.name}"
+                />
               </div>
               <span class="title">${groupProfile.name}</span>
             </div>
@@ -524,15 +660,15 @@ export class GroupHome extends LitElement {
                 }
               }}
             >
-              <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">${msg('Settings')}</div>
+              <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">
+                ${msg('Settings')}
+              </div>
               <div style="position: relative;">
-                ${
-                  !!this.updatesAvailable.value
-                    ? html`<div
-                        style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
-                      ></div>`
-                    : html``
-                }
+                ${!!this.updatesAvailable.value
+                  ? html`<div
+                      style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
+                    ></div>`
+                  : html``}
                 <sl-icon
                   .src=${wrapPathInSvg(mdiCog)}
                   title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
@@ -543,44 +679,72 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
-          <div class="row" style="align-items: center;">
+          <div class="row tab-section">
+            <div
+              tabindex="0"
+              class="row tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"
+              @click=${() => {
+                this._selectedTab = 'home';
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'home';
+              }}
+            >
+              <sl-icon
+                style="margin-left: -10px; font-size: 1.8rem;"
+                .src=${wrapPathInSvg(mdiHomeOutline)}
+              ></sl-icon>
+              <span style="margin-left: 5px;">${msg('Home')}</span>
+            </div>
+            <div
+              tabindex="0"
+              class="row tab ${this._selectedTab === 'unjoined tools' ? 'tab-selected' : ''}"
+              @click=${() => {
+                this._selectedTab = 'unjoined tools';
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'unjoined tools';
+              }}
+            >
+              ${msg('Unjoined Tools')}
+            </div>
+          </div>
+          <div class="column main-panel">${this.renderMainPanelContent()}</div>
+
+          <!-- <div class="row" style="align-items: center;">
             <span class="subtitle">${msg('Joinable Tools')}</span>
             <sl-tooltip content="${msg(
-              'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
-            )}">
+            'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
+          )}">
               <sl-icon style="height: 28px; width: 28px; margin-left: 10px; cursor: help;" .src=${wrapPathInSvg(
-                mdiHelpCircle,
-              )}><sl-icon>
+            mdiHelpCircle,
+          )}><sl-icon>
             </sl-tooltip>
           </div>
           <sl-divider style="--color: grey"></sl-divider>
           <div class="row" style="align-items: center; justify-content: flex-end; margin-top: -10px;">
             <input @input=${() =>
-              this.toggleIgnoredApplets()} id="show-ignored-applets-checkbox" type="checkbox">
+            this.toggleIgnoredApplets()} id="show-ignored-applets-checkbox" type="checkbox">
             <span>${msg('Show ignored Tools')}</span>
           </div>
-          ${this.renderNewApplets()}
+          ${this.renderNewApplets()} -->
         </div>
 
-        <div
-          class="column online-status-bar"
-        >
+        <div class="column online-status-bar">
           <div class="flex-scrollable-parent">
             <div class="flex-scrollable-container">
               <div class="flex-scrollable-y">
-                ${
-                  this._peerStatusLoading
-                    ? html`<div
-                        class="column center-content"
-                        style="margin-top: 20px; font-size: 20px;"
-                      >
-                        <sl-spinner></sl-spinner>
-                      </div>`
-                    : html``
-                }
-                <group-peers-status style="${
-                  this._peerStatusLoading ? 'display: none;' : ''
-                }"></group-peers-status>
+                ${this._peerStatusLoading
+                  ? html`<div
+                      class="column center-content"
+                      style="margin-top: 20px; font-size: 20px;"
+                    >
+                      <sl-spinner></sl-spinner>
+                    </div>`
+                  : html``}
+                <group-peers-status
+                  style="${this._peerStatusLoading ? 'display: none;' : ''}"
+                ></group-peers-status>
               </div>
             </div>
           </div>
@@ -590,11 +754,7 @@ export class GroupHome extends LitElement {
               <span>${msg('To invite other people to join this group, send them this link:')}</span>
 
               <div class="row" style="margin-top: 16px">
-                <sl-input
-                  value=${invitationUrl}
-                  style="margin-right: 8px; flex: 1"
-                >
-                </sl-input>
+                <sl-input value=${invitationUrl} style="margin-right: 8px; flex: 1"> </sl-input>
                 <sl-button
                   variant="primary"
                   @click=${async () => {
@@ -899,21 +1059,77 @@ export class GroupHome extends LitElement {
         color: #fff;
       }
       .invite-btn::part(base) {
-        background-color: var(--sl-color-secondary-200);
-        border-color: var(--sl-color-secondary-200);
+        background-color: #69982c;
+        border-color: #69982c;
       }
       .applet-card {
         width: 100%;
         margin: 10px;
+        color: black;
         --border-radius: 15px;
         border: none;
         --border-color: none;
         --sl-panel-background-color: #fbffe7;
       }
+
+      .tab-section {
+        height: 50px;
+        align-items: center;
+      }
+
+      .tab {
+        font-size: 1.25rem;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        height: 50px;
+        width: 180px;
+        box-shadow: 1px 1px 6px 0px #223607;
+        border-radius: 5px 5px 0 0;
+        /* background: linear-gradient(0, #142919c1 0%, #1e3b25b3 50.91%); */
+        background: #1e3b2585;
+        cursor: pointer;
+        clip-path: inset(-20px -20px 0 -20px);
+      }
+
+      .tab:hover {
+        /* background: #335c21; */
+        /* background: #e1efda; */
+        background: #1e3b25;
+      }
+
+      .tab-selected {
+        /* background: #335c21; */
+        /* background: #e1efda; */
+        background: #1e3b25;
+      }
+
+      .main-panel {
+        flex: 1;
+        /* background: #335c21; */
+        /* background: #e1efda; */
+        background: #1e3b25;
+        padding: 20px;
+        color: white;
+        border-radius: 0 5px 5px 5px;
+        box-shadow: 1px 1px 3px 0px #223607;
+        box-shadow: 1px 1px 6px 0px #223607;
+        overflow-y: auto;
+      }
+
+      .main-panel a {
+        color: #07cd07;
+      }
+
       .online-status-bar {
         color: var(--sl-color-secondary-100);
-        width: 260px;
+        width: 230px;
         padding: 16px;
+        /* background: #3a5b0c; */
+        /* background: #335c21; */
+        background: #1e3b25;
+        border-radius: 5px;
+        box-shadow: 1px 1px 6px 0px #223607;
       }
     `,
   ];

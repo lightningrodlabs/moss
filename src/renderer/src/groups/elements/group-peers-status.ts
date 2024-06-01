@@ -62,6 +62,10 @@ export class GroupPeersStatus extends LitElement {
       .agents-list {
         color: #fff;
       }
+
+      .agents-list span {
+        color: white;
+      }
     `,
   ];
 }
