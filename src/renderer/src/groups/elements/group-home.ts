@@ -71,7 +71,6 @@ import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash, markdownParseSafe, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
-import { slice } from '@holochain-open-dev/utils';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 TimeAgo.addDefaultLocale(en);
@@ -222,7 +221,7 @@ export class GroupHome extends LitElement {
     this._peerStatusInterval = window.setInterval(async () => {
       await this.groupStore.emitToAppletHosts({
         type: 'peer-status-update',
-        payload: this._peersStatus.value,
+        payload: this._peersStatus.value ? this._peersStatus.value : {},
       });
     }, 5000);
 
