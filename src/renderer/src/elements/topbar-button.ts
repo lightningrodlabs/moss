@@ -87,8 +87,9 @@ export class TopBarButton extends LitElement {
         .icon-container:hover {
           background-color: var(--hover-color, var(--sl-color-primary-900));
         }
-        .selected, .icon-container:hover {
-          background: linear-gradient(180deg, #67F075 0%, #556F46 100%);          
+        .selected,
+        .icon-container:hover {
+          background: linear-gradient(180deg, #dbe755 0%, #588121 100%);
         }
       `,
     ];

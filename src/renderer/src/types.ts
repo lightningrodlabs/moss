@@ -65,6 +65,12 @@ export type GroupProfile = {
   meta_data?: string;
 };
 
+export type GroupMetaData = {
+  permission_hash?: ActionHash;
+  name: string;
+  data: string;
+};
+
 export type Applet = {
   /**
    * ActionHash of the StewardPermission based on which the Applet entry has been created

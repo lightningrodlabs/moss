@@ -2,7 +2,6 @@ import { css, html, LitElement, PropertyValues } from 'lit';
 import { consume, provide } from '@lit/context';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Unsubscriber } from '@holochain-open-dev/stores';
-import { PeerStatusStore, peerStatusStoreContext } from '@holochain-open-dev/peer-status';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { DnaHash } from '@holochain/client';
 
@@ -28,9 +27,6 @@ export class GroupContext extends LitElement {
   @provide({ context: profilesStoreContext })
   profilesStore!: ProfilesStore;
 
-  @provide({ context: peerStatusStoreContext })
-  peerStatusStore!: PeerStatusStore;
-
   @provide({ context: customViewsStoreContext })
   customViewsStore!: CustomViewsStore;
 
@@ -48,7 +44,6 @@ export class GroupContext extends LitElement {
           if (groupStore) {
             this.groupStore = groupStore;
             this.profilesStore = groupStore.profilesStore;
-            this.peerStatusStore = groupStore.peerStatusStore;
             this.customViewsStore = groupStore.customViewsStore;
           }
         }

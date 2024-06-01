@@ -1,8 +1,9 @@
-import { PeerStatusClient, PeerStatusStore } from '@holochain-open-dev/peer-status';
 import { ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   AsyncReadable,
   AsyncStatus,
+  Readable,
+  Writable,
   completed,
   derived,
   joinMap,
@@ -13,22 +14,26 @@ import {
   pipe,
   sliceAndJoin,
   toPromise,
+  writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, LazyHoloHashMap, ZomeClient, mapValues } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
+  AgentPubKeyB64,
   AppAuthenticationToken,
+  AppClient,
   AppWebsocket,
   CellType,
   DnaHash,
   EntryHash,
+  RoleName,
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, ParentToAppletMessage } from '@lightningrodlabs/we-applet';
+import { AppletHash, ParentToAppletMessage, PeerStatus } from '@lightningrodlabs/we-applet';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
@@ -40,26 +45,42 @@ import {
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
+  reloadableLazyLoadAndPollUntil,
   toLowerCaseB64,
 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 import { Tool, UpdateableEntity } from '../tools-library/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
+const AGENTS_REFETCH_FREQUENCY = 10;
+const PING_AGENTS_FREQUENCY_MS = 8000;
+export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
+export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
   profilesStore: ProfilesStore;
 
-  peerStatusStore: PeerStatusStore;
-
   groupClient: GroupClient;
+
+  peerStatusClient: PeerStatusClient;
 
   customViewsStore: CustomViewsStore;
 
   members: AsyncReadable<Array<AgentPubKey>>;
 
+  _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
+
+  /**
+   * If this exceeds a certain number, agents get refetched from the DHT
+   */
+  _agentsRefetchCounter: number = 0;
+
+  allAgents: AgentPubKey[] | undefined;
+
   private constructed: boolean;
+
+  _myPubkeySum: number;
 
   constructor(
     public appWebsocket: AppWebsocket,
@@ -69,10 +90,35 @@ export class GroupStore {
   ) {
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
-    this.peerStatusStore = new PeerStatusStore(new PeerStatusClient(appWebsocket, 'group'), {});
+    this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
+
+    this._peerStatuses = writable(undefined);
+
+    this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
+
+    this.peerStatusClient.onSignal(async (signal: SignalPayload) => {
+      if (signal.type == 'Pong') {
+        this.updatePeerStatus(signal.from_agent, signal.status);
+      }
+      if (signal.type == 'Ping') {
+        const now = Date.now();
+        const status =
+          now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+        this.updatePeerStatus(signal.from_agent, signal.status);
+        await this.peerStatusClient.pong([signal.from_agent], status);
+      }
+    });
+
+    setTimeout(async () => {
+      await this.pingAgentsAndCleanPeerStatuses();
+    });
+
+    setInterval(async () => {
+      await this.pingAgentsAndCleanPeerStatuses();
+    }, PING_AGENTS_FREQUENCY_MS);
 
     this.constructed = true;
   }
@@ -99,11 +145,112 @@ export class GroupStore {
     this.groupClient.getAllAgentPermissionTypes(),
   );
 
-  groupProfile = lazyLoadAndPoll(async () => {
-    // only poll in case groupProfile is not yet defined
-    const entryRecord = await this.groupClient.getGroupProfile();
-    return entryRecord?.entry;
-  }, 4000);
+  groupProfile = reloadableLazyLoadAndPollUntil(
+    async () => {
+      // only poll in case groupProfile is not yet defined
+      const entryRecord = await this.groupClient.getGroupProfile();
+      return entryRecord?.entry;
+    },
+    undefined,
+    3000,
+  );
+
+  groupDescription = reloadableLazyLoadAndPollUntil(
+    async () => {
+      const entryRecord = await this.groupClient.getGroupMetaData('description');
+      return entryRecord?.entry;
+    },
+    undefined,
+    10000,
+  );
+
+  peerStatuses(): Readable<Record<AgentPubKeyB64, PeerStatus> | undefined> {
+    return derived(this._peerStatuses, (state) => state);
+  }
+
+  updatePeerStatus(agent: AgentPubKey, status: string) {
+    this._peerStatuses.update((value) => {
+      if (!value) {
+        value = {};
+      }
+      value[encodeHashToBase64(agent)] = {
+        lastSeen: Date.now(),
+        status,
+      };
+      return value;
+    });
+  }
+
+  async pingAgentsAndCleanPeerStatuses() {
+    const now = Date.now();
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    // Set unresponsive agents to offline
+    this._peerStatuses.update((statuses) => {
+      if (!statuses) {
+        statuses = {};
+      }
+      if (statuses) {
+        Object.keys(statuses).forEach((agent) => {
+          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+            statuses[agent] = {
+              lastSeen: statuses[agent].lastSeen,
+              status: 'offline',
+            };
+          }
+        });
+        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
+          lastSeen: now,
+          status: myStatus,
+        };
+      }
+      return statuses;
+    });
+    await this.pingAgents();
+  }
+
+  /**
+   * Pings all agents, provided that they need to be pinged based on the needsPinging function
+   */
+  async pingAgents(): Promise<void> {
+    const now = Date.now();
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
+      const agentsThatNeedPinging = this.allAgents.filter(
+        (agent) =>
+          agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
+      );
+      return agentsThatNeedPinging.length > 0
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
+        : Promise.resolve();
+    } else {
+      const allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      this.allAgents = allAgents;
+      const agentsThatNeedPinging = allAgents.filter(
+        (agent) =>
+          agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
+      );
+      this._agentsRefetchCounter = 0;
+      return agentsThatNeedPinging.length > 0
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
+        : Promise.resolve();
+    }
+  }
+
+  /**
+   * Function that returns deterministically but with 50% probability for a given pair
+   * of public keys whether an agent needs to be pinged
+   * @param agent
+   */
+  needsPinging(agent: AgentPubKey): boolean {
+    const pubkeySum = Array.from(agent).reduce((acc, curr) => acc + curr, 0);
+    const diff = pubkeySum - this._myPubkeySum;
+    if (diff % 2 === 0) {
+      if (diff === 0) return true;
+      return this._myPubkeySum > pubkeySum;
+    } else {
+      return this._myPubkeySum < pubkeySum;
+    }
+  }
 
   // Installs an applet instance that already exists in this group into this conductor
   async installApplet(appletHash: EntryHash) {
@@ -460,6 +607,36 @@ export class GroupStore {
   }
 }
 
+export class PeerStatusClient extends ZomeClient<SignalPayload> {
+  constructor(
+    public client: AppClient,
+    public roleName: RoleName,
+    public zomeName = 'peer_status',
+  ) {
+    super(client, roleName, zomeName);
+  }
+
+  /**
+   * Ping all specified agents, expecting for their pong later
+   */
+  async ping(agentPubKeys: AgentPubKey[], status): Promise<void> {
+    return this.callZome('ping', {
+      to_agents: agentPubKeys,
+      status,
+    });
+  }
+
+  /**
+   * Pong all specified agents
+   */
+  async pong(agentPubKeys: AgentPubKey[], status): Promise<void> {
+    return this.callZome('pong', {
+      to_agents: agentPubKeys,
+      status,
+    });
+  }
+}
+
 async function retryUntilResolved<T>(
   fn: () => Promise<T>,
   retryInterval: number = 200,
@@ -490,3 +667,15 @@ function delay(ms: number): Promise<void> {
     setTimeout(resolve, ms);
   });
 }
+
+export type SignalPayload =
+  | {
+      type: 'Ping';
+      from_agent: AgentPubKey;
+      status: string;
+    }
+  | {
+      type: 'Pong';
+      from_agent: AgentPubKey;
+      status: string;
+    };

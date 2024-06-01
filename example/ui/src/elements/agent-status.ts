@@ -5,7 +5,7 @@ import { localized } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import { PeerStatus, ReadonlyPeerStatusStore } from '@lightningrodlabs/we-applet';
-import { AgentPubKey } from '@holochain/client';
+import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
@@ -24,16 +24,26 @@ export class AgentStatus extends LitElement {
   @property()
   agent!: AgentPubKey;
 
-  agentStatus = new StoreSubscriber(
+  peerStatuses = new StoreSubscriber(
     this,
-    () => this.peerStatusStore.agentsStatus.get(this.agent),
+    () => this.peerStatusStore,
     () => [this.peerStatusStore]
   );
+
+  getMyStatus() {
+    const myStatus = this.peerStatuses.value[encodeHashToBase64(this.agent)];
+    if (!myStatus) return 'offline';
+    const now = Date.now();
+    if (now - myStatus.lastSeen > 20000) return 'offline';
+    return myStatus.status;
+  }
 
   render() {
     return html`<agent-avatar
       .agentPubKey=${this.agent}
-      style="${this.agentStatus.value === PeerStatus.Offline ? 'opacity: 0.4' : ''}"
+      style="${this.getMyStatus() === 'online' || this.getMyStatus() === 'inactive'
+        ? ''
+        : 'opacity: 0.4'}"
     ></agent-avatar> `;
   }
 

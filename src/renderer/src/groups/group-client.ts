@@ -14,6 +14,7 @@ import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   Applet,
   AppletAgent,
+  GroupMetaData,
   JoinAppletInput,
   PermissionType,
   PrivateAppletEntry,
@@ -195,6 +196,16 @@ export class GroupClient {
 
   async getAllAgentPermissionTypes(): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
     return this.callZome('get_all_agent_permission_types', null);
+  }
+
+  async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {
+    const record = await this.callZome('get_group_meta_data', name);
+    return record ? new EntryRecord(record) : undefined;
+  }
+
+  async setGroupMetaData(metaData: GroupMetaData): Promise<EntryRecord<GroupMetaData>> {
+    const record = await this.callZome('set_group_meta_data', metaData);
+    return new EntryRecord(record);
   }
 
   private callZome(fn_name: string, payload: any) {

@@ -25,6 +25,7 @@ import {
 import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
+import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
 import {
@@ -37,7 +38,9 @@ import {
 } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
-import { AsyncReadable, AsyncStatus, writable } from '@holochain-open-dev/stores';
+import { AsyncReadable, AsyncStatus, readable, writable } from '@holochain-open-dev/stores';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -663,6 +666,11 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   }
 }
 
+export function markdownParseSafe(input: string) {
+  const markedData = marked.parse(input) as string;
+  return DOMPurify.sanitize(markedData);
+}
+
 export function lazyReloadableStore<T>(
   load: () => Promise<T>,
 ): AsyncReadable<T> & { reload: () => Promise<void> } {
@@ -694,4 +702,105 @@ export function lazyReloadableStore<T>(
     subscribe: store.subscribe,
     reload,
   };
+}
+
+export function reloadableLazyLoadAndPollUntil<T>(
+  load: () => Promise<T>,
+  untilNot: any,
+  pollIntervalMs: number,
+): AsyncReadable<T> & { reload: () => Promise<void> } {
+  const store = writable<AsyncStatus<T>>({ status: 'pending' }, (set) => {
+    let interval;
+    let currentValue;
+    let firstLoad = true;
+    async function loadInner(): Promise<boolean> {
+      const value = await load();
+      if (firstLoad || !isEqual(value, currentValue)) {
+        currentValue = value;
+        firstLoad = false;
+        set({ status: 'complete', value });
+      }
+      if (!isEqual(value, untilNot)) {
+        return false;
+      }
+      return true;
+    }
+    loadInner()
+      .then((proceed) => {
+        if (!proceed) return;
+        interval = setInterval(() => {
+          loadInner()
+            .then((proceed) => {
+              if (!proceed) clearInterval(interval);
+            })
+            .catch(() => {});
+        }, pollIntervalMs);
+      })
+      .catch((e) => {
+        set({ status: 'error', error: e });
+      });
+    return () => {
+      set({ status: 'pending' });
+      if (interval) clearInterval(interval);
+    };
+  });
+
+  const reload = async () => {
+    try {
+      const value = await load();
+      store.set({
+        status: 'complete',
+        value,
+      });
+    } catch (error) {
+      store.set({ status: 'error', error });
+    }
+  };
+
+  return {
+    subscribe: store.subscribe,
+    reload,
+  };
+}
+
+export function lazyLoadAndPollUntil<T>(
+  load: () => Promise<T>,
+  untilNot: any,
+  pollIntervalMs: number,
+): AsyncReadable<T> {
+  return readable<AsyncStatus<T>>({ status: 'pending' }, (set) => {
+    let interval;
+    let currentValue;
+    let firstLoad = true;
+    async function loadInner(): Promise<boolean> {
+      const value = await load();
+      if (firstLoad || !isEqual(value, currentValue)) {
+        currentValue = value;
+        firstLoad = false;
+        set({ status: 'complete', value });
+      }
+      if (!isEqual(value, untilNot)) {
+        return false;
+      }
+      return true;
+    }
+    loadInner()
+      .then((proceed) => {
+        if (!proceed) return;
+        interval = setInterval(() => {
+          loadInner()
+            .then((proceed) => {
+              if (!proceed) clearInterval(interval);
+            })
+            .catch(() => {});
+        }, pollIntervalMs);
+      })
+      .catch((e) => {
+        set({ status: 'error', error: e });
+      });
+    return () => {
+      set({ status: 'pending' });
+      if (interval) clearInterval(interval);
+    };
+  });
 }

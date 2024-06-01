@@ -42,3 +42,9 @@ export type DeveloperCollective = {
   icon: string;
   meta_data: string | undefined;
 };
+
+export interface ConductorInfo {
+  app_port: number;
+  admin_port: number;
+  tools_library_app_id: string;
+}

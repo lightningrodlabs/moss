@@ -3,6 +3,7 @@ import { EntryHashMap, HoloHashMap, LazyHoloHashMap, parseHrl } from '@holochain
 import {
   ActionHash,
   AgentPubKey,
+  AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
   AppWebsocket,
@@ -205,18 +206,14 @@ const weaveApi: WeaveServices = {
       }
     });
 
-    const peerStatusStore: ReadonlyPeerStatusStore = {
-      agentsStatus: new LazyHoloHashMap((agent: AgentPubKey) =>
-        readable<PeerStatus>(PeerStatus.Offline, (set) => {
-          window.addEventListener('peer-status-update', (e: CustomEvent<PeerStatusUpdate>) => {
-            const maybeAgentStatus = e.detail.find(
-              ([agentKey, _]) => agentKey.toString() === agent.toString(),
-            );
-            if (maybeAgentStatus) set(maybeAgentStatus[1]);
-          });
-        }),
-      ),
-    };
+    const peerStatusStore: ReadonlyPeerStatusStore = readable<Record<AgentPubKeyB64, PeerStatus>>(
+      {},
+      (set) => {
+        window.addEventListener('peer-status-update', (e: CustomEvent<PeerStatusUpdate>) => {
+          set(e.detail);
+        });
+      },
+    );
 
     const [profilesClient, appletClient] = await Promise.all([
       setupProfilesClient(

@@ -102,66 +102,6 @@ export class WelcomeView extends LitElement {
     this.view = WelcomePageView.Main;
   }
 
-  renderExplanationCard() {
-    return html`
-      <sl-card style="flex: 1">
-        <span class="title" slot="header">${msg('What is We?')}</span>
-        <div class="column" style="text-align: left; font-size: 1.15em;">
-          <span>${msg('We is a group collaboration OS.')}</span>
-          <br />
-          <span
-            >${msg(
-              'In We, first you create a group, and then you install applets to that group.',
-            )}</span
-          >
-          <br />
-          <span>${msg('You can see all the groups you are part of in the left sidebar.')}</span>
-          <br />
-          <span
-            >${msg(
-              'You can also see all the applets that you have installed in the top sidebar, if you have any.',
-            )}</span
-          >
-          <br />
-          <span
-            >${msg(
-              'WARNING! We is in alpha version, which means that is not ready for production use yet. Expect bugs, breaking changes, and to lose all the data for all groups when you upgrade to a new version of We.',
-            )}</span
-          >
-        </div>
-      </sl-card>
-    `;
-  }
-
-  renderManagingGroupsCard() {
-    return html`
-      <sl-card style="flex: 1; margin-left: 16px">
-        <span class="title" slot="header">${msg('Managing Groups')}</span>
-        <div style="text-align: left; font-size: 1.15em;">
-          <ol style="line-height: 180%; margin: 0;">
-            <li>
-              ${msg('To create a new group, click on the "Add Group"')}
-              <sl-icon
-                style="position: relative; top: 0.25em;"
-                .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
-              ></sl-icon>
-              ${msg('button in the left sidebar.')}
-            </li>
-            <li>
-              ${msg(
-                'After creating a group, create a profile for this group. Only the members of that group are going to be able to see your profile.',
-              )}
-            </li>
-            <li>
-              ${msg('Invite other members to the group by sharing the group link with them.')}
-            </li>
-            <li>${msg('Install applets that you want to use as a group.')}</li>
-          </ol>
-        </div>
-      </sl-card>
-    `;
-  }
-
   renderDisclaimerDialog() {
     return html` <sl-dialog
       id="disclaimer-dialog"
@@ -238,7 +178,7 @@ export class WelcomeView extends LitElement {
                 <span style="margin-left: 5px;">Disclaimer</span>
               </div>
             </div>
-            <div class="row" style="flex-wrap: wrap; margin-top: 60px;">
+            <div class="row" style="flex-wrap: wrap; margin-top: 60px;justify-content: center;">
               <!-- Group section -->
               <div class="column button-section">
                 <div class="row" style="align-items: center; font-size: 30px;">
@@ -397,7 +337,8 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: rgba(57, 67, 51, 1);
+        background-color: #588121;
+        border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }
 
@@ -456,7 +397,7 @@ export class WelcomeView extends LitElement {
         align-items: center;
         flex-direction: row;
         padding: 10px;
-        box-shadow: 0 0 2px 2px #202020;
+        box-shadow: 0 0 2px 2px #3a622d;
         cursor: pointer;
       }
 
@@ -467,9 +408,12 @@ export class WelcomeView extends LitElement {
       .button-section {
         align-items: center;
         color: white;
-        background: #ffffff1a;
+        /* background: #224b21; */
+        /* background: #102520; */
+        background: #1e3b25;
         margin: 30px;
         padding: 30px;
+        box-shadow: 0 0 2px 2px #3a622d;
         border-radius: 15px;
       }
 
@@ -479,15 +423,18 @@ export class WelcomeView extends LitElement {
         padding: 20px;
         padding-top: 45px;
         border-radius: 10px;
-        background: rgba(22, 35, 17, 1);
-        margin: 5px;
-        border: 2px solid;
-        cursor: pointer;
+        background: #193423;
+        margin: 6px;
         color: #fff;
-        border: 2px solid rgba(96, 124, 4, 0.5);
+        box-shadow: 0 0 2px 2px #193423;
+        /* border: 2px solid #102520; */
         transition: all 0.25s ease;
         font-size: 18px;
         line-height: 1.4;
+      }
+
+      .update-feed-el a {
+        color: #07cd07;
       }
 
       .update-date {

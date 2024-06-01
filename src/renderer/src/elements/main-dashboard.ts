@@ -1,6 +1,7 @@
 import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
@@ -40,7 +41,7 @@ import '../layout/views/applet-main.js';
 import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
-import '../groups/elements/group-home.js';
+import '../groups/elements/group-container.js';
 import '../elements/zome-call-panel.js';
 
 import { weStyles } from '../shared-styles.js';
@@ -63,7 +64,7 @@ import {
   logMossZomeCall,
   stringifyWal,
 } from '../utils.js';
-import { getAppVersion } from '../electron-api.js';
+import { dialogMessagebox, getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
 type OpenTab =
@@ -632,7 +633,7 @@ export class MainDashboard extends LitElement {
   //   if (this._unlisten) this._unlisten();
   // }
 
-  displayGroupHome(groupHash: DnaHash) {
+  displayGroupContainer(groupHash: DnaHash) {
     return (
       this._dashboardState.value.viewType === 'group' &&
       !this._dashboardState.value.appletHash &&
@@ -693,7 +694,9 @@ export class MainDashboard extends LitElement {
   }
 
   renderAppletMainViews() {
-    return this._openApplets.map(
+    return repeat(
+      this._openApplets,
+      (appletHash) => encodeHashToBase64(appletHash),
       (appletHash) => html`
         <applet-main
           .appletHash=${appletHash}
@@ -706,15 +709,34 @@ export class MainDashboard extends LitElement {
   renderDashboard() {
     return html`
       ${this.renderAppletMainViews()}
-      ${this._openGroups.map(
+      ${repeat(
+        this._openGroups,
+        (group) => encodeHashToBase64(group),
         (groupHash) => html`
           <group-context .groupDnaHash=${groupHash}>
-            <group-home
-              style="flex: 1; position: relative; ${this.displayGroupHome(groupHash)
+            <group-container
+              .groupDnaHash=${groupHash}
+              style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
                 this._mossStore.setDashboardState({ viewType: 'personal' });
+              }}
+              @disable-group=${async (e: CustomEvent) => {
+                const confirmation = await dialogMessagebox({
+                  message:
+                    'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+                  type: 'warning',
+                  buttons: ['Cancel', 'Continue'],
+                });
+                if (confirmation.response === 0) return;
+                try {
+                  await this._mossStore.disableGroup(e.detail);
+                  window.location.reload();
+                } catch (e) {
+                  console.error(`Failed to disable Group: ${e}`);
+                  notifyError(msg('Failed to disable Group.'));
+                }
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
@@ -757,7 +779,7 @@ export class MainDashboard extends LitElement {
               @custom-view-created=${(_e) => {
                 throw new Error('Displaying custom views is currently not implemented.');
               }}
-            ></group-home>
+            ></group-container>
           </group-context>
         `,
       )}
@@ -1382,10 +1404,11 @@ export class MainDashboard extends LitElement {
         }
 
         .home-button {
-          background-color: transparent;
+          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
+          border-radius: 15px;
           border: none;
-          width: 50px;
-          height: 50px;
+          width: 58px;
+          height: 58px;
           outline: none;
         }
 
@@ -1394,9 +1417,16 @@ export class MainDashboard extends LitElement {
         }
 
         .top-left-corner:hover {
-          border-radius: 100% 0 0 100%;
-          background: linear-gradient(90deg, #96d96e 0%, #394333 90.91%);
+          border-radius: 20px 0 0 20px;
+          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
           cursor: pointer;
+        }
+
+        .selected {
+          border-radius: 20px 0 0 20px;
+          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
         }
 
         .hover-browser {
@@ -1450,7 +1480,7 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           right: 0;
           padding-left: 8px;
-          background-color: rgba(57, 67, 50, 1);
+          background-color: #224b21;
         }
 
         #group-view-area {
@@ -1465,11 +1495,6 @@ export class MainDashboard extends LitElement {
 
         .invisible-scrollbars::-webkit-scrollbar {
           display: none;
-        }
-
-        .selected {
-          border-radius: 100% 0 0 100%;
-          background: linear-gradient(90deg, #597448 0%, #394333 90.91%);
         }
 
         .close-tab-button {
@@ -1578,7 +1603,7 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #101c09 0%, #293c2c 100%);
+          background: linear-gradient(270deg, #142510 0%, #3a622d 100%);
           width: 74px;
         }
 
@@ -1596,7 +1621,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-bar {
-          background: #394333;
+          background: #224b21;
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
@@ -1650,13 +1675,13 @@ export class MainDashboard extends LitElement {
           outline: none;
           border: none;
           color: #fff;
-          background: linear-gradient(270deg, #394333 0%, #526c44 100%);
+          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
           border-radius: 5px;
         }
 
         .moss-button:hover {
-          background: linear-gradient(270deg, #495542 0%, #67924f 100%);
+          background: linear-gradient(0deg, #203923 0%, #63912a 100%);
           cursor: pointer;
         }
       `,

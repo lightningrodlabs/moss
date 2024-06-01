@@ -1,22 +1,27 @@
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { AgentPubKey, DnaHash } from '@holochain/client';
+import { AgentPubKey, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-import '@holochain-open-dev/peer-status/dist/elements/list-agents-by-status.js';
+import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { GroupStore } from '../group-store.js';
+import { GroupStore, IDLE_THRESHOLD, OFFLINE_THRESHOLD } from '../group-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 
 @localized()
 @customElement('group-peers-status')
 export class GroupPeersStatus extends LitElement {
+  @consume({ context: mossStoreContext, subscribe: true })
+  _mossStore!: MossStore;
+
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
 
@@ -29,14 +34,69 @@ export class GroupPeersStatus extends LitElement {
     () => [this._groupStore, this.groupDnaHash],
   );
 
+  _peerStatuses = new StoreSubscriber(
+    this,
+    () => this._groupStore.peerStatuses(),
+    () => [this._groupStore],
+  );
+
   renderPeersStatus(members: AgentPubKey[]) {
+    if (!this._peerStatuses.value) return html``;
+    const now = Date.now();
+    const myPubKey = this._groupStore.groupClient.myPubKey;
+    const myStatus =
+      now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    members = members.filter((agent) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey));
+    const onlineAgents = members.filter((agent) => {
+      const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
+      return !!agentStatus && now - agentStatus.lastSeen < OFFLINE_THRESHOLD;
+    });
+
+    const offlineAgents = members.filter((agent) => {
+      const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
+      return !agentStatus || now - agentStatus.lastSeen > OFFLINE_THRESHOLD;
+    });
+
     return html`
-      <list-agents-by-status
-        class="agents-list"
-        .agents=${members.filter(
-          (m) => m.toString() !== this._groupStore.groupClient.appClient.myPubKey.toString(),
-        )}
-      ></list-agents-by-status>
+      <div class="column agents-list">
+        <div style="margin-bottom: 5px;">${msg('Online')}</div>
+        <div class="column">
+          <div class="row" style="position: relative;">
+            <profile-detail .agentPubKey=${myPubKey}></profile-detail>
+            <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
+            <div
+              class="inactive-indicator"
+              style="${myStatus === 'inactive' ? '' : 'display: none;'}"
+            ></div>
+          </div>
+
+          ${onlineAgents.map((agent) => {
+            const status = this._peerStatuses.value![encodeHashToBase64(agent)].status;
+            return html`
+              <div class="row" style="position: relative;">
+                <profile-detail .agentPubKey=${agent}></profile-detail>
+                <div class="status-indicator ${status === 'inactive' ? 'inactive' : ''}"></div>
+                <div
+                  class="inactive-indicator"
+                  style="${status === 'inactive' ? '' : 'display: none;'}"
+                ></div>
+              </div>
+            `;
+          })}
+        </div>
+        ${offlineAgents.length > 0
+          ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Offline')}</div>
+              <div class="column">
+                ${offlineAgents.map(
+                  (agent) => html`
+                    <div class="row" style="position: relative;">
+                      <profile-detail style="opacity: 0.5;" .agentPubKey=${agent}></profile-detail>
+                    </div>
+                  `,
+                )}
+              </div>`
+          : html``}
+      </div>
     `;
   }
 
@@ -59,8 +119,43 @@ export class GroupPeersStatus extends LitElement {
   static styles = [
     weStyles,
     css`
+      profile-detail {
+        margin: 5px;
+        color: #fff;
+      }
+
       .agents-list {
         color: #fff;
+        font-size: 1.1rem;
+      }
+
+      .agents-list span {
+        color: white;
+      }
+
+      .status-indicator {
+        position: absolute;
+        top: 25px;
+        left: 25px;
+        height: 11px;
+        width: 11px;
+        border: 2px solid #1e3b25;
+        border-radius: 50%;
+        background: #44d944;
+      }
+
+      .inactive {
+        background: #fcd200;
+      }
+
+      .inactive-indicator {
+        position: absolute;
+        top: 26px;
+        left: 26px;
+        height: 9px;
+        width: 9px;
+        border-radius: 50%;
+        background: #1e3b25;
       }
     `,
   ];

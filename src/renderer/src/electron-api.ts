@@ -44,7 +44,7 @@ declare global {
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;
       getAppVersion: () => Promise<string>;
-      getInstalledApps: () => Promise<AppInfo>;
+      getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
       installAppletBundle: (
         appId: string,

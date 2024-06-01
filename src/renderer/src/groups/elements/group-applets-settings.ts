@@ -3,8 +3,8 @@ import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { EntryHash } from '@holochain/client';
-import { hashState, notify } from '@holochain-open-dev/elements';
+import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { hashState } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -27,6 +27,7 @@ import { weStyles } from '../../shared-styles.js';
 import { Applet } from '../../types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
+import { repeat } from 'lit/directives/repeat.js';
 
 @localized()
 @customElement('group-applets-settings')
@@ -73,34 +74,33 @@ export class GroupAppletsSettings extends LitElement {
       `;
     return html`
       <div class="column" style="flex: 1;">
-        ${Array.from(applets.entries())
-          .sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name))
-          .map(
-            ([appletHash, applet]) => html`
-              <applet-detail-card
-                style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
-                @applets-disabled=${(e) => {
-                  this.dispatchEvent(
-                    new CustomEvent('applets-disabled', {
-                      detail: e.detail,
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                }}
-                .appletHash=${appletHash}
-                .applet=${applet}
-              ></applet-detail-card>
-            `,
-          )}
+        ${repeat(
+          Array.from(applets.entries()).sort(([_, a], [__, b]) =>
+            a.custom_name.localeCompare(b.custom_name),
+          ),
+          ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+          ([appletHash, applet]) => html`
+            <applet-detail-card
+              style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
+              @applets-disabled=${(e) => {
+                this.dispatchEvent(
+                  new CustomEvent('applets-disabled', {
+                    detail: e.detail,
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+              }}
+              .appletHash=${appletHash}
+              .applet=${applet}
+            ></applet-detail-card>
+          `,
+        )}
       </div>
     `;
   }
 
   render() {
-    const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
-      this._groupStore.groupDnaHash,
-    );
     switch (this._groupApplets.value?.status) {
       case 'pending':
         return html` <div class="column center-content" style="flex: 1;">
@@ -119,43 +119,9 @@ export class GroupAppletsSettings extends LitElement {
           >
             <div class="row" style="position: relative">
               <div class="title" style="margin-bottom: 30px; font-size: 28px;">
-                ${msg('Joined Applets')}
+                ${msg('Joined Tools')}
               </div>
             </div>
-            ${this._groupApplets.value.value.size === 0
-              ? html``
-              : html`
-                  <div
-                    class="row"
-                    style="justify-content: flex-end; align-items: center; margin-bottom: 18px; width: 800px;"
-                  >
-                    <span style="display: flex; flex: 1;"></span>
-                    <span style="margin-right: 5px;"
-                      >${groupDisabled ? msg('Enable Group') : msg('Disable Group')}</span
-                    >
-                    <sl-switch
-                      size="large"
-                      ?checked=${!groupDisabled}
-                      @sl-change=${async () => {
-                        if (groupDisabled) {
-                          await this._groupStore.reEnableAllApplets();
-                          notify(msg('Applets re-enabled.'));
-                        } else {
-                          const disabledApplets = await this._groupStore.disableAllApplets();
-                          this.dispatchEvent(
-                            new CustomEvent('applets-disabled', {
-                              detail: disabledApplets,
-                              bubbles: true,
-                              composed: true,
-                            }),
-                          );
-                          notify(msg('All Applets disabled.'));
-                        }
-                      }}
-                    >
-                    </sl-switch>
-                  </div>
-                `}
             ${this.renderInstalledApplets(this._groupApplets.value.value)}
           </div>
         `;

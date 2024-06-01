@@ -38,7 +38,7 @@ export class AppletViewEl extends LitElement {
     css`
       :host {
         display: flex;
-        background-color: rgba(86, 113, 71, 1);
+        background-color: #588121;
         padding: 8px;
         border-radius: 5px 0 0 0;
       }

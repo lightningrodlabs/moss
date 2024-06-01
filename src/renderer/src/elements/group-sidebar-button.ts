@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
-import { derived, joinMap, pipe, StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../groups/context.js';
@@ -11,9 +11,8 @@ import { mossStoreContext } from '../context.js';
 import './sidebar-button.js';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiAccountMultiple } from '@mdi/js';
-import { pickBy, slice } from '@holochain-open-dev/utils';
-import { Status } from '@holochain-open-dev/peer-status';
 import { msg } from '@lit/localize';
+import { encodeHashToBase64 } from '@holochain/client';
 
 @customElement('group-sidebar-button')
 export class GroupSidebarButton extends LitElement {
@@ -33,22 +32,11 @@ export class GroupSidebarButton extends LitElement {
   _previousOnlineAgents = 0;
 
   @state()
-  _loadingPeerCount = true;
+  _loadingPeerCount = false;
 
-  _onlineAgents = new StoreSubscriber(
+  _peerStatuses = new StoreSubscriber(
     this,
-    () =>
-      pipe(this._groupStore.members, (members) =>
-        derived(
-          joinMap(slice(this._groupStore.peerStatusStore.agentsStatus, members)),
-          (agentsStatus) =>
-            Array.from(
-              pickBy(agentsStatus, (status, _key) => status === Status.Online).keys(),
-            ).filter(
-              (pubKey) => pubKey.toString() !== this._groupStore.groupClient.myPubKey.toString(),
-            ),
-        ),
-      ),
+    () => this._groupStore.peerStatuses(),
     () => [this._groupStore],
   );
 
@@ -59,23 +47,28 @@ export class GroupSidebarButton extends LitElement {
   }
 
   firstUpdated() {
-    this._unsubscribe = this._onlineAgents.store.subscribe((value) => {
-      // TODO emit event if first agent comes online
-      if (value.status === 'complete') {
-        if (value.value.length > 0) {
-          if (this._previousOnlineAgents === 0) {
-            console.log('NEW AGENTS ONLINE.');
-            this.dispatchEvent(
-              new CustomEvent('agents-online', {
-                detail: this._groupStore.groupDnaHash,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }
-        }
-        this._previousOnlineAgents = value.value.length;
+    this._unsubscribe = this._peerStatuses.store.subscribe((value) => {
+      if (!value) {
+        value = {};
       }
+      const numOnlineAgents = Object.entries(value).filter(
+        ([pubkey, status]) =>
+          status.status === 'online' &&
+          pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
+      ).length;
+      if (numOnlineAgents > 0) {
+        if (this._previousOnlineAgents === 0) {
+          console.log('NEW AGENTS ONLINE.');
+          this.dispatchEvent(
+            new CustomEvent('agents-online', {
+              detail: this._groupStore.groupDnaHash,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }
+      }
+      this._previousOnlineAgents = numOnlineAgents;
     });
   }
 
@@ -107,54 +100,40 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
-    switch (this._onlineAgents.value.status) {
-      case 'pending':
-        return html`
-          <div
-            class="row center-content online-agents gray"
-            title="${msg('Loading number of online members')}"
-          >
-            <sl-spinner
+    console.log('this._peerStatuses.value: ', this._peerStatuses.value);
+    const onlineAgentCount =
+      this._peerStatuses.value || this._peerStatuses.value === 0
+        ? Object.entries(this._peerStatuses.value).filter(
+            ([pubkey, status]) =>
+              ['online', 'inactive'].includes(status.status) &&
+              pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
+          ).length
+        : undefined;
+
+    console.log('onlineAgentCount: ', onlineAgentCount);
+
+    return html`
+      <div
+        class="row center-content online-agents ${!!onlineAgentCount && onlineAgentCount > 0
+          ? 'green'
+          : 'gray'}"
+        title="${this._loadingPeerCount
+          ? msg('Loading number of online members')
+          : `${onlineAgentCount} ${msg('member(s) online')}`}"
+      >
+        ${onlineAgentCount === undefined
+          ? html`<sl-spinner
               style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
-            ></sl-spinner>
-          </div>
-        `;
-      case 'error':
-        return html`
-          <div
-            class="row center-content online-agents gray"
-            style="color: red; font-weight: bold;"
-            title="${msg('Error while loading number of online members')}"
-          >
-            x
-          </div>
-        `;
-      case 'complete':
-        const onlineAgentCount = this._onlineAgents.value.value.length;
-        setTimeout(() => {
-          this._loadingPeerCount = false;
-        }, 300);
-        return html`
-          <div
-            class="row center-content online-agents ${onlineAgentCount > 0 ? 'green' : 'gray'}"
-            title="${this._loadingPeerCount
-              ? msg('Loading number of online members')
-              : `${onlineAgentCount} ${msg('member(s) online')}`}"
-          >
-            ${this._loadingPeerCount
-              ? html`<sl-spinner
-                  style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
-                ></sl-spinner>`
-              : html`
-                  <sl-icon
-                    .src=${wrapPathInSvg(mdiAccountMultiple)}
-                    style="font-size: 20px; font-weight: bold;"
-                  ></sl-icon>
-                  <span>${onlineAgentCount}</span>
-                `}
-          </div>
-        `;
-    }
+            ></sl-spinner>`
+          : html`
+              <sl-icon
+                .src=${wrapPathInSvg(mdiAccountMultiple)}
+                style="font-size: 20px; font-weight: bold;"
+              ></sl-icon>
+              <span>${onlineAgentCount}</span>
+            `}
+      </div>
+    `;
   }
 
   render() {
