@@ -100,7 +100,6 @@ export class GroupStore {
     this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
     this.peerStatusClient.onSignal(async (signal: SignalPayload) => {
-      console.log('GOT SIGNAL: ', signal);
       if (signal.type == 'Pong') {
         this.updatePeerStatus(signal.from_agent, signal.status);
       }
@@ -114,11 +113,10 @@ export class GroupStore {
     });
 
     setInterval(async () => {
-      console.log('@GroupStore: Pingning agents and updating online/offline status');
-      // Set unresponsive agents to offline
       const now = Date.now();
       const myStatus =
         now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+      // Set unresponsive agents to offline
       this._peerStatuses.update((statuses) => {
         if (!statuses) {
           statuses = {};
@@ -237,8 +235,6 @@ export class GroupStore {
   needsPinging(agent: AgentPubKey): boolean {
     const pubkeySum = Array.from(agent).reduce((acc, curr) => acc + curr, 0);
     const diff = pubkeySum - this._myPubkeySum;
-    console.log('@needsPinging: DIFF: ', diff);
-    console.log('MODULO: ', diff % 2);
     if (diff % 2 === 0) {
       if (diff === 0) return true;
       return this._myPubkeySum > pubkeySum;
@@ -615,10 +611,6 @@ export class PeerStatusClient extends ZomeClient<SignalPayload> {
    * Ping all specified agents, expecting for their pong later
    */
   async ping(agentPubKeys: AgentPubKey[], status): Promise<void> {
-    console.log(
-      'PINGING AGENTS: ',
-      agentPubKeys.map((key) => encodeHashToBase64(key)),
-    );
     return this.callZome('ping', {
       to_agents: agentPubKeys,
       status,

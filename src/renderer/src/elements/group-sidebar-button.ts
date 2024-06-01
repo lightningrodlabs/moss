@@ -48,6 +48,9 @@ export class GroupSidebarButton extends LitElement {
 
   firstUpdated() {
     this._unsubscribe = this._peerStatuses.store.subscribe((value) => {
+      if (!value) {
+        value = {};
+      }
       const numOnlineAgents = Object.entries(value).filter(
         ([pubkey, status]) =>
           status.status === 'online' &&
