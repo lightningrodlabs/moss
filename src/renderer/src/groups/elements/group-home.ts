@@ -403,89 +403,104 @@ export class GroupHome extends LitElement {
           .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
-        if (filteredApplets.length === 0) {
-          return html`${msg('No new Tools to install.')}`;
-        }
-        return html`
-          <div class="row" style="flex-wrap: wrap;">
-            ${filteredApplets.map(
-              (info) => html`
-                <sl-card class="applet-card">
-                  <div class="column" style="flex: 1;">
-                    <div class="card-header">
-                      <div class="instance-details">
-                        <agent-avatar
-                          .size=${24}
-                          style="margin-right: 5px;"
-                          .agentPubKey=${info.agentKey}
-                        ></agent-avatar>
-                        <span>${msg('added an instance of ')}</span>
-                        <span
-                          style="margin-left: 5px; font-weight: bold; ${info.toolBundle?.title
-                            ? ''
-                            : 'opacity: 0.6;'}"
-                          >${info.toolBundle ? info.toolBundle.title : 'unknown'}&nbsp;
-                        </span>
-                      </div>
-                      <div
-                        style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;"
-                      >
-                        ${timeAgo.format(new Date(info.timestamp / 1000))}
-                      </div>
-                    </div>
-                    <div class="card-content" style="align-items: center;">
-                      <sl-tooltip
-                        style="${info.toolBundle ? '' : 'display: none;'}"
-                        content="${info.toolBundle?.subtitle}"
-                      >
-                        ${info.toolBundle?.icon
-                          ? html`<img
-                              src=${info.toolBundle.icon}
-                              alt="Applet logo"
-                              style="height: 80px; margin-right: 10px;"
-                            />`
-                          : html``}
-                      </sl-tooltip>
-                      <span style="font-weight: bold; font-size: 24px;"
-                        >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
-                      >
-                    </div>
-                    <div class="card-footer" style="align-items: center; margin-top: 20px;">
-                      <span style="margin-right: 5px;"><b>${msg('Participants ')}</b></span>
-                      ${info.joinedMembers.map(
-                        (appletAgent) => html`
-                          <agent-avatar
-                            style="margin-left: 5px;"
-                            .agentPubKey=${appletAgent.group_pubkey}
-                          ></agent-avatar>
-                        `,
-                      )}
-                      <span style="display: flex; flex: 1;"></span>
-                      <sl-button
-                        style="margin-left: 20px;"
-                        .loading=${this._joiningNewApplet === encodeHashToBase64(info.appletHash)}
-                        .disabled=${!!this._joiningNewApplet}
-                        variant="success"
-                        @click=${() => this.joinNewApplet(info.appletHash)}
-                        >${msg('Join')}</sl-button
-                      >
-                      ${info.isIgnored
-                        ? html``
-                        : html`
-                            <sl-button
-                              style="margin-left: 5px;"
-                              variant="warning"
-                              @click=${() => this.ignoreApplet(info.appletHash)}
-                              >${msg('Ignore')}</sl-button
-                            >
-                          `}
-                    </div>
-                  </div>
-                </sl-card>
-              `,
-            )}
+        return html` <div
+            class="row"
+            style="align-items: center; justify-content: flex-end; margin-top: -10px;"
+          >
+            <input
+              @input=${() => this.toggleIgnoredApplets()}
+              id="show-ignored-applets-checkbox"
+              type="checkbox"
+            />
+            <span>${msg('Show ignored Tools')}</span>
           </div>
-        `;
+          ${filteredApplets.length === 0
+            ? html`
+                <div class="column" style="flex: 1; align-items: center; margin-top: 50px;">
+                  ${msg('No new Tools to install.')}
+                </div>
+              `
+            : html`
+                <div class="row" style="flex-wrap: wrap;">
+                  ${filteredApplets.map(
+                    (info) => html`
+                      <sl-card class="applet-card">
+                        <div class="column" style="flex: 1;">
+                          <div class="card-header">
+                            <div class="instance-details">
+                              <agent-avatar
+                                .size=${24}
+                                style="margin-right: 5px;"
+                                .agentPubKey=${info.agentKey}
+                              ></agent-avatar>
+                              <span>${msg('added an instance of ')}</span>
+                              <span
+                                style="margin-left: 5px; font-weight: bold; ${info.toolBundle?.title
+                                  ? ''
+                                  : 'opacity: 0.6;'}"
+                                >${info.toolBundle ? info.toolBundle.title : 'unknown'}&nbsp;
+                              </span>
+                            </div>
+                            <div
+                              style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;"
+                            >
+                              ${timeAgo.format(new Date(info.timestamp / 1000))}
+                            </div>
+                          </div>
+                          <div class="card-content" style="align-items: center;">
+                            <sl-tooltip
+                              style="${info.toolBundle ? '' : 'display: none;'}"
+                              content="${info.toolBundle?.subtitle}"
+                            >
+                              ${info.toolBundle?.icon
+                                ? html`<img
+                                    src=${info.toolBundle.icon}
+                                    alt="Applet logo"
+                                    style="height: 80px; margin-right: 10px;"
+                                  />`
+                                : html``}
+                            </sl-tooltip>
+                            <span style="font-weight: bold; font-size: 24px;"
+                              >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
+                            >
+                          </div>
+                          <div class="card-footer" style="align-items: center; margin-top: 20px;">
+                            <span style="margin-right: 5px;"><b>${msg('Participants ')}</b></span>
+                            ${info.joinedMembers.map(
+                              (appletAgent) => html`
+                                <agent-avatar
+                                  style="margin-left: 5px;"
+                                  .agentPubKey=${appletAgent.group_pubkey}
+                                ></agent-avatar>
+                              `,
+                            )}
+                            <span style="display: flex; flex: 1;"></span>
+                            <sl-button
+                              style="margin-left: 20px;"
+                              .loading=${this._joiningNewApplet ===
+                              encodeHashToBase64(info.appletHash)}
+                              .disabled=${!!this._joiningNewApplet}
+                              variant="success"
+                              @click=${() => this.joinNewApplet(info.appletHash)}
+                              >${msg('Join')}</sl-button
+                            >
+                            ${info.isIgnored
+                              ? html``
+                              : html`
+                                  <sl-button
+                                    style="margin-left: 5px;"
+                                    variant="warning"
+                                    @click=${() => this.ignoreApplet(info.appletHash)}
+                                    >${msg('Ignore')}</sl-button
+                                  >
+                                `}
+                          </div>
+                        </div>
+                      </sl-card>
+                    `,
+                  )}
+                </div>
+              `}`;
       default:
         return html``;
     }
