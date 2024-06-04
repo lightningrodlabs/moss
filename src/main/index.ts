@@ -173,15 +173,21 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
-// const isFirstInstance = app.requestSingleInstanceLock();
+const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
-// if (!isFirstInstance) {
-//   app.quit();
-// }
-
-// app.on('second-instance', () => {
-//   createOrShowMainWindow();
-// });
+if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, _argv, _cwd, additionalData: any) => {
+    if (additionalData.profile === RUN_OPTIONS.profile) {
+      if (SPLASH_SCREEN_WINDOW) {
+        SPLASH_SCREEN_WINDOW.show();
+      } else {
+        createOrShowMainWindow();
+      }
+    }
+  });
+}
 
 if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
@@ -557,10 +563,9 @@ app.whenReady().then(async () => {
       label: 'Open',
       type: 'normal',
       click() {
-        try {
-          SPLASH_SCREEN_WINDOW!.show();
-        } catch (_e) {
-          // Fails if SPLASH_SCREEN_WINDOW has been destroyed in the meantime
+        if (SPLASH_SCREEN_WINDOW) {
+          SPLASH_SCREEN_WINDOW.show();
+        } else {
           createOrShowMainWindow();
         }
       },
@@ -1072,6 +1077,7 @@ app.whenReady().then(async () => {
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+    SPLASH_SCREEN_WINDOW = undefined;
     MAIN_WINDOW = createOrShowMainWindow();
   });
 
