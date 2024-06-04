@@ -1,4 +1,5 @@
 {
   "holochainVersion": "0.4.0-dev.5",
-  "lairVersion": "0.4.4"
+  "lairVersion": "0.4.4",
+  "binariesAppendix": "moss-0.12"
 }

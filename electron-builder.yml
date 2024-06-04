@@ -1,5 +1,5 @@
 appId: org.lightningrodlabs.moss-0.12
-productName: Lightningrod Labs Moss
+productName: Moss (Sprout)
 directories:
   buildResources: build
 files:
@@ -30,10 +30,11 @@ dmg:
 linux:
   target:
     - AppImage
+    - deb
     # - snap
-    # - deb
   maintainer: lightningrodlabs.org
   category: Utility
+  icon: ./build/icon.icns
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
