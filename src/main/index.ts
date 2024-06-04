@@ -384,6 +384,31 @@ const createOrShowMainWindow = (): BrowserWindow => {
     if (!isAppQuitting) {
       e.preventDefault();
       mainWindow.hide();
+
+      const notificationIcon = nativeImage.createFromPath(
+        path.join(ICONS_DIRECTORY, '128x128.png'),
+      );
+
+      new Notification({
+        title: 'Moss keeps running in the background',
+        body: 'To close Moss and stop synching with peers, Quit from the icon in the system tray.',
+        icon: notificationIcon,
+      })
+        .on('click', async () => {
+          createOrShowMainWindow();
+          const response = await dialog.showMessageBox(MAIN_WINDOW!, {
+            type: 'info',
+            message:
+              'Moss keeps running in the background if you close the Window.\n This is to keep synchronizing data with peers.\n\nDo you want to quit Moss fully?',
+            buttons: ['Keep Running', 'Quit'],
+            defaultId: 0,
+            cancelId: 1,
+          });
+          if (response.response === 1) {
+            app.quit();
+          }
+        })
+        .show();
     }
   });
   mainWindow.on('closed', () => {
