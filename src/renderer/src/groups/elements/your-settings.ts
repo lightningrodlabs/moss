@@ -70,8 +70,8 @@ export class YourSettings extends LitElement {
         <div>${msg('Are you sure you want to leave this group?')}</div>
         <br />
         <div>
-          <b>${msg('⚠️ This will delete all your applets of this group and the data therein')}</b>
-          ${msg(' (unless an Applet is shared with another group of yours).')}
+          <b>${msg('⚠️ This will delete all your Tools of this group and the data therein')}</b>
+          ${msg(' (unless a Tool is shared with another group of yours).')}
         </div>
       </div>
       <sl-button slot="footer" @click=${() => this.dialog.hide()}>${msg('Cancel')}</sl-button>
