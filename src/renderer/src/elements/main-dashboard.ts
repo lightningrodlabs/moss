@@ -720,6 +720,7 @@ export class MainDashboard extends LitElement {
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
+                console.log('GOT GROUP LEFT EVENT');
                 this._mossStore.setDashboardState({ viewType: 'personal' });
               }}
               @disable-group=${async (e: CustomEvent) => {
