@@ -526,7 +526,7 @@ export class MainDashboard extends LitElement {
         }
       } catch (e) {
         console.error(e);
-        // notifyError(msg('Error opening the link.'));
+        notifyError(msg('Error opening the link.'));
       }
     });
 
