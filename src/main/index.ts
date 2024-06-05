@@ -182,12 +182,12 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
-if (!RUN_OPTIONS.devInfo) {
+let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
+
+if (app.isPackaged) {
   // Single instance and deep link logic
   // ------------------------------------------------------------------------------------------
   const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
-
-  let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
   if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
     app.quit();
