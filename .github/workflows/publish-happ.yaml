@@ -46,7 +46,7 @@ jobs:
           allowUpdates: true
           artifacts: 'workdir/group.happ'
           body: 'See assets below to download and install this version.'
-          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.4.0-dev.5
+          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.4.0-dev.6
           tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           draft: true
