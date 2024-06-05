@@ -285,7 +285,7 @@ export class MainDashboard extends LitElement {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Applet Library',
+        title: 'Tool Library',
         template: html`
           <tool-library
             style="display: flex; flex: 1;"
@@ -526,7 +526,7 @@ export class MainDashboard extends LitElement {
         }
       } catch (e) {
         console.error(e);
-        // notifyError(msg('Error opening the link.'));
+        notifyError(msg('Error opening the link.'));
       }
     });
 
@@ -720,6 +720,7 @@ export class MainDashboard extends LitElement {
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
+                console.log('GOT GROUP LEFT EVENT');
                 this._mossStore.setDashboardState({ viewType: 'personal' });
               }}
               @disable-group=${async (e: CustomEvent) => {

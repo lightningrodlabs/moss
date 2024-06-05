@@ -69,6 +69,8 @@ export class SelectGroupDialog extends LitElement {
           return html`<span style="margin-bottom: 20px;"><b>You need to create or join a Group before you can install Applets.<b></span>`;
         }
 
+        let customGroupOrder = this._mossStore.persistedStore.groupOrder.value();
+
         return html`
           <sl-select
             id="group-selector"
@@ -82,18 +84,24 @@ export class SelectGroupDialog extends LitElement {
             hoist
             required
           >
-            ${groups.map(
-              ([groupDnaHash, groupProfile]) => html`
-                <sl-option .value=${encodeHashToBase64(groupDnaHash)}>
-                  <img
-                    slot="prefix"
-                    .src=${groupProfile?.icon_src}
-                    alt="${groupProfile?.name}"
-                    style="height: 16px; width: 16px"
-                  />${groupProfile?.name}</sl-option
-                >
-              `,
-            )}
+            ${groups
+              .sort(
+                ([a_hash, _a], [b_hash, _b]) =>
+                  customGroupOrder!.indexOf(encodeHashToBase64(a_hash)) -
+                  customGroupOrder!.indexOf(encodeHashToBase64(b_hash)),
+              )
+              .map(
+                ([groupDnaHash, groupProfile]) => html`
+                  <sl-option .value=${encodeHashToBase64(groupDnaHash)}>
+                    <img
+                      slot="prefix"
+                      .src=${groupProfile?.icon_src}
+                      alt="${groupProfile?.name}"
+                      style="height: 16px; width: 16px"
+                    />${groupProfile?.name}</sl-option
+                  >
+                `,
+              )}
           </sl-select>
         `;
 

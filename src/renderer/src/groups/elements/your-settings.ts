@@ -15,6 +15,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
+import { dialogMessagebox } from '../../electron-api.js';
 
 @localized()
 @customElement('your-settings')
@@ -29,21 +30,19 @@ export class YourSettings extends LitElement {
   leaving = false;
 
   async leaveGroup() {
+    const confirmation = await dialogMessagebox({
+      message:
+        'WARNING: Leaving a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+      type: 'warning',
+      buttons: ['Cancel', 'Continue'],
+    });
+    if (confirmation.response === 0) return;
     this.leaving = true;
 
     const groupDnaHash = this.groupStore.groupDnaHash;
     try {
       await this.mossStore.leaveGroup(groupDnaHash);
-
-      this.dispatchEvent(
-        new CustomEvent('group-left', {
-          detail: {
-            groupDnaHash,
-          },
-          bubbles: true,
-          composed: true,
-        }),
-      );
+      window.location.reload();
     } catch (e) {
       notifyError(msg('Error leaving the group'));
       console.error(e);
@@ -70,8 +69,8 @@ export class YourSettings extends LitElement {
         <div>${msg('Are you sure you want to leave this group?')}</div>
         <br />
         <div>
-          <b>${msg('⚠️ This will delete all your applets of this group and the data therein')}</b>
-          ${msg(' (unless an Applet is shared with another group of yours).')}
+          <b>${msg('⚠️ This will delete all your Tools of this group and the data therein')}</b>
+          ${msg(' (unless a Tool is shared with another group of yours).')}
         </div>
       </div>
       <sl-button slot="footer" @click=${() => this.dialog.hide()}>${msg('Cancel')}</sl-button>

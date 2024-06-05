@@ -9,12 +9,12 @@ const BINARIES_DIRECTORY = app.isPackaged
 const HOLOCHAIN_BINARIES: Record<string, string> = {};
 HOLOCHAIN_BINARIES[MOSS_CONFIG.holochainVersion] = path.join(
   BINARIES_DIRECTORY,
-  `holochain-v${MOSS_CONFIG.holochainVersion}${process.platform === 'win32' ? '.exe' : ''}`,
+  `holochain-v${MOSS_CONFIG.holochainVersion}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 const LAIR_BINARY = path.join(
   BINARIES_DIRECTORY,
-  `lair-keystore-v${MOSS_CONFIG.lairVersion}${process.platform === 'win32' ? '.exe' : ''}`,
+  `lair-keystore-v${MOSS_CONFIG.lairVersion}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 console.log('MOSS_CONFIG: ', MOSS_CONFIG);

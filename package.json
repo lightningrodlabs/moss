@@ -1,8 +1,8 @@
 {
   "name": "org.lightningrodlabs.moss-0.12",
-  "version": "0.12.0-dev.3",
+  "version": "0.12.0-dev.4",
   "private": true,
-  "description": "Moss (Alpha)",
+  "description": "Moss (Sprout)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
@@ -41,7 +41,7 @@
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "download:kando": "curl -L --output resources/default-apps/kando.webhapp https://github.com/holochain-apps/kando/releases/download/v0.10.0-dev1/kando.webhapp",
     "download:tools-library": "curl -L --output resources/default-apps/tools-library.happ https://github.com/lightningrodlabs/tools-library/releases/download/v0.0.3/tools-library.happ",
-    "download:group-happ": "curl -L --output resources/default-apps/group.happ https://github.com/lightningrodlabs/we/releases/download/group-happ-v0.12.0-dev.1/group.happ",
+    "download:group-happ": "curl -L --output resources/default-apps/group.happ https://github.com/lightningrodlabs/we/releases/download/group-happ-v0.12.0-dev.4/group.happ",
     "postinstall": "electron-builder install-app-deps",
     "fetch:binaries": "node ./scripts/fetch-binaries.mjs",
     "check:binaries": "node ./scripts/check-binaries.mjs",
@@ -59,7 +59,7 @@
     "@holochain-open-dev/stores": "0.400.0-dev.0",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.5",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.6",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",

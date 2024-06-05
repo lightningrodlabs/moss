@@ -1,5 +1,5 @@
 appId: org.lightningrodlabs.moss-0.12
-productName: Lightningrod Labs Moss
+productName: Moss (Sprout)
 directories:
   buildResources: build
 files:
@@ -10,6 +10,10 @@ asarUnpack:
   - resources/**
   - '**/*.node'
 afterSign: scripts/notarize.js
+protocols:
+  - name: Weave URL
+    schemes:
+      - weave-0.12
 win:
   executableName: moss
 nsis:
@@ -30,10 +34,11 @@ dmg:
 linux:
   target:
     - AppImage
+    - deb
     # - snap
-    # - deb
   maintainer: lightningrodlabs.org
   category: Utility
+  icon: ./build/icon.icns
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

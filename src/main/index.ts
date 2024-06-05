@@ -63,6 +63,15 @@ let appVersion = app.getVersion();
 
 console.log('process.argv: ', process.argv);
 
+// Set as default protocol client for weave-0.12 deep links
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('weave-0.12', process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient('weave-0.12');
+}
+
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('we-dev-cli');
 if (ranViaCli) {
   process.argv.splice(2, 2);
@@ -173,15 +182,53 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
-// const isFirstInstance = app.requestSingleInstanceLock();
+// Single instance and deep link logic
+// ------------------------------------------------------------------------------------------
+const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
-// if (!isFirstInstance) {
-//   app.quit();
-// }
+let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
-// app.on('second-instance', () => {
-//   createOrShowMainWindow();
-// });
+if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
+  app.quit();
+} else {
+  // https://github.com/electron/electron/issues/40173
+  if (process.platform !== 'darwin') {
+    CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.12://'));
+  }
+
+  app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
+    // non-deeplink case (i.e. additionalData is defined)
+    if (additionalData && additionalData.profile === RUN_OPTIONS.profile) {
+      if (SPLASH_SCREEN_WINDOW) {
+        SPLASH_SCREEN_WINDOW.show();
+      } else {
+        MAIN_WINDOW = createOrShowMainWindow();
+      }
+    } else if (process.platform !== 'darwin') {
+      // deeplink case
+      const url = argv.pop();
+      if (MAIN_WINDOW) {
+        // main window is already open
+        createOrShowMainWindow();
+        emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
+      } else {
+        CACHED_DEEP_LINK = url;
+      }
+    }
+  });
+
+  if (process.platform === 'darwin') {
+    app.on('open-url', (_event, url) => {
+      if (MAIN_WINDOW) {
+        createOrShowMainWindow();
+        emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
+      } else {
+        CACHED_DEEP_LINK = url;
+      }
+    });
+  }
+}
+// ------------------------------------------------------------------------------------------
 
 if (RUN_OPTIONS.devInfo) {
   // garbage collect previously used folders
@@ -384,6 +431,31 @@ const createOrShowMainWindow = (): BrowserWindow => {
     if (!isAppQuitting) {
       e.preventDefault();
       mainWindow.hide();
+
+      const notificationIcon = nativeImage.createFromPath(
+        path.join(ICONS_DIRECTORY, '128x128.png'),
+      );
+
+      new Notification({
+        title: 'Moss keeps running in the background',
+        body: 'To close Moss and stop synching with peers, Quit from the icon in the system tray.',
+        icon: notificationIcon,
+      })
+        .on('click', async () => {
+          createOrShowMainWindow();
+          const response = await dialog.showMessageBox(MAIN_WINDOW!, {
+            type: 'info',
+            message:
+              'Moss keeps running in the background if you close the Window.\n This is to keep synchronizing data with peers.\n\nDo you want to quit Moss fully?',
+            buttons: ['Keep Running', 'Quit'],
+            defaultId: 0,
+            cancelId: 1,
+          });
+          if (response.response === 1) {
+            app.quit();
+          }
+        })
+        .show();
     }
   });
   mainWindow.on('closed', () => {
@@ -532,10 +604,9 @@ app.whenReady().then(async () => {
       label: 'Open',
       type: 'normal',
       click() {
-        try {
-          SPLASH_SCREEN_WINDOW!.show();
-        } catch (_e) {
-          // Fails if SPLASH_SCREEN_WINDOW has been destroyed in the meantime
+        if (SPLASH_SCREEN_WINDOW) {
+          SPLASH_SCREEN_WINDOW.show();
+        } else {
           createOrShowMainWindow();
         }
       },
@@ -1047,7 +1118,16 @@ app.whenReady().then(async () => {
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+    SPLASH_SCREEN_WINDOW = undefined;
     MAIN_WINDOW = createOrShowMainWindow();
+    // Send cached deep link to main window after a timeout to make sure the event listener is ready
+    if (CACHED_DEEP_LINK) {
+      setTimeout(() => {
+        if (MAIN_WINDOW) {
+          emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
+        }
+      }, 1000);
+    }
   });
 
   if (RUN_OPTIONS.devInfo) {
@@ -1128,7 +1208,7 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createOrShowMainWindow();
+    MAIN_WINDOW = createOrShowMainWindow();
   }
 });
 

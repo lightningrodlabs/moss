@@ -16,6 +16,7 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { encodeHashToBase64 } from '@holochain/client';
+import { dialogMessagebox } from '../../electron-api.js';
 
 @localized()
 @customElement('looking-for-peers')
@@ -30,21 +31,20 @@ export class LookingForPeers extends LitElement {
   leaving = false;
 
   async leaveGroup() {
+    const confirmation = await dialogMessagebox({
+      message:
+        'WARNING: Leaving a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+      type: 'warning',
+      buttons: ['Cancel', 'Continue'],
+    });
+    if (confirmation.response === 0) return;
+
     this.leaving = true;
 
     const groupDnaHash = this.groupStore.groupDnaHash;
     try {
       await this.mossStore.leaveGroup(groupDnaHash);
-
-      this.dispatchEvent(
-        new CustomEvent('group-left', {
-          detail: {
-            groupDnaHash,
-          },
-          bubbles: true,
-          composed: true,
-        }),
-      );
+      window.location.reload();
     } catch (e) {
       notifyError(msg('Error leaving the group'));
       console.error(e);

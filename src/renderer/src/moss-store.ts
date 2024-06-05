@@ -324,20 +324,34 @@ export class MossStore {
 
     const groupStore = await this.groupStore(groupDnaHash);
 
+    const groupProfile: GroupProfile = {
+      icon_src: logo,
+      name,
+    };
+
     try {
       if (!groupStore) throw new Error('GroupStore still undefined after joining group.');
-
-      const groupProfile: GroupProfile = {
-        icon_src: logo,
-        name,
-      };
       await groupStore.groupClient.setGroupProfile(groupProfile);
     } catch (e) {
-      try {
-        await this.leaveGroup(groupDnaHash);
-        console.error(`Failed to set up group profile - left group again: ${e}`);
-      } catch (err) {
-        throw new Error(`Failed to leave group after failed profile creation: ${err}`);
+      if ((e as any).toString().includes('source chain head has moved')) {
+        console.log('Source chan has moved error, retrying to create profile...');
+        try {
+          await groupStore!.groupClient.setGroupProfile(groupProfile);
+        } catch (e) {
+          try {
+            await this.leaveGroup(groupDnaHash);
+            console.error(`Failed to set up group profile - left group again: ${e}`);
+          } catch (err) {
+            throw new Error(`Failed to leave group after failed profile creation: ${err}`);
+          }
+        }
+      } else {
+        try {
+          await this.leaveGroup(groupDnaHash);
+          console.error(`Failed to set up group profile - left group again: ${e}`);
+        } catch (err) {
+          throw new Error(`Failed to leave group after failed profile creation: ${err}`);
+        }
       }
     }
 

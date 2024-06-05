@@ -5,6 +5,7 @@ import { app } from 'electron';
 export type MossConfig = {
   holochainVersion: string;
   lairVersion: string;
+  binariesAppendix: string;
 };
 
 console.log('APP PATH: ', app.getAppPath());
