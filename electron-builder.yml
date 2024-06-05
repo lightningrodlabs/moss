@@ -10,6 +10,10 @@ asarUnpack:
   - resources/**
   - '**/*.node'
 afterSign: scripts/notarize.js
+protocols:
+  - name: Weave URL
+    schemes:
+      - weave-0.12
 win:
   executableName: moss
 nsis:
