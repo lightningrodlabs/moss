@@ -20,7 +20,7 @@
     "@holochain/client": "0.18.0-dev.1",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "0.17.0-dev.2",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.4",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.6",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",

@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.12",
-  "version": "0.12.0-dev.3",
+  "version": "0.12.0-dev.4",
   "private": true,
   "description": "Moss (Sprout)",
   "main": "./out/main/index.js",
@@ -59,7 +59,7 @@
     "@holochain-open-dev/stores": "0.400.0-dev.0",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.5",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.6",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
