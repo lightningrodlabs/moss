@@ -49,7 +49,7 @@ export class ViewFrame extends LitElement {
         : undefined}
       src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
       style="flex: 1; display: block; padding: 0; margin: 0;"
-      allow="camera; microphone; clipboard-write;"
+      allow="camera *; microphone *; clipboard-write *;"
     ></iframe>`;
   }
 
@@ -72,7 +72,7 @@ export class ViewFrame extends LitElement {
             : undefined}
           src="${iframeSrc}"
           style="flex: 1; display: block; padding: 0; margin: 0;"
-          allow="camera; microphone; clipboard-write;"
+          allow="camera *; microphone *; clipboard-write *;"
         ></iframe>`;
     }
   }
