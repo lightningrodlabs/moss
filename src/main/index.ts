@@ -205,6 +205,9 @@ if (app.isPackaged) {
         } else {
           MAIN_WINDOW = createOrShowMainWindow();
         }
+      } else if (additionalData && additionalData.profile !== RUN_OPTIONS.profile) {
+        // If a second instance is being opened with a different profile
+        return;
       } else if (process.platform !== 'darwin') {
         // deeplink case
         const url = argv.pop();
