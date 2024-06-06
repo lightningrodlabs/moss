@@ -35,6 +35,10 @@ export class EditDeveloperCollective extends LitElement {
   @query('#icon-file-picker')
   private _iconFilePicker!: HTMLInputElement;
 
+  firstUpdated() {
+    this._iconSrc = this.developerCollectiveEntity.record.entry.icon;
+  }
+
   onIconUploaded() {
     if (this._iconFilePicker.files && this._iconFilePicker.files[0]) {
       const reader = new FileReader();
@@ -164,27 +168,31 @@ export class EditDeveloperCollective extends LitElement {
                 }
               }}
               style="margin-bottom: 8px;"
+              value=${this.developerCollectiveEntity.record.entry.name}
             ></sl-input>
             <sl-input
               name="collective_website"
               .placeholder=${msg('Website')}
               style="margin-bottom: 8px;"
+              value=${this.developerCollectiveEntity.record.entry.website}
             ></sl-input>
             <sl-input
               name="collective_contact"
               .placeholder=${msg('Contact')}
               style="margin-bottom: 8px;"
+              value=${this.developerCollectiveEntity.record.entry.contact}
             ></sl-input>
             <sl-textarea
               name="collective_description"
               .placeholder=${msg('Description')}
               style="margin-bottom: 8px;"
+              value=${this.developerCollectiveEntity.record.entry.description}
             ></sl-textarea>
             <div class="row">
               <sl-button
                 variant="danger"
-                style="margin-top: 20px;"
-                @click=${this.dispatchEvent(new CustomEvent('cancel-edit'))}
+                style="margin-top: 20px; margin-right: 10px;"
+                @click=${() => this.dispatchEvent(new CustomEvent('cancel-edit'))}
               >
                 ${msg('Cancel')}
               </sl-button>
@@ -194,7 +202,7 @@ export class EditDeveloperCollective extends LitElement {
                 .loading=${this._updatingCollective}
                 style="margin-top: 20px;"
               >
-                ${msg('Create')}
+                ${msg('Update')}
               </sl-button>
             </div>
           </div>

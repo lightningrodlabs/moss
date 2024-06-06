@@ -25,7 +25,7 @@ import {
   Tool,
   UpdateableEntity,
 } from '../../tools-library/types.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, pipe } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
 enum PageView {
@@ -105,7 +105,12 @@ export class DeveloperCollectiveView extends LitElement {
   _developerCollective = new StoreSubscriber(
     this,
     () =>
-      this.mossStore.toolsLibraryStore.allDeveloperCollectives.get(this.developerCollectiveHash),
+      pipe(this.mossStore.toolsLibraryStore.myDeveloperCollectives, (collectives) =>
+        collectives.find(
+          (collective) =>
+            collective.originalActionHash.toString() === this.developerCollectiveHash.toString(),
+        ),
+      ),
     () => [this.developerCollectiveHash],
   );
 
@@ -303,7 +308,6 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
           <button
             style="height: 25px; margin-left: 30px;"
             @click=${() => {
-              console.log('CLICKED.');
               this.view = PageView.UpdatePublisher;
             }}
           >
@@ -397,6 +401,7 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
                     this.view = PageView.Main;
                   }}
                   @developer-collective-updated=${() => {
+                    this.mossStore.toolsLibraryStore.myDeveloperCollectives.reload();
                     this.view = PageView.Main;
                   }}
                 >
