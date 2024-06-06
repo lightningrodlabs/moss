@@ -266,8 +266,13 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
         return html`
           <div class="row" style="display: flex; flex: 1;">
             <div class="sidebar">${this.renderSidebar()}</div>
-            <div class="column" style="flex: 1; position: relative; margin: 0;">
-              ${this.renderContent()}
+            <div class="flex-scrollable-parent" style="flex: 1;">
+              <div class="flex-scrollable-container" style="display: flex; flex: 1;">
+                <div class="flex-scrollable-y" style="display: flex; flex: 1;">
+                  <!-- <div class="column" style="flex: 1; position: relative; margin: 0;"> -->
+                  ${this.renderContent()}
+                </div>
+              </div>
             </div>
           </div>
         `;

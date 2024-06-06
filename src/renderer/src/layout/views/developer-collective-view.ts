@@ -7,12 +7,12 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
 import './publish-tool.js';
 import './update-tool.js';
+import './edit-developer-collective.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -123,33 +123,6 @@ export class DeveloperCollectiveView extends LitElement {
       };
       reader.readAsDataURL(this._iconFilePicker.files[0]);
     }
-  }
-
-  async createDeveloperCollective(fields: { collective_name: string; collective_website: string }) {
-    if (!this._iconSrc) {
-      notifyError('No Icon provided.');
-      throw new Error('Icon is required.');
-    }
-    this._creatingCollective = true;
-    const payload: DeveloperCollective = {
-      name: fields.collective_name,
-      description: 'unknown',
-      website: fields.collective_website,
-      contact: 'unknown',
-      icon: this._iconSrc,
-      meta_data: undefined,
-    };
-    const developerCollectiveRecord =
-      await this.mossStore.toolsLibraryStore.toolsLibraryClient.createDeveloperCollective(payload);
-    this._creatingCollective = false;
-    this._iconSrc = undefined;
-    this.dispatchEvent(
-      new CustomEvent('developer-collective-created', {
-        detail: developerCollectiveRecord,
-        bubbles: true,
-        composed: true,
-      }),
-    );
   }
 
   async deprecateTool(_entity: UpdateableEntity<Tool>): Promise<void> {
@@ -325,7 +298,18 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
             src=${developerCollective.record.entry.icon}
           />
         </div>
-        <h1>${developerCollective.record.entry.name}</h1>
+        <div class="row" style="align-items: center;">
+          <h1>${developerCollective.record.entry.name}</h1>
+          <button
+            style="height: 25px; margin-left: 30px;"
+            @click=${() => {
+              console.log('CLICKED.');
+              this.view = PageView.UpdatePublisher;
+            }}
+          >
+            ${msg('Edit')}
+          </button>
+        </div>
         <div class="row tab-bar" style="align-items: center;">
           <div
             tabindex="0"
@@ -390,6 +374,33 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
             return html`
               <div class="column flex-scrollable-y" style="flex: 1; padding-top: 50px;">
                 ${this.renderContent(this._developerCollective.value.value)}
+              </div>
+            `;
+        }
+      case PageView.UpdatePublisher:
+        switch (this._developerCollective.value.status) {
+          case 'pending':
+            return html`loading...`;
+          case 'error':
+            console.error(
+              'Failed to get developer collective: ',
+              this._developerCollective.value.error,
+            );
+            return html`Failed to get developer collective: ${this._developerCollective.value.error}`;
+          case 'complete':
+            console.log('Hello');
+            return html`
+              <div class="column flex-scrollable-y" style="flex: 1; padding-top: 50px;">
+                <edit-developer-collective
+                  .developerCollectiveEntity=${this._developerCollective.value.value}
+                  @cancel-edit=${() => {
+                    this.view = PageView.Main;
+                  }}
+                  @developer-collective-updated=${() => {
+                    this.view = PageView.Main;
+                  }}
+                >
+                </edit-developer-collective>
               </div>
             `;
         }

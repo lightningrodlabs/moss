@@ -1,7 +1,7 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, notifyError, onSubmit } from '@holochain-open-dev/elements';
+import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -15,28 +15,22 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { consume } from '@lit/context';
 import { resizeAndExport } from '../../utils.js';
-import { DeveloperCollective } from '../../tools-library/types.js';
+import { DeveloperCollective, UpdateableEntity } from '../../tools-library/types.js';
 
 @localized()
-@customElement('create-developer-collective')
-export class CreateDeveloperCollective extends LitElement {
+@customElement('edit-developer-collective')
+export class EditDeveloperCollective extends LitElement {
   @consume({ context: mossStoreContext })
   mossStore!: MossStore;
+
+  @property()
+  developerCollectiveEntity!: UpdateableEntity<DeveloperCollective>;
 
   @state()
   _iconSrc: string | undefined;
 
   @state()
-  _creatingCollective = false;
-
-  @state()
-  _updatingPublisher = false;
-
-  @state()
-  _publishing: string | undefined = undefined;
-
-  @state()
-  _updating: string | undefined = undefined;
+  _updatingCollective = false;
 
   @query('#icon-file-picker')
   private _iconFilePicker!: HTMLInputElement;
@@ -57,7 +51,7 @@ export class CreateDeveloperCollective extends LitElement {
     }
   }
 
-  async createDeveloperCollective(fields: {
+  async updateDeveloperCollective(fields: {
     collective_name: string;
     collective_website?: string;
     collective_contact?: string;
@@ -83,8 +77,8 @@ export class CreateDeveloperCollective extends LitElement {
       notifyError('Contact information is too long (max 300 chars.).');
       throw new Error('Contact information is too long (max 300 chars.).');
     }
-    this._creatingCollective = true;
-    const payload: DeveloperCollective = {
+    this._updatingCollective = true;
+    const updatedDeveloperCollective: DeveloperCollective = {
       name: fields.collective_name,
       description: fields.collective_description,
       website: fields.collective_website,
@@ -93,29 +87,33 @@ export class CreateDeveloperCollective extends LitElement {
       meta_data: undefined,
     };
     const developerCollectiveRecord =
-      await this.mossStore.toolsLibraryStore.toolsLibraryClient.createDeveloperCollective(payload);
-    this._creatingCollective = false;
+      await this.mossStore.toolsLibraryStore.toolsLibraryClient.updateDeveloperCollective({
+        original_developer_collective_hash: this.developerCollectiveEntity.originalActionHash,
+        previous_developer_collective_hash: this.developerCollectiveEntity.record.actionHash,
+        updated_developer_collective: updatedDeveloperCollective,
+      });
+    this._updatingCollective = false;
     this._iconSrc = undefined;
     this.dispatchEvent(
-      new CustomEvent('developer-collective-created', {
+      new CustomEvent('developer-collective-updated', {
         detail: developerCollectiveRecord,
         bubbles: true,
         composed: true,
       }),
     );
-    console.log('Developer collective created: ', developerCollectiveRecord.entry);
+    console.log('Developer collective updated: ', developerCollectiveRecord.entry);
   }
 
   render() {
     return html`
       <div class="column" style="margin: 16px; flex: 1; align-items: center;">
         <div class="title" style="margin-bottom: 50px; margin-top: 30px;">
-          ${msg('Create New Developer Collective')}
+          ${msg('Edit Developer Collective')}
         </div>
         <form
           id="form"
           ${onSubmit(async (fields) => {
-            await this.createDeveloperCollective(fields);
+            await this.updateDeveloperCollective(fields);
           })}
         >
           <div class="column" style="align-items: center;">
@@ -182,14 +180,23 @@ export class CreateDeveloperCollective extends LitElement {
               .placeholder=${msg('Description')}
               style="margin-bottom: 8px;"
             ></sl-textarea>
-            <sl-button
-              variant="primary"
-              type="submit"
-              .loading=${this._creatingCollective}
-              style="margin-top: 20px;"
-            >
-              ${msg('Create')}
-            </sl-button>
+            <div class="row">
+              <sl-button
+                variant="danger"
+                style="margin-top: 20px;"
+                @click=${this.dispatchEvent(new CustomEvent('cancel-edit'))}
+              >
+                ${msg('Cancel')}
+              </sl-button>
+              <sl-button
+                variant="primary"
+                type="submit"
+                .loading=${this._updatingCollective}
+                style="margin-top: 20px;"
+              >
+                ${msg('Create')}
+              </sl-button>
+            </div>
           </div>
         </form>
       </div>

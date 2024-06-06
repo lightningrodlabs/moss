@@ -60,7 +60,7 @@ export class ToolPublisherDetail extends LitElement {
                   ></span
                 >
               `
-            : html`<span>(no website)</span>`}
+            : html`<span>N/A</span>`}
         </div>
         <div class="row" style="align-items: center; margin-top: 8px;">
           <sl-icon
@@ -70,7 +70,7 @@ export class ToolPublisherDetail extends LitElement {
           <span style="margin-right: 10px;">${msg('Contact')}:</span>
           ${publisher.record.entry.contact && publisher.record.entry.contact !== ''
             ? html` <span>${publisher.record.entry.contact}</span> `
-            : html`<span>(no contact information)</span>`}
+            : html`<span>N/A</span>`}
         </div>
       </div>
     `;

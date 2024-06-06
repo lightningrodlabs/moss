@@ -3,9 +3,9 @@ import { ActionHash, AgentPubKey } from '@holochain/client';
 
 export type DeveloperCollective = {
   name: string;
-  description: string;
-  website: string;
-  contact: string;
+  description?: string;
+  website?: string;
+  contact?: string;
   icon: string;
   meta_data: string | undefined;
 };
