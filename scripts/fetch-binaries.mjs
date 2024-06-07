@@ -27,7 +27,7 @@ const lairBinaryFilename = `lair-keystore-v${mossConfig.lairVersion}-${mossConfi
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
-function downloadHolochainBinary() {
+async function downloadHolochainBinary() {
   const holochainBinaryRemoteFilename = holochainRemoteFilenames[process.platform];
   const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochainVersion}/${holochainBinaryRemoteFilename}`;
 
@@ -60,7 +60,7 @@ function downloadHolochainBinary() {
     });
 }
 
-function downloadLairBinary() {
+async function downloadLairBinary() {
   const lairBinaryRemoteFilename = lairRemoteFilenames[process.platform];
   const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lairVersion}/${lairBinaryRemoteFilename}`;
 
@@ -93,5 +93,5 @@ function downloadLairBinary() {
     });
 }
 
-downloadHolochainBinary();
-downloadLairBinary();
+await downloadHolochainBinary();
+await downloadLairBinary();
