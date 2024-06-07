@@ -232,7 +232,7 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
       ${this.renderMyDeveloperCollectives()} ${this.renderDeveloperCollectivesWithPermission()}
       <div
         tabindex="0"
-        class="sidebar-btn"
+        class="sidebar-btn ${this.view === PageView.CreateDeveloperCollective ? 'selected' : ''}"
         style="margin-top: 30px;"
         @click=${() => {
           this._selectedDeveloperCollective = undefined;
