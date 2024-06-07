@@ -368,6 +368,30 @@ export class GroupHome extends LitElement {
     this.requestUpdate();
   }
 
+  newAppletsAvailable(): number {
+    if (this._unjoinedApplets.value.status === 'complete') {
+      const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
+        encodeHashToBase64(this.groupStore.groupDnaHash),
+      );
+      const filteredApplets = this._unjoinedApplets.value.value
+        .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
+        .map(([appletHash, appletEntry, toolBundle, agentKey, timestamp, joinedMembers]) => ({
+          appletHash,
+          appletEntry,
+          toolBundle,
+          agentKey,
+          timestamp,
+          joinedMembers,
+          isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
+        }))
+        .filter((info) => !!info.toolBundle) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
+        .filter((info) => (info.isIgnored ? false : true));
+
+      return filteredApplets.length;
+    }
+    return 0;
+  }
+
   renderNewApplets() {
     switch (this._unjoinedApplets.value.status) {
       // TODO handle loading and error case nicely
@@ -411,6 +435,7 @@ export class GroupHome extends LitElement {
               @input=${() => this.toggleIgnoredApplets()}
               id="show-ignored-applets-checkbox"
               type="checkbox"
+              .checked=${this._showIgnoredApplets}
             />
             <span>${msg('Show ignored Tools')}</span>
           </div>
@@ -700,6 +725,7 @@ export class GroupHome extends LitElement {
             <div
               tabindex="0"
               class="row tab ${this._selectedTab === 'unjoined tools' ? 'tab-selected' : ''}"
+              style="position: relative;"
               @click=${() => {
                 this._selectedTab = 'unjoined tools';
               }}
@@ -707,6 +733,15 @@ export class GroupHome extends LitElement {
                 if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'unjoined tools';
               }}
             >
+              ${this.newAppletsAvailable()
+                ? html`<div
+                    class="row center-content indicator ${this.newAppletsAvailable() > 9
+                      ? 'padded'
+                      : ''}"
+                  >
+                    ${this.newAppletsAvailable()}
+                  </div>`
+                : html``}
               ${msg('Unjoined Tools')}
             </div>
           </div>
@@ -1131,6 +1166,24 @@ export class GroupHome extends LitElement {
         background: #1e3b25;
         border-radius: 5px;
         box-shadow: 1px 1px 6px 0px #223607;
+      }
+
+      .indicator {
+        position: absolute;
+        text-align: center;
+        color: black;
+        font-weight: bold;
+        font-size: 1.05rem;
+        top: 7px;
+        right: 9px;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background: #fcee2d;
+      }
+
+      .padded {
+        padding: 0 4px;
       }
     `,
   ];
