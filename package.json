@@ -35,7 +35,7 @@
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "prepare:default-apps": "yarn prepare:group-happ && yarn fetch:default-apps",
     "fetch:default-apps": "node ./scripts/fetch-default-apps.mjs",
-    "fetch:group-app": "node ./scripts/fetch-group-app.mjs",
+    "fetch:group-happ": "node ./scripts/fetch-group-app.mjs",
     "prepare:group-happ": "yarn build:group-happ && cp ./workdir/group.happ resources/default-apps/",
     "build:group-happ": "yarn build:zomes && hc app pack ./workdir --recursive",
     "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
