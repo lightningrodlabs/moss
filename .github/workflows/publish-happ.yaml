@@ -38,6 +38,7 @@ jobs:
       - name: Retrieve version
         run: |
           echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "HOLOCHAIN_VERSION=$(cat moss.config.json | grep -oP '(?<="holochainVersion": ")[^"]*')" >> $GITHUB_OUTPUT
         id: version
 
       - id: create-release
@@ -46,7 +47,7 @@ jobs:
           allowUpdates: true
           artifacts: 'workdir/group.happ'
           body: 'See assets below to download and install this version.'
-          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-holochain-0.4.0-dev.6
+          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-${{ steps.version.outputs.HOLOCHAIN_VERSION }}
           tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           draft: true

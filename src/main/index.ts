@@ -182,52 +182,58 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
-// Single instance and deep link logic
-// ------------------------------------------------------------------------------------------
-const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
-
 let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
-if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
-  app.quit();
-} else {
-  // https://github.com/electron/electron/issues/40173
-  if (process.platform !== 'darwin') {
-    CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.12://'));
-  }
+if (app.isPackaged) {
+  // Single instance and deep link logic
+  // ------------------------------------------------------------------------------------------
+  const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
-  app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
-    // non-deeplink case (i.e. additionalData is defined)
-    if (additionalData && additionalData.profile === RUN_OPTIONS.profile) {
-      if (SPLASH_SCREEN_WINDOW) {
-        SPLASH_SCREEN_WINDOW.show();
-      } else {
-        MAIN_WINDOW = createOrShowMainWindow();
-      }
-    } else if (process.platform !== 'darwin') {
-      // deeplink case
-      const url = argv.pop();
-      if (MAIN_WINDOW) {
-        // main window is already open
-        createOrShowMainWindow();
-        emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
-      } else {
-        CACHED_DEEP_LINK = url;
-      }
+  if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
+    app.quit();
+  } else {
+    // https://github.com/electron/electron/issues/40173
+    if (process.platform !== 'darwin') {
+      CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.12://'));
     }
-  });
 
-  if (process.platform === 'darwin') {
-    app.on('open-url', (_event, url) => {
-      if (MAIN_WINDOW) {
-        createOrShowMainWindow();
-        emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
-      } else {
-        CACHED_DEEP_LINK = url;
+    app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
+      // non-deeplink case (i.e. additionalData is defined)
+      if (additionalData && additionalData.profile === RUN_OPTIONS.profile) {
+        if (SPLASH_SCREEN_WINDOW) {
+          SPLASH_SCREEN_WINDOW.show();
+        } else {
+          MAIN_WINDOW = createOrShowMainWindow();
+        }
+      } else if (additionalData && additionalData.profile !== RUN_OPTIONS.profile) {
+        // If a second instance is being opened with a different profile
+        return;
+      } else if (process.platform !== 'darwin') {
+        // deeplink case
+        const url = argv.pop();
+        if (MAIN_WINDOW) {
+          // main window is already open
+          createOrShowMainWindow();
+          emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
+        } else {
+          CACHED_DEEP_LINK = url;
+        }
       }
     });
+
+    if (process.platform === 'darwin') {
+      app.on('open-url', (_event, url) => {
+        if (MAIN_WINDOW) {
+          createOrShowMainWindow();
+          emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
+        } else {
+          CACHED_DEEP_LINK = url;
+        }
+      });
+    }
   }
 }
+
 // ------------------------------------------------------------------------------------------
 
 if (RUN_OPTIONS.devInfo) {
