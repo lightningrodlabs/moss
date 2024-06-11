@@ -22,4 +22,4 @@ function downloadFile(url, targetDir, fileName) {
 }
 
 downloadFile(toolsLibraryUrl, targetDir, 'tools-library.happ');
-downloadFile(kandoUrl, targetDir, 'kando.happ');
+downloadFile(kandoUrl, targetDir, 'kando.webhapp');
