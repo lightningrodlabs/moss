@@ -102,4 +102,4 @@ jobs:
           # Overwrite the latest.yml one with one containing the sha512 of the code signed .exe file
           node ./scripts/latest-yaml.js
           gh release upload "latest.yml" "latest.yml" --clobber
-          gh release upload "we-alpha-v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.12-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
