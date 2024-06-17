@@ -9,9 +9,9 @@ members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
 resolver = "2"
 
 [workspace.dependencies]
-hdi = { workspace = true }
-hdk = { workspace = true }
-holochain = { workspace = true }
+hdi = "0.4.1"
+hdk = "0.3.1"
+holochain = "0.3.1"
 serde = "1"
 
 [workspace.dependencies.posts]
