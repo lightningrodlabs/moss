@@ -14,7 +14,7 @@ const holochainRemoteFilenames = {
   linux: `holochain-v${mossConfig.holochainVersion}-x86_64-unknown-linux-gnu`,
 };
 
-const holochainBinaryFilename = `holochain-v${mossConfig.holochainVersion}${
+const holochainBinaryFilename = `holochain-v${mossConfig.holochainVersion}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
@@ -24,7 +24,7 @@ const lairRemoteFilenames = {
   linux: `lair-keystore-v${mossConfig.lairVersion}-x86_64-unknown-linux-gnu`,
 };
 
-const lairBinaryFilename = `lair-keystore-v${mossConfig.lairVersion}${
+const lairBinaryFilename = `lair-keystore-v${mossConfig.lairVersion}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
