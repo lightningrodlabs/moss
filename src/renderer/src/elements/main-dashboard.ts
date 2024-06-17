@@ -570,7 +570,17 @@ export class MainDashboard extends LitElement {
       const updateFeed = await response.json();
       this._updateFeed = updateFeed['0.12.x'];
     } catch (e) {
-      console.warn('Failed to fetch update feed: ', e);
+      // Fetch Moss update feed
+      try {
+        // TODO change URL to point to main branch before merging
+        const response = await fetch(
+          'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
+        );
+        const updateFeed = await response.json();
+        this._updateFeed = updateFeed['0.12.x'];
+      } catch (e) {
+        console.warn('Failed to fetch update feed: ', e);
+      }
     }
   }
 
