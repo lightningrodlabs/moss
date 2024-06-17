@@ -565,7 +565,7 @@ export class MainDashboard extends LitElement {
     try {
       // TODO change URL to point to main branch before merging
       const response = await fetch(
-        'https://raw.githubusercontent.com/lightningrodlabs/we/main/news.json',
+        'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
       );
       const updateFeed = await response.json();
       this._updateFeed = updateFeed['0.12.x'];
@@ -574,7 +574,7 @@ export class MainDashboard extends LitElement {
       try {
         // TODO change URL to point to main branch before merging
         const response = await fetch(
-          'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
+          'https://raw.githubusercontent.com/lightningrodlabs/we/main/news.json',
         );
         const updateFeed = await response.json();
         this._updateFeed = updateFeed['0.12.x'];
