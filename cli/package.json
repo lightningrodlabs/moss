@@ -1,6 +1,6 @@
 {
   "name": "@lightningrodlabs/we-dev-cli",
-  "version": "0.12.0-dev.4",
+  "version": "0.12.0-dev.5",
   "description": "CLI to run We applets in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -20,7 +20,7 @@
     "@holochain/client": "0.18.0-dev.1",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@lightningrodlabs/we-applet": "0.17.0-dev.3",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.6",
+    "@lightningrodlabs/we-rust-utils": "0.300.1",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
