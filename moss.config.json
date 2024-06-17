@@ -3,6 +3,6 @@
   "lairVersion": "0.4.4",
   "groupHappVersion": "0.12.0-dev.5",
   "toolsLibraryVersion": "0.0.5",
-  "kandoVersion": "0.10.0-dev1",
+  "kandoVersion": "0.10.0",
   "binariesAppendix": "moss-0.12"
 }
