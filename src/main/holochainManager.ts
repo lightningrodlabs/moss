@@ -57,6 +57,7 @@ export class HolochainManager {
     signalingUrl: string,
     rustLog?: string,
     wasmLog?: string,
+    netAudit?: string,
   ): Promise<HolochainManager> {
     const adminPort = process.env.ADMIN_PORT
       ? parseInt(process.env.ADMIN_PORT, 10)
@@ -87,6 +88,7 @@ export class HolochainManager {
             // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
             'kitsune_p2p::spawn::actor::discover=error',
         WASM_LOG: wasmLog ? wasmLog : 'warn',
+        NETAUDIT: netAudit ? netAudit : 'warn',
       },
     });
     conductorHandle.stdin.write(password);

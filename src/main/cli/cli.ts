@@ -44,6 +44,7 @@ export interface CliOpts {
   holochainPath?: string | undefined;
   holochainRustLog?: string | undefined;
   holochainWasmLog?: string | undefined;
+  holochainNetaudit?: string | undefined;
   lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
@@ -60,6 +61,7 @@ export interface RunOptions {
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
   holochainWasmLog: string | undefined;
+  holochainNetaudit: string | undefined;
   lairRustLog: string | undefined;
   printHolochainLogs: boolean;
 }
@@ -109,6 +111,9 @@ export function validateArgs(args: CliOpts): RunOptions {
   }
   if (args.holochainWasmLog && typeof args.holochainWasmLog !== 'string') {
     throw new Error('The --holochain-wasm-log argument must be of type string.');
+  }
+  if (args.holochainNetaudit && typeof args.holochainNetaudit !== 'string') {
+    throw new Error('The --holochain-netaudit argument must be of type string.');
   }
   if (args.lairRustLog && typeof args.lairRustLog !== 'string') {
     throw new Error('The --lair-rust-log argument must be of type string.');
@@ -160,6 +165,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
     holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
+    holochainNetaudit: args.holochainNetaudit ? args.holochainNetaudit : undefined,
     lairRustLog: args.lairRustLog ? args.lairRustLog : undefined,
     printHolochainLogs: args.printHolochainLogs ? true : false,
   };

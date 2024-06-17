@@ -82,6 +82,7 @@ export async function launch(
     runOptions.signalingUrl!,
     runOptions.holochainRustLog,
     runOptions.holochainWasmLog,
+    runOptions.holochainNetaudit,
   );
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;

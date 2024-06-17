@@ -110,6 +110,7 @@ weCli
   )
   .option('--holochain-rust-log <string>', 'RUST_LOG value to pass to the holochain binary')
   .option('--holochain-wasm-log <string>', 'WASM_LOG value to pass to the holochain binary')
+  .option('--holochain-netaudit <string>', 'NETAUDIT value to pass to the holochain binary')
   .option('--lair-rust-log <string>', 'RUST_LOG value to pass to the lair keystore binary')
   .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
   .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
