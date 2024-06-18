@@ -105,12 +105,7 @@ export class DeveloperCollectiveView extends LitElement {
   _developerCollective = new StoreSubscriber(
     this,
     () =>
-      pipe(this.mossStore.toolsLibraryStore.myDeveloperCollectives, (collectives) =>
-        collectives.find(
-          (collective) =>
-            collective.originalActionHash.toString() === this.developerCollectiveHash.toString(),
-        ),
-      ),
+      this.mossStore.toolsLibraryStore.allDeveloperCollectives.get(this.developerCollectiveHash),
     () => [this.developerCollectiveHash],
   );
 
