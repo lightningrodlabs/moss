@@ -42,6 +42,8 @@ async function downloadHolochainBinary() {
         https.get(redirectUrl, (redirectResponse) => {
           redirectResponse.pipe(file);
         });
+      } else if (response.statusCode === 404) {
+        throw new Error('No binary found at the given URL');
       } else {
         response.pipe(file);
       }
@@ -75,6 +77,8 @@ async function downloadLairBinary() {
         https.get(redirectUrl, (redirectResponse) => {
           redirectResponse.pipe(file);
         });
+      } else if (response.statusCode === 404) {
+        throw new Error('No binary found at the given URL');
       } else {
         response.pipe(file);
       }
