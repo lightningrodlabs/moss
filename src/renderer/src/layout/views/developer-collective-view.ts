@@ -7,6 +7,7 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
@@ -23,9 +24,11 @@ import {
   ContributorPermission,
   DeveloperCollective,
   Tool,
+  UpdateToolInput,
   UpdateableEntity,
+  UpdatedTool,
 } from '../../tools-library/types.js';
-import { StoreSubscriber, pipe } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
 enum PageView {
@@ -94,13 +97,25 @@ export class DeveloperCollectiveView extends LitElement {
   _updating: string | undefined = undefined;
 
   @state()
+  _deprecating = false;
+
+  @state()
   _selectedTool: UpdateableEntity<Tool> | undefined;
+
+  @state()
+  _toolToDeprecate: UpdateableEntity<Tool> | undefined;
 
   @state()
   _expirySelected: boolean = false;
 
   @query('#publisher-icon-file-picker')
   private _iconFilePicker!: HTMLInputElement;
+
+  @query('#deprecation-dialog')
+  _deprecationDialog: SlDialog | undefined;
+
+  @query('#deprecation-input')
+  _deprecationInput: HTMLInputElement | undefined;
 
   _developerCollective = new StoreSubscriber(
     this,
@@ -125,8 +140,69 @@ export class DeveloperCollectiveView extends LitElement {
     }
   }
 
-  async deprecateTool(_entity: UpdateableEntity<Tool>): Promise<void> {
-    // TODO
+  async deprecateTool(): Promise<void> {
+    if (!this._toolToDeprecate) {
+      notifyError(msg('Tool to deprecate is undefined.'));
+      throw new Error('Tool to deprecate is undefined.');
+    }
+    if (!this._deprecationInput) {
+      notifyError(msg('Deprecation reason must not be'));
+      throw new Error('Tool to deprecate is undefined.');
+    }
+    if (this._deprecationInput && !this._deprecationInput.value) {
+      notifyError(msg('Deprecation reason must not be empty.'));
+      throw new Error('Deprecation reason must not be empty.');
+    }
+    this._deprecating = true;
+
+    let permissionHash;
+    try {
+      permissionHash = await this.mossStore.toolsLibraryStore.toolsLibraryClient.getMyPermission(
+        this.developerCollectiveHash,
+      );
+    } catch (e) {
+      this._deprecating = false;
+      notifyError(`Failed to get permission status: ${e}`);
+      this._publishing = undefined;
+      throw new Error(`Failed to get my permission status: ${e}`);
+    }
+
+    const tool = this._toolToDeprecate.record.entry;
+
+    const updatedTool: UpdatedTool = {
+      permission_hash: permissionHash,
+      title: tool.title,
+      subtitle: tool.subtitle,
+      description: tool.description,
+      icon: tool.icon,
+      version: tool.version,
+      hashes: tool.hashes,
+      source: tool.source,
+      changelog: tool.changelog,
+      meta_data: tool.meta_data,
+      deprecation: this._deprecationInput.value,
+    };
+    const updateEntityInput: UpdateToolInput = {
+      original_tool_hash: this._toolToDeprecate.originalActionHash,
+      previous_tool_hash: this._toolToDeprecate.record.actionHash,
+      updated_tool: updatedTool,
+    };
+    try {
+      console.log('deprecation tool.');
+      await this.mossStore.toolsLibraryStore.toolsLibraryClient.updateTool(updateEntityInput);
+    } catch (e) {
+      this._deprecating = false;
+      notifyError(msg('Failed to deprecate tool (see Console for details).'));
+      throw e;
+    }
+    this._deprecating = false;
+    try {
+      this.allTools =
+        await this.mossStore.toolsLibraryStore.toolsLibraryClient.getToolsForDeveloperCollective(
+          this.developerCollectiveHash,
+        );
+    } catch (e) {}
+    this._deprecationDialog?.hide();
   }
 
   updateExpirySelectState() {
@@ -183,24 +259,34 @@ export class DeveloperCollectiveView extends LitElement {
     return html`
       ${this.allTools.map(
         (entity) =>
-          html`<sl-card class="applet-card">
+          html`<sl-card
+            class="applet-card"
+            style="${entity.record.entry.deprecation ? 'opacity: 0.7' : ''}"
+          >
             <div class="row" style="align-items: center; flex: 1;">
               <span>${entity.record.entry.title}</span>
+              ${entity.record.entry.deprecation
+                ? html`<span style="font-weight: bold; margin-left: 5px;">[DEPRECATED]</span>`
+                : html``}
               <span style="display: flex; flex: 1;"></span>
               <sl-button
+                ?disabled=${!!entity.record.entry.deprecation}
                 variant="danger"
                 style="margin-right: 10px;"
                 @click=${() => {
-                  this.deprecateTool(entity);
+                  this._toolToDeprecate = entity;
+                  this._deprecationDialog!.show();
                 }}
                 @keypress=${(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    this.deprecateTool(entity);
+                    this._toolToDeprecate = entity;
+                    this._deprecationDialog!.show();
                   }
                 }}
-                >Deprecate</sl-button
+                >${msg('Deprecate')}</sl-button
               >
               <sl-button
+                ?disabled=${!!entity.record.entry.deprecation}
                 @click=${() => {
                   console.log('toolEntity.content.source: ', entity.record.entry.source);
                   this._selectedTool = entity;
@@ -371,6 +457,29 @@ ${encodeHashToBase64(permission.entry.for_agent)}</pre
             return html`Failed to get developer collective: ${this._developerCollective.value.error}`;
           case 'complete':
             return html`
+              <sl-dialog
+                label="Deprecate Tool"
+                id="deprecation-dialog"
+                @sl-hide=${() => {
+                  if (this._deprecationInput) {
+                    this._deprecationInput.value = '';
+                  }
+                  this._toolToDeprecate = undefined;
+                }}
+              >
+                <sl-input
+                  id="deprecation-input"
+                  autofocus
+                  placeholder="Deprecation reason"
+                ></sl-input>
+                <sl-button
+                  ?loading=${this._deprecating}
+                  @click=${() => this.deprecateTool()}
+                  slot="footer"
+                  variant="danger"
+                  >Deprecate</sl-button
+                >
+              </sl-dialog>
               <div class="column flex-scrollable-y" style="flex: 1; padding-top: 50px;">
                 ${this.renderContent(this._developerCollective.value.value)}
               </div>
