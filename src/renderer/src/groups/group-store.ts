@@ -116,6 +116,25 @@ export class GroupStore {
       await this.pingAgentsAndCleanPeerStatuses();
     });
 
+    // refetch profiles frequently in the beginning. Afterwards, AGENTS_REFETCH_FREQUENCY
+    // in combination with PING_AGENTS_FREQUENCY_MS will determine the frequency of
+    // re-fetching profiles
+    setTimeout(async () => {
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+    }, 5000);
+
+    setTimeout(async () => {
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+    }, 10000);
+
+    setTimeout(async () => {
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+    }, 20000);
+
+    setTimeout(async () => {
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+    }, 40000);
+
     setInterval(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
     }, PING_AGENTS_FREQUENCY_MS);
@@ -219,6 +238,7 @@ export class GroupStore {
         (agent) =>
           agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
       );
+      this._agentsRefetchCounter += 1;
       return agentsThatNeedPinging.length > 0
         ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
         : Promise.resolve();
