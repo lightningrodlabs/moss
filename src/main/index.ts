@@ -126,6 +126,12 @@ weCli
       '--agent-idx <number>',
       'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for. The agent with agentIdx 1 always needs to be run first.',
     ).argParser(parseInt),
+  )
+  .addOption(
+    new Option(
+      '--sync-time <number>',
+      'May be provided when running with the --dev-config option. Specifies the amount of time to wait for new tools to gossip after having installed a new group before checking for unjoined tools.',
+    ).argParser(parseInt),
   );
 
 weCli.parse();
