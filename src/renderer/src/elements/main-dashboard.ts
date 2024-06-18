@@ -11,7 +11,7 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
-import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
 import {
@@ -62,6 +62,7 @@ import {
   getAllIframes,
   invitePropsToPartialModifiers,
   logMossZomeCall,
+  progenitorFromProperties,
   stringifyWal,
 } from '../utils.js';
 import { dialogMessagebox, getAppVersion } from '../electron-api.js';
@@ -387,10 +388,13 @@ export class MainDashboard extends LitElement {
     const modifiers = invitePropsToPartialModifiers(inviteProps);
 
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupModifiers]) => groupModifiers.network_seed === modifiers.networkSeed,
+      ([_, groupModifiers]) =>
+        groupModifiers.network_seed === modifiers.networkSeed &&
+        progenitorFromProperties(groupModifiers.properties) === modifiers.progenitor,
     );
 
     if (alreadyJoinedGroup) {
+      notify(msg("You're already part of this group."));
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
       this.joinGroupDialog.open(modifiers);

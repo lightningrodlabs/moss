@@ -623,6 +623,11 @@ export function dateStr(timestamp: Timestamp) {
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }
 
+export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64 | null {
+  const groupDnaProperties = decode(properties) as GroupDnaProperties;
+  return groupDnaProperties.progenitor;
+}
+
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
   return `https://theweave.social/wal?weave-0.12://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;

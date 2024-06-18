@@ -467,13 +467,14 @@ async function installGroup(
   progenitor?: AgentPubKey,
 ): Promise<AppInfo> {
   const apps = await holochainManager.adminWebsocket.listApps({});
-  const hash = createHash('sha256');
-  hash.update(networkSeed);
-  const hashedSeed = hash.digest('base64');
-  const appId = `group#${hashedSeed}`;
   const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
+
+  const hash = createHash('sha256');
+  hash.update(networkSeed);
+  const hashedSeed = hash.digest('base64');
+  const appId = `group#${hashedSeed}#${progenitor ? encodeHashToBase64(appStoreAppInfo?.agent_pub_key) : null}`;
 
   const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
   const dnaPropertiesMap = progenitor
