@@ -54,6 +54,7 @@ import './group-applets-settings.js';
 import './stewards-settings.js';
 import './your-settings.js';
 import './looking-for-peers.js';
+import './edit-group-profile.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
@@ -928,6 +929,16 @@ export class GroupHome extends LitElement {
         tabs.splice(2, 0, [
           'Group Stewards',
           html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
+        ]);
+        tabs.push([
+          'Group Profile',
+          html`
+            <div class="column center-content" style="flex: 1;">
+              <edit-group-profile
+                style="background: white; padding: 20px; border-radius: 10px;"
+              ></edit-group-profile>
+            </div>
+          `,
         ]);
       }
     }
