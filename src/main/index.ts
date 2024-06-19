@@ -1038,8 +1038,12 @@ app.whenReady().then(async () => {
 
       if (!happAlreadyInstalled || !uiAlreadyInstalled) {
         // fetch webhapp from URL
-        console.log('Fetching happ/webhapp from URL: ', happOrWebHappUrl);
-        const response = await net.fetch(happOrWebHappUrl);
+        const fixedHappOrWebHappUrl = happOrWebHappUrl.startsWith('file://./')
+          ? `file://${process.cwd()}${happOrWebHappUrl.slice(8)}`
+          : happOrWebHappUrl;
+
+        console.log('Fetching happ/webhapp from URL: ', fixedHappOrWebHappUrl);
+        const response = await net.fetch(fixedHappOrWebHappUrl);
         const buffer = await response.arrayBuffer();
 
         const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
