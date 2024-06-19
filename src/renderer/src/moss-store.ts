@@ -838,7 +838,18 @@ export class MossStore {
     if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
       throw new Error(`Invalid applet source URL '${source.url}'`);
 
+    const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
+    if (appHashes.type !== 'webhapp')
+      throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+
+    if (
+      distributionInfo.type === 'tools-library' &&
+      distributionInfo.info.originalToolActionHash !==
+        encodeHashToBase64(toolEntity.originalActionHash)
+    )
+      throw new Error('Original ToolEntry action hash does not match the one in the AppletEntry');
 
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
@@ -847,9 +858,9 @@ export class MossStore {
       encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       source.url,
       distributionInfo,
-      applet.sha256_happ,
-      applet.sha256_ui,
-      applet.sha256_webhapp,
+      appHashes.happ.sha256,
+      appHashes.ui.sha256,
+      appHashes.sha256,
       toolEntity.record.entry.meta_data,
     );
 
