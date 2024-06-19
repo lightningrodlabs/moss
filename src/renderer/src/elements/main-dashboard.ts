@@ -26,6 +26,7 @@ import {
   OpenWalMode,
   WeaveLocation,
   weaveUrlToLocation,
+  weaveUrlFromWal,
 } from '@lightningrodlabs/we-applet';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -223,7 +224,7 @@ export class MainDashboard extends LitElement {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
     openWal: async (wal: WAL, mode?: OpenWalMode) => {
-      const tabId = stringifyWal(wal);
+      const tabId = weaveUrlFromWal(wal);
       try {
         const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
           wal.hrl,
@@ -432,19 +433,17 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async handleOpenHrl(wal: WAL) {
-    const hrl = wal.hrl;
-    const alreadyOpen = Object.values(this._openTabs).find(
-      (tabInfo) =>
-        tabInfo.tab.type === 'wal' && JSON.stringify(tabInfo.tab.wal) === JSON.stringify(wal),
-    );
+  async handleOpenWal(wal: WAL) {
+    const tabId = weaveUrlFromWal(wal);
+    const alreadyOpen = Object.values(this._openTabs).find((tabInfo) => tabInfo.id === tabId);
     if (alreadyOpen) {
       this.openTab(alreadyOpen);
       return;
     }
-    const tabId = `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
     try {
-      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(hrl);
+      const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
+        wal.hrl,
+      );
       const tabInfo: TabInfo = {
         id: tabId,
         tab: {
@@ -489,7 +488,7 @@ export class MainDashboard extends LitElement {
           notifyError('URL type not supported.');
           return;
         case 'asset':
-          return this.handleOpenHrl(weaveLocation.wal);
+          return this.handleOpenWal(weaveLocation.wal);
       }
     }
   }
@@ -530,7 +529,7 @@ export class MainDashboard extends LitElement {
         if (split2[0] === 'hrl') {
           const contextSplit = split2[2].split('?context=');
           console.log('contextSplit', contextSplit);
-          await this.handleOpenHrl({
+          await this.handleOpenWal({
             hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
             context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
           });
@@ -834,18 +833,22 @@ export class MainDashboard extends LitElement {
         </div>
       </div>`;
     }
-    return allOpenTabs.map((tab) => {
-      return html`
-        <div
-          class="column"
-          style="display: flex; flex: 1; ${this._selectedTab && this._selectedTab.id === tab.id
-            ? ''
-            : 'display: none;'}"
-        >
-          ${this.renderTabContent(tab)}
-        </div>
-      `;
-    });
+    return repeat(
+      allOpenTabs,
+      (tab) => tab.id,
+      (tab) => {
+        return html`
+          <div
+            class="column"
+            style="display: flex; flex: 1; ${this._selectedTab && this._selectedTab.id === tab.id
+              ? ''
+              : 'display: none;'}"
+          >
+            ${this.renderTabContent(tab)}
+          </div>
+        `;
+      },
+    );
   }
 
   renderTabContent(info: TabInfo) {
@@ -1056,7 +1059,7 @@ export class MainDashboard extends LitElement {
       <moss-pocket
         id="pocket"
         @click=${(e) => e.stopPropagation()}
-        @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
+        @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
         @open-creatable-panel=${() => this._creatablePanel.show()}
         @wal-selected=${(e) => {
@@ -1081,7 +1084,7 @@ export class MainDashboard extends LitElement {
       <creatable-panel
         id="creatable-panel"
         @click=${(e) => e.stopPropagation()}
-        @open-wal=${async (e) => await this.handleOpenHrl(e.detail.wal)}
+        @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @wal-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('wal-selected', {

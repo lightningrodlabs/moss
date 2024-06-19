@@ -310,7 +310,7 @@ export class WelcomeView extends LitElement {
               <div class="flex-scrollable-parent" style="width: 870px;">
                 <div class="flex-scrollable-container">
                   <div class="column flex-scrollable-y">
-                    ${this.updateFeed.length === 0
+                    ${!this.updateFeed || this.updateFeed.length === 0
                       ? html`No big waves lately...`
                       : this.updateFeed.map(
                           (message) => html`
