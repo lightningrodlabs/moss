@@ -17,6 +17,7 @@ function downloadFile(url, targetDir, fileName) {
     console.log(stderr);
     if (error !== null) {
       console.log('exec error: ' + error);
+      throw new Error('Failed to fetch resource.');
     }
   });
 }
