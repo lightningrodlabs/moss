@@ -31,8 +31,8 @@ export class TabGroup extends LitElement {
                 ${this.tabs.map(
                   (tab) =>
                     html` <div
-                      class="row tab ${this.selectedTab === tab ||
-                      (!this.selectedTab && tab === this.tabs[0])
+                      class="row tab ${(this.selectedTab && this.selectedTab[0] === tab[0]) ||
+                      (!this.selectedTab && tab[0] === this.tabs[0][0])
                         ? 'selected'
                         : ''}"
                       tabindex="0"

@@ -8,28 +8,40 @@ const mossConfig = JSON.parse(mossConfigJSON);
 const binariesDir = path.join('dist', 'main', 'resources', 'bins');
 fs.mkdirSync(binariesDir, { recursive: true });
 
-const holochainRemoteFilenames = {
-  win32: `holochain-v${mossConfig.holochainVersion}-x86_64-pc-windows-msvc.exe `,
-  darwin: `holochain-v${mossConfig.holochainVersion}-x86_64-apple-darwin `,
-  linux: `holochain-v${mossConfig.holochainVersion}-x86_64-unknown-linux-gnu`,
-};
+let targetEnding;
+switch (process.platform) {
+  case 'linux':
+    targetEnding = 'x86_64-unknown-linux-gnu';
+    break;
+  case 'win32':
+    targetEnding = 'x86_64-pc-windows-msvc.exe';
+    break;
+  case 'darwin':
+    switch (process.arch) {
+      case 'arm64':
+        targetEnding = 'aarch64-apple-darwin';
+        break;
+      case 'x64':
+        targetEnding = 'x86_64-apple-darwin';
+        break;
+      default:
+        throw new Error(`Got unexpected macOS architecture: ${process.arch}`);
+    }
+    break;
+  default:
+    throw new Error(`Got unexpected OS platform: ${process.platform}`);
+}
 
 const holochainBinaryFilename = `holochain-v${mossConfig.holochainVersion}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
-
-const lairRemoteFilenames = {
-  win32: `lair-keystore-v${mossConfig.lairVersion}-x86_64-pc-windows-msvc.exe `,
-  darwin: `lair-keystore-v${mossConfig.lairVersion}-x86_64-apple-darwin `,
-  linux: `lair-keystore-v${mossConfig.lairVersion}-x86_64-unknown-linux-gnu`,
-};
 
 const lairBinaryFilename = `lair-keystore-v${mossConfig.lairVersion}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
 function downloadHolochainBinary() {
-  const holochainBinaryRemoteFilename = holochainRemoteFilenames[process.platform];
+  const holochainBinaryRemoteFilename = `holochain-v${mossConfig.holochainVersion}-${targetEnding}`;
   const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochainVersion}/${holochainBinaryRemoteFilename}`;
 
   const destinationPath = path.join(binariesDir, holochainBinaryFilename);
@@ -62,7 +74,7 @@ function downloadHolochainBinary() {
 }
 
 function downloadLairBinary() {
-  const lairBinaryRemoteFilename = lairRemoteFilenames[process.platform];
+  const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lairVersion}-${targetEnding}`;
   const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lairVersion}/${lairBinaryRemoteFilename}`;
 
   const destinationPath = path.join(binariesDir, lairBinaryFilename);

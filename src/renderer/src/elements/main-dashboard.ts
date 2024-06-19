@@ -11,9 +11,14 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
-import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiMagnify, mdiViewGalleryOutline } from '@mdi/js';
+import {
+  mdiAccountLockOpen,
+  mdiAccountMultiplePlus,
+  mdiMagnify,
+  mdiViewGalleryOutline,
+} from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -29,6 +34,8 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
@@ -62,6 +69,7 @@ import {
   getAllIframes,
   invitePropsToPartialModifiers,
   logMossZomeCall,
+  progenitorFromProperties,
   stringifyWal,
 } from '../utils.js';
 import { dialogMessagebox, getAppVersion } from '../electron-api.js';
@@ -106,8 +114,14 @@ export class MainDashboard extends LitElement {
   @state()
   _mossStore!: MossStore;
 
-  @query('join-group-dialog')
+  @query('#join-group-dialog')
   joinGroupDialog!: JoinGroupDialog;
+
+  @query('#create-group-dialog')
+  createGroupDialog!: CreateGroupDialog;
+
+  @query('#add-group-dialog')
+  addGroupDialog!: SlDialog;
 
   @query('#pocket')
   _pocket!: MossPocket;
@@ -387,10 +401,13 @@ export class MainDashboard extends LitElement {
     const modifiers = invitePropsToPartialModifiers(inviteProps);
 
     const alreadyJoinedGroup = Array.from(groups.entries()).find(
-      ([_, groupModifiers]) => groupModifiers.network_seed === modifiers.networkSeed,
+      ([_, groupModifiers]) =>
+        groupModifiers.network_seed === modifiers.networkSeed &&
+        progenitorFromProperties(groupModifiers.properties) === modifiers.progenitor,
     );
 
     if (alreadyJoinedGroup) {
+      notify(msg("You're already part of this group."));
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
       this.joinGroupDialog.open(modifiers);
@@ -993,6 +1010,47 @@ export class MainDashboard extends LitElement {
     });
   }
 
+  renderAddGroupDialog() {
+    return html`
+      <sl-dialog id="add-group-dialog" label="${msg('Add Group')}">
+        <div class="row center-content" style="margin-bottom: 30px;">
+          <sl-button
+            style="margin: 0 5px;"
+            variant="primary"
+            @click=${(_e) => {
+              this.joinGroupDialog.open();
+              this.addGroupDialog.hide();
+            }}
+          >
+            <div class="row center-content" style="margin: 8px;">
+              <sl-icon
+                .src=${wrapPathInSvg(mdiAccountLockOpen)}
+                style="height: 40px; width: 40px; margin-right: 10px;"
+              ></sl-icon>
+              <span>${'Join Group'}</span>
+            </div>
+          </sl-button>
+          <sl-button
+            style="margin: 0 5px;"
+            variant="primary"
+            @click=${() => {
+              this.createGroupDialog.open();
+              this.addGroupDialog.hide();
+            }}
+          >
+            <div class="row center-content" style="margin: 8px;">
+              <sl-icon
+                .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
+                style="height: 40px; width: 40px; margin-right: 10px;"
+              ></sl-icon>
+              <span>${msg('Create Group')}</span>
+            </div>
+          </sl-button>
+        </div>
+      </sl-dialog>
+    `;
+  }
+
   render() {
     return html`
       <moss-pocket
@@ -1034,7 +1092,11 @@ export class MainDashboard extends LitElement {
           );
         }}
       ></creatable-panel>
+
+      ${this.renderAddGroupDialog()}
+
       <join-group-dialog
+        id="join-group-dialog"
         @group-joined=${(e) => this.openGroup(e.detail.groupDnaHash)}
       ></join-group-dialog>
 
@@ -1064,8 +1126,7 @@ export class MainDashboard extends LitElement {
               : ''}"
             @open-appstore=${() => this.openAppStore()}
             @open-publishing-view=${() => this.openPublishingView()}
-            @request-create-group=${() =>
-              (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
+            @request-create-group=${() => this.createGroupDialog.open()}
             @request-join-group=${(_e) => this.joinGroupDialog.open()}
             @applet-selected=${(e: CustomEvent) => {
               this.openViews.openAppletMain(e.detail.appletHash);
@@ -1188,8 +1249,8 @@ export class MainDashboard extends LitElement {
           @group-selected=${(e: CustomEvent) => {
             this.openGroup(e.detail.groupDnaHash);
           }}
-          @request-create-group=${() =>
-            (this.shadowRoot?.getElementById('create-group-dialog') as CreateGroupDialog).open()}
+          @request-add-group=${() =>
+            (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).show()}
           @agents-online=${async (e: CustomEvent) => {
             /// Only start applet iframes for groups where agents are actually online
             await this.activateAppletsForGroup(e.detail);
@@ -1402,6 +1463,10 @@ export class MainDashboard extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        sl-dialog {
+          --sl-panel-background-color: var(--sl-color-primary-0);
         }
 
         .hidden {

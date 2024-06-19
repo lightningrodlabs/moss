@@ -178,7 +178,7 @@ export class WelcomeView extends LitElement {
                 <span style="margin-left: 5px;">Disclaimer</span>
               </div>
             </div>
-            <div class="row" style="flex-wrap: wrap; margin-top: 60px;justify-content: center;">
+            <div class="row" style="flex-wrap: wrap; margin-top: 60px; justify-content: center;">
               <!-- Group section -->
               <div class="column button-section">
                 <div class="row" style="align-items: center; font-size: 30px;">

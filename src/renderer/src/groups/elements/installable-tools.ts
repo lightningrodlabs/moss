@@ -95,7 +95,13 @@ export class InstallableTools extends LitElement {
   }
 
   renderApplets(allApplets: Array<UpdateableEntity<Tool>>) {
-    const nonDeprecatedApplets = allApplets.filter((record) => !record.record.entry.deprecation);
+    const nonDeprecatedApplets = allApplets
+      .filter((record) => !record.record.entry.deprecation)
+      .sort(
+        (tool_a, tool_b) =>
+          tool_b.record.record.signed_action.hashed.content.timestamp -
+          tool_a.record.record.signed_action.hashed.content.timestamp,
+      );
     return html`
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"

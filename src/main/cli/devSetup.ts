@@ -182,9 +182,14 @@ export async function devSetup(
       const unjoinedApplets: Array<[EntryHash, Applet]> = [];
 
       if (!isCreatingAgent) {
+        // Wait 5 seconds to give some time for applets to gossip
+        console.log(
+          `Waiting ${config.syncTime} ms for tools to gossip... (this duration can be tweaked using the --sync-time argument)`,
+        );
+        await new Promise((res) => setTimeout(res, config.syncTime));
         // Get unjoined applets. This is best effort. If applets have not been gossiped over yet, the agent won't
         // be able to join them automatically
-        logDevSetup(`Fetching applets to join for group '${group.name}'...`);
+        logDevSetup(`Fetching tools to join for group '${group.name}'...`);
 
         // Look for unjoined applets
         const unjoinedAppletsArray: Array<[EntryHash, AgentPubKey, number]> =
@@ -196,7 +201,7 @@ export async function devSetup(
           });
         if (unjoinedApplets.length === 0) {
           logDevSetup(
-            'Found no applets to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
+            'Found no tools to join yet. Skipping...You will need to install them manually in the UI once they are gossiped over.',
           );
         }
 
@@ -462,13 +467,14 @@ async function installGroup(
   progenitor?: AgentPubKey,
 ): Promise<AppInfo> {
   const apps = await holochainManager.adminWebsocket.listApps({});
-  const hash = createHash('sha256');
-  hash.update(networkSeed);
-  const hashedSeed = hash.digest('base64');
-  const appId = `group#${hashedSeed}`;
   const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
   if (!appStoreAppInfo)
     throw new Error('Appstore must be installed before installing the first group.');
+
+  const hash = createHash('sha256');
+  hash.update(networkSeed);
+  const hashedSeed = hash.digest('base64');
+  const appId = `group#${hashedSeed}#${progenitor ? encodeHashToBase64(appStoreAppInfo?.agent_pub_key) : null}`;
 
   const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
   const dnaPropertiesMap = progenitor

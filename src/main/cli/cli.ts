@@ -33,6 +33,7 @@ export interface WeAppletDevInfo {
   tempDir: string;
   tempDirRoot: string;
   agentIdx: number;
+  syncTime: number;
 }
 
 export interface CliOpts {
@@ -40,6 +41,7 @@ export interface CliOpts {
   devConfig?: string | undefined;
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
+  syncTime?: number;
   networkSeed?: string | undefined;
   holochainPath?: string | undefined;
   holochainRustLog?: string | undefined;
@@ -65,12 +67,15 @@ export interface RunOptions {
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
+  // validate --profile argument
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
   if (args.profile && !allowedProfilePattern.test(args.profile)) {
     throw new Error(
       `The --profile argument may only contain digits (0-9), letters (a-z,A-Z) and dashes (-) but got '${args.profile}'`,
     );
   }
+
+  // validate --agent-idx argument
   if (args.agentIdx && !args.devConfig) {
     throw new Error(
       'The --agent-idx argument is only valid if a dev config file is passed as well via the --dev-config argument',
@@ -83,6 +88,20 @@ export function validateArgs(args: CliOpts): RunOptions {
     throw new Error('--agent-idx argument must be of type number.');
   if (args.devConfig && !args.agentIdx)
     console.warn('[WARNING]: --agent-idx was argument not explicitly provided. Defaulting to "1".');
+
+  // validate --sync-time argument
+  if (args.syncTime && !args.devConfig) {
+    throw new Error(
+      'The --sync-time argument is only valid if a dev config file is passed as well via the --dev-config argument',
+    );
+  }
+  if (
+    typeof args.syncTime !== 'undefined' &&
+    (typeof args.syncTime !== 'number' || isNaN(args.syncTime))
+  )
+    throw new Error('--sync-time argument must be of type number.');
+
+  // validate bootstarp and signaling urls
   if (args.devConfig) {
     if (
       args.bootstrapUrl &&
@@ -142,6 +161,7 @@ export function validateArgs(args: CliOpts): RunOptions {
         : path.join(os.tmpdir(), `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`),
       tempDirRoot: args.devDataDir ? args.devDataDir : os.tmpdir(),
       agentIdx,
+      syncTime: args.syncTime ? args.syncTime : 5000,
     };
   }
 

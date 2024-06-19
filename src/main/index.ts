@@ -126,6 +126,12 @@ weCli
       '--agent-idx <number>',
       'To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file) to run We for. The agent with agentIdx 1 always needs to be run first.',
     ).argParser(parseInt),
+  )
+  .addOption(
+    new Option(
+      '--sync-time <number>',
+      'May be provided when running with the --dev-config option. Specifies the amount of time to wait for new tools to gossip after having installed a new group before checking for unjoined tools.',
+    ).argParser(parseInt),
   );
 
 weCli.parse();
@@ -805,20 +811,20 @@ app.whenReady().then(async () => {
     return !WE_FILE_SYSTEM.keystoreInitialized();
   });
   ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
-    // generate random network seed
-    const networkSeed = uuidv4();
-    const hash = createHash('sha256');
-    hash.update(networkSeed);
-    const hashedSeed = hash.digest('base64');
-    const appId = `group#${hashedSeed}`;
-    console.log('Determined appId for group: ', appId);
-
     const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
     const toolsLibraryAppInfo = apps.find(
       (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
     );
     if (!toolsLibraryAppInfo)
       throw new Error('Tools Library must be installed before installing the first group.');
+
+    // generate random network seed
+    const networkSeed = uuidv4();
+    const hash = createHash('sha256');
+    hash.update(networkSeed);
+    const hashedSeed = hash.digest('base64');
+    const appId = `group#${hashedSeed}#${withProgenitor ? encodeHashToBase64(toolsLibraryAppInfo.agent_pub_key) : null}`;
+    console.log('Determined appId for group: ', appId);
 
     const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
@@ -860,7 +866,7 @@ app.whenReady().then(async () => {
       const hash = createHash('sha256');
       hash.update(networkSeed);
       const hashedSeed = hash.digest('base64');
-      const appId = `group#${hashedSeed}`;
+      const appId = `group#${hashedSeed}#${progenitor}`;
       console.log('Determined appId for group: ', appId);
       if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });

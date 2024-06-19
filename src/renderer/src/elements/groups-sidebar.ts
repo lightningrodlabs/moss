@@ -276,7 +276,7 @@ export class GroupsSidebar extends LitElement {
             circle
             @click=${() => {
               this.dispatchEvent(
-                new CustomEvent('request-create-group', {
+                new CustomEvent('request-add-group', {
                   bubbles: true,
                   composed: true,
                 }),
