@@ -10,7 +10,7 @@ module.exports = async function (params) {
 
   console.log('afterSign hook triggered', params);
 
-  const appId = 'org.lightningrodlabs.moss-0.12';
+  const appId = 'org.lightningrodlabs.moss-0.13';
 
   const appPath = path.join(params.appOutDir, `${params.packager.appInfo.productFilename}.app`);
   if (!fs.existsSync(appPath)) {

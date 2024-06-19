@@ -1,8 +1,8 @@
 {
-  "name": "org.lightningrodlabs.moss-0.12",
-  "version": "0.12.0-dev.6",
+  "name": "org.lightningrodlabs.moss-0.13",
+  "version": "0.13.0-dev.0",
   "private": true,
-  "description": "Moss (Sprout)",
+  "description": "Moss (0.13)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
