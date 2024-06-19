@@ -34,7 +34,7 @@ export class WalElement extends LitElement {
   selectTitle: string | undefined;
 
   // async copyHrl() {
-  //   const url = `https://theweave.social/wal?weave-0.12://hrl/${encodeHashToBase64(
+  //   const url = `https://theweave.social/wal?weave-0.13://hrl/${encodeHashToBase64(
   //     this.hrl[0]
   //   )}/${encodeHashToBase64(this.hrl[1])}`;
   //   await navigator.clipboard.writeText(url);
@@ -70,7 +70,7 @@ export class WalElement extends LitElement {
           return html`
             <div
               class="row element"
-              title=${`weave-0.12://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+              title=${`weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
                 this.wal.hrl[1],
               )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
             >

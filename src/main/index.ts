@@ -63,13 +63,13 @@ let appVersion = app.getVersion();
 
 console.log('process.argv: ', process.argv);
 
-// Set as default protocol client for weave-0.12 deep links
+// Set as default protocol client for weave-0.13 deep links
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('weave-0.12', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient('weave-0.13', process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('weave-0.12');
+  app.setAsDefaultProtocolClient('weave-0.13');
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('we-dev-cli');
@@ -200,7 +200,7 @@ if (app.isPackaged) {
   } else {
     // https://github.com/electron/electron/issues/40173
     if (process.platform !== 'darwin') {
-      CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.12://'));
+      CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.13://'));
     }
 
     app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {

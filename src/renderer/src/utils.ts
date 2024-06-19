@@ -630,7 +630,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.12://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
@@ -662,8 +662,8 @@ export function invitePropsToPartialModifiers(props: string): PartialModifiers {
 export function partialModifiersFromInviteLink(inviteLink: string): PartialModifiers | undefined {
   const split = inviteLink.trim().split('://');
   const split2 = inviteLink.startsWith('https')
-    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.12://invite/aljsfkajsf
-    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.12://invite/aljsfkajsf
+    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.13://invite/aljsfkajsf
+    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.13://invite/aljsfkajsf
   if (split2[0] === 'invite') {
     return invitePropsToPartialModifiers(split2[1]);
   } else {

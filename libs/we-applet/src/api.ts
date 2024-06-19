@@ -64,7 +64,7 @@ export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false
   if (webPrefix) {
     url = 'https://theweave.social/wal?';
   }
-  url = url + `weave-0.12://applet/${encodeHashToBase64(appletHash)}`;
+  url = url + `weave-0.13://applet/${encodeHashToBase64(appletHash)}`;
   return url;
 };
 
@@ -75,14 +75,14 @@ export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   }
   url =
     url +
-    `weave-0.12://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
+    `weave-0.13://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
       wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
 
 export function weaveUrlToLocation(url: string): WeaveLocation {
-  if (!url.startsWith('weave-0.12://')) {
+  if (!url.startsWith('weave-0.13://')) {
     throw new Error(`Got invalid Weave url: ${url}`);
   }
 
@@ -102,7 +102,7 @@ export function weaveUrlToLocation(url: string): WeaveLocation {
     };
   } else if (split2[0] === 'group') {
     throw new Error(
-      'Needs to be implemented in Moss version 0.12.x by changing group to invitation',
+      'Needs to be implemented in Moss version 0.13.x by changing group to invitation',
     );
   } else if (split2[0] === 'applet') {
     return {

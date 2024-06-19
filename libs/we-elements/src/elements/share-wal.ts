@@ -20,7 +20,7 @@ export class ShareWal extends LitElement {
   wal!: WAL;
 
   async copyWal() {
-    let url = `weave-0.12://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+    let url = `weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
       this.wal.hrl[1],
     )}`;
     if (this.wal.context) {

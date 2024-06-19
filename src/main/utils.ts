@@ -20,7 +20,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.12://')) {
+    if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -39,7 +39,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.12://')) {
+    if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
     }
     if (
@@ -56,7 +56,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('weave-0.12://')) {
+    if (details.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
