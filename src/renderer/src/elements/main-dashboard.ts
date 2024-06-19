@@ -71,7 +71,6 @@ import {
   invitePropsToPartialModifiers,
   logMossZomeCall,
   progenitorFromProperties,
-  stringifyWal,
 } from '../utils.js';
 import { dialogMessagebox, getAppVersion } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
