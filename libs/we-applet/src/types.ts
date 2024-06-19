@@ -29,7 +29,7 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 export type OpenWalMode = 'front' | 'side';
 
 /**
- * String of the format weave-0.12://
+ * String of the format weave-0.13://
  */
 export type WeaveUrl = string;
 
