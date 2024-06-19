@@ -15,13 +15,14 @@ import { encode } from '@msgpack/msgpack';
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
   browserWindow.webContents.on('will-frame-navigate', (e) => {
-    // console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    console.log('GOT WILL-FRAME-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
     }
     if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      return;
     }
     if (
       e.url.startsWith('http://') ||
@@ -34,13 +35,14 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   });
   // instead of the webview
   browserWindow.webContents.on('will-navigate', (e) => {
-    // console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
     }
     if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      return;
     }
     if (
       e.url.startsWith('http://') ||
