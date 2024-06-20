@@ -12,4 +12,14 @@ roles:
       properties: ~
       network_seed: ~
       version: ~
-      clone_limit: 9999
+      clone_limit: 0
+  - name: foyer
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: '../dnas/foyer/workdir/foyer.dna'
+      properties: ~
+      network_seed: ~
+      version: ~
+      clone_limit: 0

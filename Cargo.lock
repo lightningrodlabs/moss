@@ -1860,6 +1860,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "foyer"
+version = "0.0.2"
+dependencies = [
+ "foyer_integrity",
+ "hdk",
+ "serde",
+]
+
+[[package]]
+name = "foyer_integrity"
+version = "0.0.2"
+dependencies = [
+ "hdi",
+ "serde",
+]
+
+[[package]]
 name = "fragile"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
