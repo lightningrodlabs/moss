@@ -129,6 +129,9 @@ export class GroupHome extends LitElement {
   @state()
   _editGroupDescription = false;
 
+  @state()
+  _loadingDescription = false;
+
   _unsubscribe: Unsubscriber | undefined;
 
   _groupDescription = new StoreSubscriber(
@@ -612,11 +615,20 @@ export class GroupHome extends LitElement {
               <div class="row" style="justify-content: flex-end;">
                 <button
                   style="${this.hasStewardPermission() ? '' : 'display: none;'}"
-                  @click=${() => {
+                  @click=${async () => {
+                    this._loadingDescription = true;
+                    // Reload group description in case another Steward has edited it in the meantime
+                    try {
+                      await this.groupStore.groupDescription.reload();
+                    } catch (e) {
+                      console.warn('Failed to load description: ', e);
+                    }
+                    this._loadingDescription = false;
                     this._editGroupDescription = true;
                   }}
+                  ?disabled=${this._loadingDescription}
                 >
-                  Edit Description
+                  ${this._loadingDescription ? '...' : msg('Edit Description')}
                 </button>
               </div>
             </div>
