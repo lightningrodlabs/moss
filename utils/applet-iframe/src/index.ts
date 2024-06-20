@@ -368,11 +368,6 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     },
   });
 
-  window.addEventListener('beforeunload', () => {
-    // close websocket connection again to prevent insufficient resources error
-    appletClient.client.close();
-  });
-
   return appletClient;
 }
 
