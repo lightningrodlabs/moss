@@ -1,0 +1,16 @@
+---
+manifest_version: '1'
+name: foyer
+integrity:
+  network_seed: ~
+  properties:
+    type: 'foyer'
+  origin_time: 2024-06-03T00:00:00.0Z
+  zomes:
+    - name: foyer_integrity
+      bundled: ../../../target/wasm32-unknown-unknown/release/foyer_integrity.wasm
+
+coordinator:
+  zomes:
+    - name: foyer
+      bundled: ../../../target/wasm32-unknown-unknown/release/foyer.wasm

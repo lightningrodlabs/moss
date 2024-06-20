@@ -1,0 +1,12 @@
+[package]
+edition = "2021"
+name = "foyer_integrity"
+version = "0.0.2"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "foyer_integrity"
+
+[dependencies]
+hdi = { workspace = true }
+serde = { workspace = true }
