@@ -41,8 +41,8 @@ const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
 const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
 
 @localized()
-@customElement('zome-call-panel')
-export class ZomeCallPanel extends LitElement {
+@customElement('debugging-panel')
+export class DebuggingPanel extends LitElement {
   @consume({ context: mossStoreContext })
   _mossStore!: MossStore;
 

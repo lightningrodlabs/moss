@@ -50,7 +50,7 @@ import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
-import '../elements/zome-call-panel.js';
+import './debugging-panel.js';
 
 import { weStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -334,13 +334,13 @@ export class MainDashboard extends LitElement {
   }
 
   openZomeCallPanel() {
-    const tabId = 'zome-call-panel';
+    const tabId = 'debugging-panel';
     const tabInfo: TabInfo = {
       id: tabId,
       tab: {
         type: 'html',
-        title: 'Zome Call Panel',
-        template: html` <zome-call-panel></zome-call-panel> `,
+        title: 'Debugging Panel',
+        template: html` <debugging-panel></debugging-panel> `,
       },
     };
     this._mossStore.setAssetViewerState({ position: 'front', visible: true });
