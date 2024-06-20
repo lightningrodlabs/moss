@@ -76,8 +76,9 @@ export function breakingVersion(version: string): string {
   if (!semver.valid(version)) {
     throw new Error('App has an invalid version number.');
   }
-  if (semver.prerelease(version)) {
-    return version;
+  const prerelease = semver.prerelease(version);
+  if (prerelease) {
+    return `${semver.major(version)}.${semver.minor(version)}.${semver.patch(version)}-${prerelease[0]}.x`;
   }
   switch (semver.major(version)) {
     case 0:
