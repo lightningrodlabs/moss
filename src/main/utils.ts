@@ -78,7 +78,7 @@ export function breakingVersion(version: string): string {
   }
   const prerelease = semver.prerelease(version);
   if (prerelease) {
-    return `${semver.major(version)}.${semver.minor(version)}.${semver.patch(version)}-${prerelease[0]}.x`;
+    return `${semver.major(version)}.${semver.minor(version)}.${semver.patch(version)}-${prerelease[0]}`;
   }
   switch (semver.major(version)) {
     case 0:
