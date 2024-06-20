@@ -2,9 +2,9 @@
 manifest_version: '1'
 name: group
 integrity:
-  network_seed: 00000000-0000-0000-0000-000000000000
+  network_seed: ~
   properties: ~
-  origin_time: 2022-07-25T13:55:49.200Z
+  origin_time: 2024-06-03T13:55:49.200Z
   zomes:
     - name: group_integrity
       bundled: ../../../target/wasm32-unknown-unknown/release/group_integrity.wasm
