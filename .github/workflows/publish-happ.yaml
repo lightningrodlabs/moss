@@ -2,7 +2,7 @@ name: 'release-happ'
 on:
   push:
     branches:
-      - release-happ-0.13
+      - release-happ
 
 jobs:
   publish-happ:
