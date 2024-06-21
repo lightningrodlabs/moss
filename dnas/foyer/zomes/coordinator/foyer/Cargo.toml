@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+name = "foyer"
+version = "0.0.2"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "foyer"
+
+[dependencies]
+hdk = { workspace = true }
+serde = { workspace = true }
+foyer_integrity = { path = '../../integrity/foyer' }

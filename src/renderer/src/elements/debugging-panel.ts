@@ -41,8 +41,8 @@ const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
 const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
 
 @localized()
-@customElement('zome-call-panel')
-export class ZomeCallPanel extends LitElement {
+@customElement('debugging-panel')
+export class DebuggingPanel extends LitElement {
   @consume({ context: mossStoreContext })
   _mossStore!: MossStore;
 
@@ -88,6 +88,9 @@ export class ZomeCallPanel extends LitElement {
   @state()
   _appsWithNetInfo: { [key: InstalledAppId]: NetworkInfo } = {};
 
+  @state()
+  _toolLibraryTotalAgents: number | undefined;
+
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
@@ -106,6 +109,10 @@ export class ZomeCallPanel extends LitElement {
     } catch (e) {
       console.warn('Failed to get ToolsLibrary cellIds: ', e);
     }
+
+    const toolLibraryAgents =
+      await this._mossStore.toolsLibraryStore.toolsLibraryClient.getAllAgents();
+    this._toolLibraryTotalAgents = toolLibraryAgents.length;
   }
 
   disconnectedCallback(): void {
@@ -285,7 +292,7 @@ export class ZomeCallPanel extends LitElement {
         <div class="column">
           <div class="row" style="align-items: center; flex: 1; margin-top: 10px;">
             <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
-              Tools Library
+              Tools Library (${this._toolLibraryTotalAgents} total peers)
             </div>
             <div style="display: flex; flex: 1;"></div>
             <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">

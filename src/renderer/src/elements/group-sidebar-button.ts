@@ -100,7 +100,7 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
-    console.log('this._peerStatuses.value: ', this._peerStatuses.value);
+    // console.log('this._peerStatuses.value: ', this._peerStatuses.value);
     const onlineAgentCount =
       this._peerStatuses.value || this._peerStatuses.value === 0
         ? Object.entries(this._peerStatuses.value).filter(
@@ -110,7 +110,7 @@ export class GroupSidebarButton extends LitElement {
           ).length
         : undefined;
 
-    console.log('onlineAgentCount: ', onlineAgentCount);
+    // console.log('onlineAgentCount: ', onlineAgentCount);
 
     return html`
       <div

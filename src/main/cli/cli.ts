@@ -20,10 +20,10 @@ export const PRODUCTION_BOOTSTRAP_URLS = [
 // here since there is a check to prevent accidental use of a production signaling server in development
 // mode
 export const PRODUCTION_SIGNALING_URLS = [
+  'wss://sbd-0.main.infra.holo.host',
   'wss://signal-2.infra.holochain.org',
   'wss://signal-1.infra.holochain.org',
   'wss://signal-0.infra.holochain.org',
-  'wss://sbd-0.main.infra.holo.host',
   'wss://signal.holo.host',
 ];
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';

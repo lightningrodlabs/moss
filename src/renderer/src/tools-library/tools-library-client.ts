@@ -8,9 +8,19 @@ import {
   UpdateToolInput,
   UpdateableEntity,
 } from './types';
-import { ActionHash, Link, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import {
+  ActionHash,
+  AgentPubKey,
+  Link,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+} from '@holochain/client';
 
 export class ToolsLibraryClient extends ZomeClient<undefined> {
+  async getAllAgents(): Promise<AgentPubKey[]> {
+    return this.callZome('get_all_agents', null);
+  }
+
   async createDeveloperCollective(
     input: DeveloperCollective,
   ): Promise<EntryRecord<DeveloperCollective>> {
@@ -54,7 +64,7 @@ export class ToolsLibraryClient extends ZomeClient<undefined> {
   }
 
   async getAllDeveloperCollectives(): Promise<EntryRecord<DeveloperCollective>[]> {
-    const records = await this.callZome('all_developer_collectives', null);
+    const records = await this.callZome('get_all_original_developer_collectives', null);
     return records.map((record) => new EntryRecord(record));
   }
 
