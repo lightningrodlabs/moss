@@ -60,6 +60,7 @@ import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
 import '../../elements/tab-group.js';
 import '../../elements/loading-dialog.js';
+import './foyer-stream.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -124,7 +125,7 @@ export class GroupHome extends LitElement {
   _showIgnoredApplets = false;
 
   @state()
-  _selectedTab: 'home' | 'unjoined tools' = 'home';
+  _selectedTab: 'home' | 'unjoined tools' | 'foyer' = 'home';
 
   @state()
   _editGroupDescription = false;
@@ -370,6 +371,10 @@ export class GroupHome extends LitElement {
     ) as HTMLInputElement;
     this._showIgnoredApplets = checkbox.checked;
     this.requestUpdate();
+  }
+
+  unreadZaps(): number {
+    return 2;
   }
 
   newAppletsAvailable(): number {
@@ -638,12 +643,18 @@ export class GroupHome extends LitElement {
     }
   }
 
+  renderFoyer() {
+    return html`<foyer-stream></foyer-stream>`;
+  }
+
   renderMainPanelContent() {
     switch (this._selectedTab) {
       case 'home':
         return this.renderHomeContent();
       case 'unjoined tools':
         return this.renderNewApplets();
+      case 'foyer':
+        return this.renderFoyer();
     }
   }
 
@@ -756,6 +767,26 @@ export class GroupHome extends LitElement {
                   </div>`
                 : html``}
               ${msg('Unjoined Tools')}
+            </div>
+            <div
+              tabindex="0"
+              class="row tab ${this._selectedTab === 'foyer' ? 'tab-selected' : ''}"
+              style="position: relative;"
+              @click=${() => {
+                this._selectedTab = 'foyer';
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'foyer';
+              }}
+            >
+              ${this.unreadZaps()
+                ? html`<div
+                    class="row center-content indicator ${this.unreadZaps() > 9 ? 'padded' : ''}"
+                  >
+                    ${this.unreadZaps()}
+                  </div>`
+                : html``}
+              ${msg('Foyer')}
             </div>
           </div>
           <div class="column main-panel">${this.renderMainPanelContent()}</div>
