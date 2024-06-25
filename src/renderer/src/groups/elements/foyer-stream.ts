@@ -128,12 +128,12 @@ export class FoyerStream extends LitElement {
                       ></agent-avatar>
                     `
                   : ''}
+                ${msgText}
                 <span
                   title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
                   class="msg-timestamp"
                   >${new Date(msg.payload.created).toLocaleTimeString()}</span
                 >
-                ${msgText}
                 ${isMyMessage
                   ? html`
                       ${ackCount == recipientCount
@@ -245,10 +245,7 @@ export class FoyerStream extends LitElement {
         padding: 5px;
       }
       .msg-timestamp {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        margin-right: 8px;
+        margin-left: 4px;
         font-size: 80%;
         color: #ccc;
       }
