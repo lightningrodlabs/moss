@@ -719,16 +719,23 @@ export class MainDashboard extends LitElement {
   }
 
   renderAppletMainViews() {
-    return repeat(
-      this._openApplets,
-      (appletHash) => encodeHashToBase64(appletHash),
-      (appletHash) => html`
-        <applet-main
-          .appletHash=${appletHash}
-          style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
-        ></applet-main>
-      `,
-    );
+    switch (this._runningApplets.value.status) {
+      case 'pending':
+        return html`Loading running applets...`;
+      case 'error':
+        return html`Failed to get running applets: ${this._runningApplets.value.error}`;
+      case 'complete':
+        return repeat(
+          this._runningApplets.value.value,
+          (appletHash) => encodeHashToBase64(appletHash),
+          (appletHash) => html`
+            <applet-main
+              .appletHash=${appletHash}
+              style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
+            ></applet-main>
+          `,
+        );
+    }
   }
 
   renderDashboard() {
