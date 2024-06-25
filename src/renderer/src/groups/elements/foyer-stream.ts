@@ -19,7 +19,8 @@ import { mossStoreContext } from '../../context.js';
 import { Payload, Stream } from '../stream.js';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
-import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { PeerStatus } from '@lightningrodlabs/we-applet';
 
 @localized()
 @customElement('foyer-stream')
@@ -30,11 +31,14 @@ export class FoyerStream extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
+  _peersStatus = new StoreSubscriber(
+    this,
+    () => this.groupStore.peerStatuses(),
+    () => [this.groupStore],
+  );
+
   @state()
-  stream: Stream | undefined =
-    this.groupStore && this.groupStore.foyerStore
-      ? get(this.groupStore.foyerStore.streams)['_all']
-      : undefined;
+  stream: Stream | undefined;
 
   @query('#msg-input')
   private _msgInput!: SlInput;
@@ -42,20 +46,33 @@ export class FoyerStream extends LitElement {
   @query('#stream')
   private _conversationContainer!: HTMLElement;
 
+  async firstUpdated() {
+    this.stream = get(this.groupStore.foyerStore.streams)['_all'];
+    this._messages = new StoreSubscriber(
+      this,
+      () => this.stream!.messages,
+      () => [this.stream],
+    );
+  }
+
   @state()
-  _messages = this.stream
-    ? new StoreSubscriber(
-        this,
-        () => this.stream!.messages,
-        () => [this.stream],
-      )
-    : undefined;
+  _messages;
 
   @state()
   disabled = true;
 
   getRecipients(): AgentPubKey[] {
-    return [];
+    const agents: AgentPubKey[] = [];
+    const peers = this._peersStatus.value;
+    if (!peers) return [];
+    else {
+      for (const key in peers) {
+        const status = peers[key];
+        if (key != this.groupStore.foyerStore.myPubKeyB64 && status.status == 'online')
+          agents.push(decodeHashFromBase64(key));
+      }
+    }
+    return agents;
   }
 
   convertMessageText = (text: string): string => {
@@ -90,64 +107,64 @@ export class FoyerStream extends LitElement {
     return 0;
   };
 
+  renderStream() {
+    if (!this._messages) return '';
+    return this._messages.value.map((msg) => {
+      const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
+      const msgText = this.convertMessageText(msg.payload.text);
+      const ackCount = 19; //getAckCount($acks, msg.payload.created)
+      const recipientCount = 19;
+      return html`
+        <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
+          ${msg.payload.type == 'Msg'
+            ? html`
+                ${!isMyMessage
+                  ? html`
+                      <agent-avatar
+                        style="margin-right:5px"
+                        disable-copy=${true}
+                        size=${20}
+                        agent-pub-key=${encodeHashToBase64(msg.from)}
+                      ></agent-avatar>
+                    `
+                  : ''}
+                <span
+                  title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
+                  class="msg-timestamp"
+                  >${new Date(msg.payload.created).toLocaleTimeString()}</span
+                >
+                ${msgText}
+                ${isMyMessage
+                  ? html`
+                      ${ackCount == recipientCount
+                        ? '✓'
+                        : recipientCount > 1
+                          ? html` <span class="ack-count">${ackCount}</span> `
+                          : ''}
+                    `
+                  : ''}
+              `
+            : ''}
+        </div>
+      `;
+    });
+  }
+
   render() {
     return html`
       <div class="person-feed">
         <div class="header">
           <div>
-            <span>Messages: ${this._messages ? this._messages.value.length : '0'}</span>
+            <span>Foyer Messages: ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
           <div style="display:flex; align-items: center"></div>
         </div>
-        <div id="stream" class="stream">
-          ${this.stream && this._messages
-            ? this._messages.value.map((msg) => {
-                const isMyMessage =
-                  encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
-                const msgText = this.convertMessageText(msg.payload.text);
-                const ackCount = 19; //getAckCount($acks, msg.payload.created)
-                const recipientCount = 19;
-                return html`
-                  <div class="msg" class=${isMyMessage ? 'my-msg' : ''}>
-                    ${msg.payload.type == 'Msg'
-                      ? html`
-                          ${!isMyMessage
-                            ? html`
-                                <agent-avatar
-                                  style="margin-right:5px"
-                                  disable-copy="{true}"
-                                  size="{20}"
-                                  agent-pub-key="{encodeHashToBase64(msg.from)}"
-                                ></agent-avatar>
-                              `
-                            : ''}
-                          <span
-                            title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
-                            class="msg-timestamp"
-                            >${new Date(msg.payload.created).toLocaleTimeString()}</span
-                          >
-                          ${isMyMessage
-                            ? html`
-                                ${ackCount == recipientCount
-                                  ? '✓'
-                                  : recipientCount > 1
-                                    ? html` <span class="ack-count">{ackCount}</span> `
-                                    : ''}
-                              `
-                            : ''}
-                        `
-                      : ''}
-                  </div>
-                `;
-              })
-            : ''}
-        </div>
+        <div id="stream" class="stream">${this.renderStream()}</div>
         <div class="send-controls">
           <sl-input
             id="msg-input"
             style="width:100%"
             @sl-input=${(e) => {
-              console.log('FISH', e);
               this.disabled = !e.target.value || !this._msgInput.value;
             }}
             @keydown=${(e) => {
@@ -163,7 +180,19 @@ export class FoyerStream extends LitElement {
             circle
             ${this.disabled ? 'disabled' : ''}
             @click=${() => this.sendMessage()}
-            ><SvgIcon icon="zipzap" size="20" />
+          >
+            <svg
+              style="margin-top:10px"
+              xmlns="http://www.w3.org/2000/svg"
+              height="16"
+              width="16"
+              viewBox="0 0 512 512"
+            >
+              <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.-->
+              <path
+                d="M16.1 260.2c-22.6 12.9-20.5 47.3 3.6 57.3L160 376V479.3c0 18.1 14.6 32.7 32.7 32.7c9.7 0 18.9-4.3 25.1-11.8l62-74.3 123.9 51.6c18.9 7.9 40.8-4.5 43.9-24.7l64-416c1.9-12.1-3.4-24.3-13.5-31.2s-23.3-7.5-34-1.4l-448 256zm52.1 25.5L409.7 90.6 190.1 336l1.2 1L68.2 285.7zM403.3 425.4L236.7 355.9 450.8 116.6 403.3 425.4z"
+              />
+            </svg>
           </sl-button>
         </div>
       </div>
@@ -174,13 +203,13 @@ export class FoyerStream extends LitElement {
     sharedStyles,
     css`
       .person-feed {
-        padding-left: 10px;
+        color: white;
         display: flex;
         flex-direction: column;
-        background-color: lightgoldenrodyellow;
         width: 100%;
       }
       .header {
+        margin-top: 5px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -191,12 +220,12 @@ export class FoyerStream extends LitElement {
         flex: auto;
         flex-direction: column;
         overflow-y: auto;
-        height: 0px;
+        height: calc(100vh - 331px);
       }
       .msg {
         display: flex;
         margin: 5px;
-        border-radius: 0px 15px 0px 15px;
+        border-radius: 10px;
         color: white;
         padding: 3px 10px;
         flex-shrink: 1;
@@ -207,7 +236,6 @@ export class FoyerStream extends LitElement {
         text-decoration: underline;
       }
       .my-msg {
-        border-radius: 15px 0px 15px 0px;
         align-self: flex-end;
         background-color: blue;
       }
@@ -217,7 +245,10 @@ export class FoyerStream extends LitElement {
         padding: 5px;
       }
       .msg-timestamp {
-        margin-left: 4px;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        margin-right: 8px;
         font-size: 80%;
         color: #ccc;
       }
