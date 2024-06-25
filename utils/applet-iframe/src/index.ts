@@ -37,6 +37,7 @@ import {
   PeerStatus,
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
+  AppletId,
 } from '@lightningrodlabs/we-applet';
 import { readable } from '@holochain-open-dev/stores';
 
@@ -46,6 +47,7 @@ declare global {
     __WEAVE_APPLET_SERVICES__: AppletServices;
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_APPLET_HASH__: AppletHash;
+    __WEAVE_APPLET_ID__: AppletId;
   }
 
   interface WindowEventMap {
@@ -164,6 +166,7 @@ const weaveApi: WeaveServices = {
 
 (async () => {
   window.__WEAVE_APPLET_HASH__ = readAppletHash();
+  window.__WEAVE_APPLET_ID__ = readAppletId();
   window.__WEAVE_API__ = weaveApi;
   window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
@@ -342,7 +345,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletHash: window.__WEAVE_APPLET_HASH__,
+      appletId: window.__WEAVE_APPLET_ID__,
     };
 
     // eslint-disable-next-line no-restricted-globals
@@ -403,6 +406,19 @@ function readAppletHash(): EntryHash {
   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
   return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+}
+
+function readAppletId(): AppletId {
+  if (window.origin.startsWith('applet://')) {
+    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+    return toOriginalCaseB64(lowercaseB64Id);
+  }
+  // In dev mode, the applet hash will be appended at the end
+  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
 }
 
 // IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs

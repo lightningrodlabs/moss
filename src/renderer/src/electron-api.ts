@@ -9,7 +9,7 @@ import {
   FunctionName,
   DnaHashB64,
 } from '@holochain/client';
-import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, AppletToParentMessage, FrameNotification } from '@lightningrodlabs/we-applet';
 
 import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
 
@@ -22,11 +22,15 @@ declare global {
     };
     electronAPI: {
       signZomeCallApplet: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
+      appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
+      onAppletToParentMessage: (
+        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => any,
+      ) => any;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => any;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
       onZomeCallSigned: (
@@ -40,6 +44,7 @@ declare global {
         ) => any,
       ) => any;
       openApp: (appId: string) => Promise<void>;
+      openWalWindow: (iframeSrc: string, appletId: AppletId) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;

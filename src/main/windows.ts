@@ -1,9 +1,86 @@
-import { BrowserWindow, net, session } from 'electron';
+import { BrowserWindow, nativeImage, net, session } from 'electron';
 import path from 'path';
 import url from 'url';
 import { WeFileSystem } from './filesystem';
 import { setLinkOpenHandlers } from './utils';
 import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
+import { is } from '@electron-toolkit/utils';
+import { ICONS_DIRECTORY } from './paths';
+
+/**
+ * Creates a Window to render a WAL in an applet iframe
+ */
+export const createWalWindow = (): BrowserWindow => {
+  // Create the browser window.
+  let walWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.resolve(__dirname, '../preload/walwindow.js'),
+    },
+  });
+
+  walWindow.menuBarVisible = false;
+
+  setLinkOpenHandlers(walWindow);
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    walWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/walwindow.html`);
+  } else {
+    walWindow.loadFile(path.join(__dirname, '../renderer/walwindow.html'));
+  }
+
+  // walWindow.on('close', () => {
+  //   console.log(`Happ window with frame id ${walWindow.id} about to be closed.`);
+  //   // prevent closing here and hide instead in case notifications are to be received from this happ UI
+  // });
+
+  return walWindow;
+};
+
+export const createSplashscreenWindow = (): BrowserWindow => {
+  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
+
+  // Create the browser window.
+  const splashWindow = new BrowserWindow({
+    height: 450,
+    width: 800,
+    center: true,
+    resizable: false,
+    frame: false,
+    show: false,
+    backgroundColor: '#331ead',
+    icon,
+    // use these settings so that the ui
+    // can listen for status change events
+    webPreferences: {
+      preload: path.resolve(__dirname, '../preload/splashscreen.js'),
+    },
+  });
+
+  // // and load the splashscreen.html of the app.
+  // if (app.isPackaged) {
+  //   splashWindow.loadFile(SPLASH_FILE);
+  // } else {
+  //   // development
+  //   splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`);
+  // }
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    splashWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/splashscreen.html`);
+  } else {
+    splashWindow.loadFile(path.join(__dirname, '../renderer/splashscreen.html'));
+  }
+
+  // once its ready to show, show
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+  });
+
+  // Open the DevTools.
+  // mainWindow.webContents.openDevTools();
+  return splashWindow;
+};
 
 export const createHappWindow = (
   appId: string,

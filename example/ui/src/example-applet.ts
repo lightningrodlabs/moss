@@ -84,7 +84,7 @@ export class ExampleApplet extends LitElement {
                         if (!appInfo) throw new Error('AppInfo is null.');
                         const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                           .cell_id[0];
-                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
+                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'window');
                       }}
                     ></applet-main>
                   </profiles-context>

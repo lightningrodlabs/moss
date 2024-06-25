@@ -7,11 +7,11 @@ export async function postMessage<T>(request: AppletToParentRequest): Promise<T>
 
     const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-    const appletHash = decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+    const appletId = toOriginalCaseB64(lowercaseB64Id);
 
     const message: AppletToParentMessage = {
       request,
-      appletHash,
+      appletId,
     };
 
     // eslint-disable-next-line no-restricted-globals

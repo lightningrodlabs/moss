@@ -18,6 +18,7 @@ export default defineConfig({
           admin: resolve(__dirname, 'src/preload/admin.ts'),
           splashscreen: resolve(__dirname, 'src/preload/splashscreen.ts'),
           selectmediasource: resolve(__dirname, 'src/preload/selectmediasource.ts'),
+          walwindow: resolve(__dirname, 'src/preload/walwindow.ts'),
         },
       },
     },

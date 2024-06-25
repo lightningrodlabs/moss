@@ -1,6 +1,5 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { Readable } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
   AppClient,
   ActionHash,
@@ -11,7 +10,6 @@ import {
   DnaHashB64,
   CallZomeRequest,
   AppAuthenticationToken,
-  AgentPubKey,
   AgentPubKeyB64,
 } from '@holochain/client';
 
@@ -26,7 +24,7 @@ export type NullHash = Uint8Array;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-export type OpenWalMode = 'front' | 'side';
+export type OpenWalMode = 'front' | 'side' | 'window';
 
 /**
  * String of the format weave-0.13://
@@ -291,7 +289,7 @@ export type ParentToAppletMessage =
 
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
-  appletHash?: EntryHash; // Only required in dev mode when iframe origin is localhost
+  appletId?: AppletId; // Only required in dev mode when iframe origin is localhost
 };
 
 export type AppletToParentRequest =
