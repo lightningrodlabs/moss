@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import { sharedStyles } from '@holochain-open-dev/elements';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
@@ -20,6 +20,7 @@ import { Payload, Stream } from '../stream.js';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { mdiChat, mdiSofa } from '@mdi/js';
 
 @localized()
 @customElement('foyer-stream')
@@ -179,7 +180,11 @@ export class FoyerStream extends LitElement {
     return html`
       <div class="person-feed">
         <div class="header">
-          <div>
+          <div class="column">
+            <div class="row" style="align-items: center; font-size: 1.5rem;">
+              <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
+              <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
+            </div>
             <span>Foyer Messages: ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
           <div style="display:flex; align-items: center"></div>
@@ -266,7 +271,7 @@ export class FoyerStream extends LitElement {
         flex: auto;
         flex-direction: column;
         overflow-y: auto;
-        height: calc(100vh - 331px);
+        height: calc(100vh - 360px);
       }
       .msg {
         display: flex;
@@ -276,14 +281,14 @@ export class FoyerStream extends LitElement {
         padding: 3px 10px;
         flex-shrink: 1;
         align-self: flex-start;
-        background-color: rebeccapurple;
+        background-color: #305f19;
       }
       a {
         text-decoration: underline;
       }
       .my-msg {
         align-self: flex-end;
-        background-color: blue;
+        background-color: #72b51b;
       }
       .send-controls {
         display: flex;

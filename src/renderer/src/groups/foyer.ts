@@ -4,11 +4,6 @@ import {
   type RoleName,
   encodeHashToBase64,
   type AgentPubKey,
-  type ActionHash,
-  type Link,
-  type EntryHash,
-  decodeHashFromBase64,
-  type DnaHash,
   AppAuthenticationToken,
   InstalledAppId,
   AppCallZomeRequest,
@@ -16,19 +11,8 @@ import {
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
-import { EntryRecord, LazyHoloHashMap, ZomeClient } from '@holochain-open-dev/utils';
-import {
-  type Writable,
-  writable,
-  get,
-  type Unsubscriber,
-  type Readable,
-  readable,
-} from '@holochain-open-dev/stores';
-import type { ActionCommittedSignal } from '@holochain-open-dev/utils';
-import { isWeContext, type WeaveClient } from '@lightningrodlabs/we-applet';
+import { type Writable, writable, get, type Readable, readable } from '@holochain-open-dev/stores';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
-import type { UnsubscribeFunction } from 'emittery';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
 

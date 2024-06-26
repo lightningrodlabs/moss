@@ -1220,8 +1220,9 @@ export class GroupHome extends LitElement {
       }
 
       .foyer-panel {
-        border-left: solid 1px white;
-        padding-left: 10px;
+        /* border-left: solid 1px white; */
+        padding-left: 5px;
+        background: #08230e;
       }
 
       .online-status-bar {
