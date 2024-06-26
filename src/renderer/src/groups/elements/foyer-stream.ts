@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
-import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
+import { localized } from '@lit/localize';
+import { sharedStyles } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
@@ -20,7 +20,6 @@ import { Payload, Stream } from '../stream.js';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
-import { PeerStatus } from '@lightningrodlabs/we-applet';
 
 @localized()
 @customElement('foyer-stream')
@@ -57,6 +56,12 @@ export class FoyerStream extends LitElement {
 
   @state()
   _messages;
+
+  @state()
+  newMessages: number = 0;
+
+  @state()
+  previousMessageCount: number = 0;
 
   @state()
   disabled = true;
@@ -108,7 +113,27 @@ export class FoyerStream extends LitElement {
   };
 
   renderStream() {
-    if (!this._messages) return '';
+    if (!this._messages) return html``;
+    if (this._conversationContainer) {
+      const scrollTop = this._conversationContainer.scrollTop;
+      const scrollHeight = this._conversationContainer.scrollHeight;
+      const offsetHeight = this._conversationContainer.offsetHeight;
+      const scrolledFromBottom = scrollHeight - (scrollTop + offsetHeight);
+      // If not explicitly scrolled up by the user, scroll to the bottom if a new message arrives
+      if (scrolledFromBottom < 100) {
+        setTimeout(() => {
+          this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+        }, 100);
+        this.newMessages = 0;
+        this.previousMessageCount = this._messages.value.length;
+      } else {
+        const newMessages = this._messages.value.length - this.previousMessageCount;
+        if (newMessages > 0) {
+          this.newMessages = newMessages;
+          this.previousMessageCount = this._messages.value.length;
+        }
+      }
+    }
     return this._messages.value.map((msg) => {
       const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
       const msgText = this.convertMessageText(msg.payload.text);
@@ -160,6 +185,26 @@ export class FoyerStream extends LitElement {
           <div style="display:flex; align-items: center"></div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
+        ${this.newMessages
+          ? html`<div
+              tabindex="0"
+              class="new-message-indicator"
+              @click=${() => {
+                this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+                this.newMessages = 0;
+                this.previousMessageCount = this._messages.value.length;
+              }}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+                  this.newMessages = 0;
+                  this.previousMessageCount = this._messages.value.length;
+                }
+              }}
+            >
+              ${this.newMessages} new message(s)
+            </div>`
+          : html``}
         <div class="send-controls">
           <sl-input
             id="msg-input"
@@ -207,6 +252,7 @@ export class FoyerStream extends LitElement {
         display: flex;
         flex-direction: column;
         width: 100%;
+        position: relative;
       }
       .header {
         margin-top: 5px;
@@ -263,6 +309,16 @@ export class FoyerStream extends LitElement {
       }
       .person-inactive {
         opacity: 0.5;
+      }
+      .new-message-indicator {
+        position: absolute;
+        bottom: 60px;
+        right: 30px;
+        border-radius: 12px;
+        background: yellow;
+        color: black;
+        padding: 4px 8px;
+        cursor: pointer;
       }
     `,
   ];
