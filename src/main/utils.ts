@@ -22,6 +22,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     }
     if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      e.preventDefault();
       return;
     }
     if (
@@ -37,11 +38,13 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   browserWindow.webContents.on('will-navigate', (e) => {
     console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
+      e.preventDefault();
       // ignore vite routing in dev mode
       return;
     }
     if (e.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      e.preventDefault();
       return;
     }
     if (
