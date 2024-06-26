@@ -50,6 +50,7 @@ import {
 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
 import { Tool, UpdateableEntity } from '../tools-library/types.js';
+import { FoyerStore } from './foyer.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
@@ -70,6 +71,8 @@ export class GroupStore {
   members: AsyncReadable<Array<AgentPubKey>>;
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
+
+  foyerStore!: FoyerStore;
 
   /**
    * If this exceeds a certain number, agents get refetched from the DHT
@@ -94,6 +97,13 @@ export class GroupStore {
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
+
+    this.foyerStore = new FoyerStore(
+      this.profilesStore,
+      appWebsocket,
+      authenticationToken,
+      'foyer',
+    );
 
     this._peerStatuses = writable(undefined);
 
