@@ -167,7 +167,6 @@ export class FoyerStore {
     this.newStream('_all');
 
     this.client.client.on('signal', async (sig) => {
-      console.log('Got Signal:', sig);
       const signal = sig.payload;
       // @ts-ignore
       if (signal.type == 'Message') {

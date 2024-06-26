@@ -63,7 +63,7 @@ export class FoyerStream extends LitElement {
   }
 
   @state()
-  _messages;
+  _messages: StoreSubscriber<Message[]> | undefined;
 
   @state()
   _acks;
@@ -182,19 +182,17 @@ export class FoyerStream extends LitElement {
         const newMessages = this._messages.value.length - this.previousMessageCount;
         if (newMessages > 0) {
           this.newMessages = newMessages;
-          this.previousMessageCount = this._messages.value.length;
         }
       }
     }
-    return this._messages.value.map((m) => {
-      const msg: Message = m as Message;
+    return this._messages.value.map((msg) => {
       const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
-      const msgText = this.convertMessageText(msg.payload.text);
+      const msgText = this.convertMessageText((msg.payload as any).text);
       const ackCount = this.getAckCount(this._acks.value, msg.payload.created);
       return html`
         <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
           <div class="msg-content">
-            ${msg.payload.type == 'Msg'
+            ${msg.payload.type === 'Msg'
               ? html`
                   ${!isMyMessage
                     ? html`
@@ -254,8 +252,8 @@ export class FoyerStream extends LitElement {
                   this._foyerInfoDialog.show();
                 }
               }}
-              class="row"
-              style="align-items: center; font-size: 1.5rem;"
+              class="row info"
+              style="align-items: center; font-size: 1.5rem; cursor: help;"
             >
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
               <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
@@ -265,20 +263,20 @@ export class FoyerStream extends LitElement {
           <div style="display:flex; align-items: center"></div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
-        ${this.newMessages
+        ${this._messages && this.newMessages
           ? html`<div
               tabindex="0"
               class="new-message-indicator"
               @click=${() => {
                 this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
                 this.newMessages = 0;
-                this.previousMessageCount = this._messages.value.length;
+                this.previousMessageCount = this._messages!.value.length;
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
                   this.newMessages = 0;
-                  this.previousMessageCount = this._messages.value.length;
+                  this.previousMessageCount = this._messages!.value.length;
                 }
               }}
             >
@@ -327,6 +325,9 @@ export class FoyerStream extends LitElement {
   static styles = [
     sharedStyles,
     css`
+      .info:hover {
+        opacity: 0.7;
+      }
       .person-feed {
         color: white;
         display: flex;
