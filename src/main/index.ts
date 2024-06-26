@@ -762,6 +762,15 @@ app.whenReady().then(async () => {
       };
     return undefined;
   });
+  ipcMain.handle('close-window', (e) => {
+    const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (walAndWindowInfo) {
+      walAndWindowInfo[1].window.close();
+      delete WAL_WINDOWS[walAndWindowInfo[0]];
+    }
+  });
   ipcMain.handle(
     'open-app',
     async (_e, appId: string): Promise<void> =>

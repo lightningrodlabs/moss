@@ -289,7 +289,7 @@ export type ParentToAppletMessage =
 
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
-  appletId?: AppletId; // Only required in dev mode when iframe origin is localhost
+  appletHash?: AppletHash; // Only required in dev mode when iframe origin is localhost
 };
 
 export type AppletToParentRequest =
@@ -382,6 +382,9 @@ export type AppletToParentRequest =
     }
   | {
       type: 'get-applet-iframe-script';
+    }
+  | {
+      type: 'request-close';
     };
 
 export type OpenViewRequest =

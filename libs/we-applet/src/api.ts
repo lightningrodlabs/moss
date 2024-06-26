@@ -2,8 +2,6 @@ import {
   ActionHash,
   AppClient,
   EntryHash,
-  RoleName,
-  ZomeName,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -295,6 +293,11 @@ export interface WeaveServices {
    */
   requestBind: (srcWal: WAL, dstWal: WAL) => Promise<void>;
   /**
+   * Requests to close the containing window. Will only work if the applet is being run in its
+   * own window
+   */
+  requestClose: () => Promise<void>;
+  /**
    * Gets the group permission type. May be used to restrict certain actions in the UI.
    * @returns
    */
@@ -366,6 +369,8 @@ export class WeaveClient implements WeaveServices {
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
 
   requestBind = (srcWal: WAL, dstWal: WAL) => window.__WEAVE_API__.requestBind(srcWal, dstWal);
+
+  requestClose = () => window.__WEAVE_API__.requestClose();
 
   myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
 }

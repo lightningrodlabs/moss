@@ -81,7 +81,7 @@ export function appletMessageHandler(
         mossStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
-        receivedAppletId = message.data.appletId;
+        receivedAppletId = encodeHashToBase64(message.data.appletHash);
       } else if (message.origin.startsWith('default-app://')) {
         // There is another message handler for those messages in we-app.ts.
         return;
@@ -190,6 +190,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         console.error('Binding failed due to an error in the destination applet: ', e);
         throw new Error(`Binding failed due to an error in the destination applet.`);
       }
+    },
+    async requestClose() {
+      throw new Error('Close request is not supported in the headless WeaveClient.');
     },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await mossStore.groupStore(groupDnaHash);
@@ -558,6 +561,9 @@ export async function handleAppletIframeMessage(
       return mossStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
+    case 'request-close':
+      // Only supported in external windows
+      return;
     default:
       throw Error(`Got unsupported message type: '${message.type}'`);
   }

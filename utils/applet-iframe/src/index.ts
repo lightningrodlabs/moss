@@ -158,6 +158,11 @@ const weaveApi: WeaveServices = {
       dstWal,
     }),
 
+  requestClose: () =>
+    postMessage({
+      type: 'request-close',
+    }),
+
   myGroupPermissionType: () =>
     postMessage({
       type: 'my-group-permission-type',
@@ -345,7 +350,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletId: window.__WEAVE_APPLET_ID__,
+      appletHash: window.__WEAVE_APPLET_HASH__,
     };
 
     // eslint-disable-next-line no-restricted-globals

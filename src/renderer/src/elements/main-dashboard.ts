@@ -504,12 +504,12 @@ export class MainDashboard extends LitElement {
     window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       console.log('Got cross window applet to parent message: ', payload);
-      if (!payload.message.appletId)
+      if (!payload.message.appletHash)
         throw new Error('appletHash not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
         this._mossStore,
         this.openViews,
-        payload.message.appletId,
+        encodeHashToBase64(payload.message.appletHash),
         payload.message.request,
       );
       await window.electronAPI.appletMessageToParentResponse(response, payload.id);

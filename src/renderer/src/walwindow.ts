@@ -3,10 +3,12 @@ import { customElement, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import {
+  AppletHash,
   AppletId,
   AppletToParentMessage,
   AppletToParentRequest,
 } from '@lightningrodlabs/we-applet';
+import { decodeHashFromBase64 } from '@holochain/client';
 // import { ipcRenderer } from 'electron';
 
 @customElement('wal-window')
@@ -15,7 +17,7 @@ export class WalWindow extends LitElement {
   iframeSrc: string | undefined;
 
   @state()
-  appletId: AppletId | undefined;
+  appletHash: AppletHash | undefined;
 
   async firstUpdated() {
     // set up handler to handle iframe messages
@@ -30,10 +32,12 @@ export class WalWindow extends LitElement {
               return window.electronAPI.signZomeCallApplet(request.request);
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
+            case 'request-close':
+              return (window.electronAPI as any).closeWindow();
             default:
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                appletId: this.appletId,
+                appletHash: this.appletHash,
               };
               return (window.electronAPI as any).appletMessageToParent(appletToParentMessage);
           }
@@ -55,7 +59,7 @@ export class WalWindow extends LitElement {
 
     const appletSrcInfo = await (window as any).electronAPI.getMySrc();
     this.iframeSrc = appletSrcInfo.iframeSrc;
-    this.appletId = appletSrcInfo.appletId;
+    this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
   }
 
   render() {
