@@ -24,9 +24,8 @@ export class WalWindow extends LitElement {
     window.addEventListener('message', async (message) => {
       const request = message.data.request as AppletToParentRequest;
 
-      const handleRequest = (request: AppletToParentRequest) => {
+      const handleRequest = async (request: AppletToParentRequest) => {
         if (request) {
-          console.log('Got request: ', request);
           switch (request.type) {
             case 'sign-zome-call':
               return window.electronAPI.signZomeCallApplet(request.request);
@@ -34,6 +33,26 @@ export class WalWindow extends LitElement {
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
               return (window.electronAPI as any).closeWindow();
+            case 'user-select-wal': {
+              await (window.electronAPI as any).focusMainWindow();
+              let error;
+              let response;
+              const appletToParentMessage: AppletToParentMessage = {
+                request: message.data.request,
+                appletHash: this.appletHash,
+              };
+              try {
+                response = await (window.electronAPI as any).appletMessageToParent(
+                  appletToParentMessage,
+                );
+              } catch (e) {
+                error = e;
+              }
+              await (window.electronAPI as any).focusMyWindow();
+              if (error) return Promise.reject(`Failed to select WAL: ${error}`);
+              return response;
+            }
+
             default:
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,

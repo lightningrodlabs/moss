@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   appletMessageToParent: (message: AppletToParentMessage) =>
     ipcRenderer.invoke('applet-message-to-parent', message),
   closeWindow: () => ipcRenderer.invoke('close-window'),
+  focusMainWindow: () => ipcRenderer.invoke('focus-main-window'),
+  focusMyWindow: () => ipcRenderer.invoke('focus-my-window'),
   getMySrc: () => ipcRenderer.invoke('get-my-src'),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   signZomeCallApplet: (request: CallZomeRequest) =>

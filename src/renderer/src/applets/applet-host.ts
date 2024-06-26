@@ -70,11 +70,11 @@ export function appletMessageHandler(
 
       // }
       if (message.origin.startsWith('applet://')) {
-        const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
+        const appletId = getAppletIdFromOrigin(message.origin);
         // const appletHash = installedApplets.find(
         //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
         // );
-        receivedAppletId = lowerCaseAppletId;
+        receivedAppletId = appletId;
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
           message.origin.startsWith('http://localhost')) &&

@@ -771,6 +771,15 @@ app.whenReady().then(async () => {
       delete WAL_WINDOWS[walAndWindowInfo[0]];
     }
   });
+  ipcMain.handle('focus-main-window', (): void => {
+    if (MAIN_WINDOW) MAIN_WINDOW.show();
+  });
+  ipcMain.handle('focus-my-window', (e): void => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.id === e.sender.id,
+    );
+    if (windowAndInfo) windowAndInfo[1].window.show();
+  });
   ipcMain.handle(
     'open-app',
     async (_e, appId: string): Promise<void> =>

@@ -1,8 +1,7 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, LazyHoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   ActionHash,
-  AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -204,6 +203,8 @@ const weaveApi: WeaveServices = {
   if (view.type === 'applet-view') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
+    const appletHash = window.__WEAVE_APPLET_HASH__;
+
     // message handler for ParentToApplet messages - Only added for applet main-view
     window.addEventListener('message', async (m: MessageEvent<any>) => {
       try {
@@ -231,8 +232,6 @@ const weaveApi: WeaveServices = {
       ),
       setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
-
-    const appletHash = window.__WEAVE_APPLET_HASH__;
 
     window.__WEAVE_RENDER_INFO__ = {
       type: 'applet-view',
