@@ -13,6 +13,7 @@ import {
   FrameNotification,
   RecordInfo,
   PeerStatusUpdate,
+  RenderView,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -28,14 +29,17 @@ import { MossStore } from '../moss-store.js';
 import { AppletHash, AppletId, PermissionType } from '../types.js';
 import {
   appIdFromAppletHash,
+  appletOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
   logAppletZomeCall,
+  renderViewToQueryString,
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
   toolBundleActionHashFromDistInfo,
+  urlFromAppletHash,
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
@@ -53,8 +57,11 @@ function getAppletIdFromOrigin(origin: string): AppletId {
   return toOriginalCaseB64(lowercaseB64Id);
 }
 
-export async function setupAppletMessageHandler(mossStore: MossStore, openViews: AppOpenViews) {
-  window.addEventListener('message', async (message) => {
+export function appletMessageHandler(
+  mossStore: MossStore,
+  openViews: AppOpenViews,
+): (message: any) => Promise<void> {
+  return async (message) => {
     try {
       // console.log('and source: ', message.source);
       let receivedAppletId: AppletId;
@@ -63,11 +70,11 @@ export async function setupAppletMessageHandler(mossStore: MossStore, openViews:
 
       // }
       if (message.origin.startsWith('applet://')) {
-        const lowerCaseAppletId = getAppletIdFromOrigin(message.origin);
+        const appletId = getAppletIdFromOrigin(message.origin);
         // const appletHash = installedApplets.find(
         //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
         // );
-        receivedAppletId = lowerCaseAppletId;
+        receivedAppletId = appletId;
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
           message.origin.startsWith('http://localhost')) &&
@@ -117,7 +124,7 @@ export async function setupAppletMessageHandler(mossStore: MossStore, openViews:
       console.log('appletId: ', encodeHashToBase64(message.data.appletHash));
       message.ports[0].postMessage({ type: 'error', error: (e as any).message });
     }
-  });
+  };
 }
 
 export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
@@ -183,6 +190,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         console.error('Binding failed due to an error in the destination applet: ', e);
         throw new Error(`Binding failed due to an error in the destination applet.`);
       }
+    },
+    async requestClose() {
+      throw new Error('Close request is not supported in the headless WeaveClient.');
     },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await mossStore.groupStore(groupDnaHash);
@@ -334,6 +344,40 @@ export async function handleAppletIframeMessage(
             message.request.context,
           );
         case 'wal':
+          if (message.request.mode === 'window') {
+            // determine iframeSrc, then open wal in window
+            const wal = message.request.wal;
+            const location = await toPromise(
+              mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]),
+            );
+            if (!location) throw new Error('Asset not found.');
+            const renderView: RenderView = {
+              type: 'applet-view',
+              view: {
+                type: 'asset',
+                wal,
+                recordInfo: location.entryDefLocation
+                  ? {
+                      roleName: location.dnaLocation.roleName,
+                      integrityZomeName: location.entryDefLocation.integrity_zome,
+                      entryType: location.entryDefLocation.entry_def,
+                    }
+                  : undefined,
+              },
+            };
+            const appletHash = decodeHashFromBase64(appletId);
+            if (mossStore.isAppletDev) {
+              const appId = appIdFromAppletHash(appletHash);
+              const appletDevPort = await getAppletDevPort(appId);
+              const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
+                renderView,
+              )}#${urlFromAppletHash(appletHash)}`;
+              return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+            }
+            const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
+            return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+          }
+
           return openViews.openWal(message.request.wal, message.request.mode);
       }
     case 'wal-to-pocket':
@@ -517,6 +561,9 @@ export async function handleAppletIframeMessage(
       return mossStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
+    case 'request-close':
+      // Only supported in external windows
+      return;
     default:
       throw Error(`Got unsupported message type: '${message.type}'`);
   }

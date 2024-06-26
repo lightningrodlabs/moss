@@ -36,8 +36,9 @@ export declare interface WeEmitter {
       | HOLOCHAIN_FATAL_PANIC
       | HOLOCHAIN_LOG
       | WASM_LOG
-      | SCREEN_OR_WINDOW_SELECTED,
-    listener: (event: HolochainData | string | Error) => void,
+      | SCREEN_OR_WINDOW_SELECTED
+      | string, // arbitrary string, e.g. a one-time event with a unique id
+    listener: (event: HolochainData | string | Error | AppletToParentMessageResponse) => void,
   ): this;
 }
 
@@ -84,3 +85,8 @@ export interface HolochainData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
 }
+
+export type AppletToParentMessageResponse = {
+  response: any;
+  id: string;
+};

@@ -62,7 +62,7 @@ import './pocket.js';
 import './creatable-panel.js';
 import { MossPocket } from './pocket.js';
 import { CreatablePanel } from './creatable-panel.js';
-import { setupAppletMessageHandler } from '../applets/applet-host.js';
+import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import {
@@ -363,6 +363,7 @@ export class MainDashboard extends LitElement {
   }
 
   async openTab(tabInfo: TabInfo, mode?: OpenWalMode) {
+    if (mode === 'window') throw Error("Mode 'window' cannot be opened in a tab");
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
     );
@@ -500,7 +501,19 @@ export class MainDashboard extends LitElement {
   }
 
   async firstUpdated() {
-    setupAppletMessageHandler(this._mossStore, this.openViews);
+    window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
+    window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
+      console.log('Got cross window applet to parent message: ', payload);
+      if (!payload.message.appletHash)
+        throw new Error('appletHash not defined in AppletToParentMessage');
+      const response = await handleAppletIframeMessage(
+        this._mossStore,
+        this.openViews,
+        encodeHashToBase64(payload.message.appletHash),
+        payload.message.request,
+      );
+      await window.electronAPI.appletMessageToParentResponse(response, payload.id);
+    });
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));

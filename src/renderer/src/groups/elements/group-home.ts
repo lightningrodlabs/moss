@@ -7,6 +7,7 @@ import {
   AgentPubKey,
   DnaModifiers,
   EntryHash,
+  HoloHash,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -60,6 +61,7 @@ import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
 import '../../elements/tab-group.js';
 import '../../elements/loading-dialog.js';
+import './foyer-stream.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -538,7 +540,9 @@ export class GroupHome extends LitElement {
   renderHomeContent() {
     switch (this._groupDescription.value.status) {
       case 'pending':
-        return html` <div class="column center-content" style="flex: 1;">Loading...</div> `;
+        return html`
+          <div class="home-panel column center-content" style="flex: 1;">Loading...</div>
+        `;
       case 'error':
         console.error(this._groupDescription.value.error);
         return html`
@@ -549,55 +553,52 @@ export class GroupHome extends LitElement {
       case 'complete':
         if (this._editGroupDescription) {
           return html`
-            <div class="row" style="justify-content: flex-end;">
-              <button
-                @click=${() => {
-                  this._editGroupDescription = false;
-                }}
-              >
-                ${msg('Cancel')}
-              </button>
-              <button
-                @click=${async () => {
-                  const descriptionInput = this.shadowRoot!.getElementById(
-                    'group-description-input',
-                  ) as HTMLTextAreaElement;
-                  const myPermission = await toPromise(this.groupStore.permissionType);
-                  if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
-                    this._editGroupDescription = false;
-                    notifyError('No permission to edit group profile.');
-                    return;
-                  } else {
-                    console.log('Saving decription...');
-                    console.log('Value: ', descriptionInput.value);
-                    const result = await this.groupStore.groupClient.setGroupMetaData({
-                      permission_hash:
-                        myPermission.type === 'Steward'
-                          ? myPermission.content.permission_hash
-                          : undefined,
-                      name: 'description',
-                      data: descriptionInput.value,
-                    });
-                    console.log('decription saved: ', result.entry);
-
-                    await this.groupStore.groupDescription.reload();
-                    this._editGroupDescription = false;
-                  }
-                }}
-              >
-                Save
-              </button>
+            <div class="home-panel">
+              <div class="row" style="justify-content: flex-end;">
+                <button @click=${() => {}}>${msg('Cancel')}</button>
+                <button
+                  @click=${async () => {
+                    const descriptionInput = this.shadowRoot!.getElementById(
+                      'group-description-input',
+                    ) as HTMLTextAreaElement;
+                    const myPermission = await toPromise(this.groupStore.permissionType);
+                    if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
+                      this._editGroupDescription = false;
+                      notifyError('No permission to edit group profile.');
+                      return;
+                    } else {
+                      console.log('Saving decription...');
+                      console.log('Value: ', descriptionInput.value);
+                      const result = await this.groupStore.groupClient.setGroupMetaData({
+                        permission_hash:
+                          myPermission.type === 'Steward'
+                            ? myPermission.content.permission_hash
+                            : undefined,
+                        name: 'description',
+                        data: descriptionInput.value,
+                      });
+                      console.log('decription saved: ', result.entry);
+                      await this.groupStore.groupDescription.reload();
+                      this._editGroupDescription = false;
+                    }
+                  }}
+                >
+                  Save
+                </button>
+              </div>
             </div>
 
             <sl-textarea
               id="group-description-input"
+              size="medium"
               value=${this._groupDescription.value.value?.data}
             ></sl-textarea>
+          </div>
           `;
         }
         if (!this._groupDescription.value.value) {
           return html`
-            <div class="column center-content" style="flex: 1;">
+            <div class="home-panel column center-content" style="flex: 1;">
               No group description.
               <button
                 style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -611,7 +612,7 @@ export class GroupHome extends LitElement {
           `;
         } else {
           return html`
-            <div class="column">
+            <div class="home-panel column">
               <div class="row" style="justify-content: flex-end;">
                 <button
                   style="${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -638,13 +639,42 @@ export class GroupHome extends LitElement {
     }
   }
 
+  renderFoyer() {
+    return html`
+      <div class="foyer-panel">
+        <foyer-stream></foyer-stream>
+      </div>
+    `;
+  }
+
   renderMainPanelContent() {
     switch (this._selectedTab) {
       case 'home':
-        return this.renderHomeContent();
+        return html`
+          <div style="display:flex;">
+            <div style="flex:3">${this.renderHomeContent()}</div>
+            <div style="flex:1">${this.renderFoyer()}</div>
+          </div>
+        `;
       case 'unjoined tools':
         return this.renderNewApplets();
     }
+  }
+
+  renderHashForCopying(text: string, hash: HoloHash) {
+    const hashB64 = encodeHashToBase64(hash);
+    const hashText = hashB64.slice(0, 8) + '...' + hashB64.slice(-8);
+    return html`
+      <span
+        @click=${async () => {
+          await navigator.clipboard.writeText(hashB64);
+          notify(msg('Hash copied to clipboard.'));
+        }}
+        title=${hashB64}
+        class="copyable-hash"
+        >${msg(text)}:${hashText}</span
+      >
+    `;
   }
 
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
@@ -656,14 +686,8 @@ export class GroupHome extends LitElement {
           style="flex: 1; padding: 16px 16px 0 16px; overflow-y: auto; position: relative;"
         >
           <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
-            <span
-              >${msg('Group DNA Hash: ')}${encodeHashToBase64(this.groupStore.groupDnaHash)}</span
-            >
-            <span
-              >${msg('Your Public Key: ')}${encodeHashToBase64(
-                this.groupStore.groupClient.myPubKey,
-              )}</span
-            >
+            ${this.renderHashForCopying('Group DNA Hash', this.groupStore.groupDnaHash)}
+            ${this.renderHashForCopying('Your Public Key: ', this.groupStore.groupClient.myPubKey)}
           </div>
 
           <div
@@ -1168,7 +1192,6 @@ export class GroupHome extends LitElement {
         /* background: #335c21; */
         /* background: #e1efda; */
         background: #1e3b25;
-        padding: 20px;
         color: white;
         border-radius: 0 5px 5px 5px;
         box-shadow: 1px 1px 3px 0px #223607;
@@ -1178,6 +1201,18 @@ export class GroupHome extends LitElement {
 
       .main-panel a {
         color: #07cd07;
+      }
+
+      .home-panel {
+        padding: 20px;
+      }
+      #group-description-input {
+        margin-top: 5px;
+      }
+      .foyer-panel {
+        /* border-left: solid 1px white; */
+        padding-left: 5px;
+        background: #08230e;
       }
 
       .online-status-bar {
@@ -1207,6 +1242,9 @@ export class GroupHome extends LitElement {
 
       .padded {
         padding: 0 4px;
+      }
+      .copyable-hash {
+        cursor: pointer;
       }
     `,
   ];
