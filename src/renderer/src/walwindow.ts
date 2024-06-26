@@ -4,9 +4,11 @@ import { weStyles } from './shared-styles';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import {
   AppletHash,
-  AppletId,
+  AppletInfo,
   AppletToParentMessage,
   AppletToParentRequest,
+  AssetInfo,
+  AssetLocationAndInfo,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64 } from '@holochain/client';
 // import { ipcRenderer } from 'electron';
@@ -79,6 +81,35 @@ export class WalWindow extends LitElement {
     const appletSrcInfo = await (window as any).electronAPI.getMySrc();
     this.iframeSrc = appletSrcInfo.iframeSrc;
     this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
+    try {
+      const appletInfo: AppletInfo = await (window.electronAPI as any).appletMessageToParent({
+        request: {
+          type: 'get-applet-info',
+          appletHash: this.appletHash,
+        },
+        appletHash: this.appletHash,
+      });
+      let assetLocationAndInfo: AssetLocationAndInfo | undefined;
+      console.log('Getting global asset info for WAL: ', appletSrcInfo.wal);
+      try {
+        assetLocationAndInfo = await (window.electronAPI as any).appletMessageToParent({
+          request: {
+            type: 'get-global-asset-info',
+            wal: appletSrcInfo.wal,
+          },
+          appletHash: this.appletHash,
+        });
+      } catch (e) {
+        console.warn('Failed to get asset info: ', e);
+      }
+      const title = assetLocationAndInfo
+        ? `${appletInfo.appletName} - ${assetLocationAndInfo.assetInfo.name}`
+        : appletInfo.appletName;
+      await (window.electronAPI as any).setMyTitle(title);
+      await (window.electronAPI as any).setMyIcon(appletInfo.appletIcon);
+    } catch (e) {
+      console.warn('Failed to set window title or icon: ', e);
+    }
   }
 
   render() {

@@ -57,7 +57,12 @@ import {
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
-import { AppletId, AppletToParentMessage, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  WAL,
+} from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from 'electron-updater';
 import * as yaml from 'js-yaml';
@@ -309,6 +314,7 @@ const WAL_WINDOWS: Record<
   {
     appletId: AppletId;
     window: BrowserWindow;
+    wal: WAL;
   }
 > = {};
 
@@ -734,7 +740,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
-  ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId) => {
+  ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId, wal: WAL) => {
     const maybeExistingWindowInfo = WAL_WINDOWS[src];
     if (maybeExistingWindowInfo) {
       maybeExistingWindowInfo.window.show();
@@ -747,21 +753,26 @@ app.whenReady().then(async () => {
     WAL_WINDOWS[src] = {
       window: newWalWindow,
       appletId,
+      wal,
     };
   });
   // To be called by WAL windows to find out which src the iframev is supposed to use
-  ipcMain.handle('get-my-src', (e): { iframeSrc: string; appletId: AppletId } | undefined => {
-    console.log();
-    const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
-      ([_src, window]) => window.window.webContents.id === e.sender.id,
-    );
-    if (walAndWindowInfo)
-      return {
-        iframeSrc: walAndWindowInfo[0],
-        appletId: walAndWindowInfo[1].appletId,
-      };
-    return undefined;
-  });
+  ipcMain.handle(
+    'get-my-src',
+    (e): { iframeSrc: string; appletId: AppletId; wal: WAL } | undefined => {
+      console.log();
+      const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
+        ([_src, window]) => window.window.webContents.id === e.sender.id,
+      );
+      if (walAndWindowInfo)
+        return {
+          iframeSrc: walAndWindowInfo[0],
+          appletId: walAndWindowInfo[1].appletId,
+          wal: walAndWindowInfo[1].wal,
+        };
+      return undefined;
+    },
+  );
   ipcMain.handle('close-window', (e) => {
     const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
       ([_src, window]) => window.window.webContents.id === e.sender.id,
@@ -776,9 +787,28 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('focus-my-window', (e): void => {
     const windowAndInfo = Object.entries(WAL_WINDOWS).find(
-      ([_src, window]) => window.window.id === e.sender.id,
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
     );
     if (windowAndInfo) windowAndInfo[1].window.show();
+  });
+  ipcMain.handle('set-my-title', (e, title: string) => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (windowAndInfo) {
+      const window = windowAndInfo[1].window;
+      window.setTitle(title);
+    }
+  });
+  ipcMain.handle('set-my-icon', (e, icon: string) => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (windowAndInfo) {
+      const nativeIcon = nativeImage.createFromDataURL(icon);
+      const window = windowAndInfo[1].window;
+      window.setIcon(nativeIcon);
+    }
   });
   ipcMain.handle(
     'open-app',

@@ -9,7 +9,12 @@ import {
   FunctionName,
   DnaHashB64,
 } from '@holochain/client';
-import { AppletId, AppletToParentMessage, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  WAL,
+} from '@lightningrodlabs/we-applet';
 
 import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
 
@@ -44,7 +49,7 @@ declare global {
         ) => any,
       ) => any;
       openApp: (appId: string) => Promise<void>;
-      openWalWindow: (iframeSrc: string, appletId: AppletId) => Promise<void>;
+      openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;

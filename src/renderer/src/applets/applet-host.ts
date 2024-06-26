@@ -372,10 +372,10 @@ export async function handleAppletIframeMessage(
               const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
                 renderView,
               )}#${urlFromAppletHash(appletHash)}`;
-              return window.electronAPI.openWalWindow(iframeSrc, appletId);
+              return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
             }
             const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
-            return window.electronAPI.openWalWindow(iframeSrc, appletId);
+            return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
           }
 
           return openViews.openWal(message.request.wal, message.request.mode);

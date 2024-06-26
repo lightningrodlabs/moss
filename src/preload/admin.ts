@@ -11,7 +11,12 @@ import {
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
-import { AppletId, AppletToParentMessage, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  WAL,
+} from '@lightningrodlabs/we-applet';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -49,8 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) => ipcRenderer.on('zome-call-signed', callback),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
-  openWalWindow: (iframeSrc: string, appletId: AppletId) =>
-    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId),
+  openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) =>
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, wal),
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
