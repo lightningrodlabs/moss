@@ -22,6 +22,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     }
     if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      e.preventDefault();
       return;
     }
     if (
@@ -42,6 +43,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     }
     if (e.url.startsWith('weave-0.12://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
+      e.preventDefault();
       return;
     }
     if (
