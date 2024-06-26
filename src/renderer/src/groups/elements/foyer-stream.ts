@@ -11,12 +11,14 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { Payload, Stream } from '../stream.js';
+import { Message, Payload, Stream } from '../stream.js';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
@@ -53,10 +55,18 @@ export class FoyerStream extends LitElement {
       () => this.stream!.messages,
       () => [this.stream],
     );
+    this._acks = new StoreSubscriber(
+      this,
+      () => this.stream!.acks,
+      () => [this.stream],
+    );
   }
 
   @state()
   _messages;
+
+  @state()
+  _acks;
 
   @state()
   newMessages: number = 0;
@@ -113,6 +123,47 @@ export class FoyerStream extends LitElement {
     return 0;
   };
 
+  @state()
+  _showRecipients = 0;
+
+  renderRecipients(agents: AgentPubKey[]) {
+    return html`
+      <div class="msg-recipients">
+        <strong>Received by:</strong>
+        ${agents.map((agent) => html`<profile-detail .agentPubKey=${agent}></profile-detail>`)}
+      </div>
+    `;
+  }
+
+  @query('#foyer-info-dialog')
+  _foyerInfoDialog!: SlDialog;
+
+  renderFoyerInfo() {
+    return html` <sl-dialog
+      id="foyer-info-dialog"
+      style="--width: 500px; --sl-panel-background-color: #f0f59d;"
+      no-header
+    >
+      <div class="">
+        <div
+          class="row"
+          style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
+        >
+          <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
+          <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
+          <span style="margin-left: 5px;">Foyer</span>
+        </div>
+        <div style="margin-top: 20px; font-size: 20px;">
+          <p>The Foyer is a space for sending ephemeral messages to other members of the group.</p>
+          <p>
+            None of these messages are ever stored, and they only go to other members who show as
+            online in the group's member list.
+          </p>
+        </div>
+      </div>
+    </sl-dialog>`;
+  }
+
   renderStream() {
     if (!this._messages) return html``;
     if (this._conversationContainer) {
@@ -135,41 +186,55 @@ export class FoyerStream extends LitElement {
         }
       }
     }
-    return this._messages.value.map((msg) => {
+    return this._messages.value.map((m) => {
+      const msg: Message = m as Message;
       const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
       const msgText = this.convertMessageText(msg.payload.text);
-      const ackCount = 19; //getAckCount($acks, msg.payload.created)
-      const recipientCount = 19;
+      const ackCount = this.getAckCount(this._acks.value, msg.payload.created);
       return html`
         <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
-          ${msg.payload.type == 'Msg'
-            ? html`
-                ${!isMyMessage
-                  ? html`
-                      <agent-avatar
-                        style="margin-right:5px"
-                        disable-copy=${true}
-                        size=${20}
-                        agent-pub-key=${encodeHashToBase64(msg.from)}
-                      ></agent-avatar>
-                    `
-                  : ''}
-                ${msgText}
-                <span
-                  title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
-                  class="msg-timestamp"
-                  >${new Date(msg.payload.created).toLocaleTimeString()}</span
-                >
-                ${isMyMessage
-                  ? html`
-                      ${ackCount == recipientCount
-                        ? '✓'
-                        : recipientCount > 1
-                          ? html` <span class="ack-count">${ackCount}</span> `
-                          : ''}
-                    `
-                  : ''}
-              `
+          <div class="msg-content">
+            ${msg.payload.type == 'Msg'
+              ? html`
+                  ${!isMyMessage
+                    ? html`
+                        <agent-avatar
+                          style="margin-right:5px"
+                          disable-copy=${true}
+                          size=${20}
+                          agent-pub-key=${encodeHashToBase64(msg.from)}
+                        ></agent-avatar>
+                      `
+                    : ''}
+                  ${msgText}
+                  <span
+                    title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
+                    class="msg-timestamp"
+                    >${new Date(msg.payload.created).toLocaleTimeString()}</span
+                  >
+                  ${isMyMessage
+                    ? html`
+                        ${ackCount > 0
+                          ? html`
+                              <span
+                                style="cursor:pointer"
+                                @click=${() =>
+                                  (this._showRecipients =
+                                    this._showRecipients != msg.payload.created
+                                      ? msg.payload.created
+                                      : 0)}
+                                class="ack-count"
+                                >${ackCount}</span
+                              >
+                            `
+                          : '...'}
+                      `
+                    : ''}
+                `
+              : ''}
+          </div>
+          ${isMyMessage && ackCount > 0 && this._showRecipients == msg.payload.created
+            ? this.renderRecipients(this._acks.value[msg.payload.created].keys())
             : ''}
         </div>
       `;
@@ -178,10 +243,20 @@ export class FoyerStream extends LitElement {
 
   render() {
     return html`
+      ${this.renderFoyerInfo()}
       <div class="person-feed">
         <div class="header">
           <div class="column">
-            <div class="row" style="align-items: center; font-size: 1.5rem;">
+            <div
+              @click=${() => this._foyerInfoDialog.show()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  this._foyerInfoDialog.show();
+                }
+              }}
+              class="row"
+              style="align-items: center; font-size: 1.5rem;"
+            >
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
               <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
             </div>
@@ -275,6 +350,7 @@ export class FoyerStream extends LitElement {
       }
       .msg {
         display: flex;
+        flex-direction: column;
         margin: 5px;
         border-radius: 10px;
         color: white;
@@ -282,6 +358,9 @@ export class FoyerStream extends LitElement {
         flex-shrink: 1;
         align-self: flex-start;
         background-color: #305f19;
+      }
+      .msg-content {
+        display: flex;
       }
       a {
         text-decoration: underline;
@@ -324,6 +403,12 @@ export class FoyerStream extends LitElement {
         color: black;
         padding: 4px 8px;
         cursor: pointer;
+      }
+      .msg-recipients {
+        margin-top: 5px;
+        padding-top: 5px;
+        border-top: solid 1px white;
+        color: white;
       }
     `,
   ];
