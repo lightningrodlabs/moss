@@ -104,7 +104,7 @@ export class AssetView extends LitElement {
         ></display-error>`;
       case 'complete':
         if (this.location.value.value === undefined)
-          return html`<span>${msg('Entry not found.')}</span>`;
+          return html`<span>${msg('Asset not found.')}</span>`;
 
         return this.renderGroupView(
           this.location.value.value.dnaLocation,

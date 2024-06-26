@@ -702,9 +702,13 @@ export class MossStore {
 
   dnaLocations = new LazyHoloHashMap((dnaHash: DnaHash) =>
     asyncDerived(this.installedApps, async (installedApps) => {
-      const app = findAppForDnaHash(installedApps, dnaHash);
+      let app = findAppForDnaHash(installedApps, dnaHash);
 
-      if (!app) throw new Error('The given dna is not installed');
+      if (!app) {
+        const installedAppsRecent = await this.adminWebsocket.listApps({});
+        app = findAppForDnaHash(installedAppsRecent, dnaHash);
+        if (!app) throw new Error('The given dna is not installed');
+      }
       if (!app.appInfo.installed_app_id.startsWith('applet#'))
         throw new Error("The given dna is part of an app that's not an applet.");
 

@@ -1,8 +1,7 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, LazyHoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   ActionHash,
-  AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -37,6 +36,7 @@ import {
   PeerStatus,
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
+  AppletId,
 } from '@lightningrodlabs/we-applet';
 import { readable } from '@holochain-open-dev/stores';
 
@@ -46,6 +46,7 @@ declare global {
     __WEAVE_APPLET_SERVICES__: AppletServices;
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_APPLET_HASH__: AppletHash;
+    __WEAVE_APPLET_ID__: AppletId;
   }
 
   interface WindowEventMap {
@@ -156,6 +157,11 @@ const weaveApi: WeaveServices = {
       dstWal,
     }),
 
+  requestClose: () =>
+    postMessage({
+      type: 'request-close',
+    }),
+
   myGroupPermissionType: () =>
     postMessage({
       type: 'my-group-permission-type',
@@ -164,6 +170,7 @@ const weaveApi: WeaveServices = {
 
 (async () => {
   window.__WEAVE_APPLET_HASH__ = readAppletHash();
+  window.__WEAVE_APPLET_ID__ = readAppletId();
   window.__WEAVE_API__ = weaveApi;
   window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
@@ -196,6 +203,8 @@ const weaveApi: WeaveServices = {
   if (view.type === 'applet-view') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
+    const appletHash = window.__WEAVE_APPLET_HASH__;
+
     // message handler for ParentToApplet messages - Only added for applet main-view
     window.addEventListener('message', async (m: MessageEvent<any>) => {
       try {
@@ -223,8 +232,6 @@ const weaveApi: WeaveServices = {
       ),
       setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
-
-    const appletHash = window.__WEAVE_APPLET_HASH__;
 
     window.__WEAVE_RENDER_INFO__ = {
       type: 'applet-view',
@@ -403,6 +410,19 @@ function readAppletHash(): EntryHash {
   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
   return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+}
+
+function readAppletId(): AppletId {
+  if (window.origin.startsWith('applet://')) {
+    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+    return toOriginalCaseB64(lowercaseB64Id);
+  }
+  // In dev mode, the applet hash will be appended at the end
+  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
 }
 
 // IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs
