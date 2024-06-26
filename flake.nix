@@ -26,7 +26,7 @@
           , ...
           }: {
             devShells.default = pkgs.mkShell {
-              inputsFrom = [ holochain-flake.devShells.${system}.holonix ];
+              inputsFrom = [ holochain-flake.devShells.${system}.holochainBinaries ];
               packages = with pkgs; [ nodejs_20 yarn ];
             };
           };
