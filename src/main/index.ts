@@ -33,7 +33,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
-import { createHappWindow } from './windows';
+import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
 import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import {
@@ -52,7 +52,12 @@ import {
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
-import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  WAL,
+} from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from 'electron-updater';
 import * as yaml from 'js-yaml';
@@ -299,6 +304,14 @@ let SYSTRAY_ICON_STATE: 'high' | 'medium' | undefined = undefined;
 let SYSTRAY: Tray | undefined = undefined;
 let isAppQuitting = false;
 let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
+const WAL_WINDOWS: Record<
+  string,
+  {
+    appletId: AppletId;
+    window: BrowserWindow;
+    wal: WAL;
+  }
+> = {};
 
 // icons
 const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
@@ -326,50 +339,6 @@ const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) =
 const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
   if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
   return signZomeCall(zomeCall, WE_RUST_HANDLER);
-};
-
-const createSplashscreenWindow = (): BrowserWindow => {
-  const icon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '../icon.png'));
-
-  // Create the browser window.
-  const splashWindow = new BrowserWindow({
-    height: 450,
-    width: 800,
-    center: true,
-    resizable: false,
-    frame: false,
-    show: false,
-    backgroundColor: '#331ead',
-    icon,
-    // use these settings so that the ui
-    // can listen for status change events
-    webPreferences: {
-      preload: path.resolve(__dirname, '../preload/splashscreen.js'),
-    },
-  });
-
-  // // and load the splashscreen.html of the app.
-  // if (app.isPackaged) {
-  //   splashWindow.loadFile(SPLASH_FILE);
-  // } else {
-  //   // development
-  //   splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`);
-  // }
-
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    splashWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/splashscreen.html`);
-  } else {
-    splashWindow.loadFile(path.join(__dirname, '../renderer/splashscreen.html'));
-  }
-
-  // once its ready to show, show
-  splashWindow.once('ready-to-show', () => {
-    splashWindow.show();
-  });
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
-  return splashWindow;
 };
 
 const createOrShowMainWindow = (): BrowserWindow => {
@@ -713,6 +682,29 @@ app.whenReady().then(async () => {
       }
     },
   );
+  // Forward the message to the main window with a unique nano id and waits for the response
+  // that should get sent via IPC ('applet-message-to-parent-response')
+  ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
+    if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
+    const messageId = nanoid(5);
+    emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
+      message,
+      id: messageId,
+    });
+    return new Promise((resolve, reject) => {
+      const timeoutMs = 60000;
+      const timeout = setTimeout(() => {
+        return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
+      }, timeoutMs);
+      WE_EMITTER.on(messageId, (response) => {
+        clearTimeout(timeout);
+        return resolve(response);
+      });
+    });
+  });
+  ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
+    WE_EMITTER.emit(id, response);
+  });
   ipcMain.handle('get-app-version', (): string => app.getVersion());
   ipcMain.handle(
     'dialog-messagebox',
@@ -743,6 +735,76 @@ app.whenReady().then(async () => {
   ipcMain.handle('source-selected', (_e, id: string) => WE_EMITTER.emitScreenOrWindowSelected(id));
   ipcMain.handle('sign-zome-call', handleSignZomeCall);
   ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
+  ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId, wal: WAL) => {
+    const maybeExistingWindowInfo = WAL_WINDOWS[src];
+    if (maybeExistingWindowInfo) {
+      maybeExistingWindowInfo.window.show();
+      return;
+    }
+    const newWalWindow = createWalWindow();
+    newWalWindow.on('close', () => {
+      delete WAL_WINDOWS[src];
+    });
+    WAL_WINDOWS[src] = {
+      window: newWalWindow,
+      appletId,
+      wal,
+    };
+  });
+  // To be called by WAL windows to find out which src the iframev is supposed to use
+  ipcMain.handle(
+    'get-my-src',
+    (e): { iframeSrc: string; appletId: AppletId; wal: WAL } | undefined => {
+      console.log();
+      const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
+        ([_src, window]) => window.window.webContents.id === e.sender.id,
+      );
+      if (walAndWindowInfo)
+        return {
+          iframeSrc: walAndWindowInfo[0],
+          appletId: walAndWindowInfo[1].appletId,
+          wal: walAndWindowInfo[1].wal,
+        };
+      return undefined;
+    },
+  );
+  ipcMain.handle('close-window', (e) => {
+    const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (walAndWindowInfo) {
+      walAndWindowInfo[1].window.close();
+      delete WAL_WINDOWS[walAndWindowInfo[0]];
+    }
+  });
+  ipcMain.handle('focus-main-window', (): void => {
+    if (MAIN_WINDOW) MAIN_WINDOW.show();
+  });
+  ipcMain.handle('focus-my-window', (e): void => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (windowAndInfo) windowAndInfo[1].window.show();
+  });
+  ipcMain.handle('set-my-title', (e, title: string) => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (windowAndInfo) {
+      const window = windowAndInfo[1].window;
+      window.setTitle(title);
+    }
+  });
+  ipcMain.handle('set-my-icon', (e, icon: string) => {
+    const windowAndInfo = Object.entries(WAL_WINDOWS).find(
+      ([_src, window]) => window.window.webContents.id === e.sender.id,
+    );
+    if (windowAndInfo) {
+      const nativeIcon = nativeImage.createFromDataURL(icon);
+      const window = windowAndInfo[1].window;
+      window.setIcon(nativeIcon);
+    }
+  });
   ipcMain.handle(
     'open-app',
     async (_e, appId: string): Promise<void> =>

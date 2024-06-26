@@ -44,18 +44,17 @@ export class ExampleApplet extends LitElement {
 
   firstUpdated() {
     // To test whether applet iframe properly gets removed after disabling applet.
-    setInterval(() => {
-      console.log('Hello from the example applet iframe.');
-    }, 3000);
+    // setInterval(() => {
+    //   console.log('Hello from the example applet iframe.');
+    // }, 3000);
     // if (this.weaveClient.renderInfo.type === 'applet-view') {
     //   const groupProfiles = this.weaveClient.renderInfo.groupProfiles;
     //   const appletHash = this.weaveClient.renderInfo.appletHash;
     //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
     // }
-
-    this.peerStatusUnsubscribe = this.weaveClient.onPeerStatusUpdate((payload) => {
-      console.log('Got peer status update: ', payload);
-    });
+    // this.peerStatusUnsubscribe = this.weaveClient.onPeerStatusUpdate((payload) => {
+    //   console.log('Got peer status update: ', payload);
+    // });
   }
 
   async notifyWe(notifications: FrameNotification[]) {
@@ -84,7 +83,7 @@ export class ExampleApplet extends LitElement {
                         if (!appInfo) throw new Error('AppInfo is null.');
                         const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                           .cell_id[0];
-                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'front');
+                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'side');
                       }}
                     ></applet-main>
                   </profiles-context>

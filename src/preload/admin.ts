@@ -11,7 +11,12 @@ import {
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
-import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  WAL,
+} from '@lightningrodlabs/we-applet';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -20,11 +25,19 @@ contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCallApplet: (request: CallZomeRequest) =>
     ipcRenderer.invoke('sign-zome-call-applet', request),
+  appletMessageToParentResponse: (response: any, id: string) =>
+    ipcRenderer.invoke('applet-message-to-parent-response', response, id),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
+  onAppletToParentMessage: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      payload: { message: AppletToParentMessage; id: string },
+    ) => any,
+  ) => ipcRenderer.on('applet-to-parent-message', callback),
   onDeepLinkReceived: (callback: (e: Electron.IpcRendererEvent, payload: string) => any) =>
     ipcRenderer.on('deep-link-received', callback),
   onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
@@ -41,7 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) => ipcRenderer.on('zome-call-signed', callback),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
-  openDevHub: () => ipcRenderer.invoke('open-devhub'),
+  openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) =>
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, wal),
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
