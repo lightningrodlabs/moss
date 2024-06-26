@@ -38,7 +38,6 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   browserWindow.webContents.on('will-navigate', (e) => {
     console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
-      e.preventDefault();
       // ignore vite routing in dev mode
       return;
     }
