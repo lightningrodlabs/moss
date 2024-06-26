@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@rollup/plugin-replace": "^5.0.2",
-    "grapesjs": "^0.21.8",
+    "grapesjs": "=0.21.8",
     "grapesjs-blocks-basic": "^1.0.1",
     "grapesjs-preset-webpage": "^1.0.2",
     "grapesjs-tabs": "^1.0.6",

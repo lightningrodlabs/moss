@@ -9,6 +9,11 @@ export default defineConfig({
         exclude: ['@holochain/client', '@holochain-open-dev/utils', 'nanoid', 'mime'],
       }),
     ],
+    build: {
+      watch: {
+        exclude: ['**/.cargo/**', '.cargo'],
+      },
+    },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

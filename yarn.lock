@@ -6395,10 +6395,11 @@ grapesjs-tabs@^1.0.6:
   resolved "https://registry.npmjs.org/grapesjs-tabs/-/grapesjs-tabs-1.0.6.tgz"
   integrity sha512-Xmdte7jMvmGDHIL29t8jlGWL/oSmXOEgswmlKSaYKc7z4ZJEfF0Vr+YTfF6MZq/FFYjzk+0kOad6dnS3TDgZ5Q==
 
-grapesjs@^0.21.8:
-  version "0.21.10"
-  resolved "https://registry.npmjs.org/grapesjs/-/grapesjs-0.21.10.tgz"
-  integrity sha512-wvOBa8kjBLDeH006p4/krSzGNze2H7Rsncv37LxvDzC6QCQucEjQ7Lb+Fd50jDSWNnxavRRJLJPnXyPTGZYGuQ==
+grapesjs@=0.21.8:
+  version "0.21.8"
+  resolved "https://registry.yarnpkg.com/grapesjs/-/grapesjs-0.21.8.tgz#ad33fb6678a53cbb8ef44fa4ce3aaec132326337"
+  integrity sha512-f4g3JtzD4YLaNE9aRJOAnC9wzaHjV/qK4FJvGzUUHAdflIJV3PtyYlBg0tWwVCPaJeAA7s4XIkQQQ0KzMd4OTg==
+
   dependencies:
     "@types/backbone" "^1.4.15"
     backbone "1.4.1"
