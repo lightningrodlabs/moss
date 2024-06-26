@@ -28,12 +28,7 @@ import semver from 'semver';
 import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
-import {
-  APPLET_TO_PARENT_MESSAGE_RESPONSE,
-  AppletToParentMessageResponse,
-  SCREEN_OR_WINDOW_SELECTED,
-  WeEmitter,
-} from './weEmitter';
+import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';

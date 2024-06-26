@@ -7,7 +7,6 @@ import {
   AppletInfo,
   AppletToParentMessage,
   AppletToParentRequest,
-  AssetInfo,
   AssetLocationAndInfo,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64 } from '@holochain/client';
