@@ -20,4 +20,6 @@ function downloadFile(url, targetDir, fileName) {
   });
 }
 
+console.log('Fetching group happ from ', groupHappUrl);
+
 downloadFile(groupHappUrl, targetDir, 'group.happ');

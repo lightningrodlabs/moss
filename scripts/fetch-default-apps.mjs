@@ -21,5 +21,7 @@ function downloadFile(url, targetDir, fileName) {
   });
 }
 
+console.log('Fetching tool library from ', toolsLibraryUrl);
 downloadFile(toolsLibraryUrl, targetDir, 'tools-library.happ');
+console.log('Fetching kando from ', kandoUrl);
 downloadFile(kandoUrl, targetDir, 'kando.webhapp');
