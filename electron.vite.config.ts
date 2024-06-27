@@ -35,6 +35,7 @@ export default defineConfig({
           admin: resolve(__dirname, 'src/renderer/index.html'),
           splashscreen: resolve(__dirname, 'src/renderer/splashscreen.html'),
           selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
+          walwindow: resolve(__dirname, 'src/renderer/walwindow.html'),
         },
       },
     },

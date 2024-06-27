@@ -25,7 +25,6 @@ import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   mdiArrowLeft,
   mdiCog,
-  mdiHelpCircle,
   mdiHomeOutline,
   mdiLinkVariantPlus,
   mdiPowerPlugOffOutline,
