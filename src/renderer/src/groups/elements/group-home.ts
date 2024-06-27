@@ -655,7 +655,7 @@ export class GroupHome extends LitElement {
           </div>
         `;
       case 'unjoined tools':
-        return this.renderNewApplets();
+        return html` <div style="padding: 20px;">${this.renderNewApplets()}</div> `;
     }
   }
 
