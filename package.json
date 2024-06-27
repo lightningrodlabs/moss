@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.13",
-  "version": "0.13.0-alpha.1",
+  "version": "0.13.0-alpha.2",
   "private": true,
   "description": "Moss (0.13)",
   "main": "./out/main/index.js",
@@ -33,7 +33,7 @@
     "build:cli": "rimraf ./cli/dist && cp -r ./out ./cli && mv ./cli/out ./cli/dist && cp moss.config.json ./cli/dist/main && cp -r ./resources ./cli/dist/main/resources && rimraf ./cli/dist/main/resources/bins && tsc -p tsconfig.defineConfig.json && rimraf node_modules/@lightningrodlabs/we-dev-cli && yarn install --check-files",
     "link:libs": "cd libs/we-applet && yarn link && cd ../we-elements && yarn link && yarn link @lightningrodlabs/we-applet && cd ../../example/ui && yarn link @lightningrodlabs/we-applet && yarn link @lightningrodlabs/we-elements && cd ../../src/renderer && yarn link @lightningrodlabs/we-applet && cd ../../utils/applet-iframe && yarn link @lightningrodlabs/we-applet",
     "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
-    "prepare:default-apps": "yarn prepare:group-happ && yarn fetch:default-apps",
+    "prepare:default-apps": "yarn fetch:group-happ && yarn fetch:default-apps",
     "fetch:default-apps": "node ./scripts/fetch-default-apps.mjs",
     "fetch:group-happ": "node ./scripts/fetch-group-app.mjs",
     "prepare:group-happ": "yarn build:group-happ && cp ./workdir/group.happ resources/default-apps/",

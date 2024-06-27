@@ -101,9 +101,25 @@ export class WalWindow extends LitElement {
       } catch (e) {
         console.warn('Failed to get asset info: ', e);
       }
-      const title = assetLocationAndInfo
-        ? `${appletInfo.appletName} - ${assetLocationAndInfo.assetInfo.name}`
-        : appletInfo.appletName;
+
+      let groupProfile: GroupProfile | undefined;
+      if (appletInfo.groupsHashes.length > 0) {
+        const groupDnaHash = appletInfo.groupsHashes[0];
+        try {
+          groupProfile = await (window.electronAPI as any).appletMessageToParent({
+            request: {
+              type: 'get-group-profile',
+              groupHash: groupDnaHash,
+            },
+            appletHash: this.appletHash,
+          });
+        } catch (e) {
+          console.warn('Failed to get group profile: ', e);
+        }
+      }
+
+      const title = `${appletInfo.appletName}${groupProfile ? ` (${groupProfile.name})` : ''} - ${assetLocationAndInfo ? `${assetLocationAndInfo.assetInfo.name}` : 'unknown'}`;
+
       await (window.electronAPI as any).setMyTitle(title);
       await (window.electronAPI as any).setMyIcon(appletInfo.appletIcon);
     } catch (e) {
