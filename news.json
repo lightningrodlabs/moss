@@ -3,7 +3,7 @@
     {
       "type": "Release",
       "timestamp": 1719498550804,
-      "message": "## Moss 0.12.3 Released\n\nTo update you will need to manually [re-download 0.12.3](https://theweave.social/moss#download) as we have discovered that auto-updating is currently broken.\n\nChange Log:- Adds Foyer to groups, an ephemeral chat space in the group home.\n- Adds access to all boards in the Feedback\n- Adds ability to display Assets in separate windows"
+      "message": "## Moss 0.12.3 Released\n\nTo update you will need to manually [re-download 0.12.3](https://theweave.social/moss#download) as we have discovered that auto-updating is currently broken.\n\nChange Log:\n- Adds Foyer to groups, an ephemeral chat space in the group home.\n- Adds access to all boards in the Feedback\n- Adds ability to display Assets in separate windows\n\nReminder: remember to check the settings gear in your group home to see if there are any Tools that need updating.  In a future version we plan to make this more obvious!"
     },
     {
       "type": "Welcome",
