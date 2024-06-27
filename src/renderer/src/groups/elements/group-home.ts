@@ -544,71 +544,69 @@ export class GroupHome extends LitElement {
   renderHomeContent() {
     switch (this._groupDescription.value.status) {
       case 'pending':
-        return html`
-          <div class="home-panel column center-content" style="flex: 1;">Loading...</div>
-        `;
+        return html` <div class="column center-content" style="flex: 1;">Loading...</div> `;
       case 'error':
         console.error(this._groupDescription.value.error);
         return html`
-          <div class="home-panel column center-content" style="flex: 1;">
+          <div class="column center-content" style="flex: 1;">
             Error. Failed to fetch group description.
           </div>
         `;
       case 'complete':
         if (this._editGroupDescription) {
           return html`
-            <div class="home-panel">
-              <div class="row" style="justify-content: flex-end;">
-                <button
-                  @click=${() => {
+            <div class="row" style="justify-content: flex-end;">
+              <button
+                style="margin-right: 3px;"
+                @click=${() => {
+                  this._editGroupDescription = false;
+                }}
+              >
+                ${msg('Cancel')}
+              </button>
+              <button
+                @click=${async () => {
+                  const descriptionInput = this.shadowRoot!.getElementById(
+                    'group-description-input',
+                  ) as HTMLTextAreaElement;
+                  const myPermission = await toPromise(this.groupStore.permissionType);
+                  if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
                     this._editGroupDescription = false;
-                  }}
-                >
-                  ${msg('Cancel')}
-                </button>
-                <button
-                  @click=${async () => {
-                    const descriptionInput = this.shadowRoot!.getElementById(
-                      'group-description-input',
-                    ) as HTMLTextAreaElement;
-                    const myPermission = await toPromise(this.groupStore.permissionType);
-                    if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
-                      this._editGroupDescription = false;
-                      notifyError('No permission to edit group profile.');
-                      return;
-                    } else {
-                      console.log('Saving decription...');
-                      console.log('Value: ', descriptionInput.value);
-                      const result = await this.groupStore.groupClient.setGroupMetaData({
-                        permission_hash:
-                          myPermission.type === 'Steward'
-                            ? myPermission.content.permission_hash
-                            : undefined,
-                        name: 'description',
-                        data: descriptionInput.value,
-                      });
-                      console.log('decription saved: ', result.entry);
+                    notifyError('No permission to edit group profile.');
+                    return;
+                  } else {
+                    console.log('Saving decription...');
+                    console.log('Value: ', descriptionInput.value);
+                    const result = await this.groupStore.groupClient.setGroupMetaData({
+                      permission_hash:
+                        myPermission.type === 'Steward'
+                          ? myPermission.content.permission_hash
+                          : undefined,
+                      name: 'description',
+                      data: descriptionInput.value,
+                    });
+                    console.log('decription saved: ', result.entry);
 
-                      await this.groupStore.groupDescription.reload();
-                      this._editGroupDescription = false;
-                    }
-                  }}
-                >
-                  Save
-                </button>
-              </div>
-
-              <sl-textarea
-                id="group-description-input"
-                size="medium"
-                value=${this._groupDescription.value.value?.data}
-              ></sl-textarea>
+                    await this.groupStore.groupDescription.reload();
+                    this._editGroupDescription = false;
+                  }
+                }}
+              >
+                Save
+              </button>
             </div>
+
+            <sl-textarea
+              id="group-description-input"
+              size="large"
+              rows="15"
+              value=${this._groupDescription.value.value?.data}
+            ></sl-textarea>
           `;
         }
         if (!this._groupDescription.value.value) {
           return html`
-            <div class="home-panel column center-content" style="flex: 1;">
+            <div class="column center-content" style="flex: 1;">
               No group description.
               <button
                 style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -622,7 +620,7 @@ export class GroupHome extends LitElement {
           `;
         } else {
           return html`
-            <div class="home-panel column">
+            <div class="column">
               <div class="row" style="justify-content: flex-end;">
                 <button
                   style="${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -662,7 +660,7 @@ export class GroupHome extends LitElement {
       case 'home':
         return html`
           <div style="display:flex;">
-            <div style="flex:3">${this.renderHomeContent()}</div>
+            <div class="home-panel" style="flex:3">${this.renderHomeContent()}</div>
             <div style="flex:1">${this.renderFoyer()}</div>
           </div>
         `;
@@ -791,24 +789,6 @@ export class GroupHome extends LitElement {
             </div>
           </div>
           <div class="column main-panel">${this.renderMainPanelContent()}</div>
-
-          <!-- <div class="row" style="align-items: center;">
-            <span class="subtitle">${msg('Joinable Tools')}</span>
-            <sl-tooltip content="${msg(
-            'Applet instances that have been added to this group by other members via the Applet Library show up here for you to join as well.',
-          )}">
-              <sl-icon style="height: 28px; width: 28px; margin-left: 10px; cursor: help;" .src=${wrapPathInSvg(
-            mdiHelpCircle,
-          )}><sl-icon>
-            </sl-tooltip>
-          </div>
-          <sl-divider style="--color: grey"></sl-divider>
-          <div class="row" style="align-items: center; justify-content: flex-end; margin-top: -10px;">
-            <input @input=${() =>
-            this.toggleIgnoredApplets()} id="show-ignored-applets-checkbox" type="checkbox">
-            <span>${msg('Show ignored Tools')}</span>
-          </div>
-          ${this.renderNewApplets()} -->
         </div>
 
         <div class="column online-status-bar">

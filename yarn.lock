@@ -1701,8 +1701,8 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-a7844196-1b94-41b4-898e-80724cd56b29-1719403962977/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-a7844196-1b94-41b4-898e-80724cd56b29-1719403962977/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e64c778e-f46d-4d88-a9d1-e0eee80a9502-1719447351041/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e64c778e-f46d-4d88-a9d1-e0eee80a9502-1719447351041/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1721,7 +1721,7 @@
     js-base64 "^3.7.2"
 
 "@lightningrodlabs/we-applet@file:./libs/we-applet", "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.17.0-dev.4"
+  version "0.17.0"
   dependencies:
     "@holochain-open-dev/profiles" "0.400.0-dev.1"
     "@holochain/client" "0.18.0-dev.3"
@@ -1760,7 +1760,7 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-231a1884-32aa-44ce-b97b-182f4b0eccb5-1719403962976/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-4cd1bd34-2176-4b9e-aecd-061cf181269d-1719447351038/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -6399,7 +6399,6 @@ grapesjs@=0.21.8:
   version "0.21.8"
   resolved "https://registry.yarnpkg.com/grapesjs/-/grapesjs-0.21.8.tgz#ad33fb6678a53cbb8ef44fa4ce3aaec132326337"
   integrity sha512-f4g3JtzD4YLaNE9aRJOAnC9wzaHjV/qK4FJvGzUUHAdflIJV3PtyYlBg0tWwVCPaJeAA7s4XIkQQQ0KzMd4OTg==
-
   dependencies:
     "@types/backbone" "^1.4.15"
     backbone "1.4.1"
