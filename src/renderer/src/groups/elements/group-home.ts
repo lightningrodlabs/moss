@@ -25,7 +25,6 @@ import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   mdiArrowLeft,
   mdiCog,
-  mdiHelpCircle,
   mdiHomeOutline,
   mdiLinkVariantPlus,
   mdiPowerPlugOffOutline,
@@ -679,7 +678,7 @@ export class GroupHome extends LitElement {
         }}
         title=${hashB64}
         class="copyable-hash"
-        >${msg(text)}:${hashText}</span
+        >${msg(text)}: ${hashText}</span
       >
     `;
   }
@@ -693,7 +692,7 @@ export class GroupHome extends LitElement {
         >
           <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
             ${this.renderHashForCopying('Group DNA Hash', this.groupStore.groupDnaHash)}
-            ${this.renderHashForCopying('Your Public Key: ', this.groupStore.groupClient.myPubKey)}
+            ${this.renderHashForCopying('Your Public Key', this.groupStore.groupClient.myPubKey)}
           </div>
 
           <div
