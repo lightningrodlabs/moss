@@ -540,9 +540,7 @@ export class GroupHome extends LitElement {
   renderHomeContent() {
     switch (this._groupDescription.value.status) {
       case 'pending':
-        return html`
-          <div class="home-panel column center-content" style="flex: 1;">Loading...</div>
-        `;
+        return html` <div class="column center-content" style="flex: 1;">Loading...</div> `;
       case 'error':
         console.error(this._groupDescription.value.error);
         return html`
@@ -553,9 +551,10 @@ export class GroupHome extends LitElement {
       case 'complete':
         if (this._editGroupDescription) {
           return html`
-            <div class="home-panel">
               <div class="row" style="justify-content: flex-end;">
-                <button @click=${() => {}}>${msg('Cancel')}</button>
+                <button style="margin-right: 3px;" @click=${() => {
+                  this._editGroupDescription = false;
+                }}>${msg('Cancel')}</button>
                 <button
                   @click=${async () => {
                     const descriptionInput = this.shadowRoot!.getElementById(
@@ -593,12 +592,11 @@ export class GroupHome extends LitElement {
               size="medium"
               value=${this._groupDescription.value.value?.data}
             ></sl-textarea>
-          </div>
           `;
         }
         if (!this._groupDescription.value.value) {
           return html`
-            <div class="home-panel column center-content" style="flex: 1;">
+            <div class="column center-content" style="flex: 1;">
               No group description.
               <button
                 style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -612,7 +610,7 @@ export class GroupHome extends LitElement {
           `;
         } else {
           return html`
-            <div class="home-panel column">
+            <div class="column">
               <div class="row" style="justify-content: flex-end;">
                 <button
                   style="${this.hasStewardPermission() ? '' : 'display: none;'}"
@@ -652,7 +650,7 @@ export class GroupHome extends LitElement {
       case 'home':
         return html`
           <div style="display:flex;">
-            <div style="flex:3">${this.renderHomeContent()}</div>
+            <div class="home-panel" style="flex:3">${this.renderHomeContent()}</div>
             <div style="flex:1">${this.renderFoyer()}</div>
           </div>
         `;

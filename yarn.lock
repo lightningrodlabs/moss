@@ -1758,8 +1758,8 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.1"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b766df37-73e5-4d2d-82fc-fd85e0b00f02-1718824500374/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b766df37-73e5-4d2d-82fc-fd85e0b00f02-1718824500374/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-f9a19296-2a5c-4730-b5f7-6e7f6d8e5758-1719446187767/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-f9a19296-2a5c-4730-b5f7-6e7f6d8e5758-1719446187767/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1777,7 +1777,7 @@
     js-base64 "^3.7.2"
 
 "@lightningrodlabs/we-applet@file:./libs/we-applet", "@lightningrodlabs/we-applet@file:libs/we-applet":
-  version "0.17.0-dev.3"
+  version "0.17.0"
   dependencies:
     "@holochain-open-dev/profiles" "0.400.0-dev.1"
     "@holochain/client" "0.18.0-dev.1"
@@ -1814,7 +1814,7 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.1"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-ddc9b007-cada-4aa0-953a-4c8f36345270-1718824500372/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-21304e2f-d9e2-4749-87af-dd3fe76d77b9-1719446187765/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -6460,10 +6460,10 @@ grapesjs-tabs@^1.0.6:
   resolved "https://registry.yarnpkg.com/grapesjs-tabs/-/grapesjs-tabs-1.0.6.tgz#d45377935c04e043325a65ddc695b0cd8fd0b9b6"
   integrity sha512-Xmdte7jMvmGDHIL29t8jlGWL/oSmXOEgswmlKSaYKc7z4ZJEfF0Vr+YTfF6MZq/FFYjzk+0kOad6dnS3TDgZ5Q==
 
-grapesjs@^0.21.8:
-  version "0.21.10"
-  resolved "https://registry.yarnpkg.com/grapesjs/-/grapesjs-0.21.10.tgz#f64c7eeac17412555b523249f80ae0ce3297a9c0"
-  integrity sha512-wvOBa8kjBLDeH006p4/krSzGNze2H7Rsncv37LxvDzC6QCQucEjQ7Lb+Fd50jDSWNnxavRRJLJPnXyPTGZYGuQ==
+grapesjs@=0.21.8:
+  version "0.21.8"
+  resolved "https://registry.yarnpkg.com/grapesjs/-/grapesjs-0.21.8.tgz#ad33fb6678a53cbb8ef44fa4ce3aaec132326337"
+  integrity sha512-f4g3JtzD4YLaNE9aRJOAnC9wzaHjV/qK4FJvGzUUHAdflIJV3PtyYlBg0tWwVCPaJeAA7s4XIkQQQ0KzMd4OTg==
   dependencies:
     "@types/backbone" "^1.4.15"
     backbone "1.4.1"
