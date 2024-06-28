@@ -127,12 +127,6 @@ export class FoyerStream extends LitElement {
   _showRecipients = 0;
 
   renderRecipients(agents: AgentPubKey[]) {
-    const newArray: AgentPubKey[] = [];
-    for (let i = 0; i < 4; i++) {
-      newArray.push(agents[0]);
-    }
-    // console.log('newArray: ', newArray);
-    console.log('renderrecipients');
     return html`
       <div
         class="column msg-recipients"
@@ -141,9 +135,9 @@ export class FoyerStream extends LitElement {
           this._showRecipients = 0;
         }}
       >
-        <div class="msg-recipients-title">${msg('received by:')}</div>
+        <div class="msg-recipients-title" style="margin-bottom: 2px;">${msg('received by:')}</div>
         <div class="row" style="flex-wrap: wrap;">
-          ${newArray.map(
+          ${agents.map(
             (agent) =>
               html`<agent-avatar
                 style="margin-left: 2px; margin-bottom: 2px;"
