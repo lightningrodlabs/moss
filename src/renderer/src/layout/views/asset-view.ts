@@ -81,6 +81,7 @@ export class AssetView extends LitElement {
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
+        .hostColor=${'#dde7ff'}
         .view=${{
           type: 'asset',
           wal: this.wal,
@@ -125,7 +126,7 @@ export class AssetView extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content="Jump to parent Tool">
+          <sl-tooltip content="Add to Pocket">
             <div
               class="row btn toolbar-btn"
               tabindex="0"
@@ -210,16 +211,19 @@ export class AssetView extends LitElement {
         background: red;
         padding: 10px;
         border-radius: 20px 0 0 20px;
-        background: #51ed187f;
-        box-shadow: 0 0 6px #4d832b;
+        background: #97b6ff5e;
+        /* background: #a9ea03a2; */
+        box-shadow: 0 0 6px #97b6ff5e;
         /* background: #eacbff83;
         box-shadow: 0 0 6px #5804a8; */
       }
 
       .toolbar-btn {
         font-size: 36px;
-        --bg-color: #5804a8;
-        --bg-color-hover: #913ede;
+        --bg-color: var(--sl-color-tertiary-900);
+        --bg-color-hover: var(--sl-color-tertiary-700);
+        /* --bg-color: #142510;
+        --bg-color-hover: #3a622d; */
         color: white;
         margin: 3px 0;
         height: 34px;
