@@ -204,7 +204,6 @@ export class FoyerStream extends LitElement {
       const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
       const msgText = this.convertMessageText((msg.payload as any).text);
       const ackCount = this._acks ? this.getAckCount(this._acks.value, msg.payload.created) : 0;
-      console.log('rendering message');
       return html`
         <div class="row" style="position: relative;">
           ${isMyMessage ? html`<span style="flex: 1;"></span>` : html``}
