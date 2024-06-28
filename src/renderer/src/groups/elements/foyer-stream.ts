@@ -214,16 +214,17 @@ export class FoyerStream extends LitElement {
                     ? html`
                         ${ackCount > 0
                           ? html`
-                              <span
-                                style="cursor:pointer"
+                              <div
+                                style="cursor: pointer"
                                 @click=${() =>
                                   (this._showRecipients =
                                     this._showRecipients != msg.payload.created
                                       ? msg.payload.created
                                       : 0)}
-                                class="ack-count"
-                                >${ackCount}</span
+                                class="ack-count row center-content ${ackCount > 9 ? 'padded' : ''}"
                               >
+                                ${ackCount}
+                              </div>
                             `
                           : '...'}
                       `
@@ -381,17 +382,20 @@ export class FoyerStream extends LitElement {
         color: #ccc;
       }
       .ack-count {
-        display: flex;
-        justify-content: center;
         margin: auto;
-        width: 15px;
-        height: 15px;
+        min-width: 16px;
+        height: 16px;
         margin-left: 5px;
         background-color: yellow;
         color: black;
         font-size: 80%;
-        border-radius: 50%;
+        border-radius: 8px;
       }
+
+      .padded {
+        padding: 0 3px;
+      }
+
       .person-inactive {
         opacity: 0.5;
       }
