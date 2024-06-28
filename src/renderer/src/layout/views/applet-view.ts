@@ -19,17 +19,38 @@ export class AppletViewEl extends LitElement {
   @property()
   view!: AppletView;
 
+  @property()
+  hostColor: string | undefined;
+
+  firstUpdated() {
+    this.shadowRoot!.host.classList.add();
+  }
+
+  hostStyle() {
+    if (this.hostColor) {
+      return html`
+        <style>
+          :host {
+            background: ${this.hostColor};
+          }
+        </style>
+      `;
+    }
+    return html``;
+  }
+
   render() {
     const renderView: RenderView = {
       type: 'applet-view',
       view: this.view,
     };
     return html`
+      ${this.hostStyle()}
       <view-frame
         .renderView=${renderView}
         .appletHash=${this.appletHash}
-        style="flex: 1; border-radius: 5px; overflow: hidden;
-        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));"
+        class="elevated"
+        style="flex: 1; overflow: hidden;"
       ></view-frame>
     `;
   }
@@ -41,6 +62,11 @@ export class AppletViewEl extends LitElement {
         background-color: #588121;
         padding: 8px;
         border-radius: 5px 0 0 0;
+      }
+
+      .elevated {
+        border-radius: 5px;
+        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));
       }
     `,
     weStyles,

@@ -1609,8 +1609,8 @@ export class MainDashboard extends LitElement {
         }
 
         .close-tab-button:hover {
-          background: var(--sl-color-primary-800);
-          color: var(--sl-color-primary-50);
+          background: var(--sl-color-tertiary-900);
+          color: var(--sl-color-tertiary-50);
         }
 
         .asset-view-bar {

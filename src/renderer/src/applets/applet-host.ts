@@ -13,7 +13,6 @@ import {
   FrameNotification,
   RecordInfo,
   PeerStatusUpdate,
-  RenderView,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -29,17 +28,15 @@ import { MossStore } from '../moss-store.js';
 import { AppletHash, AppletId, PermissionType } from '../types.js';
 import {
   appIdFromAppletHash,
-  appletOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
   logAppletZomeCall,
-  renderViewToQueryString,
+  openWalInWindow,
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
   toolBundleActionHashFromDistInfo,
-  urlFromAppletHash,
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
@@ -345,37 +342,7 @@ export async function handleAppletIframeMessage(
           );
         case 'wal':
           if (message.request.mode === 'window') {
-            // determine iframeSrc, then open wal in window
-            const wal = message.request.wal;
-            const location = await toPromise(
-              mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]),
-            );
-            if (!location) throw new Error('Asset not found.');
-            const renderView: RenderView = {
-              type: 'applet-view',
-              view: {
-                type: 'asset',
-                wal,
-                recordInfo: location.entryDefLocation
-                  ? {
-                      roleName: location.dnaLocation.roleName,
-                      integrityZomeName: location.entryDefLocation.integrity_zome,
-                      entryType: location.entryDefLocation.entry_def,
-                    }
-                  : undefined,
-              },
-            };
-            const appletHash = decodeHashFromBase64(appletId);
-            if (mossStore.isAppletDev) {
-              const appId = appIdFromAppletHash(appletHash);
-              const appletDevPort = await getAppletDevPort(appId);
-              const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
-                renderView,
-              )}#${urlFromAppletHash(appletHash)}`;
-              return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
-            }
-            const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
-            return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+            return openWalInWindow(message.request.wal, appletId, mossStore);
           }
 
           return openViews.openWal(message.request.wal, message.request.mode);

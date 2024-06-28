@@ -22,15 +22,19 @@ export class Stream {
   _store = {};
   private store: Writable<Message[]> = writable([]);
   messages: Readable<Message[]>;
-  acks: Writable<{ [key: number]: HoloHashMap<AgentPubKey, boolean> }> = writable({});
+  _acks: Writable<Record<number, HoloHashMap<AgentPubKey, boolean>>> = writable({});
+
   constructor(public id: string) {
     this.messages = derived(this.store, (s) =>
       s.sort((a, b) => a.payload.created - b.payload.created),
     );
   }
+  acks() {
+    return derived(this._acks, (store) => store);
+  }
   addMessage(message: Message) {
     if (message.payload.type == 'Ack') {
-      this.acks.update((acks) => {
+      this._acks.update((acks) => {
         let ack = acks[message.payload.created];
         if (!ack) {
           ack = new HoloHashMap();

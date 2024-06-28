@@ -16,6 +16,7 @@ export class AppletMain extends LitElement {
     return html`<applet-view
       .view=${{ type: 'main' }}
       .appletHash=${this.appletHash}
+      .hostColor=${'#588121'}
       style="flex: 1"
     ></applet-view>`;
   }

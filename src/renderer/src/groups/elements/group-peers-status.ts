@@ -61,7 +61,19 @@ export class GroupPeersStatus extends LitElement {
       <div class="column agents-list">
         <div style="margin-bottom: 5px;">${msg('Online')}</div>
         <div class="column">
-          <div class="row" style="position: relative;">
+          <div
+            class="row profile"
+            style="position: relative;"
+            @click=${() => {
+              this.dispatchEvent(
+                new CustomEvent('profile-selected', {
+                  detail: myPubKey,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
+          >
             <profile-detail .agentPubKey=${myPubKey}></profile-detail>
             <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
             <div
@@ -73,7 +85,19 @@ export class GroupPeersStatus extends LitElement {
           ${onlineAgents.map((agent) => {
             const status = this._peerStatuses.value![encodeHashToBase64(agent)].status;
             return html`
-              <div class="row" style="position: relative;">
+              <div
+                class="row profile"
+                style="position: relative;"
+                @click=${() => {
+                  this.dispatchEvent(
+                    new CustomEvent('profile-selected', {
+                      detail: agent,
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                }}
+              >
                 <profile-detail .agentPubKey=${agent}></profile-detail>
                 <div class="status-indicator ${status === 'inactive' ? 'inactive' : ''}"></div>
                 <div
@@ -89,7 +113,19 @@ export class GroupPeersStatus extends LitElement {
               <div class="column">
                 ${offlineAgents.map(
                   (agent) => html`
-                    <div class="row" style="position: relative;">
+                    <div
+                      class="row profile"
+                      style="position: relative;"
+                      @click=${() => {
+                        this.dispatchEvent(
+                          new CustomEvent('profile-selected', {
+                            detail: agent,
+                            bubbles: true,
+                            composed: true,
+                          }),
+                        );
+                      }}
+                    >
                       <profile-detail style="opacity: 0.5;" .agentPubKey=${agent}></profile-detail>
                     </div>
                   `,
@@ -131,6 +167,14 @@ export class GroupPeersStatus extends LitElement {
 
       .agents-list span {
         color: white;
+      }
+
+      .profile {
+        border-radius: 5px;
+      }
+      .profile:hover {
+        background: #ffffff1f;
+        cursor: pointer;
       }
 
       .status-indicator {
