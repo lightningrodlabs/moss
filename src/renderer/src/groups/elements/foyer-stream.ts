@@ -207,7 +207,7 @@ export class FoyerStream extends LitElement {
       console.log('rendering message');
       return html`
         <div class="row" style="position: relative;">
-          <span style="flex: 1;"></span>
+          ${isMyMessage ? html`<span style="flex: 1;"></span>` : html``}
           <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
             <div class="msg-content">
               ${msg.payload.type === 'Msg'
@@ -273,6 +273,7 @@ export class FoyerStream extends LitElement {
               ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
               : ''}
           </div>
+          ${isMyMessage ? html`` : html`<span style="flex: 1;"></span>`}
         </div>
       `;
     });
