@@ -61,6 +61,7 @@ import {
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from 'electron-updater';
 import * as yaml from 'js-yaml';
+import { mossMenu } from './menu';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -490,6 +491,8 @@ const selectScreenOrWindow = async (): Promise<string> => {
   });
 };
 
+Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -574,6 +577,7 @@ app.whenReady().then(async () => {
       callback(false);
     },
   );
+
   SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
 
   const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));

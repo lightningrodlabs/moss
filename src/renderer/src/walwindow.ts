@@ -8,6 +8,7 @@ import {
   AppletToParentMessage,
   AppletToParentRequest,
   AssetLocationAndInfo,
+  GroupProfile,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64 } from '@holochain/client';
 // import { ipcRenderer } from 'electron';

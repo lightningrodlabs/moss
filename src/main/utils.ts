@@ -12,6 +12,10 @@ import {
 import { WeRustHandler, ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { encode } from '@msgpack/msgpack';
 
+export const isMac = process.platform === 'darwin';
+export const isWindows = process.platform === 'win32';
+export const isLinux = process.platform === 'linux';
+
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
   browserWindow.webContents.on('will-frame-navigate', (e) => {
