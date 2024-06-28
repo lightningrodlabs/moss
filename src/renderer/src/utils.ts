@@ -38,9 +38,17 @@ import {
 } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
-import { AsyncReadable, AsyncStatus, readable, writable } from '@holochain-open-dev/stores';
+import {
+  AsyncReadable,
+  AsyncStatus,
+  readable,
+  toPromise,
+  writable,
+} from '@holochain-open-dev/stores';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { MossStore } from './moss-store.js';
+import { getAppletDevPort } from './electron-api.js';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -808,4 +816,37 @@ export function lazyLoadAndPollUntil<T>(
       if (interval) clearInterval(interval);
     };
   });
+}
+
+export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: MossStore) {
+  // determine iframeSrc, then open wal in window
+  const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]));
+  if (!location) throw new Error('Asset not found.');
+  const renderView: RenderView = {
+    type: 'applet-view',
+    view: {
+      type: 'asset',
+      wal,
+      recordInfo: location.entryDefLocation
+        ? {
+            roleName: location.dnaLocation.roleName,
+            integrityZomeName: location.entryDefLocation.integrity_zome,
+            entryType: location.entryDefLocation.entry_def,
+          }
+        : undefined,
+    },
+  };
+  const appletHash = decodeHashFromBase64(appletId);
+  if (mossStore.isAppletDev) {
+    const appId = appIdFromAppletId(appletId);
+    const appletDevPort = await getAppletDevPort(appId);
+    if (appletDevPort) {
+      const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
+        renderView,
+      )}#${urlFromAppletHash(appletHash)}`;
+      return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+    }
+  }
+  const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
+  return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
 }

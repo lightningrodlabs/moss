@@ -3,15 +3,15 @@ import { consume } from '@lit/context';
 import { msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiHomeImportOutline } from '@mdi/js';
+import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiHomeImportOutline, mdiOpenInNew, mdiShareVariantOutline } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@lightningrodlabs/we-elements/dist/elements/share-wal.js';
 import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 
-import { WAL } from '@lightningrodlabs/we-applet';
+import { encodeContext, WAL } from '@lightningrodlabs/we-applet';
 
 import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
@@ -20,6 +20,8 @@ import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
+import { encodeHashToBase64 } from '@holochain/client';
+import { openWalInWindow } from '../../utils.js';
 
 @customElement('asset-view')
 export class AssetView extends LitElement {
@@ -40,12 +42,12 @@ export class AssetView extends LitElement {
 
   jumpToApplet() {
     if (this.location.value.status !== 'complete' || this.location.value.value === undefined) {
-      console.error('Entry location not defined (yet).');
-      notifyError('Failed to jump to Applet (see console for details).');
+      console.error('Asset location not defined (yet).');
+      notifyError('Failed to jump to Tool (see console for details).');
     } else {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {
-          detail: this.location.value.value?.dnaLocation.appletHash,
+          detail: this.location.value.value.dnaLocation.appletHash,
           bubbles: true,
           composed: true,
         }),
@@ -53,10 +55,33 @@ export class AssetView extends LitElement {
     }
   }
 
+  async openInWindow() {
+    if (this.location.value.status !== 'complete' || this.location.value.value === undefined) {
+      console.error('Asset location not defined (yet).');
+      notifyError('Failed to open Asset in window (see console for details).');
+    } else {
+      const appletHash = this.location.value.value.dnaLocation.appletHash;
+      return openWalInWindow(this.wal, encodeHashToBase64(appletHash), this._mossStore);
+    }
+  }
+
+  async copyWal() {
+    let url = `weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+      this.wal.hrl[1],
+    )}`;
+    if (this.wal.context) {
+      url = `${url}?context=${encodeContext(this.wal.context)}`;
+    }
+    await navigator.clipboard.writeText(url);
+
+    notify(msg('URL copied to clipboard.'));
+  }
+
   renderGroupView(dnaLocation: DnaLocation, entryTypeLocation?: EntryDefLocation) {
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
+        .hostColor=${'#dde7ff'}
         .view=${{
           type: 'asset',
           wal: this.wal,
@@ -71,7 +96,22 @@ export class AssetView extends LitElement {
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
         <weave-client-context .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}>
-          <sl-tooltip content="Jump to parent Applet">
+          <sl-tooltip content="Open in Window">
+            <div
+              class="row btn toolbar-btn"
+              style="font-size: 28px"
+              tabindex="0"
+              @click=${() => this.openInWindow()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.openInWindow();
+                }
+              }}
+            >
+              <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)}></sl-icon>
+            </div>
+          </sl-tooltip>
+          <sl-tooltip content="Jump to parent Tool">
             <div
               class="row btn toolbar-btn"
               tabindex="0"
@@ -85,8 +125,38 @@ export class AssetView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiHomeImportOutline)}></sl-icon>
             </div>
           </sl-tooltip>
-          <wal-pocket iconSrc="pocket.png" .wal=${this.wal} class="toolbar-btn"></wal-pocket>
-          <share-wal .wal=${this.wal} class="toolbar-btn"></share-wal>
+
+          <sl-tooltip content="Add to Pocket">
+            <div
+              class="row btn toolbar-btn"
+              tabindex="0"
+              @click=${() => this._mossStore.walToPocket(this.wal)}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this._mossStore.walToPocket(this.wal);
+                }
+              }}
+            >
+              <img src="pocket_white.png" style="height: 35px; fill-color: white;" />
+            </div>
+          </sl-tooltip>
+          <sl-tooltip .content=${msg('Share')}>
+            <div
+              class="row btn toolbar-btn"
+              tabindex="0"
+              @click=${() => this.copyWal()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.copyWal();
+                }
+              }}
+            >
+              <sl-icon
+                .src=${wrapPathInSvg(mdiShareVariantOutline)}
+                style="padding-right: 10%;"
+              ></sl-icon>
+            </div>
+          </sl-tooltip>
         </weave-client-context>
       </div> `;
   }
@@ -141,18 +211,23 @@ export class AssetView extends LitElement {
         background: red;
         padding: 10px;
         border-radius: 20px 0 0 20px;
-        background: #51ed187f;
-        box-shadow: 0 0 6px #4d832b;
+        background: #97b6ff5e;
+        /* background: #a9ea03a2; */
+        box-shadow: 0 0 6px #97b6ff5e;
         /* background: #eacbff83;
         box-shadow: 0 0 6px #5804a8; */
       }
 
       .toolbar-btn {
         font-size: 36px;
-        --bg-color: #5804a8;
-        --bg-color-hover: #913ede;
+        --bg-color: var(--sl-color-tertiary-900);
+        --bg-color-hover: var(--sl-color-tertiary-700);
+        /* --bg-color: #142510;
+        --bg-color-hover: #3a622d; */
         color: white;
         margin: 3px 0;
+        height: 34px;
+        width: 34px;
       }
     `,
     weStyles,

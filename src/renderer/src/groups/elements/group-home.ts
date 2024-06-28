@@ -1,7 +1,7 @@
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import {
   ActionHash,
   AgentPubKey,
@@ -25,6 +25,7 @@ import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   mdiArrowLeft,
   mdiCog,
+  mdiContentCopy,
   mdiHomeOutline,
   mdiLinkVariantPlus,
   mdiPowerPlugOffOutline,
@@ -61,6 +62,7 @@ import './edit-custom-group-view.js';
 import '../../elements/tab-group.js';
 import '../../elements/loading-dialog.js';
 import './foyer-stream.js';
+import './agent-permission.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -114,6 +116,9 @@ export class GroupHome extends LitElement {
     () => this.groupStore.peerStatuses(),
     () => [this.groupStore],
   );
+
+  @query('#member-profile')
+  _memberProfileDialog!: SlDialog;
 
   @state()
   _peerStatusLoading = true;
@@ -208,6 +213,9 @@ export class GroupHome extends LitElement {
   _joiningNewApplet: string | undefined;
 
   _peerStatusInterval: number | null | undefined;
+
+  @state()
+  _selectedAgent: AgentPubKey | undefined;
 
   groupProfile = new StoreSubscriber(
     this,
@@ -664,9 +672,10 @@ export class GroupHome extends LitElement {
           </div>
         `;
       case 'unjoined tools':
-        return this.renderNewApplets();
+        return html` <div style="padding: 20px;">${this.renderNewApplets()}</div> `;
     }
   }
+
   renderHashForCopying(text: string, hash: HoloHash) {
     const hashB64 = encodeHashToBase64(hash);
     const hashText = hashB64.slice(0, 8) + '...' + hashB64.slice(-8);
@@ -682,6 +691,31 @@ export class GroupHome extends LitElement {
       >
     `;
   }
+
+  renderMemberProfile() {
+    return html`
+      <div class="column">
+        <profile-detail .agentPubKey=${this._selectedAgent}></profile-detail>
+        <div class="row" style="align-items: center; margin-top: 20px;">
+          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Role:</span>
+          <agent-permission .agent=${this._selectedAgent}></agent-permission>
+        </div>
+        <span style="font-size: 13px; font-weight: bold; margin-top: 40px;">Public key:</span>
+        <div
+          class="row pubkey-copy"
+          style="align-items: center;"
+          @click=${async () => {
+            await navigator.clipboard.writeText(encodeHashToBase64(this._selectedAgent!));
+            notify(msg('Hash Copied to clipboard.'));
+          }}
+        >
+          <span style="margin-right: 5px;">${encodeHashToBase64(this._selectedAgent!)}</span>
+          <sl-icon .src=${wrapPathInSvg(mdiContentCopy)}></sl-icon>
+        </div>
+      </div>
+    `;
+  }
+
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
@@ -804,6 +838,10 @@ export class GroupHome extends LitElement {
                   : html``}
                 <group-peers-status
                   style="${this._peerStatusLoading ? 'display: none;' : ''}"
+                  @profile-selected=${(e) => {
+                    this._selectedAgent = e.detail;
+                    this._memberProfileDialog.show();
+                  }}
                 ></group-peers-status>
               </div>
             </div>
@@ -1040,6 +1078,9 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
+          <sl-dialog no-header id="member-profile">
+            ${this._selectedAgent ? this.renderMemberProfile() : ``}
+          </sl-dialog>
           <profile-prompt
             ><span slot="hero" style="max-width: 500px; margin-bottom: 32px" class="placeholder"
               >${msg(
@@ -1066,10 +1107,6 @@ export class GroupHome extends LitElement {
         background-color: #588121;
         padding: 8px;
         border-radius: 5px 0 0 0;
-      }
-
-      .agents-list {
-        color: #fff;
       }
 
       .settings-btn {
@@ -1234,6 +1271,21 @@ export class GroupHome extends LitElement {
       }
       .copyable-hash {
         cursor: pointer;
+      }
+
+      .pubkey-copy {
+        font-size: 13px;
+        cursor: pointer;
+        padding: 9px 5px;
+        background: #ffffff;
+        border-radius: 5px;
+        justify-content: center;
+        margin: 2px 0;
+      }
+
+      sl-dialog {
+        color: black;
+        --sl-panel-background-color: var(--sl-color-primary-0);
       }
     `,
   ];
