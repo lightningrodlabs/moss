@@ -174,6 +174,10 @@ export class GroupStore {
     this.groupClient.getAllAgentPermissionTypes(),
   );
 
+  agentPermission = new LazyHoloHashMap((agent) =>
+    lazyLoad(() => this.groupClient.getAgentPermissionType(agent)),
+  );
+
   groupProfile = reloadableLazyLoadAndPollUntil(
     async () => {
       // only poll in case groupProfile is not yet defined
