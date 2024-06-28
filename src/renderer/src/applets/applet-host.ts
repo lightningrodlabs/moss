@@ -13,7 +13,6 @@ import {
   FrameNotification,
   RecordInfo,
   PeerStatusUpdate,
-  RenderView,
 } from '@lightningrodlabs/we-applet';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -29,18 +28,15 @@ import { MossStore } from '../moss-store.js';
 import { AppletHash, AppletId, PermissionType } from '../types.js';
 import {
   appIdFromAppletHash,
-  appletOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
   logAppletZomeCall,
   openWalInWindow,
-  renderViewToQueryString,
   storeAppletNotifications,
   stringifyWal,
   toOriginalCaseB64,
   toolBundleActionHashFromDistInfo,
-  urlFromAppletHash,
   validateNotifications,
 } from '../utils.js';
 import { AppletNotificationSettings } from './types.js';
