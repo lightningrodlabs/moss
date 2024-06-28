@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { localized } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
@@ -57,7 +57,7 @@ export class FoyerStream extends LitElement {
     );
     this._acks = new StoreSubscriber(
       this,
-      () => this.stream!.acks,
+      () => this.stream!.acks(),
       () => [this.stream],
     );
   }
@@ -66,7 +66,7 @@ export class FoyerStream extends LitElement {
   _messages: StoreSubscriber<Message[]> | undefined;
 
   @state()
-  _acks;
+  _acks: StoreSubscriber<Record<number, HoloHashMap<Uint8Array, boolean>>> | undefined;
 
   @state()
   newMessages: number = 0;
@@ -127,10 +127,31 @@ export class FoyerStream extends LitElement {
   _showRecipients = 0;
 
   renderRecipients(agents: AgentPubKey[]) {
+    const newArray: AgentPubKey[] = [];
+    for (let i = 0; i < 4; i++) {
+      newArray.push(agents[0]);
+    }
+    // console.log('newArray: ', newArray);
+    console.log('renderrecipients');
     return html`
-      <div class="msg-recipients">
-        <strong>Received by:</strong>
-        ${agents.map((agent) => html`<profile-detail .agentPubKey=${agent}></profile-detail>`)}
+      <div
+        class="column msg-recipients"
+        @mouseleave=${() => {
+          console.log('Got mouseout event');
+          this._showRecipients = 0;
+        }}
+      >
+        <div class="msg-recipients-title">${msg('received by:')}</div>
+        <div class="row" style="flex-wrap: wrap;">
+          ${newArray.map(
+            (agent) =>
+              html`<agent-avatar
+                style="margin-left: 2px; margin-bottom: 2px;"
+                .size=${18}
+                .agentPubKey=${agent}
+              ></agent-avatar>`,
+          )}
+        </div>
       </div>
     `;
   }
@@ -188,53 +209,76 @@ export class FoyerStream extends LitElement {
     return this._messages.value.map((msg) => {
       const isMyMessage = encodeHashToBase64(msg.from) == this.groupStore.foyerStore.myPubKeyB64;
       const msgText = this.convertMessageText((msg.payload as any).text);
-      const ackCount = this.getAckCount(this._acks.value, msg.payload.created);
+      const ackCount = this._acks ? this.getAckCount(this._acks.value, msg.payload.created) : 0;
+      console.log('rendering message');
       return html`
-        <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
-          <div class="msg-content">
-            ${msg.payload.type === 'Msg'
-              ? html`
-                  ${!isMyMessage
-                    ? html`
-                        <agent-avatar
-                          style="margin-right:5px"
-                          disable-copy=${true}
-                          size=${20}
-                          agent-pub-key=${encodeHashToBase64(msg.from)}
-                        ></agent-avatar>
-                      `
-                    : ''}
-                  ${msgText}
-                  <span
-                    title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
-                    class="msg-timestamp"
-                    >${new Date(msg.payload.created).toLocaleTimeString()}</span
-                  >
-                  ${isMyMessage
-                    ? html`
-                        ${ackCount > 0
-                          ? html`
-                              <div
-                                style="cursor: pointer"
-                                @click=${() =>
-                                  (this._showRecipients =
-                                    this._showRecipients != msg.payload.created
-                                      ? msg.payload.created
-                                      : 0)}
-                                class="ack-count row center-content ${ackCount > 9 ? 'padded' : ''}"
-                              >
-                                ${ackCount}
-                              </div>
-                            `
-                          : '...'}
-                      `
-                    : ''}
-                `
+        <div class="row" style="position: relative;">
+          <span style="flex: 1;"></span>
+          <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
+            <div class="msg-content">
+              ${msg.payload.type === 'Msg'
+                ? html`
+                    ${!isMyMessage
+                      ? html`
+                          <agent-avatar
+                            style="margin-right:5px"
+                            disable-copy=${true}
+                            size=${20}
+                            agent-pub-key=${encodeHashToBase64(msg.from)}
+                          ></agent-avatar>
+                        `
+                      : ''}
+                    ${msgText}
+                    <span
+                      title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
+                      class="msg-timestamp"
+                      >${new Date(msg.payload.created).toLocaleTimeString()}</span
+                    >
+                    <div class="column">
+                      ${isMyMessage
+                        ? html`
+                            ${ackCount > 0
+                              ? html`
+                                  <div
+                                    tabindex="0"
+                                    style="margin-top: 1px;"
+                                    @mouseover=${() => {
+                                      console.log('mouseover');
+                                      if (this._showRecipients !== msg.payload.created) {
+                                        this._showRecipients = msg.payload.created;
+                                      }
+                                    }}
+                                    @keypress=${(e: KeyboardEvent) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        if (this._showRecipients === msg.payload.created) {
+                                          this._showRecipients = 0;
+                                        } else {
+                                          this._showRecipients = msg.payload.created;
+                                        }
+                                      }
+                                    }}
+                                    class="ack-count row center-content ${ackCount > 9
+                                      ? 'padded'
+                                      : ''}"
+                                  >
+                                    ${ackCount}
+                                  </div>
+                                `
+                              : '...'}
+                          `
+                        : ''}
+                      <span style="flex: 1;"></span>
+                    </div>
+                  `
+                : ''}
+            </div>
+            ${this._acks &&
+            isMyMessage &&
+            ackCount > 0 &&
+            this._showRecipients === msg.payload.created
+              ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
               : ''}
           </div>
-          ${isMyMessage && ackCount > 0 && this._showRecipients == msg.payload.created
-            ? this.renderRecipients(this._acks.value[msg.payload.created].keys())
-            : ''}
         </div>
       `;
     });
@@ -353,7 +397,7 @@ export class FoyerStream extends LitElement {
       .msg {
         display: flex;
         flex-direction: column;
-        margin: 5px;
+        margin: 3px 5px;
         border-radius: 10px;
         color: white;
         padding: 3px 10px;
@@ -386,7 +430,7 @@ export class FoyerStream extends LitElement {
         min-width: 16px;
         height: 16px;
         margin-left: 5px;
-        background-color: yellow;
+        background-color: #f3ff3b;
         color: black;
         font-size: 80%;
         border-radius: 8px;
@@ -410,10 +454,22 @@ export class FoyerStream extends LitElement {
         cursor: pointer;
       }
       .msg-recipients {
+        z-index: 1;
+        align-items: flex-end;
+        position: absolute;
+        top: 2px;
+        right: 14px;
+        background-color: #f3ff3b;
         margin-top: 5px;
-        padding-top: 5px;
-        border-top: solid 1px white;
+        padding: 5px;
         color: white;
+        border-radius: 8px;
+        max-width: 220px;
+      }
+      .msg-recipients-title {
+        font-size: 10px;
+        color: #08230e;
+        cursor: default;
       }
     `,
   ];
