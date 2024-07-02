@@ -64,7 +64,7 @@
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
     "electron-context-menu": "3.6.1",
-    "electron-updater": "6.1.8",
+    "electron-updater": "file:/home/matthias/code/electron/electron-builder/packages/electron-updater",
     "mime": "4.0.0",
     "nanoid": "5.0.4",
     "split": "1.0.1",
