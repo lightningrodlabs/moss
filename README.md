@@ -8,7 +8,9 @@ _Moss_ used to be called _We_, and you can read about it's early instantiation i
 
 ## Installation
 
-Go to [the releases page](https://github.com/lightningrodlabs/we/releases) and download the latest release for your Operating System.
+You can download the latest public release [here](https://theweave.social/moss/#download).
+
+If you want to install an unstable dev release, you can pick one on [the releases page](https://github.com/lightningrodlabs/we/releases).
 
 ## Developers
 
