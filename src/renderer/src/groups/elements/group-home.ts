@@ -326,12 +326,12 @@ export class GroupHome extends LitElement {
       const appId = appIdFromAppletHash(appletHash);
       await window.electronAPI.uninstallApplet(appId);
       // TODO abandon applet here for all groups this applet is installed in (groupClient.abandonApplet)
-      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
-      await Promise.all(
-        Array.from(groupsForApplet.values()).map((groupStore) =>
-          groupStore.groupClient.abandonApplet(appletHash),
-        ),
-      );
+      // const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
+      // await Promise.all(
+      //   Array.from(groupsForApplet.values()).map((groupStore) =>
+      //     groupStore.groupClient.abandonApplet(appletHash),
+      //   ),
+      // );
       await this.mossStore.reloadManualStores();
     } catch (e) {
       console.error(`Failed to uninstall Applet instance: ${e}`);
