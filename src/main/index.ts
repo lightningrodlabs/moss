@@ -499,18 +499,33 @@ Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
   session.defaultSession.setPermissionRequestHandler(
-    async (_webContents, permission, callback, details) => {
+    async (webContents, permission, callback, details) => {
       if (permission === 'media') {
         const unknownRequested = !details.mediaTypes || details.mediaTypes.length === 0;
         const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
         const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
+
+        let requestingWindow: BrowserWindow | undefined;
+        if (MAIN_WINDOW && webContents.id === MAIN_WINDOW.webContents.id) {
+          requestingWindow = MAIN_WINDOW;
+        } else {
+          const windowAndInfo = Object.values(WAL_WINDOWS).find(
+            (info) => info.window.webContents.id === webContents.id,
+          );
+          if (windowAndInfo) {
+            requestingWindow = windowAndInfo.window;
+          }
+        }
+
+        if (!requestingWindow)
+          throw Error('The requesting window is not allowed to request media access.');
 
         // On macOS, OS level permission for camera/microhone access needs to be given
         if (process.platform === 'darwin') {
           if (audioRequested) {
             const audioAccess = systemPreferences.getMediaAccessStatus('microphone');
             if (audioAccess === 'denied') {
-              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+              dialog.showMessageBoxSync(requestingWindow, {
                 type: 'error',
                 message:
                   "Audio permission has been denied ealier. You need to allow audio for Moss in your Computer's System Preferences and restart Moss to allow audio.",
@@ -519,7 +534,7 @@ app.whenReady().then(async () => {
             } else if (audioAccess !== 'granted') {
               const allowed = await systemPreferences.askForMediaAccess('microphone');
               if (!allowed) {
-                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                dialog.showMessageBoxSync(requestingWindow, {
                   type: 'error',
                   message:
                     "Audio permission has been denied. You need to allow audio for Moss in your Computer's System Preferences and restart Moss if you want to allow audio.",
@@ -531,7 +546,7 @@ app.whenReady().then(async () => {
           if (videoRequested) {
             const videoAccess = systemPreferences.getMediaAccessStatus('camera');
             if (videoAccess === 'denied') {
-              dialog.showMessageBoxSync(MAIN_WINDOW!, {
+              dialog.showMessageBoxSync(requestingWindow, {
                 type: 'error',
                 message:
                   "Video permission has been denied ealier. You need to allow video for Moss in your Computer's System Preferences and restart Moss to allow video.",
@@ -540,7 +555,7 @@ app.whenReady().then(async () => {
             } else if (videoAccess !== 'granted') {
               const allowed = await systemPreferences.askForMediaAccess('camera');
               if (!allowed) {
-                dialog.showMessageBoxSync(MAIN_WINDOW!, {
+                dialog.showMessageBoxSync(requestingWindow, {
                   type: 'error',
                   message:
                     "Video permission has been denied. You need to allow video for Moss in your Computer's System Preferences and restart Moss if you want to allow video.",
@@ -551,14 +566,14 @@ app.whenReady().then(async () => {
           }
         }
 
-        let messageContent = `An Applet wants to access the following:${
+        let messageContent = `A Tool wants to access the following:${
           details.mediaTypes?.includes('video') ? '\n* camera' : ''
         }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
         if (unknownRequested) {
           messageContent =
-            'An Applet wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
+            'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
         }
-        const response = await dialog.showMessageBox(MAIN_WINDOW!, {
+        const response = await dialog.showMessageBox(requestingWindow, {
           type: 'question',
           buttons: ['Deny', 'Allow'],
           defaultId: 0,
@@ -609,14 +624,14 @@ app.whenReady().then(async () => {
           options.execPath = process.env.APPIMAGE;
         }
         app.relaunch(options);
-        app.exit(0);
+        app.quit();
       },
     },
     {
       label: 'Quit',
       type: 'normal',
       click() {
-        app.exit(0);
+        app.quit();
       },
     },
   ]);
