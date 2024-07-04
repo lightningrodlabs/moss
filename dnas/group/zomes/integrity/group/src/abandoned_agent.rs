@@ -10,18 +10,10 @@ pub fn validate_create_link_abandoned_agent(
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
     // Check the entry type for the given action hash
-    let action_hash = base_address
-        .into_action_hash()
+    let _entry_hash = base_address
+        .into_entry_hash()
         .ok_or(wasm_error!(WasmErrorInner::Guest(
-            "No action hash associated with link".to_string()
-        )))?;
-    let record = must_get_valid_record(action_hash)?;
-    let _applet: crate::Applet = record
-        .entry()
-        .to_app_option()
-        .map_err(|e| wasm_error!(e))?
-        .ok_or(wasm_error!(WasmErrorInner::Guest(
-            "Linked action must reference an entry".to_string()
+            "No entry hash associated with link".to_string()
         )))?;
 
     let agent = match target_address
