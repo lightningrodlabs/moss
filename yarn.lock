@@ -1758,8 +1758,8 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.1"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-6adc4a7c-f9e1-4432-afe7-86c12c785d73-1719586853542/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-6adc4a7c-f9e1-4432-afe7-86c12c785d73-1719586853542/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-2c7359a5-8b96-436b-883a-d367a325aa74-1720188829038/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-2c7359a5-8b96-436b-883a-d367a325aa74-1720188829038/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1814,7 +1814,7 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.1"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-8a2beec5-dc87-4892-bf9f-0623360fabb6-1719586853540/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-8b8cb79d-3b95-4890-bb39-7718db23d7e3-1720188829035/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -2000,6 +2000,20 @@
     lit "^2.7.4"
     safevalues "^0.4.3"
     tslib "^2.4.0"
+
+"@matthme/electron-updater@6.3.0-alpha.0":
+  version "6.3.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@matthme/electron-updater/-/electron-updater-6.3.0-alpha.0.tgz#b1371268e93f26ca882e462a7311b1e48c1b0cdd"
+  integrity sha512-YBSMWj11wCbCVfKLTqflAGTiuglb/NULELJzHkOMPMB9Luq54jcCPdbm2fozAyiLnLuvq3ACkxXsA84zgiJBaQ==
+  dependencies:
+    builder-util-runtime "workspace:*"
+    fs-extra "^10.1.0"
+    js-yaml "^4.1.0"
+    lazy-val "^1.0.5"
+    lodash.escaperegexp "^4.1.2"
+    lodash.isequal "^4.5.0"
+    semver "^7.3.8"
+    tiny-typed-emitter "^2.1.0"
 
 "@mdi/js@^7.1.96", "@mdi/js@^7.2.0", "@mdi/js@^7.2.96":
   version "7.4.47"
@@ -3976,6 +3990,14 @@ builder-util-runtime@9.2.4:
   version "9.2.4"
   resolved "https://registry.yarnpkg.com/builder-util-runtime/-/builder-util-runtime-9.2.4.tgz#13cd1763da621e53458739a1e63f7fcba673c42a"
   integrity sha512-upp+biKpN/XZMLim7aguUyW8s0FUpDvOtK6sbanMFDAMBzpHDqdhgVYm6zc9HJ6nWo7u2Lxk60i2M6Jd3aiNrA==
+  dependencies:
+    debug "^4.3.4"
+    sax "^1.2.4"
+
+"builder-util-runtime@workspace:*":
+  version "9.2.5-alpha.2"
+  resolved "https://registry.yarnpkg.com/builder-util-runtime/-/builder-util-runtime-9.2.5-alpha.2.tgz#b0a1737996717d7ae0b71e5efdf0bfbd1dd2c21e"
+  integrity sha512-/Ln2ddejGj2HNMJ+X66mKHRcOvmRzUO/dSi8t4hSV64J7IA+DE+mqDb+zogIE2gin7p7YwcGiOkKny4nwPPPXg==
   dependencies:
     debug "^4.3.4"
     sax "^1.2.4"
