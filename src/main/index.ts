@@ -59,7 +59,7 @@ import {
   WAL,
 } from '@lightningrodlabs/we-applet';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
 
