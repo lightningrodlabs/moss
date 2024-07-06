@@ -47,6 +47,8 @@ declare global {
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_APPLET_HASH__: AppletHash;
     __WEAVE_APPLET_ID__: AppletId;
+    __WEAVE_PROTOCOL_VERSION__: string;
+    __MOSS_VERSION__: string;
   }
 
   interface WindowEventMap {
@@ -55,6 +57,9 @@ declare global {
 }
 
 const weaveApi: WeaveServices = {
+  mossVersion: () => {
+    return window.__MOSS_VERSION__;
+  },
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
     const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
     window.addEventListener('peer-status-update', listener);
@@ -191,6 +196,9 @@ const weaveApi: WeaveServices = {
     renderNotInstalled(iframeConfig.appletName);
     return;
   }
+
+  window.__WEAVE_PROTOCOL_VERSION__ = iframeConfig.weaveProtocolVersion;
+  window.__MOSS_VERSION__ = iframeConfig.mossVersion;
 
   // add eventlistener for clipboard
   window.addEventListener('keydown', async (zEvent) => {

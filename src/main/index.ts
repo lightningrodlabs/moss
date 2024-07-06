@@ -886,6 +886,8 @@ app.whenReady().then(async () => {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
       tools_library_app_id: TOOLS_LIBRARY_APP_ID,
+      moss_version: app.getVersion(),
+      weave_protocol_version: '0.13',
     };
   });
   ipcMain.handle('lair-setup-required', (): boolean => {

@@ -72,7 +72,7 @@ import {
   logMossZomeCall,
   progenitorFromProperties,
 } from '../utils.js';
-import { dialogMessagebox, getAppVersion } from '../electron-api.js';
+import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 
 type OpenTab =
@@ -587,7 +587,7 @@ export class MainDashboard extends LitElement {
     //   console.log('CURRENT IFRAME COUNT: ', allIframes.length);
     // }, 10000);
 
-    this.appVersion = await getAppVersion();
+    this.appVersion = this._mossStore.version;
 
     // Fetch Moss update feed
     try {

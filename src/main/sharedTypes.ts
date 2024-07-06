@@ -43,8 +43,11 @@ export type DeveloperCollective = {
   meta_data: string | undefined;
 };
 
+// CHANGE ALSO IN src/renderer/src/electron-api.ts
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
   tools_library_app_id: string;
+  moss_version: string;
+  weave_protocol_version: string;
 }
