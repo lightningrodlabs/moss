@@ -126,6 +126,9 @@ export function appletMessageHandler(
 
 export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
+    mossVersion() {
+      return mossStore.version;
+    },
     onPeerStatusUpdate(_) {
       return () => undefined;
     },
@@ -280,6 +283,8 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'cross-applet',
           appPort: mossStore.conductorInfo.app_port,
+          weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
+          mossVersion: mossStore.conductorInfo.moss_version,
           applets,
         };
         return config;
@@ -301,6 +306,8 @@ export async function handleAppletIframeMessage(
           appletHash,
           authenticationToken: appletStore.authenticationToken,
           appPort: mossStore.conductorInfo.app_port,
+          weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
+          mossVersion: mossStore.conductorInfo.moss_version,
           profilesLocation: {
             authenticationToken: groupStore.groupClient.authenticationToken,
             profilesRoleName: 'group',

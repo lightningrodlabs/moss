@@ -420,12 +420,16 @@ export type IframeConfig =
       appPort: number;
       appletHash: EntryHash;
       authenticationToken: AppAuthenticationToken;
+      weaveProtocolVersion: string;
+      mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
     }
   | {
       type: 'cross-applet';
       appPort: number;
+      weaveProtocolVersion: string;
+      mossVersion: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
     }
   | {
