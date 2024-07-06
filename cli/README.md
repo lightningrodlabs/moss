@@ -1,24 +1,24 @@
 # we-dev-cli
 
-CLI to run We Applets in development mode.
+CLI to run Moss Tools in development mode.
 
-This version is compatible with `@lightningrodlabs/we-applet@0.17.0-dev.3`.
+This version is compatible with `@lightningrodlabs/we-applet@0.17.1`.
 
 ```
 Usage: @lightningrodlabs/we-dev-cli [options]
 
-Running We applets in development mode.
+Running Moss Tools in development mode.
 
 Options:
   -V, --version                output the version number
   -p, --profile <string>       Runs We with a custom profile with its own dedicated data store.
   -n, --network-seed <string>  Installs AppStore with the provided network seed in case AppStore has not been installed yet.
-  -c, --dev-config <path>      Runs We in applet developer mode based on the configuration file at the specified path.
-  -b, --bootstrap-url <url>    URL of the bootstrap server to use. Must be provided if running in applet dev mode with the --dev-config
+  -c, --dev-config <path>      Runs Moss in Tool developer mode based on the configuration file at the specified path.
+  -b, --bootstrap-url <url>    URL of the bootstrap server to use. Must be provided if running in Tool dev mode with the --dev-config
                                argument.
-  -s, --signaling-url <url>    URL of the signaling server to use. Must be provided if running in applet dev mode with the --dev-config
+  -s, --signaling-url <url>    URL of the signaling server to use. Must be provided if running in Tool dev mode with the --dev-config
                                argument.
-  --force-production-urls      Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It
+  --force-production-urls      Explicitly allow using the production URLs of bootstrap and/or singaling server during Tool development. It
                                is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during
                                development.
   --agent-idx <number>         To be provided when running with the --dev-config option. Specifies which agent (as defined in the config file)
@@ -30,8 +30,8 @@ Options:
 
 ### 1. Define a config file
 
-The config file specifies the groups and applets to install and run. The following is an example
-of a config file that will let the `we-dev-cli` install one group with 3 applets from different
+The config file specifies the groups and Tools to install and run. The following is an example
+of a config file that will let the `we-dev-cli` install one group with 3 Tools from different
 sources.
 
 `we.dev.config.ts`:
@@ -72,14 +72,14 @@ export default defineConfig({
       ],
       applets: [
         {
-          name: 'Example Applet',
-          instanceName: 'Example Applet',
+          name: 'Example Tool',
+          instanceName: 'Example Tool',
           registeringAgent: 1,
           joiningAgents: [2],
         },
         {
-          name: 'Example Applet Hot Reload',
-          instanceName: 'Example Applet Hot Reload',
+          name: 'Example Tool Hot Reload',
+          instanceName: 'Example Tool Hot Reload',
           registeringAgent: 1,
           joiningAgents: [2],
         },
@@ -94,29 +94,29 @@ export default defineConfig({
   ],
   applets: [
     {
-      name: 'Example Applet',
+      name: 'Example Tool',
       subtitle: 'Just an Example',
-      description: 'Just an example applet to show the various affordances of We',
+      description: 'Just an example Tool to show the various affordances of Moss',
       icon: {
         type: 'filesystem',
         path: './example/ui/icon.png',
       },
       source: {
         type: 'filesystem',
-        path: './example/workdir/example-applet.webhapp',
+        path: './example/workdir/example-tool.webhapp',
       },
     },
     {
-      name: 'Example Applet Hot Reload',
+      name: 'Example Tool Hot Reload',
       subtitle: 'Just an Example',
-      description: 'Just an example applet to show the various affordances of We',
+      description: 'Just an example Tool to show the various affordances of Moss',
       icon: {
         type: 'filesystem',
         path: './example/ui/icon.png',
       },
       source: {
         type: 'localhost',
-        happPath: './example/workdir/example-applet.happ',
+        happPath: './example/workdir/example-tool.happ',
         uiPort: 8888,
       },
     },
