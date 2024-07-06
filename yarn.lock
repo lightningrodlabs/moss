@@ -1701,8 +1701,8 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-839bb143-d4e7-49d0-8140-8fb29ada488c-1720303173934/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-839bb143-d4e7-49d0-8140-8fb29ada488c-1720303173934/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b4685a28-4fce-4c2c-af93-a1daf7b9af23-1720304680370/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-b4685a28-4fce-4c2c-af93-a1daf7b9af23-1720304680370/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1760,7 +1760,7 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-aadbf735-20bb-42fc-8827-a2409f4b5882-1720303173932/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-d0c07988-fd24-4a37-b14f-8d0a575fc4b8-1720304680368/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -1947,12 +1947,12 @@
     safevalues "^0.4.3"
     tslib "^2.4.0"
 
-"@matthme/electron-updater@6.3.0-alpha.0":
-  version "6.3.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@matthme/electron-updater/-/electron-updater-6.3.0-alpha.0.tgz#b1371268e93f26ca882e462a7311b1e48c1b0cdd"
-  integrity sha512-YBSMWj11wCbCVfKLTqflAGTiuglb/NULELJzHkOMPMB9Luq54jcCPdbm2fozAyiLnLuvq3ACkxXsA84zgiJBaQ==
+"@matthme/electron-updater@6.3.0-alpha.1":
+  version "6.3.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@matthme/electron-updater/-/electron-updater-6.3.0-alpha.1.tgz#9bdf1200bba45a1d91f897523fb6e69efb53c6f3"
+  integrity sha512-k6oaZzT3XWE6hY1IchR5kZ0eEb9sVp9K3+BVtG88rA8aqvI9OJJrGZlCFStO4AXmLgZ/U/MUbWih4eHMS9eDcQ==
   dependencies:
-    builder-util-runtime "workspace:*"
+    builder-util-runtime "9.2.5-alpha.2"
     fs-extra "^10.1.0"
     js-yaml "^4.1.0"
     lazy-val "^1.0.5"
@@ -3937,7 +3937,7 @@ builder-util-runtime@9.2.4:
     debug "^4.3.4"
     sax "^1.2.4"
 
-"builder-util-runtime@workspace:*":
+builder-util-runtime@9.2.5-alpha.2:
   version "9.2.5-alpha.2"
   resolved "https://registry.yarnpkg.com/builder-util-runtime/-/builder-util-runtime-9.2.5-alpha.2.tgz#b0a1737996717d7ae0b71e5efdf0bfbd1dd2c21e"
   integrity sha512-/Ln2ddejGj2HNMJ+X66mKHRcOvmRzUO/dSi8t4hSV64J7IA+DE+mqDb+zogIE2gin7p7YwcGiOkKny4nwPPPXg==
