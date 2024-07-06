@@ -36,6 +36,8 @@ declare global {
     __WEAVE_API__: WeaveServices;
     __WEAVE_APPLET_SERVICES__: AppletServices;
     __WEAVE_RENDER_INFO__: RenderInfo;
+    __WEAVE_PROTOCOL_VERSION__: string;
+    __MOSS_VERSION__: string;
     __isWe__: boolean | undefined;
   }
 }
@@ -64,7 +66,9 @@ export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false
   if (webPrefix) {
     url = 'https://theweave.social/wal?';
   }
-  url = url + `weave-0.12://applet/${encodeHashToBase64(appletHash)}`;
+  url =
+    url +
+    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://applet/${encodeHashToBase64(appletHash)}`;
   return url;
 };
 
@@ -75,14 +79,14 @@ export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   }
   url =
     url +
-    `weave-0.12://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
+    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
       wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
 
 export function weaveUrlToLocation(url: string): WeaveLocation {
-  if (!url.startsWith('weave-0.12://')) {
+  if (!url.startsWith(`weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://`)) {
     throw new Error(`Got invalid Weave url: ${url}`);
   }
 
@@ -203,6 +207,11 @@ export class AppletServices {
 }
 
 export interface WeaveServices {
+  /**
+   *
+   * @returns Version of Moss within which this method is being called in
+   */
+  mossVersion: () => string;
   /**
    * Event handler for peer status updates.
    *
@@ -335,6 +344,8 @@ export class WeaveClient implements WeaveServices {
       return new WeaveClient();
     }
   }
+
+  mossVersion = () => window.__MOSS_VERSION__;
 
   onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
     return window.__WEAVE_API__.onPeerStatusUpdate(callback);

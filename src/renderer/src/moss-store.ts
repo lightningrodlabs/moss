@@ -92,6 +92,7 @@ export class MossStore {
   ) {
     this._authenticationTokens = authenticationTokens;
     this.myLatestActivity = Date.now();
+    this._version = conductorInfo.moss_version;
   }
 
   private _updatableApplets: Writable<Record<AppletId, UpdateableEntity<Tool>>> = writable({});
@@ -110,6 +111,12 @@ export class MossStore {
   persistedStore: PersistedStore = new PersistedStore();
 
   weCache: WeCache = new WeCache();
+
+  _version: string;
+
+  get version() {
+    return this._version;
+  }
 
   _notificationFeed: Writable<AppletNotification[]> = writable([]);
 
