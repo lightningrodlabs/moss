@@ -79,7 +79,7 @@
     "@electron-toolkit/eslint-config-ts": "^1.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@holochain-playground/cli": "^0.1.1",
-    "@lightningrodlabs/we-dev-cli": "^0.11.11-dev.3",
+    "@lightningrodlabs/we-dev-cli": "0.12.0-dev.6",
     "@types/adm-zip": "0.5.5",
     "@types/commander": "2.12.2",
     "@types/js-yaml": "4.0.9",
