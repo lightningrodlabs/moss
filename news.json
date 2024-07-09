@@ -2,6 +2,11 @@
   "0.12.x": [
     {
       "type": "Release",
+      "timestamp": 1720543484214,
+      "message": "## Moss 0.12.5 Released\n\nTo update you will need to manually [re-download 0.12.5](https://theweave.social/moss#download).\n\nChange Log:\n- should fix automatic updates\n- fixes issue of audio/camera permission dialog opening in the wrong window\n- fix an error when uninstalling a Tool\n- adds a Restart button to the OS menu"
+    },
+    {
+      "type": "Release",
       "timestamp": 1719590932226,
       "message": "## Moss 0.12.4 Released\n\nTo update you will need to manually [re-download 0.12.4](https://theweave.social/moss#download).\n\nChange Log:\n- fixes and improvements to the foyer\n- adds the option to display profile information of group members\n- adds the option to open and export logs\n- adds the option to open a WAL in a separate window from the asset viewer"
     },
