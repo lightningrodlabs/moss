@@ -47,7 +47,7 @@ async function downloadHolochainBinary() {
   const destinationPath = path.join(binariesDir, holochainBinaryFilename);
 
   const file = fs.createWriteStream(destinationPath);
-  console.log('Fetching lair binary from ', holochainBinaryUrl);
+  console.log('Fetching holochain binary from ', holochainBinaryUrl);
   https
     .get(holochainBinaryUrl, (response) => {
       if (response.statusCode === 302) {
