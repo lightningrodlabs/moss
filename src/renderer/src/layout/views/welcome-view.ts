@@ -561,15 +561,6 @@ export class WelcomeView extends LitElement {
         background: rgba(84, 109, 69, 1);
         border-radius: 10px;
       }
-
-      .invisible-scrollbars {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-      }
-
-      .invisible-scrollbars::-webkit-scrollbar {
-        display: none;
-      }
     `,
     weStyles,
   ];
