@@ -46,12 +46,6 @@ export class AppletDetailCard extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
-  _appletUpdatable = new StoreSubscriber(
-    this,
-    () => this.mossStore.appletUpdatable(this.appletHash),
-    () => [this.mossStore],
-  );
-
   _joinedMembers = new StoreSubscriber(
     this,
     () =>
@@ -81,16 +75,6 @@ export class AppletDetailCard extends LitElement {
     if (appletRecord) {
       this.addedBy = appletRecord.action.author;
     }
-  }
-
-  async updateUi() {
-    this.dispatchEvent(
-      new CustomEvent('update-ui', {
-        bubbles: true,
-        composed: true,
-        detail: this.appletHash,
-      }),
-    );
   }
 
   async uninstallApplet() {
@@ -137,19 +121,6 @@ export class AppletDetailCard extends LitElement {
             <span style="flex: 1; font-size: 23px; font-weight: 600;"
               >${this.applet.custom_name}</span
             >
-            ${!!this._appletUpdatable.value
-              ? html`<sl-button
-                  variant="success"
-                  @click=${() => this.updateUi()}
-                  @keypress=${(e: KeyboardEvent) => {
-                    if (e.key === 'Enter') {
-                      this.updateUi();
-                    }
-                  }}
-                  title="Update Applet"
-                  >Install Update</sl-button
-                >`
-              : html``}
             <sl-tooltip
               .content=${this.appInfo && isAppRunning(this.appInfo)
                 ? msg('Disable')

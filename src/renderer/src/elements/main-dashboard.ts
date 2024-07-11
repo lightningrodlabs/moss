@@ -1143,6 +1143,7 @@ export class MainDashboard extends LitElement {
         >
           <welcome-view
             id="welcome-view"
+            class="welcome-view"
             @click=${(e) => e.stopPropagation()}
             .updateFeed=${this._updateFeed}
             style="${this._dashboardState.value.viewType === 'personal'
