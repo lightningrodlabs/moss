@@ -22,6 +22,7 @@ import {
   slice,
 } from '@holochain-open-dev/utils';
 import {
+  ActionHashB64,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -51,7 +52,6 @@ import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './e
 import {
   appIdFromAppletHash,
   appletHashFromAppId,
-  appletIdFromAppId,
   deStringifyWal,
   findAppForDnaHash,
   initAppClient,
@@ -95,8 +95,10 @@ export class MossStore {
     this._version = conductorInfo.moss_version;
   }
 
-  private _updatableApplets: Writable<Record<AppletId, UpdateableEntity<Tool>>> = writable({});
-  private _updatesAvailableByGroup: Writable<DnaHashMap<boolean>> = writable(new DnaHashMap());
+  private _availableToolUpdates: Writable<Record<ActionHashB64, UpdateableEntity<Tool>>> = writable(
+    {},
+  );
+
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
   // here at the MossStore level
   private _dashboardState: Writable<DashboardState> = writable({
@@ -170,14 +172,15 @@ export class MossStore {
 
   async checkForUiUpdates() {
     // 1. Get all AppAssetsInfos
-    const updatableApplets: Record<AppletId, UpdateableEntity<Tool>> = {}; // Tool entry with the new assets by AppletId
+    const toolsWithAvailableUpdates: Record<AgentPubKeyB64, UpdateableEntity<Tool>> = {};
     const appAssetsInfos = await getAllAppAssetsInfos();
+
     // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
     const allLatestToolEntities =
       await this.toolsLibraryStore.toolsLibraryClient.getAllToolEntites();
-    // console.log('@checkForUiUpdates:  allAppEntries: ', allAppEntries);
+    console.log('@checkForUiUpdates:  allLatestToolEntities: ', allLatestToolEntities);
 
-    Object.entries(appAssetsInfos).forEach(([appId, appAssetInfo]) => {
+    Object.values(appAssetsInfos).forEach((appAssetInfo) => {
       if (
         appAssetInfo.distributionInfo.type === 'tools-library' &&
         appAssetInfo.type === 'webhapp' &&
@@ -196,47 +199,18 @@ export class MossStore {
               appHashes.happ.sha256 === appAssetInfo.happ.sha256 &&
               appHashes.sha256 !== appAssetInfo.sha256
             ) {
-              const appletId = appletIdFromAppId(appId);
-              updatableApplets[appletId] = maybeRelevantToolEntity;
+              toolsWithAvailableUpdates[orignalToolActionHash] = maybeRelevantToolEntity;
             }
           }
         }
       }
     });
 
-    // console.log('@checkForUiUpdates:  updatableApplets: ', updatableApplets);
-    this._updatableApplets.set(updatableApplets);
-
-    const updatesAvailableByGroup = new DnaHashMap<boolean>();
-    const groupStores = await toPromise(this.groupStores);
-    await Promise.all(
-      Array.from(groupStores.entries()).map(async ([dnaHash, groupStore]) => {
-        const runningGroupApplets = await toPromise(groupStore.allMyRunningApplets);
-        const runningGroupAppletsB64 = runningGroupApplets.map((hash) => encodeHashToBase64(hash));
-        let updateAvailable = false;
-        Object.keys(updatableApplets).forEach((appletId) => {
-          if (runningGroupAppletsB64.includes(appletId)) {
-            updateAvailable = true;
-          }
-        });
-        updatesAvailableByGroup.set(dnaHash, updateAvailable);
-      }),
-    );
-    this._updatesAvailableByGroup.set(updatesAvailableByGroup);
+    this._availableToolUpdates.set(toolsWithAvailableUpdates);
   }
 
-  updatableApplets(): Readable<Record<AppletId, UpdateableEntity<Tool>>> {
-    return derived(this._updatableApplets, (store) => store);
-  }
-
-  updatesAvailableForGroup(groupDnaHash: DnaHash): Readable<boolean> {
-    return derived(this._updatesAvailableByGroup, (store) => store.get(groupDnaHash));
-  }
-
-  appletUpdatable(appletHash: AppletHash): Readable<boolean> {
-    return derived(this._updatableApplets, (store) =>
-      Object.keys(store).includes(encodeHashToBase64(appletHash)),
-    );
+  availableToolUpdates(): Readable<Record<ActionHashB64, UpdateableEntity<Tool>>> {
+    return derived(this._availableToolUpdates, (store) => store);
   }
 
   dashboardState(): Readable<DashboardState> {

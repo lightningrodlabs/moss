@@ -15,7 +15,6 @@ import {
   AsyncReadable,
   StoreSubscriber,
   Unsubscriber,
-  get,
   joinAsync,
   pipe,
   toPromise,
@@ -24,7 +23,6 @@ import { consume } from '@lit/context';
 import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   mdiArrowLeft,
-  mdiCog,
   mdiContentCopy,
   mdiHomeOutline,
   mdiLinkVariantPlus,
@@ -60,7 +58,6 @@ import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
 import '../../elements/tab-group.js';
-import '../../elements/loading-dialog.js';
 import './foyer-stream.js';
 import './agent-permission.js';
 
@@ -69,9 +66,8 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppHashes, AppletAgent, AppletHash, AssetSource, DistributionInfo } from '../../types.js';
+import { AppletAgent, AppletHash, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
-import { LoadingDialog } from '../../elements/loading-dialog.js';
 import { appIdFromAppletHash, markdownParseSafe, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../tools-library/types.js';
@@ -98,12 +94,6 @@ export class GroupHome extends LitElement {
 
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
-
-  updatesAvailable = new StoreSubscriber(
-    this,
-    () => this.mossStore.updatesAvailableForGroup(this.groupStore.groupDnaHash),
-    () => [this.mossStore, this.groupStore],
-  );
 
   permissionType = new StoreSubscriber(
     this,
@@ -255,62 +245,6 @@ export class GroupHome extends LitElement {
       this.permissionType.value.status === 'complete' &&
       ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
     );
-  }
-
-  async updateUi(e: CustomEvent) {
-    const confirmation = await dialogMessagebox({
-      message:
-        'Updating an Applet UI will refresh the full We window. If you have unsaved changes in one of your applets, save them first.',
-      type: 'warning',
-      buttons: ['Cancel', 'Continue'],
-    });
-    if (confirmation.response === 0) return;
-    (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
-    console.log('appletHash: ', e.detail);
-    const appId = appIdFromAppletHash(e.detail);
-    console.log('appletId: ', appId);
-
-    try {
-      const toolEntity = get(this.mossStore.updatableApplets())[encodeHashToBase64(e.detail)];
-      if (!toolEntity)
-        throw new Error('No AppEntry found in We Store for the requested UI update.');
-
-      const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
-      if (assetsSource.type !== 'https')
-        throw new Error("Updating of applets is only implemented for sources of type 'http'");
-      const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
-      const distributionInfo: DistributionInfo = {
-        type: 'tools-library',
-        info: {
-          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-          originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
-          toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
-          toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
-        },
-      };
-      const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-      if (appHashes.type !== 'webhapp')
-        throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
-
-      await window.electronAPI.updateAppletUi(
-        appId,
-        assetsSource.url,
-        distributionInfo,
-        appHashes.happ.sha256,
-        appHashes.ui.sha256,
-        appHashes.sha256,
-      );
-      await this.mossStore.checkForUiUpdates();
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-      notify(msg('Applet UI updated.'));
-      // Required to have the browser refetch the UI. A nicer approach would be to selectively only
-      // reload the iframes associated to that applet
-      window.location.reload();
-    } catch (e) {
-      console.error(`Failed to update UI: ${e}`);
-      notifyError(msg('Failed to update the UI.'));
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-    }
   }
 
   async uninstallApplet(e: CustomEvent) {
@@ -765,18 +699,6 @@ export class GroupHome extends LitElement {
               <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">
                 ${msg('Settings')}
               </div>
-              <div style="position: relative;">
-                ${!!this.updatesAvailable.value
-                  ? html`<div
-                      style="position: absolute; top: 6px; right: 4px; background-color: #21c607; height: 12px; width: 12px; border-radius: 50%; border: 2px solid white;"
-                    ></div>`
-                  : html``}
-                <sl-icon
-                  .src=${wrapPathInSvg(mdiCog)}
-                  title=${!!this.updatesAvailable.value ? 'Applet Updates available' : ''}
-                  style="font-size: 2rem;"
-                ></sl-icon>
-              </div>
             </div>
           </div>
 
@@ -919,7 +841,6 @@ export class GroupHome extends LitElement {
       [
         'Tools',
         html`<group-applets-settings
-          @update-ui=${async (e) => this.updateUi(e)}
           @uninstall-applet=${async (e) => this.uninstallApplet(e)}
           @applets-disabled=${(e) => {
             this.dispatchEvent(
@@ -1005,7 +926,6 @@ export class GroupHome extends LitElement {
     }
 
     return html`
-      <loading-dialog id="loading-dialog" loadingText="Updating UI..."></loading-dialog>
       <div class="column" style="flex: 1; position: relative;">
         <div
           class="row"
