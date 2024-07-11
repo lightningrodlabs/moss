@@ -106,6 +106,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
+  batchUpdateAppletUis: (
+    originalToolActionHash: ActionHashB64,
+    newToolVersionActionHash: ActionHashB64,
+    happOrWebHappUrl: string,
+    distributionInfo: DistributionInfo,
+    sha256Happ: string,
+    sha256Ui: string,
+    sha256Webhapp: string,
+  ) =>
+    ipcRenderer.invoke(
+      'batch-update-applet-uis',
+      originalToolActionHash,
+      newToolVersionActionHash,
+      happOrWebHappUrl,
+      distributionInfo,
+      sha256Happ,
+      sha256Ui,
+      sha256Webhapp,
+    ),
   updateAppletUi: (
     appId: string,
     happOrWebHappUrl: string,
