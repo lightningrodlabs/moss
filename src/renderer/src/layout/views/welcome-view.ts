@@ -92,24 +92,6 @@ export class WelcomeView extends LitElement {
   //   () => [this._mossStore],
   // );
 
-  async firstUpdated() {
-    try {
-      console.log('@ WELCOME-VIEW: loading notifications');
-      const runningApplets = await toPromise(this._mossStore.runningApplets);
-      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
-      // load all notification of past 2 days since epoch
-      runningApplets.forEach((appletHash) => {
-        const appletId = encodeHashToBase64(appletHash);
-        this._mossStore.updateNotificationFeed(appletId, daysSinceEpoch);
-        this._mossStore.updateNotificationFeed(appletId, daysSinceEpoch - 1);
-      });
-      this.notificationsLoading = false;
-      console.log('Updated notifications.');
-    } catch (e) {
-      console.error('Failed to load notification feed: ', e);
-    }
-  }
-
   async updateTool(toolEntity: UpdateableEntity<Tool>) {
     const confirmation = await dialogMessagebox({
       message:
