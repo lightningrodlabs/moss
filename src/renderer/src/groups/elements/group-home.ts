@@ -23,6 +23,7 @@ import { consume } from '@lit/context';
 import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
 import {
   mdiArrowLeft,
+  mdiCog,
   mdiContentCopy,
   mdiHomeOutline,
   mdiLinkVariantPlus,
@@ -166,10 +167,7 @@ export class GroupHome extends LitElement {
                     this.mossStore.toolsLibraryStore.installableTools.get(toolBundleActionHash),
                   );
                 } catch (e) {
-                  console.warn(
-                    '@group-home @unjoined-applets: Failed to get appstoreAppEntry: ',
-                    e,
-                  );
+                  console.warn('@group-home @unjoined-applets: Failed to get ToolEntity: ', e);
                 }
               }
               return [
@@ -698,6 +696,9 @@ export class GroupHome extends LitElement {
             >
               <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">
                 ${msg('Settings')}
+              </div>
+              <div style="position: relative;">
+                <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 2rem;"></sl-icon>
               </div>
             </div>
           </div>

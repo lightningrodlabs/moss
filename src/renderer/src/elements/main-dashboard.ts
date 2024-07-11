@@ -596,7 +596,7 @@ export class MainDashboard extends LitElement {
         'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
       );
       const updateFeed = await response.json();
-      this._updateFeed = updateFeed['0.12.x'];
+      this._updateFeed = updateFeed['0.13.x'];
     } catch (e) {
       // Fetch Moss update feed
       try {
