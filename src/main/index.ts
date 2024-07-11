@@ -44,6 +44,7 @@ import {
 } from './cli/cli';
 import { launch } from './launch';
 import {
+  ActionHashB64,
   AgentPubKeyB64,
   AppInfo,
   CallZomeRequest,
@@ -1011,6 +1012,94 @@ app.whenReady().then(async () => {
       };
     }
   });
+  ipcMain.handle(
+    'batch-update-applet-uis',
+    async (
+      _e,
+      originalToolActionHash: ActionHashB64,
+      newToolVersionActionHash: ActionHashB64,
+      happOrWebHappUrl: string,
+      distributionInfo: DistributionInfo,
+      sha256Happ: string,
+      sha256Ui: string,
+      sha256Webhapp: string,
+    ): Promise<void> => {
+      // Check if UI assets need to be downloaded at all
+      const uiAlreadyInstalled = fs.existsSync(
+        path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'),
+      );
+      let tmpDir: string | undefined;
+      if (!uiAlreadyInstalled) {
+        // fetch webhapp from URL
+        console.log('Fetching webhapp from URL: ', happOrWebHappUrl);
+        const response = await net.fetch(happOrWebHappUrl);
+        const buffer = await response.arrayBuffer();
+        const assetBytes = Array.from(new Uint8Array(buffer));
+        const result: string = await rustUtils.validateHappOrWebhapp(assetBytes);
+        const [happHash, uiHash, webHappHash] = result.split('$');
+
+        if (happHash !== sha256Happ)
+          throw new Error(
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHash}' but expected hash ${sha256Happ}`,
+          );
+        if (webHappHash && webHappHash !== sha256Webhapp)
+          throw new Error(
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHash}' but expected hash ${sha256Webhapp}`,
+          );
+        if (uiHash && uiHash !== sha256Ui)
+          throw new Error(
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHash}' but expected hash ${sha256Ui}`,
+          );
+        if (sha256Webhapp && !sha256Ui)
+          throw new Error('Got applet with a webhapp hash but no UI hash.');
+
+        tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
+        fs.mkdirSync(tmpDir, { recursive: true });
+        const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+        fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+        const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
+        const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
+        // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
+        await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        try {
+          // clean up
+          fs.rmSync(tmpDir, { recursive: true });
+        } catch (e) {}
+      } else {
+        console.log(
+          '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
+        );
+      }
+      // That the happ hash is the same as with the previous installation needs to be checked in the frontend
+      const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
+        distributionInfo,
+        happOrWebHappUrl,
+        sha256Happ,
+        sha256Webhapp,
+        sha256Ui,
+      );
+
+      // Find all applets that can be updated and update them
+      const allAppInfoFiles = fs
+        .readdirSync(WE_FILE_SYSTEM.appsDir)
+        .filter((fileName) => fileName.startsWith('applet#') && fileName.endsWith('.json'));
+
+      allAppInfoFiles.forEach((file) => {
+        const appId = file.slice(0, -5); // remove the .json ending
+        const appAssetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+        if (
+          appAssetInfo.distributionInfo.type === 'tools-library' &&
+          appAssetInfo.distributionInfo.info.originalToolActionHash === originalToolActionHash &&
+          appAssetInfo.distributionInfo.info.toolVersionActionHash !== newToolVersionActionHash
+        ) {
+          WE_FILE_SYSTEM.backupAppAssetsInfo(appId);
+          WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+        }
+      });
+
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+    },
+  );
   ipcMain.handle(
     'update-applet-ui',
     async (

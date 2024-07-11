@@ -83,6 +83,15 @@ declare global {
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
+      batchUpdateAppletUis: (
+        originalToolActionHash: ActionHashB64,
+        newToolVersionActionHash: ActionHashB64,
+        happOrWebHappUrl: string,
+        distributionInfo: DistributionInfo,
+        sha256Happ: string,
+        sha256Ui: string,
+        sha256Webhapp: string,
+      ) => Promise<void>;
       updateAppletUi: (
         appId: string,
         happOrWebHappUrl: string,

@@ -8,7 +8,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import {
   mdiAccountLockOpen,
   mdiAccountMultiple,
@@ -24,31 +24,37 @@ import '../../elements/select-group-dialog.js';
 import '../../elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
+import '../../elements/loading-dialog.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
-import { toPromise } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
-import { UpdateFeedMessage } from '../../types.js';
+import { AppHashes, AssetSource, DistributionInfo, UpdateFeedMessage } from '../../types.js';
 import TimeAgo from 'javascript-time-ago';
-import { Marked } from '@ts-stack/markdown';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { Tool, UpdateableEntity } from '../../tools-library/types.js';
+import { markdownParseSafe } from '../../utils.js';
+import { dialogMessagebox } from '../../electron-api.js';
+import { LoadingDialog } from '../../elements/loading-dialog.js';
 
-Marked.setOptions({
-  // renderer: new MyRenderer,
-  // highlight: (code, lang) =>  {
-  //   if (lang)
-  //     return hljs.highlight(lang, code).value
-  //   return code
-  // },
-  gfm: true,
-  tables: true,
-  breaks: false,
-  pedantic: false,
-  sanitize: true,
-  smartLists: true,
-  smartypants: false,
-});
+type UpdateFeedMessageGeneric =
+  | {
+      type: 'Moss';
+      timestamp: number;
+      content: {
+        type: string;
+        timestamp: number;
+        message: string;
+      };
+    }
+  | {
+      type: 'Tool';
+      timestamp: number;
+      content: {
+        tool: UpdateableEntity<Tool>;
+      };
+    };
 
 enum WelcomePageView {
   Main,
@@ -71,6 +77,12 @@ export class WelcomeView extends LitElement {
 
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
+
+  availableToolUpdates = new StoreSubscriber(
+    this,
+    () => this._mossStore.availableToolUpdates(),
+    () => [this._mossStore],
+  );
 
   timeAgo = new TimeAgo('en-US');
 
@@ -95,6 +107,56 @@ export class WelcomeView extends LitElement {
       console.log('Updated notifications.');
     } catch (e) {
       console.error('Failed to load notification feed: ', e);
+    }
+  }
+
+  async updateTool(toolEntity: UpdateableEntity<Tool>) {
+    const confirmation = await dialogMessagebox({
+      message:
+        'Updating a Tool UI will refresh the full Moss window. If you have unsaved changes in one of your Tools, save them first.',
+      type: 'warning',
+      buttons: ['Cancel', 'Continue'],
+    });
+    if (confirmation.response === 0) return;
+    (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
+
+    try {
+      const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
+      if (assetsSource.type !== 'https')
+        throw new Error("Updating of applets is only implemented for sources of type 'http'");
+      const toolsLibraryDnaHash = await this._mossStore.toolsLibraryStore.toolsLibraryDnaHash();
+      const distributionInfo: DistributionInfo = {
+        type: 'tools-library',
+        info: {
+          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+          originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
+          toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
+          toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
+        },
+      };
+      const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
+      if (appHashes.type !== 'webhapp')
+        throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+
+      await window.electronAPI.batchUpdateAppletUis(
+        encodeHashToBase64(toolEntity.originalActionHash),
+        encodeHashToBase64(toolEntity.record.actionHash),
+        assetsSource.url,
+        distributionInfo,
+        appHashes.happ.sha256,
+        appHashes.ui.sha256,
+        appHashes.sha256,
+      );
+      await this._mossStore.checkForUiUpdates();
+      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+      notify(msg('Tool updated.'));
+      // Required to have the browser refetch the UI. A nicer approach would be to selectively only
+      // reload the iframes associated to that applet
+      window.location.reload();
+    } catch (e) {
+      console.error(`Failed to update Tool: ${e}`);
+      notifyError(msg('Failed to update Tool.'));
+      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
     }
   }
 
@@ -154,10 +216,86 @@ export class WelcomeView extends LitElement {
     </sl-dialog>`;
   }
 
+  renderToolUpdate(toolEntity: UpdateableEntity<Tool>) {
+    const tool = toolEntity.record.entry;
+    return html`
+      <div class="column">
+        <div class="row" style="align-items: center;">
+          <img src=${tool.icon} style="width: 70px; height: 70px; border-radius: 14px;" />
+          <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">${tool.title}</div>
+          <div style="margin-left: 10px; font-size: 28px; opacity: 0.6;">${tool.version}</div>
+          <span style="display: flex; flex: 1;"></span>
+          <sl-button @click=${() => this.updateTool(toolEntity)}
+            >${msg('Install Update')}</sl-button
+          >
+        </div>
+        ${tool.changelog
+          ? html`<div>${unsafeHTML(markdownParseSafe(tool.changelog))}</div>`
+          : html``}
+      </div>
+    `;
+  }
+
+  renderUpdateFeed() {
+    const mossFeed: UpdateFeedMessageGeneric[] = this.updateFeed.map((el) => ({
+      type: 'Moss',
+      timestamp: el.timestamp,
+      content: el,
+    }));
+
+    const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(
+      this.availableToolUpdates.value,
+    ).map((entity) => ({
+      type: 'Tool',
+      timestamp: entity.record.record.signed_action.hashed.content.timestamp / 1000,
+      content: {
+        tool: entity,
+      },
+    }));
+
+    const composedFeed = [...mossFeed, ...toolUpdates].sort((a, b) => b.timestamp - a.timestamp);
+
+    return html`
+      <div
+        class="column"
+        style="align-items: center; display:flex; flex: 1; margin-top: 10px; color: white;"
+      >
+        <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
+        <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
+          >Thank you for surfing the edge of
+          <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are relevant
+          updates for early weavers.</span
+        >
+        <div class="flex-scrollable-parent" style="width: 870px;">
+          <div class="flex-scrollable-container">
+            <div class="column flex-scrollable-y">
+              ${composedFeed.length === 0
+                ? html`No big waves lately...`
+                : composedFeed.map(
+                    (message) => html`
+                      <div class="update-feed-el">
+                        <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
+                        <div class="update-type">
+                          ${message.type === 'Moss' ? message.content.type : 'Tool Update'}
+                        </div>
+                        ${message.type === 'Moss'
+                          ? unsafeHTML(markdownParseSafe(message.content.message))
+                          : this.renderToolUpdate(message.content.tool)}
+                      </div>
+                    `,
+                  )}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
+          <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
           ${this.renderDisclaimerDialog()}
           <div class="column" style="align-items: center; flex: 1; overflow: auto;">
             <div
@@ -296,37 +434,7 @@ export class WelcomeView extends LitElement {
             </div>
 
             <!-- Moss Update Feed -->
-
-            <div
-              class="column"
-              style="align-items: center; display:flex; flex: 1; margin-top: 10px; color: white;"
-            >
-              <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
-              <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
-                >Thank you for surfing the edge of
-                <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are
-                relevant updates for early weavers.</span
-              >
-              <div class="flex-scrollable-parent" style="width: 870px;">
-                <div class="flex-scrollable-container">
-                  <div class="column flex-scrollable-y">
-                    ${!this.updateFeed || this.updateFeed.length === 0
-                      ? html`No big waves lately...`
-                      : this.updateFeed.map(
-                          (message) => html`
-                            <div class="update-feed-el">
-                              <div class="update-date">
-                                ${this.timeAgo.format(message.timestamp)}
-                              </div>
-                              <div class="update-type">${message.type}</div>
-                              ${unsafeHTML(Marked.parse(message.message))}
-                            </div>
-                          `,
-                        )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            ${this.renderUpdateFeed()}
           </div>
         `;
     }
