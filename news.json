@@ -1,6 +1,11 @@
 {
   "0.12.x": [
     {
+      "type": "🗓️ Event",
+      "timestamp": 1720796154203,
+      "message": "On July 22th at 11 am EST (5 pm CET) we will host a Weave Community Gathering.  The gathering will take place in the public [Weavers Group](https://theweave.social/wal?weave-0.12://invite/1ce8e75c-1196-489e-8dcb-2fb1e0f63fb4&progenitor=uhCAkReDO1vypDyq42CVJoQmZiE3bF1uGIrIVpWgBVZw2HJ6YJ1y8) (click the link to join the group!).  Watch this space for more details."
+    },
+    {
       "type": "Release",
       "timestamp": 1720543484214,
       "message": "## Moss 0.12.5 Released\n\nTo update you will need to manually [re-download 0.12.5](https://theweave.social/moss#download).\n\nChange Log:\n- should fix automatic updates\n- fixes issue of audio/camera permission dialog opening in the wrong window\n- fix an error when uninstalling a Tool\n- adds a Restart button to the OS menu"
