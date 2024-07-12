@@ -210,22 +210,18 @@ if (app.isPackaged) {
       CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.12://'));
     }
 
+    // This event will always be triggered in the first instance, no matter with which profile
+    // it is being run. On Linux and Windows it is also how deeplinks get in.
     app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
-      // non-deeplink case (i.e. additionalData is defined)
-      if (additionalData && additionalData.profile === RUN_OPTIONS.profile) {
-        if (SPLASH_SCREEN_WINDOW) {
-          SPLASH_SCREEN_WINDOW.show();
-        } else {
-          MAIN_WINDOW = createOrShowMainWindow();
-        }
-      } else if (additionalData && additionalData.profile !== RUN_OPTIONS.profile) {
-        // If a second instance is being opened with a different profile
-        return;
-      } else if (process.platform !== 'darwin') {
+      console.log('second-instance event triggered. argv: ', argv);
+      console.log('additionalData: ', additionalData);
+      if (process.platform !== 'darwin') {
         // deeplink case
         const url = argv.pop();
-        if (MAIN_WINDOW) {
-          // main window is already open
+        if (SPLASH_SCREEN_WINDOW) {
+          CACHED_DEEP_LINK = url;
+          SPLASH_SCREEN_WINDOW.show();
+        } else if (MAIN_WINDOW) {
           createOrShowMainWindow();
           emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
         } else {
@@ -1313,7 +1309,7 @@ app.whenReady().then(async () => {
         if (MAIN_WINDOW) {
           emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
         }
-      }, 1000);
+      }, 8000);
     }
   });
 

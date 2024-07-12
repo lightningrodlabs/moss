@@ -51,6 +51,7 @@ export class MossApp extends LitElement {
     // });
     // const launched = await isLaunched();
     // if (launched) {
+    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.12';
     window.__ZOME_CALL_LOGGING_ENABLED__ = true;
     try {
       await this.connect();
