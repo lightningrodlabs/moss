@@ -94,6 +94,10 @@ jobs:
           yarn build:linux
           ls dist
 
+          # Modify the postinst script of the .deb file
+          node ./scripts/extend-deb-postinst.mjs
+          gh release upload "latest-linux.yml" "latest-linux.yml" --clobber
+
       - name: build, sign and upload the app (Windows)
         shell: bash
         if: matrix.platform == 'windows-2019'
