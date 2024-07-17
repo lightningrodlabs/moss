@@ -35,12 +35,21 @@ const postinstScriptModified = postinstScript.replace(
   "chrome-sandbox' || true",
   `chrome-sandbox' || true
 
-release_version=$(lsb_release -rs)
+if [ -e /etc/lsb-release ]; then
 
-if [ $release_version == "24.04" ]; then
+  while IFS='=' read -r key value
 
-# add AppArmor profile on Ubuntu 24.04
-profile_content="# This profile allows everything and only exists to give the
+  do
+    if [ "$key" == "DISTRIB_RELEASE" ]; then
+       release_version=$value
+    fi
+  done < /etc/lsb-release
+
+
+  if [ $release_version == "24.04" ]; then
+
+  # add AppArmor profile on Ubuntu 24.04
+  profile_content="# This profile allows everything and only exists to give the
 # application a name instead of having the label "unconfined"
 
 abi <abi/4.0>,
@@ -53,7 +62,9 @@ profile ${appId} '/opt/${productName}/${appId}' flags=(unconfined) {
   include if exists <local/${appId}>
 }"
 
-echo "$profile_content" > /etc/apparmor.d/${appId}
+    echo "$profile_content" > /etc/apparmor.d/${appId}
+
+  fi
 
 fi
 `,
