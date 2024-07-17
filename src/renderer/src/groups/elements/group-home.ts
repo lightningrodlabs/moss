@@ -583,8 +583,8 @@ export class GroupHome extends LitElement {
 
   renderFoyer() {
     return html`
-      <div class="foyer-panel">
-        <foyer-stream></foyer-stream>
+      <div class="foyer-panel" style="display: flex; flex: 1;">
+        <foyer-stream style="display: flex; flex: 1;"></foyer-stream>
       </div>
     `;
   }
@@ -593,9 +593,15 @@ export class GroupHome extends LitElement {
     switch (this._selectedTab) {
       case 'home':
         return html`
-          <div style="display:flex;">
-            <div class="home-panel" style="flex:3">${this.renderHomeContent()}</div>
-            <div style="flex:1">${this.renderFoyer()}</div>
+          <div style="display:flex; flex: 1; overflow-y: hidden;">
+            <div class="flex-scrollable-parent" style="flex:3">
+              <div class="flex-scrollable-container">
+                <div class="flex-scrollable-y">
+                  <div class="home-panel">${this.renderHomeContent()}</div>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; flex: 1">${this.renderFoyer()}</div>
           </div>
         `;
       case 'unjoined tools':
