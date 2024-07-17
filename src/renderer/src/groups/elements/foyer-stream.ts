@@ -303,6 +303,7 @@ export class FoyerStream extends LitElement {
           <div style="display:flex; align-items: center"></div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
+        <span style="display: flex; flex: 1;"></span>
         ${this._messages && this.newMessages
           ? html`<div
               tabindex="0"
@@ -371,6 +372,7 @@ export class FoyerStream extends LitElement {
       .person-feed {
         color: white;
         display: flex;
+        flex: 1;
         flex-direction: column;
         width: 100%;
         position: relative;
@@ -387,7 +389,6 @@ export class FoyerStream extends LitElement {
         flex: auto;
         flex-direction: column;
         overflow-y: auto;
-        height: calc(100vh - 360px);
       }
       .msg {
         display: flex;
