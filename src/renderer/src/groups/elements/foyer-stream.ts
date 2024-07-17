@@ -23,6 +23,7 @@ import { HoloHashMap } from '@holochain-open-dev/utils';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { mdiChat, mdiSofa } from '@mdi/js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 @localized()
 @customElement('foyer-stream')
@@ -92,12 +93,12 @@ export class FoyerStream extends LitElement {
   }
 
   convertMessageText = (text: string): string => {
-    let formatted = text.replace(
-      /(https?:\/\/[^\s]+)/g,
-      '<a style="text-decoration: underline;" href="$1">$1</a>',
-    );
-    formatted = formatted.replace(
-      /(we:\/\/[^\s]+)/g,
+    let cleaned = text.replace(/&/g, '&amp;');
+    cleaned = cleaned.replace(/</g, '&lt;');
+    cleaned = cleaned.replace(/>/g, '&gt;');
+    cleaned = cleaned.replace(/https:\/\/theweave\.social\/wal\?weave/g, 'weave');
+    let formatted = cleaned.replace(
+      /([a-z0-9-.]+:\/\/[^\s]+)/g,
       '<a style="text-decoration: underline;" href="$1">$1</a>',
     );
     return formatted;
@@ -221,7 +222,7 @@ export class FoyerStream extends LitElement {
                           ></agent-avatar>
                         `
                       : ''}
-                    ${msgText}
+                    ${unsafeHTML(msgText)}
                     <span
                       title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
                       class="msg-timestamp"
