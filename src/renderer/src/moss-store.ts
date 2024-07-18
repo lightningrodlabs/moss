@@ -130,7 +130,7 @@ export class MossStore {
   /**
    * Number of responses that were received for a given set of search parameters
    */
-  _searchResponses: number = 0;
+  _searchResponses: [string, number] = ['', 0];
 
   _searchResults: Writable<[string, Array<WAL>, SearchStatus]> = writable(['', [], 'complete']);
 
@@ -258,20 +258,29 @@ export class MossStore {
 
   updateSearchParams(filter: string, waitingForNHosts: number) {
     this._searchParams = [filter, waitingForNHosts];
-    this._searchResponses = 0;
+    this._searchResponses = [filter, 0];
   }
 
   updateSearchResults(filter: string, results: WAL[], fromCache: boolean) {
-    if (!fromCache) this._searchResponses += 1;
-    const searchStatus = this._searchResponses === this._searchParams[1] ? 'complete' : 'loading';
+    if (!fromCache && this._searchResponses[0] === filter)
+      this._searchResponses = [filter, this._searchResponses[1] + 1];
+    let searchStatus;
+    // Only update the search status if the filter is the same as the filter in the _searchResponses
+    // otherwise results of earlier queries that arrive late may wrongly overrite the search status
+    // to be still loading
+    if (this._searchResponses[0] === filter) {
+      searchStatus = this._searchResponses[1] === this._searchParams[1] ? 'complete' : 'loading';
+    }
+    console.log('Filter: ', filter);
+    console.log('searchStatus: ', searchStatus);
     this._searchResults.update((store) => {
       if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
-        return [filter, results, searchStatus];
+        return [filter, results, searchStatus ? searchStatus : store[2]];
       } else if (this._searchParams[0] === filter) {
         const deduplicatedResults = Array.from(
           new Set([...store[1], ...results].map((wal) => stringifyWal(wal))),
         ).map((stringifiedHrl) => deStringifyWal(stringifiedHrl));
-        return [filter, deduplicatedResults, searchStatus];
+        return [filter, deduplicatedResults, searchStatus ? searchStatus : store[2]];
       }
       return store;
     });
@@ -979,6 +988,7 @@ export class MossStore {
       promises.push(
         (async () => {
           const cachedResults = this.weCache.searchResults.value(appletHash, filter);
+          // Update with cached results immediately if there are cached results
           if (cachedResults) {
             this.updateSearchResults(filter, cachedResults, true);
           }
