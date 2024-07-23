@@ -97,7 +97,7 @@ jobs:
           # Modify the postinst script of the .deb file
           node ./scripts/extend-deb-postinst.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux.yml" --clobber
-          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.13-${{ steps.version.outputs.APP_VERSION }}_amd64.deb" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.13_${{ steps.version.outputs.APP_VERSION }}_amd64.deb" --clobber
 
       - name: build, sign and upload the app (Windows)
         shell: bash
