@@ -31,6 +31,9 @@ export class ViewFrame extends LitElement {
   @state()
   appletDevPort: number | undefined;
 
+  @state()
+  loading = true;
+
   async firstUpdated() {
     console.log('@view-frame: IS APPLET DEV: ', this.mossStore.isAppletDev);
     if (this.mossStore.isAppletDev) {
@@ -42,15 +45,27 @@ export class ViewFrame extends LitElement {
 
   renderProductionFrame() {
     return html`<iframe
-      frameborder="0"
-      title="TODO"
-      id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-        ? encodeHashToBase64(this.appletHash)
-        : undefined}
-      src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
-      style="flex: 1; display: block; padding: 0; margin: 0;"
-      allow="camera *; microphone *; clipboard-write *;"
-    ></iframe>`;
+        frameborder="0"
+        title="TODO"
+        id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
+          ? encodeHashToBase64(this.appletHash)
+          : undefined}
+        src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
+        style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
+        allow="camera *; microphone *; clipboard-write *;"
+        @load=${() => {
+          this.loading = false;
+        }}
+      ></iframe>
+      <div
+        class="column center-content"
+        style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
+      >
+        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
+        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+          loading...
+        </div>
+      </div>`;
   }
 
   render() {
@@ -65,15 +80,27 @@ export class ViewFrame extends LitElement {
           this.renderView,
         )}#${urlFromAppletHash(this.appletHash)}`;
         return html`<iframe
-          frameborder="0"
-          title="TODO"
-          id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-            ? encodeHashToBase64(this.appletHash)
-            : undefined}
-          src="${iframeSrc}"
-          style="flex: 1; display: block; padding: 0; margin: 0;"
-          allow="camera *; microphone *; clipboard-write *;"
-        ></iframe>`;
+            frameborder="0"
+            title="TODO"
+            id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
+              ? encodeHashToBase64(this.appletHash)
+              : undefined}
+            src="${iframeSrc}"
+            style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
+            allow="camera *; microphone *; clipboard-write *;"
+            @load=${() => {
+              this.loading = false;
+            }}
+          ></iframe>
+          <div
+            class="column center-content"
+            style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
+          >
+            <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
+            <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+              loading...
+            </div>
+          </div> `;
     }
   }
 
