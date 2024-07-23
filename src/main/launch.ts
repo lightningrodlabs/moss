@@ -120,17 +120,15 @@ export async function launch(
               'loading-progress-update',
               `Installing default app ${appName}...`,
             );
-          const networkSeed = defaultAppNetworkSeed();
 
           const distributionInfo: DistributionInfo = {
             type: 'default-app',
           };
-          console.log('networkSeed: ', networkSeed);
           await holochainManager.installWebApp(
             path.join(DEFAULT_APPS_DIRECTORY, fileName),
             appId,
             distributionInfo,
-            networkSeed,
+            runOptions.appstoreNetworkSeed,
           );
           console.log(`Default app ${appName} installed.`);
         } else {
