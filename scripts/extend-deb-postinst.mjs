@@ -56,7 +56,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 profile ${appId} '/opt/${productName}/${appId}' flags=(unconfined) {
-  userns,s
+  userns,
 
   # Site-specific additions and overrides. See local/README for details.
   include if exists <local/${appId}>
