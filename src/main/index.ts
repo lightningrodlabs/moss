@@ -1307,7 +1307,6 @@ app.whenReady().then(async () => {
     handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-    SPLASH_SCREEN_WINDOW = undefined;
     MAIN_WINDOW = createOrShowMainWindow();
     // Send cached deep link to main window after a timeout to make sure the event listener is ready
     if (CACHED_DEEP_LINK) {
@@ -1330,6 +1329,9 @@ app.whenReady().then(async () => {
     MAIN_WINDOW = createOrShowMainWindow();
   } else {
     SPLASH_SCREEN_WINDOW = createSplashscreenWindow();
+    SPLASH_SCREEN_WINDOW.on('closed', () => {
+      SPLASH_SCREEN_WINDOW = undefined;
+    });
 
     // Check for updates
     if (app.isPackaged) {
@@ -1384,13 +1386,8 @@ app.whenReady().then(async () => {
   }
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  // if (process.platform !== 'darwin') {
-  //   app.quit();
-  // }
+  app.quit();
 });
 
 app.on('activate', () => {

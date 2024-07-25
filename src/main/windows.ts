@@ -47,7 +47,6 @@ export const createSplashscreenWindow = (): BrowserWindow => {
     width: 800,
     center: true,
     resizable: false,
-    frame: false,
     show: false,
     backgroundColor: '#331ead',
     icon,

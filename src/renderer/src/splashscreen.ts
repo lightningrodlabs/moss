@@ -228,7 +228,7 @@ export class SplashScreen extends LitElement {
   render() {
     return html`
       <div class="background">
-        ${this.renderContent()} ${this.progressState === '' ? this.renderExitButton() : html``}
+        ${this.renderContent()}
         ${this.profile && this.progressState === ''
           ? html`<span class="bottom-left">profile: ${this.profile}</span>`
           : html``}
