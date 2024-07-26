@@ -9,15 +9,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
-import {
-  mdiAccountLockOpen,
-  mdiAccountMultiple,
-  mdiAccountMultiplePlus,
-  mdiAlert,
-  mdiStoreSearch,
-  mdiTools,
-  mdiUpload,
-} from '@mdi/js';
+import { mdiAlert } from '@mdi/js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/select-group-dialog.js';
