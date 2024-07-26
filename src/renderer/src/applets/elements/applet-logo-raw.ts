@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
 import { hashProperty } from '@holochain-open-dev/elements';
-import { EntryHash } from '@holochain/client';
+import { ActionHashB64, decodeHashFromBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -13,6 +13,17 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
+import { AppletHash } from '@lightningrodlabs/we-applet';
+
+type ToolIdentifier =
+  | {
+      type: 'instance';
+      appletHash: AppletHash;
+    }
+  | {
+      type: 'class';
+      originalToolActionHash: ActionHashB64;
+    };
 
 @customElement('applet-logo-raw')
 export class AppletLogo extends LitElement {
@@ -20,7 +31,7 @@ export class AppletLogo extends LitElement {
   mossStore!: MossStore;
 
   @property(hashProperty('applet-hash'))
-  appletHash!: EntryHash;
+  toolIdentifier!: ToolIdentifier;
 
   @property()
   selected = false;
@@ -31,13 +42,23 @@ export class AppletLogo extends LitElement {
   @property()
   notificationUrgency: 'low' | 'medium' | 'high' | undefined;
 
+  appletLogoReadable(toolIdentifier: ToolIdentifier) {
+    switch (toolIdentifier.type) {
+      case 'instance':
+        return pipe(this.mossStore.appletStores.get(toolIdentifier.appletHash), (appletStore) =>
+          appletStore ? appletStore.logo : completed(undefined),
+        );
+      case 'class':
+        return this.mossStore.toolsLibraryStore.toolLogo.get(
+          decodeHashFromBase64(toolIdentifier.originalToolActionHash),
+        );
+    }
+  }
+
   appletLogo = new StoreSubscriber(
     this,
-    () =>
-      pipe(this.mossStore.appletStores.get(this.appletHash), (appletStore) =>
-        appletStore ? appletStore.logo : completed(undefined),
-      ),
-    () => [this.appletHash],
+    () => this.appletLogoReadable(this.toolIdentifier),
+    () => [this.toolIdentifier],
   );
 
   renderLogo(logo: string | undefined) {

@@ -52,6 +52,7 @@ import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './e
 import {
   appIdFromAppletHash,
   appletHashFromAppId,
+  appletIdFromAppId,
   deStringifyWal,
   findAppForDnaHash,
   initAppClient,
@@ -103,6 +104,10 @@ export class MossStore {
   // here at the MossStore level
   private _dashboardState: Writable<DashboardState> = writable({
     viewType: 'personal',
+    viewState: {
+      type: 'moss',
+      name: 'welcome',
+    },
   });
 
   private _assetViewerState: Writable<AssetViewerState> = writable({
@@ -539,6 +544,8 @@ export class MossStore {
     return groupStores;
   });
 
+  allAppAssetInfos = manualReloadStore(async () => getAllAppAssetsInfos());
+
   installedApps = manualReloadStore(async () => this.adminWebsocket.listApps({}));
 
   runningApps = asyncDerived(this.installedApps, (apps) => apps.filter((app) => isAppRunning(app)));
@@ -553,6 +560,28 @@ export class MossStore {
     apps
       .filter((app) => app.installed_app_id.startsWith('applet#'))
       .map((app) => appletHashFromAppId(app.installed_app_id)),
+  );
+
+  runningAppletClasses = pipe(this.runningApplets, (applets) =>
+    asyncDerived(this.allAppAssetInfos, (assetInfos) => {
+      const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
+      const appletClasses: Record<ActionHashB64, AppletId[]> = {};
+      Object.entries(assetInfos).forEach(([appId, info]) => {
+        if (appId.startsWith('applet#') && info.distributionInfo.type === 'tools-library') {
+          const appletId = appletIdFromAppId(appId);
+          if (runningAppletIds.includes(appletId)) {
+            const classId = info.distributionInfo.info.originalToolActionHash;
+            const otherAppletsOfSameClass = appletClasses[classId];
+            if (otherAppletsOfSameClass) {
+              appletClasses[classId] = [...otherAppletsOfSameClass, appletId];
+            } else {
+              appletClasses[classId] = [appletId];
+            }
+          }
+        }
+      });
+      return appletClasses;
+    }),
   );
 
   runningGroupsApps = asyncDerived(this.runningApps, (apps) =>
@@ -907,6 +936,7 @@ export class MossStore {
     //   }),
     // );
     await this.installedApps.reload();
+    await this.allAppAssetInfos.reload();
   }
 
   isInstalled = new LazyHoloHashMap((appletHash: EntryHash) => {

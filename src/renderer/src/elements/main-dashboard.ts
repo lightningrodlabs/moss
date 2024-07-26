@@ -2,7 +2,13 @@ import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
+import {
+  encodeHashToBase64,
+  DnaHash,
+  decodeHashFromBase64,
+  DnaHashB64,
+  ActionHashB64,
+} from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -44,8 +50,10 @@ import '../layout/views/welcome-view.js';
 import '../groups/elements/entry-title.js';
 import './groups-sidebar.js';
 import './group-applets-sidebar.js';
+import './personal-view-sidebar.js';
 import './join-group-dialog.js';
 import '../layout/views/applet-main.js';
+import '../layout/views/cross-applet-main.js';
 import '../layout/views/tool-library.js';
 import '../layout/views/publishing-view.js';
 import '../layout/views/asset-view.js';
@@ -97,9 +105,20 @@ export type TabInfo = {
   tab: OpenTab;
 };
 
+export type PersonalViewState =
+  | {
+      type: 'moss';
+      name: string;
+    }
+  | {
+      type: 'tool';
+      originalToolActionHash: ActionHashB64;
+    };
+
 export type DashboardState =
   | {
       viewType: 'personal';
+      viewState: PersonalViewState;
     }
   | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
 
@@ -186,6 +205,12 @@ export class MainDashboard extends LitElement {
     () => [this._mossStore],
   );
 
+  _runningAppletClasses = new StoreSubscriber(
+    this,
+    () => this._mossStore.runningAppletClasses,
+    () => [this, this._mossStore],
+  );
+
   // _unlisten: UnlistenFn | undefined;
 
   @provide({ context: openViewsContext })
@@ -270,14 +295,6 @@ export class MainDashboard extends LitElement {
     },
     toggleClipboard: () => this.toggleClipboard(),
   };
-
-  displayApplet(appletHash: AppletHash) {
-    return (
-      this._dashboardState.value.viewType === 'group' &&
-      this._dashboardState.value.appletHash &&
-      this._dashboardState.value.appletHash.toString() === appletHash.toString()
-    );
-  }
 
   openPublishingView() {
     const tabId = 'publishing-view';
@@ -675,6 +692,30 @@ export class MainDashboard extends LitElement {
   //   if (this._unlisten) this._unlisten();
   // }
 
+  displayMossView(name: string) {
+    return (
+      this._dashboardState.value.viewType === 'personal' &&
+      this._dashboardState.value.viewState.type === 'moss' &&
+      this._dashboardState.value.viewState.name === name
+    );
+  }
+
+  displayCrossGroupTool(originalToolActionHash: ActionHashB64) {
+    return (
+      this._dashboardState.value.viewType === 'personal' &&
+      this._dashboardState.value.viewState.type === 'tool' &&
+      this._dashboardState.value.viewState.originalToolActionHash === originalToolActionHash
+    );
+  }
+
+  displayApplet(appletHash: AppletHash) {
+    return (
+      this._dashboardState.value.viewType === 'group' &&
+      this._dashboardState.value.appletHash &&
+      this._dashboardState.value.appletHash.toString() === appletHash.toString()
+    );
+  }
+
   displayGroupContainer(groupHash: DnaHash) {
     return (
       this._dashboardState.value.viewType === 'group' &&
@@ -755,6 +796,31 @@ export class MainDashboard extends LitElement {
     }
   }
 
+  renderToolCrossGroupViews() {
+    switch (this._runningAppletClasses.value.status) {
+      case 'pending':
+        return html`Loading running tool classes...`;
+      case 'error':
+        return html`Failed to get running tool classes: ${this._runningAppletClasses.value.error}`;
+      case 'complete':
+        return repeat(
+          Object.keys(this._runningAppletClasses.value.value),
+          (originalToolActionHash) => originalToolActionHash,
+          (originalToolActionHash) => html`
+            <cross-applet-main
+              .toolBundleHash=${decodeHashFromBase64(originalToolActionHash)}
+              hostColor="#588121"
+              style="flex: 1; ${this.displayCrossGroupTool(originalToolActionHash)
+                ? ''
+                : 'display: none'}"
+            ></cross-applet-main>
+          `,
+        );
+      default:
+        return html`Invalid async status`;
+    }
+  }
+
   renderDashboard() {
     return html`
       ${this.renderAppletMainViews()}
@@ -769,8 +835,10 @@ export class MainDashboard extends LitElement {
                 ? ''
                 : 'display: none'}"
               @group-left=${() => {
-                console.log('GOT GROUP LEFT EVENT');
-                this._mossStore.setDashboardState({ viewType: 'personal' });
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: { type: 'moss', name: 'welcome' },
+                });
               }}
               @disable-group=${async (e: CustomEvent) => {
                 const confirmation = await dialogMessagebox({
@@ -1134,18 +1202,19 @@ export class MainDashboard extends LitElement {
       ></create-group-dialog>
 
       <div class="group-viewer invisible-scrollbars column">
-        <!-- PERSONAL VIEW -->
         <div
           class="row"
           style="flex: 1; ${this._assetViewerState.value.visible
             ? 'max-height: calc(100vh - 124px);'
             : ''}"
         >
+          <!-- PERSONAL VIEW -->
+          ${this.renderToolCrossGroupViews()}
           <welcome-view
             id="welcome-view"
             @click=${(e) => e.stopPropagation()}
             .updateFeed=${this._updateFeed}
-            style="${this._dashboardState.value.viewType === 'personal'
+            style="${this.displayMossView('welcome')
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
               ? 'pointer-events: none; user-select: none;'
@@ -1181,6 +1250,7 @@ export class MainDashboard extends LitElement {
               this.resizeMouseDownHandler(e);
             }}
           ></div>
+
           <div
             id="asset-viewer"
             class="${classMap({
@@ -1242,7 +1312,10 @@ export class MainDashboard extends LitElement {
             placement="bottom"
             tabindex="0"
             @click=${() => {
-              this._mossStore.setDashboardState({ viewType: 'personal' });
+              this._mossStore.setDashboardState({
+                viewType: 'personal',
+                viewState: { type: 'moss', name: 'welcome' },
+              });
               this._mossStore.setAssetViewerState({
                 position: this._assetViewerState.value.position,
                 visible: false,
@@ -1250,7 +1323,10 @@ export class MainDashboard extends LitElement {
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter') {
-                this._mossStore.setDashboardState({ viewType: 'personal' });
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: { type: 'moss', name: 'welcome' },
+                });
                 this._mossStore.setAssetViewerState({
                   position: this._assetViewerState.value.position,
                   visible: false,
@@ -1390,7 +1466,23 @@ export class MainDashboard extends LitElement {
                   ></group-applets-sidebar>
                 </group-context>
               `
-            : html``}
+            : html`
+                <personal-view-sidebar
+                  .selectedToolHash=${this._dashboardState.value.viewState.type === 'tool'
+                    ? this._dashboardState.value.viewState.originalToolActionHash
+                    : undefined}
+                  @tool-selected=${(e) => {
+                    console.log('@tool-selected: ', e);
+                    this._mossStore.setDashboardState({
+                      viewType: 'personal',
+                      viewState: {
+                        type: 'tool',
+                        originalToolActionHash: e.detail.originalToolActionHash,
+                      },
+                    });
+                  }}
+                ></personal-view-sidebar>
+              `}
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
