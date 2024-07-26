@@ -55,7 +55,7 @@ export class GroupAppletsSidebar extends LitElement {
       return html`
         <div
           class="row"
-          style="align-items: center; font-size: 20px; padding-left: 10px; font-weight: 500;"
+          style="align-items: center; font-size: 20px; padding-left: 4px; font-weight: 500;"
         >
           <span style="color: #fff; font-size: 14px; opacity: .5;">
             No applets installed or all applets disabled...
@@ -65,7 +65,7 @@ export class GroupAppletsSidebar extends LitElement {
     }
 
     return html`
-      <div class="row" style="align-items: flex-end; padding-left: 10px;">
+      <div class="row" style="align-items: flex-end; padding-left: 4px;">
         ${Array.from(applets.entries())
           .sort((a1, a2) => a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name))
           .map(

@@ -18,6 +18,9 @@ import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
 import { weStyles } from '../shared-styles.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
+import { PersonalViewState } from './main-dashboard.js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiHome, mdiStoreSearch, mdiUpload } from '@mdi/js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -27,7 +30,7 @@ export class PersonalViewSidebar extends LitElement {
   _mossStore!: MossStore;
 
   @property()
-  selectedToolHash?: ActionHashB64;
+  selectedView?: PersonalViewState;
 
   _appletClasses = new StoreSubscriber(
     this,
@@ -36,15 +39,28 @@ export class PersonalViewSidebar extends LitElement {
   );
 
   renderTools(tools: Record<ActionHashB64, AppletId[]>) {
-    console.log('selectedToolHash: ', this.selectedToolHash);
     return html`${Object.keys(tools).map(
       (actionHash) => html`
         <!-- <sl-tooltip content=""> -->
         <topbar-button
           style="margin-left: -4px; position: relative;"
-          .selected=${this.selectedToolHash && this.selectedToolHash === actionHash}
+          .selected=${this.selectedView &&
+          this.selectedView.type === 'tool' &&
+          this.selectedView.originalToolActionHash === actionHash}
           .tooltipText=${'hello'}
           placement="bottom"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('personal-view-selected', {
+                detail: {
+                  type: 'tool',
+                  originalToolActionHash: actionHash,
+                },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
         >
           <applet-logo-raw
             .toolIdentifier=${{
@@ -53,17 +69,6 @@ export class PersonalViewSidebar extends LitElement {
             }}
             placement="bottom"
             style="margin: 4px; --size: 58px;"
-            @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent('tool-selected', {
-                  detail: {
-                    originalToolActionHash: actionHash,
-                  },
-                  bubbles: false,
-                  composed: true,
-                }),
-              );
-            }}
           >
           </applet-logo-raw>
         </topbar-button>
@@ -71,56 +76,6 @@ export class PersonalViewSidebar extends LitElement {
       `,
     )}`;
   }
-
-  // renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
-  //   if (Array.from(applets.entries()).length === 0) {
-  //     return html`
-  //       <div
-  //         class="row"
-  //         style="align-items: center; font-size: 20px; padding-left: 10px; font-weight: 500;"
-  //       >
-  //         <span style="color: #fff; font-size: 14px; opacity: .5;">
-  //           No applets installed or all applets disabled...
-  //         </span>
-  //       </div>
-  //     `;
-  //   }
-
-  //   return html`
-  //     <div class="row" style="align-items: flex-end; padding-left: 10px;">
-  //       ${Array.from(applets.entries())
-  //         .sort((a1, a2) => a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name))
-  //         .map(
-  //           ([_appletBundleHash, appletStore]) => html`
-  //             <applet-topbar-button
-  //               .appletStore=${appletStore}
-  //               .selected=${this.selectedAppletHash &&
-  //               this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
-  //               .indicated=${this.indicatedAppletHashes.includes(
-  //                 encodeHashToBase64(appletStore.appletHash),
-  //               )}
-  //               .tooltipText=${appletStore.applet.custom_name}
-  //               placement="bottom"
-  //               @click=${() => {
-  //                 this.dispatchEvent(
-  //                   new CustomEvent('applet-selected', {
-  //                     detail: {
-  //                       groupDnaHash: this._groupStore!.groupDnaHash,
-  //                       appletHash: appletStore.appletHash,
-  //                     },
-  //                     bubbles: true,
-  //                     composed: true,
-  //                   }),
-  //                 );
-  //                 appletStore.clearNotificationStatus();
-  //               }}
-  //             >
-  //             </applet-topbar-button>
-  //           `,
-  //         )}
-  //     </div>
-  //   `;
-  // }
 
   renderAppletsLoading() {
     switch (this._appletClasses.value.status) {
@@ -151,9 +106,93 @@ export class PersonalViewSidebar extends LitElement {
     }
   }
 
+  renderMossButtons() {
+    return html`
+      <topbar-button
+        style="margin-left: -4px; position: relative;"
+        .selected=${this.selectedView &&
+        this.selectedView.type === 'moss' &&
+        this.selectedView.name === 'welcome'}
+        .tooltipText=${'Home'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('personal-view-selected', {
+              detail: {
+                type: 'moss',
+                name: 'welcome',
+              },
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
+        </div>
+      </topbar-button>
+
+      <topbar-button
+        style="margin-left: -4px; position: relative;"
+        .selected=${this.selectedView &&
+        this.selectedView.type === 'moss' &&
+        this.selectedView.name === 'tool-library'}
+        .tooltipText=${'Tool Library'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('personal-view-selected', {
+              detail: {
+                type: 'moss',
+                name: 'tool-library',
+              },
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <sl-icon
+            .src=${wrapPathInSvg(mdiStoreSearch)}
+            style="font-size: 40px; margin-left: 3px; margin-top: 3px;"
+          ></sl-icon>
+        </div>
+      </topbar-button>
+
+      <topbar-button
+        style="margin-left: -4px; position: relative;"
+        .selected=${this.selectedView &&
+        this.selectedView.type === 'moss' &&
+        this.selectedView.name === 'publisher-panel'}
+        .tooltipText=${'Publish Tool'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('personal-view-selected', {
+              detail: {
+                type: 'moss',
+                name: 'publisher-panel',
+              },
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <sl-icon .src=${wrapPathInSvg(mdiUpload)} style="font-size: 40px;"></sl-icon>
+        </div>
+      </topbar-button>
+    `;
+  }
+
   render() {
     return html`
-      <div class="row" style="flex: 1; align-items: center;">${this.renderAppletsLoading()}</div>
+      <div class="row" style="flex: 1; align-items: center;">
+        ${this.renderMossButtons()} ${this.renderAppletsLoading()}
+      </div>
     `;
   }
 
@@ -162,6 +201,17 @@ export class PersonalViewSidebar extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .moss-item-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background: #0b2f00;
+        color: #dbe755;
+        width: 58px;
+        height: 58px;
       }
     `,
   ];

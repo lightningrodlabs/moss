@@ -264,7 +264,7 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
         </div>`;
       case 'complete':
         return html`
-          <div class="row" style="display: flex; flex: 1;">
+          <div class="row container" style="display: flex; flex: 1;">
             <div class="sidebar">${this.renderSidebar()}</div>
             <div class="flex-scrollable-parent" style="flex: 1;">
               <div class="flex-scrollable-container" style="display: flex; flex: 1;">
@@ -285,6 +285,15 @@ ${encodeHashToBase64(this.mossStore.toolsLibraryStore.toolsLibraryClient.client.
       :host {
         display: flex;
         flex: 1;
+        background-color: #588121;
+        overflow: auto;
+        color: var(--sl-color-secondary-950);
+        padding: 8px;
+        border-radius: 5px 0 0 0;
+      }
+
+      .container {
+        background: var(--sl-color-tertiary-0);
       }
 
       .sidebar {

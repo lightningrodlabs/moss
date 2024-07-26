@@ -296,60 +296,6 @@ export class MainDashboard extends LitElement {
     toggleClipboard: () => this.toggleClipboard(),
   };
 
-  openPublishingView() {
-    const tabId = 'publishing-view';
-    const tabInfo: TabInfo = {
-      id: tabId,
-      tab: {
-        type: 'html',
-        title: 'Publisher Panel',
-        template: html` <publishing-view></publishing-view> `,
-      },
-    };
-    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
-    this.openTab(tabInfo);
-  }
-
-  openAppStore() {
-    const tabId = 'app-library';
-    const tabInfo: TabInfo = {
-      id: tabId,
-      tab: {
-        type: 'html',
-        title: 'Tool Library',
-        template: html`
-          <tool-library
-            style="display: flex; flex: 1;"
-            @applet-installed=${(e: {
-              detail: {
-                appletEntryHash: AppletHash;
-                groupDnaHash: DnaHash;
-              };
-            }) => {
-              if (
-                !this._openApplets
-                  .map((appletHash) => appletHash.toString())
-                  .includes(e.detail.appletEntryHash.toString())
-              ) {
-                this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
-              }
-              this._mossStore.setDashboardState({
-                viewType: 'group',
-                groupHash: e.detail.groupDnaHash,
-                appletHash: e.detail.appletEntryHash,
-              });
-              if (this._assetViewerState.value.position === 'front') {
-                this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-              }
-            }}
-          ></tool-library>
-        `,
-      },
-    };
-    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
-    this.openTab(tabInfo);
-  }
-
   openZomeCallPanel() {
     const tabId = 'debugging-panel';
     const tabInfo: TabInfo = {
@@ -821,6 +767,63 @@ export class MainDashboard extends LitElement {
     }
   }
 
+  renderMossViews() {
+    return html`
+      <welcome-view
+        id="welcome-view"
+        @click=${(e) => e.stopPropagation()}
+        .updateFeed=${this._updateFeed}
+        style="${this.displayMossView('welcome')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''}"
+        @request-create-group=${() => this.createGroupDialog.open()}
+        @request-join-group=${(_e) => this.joinGroupDialog.open()}
+        @applet-selected=${(e: CustomEvent) => {
+          this.openViews.openAppletMain(e.detail.appletHash);
+          if (this._assetViewerState.value.position === 'front') {
+            this._mossStore.setAssetViewerState({ position: 'front', visible: false });
+          }
+        }}
+      ></welcome-view>
+
+      <tool-library
+        style="${this.displayMossView('tool-library')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'} position: relative;"
+        @applet-installed=${(e: {
+          detail: {
+            appletEntryHash: AppletHash;
+            groupDnaHash: DnaHash;
+          };
+        }) => {
+          if (
+            !this._openApplets
+              .map((appletHash) => appletHash.toString())
+              .includes(e.detail.appletEntryHash.toString())
+          ) {
+            this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+          }
+          this._mossStore.setDashboardState({
+            viewType: 'group',
+            groupHash: e.detail.groupDnaHash,
+            appletHash: e.detail.appletEntryHash,
+          });
+          if (this._assetViewerState.value.position === 'front') {
+            this._mossStore.setAssetViewerState({ position: 'front', visible: false });
+          }
+        }}
+      ></tool-library>
+
+      <publishing-view
+        style="${this.displayMossView('publisher-panel')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}"
+      ></publishing-view>
+    `;
+  }
+
   renderDashboard() {
     return html`
       ${this.renderAppletMainViews()}
@@ -1209,27 +1212,7 @@ export class MainDashboard extends LitElement {
             : ''}"
         >
           <!-- PERSONAL VIEW -->
-          ${this.renderToolCrossGroupViews()}
-          <welcome-view
-            id="welcome-view"
-            @click=${(e) => e.stopPropagation()}
-            .updateFeed=${this._updateFeed}
-            style="${this.displayMossView('welcome')
-              ? 'display: flex; flex: 1;'
-              : 'display: none;'}${this._drawerResizing
-              ? 'pointer-events: none; user-select: none;'
-              : ''}"
-            @open-appstore=${() => this.openAppStore()}
-            @open-publishing-view=${() => this.openPublishingView()}
-            @request-create-group=${() => this.createGroupDialog.open()}
-            @request-join-group=${(_e) => this.joinGroupDialog.open()}
-            @applet-selected=${(e: CustomEvent) => {
-              this.openViews.openAppletMain(e.detail.appletHash);
-              if (this._assetViewerState.value.position === 'front') {
-                this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-              }
-            }}
-          ></welcome-view>
+          ${this.renderToolCrossGroupViews()} ${this.renderMossViews()}
 
           <!-- GROUP VIEW -->
           <div
@@ -1468,17 +1451,13 @@ export class MainDashboard extends LitElement {
               `
             : html`
                 <personal-view-sidebar
-                  .selectedToolHash=${this._dashboardState.value.viewState.type === 'tool'
-                    ? this._dashboardState.value.viewState.originalToolActionHash
-                    : undefined}
-                  @tool-selected=${(e) => {
+                  style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px; "
+                  .selectedView=${this._dashboardState.value.viewState}
+                  @personal-view-selected=${(e) => {
                     console.log('@tool-selected: ', e);
                     this._mossStore.setDashboardState({
                       viewType: 'personal',
-                      viewState: {
-                        type: 'tool',
-                        originalToolActionHash: e.detail.originalToolActionHash,
-                      },
+                      viewState: e.detail,
                     });
                   }}
                 ></personal-view-sidebar>
