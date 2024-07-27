@@ -185,7 +185,7 @@ export class MossStore {
       await this.toolsLibraryStore.toolsLibraryClient.getAllToolEntites();
     console.log('@checkForUiUpdates:  allLatestToolEntities: ', allLatestToolEntities);
 
-    Object.values(appAssetsInfos).forEach((appAssetInfo) => {
+    Object.values(appAssetsInfos).forEach(([appAssetInfo, _weaveConfig]) => {
       if (
         appAssetInfo.distributionInfo.type === 'tools-library' &&
         appAssetInfo.type === 'webhapp' &&
@@ -562,12 +562,20 @@ export class MossStore {
       .map((app) => appletHashFromAppId(app.installed_app_id)),
   );
 
+  /**
+   * This only returns applets whose UI supports a cross group view according
+   * to its weave.config.json
+   */
   runningAppletClasses = pipe(this.runningApplets, (applets) =>
     asyncDerived(this.allAppAssetInfos, (assetInfos) => {
       const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
       const appletClasses: Record<ActionHashB64, AppletId[]> = {};
-      Object.entries(assetInfos).forEach(([appId, info]) => {
-        if (appId.startsWith('applet#') && info.distributionInfo.type === 'tools-library') {
+      Object.entries(assetInfos).forEach(([appId, [info, weaveConfig]]) => {
+        if (
+          appId.startsWith('applet#') &&
+          info.distributionInfo.type === 'tools-library' &&
+          weaveConfig?.crossGroupView
+        ) {
           const appletId = appletIdFromAppId(appId);
           if (runningAppletIds.includes(appletId)) {
             const classId = info.distributionInfo.info.originalToolActionHash;

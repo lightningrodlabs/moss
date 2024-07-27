@@ -51,3 +51,7 @@ export interface ConductorInfo {
   moss_version: string;
   weave_protocol_version: string;
 }
+
+export type ToolWeaveConfig = {
+  crossGroupView: boolean;
+};
