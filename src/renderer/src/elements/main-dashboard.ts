@@ -1414,6 +1414,12 @@ export class MainDashboard extends LitElement {
                     this._selectedTab.tab.type === 'wal'
                       ? this._selectedTab.tab.appletIds
                       : []}
+                    @group-home-selected=${() => {
+                      this._mossStore.setDashboardState({
+                        viewType: 'group',
+                        groupHash: (this._dashboardState.value as any).groupHash,
+                      });
+                    }}
                     @applet-selected=${(e: {
                       detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
                     }) => {
