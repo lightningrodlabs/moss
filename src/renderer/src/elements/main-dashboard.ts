@@ -1585,6 +1585,10 @@ export class MainDashboard extends LitElement {
           </sl-tooltip>
         </div>
       </div>
+
+      ${this.hoverPersonalView && this._dashboardState.value.viewType === 'group'
+        ? html`<div class="personal-view-indicator">${msg('switch to personal view')}</div>`
+        : html``}
     `;
   }
 
@@ -1850,6 +1854,16 @@ export class MainDashboard extends LitElement {
 
         .personal-top-bar {
           background: #689d19;
+        }
+
+        .personal-view-indicator {
+          position: absolute;
+          top: 74px;
+          left: 74px;
+          font-size: 18px;
+          background: #689d19;
+          padding: 5px;
+          border-radius: 0 0 10px 10px;
         }
 
         .slide-in-right {
