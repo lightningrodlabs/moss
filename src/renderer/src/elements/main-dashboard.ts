@@ -1446,7 +1446,6 @@ export class MainDashboard extends LitElement {
           this.hoverTopBar = true;
         }}
         @mouseleave=${() => {
-          console.log('mouseout topbar');
           this.hoverTopBar = false;
           setTimeout(() => {
             if (!this.hoverMossButton) {
