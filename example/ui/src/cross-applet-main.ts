@@ -34,7 +34,7 @@ export class CrossAppletMain extends LitElement {
   );
 
   render() {
-    return html``;
+    return html`Hello from cross-applet-main`;
   }
 
   static styles = [

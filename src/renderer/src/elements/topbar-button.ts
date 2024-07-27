@@ -31,6 +31,9 @@ export class TopBarButton extends LitElement {
   @property()
   indicated = false;
 
+  @property()
+  invertColors = false;
+
   @query('#tooltip')
   _tooltip!: SlTooltip;
 
@@ -46,7 +49,8 @@ export class TopBarButton extends LitElement {
       .content=${this.tooltipText}
     >
       <div
-        class="icon-container column ${this.selected ? 'selected' : ''}
+        class="icon-container column ${this.selected ? 'selected' : ''} ${this.invertColors
+          ? 'inverted'
           : ''}"
         @click=${this.handleClick}
       >
@@ -87,9 +91,16 @@ export class TopBarButton extends LitElement {
         .icon-container:hover {
           background-color: var(--hover-color, var(--sl-color-primary-900));
         }
-        .selected,
+        .selected:not(.inverted),
         .icon-container:hover {
           background: linear-gradient(180deg, #dbe755 0%, #588121 100%);
+        }
+
+        .inverted:hover {
+          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+        }
+        .selected {
+          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
         }
       `,
     ];
