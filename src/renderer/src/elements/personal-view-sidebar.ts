@@ -13,6 +13,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '../groups/elements/group-context.js';
 import '../elements/topbar-button.js';
 import './create-group-dialog.js';
+import './tool-personal-bar-button.js';
 
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
@@ -42,13 +43,11 @@ export class PersonalViewSidebar extends LitElement {
     return html`${Object.keys(tools).map(
       (actionHash) => html`
         <!-- <sl-tooltip content=""> -->
-        <topbar-button
-          style="margin-left: -4px; position: relative;"
+        <tool-personal-bar-button
+          .originalToolActionHash=${actionHash}
           .selected=${this.selectedView &&
           this.selectedView.type === 'tool' &&
           this.selectedView.originalToolActionHash === actionHash}
-          .tooltipText=${'hello'}
-          placement="bottom"
           @click=${() => {
             this.dispatchEvent(
               new CustomEvent('personal-view-selected', {
@@ -61,18 +60,7 @@ export class PersonalViewSidebar extends LitElement {
               }),
             );
           }}
-        >
-          <applet-logo-raw
-            .toolIdentifier=${{
-              type: 'class',
-              originalToolActionHash: actionHash,
-            }}
-            placement="bottom"
-            style="margin: 4px; --size: 58px;"
-          >
-          </applet-logo-raw>
-        </topbar-button>
-        <!-- </sl-tooltip> -->
+        ></tool-personal-bar-button>
       `,
     )}`;
   }
