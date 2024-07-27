@@ -1426,11 +1426,23 @@ export class MainDashboard extends LitElement {
           : 'personal-top-bar'}"
         style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
       >
-        <div class="row invisible-scrollbars" style="overflow-x: auto; padding-right: 40px;">
+        <div
+          id="top-bar-scroller"
+          class="row invisible-scrollbars"
+          style="overflow-x: auto; padding-right: 40px;"
+          @wheel=${(e) => {
+            const el = this.shadowRoot!.getElementById('top-bar-scroller');
+            if (el)
+              el.scrollBy({
+                left: e.deltaY < 0 ? -30 : 30,
+              });
+          }}
+        >
           ${this._dashboardState.value.viewType === 'group'
             ? html`
                 <group-context .groupDnaHash=${this._dashboardState.value.groupHash}>
                   <group-applets-sidebar
+                    id="group-applets-sidebar"
                     style="margin-left: 12px; flex: 1; overflow-x: sroll; ${this.hoverPersonalView
                       ? 'display: none'
                       : ''}"
