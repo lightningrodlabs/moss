@@ -305,7 +305,8 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #588121;
+        /* background-color: #588121; */
+        background-color: #224b21;
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }

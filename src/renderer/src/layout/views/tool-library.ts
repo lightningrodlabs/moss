@@ -232,7 +232,7 @@ export class ToolLibrary extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #588121;
+        background-color: #224b21;
         overflow: auto;
         color: var(--sl-color-secondary-950);
         padding: 8px;

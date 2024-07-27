@@ -43,6 +43,7 @@ export class PersonalViewSidebar extends LitElement {
   render() {
     return html`
       <topbar-button
+        .invertColors=${true}
         style="margin-left: -4px; position: relative;"
         .selected=${this.selected}
         .tooltipText=${this.toolBundle.value.status === 'complete'

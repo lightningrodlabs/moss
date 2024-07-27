@@ -181,6 +181,9 @@ export class MainDashboard extends LitElement {
   @state()
   _updateFeed: Array<UpdateFeedMessage> = [];
 
+  @state()
+  hoverPersonalView = false;
+
   _dashboardState = new StoreSubscriber(
     this,
     () => this._mossStore.dashboardState(),
@@ -755,10 +758,12 @@ export class MainDashboard extends LitElement {
           (originalToolActionHash) => html`
             <cross-applet-main
               .toolBundleHash=${decodeHashFromBase64(originalToolActionHash)}
-              hostColor="#588121"
+              hostColor="#224b21"
               style="flex: 1; ${this.displayCrossGroupTool(originalToolActionHash)
                 ? ''
-                : 'display: none'}"
+                : 'display: none;'}
+                ${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}
+                overflow-x: auto;"
             ></cross-applet-main>
           `,
         );
@@ -777,7 +782,7 @@ export class MainDashboard extends LitElement {
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
-          : ''}"
+          : ''} overflow-x: hidden;"
         @request-create-group=${() => this.createGroupDialog.open()}
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
         @applet-selected=${(e: CustomEvent) => {
@@ -791,7 +796,9 @@ export class MainDashboard extends LitElement {
       <tool-library
         style="${this.displayMossView('tool-library')
           ? 'display: flex; flex: 1;'
-          : 'display: none;'} position: relative;"
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} position: relative; overflow-x: auto;"
         @applet-installed=${(e: {
           detail: {
             appletEntryHash: AppletHash;
@@ -819,7 +826,9 @@ export class MainDashboard extends LitElement {
       <publishing-view
         style="${this.displayMossView('publisher-panel')
           ? 'display: flex; flex: 1;'
-          : 'display: none;'}"
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: auto;"
       ></publishing-view>
     `;
   }
@@ -1204,7 +1213,12 @@ export class MainDashboard extends LitElement {
         }}
       ></create-group-dialog>
 
-      <div class="group-viewer invisible-scrollbars column">
+      <div
+        class="group-viewer invisible-scrollbars column ${this._dashboardState.value.viewType ===
+        'group'
+          ? ''
+          : 'personal-view'}"
+      >
         <div
           class="row"
           style="flex: 1; ${this._assetViewerState.value.visible
@@ -1221,7 +1235,7 @@ export class MainDashboard extends LitElement {
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
               ? 'pointer-events: none; user-select: none;'
-              : ''}"
+              : ''} overflow-x: auto;"
           >
             ${this.renderDashboard()}
           </div>
@@ -1287,6 +1301,12 @@ export class MainDashboard extends LitElement {
           class="column top-left-corner ${this._dashboardState.value.viewType === 'personal'
             ? 'selected'
             : ''}"
+          @mouseover=${() => {
+            this.hoverPersonalView = true;
+          }}
+          @mouseout=${() => {
+            this.hoverPersonalView = false;
+          }}
         >
           <button
             class="home-button"
@@ -1400,7 +1420,10 @@ export class MainDashboard extends LitElement {
 
       <!-- TOP BAR -->
       <div
-        class="top-bar row"
+        class="top-bar row ${this._dashboardState.value.viewType === 'group' &&
+        !this.hoverPersonalView
+          ? ''
+          : 'personal-top-bar'}"
         style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
       >
         <div class="row invisible-scrollbars" style="overflow-x: auto; padding-right: 40px;">
@@ -1408,6 +1431,9 @@ export class MainDashboard extends LitElement {
             ? html`
                 <group-context .groupDnaHash=${this._dashboardState.value.groupHash}>
                   <group-applets-sidebar
+                    style="margin-left: 12px; flex: 1; overflow-x: sroll; ${this.hoverPersonalView
+                      ? 'display: none'
+                      : ''}"
                     .selectedAppletHash=${this._dashboardState.value.appletHash}
                     .indicatedAppletHashes=${this._assetViewerState.value.visible &&
                     this._selectedTab &&
@@ -1451,23 +1477,26 @@ export class MainDashboard extends LitElement {
                         appletIframe.src += '';
                       }
                     }}
-                    style="margin-left: 12px; flex: 1; overflow-x: sroll;"
                   ></group-applets-sidebar>
                 </group-context>
               `
-            : html`
-                <personal-view-sidebar
-                  style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px; "
-                  .selectedView=${this._dashboardState.value.viewState}
-                  @personal-view-selected=${(e) => {
-                    console.log('@tool-selected: ', e);
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: e.detail,
-                    });
-                  }}
-                ></personal-view-sidebar>
-              `}
+            : html``}
+          <personal-view-sidebar
+            style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px; ${this
+              ._dashboardState.value.viewType === 'personal' || this.hoverPersonalView
+              ? ''
+              : 'display: none'}"
+            .selectedView=${this._dashboardState.value.viewType === 'personal'
+              ? this._dashboardState.value.viewState
+              : undefined}
+            @personal-view-selected=${(e) => {
+              console.log('@tool-selected: ', e);
+              this._mossStore.setDashboardState({
+                viewType: 'personal',
+                viewState: e.detail,
+              });
+            }}
+          ></personal-view-sidebar>
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
@@ -1598,14 +1627,16 @@ export class MainDashboard extends LitElement {
         .top-left-corner:hover {
           border-radius: 20px 0 0 20px;
           /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
+          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
           cursor: pointer;
         }
 
         .selected {
           border-radius: 20px 0 0 20px;
           /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%);
+          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
+          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
         }
 
         .hover-browser {
@@ -1660,6 +1691,10 @@ export class MainDashboard extends LitElement {
           right: 0;
           padding-left: 8px;
           background-color: #224b21;
+        }
+
+        .personal-view {
+          background-color: #689d19;
         }
 
         #group-view-area {
@@ -1800,6 +1835,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-bar {
+          position: relative;
           background: #224b21;
           min-height: var(--sidebar-width);
           align-items: center;
@@ -1810,6 +1846,10 @@ export class MainDashboard extends LitElement {
 
         .top-bar::-webkit-scrollbar {
           display: none;
+        }
+
+        .personal-top-bar {
+          background: #689d19;
         }
 
         .slide-in-right {

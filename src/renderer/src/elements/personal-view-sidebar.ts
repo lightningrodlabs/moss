@@ -97,6 +97,7 @@ export class PersonalViewSidebar extends LitElement {
   renderMossButtons() {
     return html`
       <topbar-button
+        .invertColors=${true}
         style="margin-left: -4px; position: relative;"
         .selected=${this.selectedView &&
         this.selectedView.type === 'moss' &&
@@ -122,6 +123,7 @@ export class PersonalViewSidebar extends LitElement {
       </topbar-button>
 
       <topbar-button
+        .invertColors=${true}
         style="margin-left: -4px; position: relative;"
         .selected=${this.selectedView &&
         this.selectedView.type === 'moss' &&
@@ -150,6 +152,7 @@ export class PersonalViewSidebar extends LitElement {
       </topbar-button>
 
       <topbar-button
+        .invertColors=${true}
         style="margin-left: -4px; position: relative;"
         .selected=${this.selectedView &&
         this.selectedView.type === 'moss' &&
@@ -196,8 +199,9 @@ export class PersonalViewSidebar extends LitElement {
         justify-content: center;
         align-items: center;
         border-radius: 50%;
-        background: #0b2f00;
-        color: #dbe755;
+        /* color: #0b2f00; */
+        color: #173917;
+        background: #dbe755;
         width: 58px;
         height: 58px;
       }
