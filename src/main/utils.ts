@@ -19,7 +19,7 @@ export const isLinux = process.platform === 'linux';
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application
   browserWindow.webContents.on('will-frame-navigate', (e) => {
-    console.log('GOT WILL-FRAME-NAVIGATE EVENT: ', e);
+    // console.log('GOT WILL-FRAME-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
@@ -40,7 +40,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   });
   // instead of the webview
   browserWindow.webContents.on('will-navigate', (e) => {
-    console.log('GOT WILL-NAVIGATE EVENT: ', e);
+    // console.log('GOT WILL-NAVIGATE EVENT: ', e);
     if (e.url.startsWith('http://localhost:')) {
       // ignore vite routing in dev mode
       return;
@@ -63,7 +63,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // Links with target=_blank should open in the system default browser and
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
-    console.log('GOT NEW WINDOW EVENT: ', details);
+    // console.log('GOT NEW WINDOW EVENT: ', details);
     if (details.url.startsWith('weave-0.13://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
