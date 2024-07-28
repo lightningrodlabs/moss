@@ -174,6 +174,7 @@ export class GroupAppletsSidebar extends LitElement {
         color: #dbe755;
         width: 58px;
         height: 58px;
+        box-shadow: 1px 2px 10px 0px #102520ab;
       }
     `,
   ];
