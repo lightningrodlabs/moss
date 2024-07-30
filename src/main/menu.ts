@@ -43,15 +43,8 @@ export const mossMenu = (mossFileSystem: WeFileSystem) => {
   };
 
   const applicationMenu: Electron.MenuItemConstructorOptions = {
-    label: 'Application',
+    label: 'Moss',
     submenu: [
-      {
-        label: 'Quit',
-        type: 'normal',
-        click() {
-          app.quit();
-        },
-      },
       {
         label: 'Restart',
         click() {
@@ -65,6 +58,13 @@ export const mossMenu = (mossFileSystem: WeFileSystem) => {
             options.execPath = process.env.APPIMAGE;
           }
           app.relaunch(options);
+          app.quit();
+        },
+      },
+      {
+        label: 'Quit',
+        type: 'normal',
+        click() {
           app.quit();
         },
       },

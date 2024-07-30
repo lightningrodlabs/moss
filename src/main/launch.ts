@@ -13,7 +13,6 @@ import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
-import { defaultAppNetworkSeed } from './utils';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
