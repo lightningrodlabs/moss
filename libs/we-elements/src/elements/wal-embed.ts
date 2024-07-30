@@ -16,7 +16,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { appletOrigin, urlFromAppletHash } from '../utils';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash } from '@holochain/client';
-import { mdiClose, mdiOpenInNew } from '@mdi/js';
+import { mdiArrowCollapse, mdiArrowExpand, mdiClose, mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
 
@@ -43,6 +43,12 @@ export class WalEmbed extends LitElement {
 
   @property({ type: Boolean })
   closable = false;
+
+  @property({ type: Boolean })
+  collapsable = true;
+
+  @property({ type: Boolean })
+  collapsed = false;
 
   @state()
   assetStatus: AssetStatus = { type: 'loading' };
@@ -100,6 +106,10 @@ export class WalEmbed extends LitElement {
         detail: this.wal,
       }),
     );
+  }
+
+  toggleCollapse() {
+    this.collapsed = !this.collapsed;
   }
 
   resizeIFrameToFitContent() {
@@ -203,6 +213,27 @@ export class WalEmbed extends LitElement {
                 )}
               </div>`
             : html``}
+          ${this.collapsable
+            ? html`
+                <sl-tooltip .content=${msg(this.collapsed ? 'Expand' : 'Collapse')}>
+                  <div
+                    class="column center-content open-btn"
+                    tabindex="0"
+                    @click=${async () => await this.toggleCollapse()}
+                    @keypress=${async (e: KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        await this.toggleCollapse();
+                      }
+                    }}
+                  >
+                    <sl-icon
+                      .src=${wrapPathInSvg(this.collapsed ? mdiArrowExpand : mdiArrowCollapse)}
+                      style="font-size: 24px;"
+                    ></sl-icon>
+                  </div>
+                </sl-tooltip>
+              `
+            : ''}
           <sl-tooltip .content=${msg('Open in sidebar')}>
             <div
               class="column center-content open-btn"
@@ -236,7 +267,7 @@ export class WalEmbed extends LitElement {
               `
             : html``}
         </div>
-        ${this.renderContent()}
+        ${this.collapsed ? '' : this.renderContent()}
       </div>
     `;
   }
