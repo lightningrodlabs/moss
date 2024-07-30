@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import semver from 'semver';
 import { ActionHashB64, DnaHashB64, EntryHashB64, InstalledAppId } from '@holochain/client';
+import { ToolUserPreferences } from './sharedTypes';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -81,6 +82,11 @@ export class WeFileSystem {
   public conductorDir: string;
   public keystoreDir: string;
   public appsDir: string;
+  /**
+   * This is the directory where information about Tools (i.e. not instances
+   * but Tool as the class) is stored
+   */
+  public toolsDir: string;
   public happsDir: string;
   public uisDir: string;
   public iconsDir: string;
@@ -93,6 +99,7 @@ export class WeFileSystem {
     this.conductorDir = path.join(appDataDir, 'conductor');
     this.keystoreDir = path.join(appDataDir, 'keystore');
     this.appsDir = path.join(appDataDir, 'apps');
+    this.toolsDir = path.join(appDataDir, 'tools');
     this.happsDir = path.join(appDataDir, 'happs');
     this.uisDir = path.join(appDataDir, 'uis');
     this.iconsDir = path.join(appDataDir, 'icons');
@@ -100,6 +107,7 @@ export class WeFileSystem {
     createDirIfNotExists(this.conductorDir);
     createDirIfNotExists(this.keystoreDir);
     createDirIfNotExists(this.appsDir);
+    createDirIfNotExists(this.toolsDir);
     createDirIfNotExists(this.happsDir);
     createDirIfNotExists(this.uisDir);
     createDirIfNotExists(this.iconsDir);
@@ -167,6 +175,58 @@ export class WeFileSystem {
     return undefined;
   }
 
+  /**
+   * Directory of an app (e.g. a Tool) where meta data about it is stored,
+   * e.g. user preferences
+   *
+   * @param appId
+   * @returns
+   */
+  appMetaDataDir(appId: string) {
+    return path.join(this.appsDir, appId);
+  }
+
+  /**
+   * Directory for data related to a Tool (not the instance but the class)
+   *
+   * Initially, the toolId will be the originalToolActionHash from the tool-library
+   *
+   * @param toolId Identifier of a Tool (not the instance but the class)
+   * @returns
+   */
+  toolDir(toolId: string) {
+    return path.join(this.toolsDir, toolId);
+  }
+
+  toolUserPreferencesPath(toolId: string) {
+    return path.join(this.toolDir(toolId), 'preferences.json');
+  }
+
+  toolUserPreferences(toolId: string): ToolUserPreferences | undefined {
+    const filePath = this.toolUserPreferencesPath(toolId);
+    let userPreferencesJson: string | undefined;
+    try {
+      userPreferencesJson = fs.readFileSync(filePath, 'utf-8');
+    } catch (e) {
+      // console.warn(`Failed to read user preferences at path ${filePath}: ${e}`);
+      return undefined;
+    }
+    try {
+      const userPreferences: ToolUserPreferences = JSON.parse(userPreferencesJson);
+      return userPreferences;
+    } catch (e) {
+      console.warn(
+        `Failed to parse user preferences: ${e}.\nWill try to remove corrupted user preferences.`,
+      );
+      try {
+        fs.rmSync(filePath);
+      } catch (e) {
+        console.warn(`Failed to remove corrupted user preferences: ${e}`);
+      }
+    }
+    return undefined;
+  }
+
   keystoreInitialized = () => {
     return fs.existsSync(path.join(this.keystoreDir, 'lair-keystore-config.yaml'));
   };
@@ -218,7 +278,7 @@ export class WeFileSystem {
     const filePath = path.join(this.appsDir, `${installedAppId}.json`);
     let appAssetsInfoJson: string | undefined;
     try {
-      appAssetsInfoJson = fs.readFileSync(filePath, 'utf8');
+      appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
     } catch (e) {
       throw new Error(`Failed to read app assets info json file at path ${filePath}: ${e}`);
     }
@@ -227,6 +287,62 @@ export class WeFileSystem {
       return appAssetsInfo;
     } catch (e) {
       throw new Error(`Failed to parse app assets info: ${e}`);
+    }
+  }
+
+  grantCameraAccess(toolId: string) {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.cameraAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        cameraAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  grantMicrophoneAccess(toolId: string) {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.microphoneAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        microphoneAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  grantFullMediaAccess(toolId: string) {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.fullMediaAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        microphoneAccessGranted: true,
+        cameraAccessGranted: true,
+        fullMediaAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
     }
   }
 }

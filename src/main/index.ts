@@ -502,6 +502,8 @@ app.whenReady().then(async () => {
         const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
         const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
 
+        console.log('@permissionRequestHandler: details.mediaTypes: ', details.mediaTypes);
+
         let requestingWindow: BrowserWindow | undefined;
         if (MAIN_WINDOW && webContents.id === MAIN_WINDOW.webContents.id) {
           requestingWindow = MAIN_WINDOW;
@@ -516,6 +518,22 @@ app.whenReady().then(async () => {
 
         if (!requestingWindow)
           throw Error('The requesting window is not allowed to request media access.');
+
+        // If it's coming from a Tool, figure out the toolId (originalToolActionHash)
+        let toolId: string | undefined;
+        if (details.requestingUrl.startsWith('applet://')) {
+          const appletAppId = `applet#${details.requestingUrl.slice(9).split('/')[0]}`;
+          console.log('appletAppId: ', appletAppId);
+          try {
+            const assetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appletAppId);
+            console.log('assetInfo: ', assetInfo);
+            if (assetInfo.distributionInfo.type === 'tools-library') {
+              toolId = assetInfo.distributionInfo.info.originalToolActionHash;
+            }
+          } catch (e) {
+            console.warn('Failed to read assetInfo during permission request.');
+          }
+        }
 
         // On macOS, OS level permission for camera/microhone access needs to be given
         if (process.platform === 'darwin') {
@@ -563,6 +581,38 @@ app.whenReady().then(async () => {
           }
         }
 
+        // Check existing settings and only show dialog if necessary
+        if (toolId) {
+          const toolPreferences = WE_FILE_SYSTEM.toolUserPreferences(toolId);
+          if (toolPreferences) {
+            // If full media access is already granted, allow permission and return
+            if (toolPreferences.fullMediaAccessGranted) {
+              callback(true);
+              return;
+            } else {
+              if (!unknownRequested) {
+                if (
+                  audioRequested &&
+                  videoRequested &&
+                  toolPreferences.microphoneAccessGranted &&
+                  toolPreferences.cameraAccessGranted
+                ) {
+                  callback(true);
+                  return;
+                }
+                if (audioRequested && toolPreferences.microphoneAccessGranted) {
+                  callback(true);
+                  return;
+                }
+                if (videoRequested && toolPreferences.cameraAccessGranted) {
+                  callback(true);
+                  return;
+                }
+              }
+            }
+          }
+        }
+
         let messageContent = `A Tool wants to access the following:${
           details.mediaTypes?.includes('video') ? '\n* camera' : ''
         }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
@@ -570,15 +620,28 @@ app.whenReady().then(async () => {
           messageContent =
             'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
         }
+
         const response = await dialog.showMessageBox(requestingWindow, {
           type: 'question',
           buttons: ['Deny', 'Allow'],
           defaultId: 0,
           cancelId: 0,
           message: messageContent,
+          checkboxLabel: toolId ? 'Remember my decision for this Tool' : undefined,
         });
         if (response.response === 1) {
           callback(true);
+          if (toolId && response.checkboxChecked) {
+            if (videoRequested) {
+              WE_FILE_SYSTEM.grantCameraAccess(toolId);
+            }
+            if (audioRequested) {
+              WE_FILE_SYSTEM.grantMicrophoneAccess(toolId);
+            }
+            if (unknownRequested) {
+              WE_FILE_SYSTEM.grantFullMediaAccess(toolId);
+            }
+          }
           return;
         }
       }
@@ -866,7 +929,7 @@ app.whenReady().then(async () => {
                 );
                 toolWeaveConfig = JSON.parse(weaveConfigString);
               } catch (e) {
-                console.error('Failed to get weaveConfig: ', e);
+                // console.error('Failed to get weaveConfig: ', e);
                 // invalid or inexistent weave config - ignore
               }
             } else if (
