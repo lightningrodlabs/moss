@@ -61,7 +61,10 @@ export class AppletTopBarButton extends LitElement {
       >
         <applet-logo-raw
           class="applet-icon ${this.selected ? 'no-shadow' : ''}"
-          .appletHash=${this.appletStore.appletHash}
+          .toolIdentifier=${{
+            type: 'instance',
+            appletHash: this.appletStore.appletHash,
+          }}
           .notificationUrgency=${this.appletNotificationStatus.value[0]}
           .notificationCount=${this.appletNotificationStatus.value[1]}
           style="z-index: 1; --size: 58px;"

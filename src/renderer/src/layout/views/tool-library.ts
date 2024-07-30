@@ -204,7 +204,7 @@ export class ToolLibrary extends LitElement {
               ></install-tool-dialog>
             `
           : html``}
-      <div class="column" style="flex: 1;">
+      <div class="column container" style="flex: 1;">
         <div class="header column center-content">
           <sl-icon-button
             class="back-btn"
@@ -222,7 +222,7 @@ export class ToolLibrary extends LitElement {
             <span style="flex: 1; margin-left: 10px;">${msg('Tool Library')}</span>
           </div>
         </div>
-        <div class="column" style="margin-top: 70px; flex: 1;">${this.renderContent()}</div>
+        <div class="column" style="flex: 1;">${this.renderContent()}</div>
       </div>
     `;
   }
@@ -232,19 +232,20 @@ export class ToolLibrary extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background: var(--sl-color-tertiary-0);
+        background-color: #224b21;
         overflow: auto;
-        color: var(--sl-color-secondary-950);
+        padding: 8px;
+        border-radius: 5px 0 0 0;
+      }
+
+      .container {
+        background: var(--sl-color-tertiary-0);
       }
 
       .header {
         color: white;
         height: 70px;
         background: var(--sl-color-tertiary-950);
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
       }
 
       .detail-header {

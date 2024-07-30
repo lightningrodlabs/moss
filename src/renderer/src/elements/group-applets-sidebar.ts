@@ -13,6 +13,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '../groups/elements/group-context.js';
 import '../elements/applet-topbar-button.js';
 import './create-group-dialog.js';
+import './topbar-button.js';
 
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
@@ -21,6 +22,8 @@ import { AppletStore } from '../applets/applet-store.js';
 import { GroupStore } from '../groups/group-store.js';
 import { groupStoreContext } from '../groups/context.js';
 import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { mdiHome } from '@mdi/js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -53,10 +56,7 @@ export class GroupAppletsSidebar extends LitElement {
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     if (Array.from(applets.entries()).length === 0) {
       return html`
-        <div
-          class="row"
-          style="align-items: center; font-size: 20px; padding-left: 10px; font-weight: 500;"
-        >
+        <div class="row" style="align-items: center; font-size: 20px; font-weight: 500;">
           <span style="color: #fff; font-size: 14px; opacity: .5;">
             No applets installed or all applets disabled...
           </span>
@@ -65,7 +65,7 @@ export class GroupAppletsSidebar extends LitElement {
     }
 
     return html`
-      <div class="row" style="align-items: flex-end; padding-left: 10px;">
+      <div class="row" style="align-items: flex-end;">
         ${Array.from(applets.entries())
           .sort((a1, a2) => a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name))
           .map(
@@ -128,9 +128,34 @@ export class GroupAppletsSidebar extends LitElement {
     }
   }
 
+  renderMossButtons() {
+    return html`
+      <topbar-button
+        style="position: relative;"
+        .selected=${!this.selectedAppletHash}
+        .tooltipText=${'Home'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('group-home-selected', {
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
+        </div>
+      </topbar-button>
+    `;
+  }
+
   render() {
     return html`
-      <div class="row" style="flex: 1; align-items: center;">${this.renderAppletsLoading()}</div>
+      <div class="row" style="flex: 1; align-items: center;">
+        ${this.renderMossButtons()} ${this.renderAppletsLoading()}
+      </div>
     `;
   }
 
@@ -139,6 +164,17 @@ export class GroupAppletsSidebar extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .moss-item-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background: #0b2f00;
+        color: #dbe755;
+        width: 58px;
+        height: 58px;
       }
     `,
   ];

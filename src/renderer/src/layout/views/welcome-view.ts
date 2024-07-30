@@ -240,7 +240,7 @@ export class WelcomeView extends LitElement {
     return html`
       <div
         class="column"
-        style="align-items: center; display:flex; flex: 1; margin-top: 10px; color: white; margin-bottom: 160px;"
+        style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
       >
         <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
         <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
@@ -287,136 +287,9 @@ export class WelcomeView extends LitElement {
                       }
                     }}
                   >
-                    <div
-                      class="row"
-                      style="align-items: center; font-size: 26px; justify-content: center;"
-                    >
-                      <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
-                      <span style="margin-left: 5px;">Disclaimer</span>
-                    </div>
+                    <!-- Moss Update Feed -->
+                    ${this.renderUpdateFeed()}
                   </div>
-                  <div
-                    class="row"
-                    style="flex-wrap: wrap; margin-top: 60px; justify-content: center;"
-                  >
-                    <!-- Group section -->
-                    <div class="column button-section">
-                      <div class="row" style="align-items: center; font-size: 30px;">
-                        <sl-icon .src=${wrapPathInSvg(mdiAccountMultiple)}></sl-icon>
-                        <span style="margin-left: 10px;">Groups</span>
-                      </div>
-                      <div class="row" style="margin-top: 20px;">
-                        <button
-                          class="btn"
-                          @click=${(_e) =>
-                            this.dispatchEvent(
-                              new CustomEvent('request-join-group', {
-                                composed: true,
-                                bubbles: true,
-                              }),
-                            )}
-                          @keypress=${(e: KeyboardEvent) => {
-                            if (e.key === 'Enter') {
-                              this.dispatchEvent(
-                                new CustomEvent('request-join-group', {
-                                  composed: true,
-                                  bubbles: true,
-                                }),
-                              );
-                            }
-                          }}
-                        >
-                          <div class="row center-content">
-                            <sl-icon
-                              .src=${wrapPathInSvg(mdiAccountLockOpen)}
-                              style="color: white; height: 40px; width: 40px; margin-right: 10px;"
-                            ></sl-icon>
-                            <span>${'Join Group'}</span>
-                          </div>
-                        </button>
-                        <button
-                          class="btn"
-                          @click=${() => {
-                            this.dispatchEvent(
-                              new CustomEvent('request-create-group', {
-                                bubbles: true,
-                                composed: true,
-                              }),
-                            );
-                          }}
-                          @keypress=${(e: KeyboardEvent) => {
-                            if (e.key === 'Enter') {
-                              this.dispatchEvent(
-                                new CustomEvent('request-create-group', {
-                                  bubbles: true,
-                                  composed: true,
-                                }),
-                              );
-                            }
-                          }}
-                        >
-                          <div class="row center-content">
-                            <sl-icon
-                              .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
-                              style="color: white; height: 40px; width: 40px; margin-right: 10px;"
-                            ></sl-icon>
-                            <span>${msg('Create Group')}</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Tools section -->
-                    <div class="column button-section">
-                      <div class="row" style="align-items: center; font-size: 30px;">
-                        <sl-icon .src=${wrapPathInSvg(mdiTools)}></sl-icon>
-                        <span style="margin-left: 10px;">Tools</span>
-                      </div>
-                      <div class="row" style="margin-top: 20px;">
-                        <button
-                          class="btn"
-                          @click=${() => {
-                            this.dispatchEvent(new CustomEvent('open-appstore'));
-                          }}
-                          @keypress=${(e: KeyboardEvent) => {
-                            if (e.key === 'Enter') {
-                              this.dispatchEvent(new CustomEvent('open-appstore'));
-                            }
-                          }}
-                        >
-                          <div class="row center-content">
-                            <sl-icon
-                              .src=${wrapPathInSvg(mdiStoreSearch)}
-                              style="color: white; height: 40px; width: 40px; margin-right: 10px;"
-                            ></sl-icon>
-                            <span>${msg('Browse Library')}</span>
-                          </div>
-                        </button>
-                        <button
-                          class="btn"
-                          @click=${() => {
-                            this.dispatchEvent(new CustomEvent('open-publishing-view'));
-                          }}
-                          @keypress=${(e: KeyboardEvent) => {
-                            if (e.key === 'Enter') {
-                              this.dispatchEvent(new CustomEvent('open-publishing-view'));
-                            }
-                          }}
-                        >
-                          <div class="row center-content">
-                            <sl-icon
-                              .src=${wrapPathInSvg(mdiUpload)}
-                              style="color: white; height: 40px; width: 40px; margin-right: 10px;"
-                            ></sl-icon>
-                            <span>${msg('Publish Tool')}</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Moss Update Feed -->
-                  ${this.renderUpdateFeed()}
                 </div>
               </div>
             </div>
@@ -430,7 +303,7 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #588121;
+        background-color: #224b21;
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }

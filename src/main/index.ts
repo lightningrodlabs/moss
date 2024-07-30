@@ -34,7 +34,7 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
-import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo, ToolWeaveConfig } from './sharedTypes';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -841,24 +841,56 @@ app.whenReady().then(async () => {
   ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
   ipcMain.handle(
     'get-all-app-assets-infos',
-    async (): Promise<Record<InstalledAppId, AppAssetsInfo>> => {
-      const allAppAssetsInfos: Record<InstalledAppId, AppAssetsInfo> = {};
+    async (): Promise<Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>> => {
+      const allAppAssetsInfos: Record<
+        InstalledAppId,
+        [AppAssetsInfo, ToolWeaveConfig | undefined]
+      > = {};
       // Get all applets
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const allApplets = allApps.filter((appInfo) =>
         appInfo.installed_app_id.startsWith('applet#'),
       );
-      // For each applet, read app assets info and add to record
-      allApplets.forEach((appInfo) => {
-        try {
-          const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appInfo.installed_app_id);
-          allAppAssetsInfos[appInfo.installed_app_id] = appAssetsInfo;
-        } catch (e) {
-          console.warn(
-            `Failed to read AppAssetsInfo for applet with app id ${appInfo.installed_app_id}`,
-          );
-        }
-      });
+      // For each applet, read app assets info and weave config and add to record
+      await Promise.all(
+        allApplets.map(async (appInfo) => {
+          try {
+            const appAssetsInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appInfo.installed_app_id);
+            let toolWeaveConfig;
+            const uiAssetsDir = WE_FILE_SYSTEM.appUiAssetsDir(appInfo.installed_app_id);
+            if (uiAssetsDir) {
+              try {
+                const weaveConfigString = fs.readFileSync(
+                  path.join(uiAssetsDir, 'weave.config.json'),
+                  'utf-8',
+                );
+                toolWeaveConfig = JSON.parse(weaveConfigString);
+              } catch (e) {
+                console.error('Failed to get weaveConfig: ', e);
+                // invalid or inexistent weave config - ignore
+              }
+            } else if (
+              appAssetsInfo.type === 'webhapp' &&
+              appAssetsInfo.ui.location.type === 'localhost'
+            ) {
+              try {
+                console.log('Trying to fetch weave.config.json from localhost');
+                const resp = await net.fetch(
+                  `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
+                );
+                toolWeaveConfig = await resp.json();
+              } catch (e) {
+                // invalid or inexistent weave config - ignore
+              }
+            }
+            allAppAssetsInfos[appInfo.installed_app_id] = [appAssetsInfo, toolWeaveConfig];
+          } catch (e) {
+            console.warn(
+              `Failed to read AppAssetsInfo for applet with app id ${appInfo.installed_app_id}`,
+            );
+          }
+        }),
+      );
       return allAppAssetsInfos;
     },
   );

@@ -24,16 +24,32 @@ import { weStyles } from '../../shared-styles.js';
 @customElement('cross-applet-main')
 export class CrossAppletMain extends LitElement {
   @property(hashProperty('app-bundle-hash'))
-  appletBundleHash!: ActionHash;
+  toolBundleHash!: ActionHash;
 
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
+  @property()
+  hostColor: string | undefined;
+
   appletsForBundle = new StoreSubscriber(
     this,
-    () => this.mossStore.appletsForBundleHash.get(this.appletBundleHash),
-    () => [this.appletBundleHash],
+    () => this.mossStore.appletsForBundleHash.get(this.toolBundleHash),
+    () => [this.toolBundleHash],
   );
+
+  hostStyle() {
+    if (this.hostColor) {
+      return html`
+        <style>
+          :host {
+            background: ${this.hostColor};
+          }
+        </style>
+      `;
+    }
+    return html``;
+  }
 
   renderMain(applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>) {
     const renderView: RenderView = {
@@ -43,12 +59,13 @@ export class CrossAppletMain extends LitElement {
       },
     };
 
-    return html`<view-frame
-      .renderView=${renderView}
-      .appletHash=${decodeHashFromBase64(Object.keys(applets)[0])}
-      style="flex: 1"
-    >
-    </view-frame>`;
+    return html` ${this.hostStyle()}
+      <view-frame
+        .renderView=${renderView}
+        .appletHash=${decodeHashFromBase64(Object.keys(applets)[0])}
+        style="flex: 1"
+      >
+      </view-frame>`;
   }
 
   render() {
@@ -72,6 +89,8 @@ export class CrossAppletMain extends LitElement {
     css`
       :host {
         display: flex;
+        padding: 8px;
+        border-radius: 5px 0 0 0;
       }
     `,
   ];

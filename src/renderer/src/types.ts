@@ -229,3 +229,7 @@ export type PartialModifiers = {
   networkSeed: string;
   progenitor: AgentPubKeyB64 | null;
 };
+
+export type ToolWeaveConfig = {
+  crossGroupView: boolean;
+};

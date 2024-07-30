@@ -69,7 +69,10 @@ export class GroupAppletsRow extends LitElement {
             ([_appletBundleHash, appletStore]) => html`
               <sl-tooltip content="${appletStore.applet.custom_name}">
                 <applet-logo-raw
-                  .appletHash=${appletStore.appletHash}
+                  .toolIdentifier=${{
+                    type: 'instance',
+                    appletHash: appletStore.appletHash,
+                  }}
                   placement="bottom"
                   style="margin: 4px; --size: 50px;"
                   class="${this.activeApplets &&

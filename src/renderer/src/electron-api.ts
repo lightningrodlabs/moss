@@ -16,7 +16,7 @@ import {
   WAL,
 } from '@lightningrodlabs/we-applet';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo } from './types';
+import { AppAssetsInfo, AppHashes, DistributionInfo, ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -50,7 +50,9 @@ declare global {
       ) => any;
       openApp: (appId: string) => Promise<void>;
       openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;
-      getAllAppAssetsInfos: () => Promise<Record<InstalledAppId, AppAssetsInfo>>;
+      getAllAppAssetsInfos: () => Promise<
+        Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>
+      >;
       getAppletDevPort: (appId: string) => Promise<number>;
       getAppletIframeScript: () => Promise<string>;
       getAppVersion: () => Promise<string>;
@@ -132,7 +134,9 @@ export async function dialogMessagebox(
   return window.electronAPI.dialogMessagebox(options);
 }
 
-export async function getAllAppAssetsInfos(): Promise<Record<InstalledAppId, AppAssetsInfo>> {
+export async function getAllAppAssetsInfos(): Promise<
+  Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>
+> {
   return window.electronAPI.getAllAppAssetsInfos();
 }
 
