@@ -17,6 +17,7 @@ export const createWalWindow = (): BrowserWindow => {
     height: 800,
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/walwindow.js'),
+      safeDialogs: true,
     },
   });
 
@@ -54,6 +55,7 @@ export const createSplashscreenWindow = (): BrowserWindow => {
     // can listen for status change events
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/splashscreen.js'),
+      safeDialogs: true,
     },
   });
 
@@ -123,6 +125,7 @@ export const createHappWindow = (
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/happs.js'),
       partition,
+      safeDialogs: true,
     },
   });
 
