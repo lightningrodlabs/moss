@@ -52,6 +52,7 @@ export class PersonalViewSidebar extends LitElement {
         placement="bottom"
       >
         <applet-logo-raw
+          class="applet-icon"
           .toolIdentifier=${{
             type: 'class',
             originalToolActionHash: this.originalToolActionHash,
@@ -70,6 +71,12 @@ export class PersonalViewSidebar extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .applet-icon {
+        /* box-shadow: 0 0 2px 3px var(--sl-color-primary-400); */
+        box-shadow: 1px 2px 10px 0px #102520ab;
+        border-radius: 12px;
       }
     `,
   ];

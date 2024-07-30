@@ -655,7 +655,7 @@ export class GroupHome extends LitElement {
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div
           class="column"
-          style="flex: 1; padding: 16px 16px 0 16px; overflow-y: auto; position: relative;"
+          style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
         >
           <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
             ${this.renderHashForCopying('Group DNA Hash', this.groupStore.groupDnaHash)}

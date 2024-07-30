@@ -184,6 +184,12 @@ export class MainDashboard extends LitElement {
   @state()
   hoverPersonalView = false;
 
+  @state()
+  hoverMossButton = false;
+
+  @state()
+  hoverTopBar = false;
+
   _dashboardState = new StoreSubscriber(
     this,
     () => this._mossStore.dashboardState(),
@@ -1296,14 +1302,21 @@ export class MainDashboard extends LitElement {
       <!-- LEFT SIDEBAR -->
       <div class="column left-sidebar">
         <div
-          class="column top-left-corner ${this._dashboardState.value.viewType === 'personal'
+          class="column top-left-corner ${this._dashboardState.value.viewType === 'personal' ||
+          this.hoverPersonalView
             ? 'selected'
             : ''}"
-          @mouseover=${() => {
+          @mouseenter=${() => {
+            this.hoverMossButton = true;
             this.hoverPersonalView = true;
           }}
-          @mouseout=${() => {
-            this.hoverPersonalView = false;
+          @mouseleave=${() => {
+            this.hoverMossButton = false;
+            setTimeout(() => {
+              if (!this.hoverTopBar) {
+                this.hoverPersonalView = false;
+              }
+            }, 50);
           }}
         >
           <button
@@ -1416,6 +1429,10 @@ export class MainDashboard extends LitElement {
         </div>
       </div>
 
+      ${this.hoverPersonalView && this._dashboardState.value.viewType === 'group'
+        ? html`<div class="personal-view-indicator">${msg('switch to personal view')}</div>`
+        : html``}
+
       <!-- TOP BAR -->
       <div
         class="top-bar row ${this._dashboardState.value.viewType === 'group' &&
@@ -1423,6 +1440,17 @@ export class MainDashboard extends LitElement {
           ? ''
           : 'personal-top-bar'}"
         style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
+        @mouseenter=${() => {
+          this.hoverTopBar = true;
+        }}
+        @mouseleave=${() => {
+          this.hoverTopBar = false;
+          setTimeout(() => {
+            if (!this.hoverMossButton) {
+              this.hoverPersonalView = false;
+            }
+          }, 50);
+        }}
       >
         <div
           id="top-bar-scroller"
@@ -1595,10 +1623,6 @@ export class MainDashboard extends LitElement {
           </sl-tooltip>
         </div>
       </div>
-
-      ${this.hoverPersonalView && this._dashboardState.value.viewType === 'group'
-        ? html`<div class="personal-view-indicator">${msg('switch to personal view')}</div>`
-        : html``}
     `;
   }
 

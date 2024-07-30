@@ -364,6 +364,7 @@ const createOrShowMainWindow = (): BrowserWindow => {
       // autoplayPolicy: 'user-gesture-required',
       // uncomment this line to get fetch requests working while testing publishing of tools:
       webSecurity: app.isPackaged ? true : false,
+      safeDialogs: true,
     },
   });
 
@@ -462,6 +463,7 @@ const selectScreenOrWindow = async (): Promise<string> => {
     title: 'Select Screen or Window',
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/selectmediasource.js'),
+      safeDialogs: true,
     },
   });
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -653,6 +655,7 @@ app.whenReady().then(async () => {
     },
   );
   SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
+  SYSTRAY.setToolTip('Moss (0.12)');
 
   const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
