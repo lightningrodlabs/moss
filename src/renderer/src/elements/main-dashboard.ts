@@ -123,7 +123,7 @@ export type DashboardState =
   | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
 
 export type AssetViewerState = {
-  position: 'front' | 'side';
+  position: 'side';
   visible: boolean;
 };
 
@@ -315,7 +315,7 @@ export class MainDashboard extends LitElement {
         template: html` <debugging-panel></debugging-panel> `,
       },
     };
-    this._mossStore.setAssetViewerState({ position: 'front', visible: true });
+    this._mossStore.setAssetViewerState({ position: 'side', visible: true });
     this.openTab(tabInfo);
   }
 
@@ -358,7 +358,7 @@ export class MainDashboard extends LitElement {
       };
     }
     this._mossStore.setAssetViewerState({
-      position: mode ? mode : this._assetViewerState.value.position,
+      position: 'side',
       visible: true,
     });
     this._selectedTab = tabInfo;
@@ -467,9 +467,6 @@ export class MainDashboard extends LitElement {
 
   async handleOpenAppletMain(appletHash: AppletHash) {
     this.openViews.openAppletMain(appletHash);
-    if (this._assetViewerState.value.position === 'front') {
-      this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-    }
   }
 
   async firstUpdated() {
@@ -489,9 +486,6 @@ export class MainDashboard extends LitElement {
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
-        if (this._assetViewerState.value.position === 'front') {
-          this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-        }
       }
     });
 
@@ -527,13 +521,6 @@ export class MainDashboard extends LitElement {
       } catch (e) {
         console.error(e);
         notifyError(msg('Error opening the link.'));
-      }
-    });
-
-    // add event listener to close asset viewer when clicking outside of it
-    document.addEventListener('click', () => {
-      if (this._assetViewerState.value.position === 'front') {
-        this._mossStore.setAssetViewerState({ position: 'front', visible: false });
       }
     });
 
@@ -691,9 +678,6 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     });
-    if (this._assetViewerState.value.position === 'front') {
-      this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-    }
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
     //   type: "component",
@@ -793,9 +777,6 @@ export class MainDashboard extends LitElement {
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
         @applet-selected=${(e: CustomEvent) => {
           this.openViews.openAppletMain(e.detail.appletHash);
-          if (this._assetViewerState.value.position === 'front') {
-            this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-          }
         }}
       ></welcome-view>
 
@@ -823,9 +804,6 @@ export class MainDashboard extends LitElement {
             groupHash: e.detail.groupDnaHash,
             appletHash: e.detail.appletEntryHash,
           });
-          if (this._assetViewerState.value.position === 'front') {
-            this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-          }
         }}
       ></tool-library>
 
@@ -876,9 +854,6 @@ export class MainDashboard extends LitElement {
               }}
               @applet-selected=${(e: CustomEvent) => {
                 this.openViews.openAppletMain(e.detail.appletHash);
-                if (this._assetViewerState.value.position === 'front') {
-                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-                }
               }}
               @applet-installed=${(e: {
                 detail: {
@@ -898,9 +873,6 @@ export class MainDashboard extends LitElement {
                   groupHash: e.detail.groupDnaHash,
                   appletHash: e.detail.appletEntryHash,
                 });
-                if (this._assetViewerState.value.position === 'front') {
-                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-                }
               }}
               @applets-disabled=${(e: { detail: Array<AppletHash> }) => {
                 // Make sure applet iframes get removed in the background
@@ -930,15 +902,8 @@ export class MainDashboard extends LitElement {
           Asset Viewer
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where assets are displayed. Opening an asset from one of your applets will create
-          a new tab here.<br /><br />
-          If you are looking at an asset, green indicators show you the group(s) and applet(s) the
-          specific asset belongs to:
-        </div>
-        <div class="column" style="margin-top: 20px;">
-          <div
-            style="position: absolute; height: 7px; border-radius: 7px 7px 0 0; width: 32px; background: var(--sl-color-tertiary-200);"
-          ></div>
+          This is where assets are displayed. Opening an asset from one of your Tools will create a
+          new tab here.
         </div>
       </div>`;
     }
@@ -966,9 +931,6 @@ export class MainDashboard extends LitElement {
         return html`<asset-view
           @jump-to-applet=${(e) => {
             this.openViews.openAppletMain(e.detail);
-            if (this._assetViewerState.value.position === 'front') {
-              this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-            }
           }}
           .wal=${info.tab.wal}
           style="display: flex; flex: 1;"
@@ -1039,7 +1001,7 @@ export class MainDashboard extends LitElement {
   renderEntryTabBar() {
     const openTabs = Object.values(this._openTabs);
     if (openTabs.length === 0) {
-      return html`<span style="margin-left: 10px; font-size: 20px;">No open entries...</span>`;
+      return html`<span style="margin-left: 10px; font-size: 20px;">No open assets...</span>`;
     }
     return openTabs.map((tabInfo) => {
       switch (tabInfo.tab.type) {
@@ -1257,19 +1219,10 @@ export class MainDashboard extends LitElement {
           <div
             id="asset-viewer"
             class="${classMap({
-              'asset-viewer': this._assetViewerState.value.position === 'front',
-              'slide-in-right': this._assetViewerState.value.position === 'front',
-              'slide-out-right': this._assetViewerState.value.position === 'front',
               'side-drawer': this._assetViewerState.value.position === 'side',
               hidden:
                 !this._assetViewerState.value.visible &&
                 this._assetViewerState.value.position === 'side',
-              show:
-                this._assetViewerState.value.visible &&
-                this._assetViewerState.value.position === 'front',
-              hide:
-                !this._assetViewerState.value.visible &&
-                this._assetViewerState.value.position === 'front',
             })}"
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
               ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
@@ -1501,12 +1454,6 @@ export class MainDashboard extends LitElement {
                         groupHash: e.detail.groupDnaHash,
                         appletHash: e.detail.appletHash,
                       });
-                      if (this._assetViewerState.value.position === 'front') {
-                        this._mossStore.setAssetViewerState({
-                          position: 'front',
-                          visible: false,
-                        });
-                      }
                     }}
                     @refresh-applet=${(e: CustomEvent) => {
                       const allIframes = getAllIframes();
@@ -1540,50 +1487,13 @@ export class MainDashboard extends LitElement {
         </div>
         <div style="display: flex; flex: 1;"></div>
         <div class="row">
-          <sl-tooltip content="Show Asset Viewer in Front" placement="bottom" hoist>
-            <div
-              id="tab-bar-button"
-              class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
-              this._assetViewerState.value.position === 'front'
-                ? 'btn-selected'
-                : ''}"
-              tabindex="0"
-              @click=${(e) => {
-                e.stopPropagation();
-                if (
-                  this._assetViewerState.value.visible &&
-                  this._assetViewerState.value.position === 'front'
-                ) {
-                  this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-                  return;
-                }
-                this._mossStore.setAssetViewerState({ position: 'front', visible: true });
-              }}
-              @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation();
-                  if (
-                    this._assetViewerState.value.visible &&
-                    this._assetViewerState.value.position === 'front'
-                  ) {
-                    this._mossStore.setAssetViewerState({ position: 'front', visible: false });
-                    return;
-                  }
-                  this._mossStore.setAssetViewerState({ position: 'front', visible: true });
-                }
-              }}
-            >
-              <div class="column center-content">
-                <sl-icon
-                  .src=${wrapPathInSvg(mdiViewGalleryOutline)}
-                  style="font-size: 34px;"
-                ></sl-icon>
-                front
-              </div>
-            </div>
-          </sl-tooltip>
-
-          <sl-tooltip content="Show Asset Viewer to the Side" placement="bottom" hoist>
+          <sl-tooltip
+            content="${this._assetViewerState.value.visible
+              ? 'Hide Asset Viewer'
+              : 'Show Asset Viewer'}"
+            placement="bottom"
+            hoist
+          >
             <div
               id="tab-bar-button"
               class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
@@ -1615,11 +1525,7 @@ export class MainDashboard extends LitElement {
               }}"
             >
               <div class="column center-content">
-                <sl-icon
-                  .src=${wrapPathInSvg(mdiViewGalleryOutline)}
-                  style="font-size: 34px;"
-                ></sl-icon>
-                side
+                <img src="sidebar.svg" style="height: 34px; fill-color: red;" />
               </div>
             </div>
           </sl-tooltip>
@@ -1813,7 +1719,7 @@ export class MainDashboard extends LitElement {
           cursor: pointer;
           /* margin: 5px; */
           height: 74px;
-          width: 50px;
+          width: 60px;
         }
 
         .entry-tab-bar-button:hover {
@@ -1824,9 +1730,21 @@ export class MainDashboard extends LitElement {
           /* height: 50px; */
         }
 
-        .entry-tab-bar-button:focus {
+        .entry-tab-bar-button:focus-visible {
           background: var(--sl-color-tertiary-50);
           color: var(--sl-color-tertiary-950);
+        }
+
+        .entry-tab-bar-button img {
+          filter: invert(1);
+        }
+
+        .entry-tab-bar-button:hover img {
+          filter: none;
+        }
+
+        .entry-tab-bar-button:focus-visible img {
+          filter: none;
         }
 
         .btn-selected {
@@ -1835,6 +1753,10 @@ export class MainDashboard extends LitElement {
           /* margin: 0;
           border-radius: 5px 0 0 5px;
           height: 50px; */
+        }
+
+        .btn-selected img {
+          filter: none;
         }
 
         .open-tab-btn {
@@ -1900,28 +1822,6 @@ export class MainDashboard extends LitElement {
           background: #689d19;
           padding: 5px;
           border-radius: 0 0 10px 10px;
-        }
-
-        .slide-in-right {
-          transform: translateX(102%);
-          transition:
-            opacity 0.15s ease-out,
-            transform 0.15s ease-out;
-        }
-
-        .slide-in-right.show {
-          transform: translateX(0);
-        }
-
-        .slide-out-right {
-          transform: translateX(0);
-          transition:
-            opacity 0.15s ease-out,
-            transform 0.15s ease-out;
-        }
-
-        .slide-out-right.hide {
-          transform: translateX(102%);
         }
 
         .moss-button-icon {
