@@ -279,6 +279,14 @@ export class WelcomeView extends LitElement {
                       }
                     }}
                   >
+                  <div
+                      class="row"
+                      style="align-items: center; font-size: 26px; justify-content: center;"
+                    >
+                      <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
+                      <span style="margin-left: 5px;">Disclaimer</span>
+                    </div>
+                  </div>
                     <!-- Moss Update Feed -->
                     ${this.renderUpdateFeed()}
                   </div>
