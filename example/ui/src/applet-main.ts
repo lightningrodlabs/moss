@@ -6,6 +6,9 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 
 import './elements/all-posts.js';
 import './elements/create-post.js';
+import './elements/wal-space-debug.js';
+import './elements/wal-embed-debug.js';
+
 import {
   type WAL,
   type FrameNotification,
@@ -15,7 +18,7 @@ import {
   GroupPermissionType,
 } from '@lightningrodlabs/we-applet';
 import { AppClient } from '@holochain/client';
-import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
+//import '@lightningrodlabs/we-elements/dist/elements/wal-space.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { consume } from '@lit/context';
@@ -279,6 +282,11 @@ export class AppletMain extends LitElement {
                     `
                   : html``
               }
+            </div>
+            <div>
+              <h2>Wal Space</h2>
+              <wal-space
+              ></wal-space>
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap;">

@@ -27,7 +27,8 @@
     "@mdi/js": "^7.2.0",
     "@shoelace-style/shoelace": "2.15.1",
     "lib": "^0.1.0",
-    "lit": "^3.0.2"
+    "lit": "^3.0.2",
+    "lit-moveable": "0.30.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.0",

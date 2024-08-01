@@ -8,6 +8,7 @@ import './elements/all-posts.js';
 import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
+import './elements/wal-space-debug.js';
 
 import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@lightningrodlabs/we-applet';
 import { weaveClientContext } from '@lightningrodlabs/we-elements';
