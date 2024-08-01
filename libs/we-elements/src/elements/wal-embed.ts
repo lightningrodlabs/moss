@@ -50,6 +50,9 @@ export class WalEmbed extends LitElement {
   @property({ type: Boolean })
   collapsed = false;
 
+  @property({ type: Boolean })
+  bare = false;
+
   @state()
   assetStatus: AssetStatus = { type: 'loading' };
 
@@ -125,6 +128,117 @@ export class WalEmbed extends LitElement {
     }
   }
 
+  renderHeader() {
+    return html`
+      <div class="top-bar row" style="align-items: center;">
+        ${this.assetStatus.type === 'success'
+          ? html`
+              <div class="row" style="align-items: center;">
+                <div class="row">
+                  <sl-icon
+                    style="font-size: 24px;"
+                    .src=${this.assetStatus.assetInfo.assetInfo.icon_src}
+                  ></sl-icon>
+                </div>
+                <div
+                  class="column"
+                  style="font-size: 18px; margin-left: 3px; height: 20px; overflow: hidden;"
+                  title=${this.assetStatus.assetInfo.assetInfo.name}
+                >
+                  ${this.assetStatus.assetInfo.assetInfo.name}
+                </div>
+              </div>
+            `
+          : html``}
+        <span style="display: flex; flex: 1;"></span>
+        ${this.appletInfo
+          ? html`
+              <div
+                class="row"
+                style="align-items: center; ${this.groupProfiles
+                  ? 'border-right: 2px solid black;'
+                  : ''}"
+              >
+                <sl-tooltip .content=${this.appletInfo.appletName}>
+                  <img
+                    style="height: 26px; margin-right: 4px; border-radius: 3px;"
+                    .src=${this.appletInfo.appletIcon}
+                  />
+                </sl-tooltip>
+              </div>
+            `
+          : html``}
+        ${this.groupProfiles
+          ? html` <div class="row" style="align-items: center; margin-left: 4px;">
+              ${Array.from(this.groupProfiles.values()).map(
+                (groupProfile) => html`
+                  <sl-tooltip .content=${groupProfile.name}>
+                    <img
+                      src=${groupProfile.icon_src}
+                      style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
+                    />
+                  </sl-tooltip>
+                `,
+              )}
+            </div>`
+          : html``}
+        ${this.collapsable
+          ? html`
+              <sl-tooltip .content=${msg(this.collapsed ? 'Expand' : 'Collapse')}>
+                <div
+                  class="column center-content open-btn"
+                  tabindex="0"
+                  @click=${async () => await this.toggleCollapse()}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      await this.toggleCollapse();
+                    }
+                  }}
+                >
+                  <sl-icon
+                    .src=${wrapPathInSvg(this.collapsed ? mdiArrowExpand : mdiArrowCollapse)}
+                    style="font-size: 24px;"
+                  ></sl-icon>
+                </div>
+              </sl-tooltip>
+            `
+          : ''}
+        <sl-tooltip .content=${msg('Open in sidebar')}>
+          <div
+            class="column center-content open-btn"
+            tabindex="0"
+            @click=${async () => await this.openInSidebar()}
+            @keypress=${async (e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                await this.openInSidebar();
+              }
+            }}
+          >
+            <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
+          </div>
+        </sl-tooltip>
+        ${this.closable
+          ? html`
+              <sl-tooltip .content=${msg('Close')}>
+                <div
+                  class="column center-content close-btn"
+                  tabindex="0"
+                  @click=${async () => await this.emitClose()}
+                  @keypress=${async (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      await this.emitClose();
+                    }
+                  }}
+                >
+                  <sl-icon .src=${wrapPathInSvg(mdiClose)} style="font-size: 24px;"></sl-icon>
+                </div>
+              </sl-tooltip>
+            `
+          : html``}
+      </div>
+    `;
+  }
+
   renderContent() {
     switch (this.assetStatus.type) {
       case 'not found':
@@ -159,117 +273,13 @@ export class WalEmbed extends LitElement {
   }
 
   render() {
-    return html`
-      <div class="container">
-        <div class="top-bar row" style="align-items: center;">
-          ${this.assetStatus.type === 'success'
-            ? html`
-                <div class="row" style="align-items: center;">
-                  <div class="row">
-                    <sl-icon
-                      style="font-size: 24px;"
-                      .src=${this.assetStatus.assetInfo.assetInfo.icon_src}
-                    ></sl-icon>
-                  </div>
-                  <div
-                    class="column"
-                    style="font-size: 18px; margin-left: 3px; height: 20px; overflow: hidden;"
-                    title=${this.assetStatus.assetInfo.assetInfo.name}
-                  >
-                    ${this.assetStatus.assetInfo.assetInfo.name}
-                  </div>
-                </div>
-              `
-            : html``}
-          <span style="display: flex; flex: 1;"></span>
-          ${this.appletInfo
-            ? html`
-                <div
-                  class="row"
-                  style="align-items: center; ${this.groupProfiles
-                    ? 'border-right: 2px solid black;'
-                    : ''}"
-                >
-                  <sl-tooltip .content=${this.appletInfo.appletName}>
-                    <img
-                      style="height: 26px; margin-right: 4px; border-radius: 3px;"
-                      .src=${this.appletInfo.appletIcon}
-                    />
-                  </sl-tooltip>
-                </div>
-              `
-            : html``}
-          ${this.groupProfiles
-            ? html` <div class="row" style="align-items: center; margin-left: 4px;">
-                ${Array.from(this.groupProfiles.values()).map(
-                  (groupProfile) => html`
-                    <sl-tooltip .content=${groupProfile.name}>
-                      <img
-                        src=${groupProfile.icon_src}
-                        style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
-                      />
-                    </sl-tooltip>
-                  `,
-                )}
-              </div>`
-            : html``}
-          ${this.collapsable
-            ? html`
-                <sl-tooltip .content=${msg(this.collapsed ? 'Expand' : 'Collapse')}>
-                  <div
-                    class="column center-content open-btn"
-                    tabindex="0"
-                    @click=${async () => await this.toggleCollapse()}
-                    @keypress=${async (e: KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        await this.toggleCollapse();
-                      }
-                    }}
-                  >
-                    <sl-icon
-                      .src=${wrapPathInSvg(this.collapsed ? mdiArrowExpand : mdiArrowCollapse)}
-                      style="font-size: 24px;"
-                    ></sl-icon>
-                  </div>
-                </sl-tooltip>
-              `
-            : ''}
-          <sl-tooltip .content=${msg('Open in sidebar')}>
-            <div
-              class="column center-content open-btn"
-              tabindex="0"
-              @click=${async () => await this.openInSidebar()}
-              @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  await this.openInSidebar();
-                }
-              }}
-            >
-              <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)} style="font-size: 24px;"></sl-icon>
-            </div>
-          </sl-tooltip>
-          ${this.closable
-            ? html`
-                <sl-tooltip .content=${msg('Close')}>
-                  <div
-                    class="column center-content close-btn"
-                    tabindex="0"
-                    @click=${async () => await this.emitClose()}
-                    @keypress=${async (e: KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        await this.emitClose();
-                      }
-                    }}
-                  >
-                    <sl-icon .src=${wrapPathInSvg(mdiClose)} style="font-size: 24px;"></sl-icon>
-                  </div>
-                </sl-tooltip>
-              `
-            : html``}
-        </div>
-        ${this.collapsed ? '' : this.renderContent()}
-      </div>
-    `;
+    return this.bare
+      ? this.renderContent()
+      : html`
+          <div class="container">
+            ${this.renderHeader()} ${this.collapsed ? '' : this.renderContent()}
+          </div>
+        `;
   }
 
   static styles = [

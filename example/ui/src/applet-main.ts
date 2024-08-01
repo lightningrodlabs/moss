@@ -43,6 +43,9 @@ export class AppletMain extends LitElement {
   @query('#wal-embed-input-field')
   walEmbedInputField!: HTMLInputElement;
 
+  @query('#wal-embed-bare-field')
+  walEmbedBareField!: HTMLInputElement;
+
   @state()
   mediumInterval: number | null = null;
 
@@ -57,6 +60,9 @@ export class AppletMain extends LitElement {
 
   @state()
   walEmbedLink: string = '';
+
+  @state()
+  bare: boolean = true;
 
   @state()
   groupPermissionType: GroupPermissionType | undefined;
@@ -83,6 +89,10 @@ export class AppletMain extends LitElement {
 
   updateWalEmbedLink() {
     this.walEmbedLink = this.walEmbedInputField.value;
+  }
+
+  updateWalEmbedBare() {
+    this.bare = this.walEmbedBareField.checked;
   }
 
   sendUrgentNotification(delay: number) {
@@ -246,6 +256,7 @@ export class AppletMain extends LitElement {
                 <input id="wal-embed-input-field" type="text" rows="4" cols="50" />
                 <button
                   @click=${() => {
+                    this.updateWalEmbedBare();
                     this.updateWalEmbedLink();
                   }}
                   style="width: 100px; margin-left: 5px;"
@@ -253,17 +264,21 @@ export class AppletMain extends LitElement {
                   Embed
                 </button>
               </div>
-              ${this.walEmbedLink !== ''
-                ? html`
-                    <wal-embed
-                      style="margin-top: 20px;"
-                      .src=${this.walEmbedLink}
-                      closable
-                      @open-in-sidebar=${() => console.log('Opening in sidebar')}
-                      @close=${() => console.log('Closing requested')}
-                    ></wal-embed>
-                  `
-                : html``}
+              <input id="wal-embed-bare-field" type="checkbox">bare embed</input>
+              ${
+                this.walEmbedLink !== ''
+                  ? html`
+                      <wal-embed
+                        style="margin-top: 20px;"
+                        .src=${this.walEmbedLink}
+                        ?bare=${this.bare}
+                        closable
+                        @open-in-sidebar=${() => console.log('Opening in sidebar')}
+                        @close=${() => console.log('Closing requested')}
+                      ></wal-embed>
+                    `
+                  : html``
+              }
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap;">
