@@ -19,12 +19,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import {
-  mdiAccountLockOpen,
-  mdiAccountMultiplePlus,
-  mdiMagnify,
-  mdiViewGalleryOutline,
-} from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiMagnify } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
