@@ -67,7 +67,7 @@ export class ToolLibrary extends LitElement {
 
   renderMainView() {
     return html`
-      <div class="column" style="display: flex; margin: 16px; flex: 1">
+      <div class="column" style="display: flex; margin: 16px; flex: 1;">
         <installable-tools
           style="display: flex; flex: 1; overflow-y: auto;"
           @open-tool-detail=${(e) => {
@@ -222,7 +222,11 @@ export class ToolLibrary extends LitElement {
             <span style="flex: 1; margin-left: 10px;">${msg('Tool Library')}</span>
           </div>
         </div>
-        <div class="column" style="flex: 1;">${this.renderContent()}</div>
+        <div class="column flex-scrollable-parent">
+          <div class="flex-scrollable-container">
+            <div class="column flex-scrollable-y">${this.renderContent()}</div>
+          </div>
+        </div>
       </div>
     `;
   }
