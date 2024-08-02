@@ -386,7 +386,6 @@ export async function handleAppletIframeMessage(
       const assetViewerState = get(mossStore.assetViewerState());
 
       const ignoreNotification =
-        !(assetViewerState.visible && assetViewerState.position === 'front') &&
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
         dashboardMode.appletHash.toString() === appletHash.toString() &&
