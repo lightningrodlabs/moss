@@ -383,7 +383,6 @@ export async function handleAppletIframeMessage(
       // If the applet that the notification is coming from is already open, and the We main window
       // itself is also open, don't do anything
       const dashboardMode = get(mossStore.dashboardState());
-      const assetViewerState = get(mossStore.assetViewerState());
 
       const ignoreNotification =
         dashboardMode.viewType === 'group' &&
