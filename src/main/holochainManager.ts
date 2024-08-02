@@ -84,7 +84,7 @@ export class HolochainManager {
       const p2pDbs = fs.readdirSync(p2pDir);
       p2pDbs.forEach((file) => {
         if (file.startsWith('p2p_')) {
-          const newFileName = file.replace('p2p_', '').replace('.sqlite', '');
+          const newFileName = file.replace('p2p_', '').replace('.sqlite3', '');
           fs.renameSync(path.join(p2pDir, file), path.join(p2pDir, newFileName));
         }
       });
@@ -94,7 +94,7 @@ export class HolochainManager {
       const dhtDbs = fs.readdirSync(dhtDir);
       dhtDbs.forEach((file) => {
         if (file.startsWith('dht-')) {
-          const newFileName = file.replace('dht-', '').replace('.sqlite', '');
+          const newFileName = file.replace('dht-', '').replace('.sqlite3', '');
           fs.renameSync(path.join(dhtDir, file), path.join(dhtDir, newFileName));
         }
       });
@@ -104,7 +104,7 @@ export class HolochainManager {
       const cacheDbs = fs.readdirSync(cacheDir);
       cacheDbs.forEach((file) => {
         if (file.startsWith('cache-')) {
-          const newFileName = file.replace('cache-', '').replace('.sqlite', '');
+          const newFileName = file.replace('cache-', '').replace('.sqlite3', '');
           fs.renameSync(path.join(cacheDir, file), path.join(cacheDir, newFileName));
         }
       });
@@ -114,8 +114,28 @@ export class HolochainManager {
       const authoredDbs = fs.readdirSync(authoredDir);
       authoredDbs.forEach((file) => {
         if (file.startsWith('authored-')) {
-          const newFileName = file.replace('authored-', '').replace('.sqlite', '');
+          const newFileName = file.replace('authored-', '').replace('.sqlite3', '');
           fs.renameSync(path.join(authoredDir, file), path.join(authoredDir, newFileName));
+        }
+      });
+    }
+    const conductorDir = path.join(databasesDir, 'conductor');
+    if (fs.existsSync(conductorDir)) {
+      const conductorDbs = fs.readdirSync(conductorDir);
+      conductorDbs.forEach((file) => {
+        if (file.includes('.sqlite3')) {
+          const newFileName = file.replace('.sqlite3', '');
+          fs.renameSync(path.join(conductorDir, file), path.join(conductorDir, newFileName));
+        }
+      });
+    }
+    const wasmDir = path.join(databasesDir, 'wasm');
+    if (fs.existsSync(wasmDir)) {
+      const wasmDbs = fs.readdirSync(wasmDir);
+      wasmDbs.forEach((file) => {
+        if (file.includes('.sqlite3')) {
+          const newFileName = file.replace('.sqlite3', '');
+          fs.renameSync(path.join(wasmDir, file), path.join(wasmDir, newFileName));
         }
       });
     }
