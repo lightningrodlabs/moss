@@ -25,7 +25,7 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
-import { AppAssetsInfo, DistributionInfo, WeFileSystem, deriveAppAssetsInfo } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, MossFileSystem, deriveAppAssetsInfo } from './filesystem';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
@@ -264,7 +264,7 @@ if (RUN_OPTIONS.devInfo) {
   }
 }
 
-const WE_FILE_SYSTEM = WeFileSystem.connect(
+const WE_FILE_SYSTEM = MossFileSystem.connect(
   app,
   RUN_OPTIONS.profile,
   RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,

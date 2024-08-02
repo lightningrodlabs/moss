@@ -2,7 +2,7 @@ import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { BrowserWindow } from 'electron';
-import { DistributionInfo, WeFileSystem } from './filesystem';
+import { DistributionInfo, MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
@@ -21,7 +21,7 @@ const DEFAULT_APPS = {
 };
 
 export async function launch(
-  weFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   weEmitter: WeEmitter,
   splashscreenWindow: BrowserWindow | undefined,
   password: string,
@@ -35,7 +35,7 @@ export async function launch(
     console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
   }
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
-  if (!weFileSystem.keystoreInitialized()) {
+  if (!mossFileSystem.keystoreInitialized()) {
     if (splashscreenWindow)
       splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
     // TODO: https://github.com/holochain/launcher/issues/144
@@ -45,7 +45,7 @@ export async function launch(
     // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
     //   console.log("[LAIR INIT]: ", line);
     // })
-    await initializeLairKeystore(LAIR_BINARY, weFileSystem.keystoreDir, weEmitter, password);
+    await initializeLairKeystore(LAIR_BINARY, mossFileSystem.keystoreDir, weEmitter, password);
   }
   if (splashscreenWindow)
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
@@ -53,7 +53,7 @@ export async function launch(
   // launch lair keystore
   const [lairHandle, lairUrl] = await launchLairKeystore(
     LAIR_BINARY,
-    weFileSystem.keystoreDir,
+    mossFileSystem.keystoreDir,
     weEmitter,
     password,
     runOptions.lairRustLog,
@@ -70,12 +70,12 @@ export async function launch(
   // launch holochain
   const holochainManager = await HolochainManager.launch(
     weEmitter,
-    weFileSystem,
+    mossFileSystem,
     customBinary ? customBinary : HOLOCHAIN_BINARIES[holochainVersion],
     password,
     holochainVersion,
-    weFileSystem.conductorDir,
-    weFileSystem.conductorConfigPath,
+    mossFileSystem.conductorDir,
+    mossFileSystem.conductorConfigPath,
     lairUrl,
     runOptions.bootstrapUrl!,
     runOptions.signalingUrl!,
@@ -132,7 +132,7 @@ export async function launch(
           console.log(`Default app ${appName} installed.`);
         } else {
           // Compare the hashes to check whether happ and/or UI got an update
-          const currentAppAssetsInfo = weFileSystem.readAppAssetsInfo(appId);
+          const currentAppAssetsInfo = mossFileSystem.readAppAssetsInfo(appId);
           if (
             currentAppAssetsInfo.type === 'webhapp' &&
             currentAppAssetsInfo.ui.location.type === 'filesystem'
@@ -160,7 +160,7 @@ export async function launch(
               //   );
               // await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
               // // back up previous assets info
-              // weFileSystem.backupAppAssetsInfo(appId);
+              // mossFileSystem.backupAppAssetsInfo(appId);
               // const networkSeed = defaultAppNetworkSeed();
               // const distributionInfo: DistributionInfo = {
               //   type: 'default-app',
@@ -189,18 +189,18 @@ export async function launch(
                 uiHash;
               await rustUtils.saveHappOrWebhapp(
                 webHappPath,
-                weFileSystem.uisDir,
-                weFileSystem.happsDir,
+                mossFileSystem.uisDir,
+                mossFileSystem.happsDir,
               );
-              weFileSystem.backupAppAssetsInfo(appId);
-              weFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+              mossFileSystem.backupAppAssetsInfo(appId);
+              mossFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
             }
           }
         }
       }),
     );
   } else {
-    await devSetup(runOptions.devInfo, holochainManager, weFileSystem);
+    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

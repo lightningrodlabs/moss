@@ -74,7 +74,7 @@ export type DistributionInfo =
       type: 'default-app'; // Shipped with the We executable by default
     };
 
-export class WeFileSystem {
+export class MossFileSystem {
   public appDataDir: string;
   public appConfigDir: string;
   public appLogsDir: string;
@@ -148,9 +148,9 @@ export class WeFileSystem {
 
     console.log('Got logsDir, configDir and dataDir: ', logsDir, configDir, dataDir);
 
-    const launcherFileSystem = new WeFileSystem(dataDir, configDir, logsDir);
+    const mossFileSystem = new MossFileSystem(dataDir, configDir, logsDir);
 
-    return launcherFileSystem;
+    return mossFileSystem;
   }
 
   get conductorConfigPath() {

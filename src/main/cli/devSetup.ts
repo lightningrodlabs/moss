@@ -21,7 +21,7 @@ import {
   GrantedFunctionsType,
 } from '@holochain/client';
 import { AppletHash } from '@lightningrodlabs/we-applet';
-import { AppAssetsInfo, DistributionInfo, WeFileSystem } from '../filesystem';
+import { AppAssetsInfo, DistributionInfo, MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import { WeAppletDevInfo } from './cli';
@@ -94,7 +94,7 @@ export async function startLocalServices(): Promise<
 export async function devSetup(
   config: WeAppletDevInfo,
   holochainManager: HolochainManager,
-  weFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
 ): Promise<void> {
   const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
@@ -116,7 +116,7 @@ export async function devSetup(
       );
 
       installableApplets[installableApplet.name] = await fetchHappOrWebHappIfNecessary(
-        weFileSystem,
+        mossFileSystem,
         installableApplet.source,
       );
     }
@@ -317,7 +317,7 @@ export async function devSetup(
           storeAppAssetsInfo(
             appletConfig,
             appId,
-            weFileSystem,
+            mossFileSystem,
             distributionInfo,
             happPath,
             happHash,
@@ -362,7 +362,7 @@ export async function devSetup(
             storeAppAssetsInfo(
               appletConfig,
               appId,
-              weFileSystem,
+              mossFileSystem,
               JSON.parse(applet.distribution_info),
               happPath,
               happHash,
@@ -510,7 +510,7 @@ async function installGroup(
 }
 
 async function fetchHappOrWebHappIfNecessary(
-  weFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   source: WebHappLocation,
 ): Promise<[string, string, string | undefined, string | undefined, string | undefined]> {
   switch (source.type) {
@@ -522,8 +522,8 @@ async function fetchHappOrWebHappIfNecessary(
       const happOrWebHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
       fs.writeFileSync(happOrWebHappPath, new Uint8Array(buffer));
 
-      const uisDir = path.join(weFileSystem.uisDir);
-      const happsDir = path.join(weFileSystem.happsDir);
+      const uisDir = path.join(mossFileSystem.uisDir);
+      const happsDir = path.join(mossFileSystem.happsDir);
       const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
       fs.rmSync(tmpDir, { recursive: true });
       // webHappHash should only be returned if it is actually a webhapp
@@ -538,8 +538,8 @@ async function fetchHappOrWebHappIfNecessary(
     }
     case 'filesystem': {
       const happOrWebHappPath = source.path;
-      const uisDir = path.join(weFileSystem.uisDir);
-      const happsDir = path.join(weFileSystem.happsDir);
+      const uisDir = path.join(mossFileSystem.uisDir);
+      const happsDir = path.join(mossFileSystem.happsDir);
       const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
       const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
       return [
@@ -657,7 +657,7 @@ async function publishApplet(
 function storeAppAssetsInfo(
   appletConfig: AppletConfig,
   appId: string,
-  weFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   distributionInfo: DistributionInfo,
   happPath: string,
   happHash: string,
@@ -718,7 +718,7 @@ function storeAppAssetsInfo(
           };
 
   fs.writeFileSync(
-    path.join(weFileSystem.appsDir, `${appId}.json`),
+    path.join(mossFileSystem.appsDir, `${appId}.json`),
     JSON.stringify(appAssetsInfo, undefined, 4),
   );
 }

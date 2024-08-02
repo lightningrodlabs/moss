@@ -1,10 +1,10 @@
 import { Menu, app, dialog, shell } from 'electron';
-import { WeFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import { isMac } from './utils';
 import AdmZip from 'adm-zip';
 
 // extending from electron's default menu: https://github.com/electron/electron/blob/398dde9dfbdfcfd7757ead9a30785c01de9f0808/lib/browser/default-menu.ts#L12
-export const mossMenu = (mossFileSystem: WeFileSystem) => {
+export const mossMenu = (mossFileSystem: MossFileSystem) => {
   const macAppMenu: Electron.MenuItemConstructorOptions = { role: 'appMenu' };
   const helpMenu: Electron.MenuItemConstructorOptions = {
     role: 'help',

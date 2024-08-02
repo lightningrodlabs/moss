@@ -6,7 +6,7 @@ import * as childProcess from 'child_process';
 import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
 import { AdminWebsocket, AppAuthenticationToken, AppInfo, InstalledAppId } from '@holochain/client';
-import { AppAssetsInfo, DistributionInfo, WeFileSystem } from './filesystem';
+import { AppAssetsInfo, DistributionInfo, MossFileSystem } from './filesystem';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -18,7 +18,7 @@ export class HolochainManager {
   adminPort: AdminPort;
   appPort: AppPort;
   adminWebsocket: AdminWebsocket;
-  fs: WeFileSystem;
+  fs: MossFileSystem;
   installedApps: AppInfo[];
   weEmitter: WeEmitter;
   version: HolochainVersion;
@@ -27,7 +27,7 @@ export class HolochainManager {
   constructor(
     processHandle: childProcess.ChildProcessWithoutNullStreams,
     weEmitter: WeEmitter,
-    launcherFileSystem: WeFileSystem,
+    mossFileSystem: MossFileSystem,
     adminPort: AdminPort,
     appPort: AppPort,
     adminWebsocket: AdminWebsocket,
@@ -39,14 +39,14 @@ export class HolochainManager {
     this.adminPort = adminPort;
     this.appPort = appPort;
     this.adminWebsocket = adminWebsocket;
-    this.fs = launcherFileSystem;
+    this.fs = mossFileSystem;
     this.installedApps = installedApps;
     this.version = version;
   }
 
   static async launch(
     weEmitter: WeEmitter,
-    launcherFileSystem: WeFileSystem,
+    mossFileSystem: MossFileSystem,
     binary: string,
     password: string,
     version: HolochainVersion,
@@ -74,6 +74,44 @@ export class HolochainManager {
     console.log('Writing conductor-config.yaml...');
 
     fs.writeFileSync(configPath, conductorConfig);
+
+    // TODO remove after breaking change
+    // Rename databases if they have old names
+    // ----------------------------------------------------------------------
+    const databasesDir = path.join(mossFileSystem.conductorDir, 'databases');
+    const p2pDir = path.join(databasesDir, 'p2p');
+    const p2pDbs = fs.readdirSync(p2pDir);
+    p2pDbs.forEach((file) => {
+      if (file.startsWith('p2p_')) {
+        const newFileName = file.replace('p2p_', '').replace('.sqlite', '');
+        fs.renameSync(path.join(p2pDir, file), path.join(p2pDir, newFileName));
+      }
+    });
+    const dhtDir = path.join(databasesDir, 'dht');
+    const dhtDbs = fs.readdirSync(dhtDir);
+    dhtDbs.forEach((file) => {
+      if (file.startsWith('dht-')) {
+        const newFileName = file.replace('dht-', '').replace('.sqlite', '');
+        fs.renameSync(path.join(dhtDir, file), path.join(dhtDir, newFileName));
+      }
+    });
+    const cacheDir = path.join(databasesDir, 'cache');
+    const cacheDbs = fs.readdirSync(cacheDir);
+    cacheDbs.forEach((file) => {
+      if (file.startsWith('cache-')) {
+        const newFileName = file.replace('cache-', '').replace('.sqlite', '');
+        fs.renameSync(path.join(cacheDir, file), path.join(cacheDir, newFileName));
+      }
+    });
+    const authoredDir = path.join(databasesDir, 'authored');
+    const authoredDbs = fs.readdirSync(authoredDir);
+    authoredDbs.forEach((file) => {
+      if (file.startsWith('authored-')) {
+        const newFileName = file.replace('authored-', '').replace('.sqlite', '');
+        fs.renameSync(path.join(authoredDir, file), path.join(authoredDir, newFileName));
+      }
+    });
+    // ----------------------------------------------------------------------
 
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
       env: {
@@ -137,7 +175,7 @@ export class HolochainManager {
             new HolochainManager(
               conductorHandle,
               weEmitter,
-              launcherFileSystem,
+              mossFileSystem,
               adminPort,
               appPort,
               adminWebsocket,

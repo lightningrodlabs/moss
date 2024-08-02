@@ -1,7 +1,7 @@
 import { BrowserWindow, nativeImage, net, session } from 'electron';
 import path from 'path';
 import url from 'url';
-import { WeFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import { setLinkOpenHandlers } from './utils';
 import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
 import { is } from '@electron-toolkit/utils';
@@ -85,13 +85,13 @@ export const createSplashscreenWindow = (): BrowserWindow => {
 
 export const createHappWindow = (
   appId: string,
-  launcherFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   appPort: number,
 ) => {
   // TODO create mapping between installed-app-id's and window ids
   const uiAssetsDir = [TOOLS_LIBRARY_APP_ID].includes(appId)
-    ? path.join(launcherFileSystem.uisDir, appId, 'assets')
-    : launcherFileSystem.appUiAssetsDir(appId);
+    ? path.join(mossFileSystem.uisDir, appId, 'assets')
+    : mossFileSystem.appUiAssetsDir(appId);
   if (!uiAssetsDir) {
     throw new Error(`No directory found for UI assets. Is it a headless app?`);
   }

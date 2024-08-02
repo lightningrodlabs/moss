@@ -1,5 +1,5 @@
 import { protocol, net } from 'electron';
-import { WeFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import url from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -15,7 +15,7 @@ const HAPP_IFRAME_SCRIPT = fs.readFileSync(
   'utf-8',
 );
 
-export async function handleAppletProtocol(weFileSystem: WeFileSystem) {
+export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
   protocol.handle('applet', async (request) => {
     // console.log('### Got applet request: ', request);
     // console.log('### Got request with url: ', request.url);
@@ -26,7 +26,7 @@ export async function handleAppletProtocol(weFileSystem: WeFileSystem) {
 
     const installedAppId = `applet#${lowerCasedAppletId}`;
 
-    const uiAssetsDir = weFileSystem.appUiAssetsDir(installedAppId);
+    const uiAssetsDir = mossFileSystem.appUiAssetsDir(installedAppId);
 
     if (!uiAssetsDir) {
       throw new Error(`Failed to find UI assets directory for requested applet assets.`);
@@ -62,7 +62,7 @@ export async function handleAppletProtocol(weFileSystem: WeFileSystem) {
 }
 
 export async function handleDefaultAppsProtocol(
-  weFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   holochainManager: HolochainManager | undefined,
 ) {
   protocol.handle('default-app', async (request) => {
@@ -73,7 +73,7 @@ export async function handleDefaultAppsProtocol(
 
     const installedAppId = `default-app#${uriComponents[0]}`;
 
-    const uiAssetsDir = weFileSystem.appUiAssetsDir(installedAppId);
+    const uiAssetsDir = mossFileSystem.appUiAssetsDir(installedAppId);
 
     if (!holochainManager) throw new Error('HolochainManager not defined');
 

@@ -1,7 +1,7 @@
 import winston, { createLogger, transports, format } from 'winston';
 import path from 'path';
 import fs from 'fs';
-import { WeFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import {
   HOLOCHAIN_ERROR,
   HOLOCHAIN_LOG,
@@ -22,10 +22,10 @@ const HOLOCHAIN_LOGGERS: Record<HolochainVersion, winston.Logger> = {};
 
 export function setupLogs(
   weEmitter: WeEmitter,
-  launcherFileSystem: WeFileSystem,
+  mossFileSystem: MossFileSystem,
   holochainLogsToTerminal: boolean,
 ) {
-  const logFilePath = path.join(launcherFileSystem.appLogsDir, 'we.log');
+  const logFilePath = path.join(mossFileSystem.appLogsDir, 'we.log');
   if (fs.existsSync(logFilePath)) {
     const stats = fs.statSync(logFilePath);
     // If existing logfile is larger than 1GB, delete it
