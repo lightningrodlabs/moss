@@ -80,37 +80,45 @@ export class HolochainManager {
     // ----------------------------------------------------------------------
     const databasesDir = path.join(mossFileSystem.conductorDir, 'databases');
     const p2pDir = path.join(databasesDir, 'p2p');
-    const p2pDbs = fs.readdirSync(p2pDir);
-    p2pDbs.forEach((file) => {
-      if (file.startsWith('p2p_')) {
-        const newFileName = file.replace('p2p_', '').replace('.sqlite', '');
-        fs.renameSync(path.join(p2pDir, file), path.join(p2pDir, newFileName));
-      }
-    });
+    if (fs.existsSync(p2pDir)) {
+      const p2pDbs = fs.readdirSync(p2pDir);
+      p2pDbs.forEach((file) => {
+        if (file.startsWith('p2p_')) {
+          const newFileName = file.replace('p2p_', '').replace('.sqlite', '');
+          fs.renameSync(path.join(p2pDir, file), path.join(p2pDir, newFileName));
+        }
+      });
+    }
     const dhtDir = path.join(databasesDir, 'dht');
-    const dhtDbs = fs.readdirSync(dhtDir);
-    dhtDbs.forEach((file) => {
-      if (file.startsWith('dht-')) {
-        const newFileName = file.replace('dht-', '').replace('.sqlite', '');
-        fs.renameSync(path.join(dhtDir, file), path.join(dhtDir, newFileName));
-      }
-    });
+    if (fs.existsSync(dhtDir)) {
+      const dhtDbs = fs.readdirSync(dhtDir);
+      dhtDbs.forEach((file) => {
+        if (file.startsWith('dht-')) {
+          const newFileName = file.replace('dht-', '').replace('.sqlite', '');
+          fs.renameSync(path.join(dhtDir, file), path.join(dhtDir, newFileName));
+        }
+      });
+    }
     const cacheDir = path.join(databasesDir, 'cache');
-    const cacheDbs = fs.readdirSync(cacheDir);
-    cacheDbs.forEach((file) => {
-      if (file.startsWith('cache-')) {
-        const newFileName = file.replace('cache-', '').replace('.sqlite', '');
-        fs.renameSync(path.join(cacheDir, file), path.join(cacheDir, newFileName));
-      }
-    });
+    if (fs.existsSync(cacheDir)) {
+      const cacheDbs = fs.readdirSync(cacheDir);
+      cacheDbs.forEach((file) => {
+        if (file.startsWith('cache-')) {
+          const newFileName = file.replace('cache-', '').replace('.sqlite', '');
+          fs.renameSync(path.join(cacheDir, file), path.join(cacheDir, newFileName));
+        }
+      });
+    }
     const authoredDir = path.join(databasesDir, 'authored');
-    const authoredDbs = fs.readdirSync(authoredDir);
-    authoredDbs.forEach((file) => {
-      if (file.startsWith('authored-')) {
-        const newFileName = file.replace('authored-', '').replace('.sqlite', '');
-        fs.renameSync(path.join(authoredDir, file), path.join(authoredDir, newFileName));
-      }
-    });
+    if (fs.existsSync(authoredDir)) {
+      const authoredDbs = fs.readdirSync(authoredDir);
+      authoredDbs.forEach((file) => {
+        if (file.startsWith('authored-')) {
+          const newFileName = file.replace('authored-', '').replace('.sqlite', '');
+          fs.renameSync(path.join(authoredDir, file), path.join(authoredDir, newFileName));
+        }
+      });
+    }
     // ----------------------------------------------------------------------
 
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
