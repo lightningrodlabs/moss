@@ -32,7 +32,7 @@ console.log('.deb file unpacked.');
 const posinstPath = `${unpackDirectory}/DEBIAN/postinst`;
 const postinstScript = fs.readFileSync(posinstPath, 'utf-8');
 const postinstScriptModified = postinstScript.replace(
-  "chrome-sandbox' || true",
+  '# SUID chrome-sandbox for Electron 5+',
   `chrome-sandbox' || true
 
 if [ -e /etc/lsb-release ]; then
@@ -47,6 +47,9 @@ if [ -e /etc/lsb-release ]; then
 
 
   if [ $release_version == "24.04" ]; then
+
+  # chown the sandbox on Ubuntu 24.04
+  chown '/opt/${productName}/chrome-sandbox' || true
 
   # add AppArmor profile on Ubuntu 24.04
   profile_content="# This profile allows everything and only exists to give the
@@ -64,9 +67,13 @@ profile ${appId} \\"/opt/${productName}/${appId}\\" flags=(unconfined) {
 
     echo "$profile_content" > /etc/apparmor.d/${appId}
 
+    systemctl reload apparmor.service
+
   fi
 
 fi
+
+# SUID chrome-sandbox for Electron 5+
 `,
 );
 
