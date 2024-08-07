@@ -13,6 +13,11 @@
   ],
   "0.12.x": [
     {
+      "type": "Release",
+      "timestamp": 1723020744459,
+      "message": "## Moss 0.12.8 released\n\nChange Log:\n- adds scrolling in tool library\n- fixes deb installation on Ubuntu 24.04"
+    },
+    {
       "type": "🗓️ Event",
       "timestamp": 1722977217170,
       "message": "## The Weave at DWeb 2024\n\nIf you are at DWeb, please [join the DWeb Moss Group!](weave-0.12://invite/1380ec17-abc5-4ead-bbf8-0c6026b2826a&progenitor=null)"
