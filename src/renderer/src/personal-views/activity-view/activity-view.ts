@@ -42,7 +42,14 @@ export class ActivityView extends LitElement {
   );
 
   render() {
-    return html`Hello from the activity view.`;
+    return html` <div class="column">
+      ${this._notificationFeed.value.map(
+        (appletNotification) =>
+          html`<div style="background: white; margin: 2px; border-radius: 10px; padding: 10px;">
+            ${appletNotification.notification.body}
+          </div>`,
+      )}
+    </div>`;
   }
 
   static styles = [
