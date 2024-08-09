@@ -58,7 +58,7 @@ import './edit-group-profile.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
-import '../../elements/tab-group.js';
+import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
 
@@ -71,7 +71,7 @@ import { AppletAgent, AppletHash, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
 import { appIdFromAppletHash, markdownParseSafe, modifiersToInviteUrl } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
-import { Tool, UpdateableEntity } from '../../tools-library/types.js';
+import { Tool, UpdateableEntity } from '../../personal-views/tool-library/types.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 TimeAgo.addDefaultLocale(en);

@@ -41,30 +41,30 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
-import '../layout/views/welcome-view.js';
+import '../personal-views/welcome-view/welcome-view.js';
 import '../groups/elements/entry-title.js';
-import './groups-sidebar.js';
-import './group-applets-sidebar.js';
-import './personal-view-sidebar.js';
-import './join-group-dialog.js';
+import './navigation/groups-sidebar.js';
+import './navigation/group-applets-sidebar.js';
+import './navigation/personal-view-sidebar.js';
+import './dialogs/join-group-dialog.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/cross-applet-main.js';
-import '../layout/views/tool-library.js';
-import '../layout/views/publishing-view.js';
+import '../personal-views/tool-library/tool-library.js';
+import '../personal-views/tool-publishing/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
-import './debugging-panel.js';
+import './debugging-panel/debugging-panel.js';
 
 import { weStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
-import { JoinGroupDialog } from './join-group-dialog.js';
-import { CreateGroupDialog } from './create-group-dialog.js';
+import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
+import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
-import './pocket.js';
-import './creatable-panel.js';
-import { MossPocket } from './pocket.js';
-import { CreatablePanel } from './creatable-panel.js';
+import './pocket/pocket.js';
+import './creatables/creatable-panel.js';
+import { MossPocket } from './pocket/pocket.js';
+import { CreatablePanel } from './creatables/creatable-panel.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
