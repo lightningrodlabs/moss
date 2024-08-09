@@ -144,7 +144,7 @@ export class PersonalViewSidebar extends LitElement {
         }}
       >
         <div class="moss-item-button">
-          <img src="mountain_stream.svg" style="height: 40px;" />
+          <img src="mountain_stream.svg" class="black-svg" style="height: 40px;" />
         </div>
       </topbar-button>
 
@@ -231,6 +231,11 @@ export class PersonalViewSidebar extends LitElement {
         width: 58px;
         height: 58px;
         box-shadow: 1px 2px 10px 0px #102520ab;
+      }
+
+      .black-svg {
+        filter: invert(15%) sepia(16%) saturate(2032%) hue-rotate(71deg) brightness(94%)
+          contrast(90%);
       }
     `,
   ];
