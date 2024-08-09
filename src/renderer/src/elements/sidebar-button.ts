@@ -71,7 +71,9 @@ export class SidebarButton extends LitElement {
             ? 'padded'
             : ''}
           "
-          style="${!this.notificationUrgency ? 'display: none' : ''}"
+          style="${!this.notificationUrgency || this.notificationUrgency === 'low'
+            ? 'display: none'
+            : ''}"
         >
           ${this.notificationCount && this.notificationUrgency === 'high'
             ? this.notificationCount

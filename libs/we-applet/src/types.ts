@@ -11,6 +11,7 @@ import {
   CallZomeRequest,
   AppAuthenticationToken,
   AgentPubKeyB64,
+  AgentPubKey,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -87,7 +88,7 @@ export type FrameNotification = {
    */
   icon_src: string | undefined;
   /**
-   * urgency level "low" only shows up in the We UI when opened
+   * urgency level "low" only shows up in Activity Feed(s)
    * urgency level "medium" shows up as a dot in the system tray icon
    * urgency level "high" additionally triggers an OS notification
    */
@@ -96,20 +97,27 @@ export type FrameNotification = {
    * Timestamp **in milliseconds** of when the event that the notification is about
    * has occured.
    * Ideally the timestamp of the DHT Action associated to the notification.
-   * It may be displayed by We in notification feeds and will be used to determine
+   * It may be displayed by Moss in notification feeds and will be used to determine
    * whether an event is "fresh" or has occurred while the user was offline.
-   * In the latter case, We will not show an OS notification for
-   * that notification on startup of We.
+   * In the latter case, Moss will not show an OS notification for
+   * that notification on startup of Moss.
    */
   timestamp: number;
+
+  aboutWal?: WAL;
+
+  fromAgent?: AgentPubKey;
+
+  forAgents?: AgentPubKey[];
+
   // /**
-  //  * If not provided, We resets the notification count (used for
+  //  * If not provided, Moss resets the notification count (used for
   //  * dots on applet icons and similar) for this message automatically when
   //  * the user opens the applet (default). Otherwise, the applet is assumed
   //  * to take care of clearing the notification count for this message via
   //  * use of resetNotificationCount() and based on applet-internal logic.
   //  * If handled improperly by the applet, this can lead to accumulation
-  //  * of notifications and We will delete stale notifications after
+  //  * of notifications and Moss will delete stale notifications after
   //  * a certain time period.
   //  */
   // customCountReset?: NotificationId;
@@ -135,7 +143,7 @@ export type AssetLocationAndInfo = {
   appletHash: AppletHash;
   assetInfo: AssetInfo;
   /**
-   * Only set if We is run in applet development mode and the applet is running in hot-reloading mode
+   * Only set if Moss is run in applet development mode and the applet is running in hot-reloading mode
    */
   appletDevPort?: number;
 };
@@ -197,7 +205,7 @@ export type CrossAppletView =
 
 export type CreatableType = {
   /**
-   * The label for the creatable that's displayed in We to open the creatable view
+   * The label for the creatable that's displayed in Moss to open the creatable view
    */
   label: string;
   icon_src: string;
@@ -243,7 +251,7 @@ export type RenderInfo =
        * Non-exhaustive array of profiles of the groups the given applet is shared with.
        * Note that an applet may be shared with other groups beyond the ones returned
        * by this array if the applet has been federated with groups that the agent
-       * of the given We instance is not part of.
+       * of the given Moss instance is not part of.
        */
       groupProfiles: GroupProfile[];
     }
