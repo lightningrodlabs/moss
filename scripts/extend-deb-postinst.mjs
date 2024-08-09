@@ -33,8 +33,7 @@ const posinstPath = `${unpackDirectory}/DEBIAN/postinst`;
 const postinstScript = fs.readFileSync(posinstPath, 'utf-8');
 const postinstScriptModified = postinstScript.replace(
   '# SUID chrome-sandbox for Electron 5+',
-  `chrome-sandbox' || true
-
+  `
 if [ -e /etc/lsb-release ]; then
 
   while IFS='=' read -r key value
