@@ -45,7 +45,7 @@ import {
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
-import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
+import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
@@ -74,7 +74,7 @@ import {
 } from './types.js';
 import { Applet } from './types.js';
 import { GroupClient } from './groups/group-client.js';
-import { Tool, UpdateableEntity } from './tools-library/types.js';
+import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';

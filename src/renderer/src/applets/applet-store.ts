@@ -19,7 +19,7 @@ import {
   toolBundleActionHashFromDistInfo,
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
-import { ToolsLibraryStore } from '../tools-library/tool-library-store.js';
+import { ToolsLibraryStore } from '../personal-views/tool-library/tool-library-store.js';
 
 export class AppletStore {
   isAppletDev: boolean;

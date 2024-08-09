@@ -18,7 +18,7 @@ import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js
 import { weStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
-import '../../elements/wal-pocket.js';
+import '../../elements/pocket/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { openWalInWindow } from '../../utils.js';

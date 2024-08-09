@@ -49,7 +49,7 @@ import {
   toLowerCaseB64,
 } from '../utils.js';
 import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
-import { Tool, UpdateableEntity } from '../tools-library/types.js';
+import { Tool, UpdateableEntity } from '../personal-views/tool-library/types.js';
 import { FoyerStore } from './foyer.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;

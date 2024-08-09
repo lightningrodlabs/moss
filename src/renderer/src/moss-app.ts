@@ -6,19 +6,16 @@ import { LitElement, html, css } from 'lit';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
-import './password/enter-password.js';
-import './password/create-password.js';
-import './password/factory-reset.js';
 import './elements/main-dashboard.js';
 import { weStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
-import { ToolsLibraryStore } from './tools-library/tool-library-store.js';
+import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { getConductorInfo, isAppletDev } from './electron-api.js';
-import { ToolsLibraryClient } from './tools-library/tools-library-client.js';
+import { ToolsLibraryClient } from './personal-views/tool-library/tools-library-client.js';
 
-type State = { state: 'loading' } | { state: 'running' } | { state: 'factoryReset' };
+type State = { state: 'loading' } | { state: 'running' };
 
 @customElement('moss-app')
 export class MossApp extends LitElement {
@@ -222,17 +219,6 @@ export class MossApp extends LitElement {
         return html`
           ${this.renderFeedbackBoard()}
           <main-dashboard id="main-dashboard"></main-dashboard>
-        `;
-      case 'factoryReset':
-        return html`
-          <div class="column center-content" style="flex: 1">
-            factory reset not implemented
-            <!-- <factory-reset
-              @cancel-factory-reset=${() => {
-              // this.state = this.previousState;
-            }}
-            ></factory-reset> -->
-          </div>
         `;
     }
   }
