@@ -42,6 +42,7 @@ import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
+import '../personal-views/activity-view/activity-view.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './navigation/group-applets-sidebar.js';
@@ -761,7 +762,6 @@ export class MainDashboard extends LitElement {
     return html`
       <welcome-view
         id="welcome-view"
-        @click=${(e) => e.stopPropagation()}
         .updateFeed=${this._updateFeed}
         style="${this.displayMossView('welcome')
           ? 'display: flex; flex: 1;'
@@ -774,6 +774,14 @@ export class MainDashboard extends LitElement {
           this.openViews.openAppletMain(e.detail.appletHash);
         }}
       ></welcome-view>
+
+      <activity-view
+        style="${this.displayMossView('activity-view')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: hidden;"
+      ></activity-view>
 
       <tool-library
         style="${this.displayMossView('tool-library')
