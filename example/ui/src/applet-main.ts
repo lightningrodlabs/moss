@@ -155,7 +155,7 @@ export class AppletMain extends LitElement {
   async sendActivityNotification(delay: number) {
     const selectedWal = await this.weaveClient.userSelectWal();
     const notification: FrameNotification = {
-      title: 'Title',
+      title: 'Activity Notification Title',
       body: 'Message body',
       notification_type: 'default',
       icon_src: 'https://static-00.iconduck.com/assets.00/duckduckgo-icon-512x512-zp12dd1l.png',
@@ -218,7 +218,7 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
-            <button @click=${() => this.sendActivityNotification(5000)}>
+            <button @click=${() => this.sendActivityNotification(0)}>
               Send Activity Notification
             </button>
             <div>Enter WAL:</div>

@@ -59,26 +59,58 @@ export class ActivityAsset extends LitElement {
   }
   
   render() {
-    switch (this.assetInfo.value.status) {
-        case 'pending':
-          return html``;
-        case 'complete':
-          return this.renderName(this.assetInfo.value.value);
-        case 'error':
-          console.error(
-            `Failed to get asset info for WAL '${this.wal}': ${this.assetInfo.value.error}`,
-          );
-          return html`[Unknown]`;
-    }
+    // switch (this.assetInfo.value.status) {
+    //     case 'pending':
+    //       return html``;
+    //     case 'complete':
+    //       return this.renderName(this.assetInfo.value.value);
+    //     case 'error':
+    //       console.error(
+    //         `Failed to get asset info for WAL '${this.wal}': ${this.assetInfo.value.error}`,
+    //       );
+    //       return html`[Unknown]`;
+    // }
     return html`
-        <sl-card>
-        <sl-icon slot="header" name="activity"></sl-icon>
-        <div class="card-content">
-            <applet-logo></applet-logo>
-            <applet-title></applet-title>
-            <p>${JSON.stringify(this.wal)}</p>
+        <div 
+            @click=${() => {
+                console.log('Clicked on asset', this.wal);
+            }}
+            class="activity-asset">
+            This is a placeholder title
+            ${this.notifications.length}
+            <div>
+                ${this.notifications.map((notification: any) => {
+                    return html`
+                        <div
+                            <sl-icon
+                                .src=${notification.notification.icon_src}
+                                style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 12px;"
+                            ></sl-icon>
+                            ${notification.notification.title}
+                        </div>
+                    `
+                })}
+            </div>
         </div>
-        </sl-card>
     `;
   }
+  
+  static styles = [
+    css`
+    .activity-asset {
+        background: white; 
+        margin-bottom: 10px; 
+        border-radius: 5px; 
+        padding: 10px; 
+        background: #53d43f; 
+        color: #3a622d; 
+        width: calc(100vw - 221px);
+    }
+
+    .activity-asset:hover {
+        cursor: pointer;
+        background: #4bbe39;
+    }
+    `,
+  ];
 }

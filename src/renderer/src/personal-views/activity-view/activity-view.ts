@@ -39,7 +39,7 @@ export class ActivityView extends LitElement {
   timeAgo = new TimeAgo('en-US');
 
   @state()
-  sortMethod = 'new';
+  sortMethod = 'popular';
 
   _notificationFeed = new StoreSubscriber(
     this,
@@ -74,15 +74,15 @@ export class ActivityView extends LitElement {
 
   sortNotifications(combinedNotifications: any) {
     switch (this.sortMethod) {
-      case 'top':
+      case 'active':
         return Object.keys(combinedNotifications).sort((a, b) => {
           return combinedNotifications[b].notifications.length - combinedNotifications[a].notifications.length;
         });
-      case 'new':
+      case 'latest':
         return Object.keys(combinedNotifications).sort((a, b) => {
           return combinedNotifications[b].notifications[0].notification.timestamp - combinedNotifications[a].notifications[0].notification.timestamp;
         });
-      case 'hot':
+      case 'popular':
         return Object.keys(combinedNotifications).sort((a, b) => {
           return combinedNotifications[b].notifications.length - combinedNotifications[a].notifications.length;
         });
@@ -100,30 +100,28 @@ export class ActivityView extends LitElement {
     <div class="column">
       <div class="sort-buttons">
         <button 
-          @click=${() => this.sortMethod = 'new'} 
-          style=${this.getButtonStyle('new')}
-        >New</button>
+          @click=${() => this.sortMethod = 'popular'} 
+          style=${this.getButtonStyle('popular')}
+        >Popular</button>
         <button 
-          @click=${() => this.sortMethod = 'top'} 
-          style=${this.getButtonStyle('top')}
-        >Top</button>
+          @click=${() => this.sortMethod = 'active'} 
+          style=${this.getButtonStyle('active')}
+        >Active</button>
         <button 
-          @click=${() => this.sortMethod = 'hot'} 
-          style=${this.getButtonStyle('hot')}
-        >Hot</button>
+          @click=${() => this.sortMethod = 'latest'} 
+          style=${this.getButtonStyle('latest')}
+        >Latest</button>
       </div>
-      ${sortedNotifications.map((key) => {
+      ${sortedNotifications.length === 0 ? html`
+        <div style="background: white; border-radius: 10px; background: transparent; color: #468c2f; width: calc(100vw - 221px);">
+          Your notifications will appear here
+        </div>
+      ` : sortedNotifications.map((key) => {
         const notifications = combinedNotifications[key].notifications;
-        // const assetInfo = combinedNotifications[key].assetInfo;
         return html`
-          <div style="background: white; margin: 2px; border-radius: 10px; padding: 10px; background: #53d43f; color: #3a622d; width: calc(100vw - 221px);">
-            This is a placeholder title
-            ${notifications.length}
-            <activity-asset .notifications=${notifications} .wal=${key}></activity-asset>
-          </div>
+          <activity-asset .notifications=${notifications} .wal=${key}></activity-asset>
         `;
-      }
-    )}
+      })}
     </div>`;
   }
 
@@ -136,7 +134,8 @@ export class ActivityView extends LitElement {
         border-radius: 5px 0 0 0;
       }
       .column {
-        padding: 1em;
+        padding: 10px;
+
       .sort-buttons {
         margin-bottom: 10px;
       }
