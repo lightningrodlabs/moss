@@ -152,6 +152,28 @@ export class AppletMain extends LitElement {
     }, delay);
   }
 
+  async sendActivityNotification(delay: number) {
+    const selectedWal = await this.weaveClient.userSelectWal();
+    const notification: FrameNotification = {
+      title: 'Title',
+      body: 'Message body',
+      notification_type: 'default',
+      icon_src: 'https://static-00.iconduck.com/assets.00/duckduckgo-icon-512x512-zp12dd1l.png',
+      urgency: 'low',
+      timestamp: Date.now(),
+      aboutWal: selectedWal,
+    };
+    console.log('Sending activity notification', notification);
+    setTimeout(() => {
+      this.dispatchEvent(
+        new CustomEvent('notification', {
+          detail: [notification],
+          bubbles: true,
+        })
+      );
+    }, delay);
+  }
+
   async userSelectWal() {
     const selectedWal = await this.weaveClient.userSelectWal();
     this.selectedWal = selectedWal;
@@ -195,6 +217,9 @@ export class AppletMain extends LitElement {
             </button>
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
+            </button>
+            <button @click=${() => this.sendActivityNotification(5000)}>
+              Send Activity Notification
             </button>
             <div>Enter WAL:</div>
             <textarea
