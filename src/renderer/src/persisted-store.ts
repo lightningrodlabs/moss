@@ -1,6 +1,7 @@
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
 import { AppletNotificationSettings } from './applets/types';
+import { destringifyAndDecode, encodeAndStringify } from './utils';
 
 /**
  * A store that's persisted.
@@ -192,9 +193,9 @@ export interface KeyValueStore {
 
 export function getLocalStorageItem<T>(key: string): T | undefined {
   const item: string | null = window.localStorage.getItem(key);
-  return item ? JSON.parse(item) : undefined;
+  return item ? destringifyAndDecode<T>(item) : undefined;
 }
 
 export function setLocalStorageItem<T>(key: string, value: T): void {
-  window.localStorage.setItem(key, JSON.stringify(value));
+  window.localStorage.setItem(key, encodeAndStringify(value));
 }

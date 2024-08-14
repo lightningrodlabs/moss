@@ -54,6 +54,8 @@ import {
   appletHashFromAppId,
   appletIdFromAppId,
   deStringifyWal,
+  destringifyAndDecode,
+  encodeAndStringify,
   findAppForDnaHash,
   initAppClient,
   isAppDisabled,
@@ -241,10 +243,10 @@ export class MossStore {
   updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
     this._notificationFeed.update((store) => {
       // console.log('store: ', store);
-      const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
+      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
       const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
         .value(appletId, daysSinceEpoch)
-        .map((notification) => JSON.stringify({ appletId, notification }));
+        .map((notification) => encodeAndStringify({ appletId, notification }));
       // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
       // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
       const updatedNotifications: string[] = [
@@ -252,7 +254,7 @@ export class MossStore {
       ];
       // console.log('updatedNotifications: ', updatedNotifications);
       return updatedNotifications
-        .map((notificationsString) => JSON.parse(notificationsString))
+        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
         .sort(
           (appletNotification_a, appletNotification_b) =>
             appletNotification_b.notification.timestamp -

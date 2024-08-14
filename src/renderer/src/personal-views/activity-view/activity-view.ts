@@ -23,7 +23,6 @@ import { stringifyWal } from '../../utils.js';
 @customElement('activity-view')
 export class ActivityView extends LitElement {
   @consume({ context: mossStoreContext })
-  
   @state()
   _mossStore!: MossStore;
 
@@ -53,15 +52,19 @@ export class ActivityView extends LitElement {
     for (let i = 0; i < notifications.length; i++) {
       const notification = notifications[i];
       if (notification.notification.aboutWal) {
-        console.log('Notification with aboutWal: ', stringifyWal(notification.notification.aboutWal), notification.notification.aboutWal);
+        console.log(
+          'Notification with aboutWal: ',
+          stringifyWal(notification.notification.aboutWal),
+          notification.notification.aboutWal,
+        );
         const aboutWalUrl = stringifyWal(notification.notification.aboutWal);
         if (combinedNotifications[aboutWalUrl]) {
           combinedNotifications[aboutWalUrl].notifications.push(notification);
         } else {
-          let res = this._mossStore.assetInfo.get(stringifyWal(notification.notification.aboutWal))
+          let res = this._mossStore.assetInfo.get(stringifyWal(notification.notification.aboutWal));
           console.log('Asset Info: ', res);
-          combinedNotifications[aboutWalUrl] = { 
-            notifications: [notification], 
+          combinedNotifications[aboutWalUrl] = {
+            notifications: [notification],
           };
         }
       } else {
@@ -76,16 +79,27 @@ export class ActivityView extends LitElement {
     switch (this.sortMethod) {
       case 'active':
         return Object.keys(combinedNotifications).sort((a, b) => {
-          return combinedNotifications[b].notifications.length - combinedNotifications[a].notifications.length;
+          return (
+            combinedNotifications[b].notifications.length -
+            combinedNotifications[a].notifications.length
+          );
         });
       case 'latest':
         return Object.keys(combinedNotifications).sort((a, b) => {
-          return combinedNotifications[b].notifications[0].notification.timestamp - combinedNotifications[a].notifications[0].notification.timestamp;
+          return (
+            combinedNotifications[b].notifications[0].notification.timestamp -
+            combinedNotifications[a].notifications[0].notification.timestamp
+          );
         });
       case 'popular':
         return Object.keys(combinedNotifications).sort((a, b) => {
-          return combinedNotifications[b].notifications.length - combinedNotifications[a].notifications.length;
+          return (
+            combinedNotifications[b].notifications.length -
+            combinedNotifications[a].notifications.length
+          );
         });
+      default:
+        return [];
     }
   }
 
@@ -96,32 +110,35 @@ export class ActivityView extends LitElement {
   render() {
     const combinedNotifications = this.combineNotifications(this._notificationFeed.value);
     const sortedNotifications = this.sortNotifications(combinedNotifications);
-    return html`
-    <div class="column">
+    return html` <div class="column">
       <div class="sort-buttons">
-        <button 
-          @click=${() => this.sortMethod = 'popular'} 
+        <button
+          @click=${() => (this.sortMethod = 'popular')}
           style=${this.getButtonStyle('popular')}
-        >Popular</button>
-        <button 
-          @click=${() => this.sortMethod = 'active'} 
-          style=${this.getButtonStyle('active')}
-        >Active</button>
-        <button 
-          @click=${() => this.sortMethod = 'latest'} 
-          style=${this.getButtonStyle('latest')}
-        >Latest</button>
+        >
+          Popular
+        </button>
+        <button @click=${() => (this.sortMethod = 'active')} style=${this.getButtonStyle('active')}>
+          Active
+        </button>
+        <button @click=${() => (this.sortMethod = 'latest')} style=${this.getButtonStyle('latest')}>
+          Latest
+        </button>
       </div>
-      ${sortedNotifications.length === 0 ? html`
-        <div style="background: white; border-radius: 10px; background: transparent; color: #468c2f; width: calc(100vw - 221px);">
-          Your notifications will appear here
-        </div>
-      ` : sortedNotifications.map((key) => {
-        const notifications = combinedNotifications[key].notifications;
-        return html`
-          <activity-asset .notifications=${notifications} .wal=${key}></activity-asset>
-        `;
-      })}
+      ${sortedNotifications.length === 0
+        ? html`
+            <div
+              style="background: white; border-radius: 10px; background: transparent; color: #468c2f; width: calc(100vw - 221px);"
+            >
+              Your notifications will appear here
+            </div>
+          `
+        : sortedNotifications.map((key) => {
+            const notifications = combinedNotifications[key].notifications;
+            return html`
+              <activity-asset .notifications=${notifications} .wal=${key}></activity-asset>
+            `;
+          })}
     </div>`;
   }
 
