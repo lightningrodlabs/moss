@@ -776,6 +776,10 @@ export class MainDashboard extends LitElement {
       ></welcome-view>
 
       <activity-view
+        @open-wal=${async (e) => {
+          console.log('Opening WAL 3: ', e.detail);
+          await this.handleOpenWal(e.detail)}
+        }
         style="${this.displayMossView('activity-view')
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing
