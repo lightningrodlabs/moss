@@ -2,7 +2,7 @@ import { pipe, completed, StoreSubscriber, toPromise } from '@holochain-open-dev
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import type { AssetInfo } from '@lightningrodlabs/we-applet';
+import type { AppletId, AssetInfo, FrameNotification } from '@lightningrodlabs/we-applet';
 import { deStringifyWal } from '../../utils.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -21,30 +21,21 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { formatDistanceToNow } from 'date-fns';
 
 @localized()
-@customElement('activity-asset')
-export class ActivityAsset extends LitElement {
+@customElement('notification-asset')
+export class NotificationAsset extends LitElement {
   @consume({ context: mossStoreContext })
   
   @state()
   _mossStore!: MossStore;
-
-  @property({ type: Boolean })
-  showNotifications = false;
   
   @property()
   notifications: any;
-  
-  @property()
-  wal: any;
 
   @property()
   appletHash: AppletHash | undefined;
 
-  assetInfo = new StoreSubscriber(
-    this,
-    () => this._mossStore.assetInfo.get(this.wal),
-    () => [this.wal],
-  );
+  @property()
+  notification: FrameNotification | undefined;
 
   _groupProfiles = new StoreSubscriber(
     this,
@@ -148,110 +139,44 @@ export class ActivityAsset extends LitElement {
   }
   
   render() {
-    switch (this.assetInfo.value.status) {
+    switch (this.appletLogo.value.status) {
         case 'pending':
           return html``;
         case 'complete':
           return html`
-            <div style="display: flex; flex-direction: column; margin-bottom: 4px;">
-              <div class="activity-asset-outer">
-                <div 
-                  @click=${() => {
-                      console.log('Clicked on asset', this.wal);
-                      this.dispatchEvent(
-                        new CustomEvent('open-wal', {
-                          detail: deStringifyWal(this.wal),
-                          bubbles: true,
-                          composed: true,
-                        }),
-                      );
-                  }}
-                  class="activity-asset">
-                  <div
-                    style="display: flex; align-items: center; margin-right: 10px;"
-                  >
-                    <sl-icon
-                      .src=${this.assetInfo.value.value.icon_src}
-                      style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 50px;"
-                    ></sl-icon>
-                  </div>
-                  <div style="display: flex; flex-direction: column; margin-right: 10px;">
-                    <div class="asset-title">
-                      ${this.assetInfo?.value?.value?.name}
-                    </div>
-                    <div style="display: flex; flex-direction: row;">
-                      <div style="margin-right: 10px;">
-                        ${this.renderFirstGroupProfileIcon()}
-                      </div>
-                      ${this.renderAppletLogo()}
-                      ${this.renderAppletName()}
-                    </div>
-                    <div style="display: flex; flex-direction: row;">
-                      <div
-                        style=""
-                      >
-                        ${this.notifications.length} notifications
-                      </div>
-                      <div
-                        style="margin-left: 10px;"
-                      >
-                        ${new Set(
-                          this.notifications.map((notification) => JSON.stringify(notification.notification.fromAgent)),
-                        ).size - 1} people
-                      </div>
-                      <div
-                        style="margin-left: 10px;"
-                      >
-                        latest ${
-                          formatDistanceToNow(
-                            new Date(
-                              this.notifications.reduce((latest, current) => {
-                                return current.notification.timestamp > latest.notification.timestamp ? current : latest;
-                              }).notification.timestamp
-                            ),
-                            { addSuffix: true }
-                          )
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                ${this.showNotifications ? html`
-                  <button
-                    @click=${() => {
-                      this.showNotifications = false;
-                    }}
-                    class="hide-notifications-button"
-                  >
-                    ⌃
-                  </button>
-                ` : html`
-                  <button
-                    @click=${() => {
-                      this.showNotifications = true;
-                    }}
-                    class="show-notifications-button"
-                  >
-                    ⌄
-                  </button>
-                `}
+            <div class="notification-card"
+              @click=${() => {
+                this.dispatchEvent(
+                  new CustomEvent('open-applet-main', {
+                    detail: this.appletHash,
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+            }}
+            >
+            <div class="notification-title">${this.notification?.title}</div>
+            <div style="display: flex; flex-direction: row;">
+              <div style="margin-right: 10px;">
+                ${this.renderFirstGroupProfileIcon()}
               </div>
-              </div>
-              <div class="displayed-notifications-list">
-                ${this.showNotifications
-                  ? html`
-                      ${this.notifications.map((notification: any) => {
-                        return html`
-                          <div style="padding: 4px 4px 0 4px">
-                            ${notification.notification.title}
-                          </div>
-                        `;
-                      })}
-                    `
-                  : ''}
-              </div>
+              ${this.renderAppletLogo()}
+              ${this.renderAppletName()}
             </div>
-        `;
+            <div class="notification-body">${this.notification?.body}</div>
+            <div class="notification-date">
+              ${this.notification ? 
+                formatDistanceToNow(
+                  new Date(
+                    this.notification?.timestamp
+                  ),
+                  { addSuffix: true }
+                )
+                 : "unknown date"
+              }
+            </div>
+          </div>`;
+
         case 'error':
           console.error(
             `Failed to get asset info for WAL '${this.wal}': ${this.assetInfo.value.error}`,
@@ -329,6 +254,30 @@ export class ActivityAsset extends LitElement {
     .displayed-notifications-list > div:first-child {
       margin-top: 4px;
     }
-    `,
+
+    .notification-card {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #3a622d;
+        color: #53d43f;
+      }
+    .notification-card:hover {
+      background-color: #3f6733;
+      cursor: pointer;
+    }
+    .notification-title {
+      font-weight: bold;
+      color: #53d43f;
+    }
+    .notification-date {
+      font-size: 0.9em;
+      color: #53d43f;
+    }
+    .notification-content {
+      font-size: 1em;
+      color: #53d43f;
+    }
+  `,
   ];
 }

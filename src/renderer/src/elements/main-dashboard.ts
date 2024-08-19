@@ -780,6 +780,9 @@ export class MainDashboard extends LitElement {
           console.log('Opening WAL 3: ', e.detail);
           await this.handleOpenWal(e.detail)}
         }
+        @open-applet-main=${(e: CustomEvent) => {
+          this.openViews.openAppletMain(e.detail);
+        }}
         style="${this.displayMossView('activity-view')
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing

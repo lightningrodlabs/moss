@@ -14,12 +14,13 @@ import {
   ReadonlyPeerStatusStore,
   GroupPermissionType,
 } from '@lightningrodlabs/we-applet';
-import { AppClient } from '@holochain/client';
+import { AgentPubKey, AppClient } from '@holochain/client';
 import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { consume } from '@lit/context';
 import './elements/agent-status.js';
+import "@holochain-open-dev/profiles/dist/elements/search-agent.js";
 
 @localized()
 @customElement('applet-main')
@@ -66,6 +67,9 @@ export class AppletMain extends LitElement {
 
   @state()
   groupPermissionType: GroupPermissionType | undefined;
+
+  @state()
+  selectedAgent: AgentPubKey | undefined;
   // @state()
   // unsubscribe: undefined | (() => void);
 
@@ -152,7 +156,12 @@ export class AppletMain extends LitElement {
     }, delay);
   }
 
-  async sendActivityNotification(delay: number) {
+  handleAgentSelected(e: any) {
+    console.log("Agent selected", e.detail);
+    this.selectedAgent = e.detail.agentPubKey;
+  }
+
+  async sendActivityNotification(delay: number, agent: AgentPubKey | undefined) {
     const selectedWal = await this.weaveClient.userSelectWal();
     const notification: FrameNotification = {
       title: 'Activity Notification Title',
@@ -162,6 +171,7 @@ export class AppletMain extends LitElement {
       urgency: 'low',
       timestamp: Date.now(),
       aboutWal: selectedWal,
+      fromAgent: agent
     };
     console.log('Sending activity notification', notification);
     setTimeout(() => {
@@ -218,7 +228,10 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
-            <button @click=${() => this.sendActivityNotification(0)}>
+            <search-agent
+                @agent-selected=${this.handleAgentSelected}
+            ></search-agent>
+            <button @click=${() => {console.log(this.selectedAgent); this.sendActivityNotification(0, this.selectedAgent)}}>
               Send Activity Notification
             </button>
             <div>Enter WAL:</div>
