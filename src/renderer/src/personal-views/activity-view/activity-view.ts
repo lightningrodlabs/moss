@@ -18,7 +18,7 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import TimeAgo from 'javascript-time-ago';
-import { stringifyWal, appIdFromAppletId, appletHashFromAppId } from '../../utils.js';
+import { stringifyWal, appIdFromAppletId, appletHashFromAppId, encodeAndStringify } from '../../utils.js';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { app } from 'electron';
 
@@ -211,10 +211,10 @@ export class ActivityView extends LitElement {
         // }
         return Object.keys(filteredByTime).sort((a, b) => {
           let numberOfAgentsCountA = new Set(
-            filteredByTime[a].notifications.map((notification) => JSON.stringify(notification.notification.fromAgent)),
+            filteredByTime[a].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
           ).size;
           let numberOfAgentsCountB = new Set(
-            filteredByTime[b].notifications.map((notification) => JSON.stringify(notification.notification.fromAgent)),
+            filteredByTime[b].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
           ).size;
           console.log('Number of Agents Count A: ', numberOfAgentsCountA, numberOfAgentsCountB);
           return numberOfAgentsCountB - numberOfAgentsCountA;

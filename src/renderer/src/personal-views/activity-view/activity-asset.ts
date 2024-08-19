@@ -3,7 +3,7 @@ import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import type { AssetInfo } from '@lightningrodlabs/we-applet';
-import { deStringifyWal } from '../../utils.js';
+import { deStringifyWal, encodeAndStringify } from '../../utils.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -196,7 +196,7 @@ export class ActivityAsset extends LitElement {
                         style="margin-left: 10px;"
                       >
                         ${new Set(
-                          this.notifications.map((notification) => JSON.stringify(notification.notification.fromAgent)),
+                          this.notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
                         ).size - 1} people
                       </div>
                       <div
