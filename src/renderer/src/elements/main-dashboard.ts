@@ -338,21 +338,6 @@ export class MainDashboard extends LitElement {
     if (!alreadyOpen) {
       this._openTabs[tabInfo.id] = tabInfo;
     }
-    // In order to be able to show the indicators about which applet
-    // this HRL belongs to, the applets bar needs to actually be there,
-    // i.e. we need to switch to group view if we haven't yet
-    if (
-      this._dashboardState.value.viewType === 'personal' &&
-      tabInfo.tab.type === 'wal' &&
-      tabInfo.tab.groupHashesB64.length > 0
-    ) {
-      const groupDnaHash = decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]);
-      this.openGroup(groupDnaHash);
-      this._dashboardState.value = {
-        viewType: 'group',
-        groupHash: groupDnaHash,
-      };
-    }
     this._mossStore.setAssetViewerState({
       position: 'side',
       visible: true,
