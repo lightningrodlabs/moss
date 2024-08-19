@@ -2,8 +2,7 @@ import { pipe, completed, StoreSubscriber, toPromise } from '@holochain-open-dev
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import type { AppletId, AssetInfo, FrameNotification } from '@lightningrodlabs/we-applet';
-import { deStringifyWal } from '../../utils.js';
+import type { FrameNotification } from '@lightningrodlabs/we-applet';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -17,22 +16,21 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { AppletHash } from '@lightningrodlabs/we-applet';
 import { msg } from '@lit/localize';
-import { ifDefined } from 'lit/directives/if-defined.js';
 import { formatDistanceToNow } from 'date-fns';
+import { AppletNotification } from '../../types.js';
 
 @localized()
 @customElement('notification-asset')
 export class NotificationAsset extends LitElement {
   @consume({ context: mossStoreContext })
-  
   @state()
   _mossStore!: MossStore;
-  
-  @property()
-  notifications: any;
 
   @property()
-  appletHash: AppletHash | undefined;
+  notifications!: AppletNotification[];
+
+  @property()
+  appletHash!: AppletHash;
 
   @property()
   notification: FrameNotification | undefined;
@@ -56,7 +54,7 @@ export class NotificationAsset extends LitElement {
     () =>
       pipe(this._mossStore.appletStores.get(this.appletHash), (appletStore) => {
         console.log('Applet store logo:', appletStore.logo);
-        return appletStore ? appletStore.logo : completed(undefined)
+        return appletStore ? appletStore.logo : completed(undefined);
       }),
     () => [this.appletHash],
   );
@@ -68,7 +66,7 @@ export class NotificationAsset extends LitElement {
         if (appletStore) {
           return appletStore.applet.custom_name;
         }
-        return completed(undefined);
+        return undefined;
       }),
     () => [this.appletHash],
   );
@@ -80,18 +78,15 @@ export class NotificationAsset extends LitElement {
       <img
         style="height: 14px; width: 14px; margin-bottom: -3px; margin-right: 3px;"
         .src=${logo}
-          alt="TODO"
-        />
+        alt="TODO"
+      />
     `;
   }
 
   renderAppletLogo() {
     switch (this.appletLogo.value.status) {
       case 'pending':
-        return html`<sl-skeleton
-          style="height: 14px; width: 14px;"
-          effect="pulse"
-        ></sl-skeleton> `;
+        return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
         return this.renderLogo(this.appletLogo.value.value);
       case 'error':
@@ -103,9 +98,6 @@ export class NotificationAsset extends LitElement {
         ></display-error>`;
     }
   }
-  // renderAppletLogo() {
-  //   return html`${JSON.stringify(this.appletLogo.value)}`;
-  // }
 
   renderAppletName() {
     switch (this.appletName.value.status) {
@@ -137,147 +129,138 @@ export class NotificationAsset extends LitElement {
         return html`error`;
     }
   }
-  
+
   render() {
     switch (this.appletLogo.value.status) {
-        case 'pending':
-          return html``;
-        case 'complete':
-          return html`
-            <div class="notification-card"
-              @click=${() => {
-                this.dispatchEvent(
-                  new CustomEvent('open-applet-main', {
-                    detail: this.appletHash,
-                    bubbles: true,
-                    composed: true,
-                  }),
-                );
-            }}
-            >
-            <div class="notification-title">${this.notification?.title}</div>
-            <div style="display: flex; flex-direction: row;">
-              <div style="margin-right: 10px;">
-                ${this.renderFirstGroupProfileIcon()}
-              </div>
-              ${this.renderAppletLogo()}
-              ${this.renderAppletName()}
-            </div>
-            <div class="notification-body">${this.notification?.body}</div>
-            <div class="notification-date">
-              ${this.notification ? 
-                formatDistanceToNow(
-                  new Date(
-                    this.notification?.timestamp
-                  ),
-                  { addSuffix: true }
-                )
-                 : "unknown date"
-              }
-            </div>
-          </div>`;
+      case 'pending':
+        return html``;
+      case 'complete':
+        return html` <div
+          class="notification-card"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('open-applet-main', {
+                detail: this.appletHash,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="notification-title">${this.notification?.title}</div>
+          <div style="display: flex; flex-direction: row;">
+            <div style="margin-right: 10px;">${this.renderFirstGroupProfileIcon()}</div>
+            ${this.renderAppletLogo()} ${this.renderAppletName()}
+          </div>
+          <div class="notification-body">${this.notification?.body}</div>
+          <div class="notification-date">
+            ${this.notification
+              ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
+              : 'unknown date'}
+          </div>
+        </div>`;
 
-        case 'error':
-          console.error(
-            `Failed to get asset info for WAL '${this.wal}': ${this.assetInfo.value.error}`,
-          );
-          return html`[Unknown]`;
+      case 'error':
+        console.error(`Failed to get applet logo: ${this.appletLogo.value.error}`);
+        return html`[Unknown]`;
     }
   }
-  
+
   static styles = [
     css`
-    .activity-asset-outer {
-      display: flex;
-      flex-direction: column;
-    }
+      .activity-asset-outer {
+        display: flex;
+        flex-direction: column;
+      }
 
-    .show-notifications-button, .hide-notifications-button {
-      background: #3b922d; 
-      background: transparent;
-      color: white; 
-      border: none; 
-      border-radius: 0 0 5px 5px; 
-      padding: 0 0 3px 0;
-      color: transparent;
-      cursor: pointer;
-      margin-top: -18px;
-      font-size: 14px;
-    }
+      .show-notifications-button,
+      .hide-notifications-button {
+        background: #3b922d;
+        background: transparent;
+        color: white;
+        border: none;
+        border-radius: 0 0 5px 5px;
+        padding: 0 0 3px 0;
+        color: transparent;
+        cursor: pointer;
+        margin-top: -18px;
+        font-size: 14px;
+      }
 
-    .show-notifications-button:hover, .hide-notifications-button:hover {
-      background: #29711d !important;
-    }
+      .show-notifications-button:hover,
+      .hide-notifications-button:hover {
+        background: #29711d !important;
+      }
 
-    .hide-notifications-button {
-      border-radius: 0;
-      background: #3b922d;
-      color: white;
-      padding: 3px 0 0 0;
-    }
+      .hide-notifications-button {
+        border-radius: 0;
+        background: #3b922d;
+        color: white;
+        padding: 3px 0 0 0;
+      }
 
-    .activity-asset-outer:hover > button {
-      background: #3b922d;
-      color: white;
-    }
+      .activity-asset-outer:hover > button {
+        background: #3b922d;
+        color: white;
+      }
 
-    .activity-asset {
-      background: white; 
-      border-radius: 5px;
-      padding: 10px; 
-      background: #53d43f; 
-      color: #3a622d; 
-      max-width: calc(60vw - 110px);
-      display: flex;
-    }
+      .activity-asset {
+        background: white;
+        border-radius: 5px;
+        padding: 10px;
+        background: #53d43f;
+        color: #3a622d;
+        max-width: calc(60vw - 110px);
+        display: flex;
+      }
 
-    .activity-asset:hover {
+      .activity-asset:hover {
         cursor: pointer;
         background: #4bbe39;
-    }
+      }
 
-    .asset-title {
-      font-size: 20px !important;
-    }
+      .asset-title {
+        font-size: 20px !important;
+      }
 
-    .displayed-notifications-list {
-      background: #0080574a;
-      color: #c2f2c1;
-      padding-bottom: 4px;
-      margin-top: -9px;
-      margin-bottom: 10px;
-      border-radius: 0 0 5px 5px;
-      max-height: 1000px;
-      overflow-y: auto;
-    }
+      .displayed-notifications-list {
+        background: #0080574a;
+        color: #c2f2c1;
+        padding-bottom: 4px;
+        margin-top: -9px;
+        margin-bottom: 10px;
+        border-radius: 0 0 5px 5px;
+        max-height: 1000px;
+        overflow-y: auto;
+      }
 
-    .displayed-notifications-list > div:first-child {
-      margin-top: 4px;
-    }
+      .displayed-notifications-list > div:first-child {
+        margin-top: 4px;
+      }
 
-    .notification-card {
+      .notification-card {
         padding: 10px;
         margin-bottom: 10px;
         border-radius: 5px;
         background-color: #3a622d;
         color: #53d43f;
       }
-    .notification-card:hover {
-      background-color: #3f6733;
-      cursor: pointer;
-    }
-    .notification-title {
-      font-weight: bold;
-      color: #53d43f;
-    }
-    .notification-date {
-      font-size: 0.9em;
-      color: #53d43f;
-    }
-    .notification-content {
-      font-size: 1em;
-      color: #53d43f;
-    }
-  `,
+      .notification-card:hover {
+        background-color: #3f6733;
+        cursor: pointer;
+      }
+      .notification-title {
+        font-weight: bold;
+        color: #53d43f;
+      }
+      .notification-date {
+        font-size: 0.9em;
+        color: #53d43f;
+      }
+      .notification-content {
+        font-size: 1em;
+        color: #53d43f;
+      }
+    `,
   ];
 }

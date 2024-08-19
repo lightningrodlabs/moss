@@ -558,6 +558,9 @@ export class MainDashboard extends LitElement {
         console.warn('Failed to fetch update feed: ', e);
       }
     }
+
+    // Load all notifications for the last week
+    await this._mossStore.loadNotificationFeed(7);
   }
 
   openClipboard() {

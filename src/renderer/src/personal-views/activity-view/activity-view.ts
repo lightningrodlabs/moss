@@ -18,9 +18,13 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import TimeAgo from 'javascript-time-ago';
-import { stringifyWal, appIdFromAppletId, appletHashFromAppId, encodeAndStringify } from '../../utils.js';
+import {
+  stringifyWal,
+  appIdFromAppletId,
+  appletHashFromAppId,
+  encodeAndStringify,
+} from '../../utils.js';
 import { AppletHash } from '@lightningrodlabs/we-applet';
-import { app } from 'electron';
 
 @localized()
 @customElement('activity-view')
@@ -47,10 +51,10 @@ export class ActivityView extends LitElement {
   sortMethod2 = 'high';
 
   @state()
-  lookBackString1 = "week";
+  lookBackString1 = 'week';
 
   @state()
-  lookBackString2 = "week";
+  lookBackString2 = 'week';
 
   _notificationFeed = new StoreSubscriber(
     this,
@@ -79,30 +83,35 @@ export class ActivityView extends LitElement {
   }
 
   filterIndividualNotifications(notifications: Array<any>) {
-    console.log("filter individual notifications", notifications, this.sortMethod2, this.lookBackString2);
-    return notifications.filter(notification => {
+    console.log(
+      'filter individual notifications',
+      notifications,
+      this.sortMethod2,
+      this.lookBackString2,
+    );
+    return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);
       let timeFrame = false;
 
       switch (this.lookBackString2) {
         case 'minute':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 60000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 60000;
           break;
         case 'hour':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 3600000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 3600000;
           break;
         case 'day':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 86400000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 86400000;
           break;
         case 'week':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 604800000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 604800000;
           break;
         case 'month':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 2592000000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 2592000000;
           break;
         case 'year':
-          timeFrame = (now.getTime() - notificationDate.getTime()) <= 31536000000;
+          timeFrame = now.getTime() - notificationDate.getTime() <= 31536000000;
           break;
         case 'all':
           timeFrame = true;
@@ -118,34 +127,36 @@ export class ActivityView extends LitElement {
     let now = Date.now();
     let lookBackInt = 0;
     switch (this.lookBackString1) {
-      case "minute":
+      case 'minute':
         lookBackInt = 60 * 1000;
         break;
-      case "hour":
+      case 'hour':
         lookBackInt = 60 * 60 * 1000;
         break;
-      case "day":
+      case 'day':
         lookBackInt = 24 * 60 * 60 * 1000;
         break;
-      case "week":
+      case 'week':
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
         break;
-      case "month":
+      case 'month':
         lookBackInt = 30 * 24 * 60 * 60 * 1000;
         break;
-      case "year":
+      case 'year':
         lookBackInt = 365 * 24 * 60 * 60 * 1000;
         break;
-      case "all":
+      case 'all':
         lookBackInt = 999999999999999999999999999999;
         break;
       default:
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
     }
     for (let key in combinedNotifications) {
-      let latestNotification = combinedNotifications[key].notifications.reduce((latest, current) => {
-        return current.notification.timestamp > latest.notification.timestamp ? current : latest;
-      });
+      let latestNotification = combinedNotifications[key].notifications.reduce(
+        (latest, current) => {
+          return current.notification.timestamp > latest.notification.timestamp ? current : latest;
+        },
+      );
       if (now - latestNotification.notification.timestamp < lookBackInt) {
         filteredByTime[key] = combinedNotifications[key];
       }
@@ -158,25 +169,25 @@ export class ActivityView extends LitElement {
         //   const hoursPast = (now - timestamp) / 3600000; // Convert milliseconds to hours
         //   let score = 10;
         //   let timePoints = 1;
-        
+
         //   for (let i = 1; i <= hoursPast; i++) {
         //     score -= timePoints;
         //     timePoints = Math.max(0, timePoints - 0.1); // Ensure timePoints doesn't go below 0
         //   }
-        
+
         //   return score;
         // }
-        
+
         // return Object.keys(combinedNotifications).sort((a, b) => {
         //   let scoreA = combinedNotifications[a].notifications.reduce((total, notification) => {
         //     return total + calculateActiveScore(notification.notification.timestamp);
 
         //   }, 0);
-        
+
         //   let scoreB = combinedNotifications[b].notifications.reduce((total, notification) => {
         //     return total + calculateActiveScore(notification.notification.timestamp);
         //   }, 0);
-        
+
         //   return scoreB - scoreA;
         // });
 
@@ -186,13 +197,19 @@ export class ActivityView extends LitElement {
       case 'latest':
         return Object.keys(filteredByTime).sort((a, b) => {
           let latestNotificationA = filteredByTime[a].notifications.reduce((latest, current) => {
-            return current.notification.timestamp > latest.notification.timestamp ? current : latest;
+            return current.notification.timestamp > latest.notification.timestamp
+              ? current
+              : latest;
           });
-          
+
           let latestNotificationB = filteredByTime[b].notifications.reduce((latest, current) => {
-            return current.notification.timestamp > latest.notification.timestamp ? current : latest;
+            return current.notification.timestamp > latest.notification.timestamp
+              ? current
+              : latest;
           });
-          return latestNotificationB.notification.timestamp - latestNotificationA.notification.timestamp;
+          return (
+            latestNotificationB.notification.timestamp - latestNotificationA.notification.timestamp
+          );
         });
       case 'popular':
         // TODO: Implement mixed sorting
@@ -201,20 +218,24 @@ export class ActivityView extends LitElement {
         //   const hoursPast = (now - timestamp) / 3600000; // Convert milliseconds to hours
         //   let score = 10;
         //   let timePoints = 1;
-        
+
         //   for (let i = 1; i <= hoursPast; i++) {
         //     score -= timePoints;
         //     timePoints = Math.max(0, timePoints - 0.1); // Ensure timePoints doesn't go below 0
         //   }
-        
+
         //   return score;
         // }
         return Object.keys(filteredByTime).sort((a, b) => {
           let numberOfAgentsCountA = new Set(
-            filteredByTime[a].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
+            filteredByTime[a].notifications.map((notification) =>
+              encodeAndStringify(notification.notification.fromAgent),
+            ),
           ).size;
           let numberOfAgentsCountB = new Set(
-            filteredByTime[b].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
+            filteredByTime[b].notifications.map((notification) =>
+              encodeAndStringify(notification.notification.fromAgent),
+            ),
           ).size;
           console.log('Number of Agents Count A: ', numberOfAgentsCountA, numberOfAgentsCountB);
           return numberOfAgentsCountB - numberOfAgentsCountA;
@@ -225,100 +246,129 @@ export class ActivityView extends LitElement {
   }
 
   getButtonStyle(method) {
-    return this.sortMethod1 === method ? 'background-color: #53d43f; color: #3a622d' : 'background-color: #3a622d; color: #53d43f';
+    return this.sortMethod1 === method
+      ? 'background-color: #53d43f; color: #3a622d'
+      : 'background-color: #3a622d; color: #53d43f';
   }
 
   render() {
     const combinedNotifications = this.combineNotifications(this._notificationFeed.value);
     const sortedNotifications = this.sortNotifications(combinedNotifications);
-    const filteredIndividualNotifications = this.filterIndividualNotifications(this._notificationFeed.value);
-    
-    return html` <div class="column">
-      <div class="sort-buttons">
-        <div
-          style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;"
-        >
-          Activity currents
+    const filteredIndividualNotifications = this.filterIndividualNotifications(
+      this._notificationFeed.value,
+    );
+
+    return html`
+      <div class="column">
+        <div class="sort-buttons">
+          <div style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
+            Activity currents
+          </div>
+          <button
+            @click=${() => (this.sortMethod1 = 'popular')}
+            style=${this.getButtonStyle('popular')}
+          >
+            Popular
+          </button>
+          <button
+            @click=${() => (this.sortMethod1 = 'active')}
+            style=${this.getButtonStyle('active')}
+          >
+            Active
+          </button>
+          <button
+            @click=${() => (this.sortMethod1 = 'latest')}
+            style=${this.getButtonStyle('latest')}
+          >
+            Latest
+          </button>
+          <select
+            class="time-select"
+            @change=${(e) => (this.lookBackString1 = e.target.value)}
+            .value=${this.lookBackString1 || 'day'}
+          >
+            <option value="minute">Last minute</option>
+            <option value="hour">Last hour</option>
+            <option value="day">Last 24 hours</option>
+            <option value="week">Last week</option>
+            <option value="month">Last month</option>
+            <option value="year">Last year</option>
+            <option value="all">All time</option>
+          </select>
         </div>
-        <button
-          @click=${() => (this.sortMethod1 = 'popular')}
-          style=${this.getButtonStyle('popular')}
-        >
-          Popular
-        </button>
-        <button @click=${() => (this.sortMethod1 = 'active')} style=${this.getButtonStyle('active')}>
-          Active
-        </button>
-        <button @click=${() => (this.sortMethod1 = 'latest')} style=${this.getButtonStyle('latest')}>
-          Latest
-        </button>
-        <select class="time-select" @change=${(e) => (this.lookBackString1 = e.target.value)} .value=${this.lookBackString1 || 'day'}>
-          <option value="minute">Last minute</option>
-          <option value="hour">Last hour</option>
-          <option value="day">Last 24 hours</option>
-          <option value="week">Last week</option>
-          <option value="month">Last month</option>
-          <option value="year">Last year</option>
-          <option value="all">All time</option>
-        </select>
-      </div>
-      ${sortedNotifications.length === 0
-        ? html`
-            <div
-              style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
-            >
-              Your activity will appear here
-            </div>
-          `
-        : sortedNotifications.map((key) => {
-            const notifications = combinedNotifications[key].notifications;
-            console.log("going to try to get appletHash for ", combinedNotifications[key].appletId);
-            const appletHash: AppletHash = appletHashFromAppId(appIdFromAppletId(combinedNotifications[key].appletId));
-            console.log("appletHash is ", appletHash);
-            return html`
-              <activity-asset 
-              @open-wal=${async (e) => {
-                this.dispatchEvent(
-                  new CustomEvent('open-wal', {
-                    detail: e.detail,
-                    bubbles: true,
-                    composed: true,
-                  }),
-                );
-              }}
-              .notifications=${notifications} .wal=${key} .appletHash=${appletHash}></activity-asset>
-            `;
-          })}
+        ${sortedNotifications.length === 0
+          ? html`
+              <div
+                style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+              >
+                Your activity will appear here
+              </div>
+            `
+          : sortedNotifications.map((key) => {
+              const notifications = combinedNotifications[key].notifications;
+              console.log(
+                'going to try to get appletHash for ',
+                combinedNotifications[key].appletId,
+              );
+              const appletHash: AppletHash = appletHashFromAppId(
+                appIdFromAppletId(combinedNotifications[key].appletId),
+              );
+              console.log('appletHash is ', appletHash);
+              return html`
+                <activity-asset
+                  @open-wal=${async (e) => {
+                    this.dispatchEvent(
+                      new CustomEvent('open-wal', {
+                        detail: e.detail,
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                  .notifications=${notifications}
+                  .wal=${key}
+                  .appletHash=${appletHash}
+                ></activity-asset>
+              `;
+            })}
       </div>
       <div class="column">
-        <div
-          style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;"
-        >
+        <div style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
           All notifications
         </div>
         <div class="sort-buttons">
           <button
             @click=${() => (this.sortMethod2 = 'high')}
             class="sort-button"
-            style=${this.sortMethod2 === 'high' ? 'background-color: #53d43f; color: #3a622d' : 'background-color: #3a622d; color: #53d43f'}
+            style=${this.sortMethod2 === 'high'
+              ? 'background-color: #53d43f; color: #3a622d'
+              : 'background-color: #3a622d; color: #53d43f'}
           >
             High
           </button>
           <button
             @click=${() => (this.sortMethod2 = 'medium')}
             class="sort-button"
-            style=${this.sortMethod2 === 'medium' ? 'background-color: #53d43f; color: #3a622d' : 'background-color: #3a622d; color: #53d43f'}
+            style=${this.sortMethod2 === 'medium'
+              ? 'background-color: #53d43f; color: #3a622d'
+              : 'background-color: #3a622d; color: #53d43f'}
           >
             Medium
           </button>
           <button
             @click=${() => (this.sortMethod2 = 'low')}
             class="sort-button"
-            style=${this.sortMethod2 === 'low' ? 'background-color: #53d43f; color: #3a622d' : 'background-color: #3a622d; color: #53d43f'}
+            style=${this.sortMethod2 === 'low'
+              ? 'background-color: #53d43f; color: #3a622d'
+              : 'background-color: #3a622d; color: #53d43f'}
           >
             Low
           </button>
-          <select class="time-select" @change=${(e) => (this.lookBackString2 = e.target.value)} .value=${this.lookBackString2 || 'day'}>
+          <select
+            class="time-select"
+            @change=${(e) => (this.lookBackString2 = e.target.value)}
+            .value=${this.lookBackString2 || 'day'}
+          >
             <option value="minute">Last minute</option>
             <option value="hour">Last hour</option>
             <option value="day">Last 24 hours</option>
@@ -336,21 +386,24 @@ export class ActivityView extends LitElement {
                 Your notifications will appear here
               </div>
             `
-          : filteredIndividualNotifications.map(notification => html`
-          <notification-asset .notification=${notification.notification} .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-            @open-applet-main=${(e) => {
-              console.log('notification clicked', e.detail);
-              this.dispatchEvent(
-                new CustomEvent('open-applet-main', {
-                  detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }
-          }
-          ></notification-asset>
-        `)}
+          : filteredIndividualNotifications.map(
+              (notification) => html`
+                <notification-asset
+                  .notification=${notification.notification}
+                  .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
+                  @open-applet-main=${(e) => {
+                    console.log('notification clicked', e.detail);
+                    this.dispatchEvent(
+                      new CustomEvent('open-applet-main', {
+                        detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                ></notification-asset>
+              `,
+            )}
       </div>
     `;
   }
