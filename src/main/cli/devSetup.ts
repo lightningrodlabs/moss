@@ -717,10 +717,7 @@ function storeAppAssetsInfo(
             distributionInfo,
           };
 
-  fs.writeFileSync(
-    path.join(mossFileSystem.appsDir, `${appId}.json`),
-    JSON.stringify(appAssetsInfo, undefined, 4),
-  );
+  mossFileSystem.storeAppAssetsInfo(appId, appAssetsInfo);
 }
 
 function _arrayBufferToBase64(buffer) {

@@ -34,7 +34,7 @@ dmg:
 linux:
   target:
     - AppImage
-    - deb
+    # - deb
     # - snap
   maintainer: lightningrodlabs.org
   category: Utility
