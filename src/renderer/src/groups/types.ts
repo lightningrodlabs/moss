@@ -22,9 +22,11 @@ export type PeerStatusSignal =
 export type PingPayload = {
   to_agents: AgentPubKey[];
   status: string;
+  tz_utc_offset?: number;
 };
 
 export type PongPayload = {
   to_agent: AgentPubKey;
   status: string;
+  tz_utc_offset?: number;
 };
