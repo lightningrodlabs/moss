@@ -388,6 +388,9 @@ export class ActivityView extends LitElement {
         border-radius: 5px;
         cursor: pointer;
       }
+      .time-select:focus-visible {
+        outline: none;
+      }
     `,
     weStyles,
   ];
