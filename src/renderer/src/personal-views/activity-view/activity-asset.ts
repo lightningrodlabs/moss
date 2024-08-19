@@ -87,7 +87,7 @@ export class ActivityAsset extends LitElement {
 
     return html`
       <img
-        style="height: 14px; width: 14px;"
+        style="height: 14px; width: 14px; margin-bottom: -3px; margin-right: 3px;"
         .src=${logo}
           alt="TODO"
         />
@@ -138,7 +138,7 @@ export class ActivityAsset extends LitElement {
               slot="prefix"
               .src=${groupProfile?.icon_src}
               alt="${groupProfile?.name}"
-              style="height: 16px; width: 16px;"
+              style="height: 16px; width: 16px; margin-bottom: -3px; margin-right: 3px;"
             />${groupProfile?.name}</sl-option
           >
         `;
@@ -302,7 +302,7 @@ export class ActivityAsset extends LitElement {
       padding: 10px; 
       background: #53d43f; 
       color: #3a622d;
-      min-width: 400px;
+      min-width: 416px;
       max-width: calc(60vw - 110px);
       display: flex;
     }

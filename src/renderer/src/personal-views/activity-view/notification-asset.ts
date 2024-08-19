@@ -78,7 +78,7 @@ export class NotificationAsset extends LitElement {
 
     return html`
       <img
-        style="height: 14px; width: 14px;"
+        style="height: 14px; width: 14px; margin-bottom: -3px; margin-right: 3px;"
         .src=${logo}
           alt="TODO"
         />
@@ -129,7 +129,7 @@ export class NotificationAsset extends LitElement {
               slot="prefix"
               .src=${groupProfile?.icon_src}
               alt="${groupProfile?.name}"
-              style="height: 16px; width: 16px;"
+              style="height: 16px; width: 16px; margin-bottom: -3px; margin-right: 3px;"
             />${groupProfile?.name}</sl-option
           >
         `;
