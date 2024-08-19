@@ -176,7 +176,7 @@ export class MossFileSystem {
   }
 
   /**
-   * Directory of an app (e.g. a Tool) where meta data about it is stored,
+   * Directory of an app (e.g. a Tool instance) where meta data about it is stored,
    * e.g. user preferences
    *
    * @param appId
@@ -227,6 +227,14 @@ export class MossFileSystem {
     return undefined;
   }
 
+  appAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json');
+  }
+
+  appPreviousAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
+  }
+
   keystoreInitialized = () => {
     return fs.existsSync(path.join(this.keystoreDir, 'lair-keystore-config.yaml'));
   };
@@ -238,7 +246,9 @@ export class MossFileSystem {
    * @param info
    */
   storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
-    const filePath = path.join(this.appsDir, `${installedAppId}.json`);
+    const appMetaDataDir = this.appMetaDataDir(installedAppId);
+    createDirIfNotExists(appMetaDataDir);
+    const filePath = this.appAssetInfoPath(installedAppId);
     try {
       fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
     } catch (e) {
@@ -252,12 +262,12 @@ export class MossFileSystem {
    * @param installedAppId
    */
   deleteAppAssetsInfo(installedAppId: InstalledAppId) {
-    const filePath = path.join(this.appsDir, `${installedAppId}.json`);
-    const backupFilePath = path.join(this.appsDir, `${installedAppId}.json.previous`);
+    const filePath = this.appAssetInfoPath(installedAppId);
+    const backupFilePath = this.appPreviousAssetInfoPath(installedAppId);
     try {
       fs.rmSync(filePath);
     } catch (e) {
-      throw new Error(`Failed to write app assets info to json file: ${e}`);
+      throw new Error(`Failed to delete app assets for app '${installedAppId}': ${e}`);
     }
     try {
       fs.rmSync(backupFilePath);
@@ -265,22 +275,22 @@ export class MossFileSystem {
   }
 
   backupAppAssetsInfo(installedAppId: InstalledAppId) {
-    const fileToBackup = path.join(this.appsDir, `${installedAppId}.json`);
-    const backupPath = path.join(this.appsDir, `${installedAppId}.json.previous`);
+    const fileToBackup = this.appAssetInfoPath(installedAppId);
+    const backupPath = this.appPreviousAssetInfoPath(installedAppId);
     try {
       fs.copyFileSync(fileToBackup, backupPath);
     } catch (e) {
-      throw new Error(`Failed to backup app assets info for app Id ''${installedAppId}: ${e}`);
+      throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
     }
   }
 
   readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
-    const filePath = path.join(this.appsDir, `${installedAppId}.json`);
+    const filePath = this.appAssetInfoPath(installedAppId);
     let appAssetsInfoJson: string | undefined;
     try {
       appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
     } catch (e) {
-      throw new Error(`Failed to read app assets info json file at path ${filePath}: ${e}`);
+      throw new Error(`Failed to read app assets info json file at path '${filePath}': ${e}`);
     }
     try {
       const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
