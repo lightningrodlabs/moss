@@ -107,12 +107,12 @@ export class ActivityView extends LitElement {
         case 'week':
           timeFrame = now.getTime() - notificationDate.getTime() <= 604800000;
           break;
-        case 'month':
-          timeFrame = now.getTime() - notificationDate.getTime() <= 2592000000;
-          break;
-        case 'year':
-          timeFrame = now.getTime() - notificationDate.getTime() <= 31536000000;
-          break;
+        // case 'month':
+        //   timeFrame = now.getTime() - notificationDate.getTime() <= 2592000000;
+        //   break;
+        // case 'year':
+        //   timeFrame = now.getTime() - notificationDate.getTime() <= 31536000000;
+        //   break;
         case 'all':
           timeFrame = true;
           break;
@@ -139,11 +139,11 @@ export class ActivityView extends LitElement {
       case 'week':
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
         break;
-      case 'month':
-        lookBackInt = 30 * 24 * 60 * 60 * 1000;
-        break;
-      case 'year':
-        lookBackInt = 365 * 24 * 60 * 60 * 1000;
+        // case 'month':
+        //   lookBackInt = 30 * 24 * 60 * 60 * 1000;
+        //   break;
+        // case 'year':
+        //   lookBackInt = 365 * 24 * 60 * 60 * 1000;
         break;
       case 'all':
         lookBackInt = 999999999999999999999999999999;
@@ -284,7 +284,13 @@ export class ActivityView extends LitElement {
           </button>
           <select
             class="time-select"
-            @change=${(e) => (this.lookBackString1 = e.target.value)}
+            @change=${(e) => {
+              // By default, notifications 1 week back should already be loaded
+              if (this.lookBackString1 === 'month') {
+                this._mossStore.loadNotificationFeed(30);
+              }
+              this.lookBackString1 = e.target.value;
+            }}
             .value=${this.lookBackString1 || 'day'}
           >
             <option value="minute">Last minute</option>
@@ -292,8 +298,8 @@ export class ActivityView extends LitElement {
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
             <option value="month">Last month</option>
-            <option value="year">Last year</option>
-            <option value="all">All time</option>
+            <!-- <option value="year">Last year</option>
+            <option value="all">All time</option> -->
           </select>
         </div>
         ${sortedNotifications.length === 0
@@ -366,7 +372,13 @@ export class ActivityView extends LitElement {
           </button>
           <select
             class="time-select"
-            @change=${(e) => (this.lookBackString2 = e.target.value)}
+            @change=${(e) => {
+              // By default, notifications 1 week back should already be loaded
+              if (this.lookBackString2 === 'month') {
+                this._mossStore.loadNotificationFeed(30);
+              }
+              this.lookBackString1 = e.target.value;
+            }}
             .value=${this.lookBackString2 || 'day'}
           >
             <option value="minute">Last minute</option>
@@ -374,8 +386,8 @@ export class ActivityView extends LitElement {
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
             <option value="month">Last month</option>
-            <option value="year">Last year</option>
-            <option value="all">All time</option>
+            <!-- <option value="year">Last year</option>
+            <option value="all">All time</option> -->
           </select>
         </div>
         ${filteredIndividualNotifications.length === 0
