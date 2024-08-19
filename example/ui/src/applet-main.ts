@@ -20,7 +20,7 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { consume } from '@lit/context';
 import './elements/agent-status.js';
-import "@holochain-open-dev/profiles/dist/elements/search-agent.js";
+import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
 
 @localized()
 @customElement('applet-main')
@@ -157,7 +157,7 @@ export class AppletMain extends LitElement {
   }
 
   handleAgentSelected(e: any) {
-    console.log("Agent selected", e.detail);
+    console.log('Agent selected', e.detail);
     this.selectedAgent = e.detail.agentPubKey;
   }
 
@@ -171,7 +171,7 @@ export class AppletMain extends LitElement {
       urgency: 'low',
       timestamp: Date.now(),
       aboutWal: selectedWal,
-      fromAgent: agent
+      fromAgent: agent,
     };
     console.log('Sending activity notification', notification);
     setTimeout(() => {
@@ -231,7 +231,10 @@ export class AppletMain extends LitElement {
             <search-agent
                 @agent-selected=${this.handleAgentSelected}
             ></search-agent>
-            <button @click=${() => {console.log(this.selectedAgent); this.sendActivityNotification(0, this.selectedAgent)}}>
+            <button @click=${() => {
+              console.log(this.selectedAgent);
+              this.sendActivityNotification(0, this.selectedAgent);
+            }}>
               Send Activity Notification
             </button>
             <div>Enter WAL:</div>

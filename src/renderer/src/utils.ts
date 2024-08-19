@@ -297,7 +297,20 @@ export function storeAppletNotifications(
   if (storeUnread) {
     // store them to unread messages
     unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
-    unreadNotifications = [...new Set([...unreadNotifications, ...notifications])]; // dedpulicated array
+    const unreadNotificationStrings = unreadNotifications.map((notification) =>
+      encodeAndStringify(notification),
+    );
+    const notificationStrings = notifications.map((notification) =>
+      encodeAndStringify(notification),
+    );
+    const dedupedNotifications = [
+      ...new Set([...unreadNotificationStrings, ...notificationStrings]),
+    ];
+
+    unreadNotifications = dedupedNotifications.map((notification) =>
+      destringifyAndDecode(notification),
+    ); // dedpulicated array
+
     persistedStore.appletNotificationsUnread.set(unreadNotifications, appletId);
   }
 
