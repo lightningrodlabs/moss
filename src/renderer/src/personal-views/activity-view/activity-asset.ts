@@ -202,7 +202,7 @@ export class ActivityAsset extends LitElement {
                       <div
                         style="margin-left: 10px;"
                       >
-                        latest ${
+                        ${
                           formatDistanceToNow(
                             new Date(
                               this.notifications.reduce((latest, current) => {
@@ -301,7 +301,8 @@ export class ActivityAsset extends LitElement {
       border-radius: 5px;
       padding: 10px; 
       background: #53d43f; 
-      color: #3a622d; 
+      color: #3a622d;
+      min-width: 400px;
       max-width: calc(60vw - 110px);
       display: flex;
     }

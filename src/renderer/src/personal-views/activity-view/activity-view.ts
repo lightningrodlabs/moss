@@ -238,7 +238,7 @@ export class ActivityView extends LitElement {
         <div
           style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;"
         >
-          All Moss  activity
+          Activity currents
         </div>
         <button
           @click=${() => (this.sortMethod1 = 'popular')}
@@ -294,7 +294,7 @@ export class ActivityView extends LitElement {
         <div
           style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;"
         >
-          All Moss Notifications
+          All notifications
         </div>
         <div class="sort-buttons">
           <button
@@ -368,6 +368,7 @@ export class ActivityView extends LitElement {
 
       .sort-buttons {
         margin-bottom: 10px;
+        min-width: 330px;
       }
       .sort-buttons button {
         margin-right: 5px;
