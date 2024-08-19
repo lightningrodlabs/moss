@@ -9,14 +9,11 @@ import {
   AppCallZomeRequest,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
 import { type Writable, writable, get, type Readable, readable } from '@holochain-open-dev/stores';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
-
-TimeAgo.addDefaultLocale(en);
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {

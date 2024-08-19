@@ -78,6 +78,10 @@ import {
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+
+TimeAgo.addDefaultLocale(en);
 
 type OpenTab =
   | {
@@ -763,8 +767,8 @@ export class MainDashboard extends LitElement {
       <activity-view
         @open-wal=${async (e) => {
           console.log('Opening WAL 3: ', e.detail);
-          await this.handleOpenWal(e.detail)}
-        }
+          await this.handleOpenWal(e.detail);
+        }}
         @open-applet-main=${(e: CustomEvent) => {
           this.openViews.openAppletMain(e.detail);
         }}
