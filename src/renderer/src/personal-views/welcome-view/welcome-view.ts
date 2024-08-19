@@ -61,11 +61,8 @@ export class WelcomeView extends LitElement {
   @state()
   view: WelcomePageView = WelcomePageView.Main;
 
-  @state()
-  notificationsLoading = true;
-
   @query('#disclaimer-dialog')
-  _displaimerDialog!: SlDialog;
+  _disclaimerDialog!: SlDialog;
 
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
@@ -273,10 +270,10 @@ export class WelcomeView extends LitElement {
                   <div
                     class="disclaimer-btn"
                     tabindex="0"
-                    @click=${() => this._displaimerDialog.show()}
+                    @click=${() => this._disclaimerDialog.show()}
                     @keypress=${(e: KeyboardEvent) => {
                       if (e.key === 'Enter' || e.key === ' ') {
-                        this._displaimerDialog.show();
+                        this._disclaimerDialog.show();
                       }
                     }}
                   >

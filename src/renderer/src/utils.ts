@@ -418,6 +418,14 @@ export function getNotificationTypeSettings(
   return appletNotificationSettings.applet;
 }
 
+export function encodeAndStringify(input: unknown): string {
+  return fromUint8Array(encode(input));
+}
+
+export function destringifyAndDecode<T>(input: string): T {
+  return decode(toUint8Array(input)) as T;
+}
+
 export function stringifyWal(wal: WAL): string {
   return fromUint8Array(encode(wal));
 }

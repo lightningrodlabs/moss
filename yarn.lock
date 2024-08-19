@@ -1701,8 +1701,8 @@
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-dc308cb9-62da-4163-8916-8c6400413841-1721161035744/node_modules/@lightningrodlabs/we-applet"
-    "@lightningrodlabs/we-elements" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-dc308cb9-62da-4163-8916-8c6400413841-1721161035744/node_modules/@lightningrodlabs/we-elements"
+    "@lightningrodlabs/we-applet" "file:../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e45c9938-5758-438b-b002-724e3924e28f-1723476473792/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-elements" "file:../../.cache/yarn/v6/npm-@lightningrodlabs-attachments-0.6.0-e45c9938-5758-438b-b002-724e3924e28f-1723476473792/node_modules/@lightningrodlabs/we-elements"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@material/web" "=1.0.0-pre.9"
@@ -1753,14 +1753,14 @@
     winston "3.11.0"
 
 "@lightningrodlabs/we-elements@file:libs/we-elements":
-  version "0.6.0-dev.1"
+  version "0.6.1"
   dependencies:
     "@holochain-open-dev/elements" "0.400.0-dev.0"
     "@holochain-open-dev/profiles" "0.400.0-dev.1"
     "@holochain-open-dev/stores" "0.400.0-dev.0"
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
-    "@lightningrodlabs/we-applet" "file:../../../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.0-dev.1-3e865c80-7ae0-4b86-abbd-bf00e5e2b932-1721161035743/node_modules/@lightningrodlabs/we-applet"
+    "@lightningrodlabs/we-applet" "file:../../.cache/yarn/v6/npm-@lightningrodlabs-we-elements-0.6.1-e365be24-e9ed-4896-97d9-80eb11908915-1723476473790/node_modules/@lightningrodlabs/we-applet"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"

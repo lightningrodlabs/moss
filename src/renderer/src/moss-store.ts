@@ -54,6 +54,8 @@ import {
   appletHashFromAppId,
   appletIdFromAppId,
   deStringifyWal,
+  destringifyAndDecode,
+  encodeAndStringify,
   findAppForDnaHash,
   initAppClient,
   isAppDisabled,
@@ -244,13 +246,53 @@ export class MossStore {
     return derived(this._notificationFeed, (store) => store);
   }
 
+  /**
+   * Loads the notification feed n days back for all installed applets.
+   *
+   * @param nDaysBack
+   */
+  async loadNotificationFeed(nDaysBack: number) {
+    const allApplets = await toPromise(this.runningApplets);
+    const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
+    let allNotifications: AppletNotification[][] = [];
+    const daysSinceEpochToday = Math.floor(Date.now() / 8.64e7);
+    for (let i = 0; i < nDaysBack + 1; i++) {
+      const daysSinceEpoch = daysSinceEpochToday - i;
+      allAppletIds.forEach((appletId) => {
+        const notifications = this.persistedStore.appletNotifications.value(
+          appletId,
+          daysSinceEpoch,
+        );
+        allNotifications.push(
+          notifications.map((notification) => ({
+            appletId,
+            notification,
+          })),
+        );
+      });
+    }
+    const allNotificationsFlattened = allNotifications.flat(1);
+    this._notificationFeed.set(
+      allNotificationsFlattened.sort(
+        (appletNotification_a, appletNotification_b) =>
+          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
+      ),
+    );
+  }
+
+  /**
+   * Updates the notification feed for the given applet Id
+   *
+   * @param appletId
+   * @param daysSinceEpoch
+   */
   updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
     this._notificationFeed.update((store) => {
       // console.log('store: ', store);
-      const allNotificationStrings = store.map((nots) => JSON.stringify(nots));
+      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
       const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
         .value(appletId, daysSinceEpoch)
-        .map((notification) => JSON.stringify({ appletId, notification }));
+        .map((notification) => encodeAndStringify({ appletId, notification }));
       // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
       // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
       const updatedNotifications: string[] = [
@@ -258,7 +300,7 @@ export class MossStore {
       ];
       // console.log('updatedNotifications: ', updatedNotifications);
       return updatedNotifications
-        .map((notificationsString) => JSON.parse(notificationsString))
+        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
         .sort(
           (appletNotification_a, appletNotification_b) =>
             appletNotification_b.notification.timestamp -

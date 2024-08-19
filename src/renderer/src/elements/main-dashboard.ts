@@ -42,6 +42,7 @@ import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
 import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
+import '../personal-views/activity-view/activity-view.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './navigation/group-applets-sidebar.js';
@@ -77,6 +78,10 @@ import {
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+
+TimeAgo.addDefaultLocale(en);
 
 type OpenTab =
   | {
@@ -337,21 +342,6 @@ export class MainDashboard extends LitElement {
     if (!alreadyOpen) {
       this._openTabs[tabInfo.id] = tabInfo;
     }
-    // In order to be able to show the indicators about which applet
-    // this HRL belongs to, the applets bar needs to actually be there,
-    // i.e. we need to switch to group view if we haven't yet
-    if (
-      this._dashboardState.value.viewType === 'personal' &&
-      tabInfo.tab.type === 'wal' &&
-      tabInfo.tab.groupHashesB64.length > 0
-    ) {
-      const groupDnaHash = decodeHashFromBase64(tabInfo.tab.groupHashesB64[0]);
-      this.openGroup(groupDnaHash);
-      this._dashboardState.value = {
-        viewType: 'group',
-        groupHash: groupDnaHash,
-      };
-    }
     this._mossStore.setAssetViewerState({
       position: 'side',
       visible: true,
@@ -568,6 +558,9 @@ export class MainDashboard extends LitElement {
         console.warn('Failed to fetch update feed: ', e);
       }
     }
+
+    // Load all notifications for the last week
+    await this._mossStore.loadNotificationFeed(7);
   }
 
   openClipboard() {
@@ -761,7 +754,6 @@ export class MainDashboard extends LitElement {
     return html`
       <welcome-view
         id="welcome-view"
-        @click=${(e) => e.stopPropagation()}
         .updateFeed=${this._updateFeed}
         style="${this.displayMossView('welcome')
           ? 'display: flex; flex: 1;'
@@ -774,6 +766,21 @@ export class MainDashboard extends LitElement {
           this.openViews.openAppletMain(e.detail.appletHash);
         }}
       ></welcome-view>
+
+      <activity-view
+        @open-wal=${async (e) => {
+          console.log('Opening WAL 3: ', e.detail);
+          await this.handleOpenWal(e.detail);
+        }}
+        @open-applet-main=${(e: CustomEvent) => {
+          this.openViews.openAppletMain(e.detail);
+        }}
+        style="${this.displayMossView('activity-view')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: hidden; overflow-y: scroll;"
+      ></activity-view>
 
       <tool-library
         style="${this.displayMossView('tool-library')

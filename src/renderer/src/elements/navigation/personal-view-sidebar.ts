@@ -127,6 +127,32 @@ export class PersonalViewSidebar extends LitElement {
         style="margin-left: -4px; position: relative;"
         .selected=${this.selectedView &&
         this.selectedView.type === 'moss' &&
+        this.selectedView.name === 'activity-view'}
+        .tooltipText=${'Activity Stream'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('personal-view-selected', {
+              detail: {
+                type: 'moss',
+                name: 'activity-view',
+              },
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <img src="mountain_stream.svg" class="black-svg" style="height: 40px;" />
+        </div>
+      </topbar-button>
+
+      <topbar-button
+        .invertColors=${true}
+        style="margin-left: -4px; position: relative;"
+        .selected=${this.selectedView &&
+        this.selectedView.type === 'moss' &&
         this.selectedView.name === 'tool-library'}
         .tooltipText=${'Tool Library'}
         placement="bottom"
@@ -205,6 +231,11 @@ export class PersonalViewSidebar extends LitElement {
         width: 58px;
         height: 58px;
         box-shadow: 1px 2px 10px 0px #102520ab;
+      }
+
+      .black-svg {
+        filter: invert(15%) sepia(16%) saturate(2032%) hue-rotate(71deg) brightness(94%)
+          contrast(90%);
       }
     `,
   ];

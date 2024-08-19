@@ -31,7 +31,6 @@ import {
 } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -81,8 +80,6 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../personal-views/tool-library/types.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
-
-TimeAgo.addDefaultLocale(en);
 
 type View =
   | {
