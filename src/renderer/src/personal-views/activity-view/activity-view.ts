@@ -418,7 +418,7 @@ export class ActivityView extends LitElement {
       }
       .column {
         padding: 10px;
-
+      }
       .sort-buttons {
         margin-bottom: 10px;
         min-width: 330px;
