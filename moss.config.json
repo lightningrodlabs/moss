@@ -1,7 +1,7 @@
 {
-  "holochainVersion": "0.4.0-dev.15",
+  "holochainVersion": "0.4.0-dev.18",
   "lairVersion": "0.4.5",
-  "groupHappVersion": "0.13.0-alpha.0",
+  "groupHappVersion": "0.13.0-beta.0",
   "toolsLibraryVersion": "0.0.6",
   "kandoVersion": "0.11.0-dev.1",
   "binariesAppendix": "moss-0.13"
