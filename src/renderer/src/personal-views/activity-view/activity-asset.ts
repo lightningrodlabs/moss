@@ -192,10 +192,12 @@ export class ActivityAsset extends LitElement {
                       >
                         ${
                           new Set(
-                            this.notifications.map((notification) =>
-                              encodeAndStringify(notification.notification.fromAgent),
-                            ),
-                          ).size - 1
+                            this.notifications
+                              .filter((notification) => notification.notification.fromAgent)
+                              .map((notification) =>
+                                encodeAndStringify(notification.notification.fromAgent),
+                              ),
+                          ).size
                         } people
                       </div>
                       <div
