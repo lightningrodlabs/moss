@@ -196,8 +196,10 @@ export class ActivityAsset extends LitElement {
                         style="margin-left: 10px;"
                       >
                         ${new Set(
-                          this.notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
-                        ).size - 1} people
+                          this.notifications
+                          .filter((notification) => notification.notification.fromAgent)
+                          .map((notification) => encodeAndStringify(notification.notification.fromAgent)),
+                        ).size} people
                       </div>
                       <div
                         style="margin-left: 10px;"

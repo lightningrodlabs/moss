@@ -211,10 +211,14 @@ export class ActivityView extends LitElement {
         // }
         return Object.keys(filteredByTime).sort((a, b) => {
           let numberOfAgentsCountA = new Set(
-            filteredByTime[a].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
+            filteredByTime[a].notifications
+            .filter((notification) => notification.notification.fromAgent)
+            .map((notification) => encodeAndStringify(notification.notification.fromAgent)),
           ).size;
           let numberOfAgentsCountB = new Set(
-            filteredByTime[b].notifications.map((notification) => encodeAndStringify(notification.notification.fromAgent)),
+            filteredByTime[b].notifications
+            .filter((notification) => notification.notification.fromAgent)
+            .map((notification) => encodeAndStringify(notification.notification.fromAgent)),
           ).size;
           console.log('Number of Agents Count A: ', numberOfAgentsCountA, numberOfAgentsCountB);
           return numberOfAgentsCountB - numberOfAgentsCountA;

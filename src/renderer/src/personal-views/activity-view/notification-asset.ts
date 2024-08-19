@@ -193,7 +193,7 @@ export class NotificationAsset extends LitElement {
     }
 
     .show-notifications-button, .hide-notifications-button {
-      background: #3b922d; 
+      background: #3b922d;
       background: transparent;
       color: white; 
       border: none; 
