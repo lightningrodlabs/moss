@@ -467,6 +467,10 @@ export type UnsubscribeFunction = () => void;
 export type PeerStatus = {
   lastSeen: number;
   status: string;
+  /**
+   * Timezone offset from UTC, in minutes
+   */
+  tzUtcOffset?: number;
 };
 
 export type PeerStatusUpdate = Record<AgentPubKeyB64, PeerStatus>;

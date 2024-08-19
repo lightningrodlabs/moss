@@ -69,10 +69,18 @@ import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletAgent, AppletHash, DistributionInfo } from '../../types.js';
 import { Applet } from '../../types.js';
-import { appIdFromAppletHash, markdownParseSafe, modifiersToInviteUrl } from '../../utils.js';
+import {
+  UTCOffsetStringFromOffsetMinutes,
+  appIdFromAppletHash,
+  localTimeFromUtcOffset,
+  markdownParseSafe,
+  modifiersToInviteUrl,
+  relativeTzOffsetString,
+} from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '../../personal-views/tool-library/types.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { AgentAndTzOffset } from './group-peers-status.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -203,7 +211,7 @@ export class GroupHome extends LitElement {
   _peerStatusInterval: number | null | undefined;
 
   @state()
-  _selectedAgent: AgentPubKey | undefined;
+  _selectedAgent: AgentAndTzOffset | undefined;
 
   groupProfile = new StoreSubscriber(
     this,
@@ -632,21 +640,34 @@ export class GroupHome extends LitElement {
   renderMemberProfile() {
     return html`
       <div class="column">
-        <profile-detail .agentPubKey=${this._selectedAgent}></profile-detail>
+        <profile-detail .agentPubKey=${this._selectedAgent?.agent}></profile-detail>
         <div class="row" style="align-items: center; margin-top: 20px;">
           <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Role:</span>
-          <agent-permission .agent=${this._selectedAgent}></agent-permission>
+          <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
+        </div>
+        <div class="row" style="align-items: center; margin-top: 15px;">
+          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Local Time:</span>
+          ${this._selectedAgent?.tzUtcOffset
+            ? html`<span
+                >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
+                (${relativeTzOffsetString(
+                  this.mossStore.tzUtcOffset(),
+                  this._selectedAgent.tzUtcOffset,
+                )},
+                ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
+              >`
+            : html`<span>unknown</span>`}
         </div>
         <span style="font-size: 13px; font-weight: bold; margin-top: 40px;">Public key:</span>
         <div
           class="row pubkey-copy"
           style="align-items: center;"
           @click=${async () => {
-            await navigator.clipboard.writeText(encodeHashToBase64(this._selectedAgent!));
+            await navigator.clipboard.writeText(encodeHashToBase64(this._selectedAgent!.agent));
             notify(msg('Hash Copied to clipboard.'));
           }}
         >
-          <span style="margin-right: 5px;">${encodeHashToBase64(this._selectedAgent!)}</span>
+          <span style="margin-right: 5px;">${encodeHashToBase64(this._selectedAgent!.agent)}</span>
           <sl-icon .src=${wrapPathInSvg(mdiContentCopy)}></sl-icon>
         </div>
       </div>

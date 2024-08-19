@@ -150,7 +150,13 @@ export class MossStore {
 
   _appClients: Record<InstalledAppId, AppClient> = {};
 
+  _tzUtcOffset: number | undefined;
+
   myLatestActivity: number;
+
+  tzUtcOffset(): number {
+    return this._tzUtcOffset ? this._tzUtcOffset : new Date().getTimezoneOffset();
+  }
 
   setCreatableDialogResult(dialogId: string, result: CreatableResult) {
     this._creatableDialogResults.update((store) => {

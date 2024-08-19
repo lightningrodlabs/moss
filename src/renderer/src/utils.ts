@@ -850,3 +850,37 @@ export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: M
   const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
 }
+
+export function UTCOffsetStringFromOffsetMinutes(offsetMinutes: number): string {
+  const offsetHours = offsetMinutes / 60;
+  if (offsetHours > 0) {
+    return `UTC-${Math.abs(offsetHours)}`;
+  }
+  if (offsetHours < 0) {
+    return `UTC+${Math.abs(offsetHours)}`;
+  }
+  return 'UTC';
+}
+
+export function relativeTzOffsetString(offsetMinutes1: number, offsetMinutes2: number): string {
+  const delta = offsetMinutes2 - offsetMinutes1;
+  const deltaHours = delta / 60;
+  if (deltaHours > 0) {
+    return `${deltaHours} hr ahead`;
+  }
+  if (deltaHours < 0) {
+    return `${deltaHours} hr behind`;
+  }
+  return 'same timezone';
+}
+
+export function localTimeFromUtcOffset(offsetMinues: number): string {
+  const utcNow = Date.now();
+  const localNow = utcNow - offsetMinues * 60 * 1000;
+  const localDate = new Date(localNow);
+  const hours = localDate.getUTCHours();
+  const minutes = localDate.getUTCMinutes();
+
+  // Format the time in HH:MM format
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}

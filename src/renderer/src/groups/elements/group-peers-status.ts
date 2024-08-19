@@ -16,6 +16,11 @@ import { GroupStore, IDLE_THRESHOLD, OFFLINE_THRESHOLD } from '../group-store.js
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 
+export type AgentAndTzOffset = {
+  agent: AgentPubKey;
+  tzUtcOffset?: number;
+};
+
 @localized()
 @customElement('group-peers-status')
 export class GroupPeersStatus extends LitElement {
@@ -47,15 +52,33 @@ export class GroupPeersStatus extends LitElement {
     const myStatus =
       now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     members = members.filter((agent) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey));
-    const onlineAgents = members.filter((agent) => {
-      const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
-      return !!agentStatus && now - agentStatus.lastSeen < OFFLINE_THRESHOLD;
-    });
+    const onlineAgents = members
+      .filter((agent) => {
+        const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return !!agentStatus && now - agentStatus.lastSeen < OFFLINE_THRESHOLD;
+      })
+      .map((agent) => {
+        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return {
+          agent,
+          tzUtcOffset: statusInfo.tzUtcOffset,
+          status: statusInfo.status,
+        };
+      });
 
-    const offlineAgents = members.filter((agent) => {
-      const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
-      return !agentStatus || now - agentStatus.lastSeen > OFFLINE_THRESHOLD;
-    });
+    const offlineAgents: AgentAndTzOffset[] = members
+      .filter((agent) => {
+        const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return !agentStatus || now - agentStatus.lastSeen > OFFLINE_THRESHOLD;
+      })
+      .map((agent) => {
+        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return {
+          agent,
+          tzUtcOffset: statusInfo.tzUtcOffset,
+          status: statusInfo.status,
+        };
+      });
 
     return html`
       <div class="column agents-list">
@@ -64,14 +87,32 @@ export class GroupPeersStatus extends LitElement {
           <div
             class="row profile"
             style="position: relative;"
+            tabindex="0"
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('profile-selected', {
-                  detail: myPubKey,
+                  detail: {
+                    agent: myPubKey,
+                    tzUtcOffset: this._mossStore.tzUtcOffset(),
+                  },
                   bubbles: true,
                   composed: true,
                 }),
               );
+            }}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                this.dispatchEvent(
+                  new CustomEvent('profile-selected', {
+                    detail: {
+                      agent: myPubKey,
+                      tzUtcOffset: this._mossStore.tzUtcOffset(),
+                    },
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+              }
             }}
           >
             <profile-detail .agentPubKey=${myPubKey}></profile-detail>
@@ -82,27 +123,40 @@ export class GroupPeersStatus extends LitElement {
             ></div>
           </div>
 
-          ${onlineAgents.map((agent) => {
-            const status = this._peerStatuses.value![encodeHashToBase64(agent)].status;
+          ${onlineAgents.map((agentInfo) => {
             return html`
               <div
                 class="row profile"
                 style="position: relative;"
+                tabindex="0"
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('profile-selected', {
-                      detail: agent,
+                      detail: agentInfo,
                       bubbles: true,
                       composed: true,
                     }),
                   );
                 }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    this.dispatchEvent(
+                      new CustomEvent('profile-selected', {
+                        detail: agentInfo,
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }
+                }}
               >
-                <profile-detail .agentPubKey=${agent}></profile-detail>
-                <div class="status-indicator ${status === 'inactive' ? 'inactive' : ''}"></div>
+                <profile-detail .agentPubKey=${agentInfo.agent}></profile-detail>
+                <div
+                  class="status-indicator ${agentInfo.status === 'inactive' ? 'inactive' : ''}"
+                ></div>
                 <div
                   class="inactive-indicator"
-                  style="${status === 'inactive' ? '' : 'display: none;'}"
+                  style="${agentInfo.status === 'inactive' ? '' : 'display: none;'}"
                 ></div>
               </div>
             `;
@@ -112,21 +166,35 @@ export class GroupPeersStatus extends LitElement {
           ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Offline')}</div>
               <div class="column">
                 ${offlineAgents.map(
-                  (agent) => html`
+                  (agentInfo) => html`
                     <div
                       class="row profile"
                       style="position: relative;"
                       @click=${() => {
                         this.dispatchEvent(
                           new CustomEvent('profile-selected', {
-                            detail: agent,
+                            detail: agentInfo,
                             bubbles: true,
                             composed: true,
                           }),
                         );
                       }}
+                      @keypress=${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          this.dispatchEvent(
+                            new CustomEvent('profile-selected', {
+                              detail: agentInfo,
+                              bubbles: true,
+                              composed: true,
+                            }),
+                          );
+                        }
+                      }}
                     >
-                      <profile-detail style="opacity: 0.5;" .agentPubKey=${agent}></profile-detail>
+                      <profile-detail
+                        style="opacity: 0.5;"
+                        .agentPubKey=${agentInfo.agent}
+                      ></profile-detail>
                     </div>
                   `,
                 )}

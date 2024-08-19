@@ -111,14 +111,15 @@ export class GroupStore {
 
     this.peerStatusClient.onSignal(async (signal: SignalPayload) => {
       if (signal.type == 'Pong') {
-        this.updatePeerStatus(signal.from_agent, signal.status);
+        this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
       }
       if (signal.type == 'Ping') {
         const now = Date.now();
         const status =
           now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-        this.updatePeerStatus(signal.from_agent, signal.status);
-        await this.peerStatusClient.pong([signal.from_agent], status);
+        this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
+        console.log('this.mossStore.tzUtcOffset(): ', this.mossStore.tzUtcOffset());
+        await this.peerStatusClient.pong([signal.from_agent], status, this.mossStore.tzUtcOffset());
       }
     });
 
@@ -201,7 +202,7 @@ export class GroupStore {
     return derived(this._peerStatuses, (state) => state);
   }
 
-  updatePeerStatus(agent: AgentPubKey, status: string) {
+  updatePeerStatus(agent: AgentPubKey, status: string, tzUtcOffset?: number) {
     this._peerStatuses.update((value) => {
       if (!value) {
         value = {};
@@ -209,6 +210,7 @@ export class GroupStore {
       value[encodeHashToBase64(agent)] = {
         lastSeen: Date.now(),
         status,
+        tzUtcOffset,
       };
       return value;
     });
@@ -247,6 +249,7 @@ export class GroupStore {
   async pingAgents(): Promise<void> {
     const now = Date.now();
     const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    const tzOffset = this.mossStore.tzUtcOffset();
     if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
       const agentsThatNeedPinging = this.allAgents.filter(
         (agent) =>
@@ -254,7 +257,7 @@ export class GroupStore {
       );
       this._agentsRefetchCounter += 1;
       return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
         : Promise.resolve();
     } else {
       const allAgents = await this.profilesStore.client.getAgentsWithProfile();
@@ -265,7 +268,7 @@ export class GroupStore {
       );
       this._agentsRefetchCounter = 0;
       return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus)
+        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
         : Promise.resolve();
     }
   }
@@ -653,20 +656,22 @@ export class PeerStatusClient extends ZomeClient<SignalPayload> {
   /**
    * Ping all specified agents, expecting for their pong later
    */
-  async ping(agentPubKeys: AgentPubKey[], status): Promise<void> {
+  async ping(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
     return this.callZome('ping', {
       to_agents: agentPubKeys,
       status,
+      tz_utc_offset: tzUtcOffset,
     });
   }
 
   /**
    * Pong all specified agents
    */
-  async pong(agentPubKeys: AgentPubKey[], status): Promise<void> {
+  async pong(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
     return this.callZome('pong', {
       to_agents: agentPubKeys,
       status,
+      tz_utc_offset: tzUtcOffset,
     });
   }
 }
@@ -707,9 +712,11 @@ export type SignalPayload =
       type: 'Ping';
       from_agent: AgentPubKey;
       status: string;
+      tz_utc_offset: number;
     }
   | {
       type: 'Pong';
       from_agent: AgentPubKey;
       status: string;
+      tz_utc_offset: number;
     };
