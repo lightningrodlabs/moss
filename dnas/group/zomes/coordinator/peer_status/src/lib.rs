@@ -11,12 +11,12 @@ pub enum SignalPayload {
     Ping {
         from_agent: AgentPubKey,
         status: String,
-        tz_utc_offset: Option<f32>,
+        tz_utc_offset: Option<i32>,
     },
     Pong {
         from_agent: AgentPubKey,
         status: String,
-        tz_utc_offset: Option<f32>,
+        tz_utc_offset: Option<i32>,
     },
 }
 
@@ -50,7 +50,7 @@ pub fn recv_remote_signal(signal: ExternIO) -> ExternResult<()> {
 pub struct PingPayload {
     pub to_agents: Vec<AgentPubKey>,
     pub status: String,
-    pub tz_utc_offset: Option<f32>,
+    pub tz_utc_offset: Option<i32>,
 }
 
 /// Send a remote signal to the given users to check whether they are online
@@ -73,7 +73,7 @@ pub fn ping(input: PingPayload) -> ExternResult<()> {
 pub struct PongPayload {
     pub to_agents: Vec<AgentPubKey>,
     pub status: String,
-    pub tz_utc_offset: Option<f32>,
+    pub tz_utc_offset: Option<i32>,
 }
 
 #[hdk_extern]
