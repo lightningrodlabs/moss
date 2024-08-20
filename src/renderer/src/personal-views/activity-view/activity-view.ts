@@ -302,7 +302,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
           </select>
         </div>
-        <div style="overflow-y: auto;">
+        <div style="overflow-y: auto; padding-bottom: 15px;">
         ${sortedNotifications.length === 0
           ? html`
               <div
@@ -379,7 +379,7 @@ export class ActivityView extends LitElement {
               if (this.lookBackString2 === 'month') {
                 this._mossStore.loadNotificationFeed(30);
               }
-              this.lookBackString1 = e.target.value;
+              this.lookBackString2 = e.target.value;
             }}
             .value=${this.lookBackString2 || 'day'}
           >
