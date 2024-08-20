@@ -1,5 +1,6 @@
 import {
   ActionHash,
+  AgentPubKey,
   AppClient,
   EntryHash,
   decodeHashFromBase64,
@@ -311,6 +312,11 @@ export interface WeaveServices {
    * @returns
    */
   myGroupPermissionType: () => Promise<GroupPermissionType>;
+  /**
+   * Gets all the agents that joined the Tool instance of the Tool calling this function
+   * @returns
+   */
+  appletParticipants: () => Promise<AgentPubKey[]>;
 }
 
 export class WeaveClient implements WeaveServices {
@@ -384,4 +390,6 @@ export class WeaveClient implements WeaveServices {
   requestClose = () => window.__WEAVE_API__.requestClose();
 
   myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
+
+  appletParticipants = () => window.__WEAVE_API__.appletParticipants();
 }

@@ -249,6 +249,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async myGroupPermissionType() {
       throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
     },
+    async appletParticipants() {
+      throw new Error('appletParticipants is not supported in headless WeaveServices.');
+    },
   };
 }
 
@@ -495,6 +498,17 @@ export async function handleAppletIframeMessage(
           };
         }
       }
+    }
+    case 'applet-participants': {
+      const appletHash = decodeHashFromBase64(appletId);
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      if (groupStores.size === 0) throw new Error('No group store found for applet.');
+
+      // TODO: Think through in case multiple groups are supposed to be possible again
+      // for the same applet.
+      const groupStore = Array.from(groupStores.values())[0];
+      const appletAgents = await groupStore.groupClient.getJoinedAppletAgents(appletHash);
+      return appletAgents.map((appletAgent) => appletAgent.applet_pubkey);
     }
     case 'sign-zome-call':
       logAppletZomeCall(message.request, appletId);

@@ -69,12 +69,16 @@ export class AppletMain extends LitElement {
   groupPermissionType: GroupPermissionType | undefined;
 
   @state()
+  appletParticipants: AgentPubKey[] | undefined;
+
+  @state()
   selectedAgent: AgentPubKey | undefined;
   // @state()
   // unsubscribe: undefined | (() => void);
 
   async firstUpdated() {
     this.groupPermissionType = await this.weaveClient.myGroupPermissionType();
+    this.appletParticipants = await this.weaveClient.appletParticipants();
   }
 
   // disconnectedCallback(): void {
@@ -189,7 +193,7 @@ export class AppletMain extends LitElement {
     this.selectedWal = selectedWal;
   }
 
-  renderPeers() {
+  renderGroupPeers() {
     switch (this._allProfiles.value.status) {
       case 'pending':
         return html`Loading peer profiles...`;
@@ -204,6 +208,7 @@ export class AppletMain extends LitElement {
                 <agent-status
                   .agent=${agent}
                   .peerStatusStore=${this.peerStatusStore}
+                  style="margin-right: 3px;"
                 ></agent-status>
               `
           )}
@@ -211,10 +216,31 @@ export class AppletMain extends LitElement {
     }
   }
 
+  renderAppletParticipants() {
+    if (!this.appletParticipants) return html`Loading group participants...`;
+    return html`
+      ${Array.from(this.appletParticipants).map(
+        (agent) =>
+          html`
+            <agent-status
+              .agent=${agent}
+              .peerStatusStore=${this.peerStatusStore}
+              style="margin-right: 3px;"
+            ></agent-status>
+          `
+      )}
+    `;
+  }
+
   render() {
     return html`
       <div class="column" style="margin-bottom: 500px;">
-        <div class="row" style="justify-content: flex-start;">${this.renderPeers()}</div>
+        <div class="row" style="justify-content: flex-start; align-items: center;">
+          <span>All group agents:</span>${this.renderGroupPeers()}
+        </div>
+        <div class="row" style="justify-content: flex-start; align-items: center;">
+          <span>All Tool participants:</span>${this.renderAppletParticipants()}
+        </div>
         <div><b>My Group Permission Type: </b>${JSON.stringify(this.groupPermissionType)}</div>
         <div class="row">
           <div class="column">

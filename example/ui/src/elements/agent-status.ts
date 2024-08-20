@@ -47,13 +47,5 @@ export class AgentStatus extends LitElement {
     ></agent-avatar> `;
   }
 
-  static styles = [
-    css`
-      :host {
-        display: flex;
-        flex: 1;
-      }
-    `,
-    sharedStyles,
-  ];
+  static styles = [sharedStyles];
 }
