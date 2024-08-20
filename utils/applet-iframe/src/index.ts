@@ -171,6 +171,11 @@ const weaveApi: WeaveServices = {
     postMessage({
       type: 'my-group-permission-type',
     }),
+
+  appletParticipants: () =>
+    postMessage({
+      type: 'applet-participants',
+    }),
 };
 
 (async () => {

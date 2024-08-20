@@ -353,6 +353,9 @@ export type AppletToParentRequest =
       type: 'my-group-permission-type';
     }
   | {
+      type: 'applet-participants';
+    }
+  | {
       type: 'user-select-wal';
     }
   | {
