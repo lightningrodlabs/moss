@@ -72,11 +72,9 @@ export class GroupPeersStatus extends LitElement {
         return !agentStatus || now - agentStatus.lastSeen > OFFLINE_THRESHOLD;
       })
       .map((agent) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
         return {
           agent,
-          tzUtcOffset: statusInfo.tzUtcOffset,
-          status: statusInfo.status,
+          tzUtcOffset: undefined,
         };
       });
 
