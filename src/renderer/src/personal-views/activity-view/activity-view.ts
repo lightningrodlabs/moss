@@ -302,6 +302,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
           </select>
         </div>
+        <div style="overflow-y: auto;">
         ${sortedNotifications.length === 0
           ? html`
               <div
@@ -337,6 +338,7 @@ export class ActivityView extends LitElement {
                 ></activity-asset>
               `;
             })}
+        </div>
       </div>
       <div class="column">
         <div style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
@@ -390,6 +392,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
           </select>
         </div>
+        <div style="overflow-y: auto; padding-bottom: 15px;">
         ${filteredIndividualNotifications.length === 0
           ? html`
               <div
@@ -416,6 +419,7 @@ export class ActivityView extends LitElement {
                 ></notification-asset>
               `,
             )}
+        </div>
       </div>
     `;
   }
@@ -430,6 +434,7 @@ export class ActivityView extends LitElement {
       }
       .column {
         padding: 10px;
+        height: calc(100vh - 70px);        
       }
       .sort-buttons {
         margin-bottom: 10px;

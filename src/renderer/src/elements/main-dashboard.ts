@@ -779,7 +779,7 @@ export class MainDashboard extends LitElement {
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
-          : ''} overflow-x: hidden; overflow-y: scroll;"
+          : ''} overflow-x: hidden; overflow-y: auto;"
       ></activity-view>
 
       <tool-library

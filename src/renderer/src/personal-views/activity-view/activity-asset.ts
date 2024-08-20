@@ -183,12 +183,12 @@ export class ActivityAsset extends LitElement {
                     </div>
                     <div style="display: flex; flex-direction: row;">
                       <div
-                        style=""
+                        style="flex: 0 0 auto;"
                       >
                         ${this.notifications.length} notifications
                       </div>
                       <div
-                        style="margin-left: 10px;"
+                        style="margin-left: 10px; flex: 0 0 auto;"
                       >
                         ${
                           new Set(
@@ -201,7 +201,7 @@ export class ActivityAsset extends LitElement {
                         } people
                       </div>
                       <div
-                        style="margin-left: 10px;"
+                        style="margin-left: 10px; flex: 0 0 auto;"
                       >
                         ${formatDistanceToNow(
                           new Date(

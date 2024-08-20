@@ -149,8 +149,8 @@ export class NotificationAsset extends LitElement {
         >
           <div class="notification-title">${this.notification?.title}</div>
           <div style="display: flex; flex-direction: row;">
-            <div style="margin-right: 10px;">${this.renderFirstGroupProfileIcon()}</div>
-            ${this.renderAppletLogo()} ${this.renderAppletName()}
+            <div style="margin-right: 10px; flex: 0 0 auto;">${this.renderFirstGroupProfileIcon()}</div>
+            <div style="flex: 0 0 auto;">${this.renderAppletLogo()} ${this.renderAppletName()}</div>
           </div>
           <div class="notification-body">${this.notification?.body}</div>
           <div class="notification-date">
@@ -221,21 +221,6 @@ export class NotificationAsset extends LitElement {
 
       .asset-title {
         font-size: 20px !important;
-      }
-
-      .displayed-notifications-list {
-        background: #0080574a;
-        color: #c2f2c1;
-        padding-bottom: 4px;
-        margin-top: -9px;
-        margin-bottom: 10px;
-        border-radius: 0 0 5px 5px;
-        max-height: 1000px;
-        overflow-y: auto;
-      }
-
-      .displayed-notifications-list > div:first-child {
-        margin-top: 4px;
       }
 
       .notification-card {
