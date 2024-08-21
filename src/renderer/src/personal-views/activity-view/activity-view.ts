@@ -247,8 +247,8 @@ export class ActivityView extends LitElement {
 
   getButtonStyle(method) {
     return this.sortMethod1 === method
-      ? 'background-color: #53d43f; color: #3a622d'
-      : 'background-color: #3a622d; color: #53d43f';
+      ? 'background-color: #44b134; color: #000'
+      : 'background-color: #193423; color: #fff';
   }
 
   render() {
@@ -261,7 +261,7 @@ export class ActivityView extends LitElement {
     return html`
       <div class="column">
         <div class="sort-buttons">
-          <div style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
+          <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
             Activity currents
           </div>
           <button
@@ -341,7 +341,7 @@ export class ActivityView extends LitElement {
         </div>
       </div>
       <div class="column">
-        <div style="color: #53d43f; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
+        <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
           All notifications
         </div>
         <div class="sort-buttons">
@@ -349,8 +349,8 @@ export class ActivityView extends LitElement {
             @click=${() => (this.sortMethod2 = 'high')}
             class="sort-button"
             style=${this.sortMethod2 === 'high'
-              ? 'background-color: #53d43f; color: #3a622d'
-              : 'background-color: #3a622d; color: #53d43f'}
+              ? 'background-color: #44b134; color: #000'
+              : 'background-color: #193423; color: #fff'}
           >
             High
           </button>
@@ -358,8 +358,8 @@ export class ActivityView extends LitElement {
             @click=${() => (this.sortMethod2 = 'medium')}
             class="sort-button"
             style=${this.sortMethod2 === 'medium'
-              ? 'background-color: #53d43f; color: #3a622d'
-              : 'background-color: #3a622d; color: #53d43f'}
+              ? 'background-color: #44b134; color: #000'
+              : 'background-color: #193423; color: #fff'}
           >
             Medium
           </button>
@@ -367,8 +367,8 @@ export class ActivityView extends LitElement {
             @click=${() => (this.sortMethod2 = 'low')}
             class="sort-button"
             style=${this.sortMethod2 === 'low'
-              ? 'background-color: #53d43f; color: #3a622d'
-              : 'background-color: #3a622d; color: #53d43f'}
+              ? 'background-color: #44b134; color: #000'
+              : 'background-color: #193423; color: #fff'}
           >
             Low
           </button>
@@ -451,12 +451,14 @@ export class ActivityView extends LitElement {
         background-color: #53d43f;
       }
       .time-select {
-        background-color: #3a622d;
-        color: #53d43f;
+        background-color: #193423;
+        color: #fff !important;
         border: none;
         padding: 5px 10px;
         border-radius: 5px;
         cursor: pointer;
+        border: 0;
+        outline: 0;
       }
       .time-select:focus-visible {
         outline: none;

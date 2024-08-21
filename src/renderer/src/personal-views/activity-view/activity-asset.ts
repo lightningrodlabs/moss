@@ -85,7 +85,8 @@ export class ActivityAsset extends LitElement {
 
     return html`
       <img
-        style="height: 14px; width: 14px; margin-bottom: -3px; margin-right: 3px;"
+        style="height: 14px; width: 14px; margin-bottom: -2px; margin-right: 3px;"
+        title="${this.renderAppletName()}"
         .src=${logo}
         alt="TODO"
       />
@@ -97,7 +98,7 @@ export class ActivityAsset extends LitElement {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
-        return this.renderLogo(this.appletLogo.value.value);
+        return html`${this.renderLogo(this.appletLogo.value.value)}`;
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
@@ -116,7 +117,7 @@ export class ActivityAsset extends LitElement {
       case 'pending':
         return html`<div>Loading...</div>`;
       case 'complete':
-        return html`${this.appletName.value.value}`;
+        return this.appletName.value.value;
       case 'error':
         return html`<div>Failed to load applet name</div>`;
     }
@@ -133,8 +134,8 @@ export class ActivityAsset extends LitElement {
               slot="prefix"
               .src=${groupProfile?.icon_src}
               alt="${groupProfile?.name}"
-              style="height: 16px; width: 16px; margin-bottom: -3px; margin-right: 3px;"
-            />${groupProfile?.name}</sl-option
+              title="${groupProfile?.name}"
+              style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
           >
         `;
       case 'error':
@@ -173,13 +174,8 @@ export class ActivityAsset extends LitElement {
                   <div style="display: flex; flex-direction: column; margin-right: 10px;">
                     <div class="asset-title">
                       ${this.assetInfo?.value?.value?.name}
-                    </div>
-                    <div style="display: flex; flex-direction: row;">
-                      <div style="margin-right: 10px;">
-                        ${this.renderFirstGroupProfileIcon()}
-                      </div>
+                      ${this.renderFirstGroupProfileIcon()}
                       ${this.renderAppletLogo()}
-                      ${this.renderAppletName()}
                     </div>
                     <div style="display: flex; flex-direction: row;">
                       <div
@@ -276,7 +272,6 @@ export class ActivityAsset extends LitElement {
 
       .show-notifications-button,
       .hide-notifications-button {
-        background: #3b922d;
         background: transparent;
         color: white;
         border: none;
@@ -290,18 +285,18 @@ export class ActivityAsset extends LitElement {
 
       .show-notifications-button:hover,
       .hide-notifications-button:hover {
-        background: #29711d !important;
+        background: #3f6733 !important;
       }
 
       .hide-notifications-button {
         border-radius: 0;
-        background: #3b922d;
+        background: #204d31;
         color: white;
         padding: 3px 0 0 0;
       }
 
       .activity-asset-outer:hover > button {
-        background: #3b922d;
+        background: #193423;
         color: white;
       }
 
@@ -309,8 +304,8 @@ export class ActivityAsset extends LitElement {
         background: white;
         border-radius: 5px;
         padding: 10px;
-        background: #53d43f;
-        color: #3a622d;
+        background: #193423;
+        color: #fff;
         min-width: 416px;
         max-width: calc(60vw - 110px);
         display: flex;
@@ -318,11 +313,12 @@ export class ActivityAsset extends LitElement {
 
       .activity-asset:hover {
         cursor: pointer;
-        background: #4bbe39;
+        background: #3f6733;
       }
 
       .asset-title {
         font-size: 20px !important;
+        margin: 4px 0;
       }
 
       .displayed-notifications-list {

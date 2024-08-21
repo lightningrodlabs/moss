@@ -76,7 +76,8 @@ export class NotificationAsset extends LitElement {
 
     return html`
       <img
-        style="height: 14px; width: 14px; margin-bottom: -3px; margin-right: 3px;"
+        style="height: 14px; width: 14px; margin-bottom: -2px; margin-right: 3px;"
+        title="${this.renderAppletName()}"
         .src=${logo}
         alt="TODO"
       />
@@ -88,7 +89,7 @@ export class NotificationAsset extends LitElement {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
-        return this.renderLogo(this.appletLogo.value.value);
+        return html`${this.renderLogo(this.appletLogo.value.value)}`;
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
@@ -98,13 +99,16 @@ export class NotificationAsset extends LitElement {
         ></display-error>`;
     }
   }
+  // renderAppletLogo() {
+  //   return html`${JSON.stringify(this.appletLogo.value)}`;
+  // }
 
   renderAppletName() {
     switch (this.appletName.value.status) {
       case 'pending':
         return html`<div>Loading...</div>`;
       case 'complete':
-        return html`${this.appletName.value.value}`;
+        return this.appletName.value.value;
       case 'error':
         return html`<div>Failed to load applet name</div>`;
     }
@@ -113,7 +117,7 @@ export class NotificationAsset extends LitElement {
   renderFirstGroupProfileIcon() {
     switch (this._groupProfiles.value.status) {
       case 'pending':
-        return html`pending`;
+        return html`loading...`;
       case 'complete':
         const groupProfile = this._groupProfiles.value.value[0];
         return html`
@@ -121,8 +125,8 @@ export class NotificationAsset extends LitElement {
               slot="prefix"
               .src=${groupProfile?.icon_src}
               alt="${groupProfile?.name}"
-              style="height: 16px; width: 16px; margin-bottom: -3px; margin-right: 3px;"
-            />${groupProfile?.name}</sl-option
+              title="${groupProfile?.name}"
+              style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
           >
         `;
       case 'error':
@@ -147,10 +151,10 @@ export class NotificationAsset extends LitElement {
             );
           }}
         >
-          <div class="notification-title">${this.notification?.title}</div>
-          <div style="display: flex; flex-direction: row;">
-            <div style="margin-right: 10px; flex: 0 0 auto;">${this.renderFirstGroupProfileIcon()}</div>
-            <div style="flex: 0 0 auto;">${this.renderAppletLogo()} ${this.renderAppletName()}</div>
+          <div class="notification-title">
+            ${this.notification?.title}
+            ${this.renderFirstGroupProfileIcon()}
+            ${this.renderAppletLogo()}
           </div>
           <div class="notification-body">${this.notification?.body}</div>
           <div class="notification-date">
@@ -199,26 +203,6 @@ export class NotificationAsset extends LitElement {
         padding: 3px 0 0 0;
       }
 
-      .activity-asset-outer:hover > button {
-        background: #3b922d;
-        color: white;
-      }
-
-      .activity-asset {
-        background: white;
-        border-radius: 5px;
-        padding: 10px;
-        background: #53d43f;
-        color: #3a622d;
-        max-width: calc(60vw - 110px);
-        display: flex;
-      }
-
-      .activity-asset:hover {
-        cursor: pointer;
-        background: #4bbe39;
-      }
-
       .asset-title {
         font-size: 20px !important;
       }
@@ -227,8 +211,8 @@ export class NotificationAsset extends LitElement {
         padding: 10px;
         margin-bottom: 10px;
         border-radius: 5px;
-        background-color: #3a622d;
-        color: #53d43f;
+        background: #193423;
+        color: #fff;
       }
       .notification-card:hover {
         background-color: #3f6733;
@@ -236,15 +220,15 @@ export class NotificationAsset extends LitElement {
       }
       .notification-title {
         font-weight: bold;
-        color: #53d43f;
+        color: #fff;
       }
       .notification-date {
         font-size: 0.9em;
-        color: #53d43f;
+        color: #fff;
       }
       .notification-content {
         font-size: 1em;
-        color: #53d43f;
+        color: #fff;
       }
     `,
   ];
