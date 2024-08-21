@@ -303,41 +303,41 @@ export class ActivityView extends LitElement {
           </select>
         </div>
         <div style="overflow-y: auto; padding-bottom: 15px;">
-        ${sortedNotifications.length === 0
-          ? html`
-              <div
-                style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
-              >
-                Your activity will appear here
-              </div>
-            `
-          : sortedNotifications.map((key) => {
-              const notifications = combinedNotifications[key].notifications;
-              console.log(
-                'going to try to get appletHash for ',
-                combinedNotifications[key].appletId,
-              );
-              const appletHash: AppletHash = appletHashFromAppId(
-                appIdFromAppletId(combinedNotifications[key].appletId),
-              );
-              console.log('appletHash is ', appletHash);
-              return html`
-                <activity-asset
-                  @open-wal=${async (e) => {
-                    this.dispatchEvent(
-                      new CustomEvent('open-wal', {
-                        detail: e.detail,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
-                  .notifications=${notifications}
-                  .wal=${key}
-                  .appletHash=${appletHash}
-                ></activity-asset>
-              `;
-            })}
+          ${sortedNotifications.length === 0
+            ? html`
+                <div
+                  style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                >
+                  Your activity will appear here
+                </div>
+              `
+            : sortedNotifications.map((key) => {
+                const notifications = combinedNotifications[key].notifications;
+                console.log(
+                  'going to try to get appletHash for ',
+                  combinedNotifications[key].appletId,
+                );
+                const appletHash: AppletHash = appletHashFromAppId(
+                  appIdFromAppletId(combinedNotifications[key].appletId),
+                );
+                console.log('appletHash is ', appletHash);
+                return html`
+                  <activity-asset
+                    @open-wal=${async (e) => {
+                      this.dispatchEvent(
+                        new CustomEvent('open-wal', {
+                          detail: e.detail,
+                          bubbles: true,
+                          composed: true,
+                        }),
+                      );
+                    }}
+                    .notifications=${notifications}
+                    .wal=${key}
+                    .appletHash=${appletHash}
+                  ></activity-asset>
+                `;
+              })}
         </div>
       </div>
       <div class="column">
@@ -393,32 +393,32 @@ export class ActivityView extends LitElement {
           </select>
         </div>
         <div style="overflow-y: auto; padding-bottom: 15px;">
-        ${filteredIndividualNotifications.length === 0
-          ? html`
-              <div
-                style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
-              >
-                Your notifications will appear here
-              </div>
-            `
-          : filteredIndividualNotifications.map(
-              (notification) => html`
-                <notification-asset
-                  .notification=${notification.notification}
-                  .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-                  @open-applet-main=${(e) => {
-                    console.log('notification clicked', e.detail);
-                    this.dispatchEvent(
-                      new CustomEvent('open-applet-main', {
-                        detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
-                ></notification-asset>
-              `,
-            )}
+          ${filteredIndividualNotifications.length === 0
+            ? html`
+                <div
+                  style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                >
+                  Your notifications will appear here
+                </div>
+              `
+            : filteredIndividualNotifications.map(
+                (notification) => html`
+                  <notification-asset
+                    .notification=${notification.notification}
+                    .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
+                    @open-applet-main=${(e) => {
+                      console.log('notification clicked', e.detail);
+                      this.dispatchEvent(
+                        new CustomEvent('open-applet-main', {
+                          detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
+                          bubbles: true,
+                          composed: true,
+                        }),
+                      );
+                    }}
+                  ></notification-asset>
+                `,
+              )}
         </div>
       </div>
     `;
@@ -434,7 +434,7 @@ export class ActivityView extends LitElement {
       }
       .column {
         padding: 10px;
-        height: calc(100vh - 70px);        
+        height: calc(100vh - 70px);
       }
       .sort-buttons {
         margin-bottom: 10px;
@@ -452,7 +452,7 @@ export class ActivityView extends LitElement {
       }
       .time-select {
         background-color: #193423;
-        color: #fff !important;
+        color: #fff;
         border: none;
         padding: 5px 10px;
         border-radius: 5px;

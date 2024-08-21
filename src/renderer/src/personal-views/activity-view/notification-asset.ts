@@ -89,7 +89,7 @@ export class NotificationAsset extends LitElement {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
-        return this.renderLogo(this.appletLogo.value.value)
+        return this.renderLogo(this.appletLogo.value.value);
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
@@ -106,11 +106,11 @@ export class NotificationAsset extends LitElement {
   getAppletName() {
     switch (this.appletName.value.status) {
       case 'pending':
-        return `<div>Loading...</div>`;
+        return 'Loading...';
       case 'complete':
         return this.appletName.value.value;
       case 'error':
-        return `<div>Failed to load applet name</div>`;
+        return 'Failed to load applet name';
     }
   }
 
@@ -122,12 +122,12 @@ export class NotificationAsset extends LitElement {
         const groupProfile = this._groupProfiles.value.value[0];
         return html`
           <img
-              slot="prefix"
-              .src=${groupProfile?.icon_src}
-              alt="${groupProfile?.name}"
-              title="${groupProfile?.name}"
-              style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
-          >
+            slot="prefix"
+            .src=${groupProfile?.icon_src}
+            alt="${groupProfile?.name}"
+            title="${groupProfile?.name}"
+            style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
+          />
         `;
       case 'error':
         return html`error`;
@@ -152,8 +152,7 @@ export class NotificationAsset extends LitElement {
           }}
         >
           <div class="notification-title">
-            ${this.notification?.title}
-            ${this.renderFirstGroupProfileIcon()}
+            ${this.notification?.title} ${this.renderFirstGroupProfileIcon()}
             ${this.renderAppletLogo()}
           </div>
           <div class="notification-body">${this.notification?.body}</div>
@@ -193,7 +192,7 @@ export class NotificationAsset extends LitElement {
 
       .show-notifications-button:hover,
       .hide-notifications-button:hover {
-        background: #29711d !important;
+        background: #29711d;
       }
 
       .hide-notifications-button {
@@ -204,7 +203,7 @@ export class NotificationAsset extends LitElement {
       }
 
       .asset-title {
-        font-size: 20px !important;
+        font-size: 20px;
       }
 
       .notification-card {
