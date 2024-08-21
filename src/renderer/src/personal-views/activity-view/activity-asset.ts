@@ -98,7 +98,7 @@ export class ActivityAsset extends LitElement {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
-        return html`${this.renderLogo(this.appletLogo.value.value)}`;
+        return this.renderLogo(this.appletLogo.value.value)
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
