@@ -77,7 +77,7 @@ export class NotificationAsset extends LitElement {
     return html`
       <img
         style="height: 14px; width: 14px; margin-bottom: -2px; margin-right: 3px;"
-        title="${this.renderAppletName()}"
+        title="${this.getAppletName()}"
         .src=${logo}
         alt="TODO"
       />
@@ -89,7 +89,7 @@ export class NotificationAsset extends LitElement {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
-        return html`${this.renderLogo(this.appletLogo.value.value)}`;
+        return this.renderLogo(this.appletLogo.value.value)
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
@@ -103,14 +103,14 @@ export class NotificationAsset extends LitElement {
   //   return html`${JSON.stringify(this.appletLogo.value)}`;
   // }
 
-  renderAppletName() {
+  getAppletName() {
     switch (this.appletName.value.status) {
       case 'pending':
-        return html`<div>Loading...</div>`;
+        return `<div>Loading...</div>`;
       case 'complete':
         return this.appletName.value.value;
       case 'error':
-        return html`<div>Failed to load applet name</div>`;
+        return `<div>Failed to load applet name</div>`;
     }
   }
 

@@ -86,7 +86,7 @@ export class ActivityAsset extends LitElement {
     return html`
       <img
         style="height: 14px; width: 14px; margin-bottom: -2px; margin-right: 3px;"
-        title="${this.renderAppletName()}"
+        title="${this.getAppletName()}"
         .src=${logo}
         alt="TODO"
       />
@@ -112,14 +112,14 @@ export class ActivityAsset extends LitElement {
   //   return html`${JSON.stringify(this.appletLogo.value)}`;
   // }
 
-  renderAppletName() {
+  getAppletName() {
     switch (this.appletName.value.status) {
       case 'pending':
-        return html`<div>Loading...</div>`;
+        return `<div>Loading...</div>`;
       case 'complete':
         return this.appletName.value.value;
       case 'error':
-        return html`<div>Failed to load applet name</div>`;
+        return `<div>Failed to load applet name</div>`;
     }
   }
 
