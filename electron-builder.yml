@@ -42,6 +42,7 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-# publish:
-#   provider: generic
+publish:
+  provider: github
+  releaseType: prerelease
 #   url: https://example.com/auto-updates
