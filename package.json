@@ -58,7 +58,7 @@
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@holochain/client": "0.18.0-dev.3",
     "@lightningrodlabs/we-applet": "file:./libs/we-applet",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.7",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
     "adm-zip": "0.5.14",

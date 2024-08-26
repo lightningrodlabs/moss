@@ -118,8 +118,18 @@ weCli
   .option('--holochain-rust-log <string>', 'RUST_LOG value to pass to the holochain binary')
   .option('--holochain-wasm-log <string>', 'WASM_LOG value to pass to the holochain binary')
   .option('--lair-rust-log <string>', 'RUST_LOG value to pass to the lair keystore binary')
-  .option('-b, --bootstrap-url <url>', 'URL of the bootstrap server to use.')
-  .option('-s, --signaling-url <url>', 'URL of the signaling server to use.')
+  .option(
+    '-b, --bootstrap-url <url>',
+    'URL of the bootstrap server to use (not persisted across restarts).',
+  )
+  .option(
+    '-s, --signaling-url <url>',
+    'URL of the signaling server to use (not persisted across restarts).',
+  )
+  .option(
+    '--ice-urls <string>',
+    'Comma separated string of ICE server URLs to use. Is ignored if an external holochain binary is being used (not persisted across restarts).',
+  )
   .option(
     '--force-production-urls',
     'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',

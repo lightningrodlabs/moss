@@ -50,6 +50,7 @@ export interface CliOpts {
   lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
+  iceUrls?: string;
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
 }
@@ -60,6 +61,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
+  iceUrls: string[] | undefined;
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
   holochainWasmLog: string | undefined;
@@ -178,6 +180,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
+    iceUrls: args.iceUrls ? args.iceUrls.split(',') : undefined,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
     holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
