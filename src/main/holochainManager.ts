@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import getPort from 'get-port';
 import fs from 'fs';
-import path from 'path';
 import * as childProcess from 'child_process';
 import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
@@ -55,6 +54,7 @@ export class HolochainManager {
     lairUrl: string,
     bootstrapUrl: string,
     signalingUrl: string,
+    iceUrls?: Array<string>,
     rustLog?: string,
     wasmLog?: string,
   ): Promise<HolochainManager> {
@@ -62,15 +62,33 @@ export class HolochainManager {
       ? parseInt(process.env.ADMIN_PORT, 10)
       : await getPort();
 
-    // TODO Reuse existing config and only overwrite chosen values if necessary
-    const conductorConfig = rustUtils.defaultConductorConfig(
-      adminPort,
-      rootDir,
-      lairUrl,
-      bootstrapUrl,
-      signalingUrl,
-      '*',
-    );
+    let conductorConfig: string;
+
+    if (fs.existsSync(configPath)) {
+      conductorConfig = rustUtils.overwriteConfig(
+        adminPort,
+        configPath,
+        lairUrl,
+        bootstrapUrl,
+        signalingUrl,
+        '*',
+        false,
+        iceUrls,
+      );
+    } else {
+      // TODO Reuse existing config and only overwrite chosen values if necessary
+      conductorConfig = rustUtils.defaultConductorConfig(
+        adminPort,
+        rootDir,
+        lairUrl,
+        bootstrapUrl,
+        signalingUrl,
+        '*',
+        false,
+        iceUrls,
+      );
+    }
+
     console.log('Writing conductor-config.yaml...');
 
     fs.writeFileSync(configPath, conductorConfig);
@@ -207,10 +225,7 @@ export class HolochainManager {
       },
     };
 
-    fs.writeFileSync(
-      path.join(this.fs.appsDir, `${appId}.json`),
-      JSON.stringify(appAssetsInfo, undefined, 4),
-    );
+    this.fs.storeAppAssetsInfo(appId, appAssetsInfo);
 
     await this.adminWebsocket.enableApp({ installed_app_id: appId });
 

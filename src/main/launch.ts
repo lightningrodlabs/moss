@@ -79,6 +79,7 @@ export async function launch(
     lairUrl,
     runOptions.bootstrapUrl!,
     runOptions.signalingUrl!,
+    runOptions.iceUrls,
     runOptions.holochainRustLog,
     runOptions.holochainWasmLog,
   );
