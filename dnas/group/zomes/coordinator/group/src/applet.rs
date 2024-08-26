@@ -75,6 +75,8 @@ fn abandon_applet(applet_hash: EntryHash) -> ExternResult<()> {
     for link in joined_agents_links {
         if link.target == AnyLinkableHash::from(my_pubkey.clone()) {
             // delete link and create abandoned link
+            // TODO reconsider whether this link should really be deleted as it contains information
+            // to resolve the public keys of other people in the group
             delete_link(link.create_link_hash)?;
             create_link(
                 applet_hash.clone(),
