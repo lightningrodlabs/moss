@@ -563,6 +563,9 @@ export class DebuggingPanel extends LitElement {
     return html`
       <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
         <h2 style="text-align: center;">Global Apps</h2>
+        <sl-button @click=${async () => await window.electronAPI.dumpNetworkStats()}>
+          Dump Network Stats
+        </sl-button>
         <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
           ${this.renderDefaultApps()}
         </div>

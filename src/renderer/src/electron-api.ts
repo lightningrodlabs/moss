@@ -103,6 +103,7 @@ declare global {
         sha256Webhapp: string,
       ) => Promise<void>;
       uninstallApplet: (appId: string) => Promise<void>;
+      dumpNetworkStats: () => Promise<void>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
