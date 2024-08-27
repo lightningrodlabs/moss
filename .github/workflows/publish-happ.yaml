@@ -38,7 +38,7 @@ jobs:
       - name: Retrieve version
         run: |
           echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
-          echo "HOLOCHAIN_VERSION=$(cat moss.config.json | grep -oP '(?<="holochainVersion": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "HOLOCHAIN_VERSION=$(node ./scripts/read-holochain-version.mjs)" >> $GITHUB_OUTPUT
         id: version
 
       - id: create-release

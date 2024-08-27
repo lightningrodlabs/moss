@@ -1,6 +1,7 @@
 import * as fs from 'fs';
-import https from 'https';
 import * as path from 'path';
+import { exec } from 'child_process';
+import crypto from 'crypto';
 
 const mossConfigJSON = fs.readFileSync('moss.config.json');
 const mossConfig = JSON.parse(mossConfigJSON);
@@ -32,83 +33,49 @@ switch (process.platform) {
     throw new Error(`Got unexpected OS platform: ${process.platform}`);
 }
 
-const holochainBinaryFilename = `holochain-v${mossConfig.holochainVersion}-${mossConfig.binariesAppendix}${
+const holochainBinaryFilename = `holochain-v${mossConfig.holochain.version}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
-const lairBinaryFilename = `lair-keystore-v${mossConfig.lairVersion}-${mossConfig.binariesAppendix}${
+const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConfig.binariesAppendix}${
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
-async function downloadHolochainBinary() {
-  const holochainBinaryRemoteFilename = `holochain-v${mossConfig.holochainVersion}-${targetEnding}`;
-  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochainVersion}/${holochainBinaryRemoteFilename}`;
+function downloadFile(url, targetPath, expectedSha256Hex) {
+  exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
+    console.log(stdout);
+    console.log(stderr);
+    if (error !== null) {
+      console.log('exec error: ' + error);
+      throw new Error('Failed to fetch resource.');
+    }
+  });
 
+  const fileBytes = fs.readFileSync(targetPath);
+  const hasher = crypto.createHash('sha256');
+  hasher.update(fileBytes);
+  const sha256Hex = hasher.digest('hex');
+  if (sha256Hex !== expectedSha256Hex)
+    throw new Error(
+      `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
+    );
+
+  console.log('Download successful. sha256 of file (hex): ', sha256Hex);
+}
+
+function downloadHolochainBinary() {
+  const holochainBinaryRemoteFilename = `holochain-v${mossConfig.holochain.version}-${targetEnding}`;
+  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochain.version}/${holochainBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, holochainBinaryFilename);
-
-  const file = fs.createWriteStream(destinationPath);
-  console.log('Fetching holochain binary from ', holochainBinaryUrl);
-  https
-    .get(holochainBinaryUrl, (response) => {
-      if (response.statusCode === 302) {
-        const redirectUrl = response.headers.location;
-        https.get(redirectUrl, (redirectResponse) => {
-          redirectResponse.pipe(file);
-        });
-      } else if (response.statusCode === 404) {
-        throw new Error('No binary found at the given URL');
-      } else {
-        response.pipe(file);
-      }
-
-      file.on('finish', () => {
-        file.close(() => {
-          console.log('Holochain binary saved successfully.');
-        });
-      });
-
-      fs.chmodSync(destinationPath, 511);
-    })
-    .on('error', (err) => {
-      fs.unlink(destinationPath);
-      console.error(err.message);
-    });
+  downloadFile(holochainBinaryUrl, destinationPath, mossConfig.holochain.sha256);
 }
 
-async function downloadLairBinary() {
-  const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lairVersion}-${targetEnding}`;
-  const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lairVersion}/${lairBinaryRemoteFilename}`;
-
+function downloadLairBinary() {
+  const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lair.version}-${targetEnding}`;
+  const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lair.version}/${lairBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, lairBinaryFilename);
-
-  const file = fs.createWriteStream(destinationPath);
-  console.log('Fetching lair binary from ', lairBinaryUrl);
-  https
-    .get(lairBinaryUrl, (response) => {
-      if (response.statusCode === 302) {
-        const redirectUrl = response.headers.location;
-        https.get(redirectUrl, (redirectResponse) => {
-          redirectResponse.pipe(file);
-        });
-      } else if (response.statusCode === 404) {
-        throw new Error('No binary found at the given URL');
-      } else {
-        response.pipe(file);
-      }
-
-      file.on('finish', () => {
-        file.close(() => {
-          console.log('Lair binary saved successfully.');
-        });
-      });
-
-      fs.chmodSync(destinationPath, 511);
-    })
-    .on('error', (err) => {
-      fs.unlink(destinationPath);
-      console.error(err.message);
-    });
+  downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256);
 }
 
-await downloadHolochainBinary();
-await downloadLairBinary();
+downloadHolochainBinary();
+downloadLairBinary();
