@@ -59,7 +59,7 @@ export async function launch(
     runOptions.lairRustLog,
   );
 
-  const holochainVersion = MOSS_CONFIG.holochainVersion;
+  const holochainVersion = MOSS_CONFIG.holochain.version;
 
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
