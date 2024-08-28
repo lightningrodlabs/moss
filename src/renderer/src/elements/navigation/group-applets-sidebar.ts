@@ -23,6 +23,7 @@ import { groupStoreContext } from '../../groups/context.js';
 import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
 import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { repeat } from 'lit/directives/repeat.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -65,36 +66,38 @@ export class GroupAppletsSidebar extends LitElement {
 
     return html`
       <div class="row" style="align-items: flex-end;">
-        ${Array.from(applets.entries())
-          .sort((a1, a2) => a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name))
-          .map(
-            ([_appletBundleHash, appletStore]) => html`
-              <applet-topbar-button
-                .appletStore=${appletStore}
-                .selected=${this.selectedAppletHash &&
-                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
-                .indicated=${this.indicatedAppletHashes.includes(
-                  encodeHashToBase64(appletStore.appletHash),
-                )}
-                .tooltipText=${appletStore.applet.custom_name}
-                placement="bottom"
-                @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('applet-selected', {
-                      detail: {
-                        groupDnaHash: this._groupStore!.groupDnaHash,
-                        appletHash: appletStore.appletHash,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                  appletStore.clearNotificationStatus();
-                }}
-              >
-              </applet-topbar-button>
-            `,
-          )}
+        ${repeat(
+          Array.from(applets.entries()).sort((a1, a2) =>
+            a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name),
+          ),
+          ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
+          ([_appletHash, appletStore]) => html`
+            <applet-topbar-button
+              .appletStore=${appletStore}
+              .selected=${this.selectedAppletHash &&
+              this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+              .indicated=${this.indicatedAppletHashes.includes(
+                encodeHashToBase64(appletStore.appletHash),
+              )}
+              .tooltipText=${appletStore.applet.custom_name}
+              placement="bottom"
+              @click=${() => {
+                this.dispatchEvent(
+                  new CustomEvent('applet-selected', {
+                    detail: {
+                      groupDnaHash: this._groupStore!.groupDnaHash,
+                      appletHash: appletStore.appletHash,
+                    },
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+                appletStore.clearNotificationStatus();
+              }}
+            >
+            </applet-topbar-button>
+          `,
+        )}
       </div>
     `;
   }
