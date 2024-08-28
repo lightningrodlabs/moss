@@ -19,19 +19,19 @@ function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
     if (error !== null) {
       console.log('exec error: ' + error);
       throw new Error('Failed to fetch resource.');
+    } else {
+      const fileBytes = fs.readFileSync(filePath);
+      const hasher = crypto.createHash('sha256');
+      hasher.update(fileBytes);
+      const sha256Hex = hasher.digest('hex');
+      if (sha256Hex !== expectedSha256Hex)
+        throw new Error(
+          `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
+        );
+
+      console.log('Download successful. sha256 of file (hex): ', sha256Hex);
     }
   });
-
-  const fileBytes = fs.readFileSync(filePath);
-  const hasher = crypto.createHash('sha256');
-  hasher.update(fileBytes);
-  const sha256Hex = hasher.digest('hex');
-  if (sha256Hex !== expectedSha256Hex)
-    throw new Error(
-      `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
-    );
-
-  console.log('Download successful. sha256 of file (hex): ', sha256Hex);
 }
 
 console.log('Fetching tool library from ', toolsLibraryUrl);
