@@ -143,6 +143,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       sha256Webhapp,
     ),
   uninstallApplet: (appId: string) => ipcRenderer.invoke('uninstall-applet', appId),
+  dumpNetworkStats: () => ipcRenderer.invoke('dump-network-stats'),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
 });
 

@@ -1,8 +1,23 @@
 {
-  "holochainVersion": "0.4.0-dev.20",
-  "lairVersion": "0.5.0",
-  "groupHappVersion": "0.13.0-beta.0",
-  "toolsLibraryVersion": "0.0.6",
-  "kandoVersion": "0.11.0-dev.1",
+  "holochain": {
+    "version": "0.4.0-dev.20",
+    "sha256": "31f4fc0a1faf6154ca17c6ea73782f7dd7c021edd88d59914d560cfbb5774cec"
+  },
+  "lair": {
+    "version": "0.5.0",
+    "sha256": "0d9bf4e1172d8ad7575e8e7b063aa9a9b07d721cff91c24284f7c150a68b1781"
+  },
+  "groupHapp": {
+    "version": "0.13.0-beta.0",
+    "sha256": "3666a12e8c3d1df60e956ccdc4be608752ec41251bec22d73e45c33108c94fe7"
+  },
+  "toolsLibrary": {
+    "version": "0.0.6",
+    "sha256": "5bf708efdfbc2111e58aa89bac5028c0ec9f094db3167e0e1989b5686c5fdf6e"
+  },
+  "kando": {
+    "version": "0.11.0-dev.1",
+    "sha256": "4603e9f748f32d4f0861ce89bf2003f7f8b64a92053a23f22c932835a574663c"
+  },
   "binariesAppendix": "moss-0.13"
 }

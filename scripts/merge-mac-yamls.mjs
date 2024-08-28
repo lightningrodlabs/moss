@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import { Readable } from 'node:stream';
 import { Buffer } from 'node:buffer';
 import yaml from 'js-yaml';
-import { release } from 'node:os';
 
 // https://github.com/electron-userland/electron-builder/issues/5592#issuecomment-2004803764
 

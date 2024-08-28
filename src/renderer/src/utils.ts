@@ -886,10 +886,10 @@ export function UTCOffsetStringFromOffsetMinutes(offsetMinutes: number): string 
 export function relativeTzOffsetString(offsetMinutes1: number, offsetMinutes2: number): string {
   const delta = offsetMinutes2 - offsetMinutes1;
   const deltaHours = delta / 60;
-  if (deltaHours > 0) {
+  if (deltaHours < 0) {
     return `${deltaHours} hr ahead`;
   }
-  if (deltaHours < 0) {
+  if (deltaHours > 0) {
     return `${deltaHours} hr behind`;
   }
   return 'same timezone';

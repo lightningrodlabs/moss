@@ -3,9 +3,17 @@ import path from 'path';
 import { app } from 'electron';
 
 export type MossConfig = {
-  holochainVersion: string;
-  lairVersion: string;
+  holochain: VersionAndSha256;
+  lair: VersionAndSha256;
+  groupHapp: VersionAndSha256;
+  toolsLibrary: VersionAndSha256;
+  kando: VersionAndSha256;
   binariesAppendix: string;
+};
+
+type VersionAndSha256 = {
+  version: string;
+  sha256: string;
 };
 
 console.log('APP PATH: ', app.getAppPath());
