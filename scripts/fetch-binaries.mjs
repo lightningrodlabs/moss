@@ -68,6 +68,7 @@ function downloadHolochainBinary() {
   const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochain.version}/${holochainBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, holochainBinaryFilename);
   downloadFile(holochainBinaryUrl, destinationPath, mossConfig.holochain.sha256[targetEnding]);
+  fs.chmodSync(destinationPath, 511);
 }
 
 function downloadLairBinary() {
@@ -75,6 +76,7 @@ function downloadLairBinary() {
   const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lair.version}/${lairBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, lairBinaryFilename);
   downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256[targetEnding]);
+  fs.chmodSync(destinationPath, 511);
 }
 
 downloadHolochainBinary();
