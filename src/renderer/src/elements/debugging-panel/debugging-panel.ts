@@ -34,7 +34,7 @@ import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@lightningrodlabs/we-applet';
 import { appIdFromAppletHash, getCellId } from '../../utils.js';
 import { DumpData } from '../../types.js';
-import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 
 const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
@@ -563,7 +563,12 @@ export class DebuggingPanel extends LitElement {
     return html`
       <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
         <h2 style="text-align: center;">Global Apps</h2>
-        <sl-button @click=${async () => await window.electronAPI.dumpNetworkStats()}>
+        <sl-button
+          @click=${async () => {
+            await window.electronAPI.dumpNetworkStats();
+            notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
+          }}
+        >
           Dump Network Stats
         </sl-button>
         <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
