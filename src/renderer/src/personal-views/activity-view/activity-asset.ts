@@ -62,7 +62,6 @@ export class ActivityAsset extends LitElement {
     this,
     () =>
       pipe(this._mossStore.appletStores.get(this.appletHash), (appletStore) => {
-        console.log('Applet store logo:', appletStore.logo);
         return appletStore ? appletStore.logo : completed(undefined);
       }),
     () => [this.appletHash],
