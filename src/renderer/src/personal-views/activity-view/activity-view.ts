@@ -83,12 +83,6 @@ export class ActivityView extends LitElement {
   }
 
   filterIndividualNotifications(notifications: Array<any>) {
-    console.log(
-      'filter individual notifications',
-      notifications,
-      this.sortMethod2,
-      this.lookBackString2,
-    );
     return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);

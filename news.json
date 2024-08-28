@@ -30,7 +30,7 @@
     {
       "type": "🗓️ Event",
       "timestamp": 1720796154203,
-      "message": "On July 22th at 11 am EST (5 pm CET) we will host a Weave Community Gathering.  The gathering will take place in the public [Weavers Group](https://theweave.social/wal?weave-0.12://invite/1ce8e75c-1196-489e-8dcb-2fb1e0f63fb4&progenitor=uhCAkReDO1vypDyq42CVJoQmZiE3bF1uGIrIVpWgBVZw2HJ6YJ1y8) (click the link to join the group!).  Watch this space for more details."
+      "message": "On July 22th at 11 am EST (5 pm CET) we will host a Weave Community Gathering.  The gathering will take place in the public [Weavers Group](weave-0.12://invite/1ce8e75c-1196-489e-8dcb-2fb1e0f63fb4&progenitor=uhCAkReDO1vypDyq42CVJoQmZiE3bF1uGIrIVpWgBVZw2HJ6YJ1y8) (click the link to join the group!).  Watch this space for more details."
     },
     {
       "type": "Release",

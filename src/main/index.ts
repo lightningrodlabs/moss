@@ -1190,12 +1190,11 @@ app.whenReady().then(async () => {
       );
 
       // Find all applets that can be updated and update them
-      const allAppInfoFiles = fs
+      const allAppInfoFolders = fs
         .readdirSync(WE_FILE_SYSTEM.appsDir)
-        .filter((fileName) => fileName.startsWith('applet#') && fileName.endsWith('.json'));
+        .filter((dirName) => dirName.startsWith('applet#'));
 
-      allAppInfoFiles.forEach((file) => {
-        const appId = file.slice(0, -5); // remove the .json ending
+      allAppInfoFolders.forEach((appId) => {
         const appAssetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
         if (
           appAssetInfo.distributionInfo.type === 'tools-library' &&
