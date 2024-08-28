@@ -289,11 +289,11 @@ export class GroupHome extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Applet installed.');
+      notify('Tool installed.');
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       this._showIgnoredApplets = false;
     } catch (e) {
-      notifyError(`Failed to join Applet (See console for details).`);
+      notifyError(`Failed to join Tool (See console for details).`);
       console.error(e);
     }
     this._joiningNewApplet = undefined;

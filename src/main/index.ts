@@ -1286,6 +1286,11 @@ app.whenReady().then(async () => {
     });
     WE_FILE_SYSTEM.deleteAppAssetsInfo(appId);
   });
+  ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
+    const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
+    const filePath = path.join(WE_FILE_SYSTEM.appLogsDir, 'network_stats.json');
+    fs.writeFileSync(filePath, stats, 'utf-8');
+  });
   ipcMain.handle(
     'install-applet-bundle',
     async (
