@@ -12,6 +12,7 @@ const toolsLibraryUrl = `https://github.com/lightningrodlabs/tools-library/relea
 const kandoUrl = `https://github.com/holochain-apps/kando/releases/download/v${mossConfig.kando.version}/kando.webhapp`;
 
 function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
+  console.log('Downloading from ', url);
   const filePath = path.join(targetDir, fileName);
   exec(`curl -f -L --output ${filePath} ${url}`, (error, stdout, stderr) => {
     console.log(stdout);

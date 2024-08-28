@@ -42,6 +42,7 @@ const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConf
 }`;
 
 function downloadFile(url, targetPath, expectedSha256Hex) {
+  console.log('Downloading from ', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
     console.log(stdout);
     console.log(stderr);
