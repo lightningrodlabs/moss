@@ -261,17 +261,12 @@ export class MossFileSystem {
    *
    * @param installedAppId
    */
-  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
-    const filePath = this.appAssetInfoPath(installedAppId);
-    const backupFilePath = this.appPreviousAssetInfoPath(installedAppId);
+  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
     try {
-      fs.rmSync(filePath);
+      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
     } catch (e) {
-      throw new Error(`Failed to delete app assets for app '${installedAppId}': ${e}`);
+      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
     }
-    try {
-      fs.rmSync(backupFilePath);
-    } catch (e) {}
   }
 
   backupAppAssetsInfo(installedAppId: InstalledAppId) {
