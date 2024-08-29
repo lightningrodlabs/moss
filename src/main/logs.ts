@@ -11,6 +11,7 @@ import {
   LAIR_LOG,
   WeEmitter,
   WASM_LOG,
+  MOSS_ERROR,
 } from './weEmitter';
 
 const { combine, timestamp } = format;
@@ -51,6 +52,11 @@ export function setupLogs(
   });
   weEmitter.on(LAIR_ERROR, (log) => {
     const logLine = `[LAIR] ERROR: ${log}`;
+    console.log(logLine);
+    lairLogger.log('info', logLine);
+  });
+  weEmitter.on(MOSS_ERROR, (log) => {
+    const logLine = `[MOSS] ${log}`;
     console.log(logLine);
     lairLogger.log('info', logLine);
   });

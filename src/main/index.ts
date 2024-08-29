@@ -1177,7 +1177,7 @@ app.whenReady().then(async () => {
         } catch (e) {}
       } else {
         console.log(
-          '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
+          '@batch-update-applet-uis: UI already on the filesystem. Skipping download from remote source.',
         );
       }
       // That the happ hash is the same as with the previous installation needs to be checked in the frontend
@@ -1190,11 +1190,12 @@ app.whenReady().then(async () => {
       );
 
       // Find all applets that can be updated and update them
-      const allAppInfoFolders = fs
-        .readdirSync(WE_FILE_SYSTEM.appsDir)
-        .filter((dirName) => dirName.startsWith('applet#'));
+      const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      const allAppletAppIds = allApps
+        .filter((appInfo) => appInfo.installed_app_id.startsWith('applet#'))
+        .map((appInfo) => appInfo.installed_app_id);
 
-      allAppInfoFolders.forEach((appId) => {
+      allAppletAppIds.forEach((appId) => {
         const appAssetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
         if (
           appAssetInfo.distributionInfo.type === 'tools-library' &&
@@ -1283,7 +1284,11 @@ app.whenReady().then(async () => {
     await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
       installed_app_id: appId,
     });
-    WE_FILE_SYSTEM.deleteAppAssetsInfo(appId);
+    try {
+      WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+    } catch (e: any) {
+      WE_EMITTER.emitMossError(e);
+    }
   });
   ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
     const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
@@ -1378,7 +1383,6 @@ app.whenReady().then(async () => {
         network_seed: networkSeed,
         membrane_proofs: membraneProofs,
       });
-      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       // TODO Store more app metadata
       // Store app metadata
       let uiPort: number | undefined;
@@ -1402,6 +1406,10 @@ app.whenReady().then(async () => {
       // remove temp dir again
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
       console.log('@install-applet-bundle: app installed.');
+
+      // Enable the app after storing metadata in case enabling fails
+      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+
       return appInfo;
     },
   );
