@@ -57,6 +57,9 @@ export class ActivityView extends LitElement {
   @state()
   lookBackString2 = 'week';
 
+  @state()
+  maxNumShownNotifications: number = 50;
+
   _notificationFeed = new StoreSubscriber(
     this,
     () => this._mossStore.notificationFeed(),
@@ -263,9 +266,11 @@ export class ActivityView extends LitElement {
     const filteredIndividualNotifications = this.filterIndividualNotifications(
       this._notificationFeed.value,
     );
+    const displayShowMoreButton =
+      filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
     return html`
-      <div class="column">
+      <div class="column feed">
         <div class="sort-buttons">
           <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
             Activity currents
@@ -346,7 +351,7 @@ export class ActivityView extends LitElement {
               })}
         </div>
       </div>
-      <div class="column">
+      <div class="column feed">
         <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
           All notifications
         </div>
@@ -398,7 +403,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
           </select>
         </div>
-        <div style="overflow-y: auto; padding-bottom: 15px;">
+        <div class="column" style="overflow-y: auto; padding-bottom: 80px;">
           ${filteredIndividualNotifications.length === 0
             ? html`
                 <div
@@ -407,9 +412,10 @@ export class ActivityView extends LitElement {
                   Your notifications will appear here
                 </div>
               `
-            : filteredIndividualNotifications.map(
+            : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
                 (notification) => html`
                   <notification-asset
+                    style="display: flex; flex: 1;"
                     .notification=${notification.notification}
                     .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
                     @open-applet-main=${(e) => {
@@ -425,6 +431,18 @@ export class ActivityView extends LitElement {
                   ></notification-asset>
                 `,
               )}
+          ${displayShowMoreButton
+            ? html`<div class="row" style="justify-content: center;">
+                <button
+                  @click=${() => {
+                    this.maxNumShownNotifications += 50;
+                  }}
+                  style="margin-top: 20px; with: 80px;"
+                >
+                  Show More
+                </button>
+              </div>`
+            : html``}
         </div>
       </div>
     `;
@@ -438,7 +456,7 @@ export class ActivityView extends LitElement {
         background-color: #224b21;
         border-radius: 5px 0 0 0;
       }
-      .column {
+      .feed {
         padding: 10px;
         height: calc(100vh - 70px);
       }

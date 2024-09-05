@@ -18,6 +18,7 @@ import { AppletHash } from '@lightningrodlabs/we-applet';
 import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
 import { AppletNotification } from '../../types.js';
+import { weStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('notification-asset')
@@ -139,7 +140,7 @@ export class NotificationAsset extends LitElement {
         return html``;
       case 'complete':
         return html` <div
-          class="notification-card"
+          class="column notification-card"
           @click=${() => {
             this.dispatchEvent(
               new CustomEvent('open-applet-main', {
@@ -150,11 +151,12 @@ export class NotificationAsset extends LitElement {
             );
           }}
         >
-          <div class="notification-title">
-            ${this.notification?.title} ${this.renderFirstGroupProfileIcon()}
-            ${this.renderAppletLogo()}
+          <div class="row notification-title">
+            ${this.notification?.title}
+            <span style="display: flex; flex: 1;"></span>
+            ${this.renderFirstGroupProfileIcon()} ${this.renderAppletLogo()}
           </div>
-          <div class="notification-body">${this.notification?.body}</div>
+          <div>${this.notification?.body}</div>
           <div class="notification-date">
             ${this.notification
               ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
@@ -169,6 +171,7 @@ export class NotificationAsset extends LitElement {
   }
 
   static styles = [
+    weStyles,
     css`
       .activity-asset-outer {
         display: flex;
@@ -211,6 +214,7 @@ export class NotificationAsset extends LitElement {
         border-radius: 5px;
         background: #193423;
         color: #fff;
+        flex: 1;
       }
       .notification-card:hover {
         background-color: #3f6733;
@@ -219,6 +223,7 @@ export class NotificationAsset extends LitElement {
       .notification-title {
         font-weight: bold;
         color: #fff;
+        flex: 1;
       }
       .notification-date {
         font-size: 0.9em;
