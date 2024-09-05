@@ -24,7 +24,8 @@ import {
   appletHashFromAppId,
   encodeAndStringify,
 } from '../../utils.js';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { AppletNotification } from '../../types.js';
 
 @localized()
 @customElement('activity-view')
@@ -63,16 +64,19 @@ export class ActivityView extends LitElement {
   );
 
   // function that combines notifications based on their aboutWal, if available
-  combineNotifications(notifications: Array<any>) {
-    const combinedNotifications = {};
+  combineNotifications(notifications: Array<AppletNotification>) {
+    const combinedNotifications: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    > = {};
     for (let i = 0; i < notifications.length; i++) {
       const notification = notifications[i];
       if (notification.notification.aboutWal) {
-        const aboutWalUrl = stringifyWal(notification.notification.aboutWal);
-        if (combinedNotifications[aboutWalUrl]) {
-          combinedNotifications[aboutWalUrl].notifications.push(notification);
+        const aboutWal = stringifyWal(notification.notification.aboutWal);
+        if (combinedNotifications[aboutWal]) {
+          combinedNotifications[aboutWal].notifications.push(notification);
         } else {
-          combinedNotifications[aboutWalUrl] = {
+          combinedNotifications[aboutWal] = {
             notifications: [notification],
             appletId: notification.appletId,
           };
@@ -82,7 +86,7 @@ export class ActivityView extends LitElement {
     return combinedNotifications;
   }
 
-  filterIndividualNotifications(notifications: Array<any>) {
+  filterIndividualNotifications(notifications: Array<AppletNotification>) {
     return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);
@@ -116,8 +120,16 @@ export class ActivityView extends LitElement {
     });
   }
 
-  sortNotifications(combinedNotifications: any) {
-    let filteredByTime = {};
+  sortNotifications(
+    combinedNotifications: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    >,
+  ) {
+    let filteredByTime: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    > = {};
     let now = Date.now();
     let lookBackInt = 0;
     switch (this.lookBackString1) {
@@ -145,14 +157,14 @@ export class ActivityView extends LitElement {
       default:
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
     }
-    for (let key in combinedNotifications) {
-      let latestNotification = combinedNotifications[key].notifications.reduce(
+    for (let aboutWal in combinedNotifications) {
+      let latestNotification = combinedNotifications[aboutWal].notifications.reduce(
         (latest, current) => {
           return current.notification.timestamp > latest.notification.timestamp ? current : latest;
         },
       );
       if (now - latestNotification.notification.timestamp < lookBackInt) {
-        filteredByTime[key] = combinedNotifications[key];
+        filteredByTime[aboutWal] = combinedNotifications[aboutWal];
       }
     }
     switch (this.sortMethod1) {
@@ -305,14 +317,14 @@ export class ActivityView extends LitElement {
                   Your activity will appear here
                 </div>
               `
-            : sortedNotifications.map((key) => {
-                const notifications = combinedNotifications[key].notifications;
+            : sortedNotifications.map((aboutWal) => {
+                const notifications = combinedNotifications[aboutWal].notifications;
                 console.log(
                   'going to try to get appletHash for ',
-                  combinedNotifications[key].appletId,
+                  combinedNotifications[aboutWal].appletId,
                 );
                 const appletHash: AppletHash = appletHashFromAppId(
-                  appIdFromAppletId(combinedNotifications[key].appletId),
+                  appIdFromAppletId(combinedNotifications[aboutWal].appletId),
                 );
                 console.log('appletHash is ', appletHash);
                 return html`
@@ -327,7 +339,7 @@ export class ActivityView extends LitElement {
                       );
                     }}
                     .notifications=${notifications}
-                    .wal=${key}
+                    .wal=${aboutWal}
                     .appletHash=${appletHash}
                   ></activity-asset>
                 `;
