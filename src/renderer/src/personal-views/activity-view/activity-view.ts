@@ -148,15 +148,15 @@ export class ActivityView extends LitElement {
       case 'week':
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
         break;
-        // case 'month':
-        //   lookBackInt = 30 * 24 * 60 * 60 * 1000;
-        //   break;
-        // case 'year':
-        //   lookBackInt = 365 * 24 * 60 * 60 * 1000;
-        break;
-      case 'all':
-        lookBackInt = 999999999999999999999999999999;
-        break;
+      // case 'month':
+      //   lookBackInt = 30 * 24 * 60 * 60 * 1000;
+      //   break;
+      // case 'year':
+      //   lookBackInt = 365 * 24 * 60 * 60 * 1000;
+      // break;
+      // case 'all':
+      //   lookBackInt = 999999999999999999999999999999;
+      //   break;
       default:
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
     }
@@ -308,7 +308,7 @@ export class ActivityView extends LitElement {
             <option value="hour">Last hour</option>
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
-            <option value="month">Last month</option>
+            <!-- <option value="month">Last month</option> -->
             <!-- <option value="year">Last year</option>
             <option value="all">All time</option> -->
           </select>
@@ -398,7 +398,7 @@ export class ActivityView extends LitElement {
             <option value="hour">Last hour</option>
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
-            <option value="month">Last month</option>
+            <!-- <option value="month">Last month</option> -->
             <!-- <option value="year">Last year</option>
             <option value="all">All time</option> -->
           </select>
