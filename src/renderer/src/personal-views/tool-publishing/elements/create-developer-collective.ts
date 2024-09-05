@@ -72,8 +72,8 @@ export class CreateDeveloperCollective extends LitElement {
       throw new Error('Name is too long (max 50 chars.).');
     }
     if (fields.collective_description && fields.collective_description.length > 1200) {
-      notifyError('Descrition is too long (max 1200 chars.).');
-      throw new Error('Descrition is too long (max 1200 chars.).');
+      notifyError('Description is too long (max 1200 chars.).');
+      throw new Error('Description is too long (max 1200 chars.).');
     }
     if (fields.collective_website && fields.collective_website.length > 500) {
       notifyError('Website is too long (max 500 chars.).');
