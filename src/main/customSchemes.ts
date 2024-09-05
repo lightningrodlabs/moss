@@ -29,16 +29,25 @@ export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
     const uiAssetsDir = mossFileSystem.appUiAssetsDir(installedAppId);
 
     if (!uiAssetsDir) {
-      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
+      throw new Error(
+        `Failed to find UI assets directory for requested applet assets. AppId: ${installedAppId}`,
+      );
     }
 
     if (
       uriComponents.length === 1 ||
       (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
     ) {
-      const indexHtmlResponse = await net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
-      );
+      let indexHtmlResponse: Response;
+      try {
+        indexHtmlResponse = await net.fetch(
+          url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
+        );
+      } catch (e) {
+        return new Response(
+          'No index.html found. If you are the developer of this Tool, make sure that the index.html is located at the root level of your UI assets.',
+        );
+      }
 
       const content = await indexHtmlResponse.text();
 
@@ -78,7 +87,9 @@ export async function handleDefaultAppsProtocol(
     if (!holochainManager) throw new Error('HolochainManager not defined');
 
     if (!uiAssetsDir) {
-      throw new Error(`Failed to find UI assets directory for requested applet assets.`);
+      throw new Error(
+        `Failed to find UI assets directory for requested applet assets. AppId: ${installedAppId}`,
+      );
     }
 
     if (
