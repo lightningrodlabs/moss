@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { exec } from 'child_process';
+import crypto from 'crypto';
 
 const mossConfigJSON = fs.readFileSync(path.join('dist', 'main', 'moss.config.json'));
 const mossConfig = JSON.parse(mossConfigJSON);
