@@ -42,6 +42,7 @@ export interface CliOpts {
   devConfig?: string | undefined;
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
+  disableOsNotifications?: boolean;
   syncTime?: number;
   networkSeed?: string | undefined;
   holochainPath?: string | undefined;
@@ -67,6 +68,7 @@ export interface RunOptions {
   holochainWasmLog: string | undefined;
   lairRustLog: string | undefined;
   printHolochainLogs: boolean;
+  disableOsNotifications: boolean;
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
@@ -186,6 +188,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
     lairRustLog: args.lairRustLog ? args.lairRustLog : undefined,
     printHolochainLogs: args.printHolochainLogs ? true : false,
+    disableOsNotifications: args.disableOsNotifications ? true : false,
   };
 }
 
