@@ -41,40 +41,50 @@ const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConf
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
-function downloadFile(url, targetPath, expectedSha256Hex) {
+function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
+  console.log('Downloading from ', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
     console.log(stdout);
     console.log(stderr);
     if (error !== null) {
       console.log('exec error: ' + error);
       throw new Error('Failed to fetch resource.');
+    } else {
+      const fileBytes = fs.readFileSync(targetPath);
+      const hasher = crypto.createHash('sha256');
+      hasher.update(fileBytes);
+      const sha256Hex = hasher.digest('hex');
+      if (sha256Hex !== expectedSha256Hex)
+        throw new Error(
+          `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
+        );
+
+      console.log('Download successful. sha256 of file (hex): ', sha256Hex);
+      if (chmod) {
+        fs.chmodSync(targetPath, 511);
+        console.log('Gave executable permission to file.');
+      }
     }
   });
-
-  const fileBytes = fs.readFileSync(targetPath);
-  const hasher = crypto.createHash('sha256');
-  hasher.update(fileBytes);
-  const sha256Hex = hasher.digest('hex');
-  if (sha256Hex !== expectedSha256Hex)
-    throw new Error(
-      `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
-    );
-
-  console.log('Download successful. sha256 of file (hex): ', sha256Hex);
 }
 
 function downloadHolochainBinary() {
   const holochainBinaryRemoteFilename = `holochain-v${mossConfig.holochain.version}-${targetEnding}`;
   const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochain.version}/${holochainBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, holochainBinaryFilename);
-  downloadFile(holochainBinaryUrl, destinationPath, mossConfig.holochain.sha256);
+  downloadFile(
+    holochainBinaryUrl,
+    destinationPath,
+    mossConfig.holochain.sha256[targetEnding],
+    true,
+  );
 }
 
 function downloadLairBinary() {
   const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lair.version}-${targetEnding}`;
   const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lair.version}/${lairBinaryRemoteFilename}`;
   const destinationPath = path.join(binariesDir, lairBinaryFilename);
-  downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256);
+  downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256[targetEnding], true);
 }
 
 downloadHolochainBinary();
