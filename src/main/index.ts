@@ -784,6 +784,9 @@ app.whenReady().then(async () => {
   ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
     if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
     const messageId = nanoid(5);
+    if (message.request.type === 'open-view') {
+      MAIN_WINDOW.show();
+    }
     emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
       message,
       id: messageId,
