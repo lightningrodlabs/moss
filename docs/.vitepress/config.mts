@@ -9,7 +9,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Examples', link: '/markdown-examples' },
-      { text: 'API', link: '/api/index' },
+      { text: 'API', link: '/api-reference/api/we-applet' },
     ],
 
     sidebar: [
@@ -22,12 +22,9 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Further Examples',
+        text: 'API Reference',
         collapsed: false,
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' },
-        ],
+        items: [{ text: '@lightningrodlabs/we-applet', link: '/api-reference/api/we-applet.html' }],
       },
     ],
 

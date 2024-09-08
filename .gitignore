@@ -24,3 +24,7 @@ we.dev.config*
 
 # vitepress
 **/.vitepress/cache/**
+
+## doc temp/local files
+libs/*/docs/**
+libs/*/markdown/**
