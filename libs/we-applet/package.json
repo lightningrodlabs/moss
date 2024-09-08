@@ -20,7 +20,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch --preserveWatchOutput"
+    "build:watch": "tsc --watch --preserveWatchOutput",
+    "build:api-docs": "api-extractor run --local && api-documenter markdown -i docs/temp"
   },
   "type": "module",
   "dependencies": {
