@@ -3,22 +3,21 @@
 layout: home
 
 hero:
-  name: 'Developing The Weave'
+  name: 'Developing for The Weave'
   text: 'Interoperable Tools for Social Fabric'
-  tagline: Developer Documentation for Moss/The Weave
+  tagline: Developer Documentation for Moss/The Weave<br><br>🚧 This documentation is still under construction 🚧
   actions:
     - theme: brand
       text: Get Started
-      link: /markdown-examples
+      link: /build/overview
     - theme: alt
       text: Weave API
-      link: /api-examples
-
-features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+      link: /api-reference/api/we-applet
+# features:
+#   - title: Feature A
+#     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+#   - title: Feature B
+#     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+#   - title: Feature C
+#     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
 ---

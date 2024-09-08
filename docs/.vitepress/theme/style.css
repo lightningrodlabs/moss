@@ -72,10 +72,25 @@
   /* dark */
   /* --vp-c-bg: #08230e; */
 
+  /* --vp-c-bg: #fefff0; */
+  /* --vp-c-bg: #fffffa; */
+  /* --vp-c-bg-soft: #e0e0c0; */
+
+  /* --vp-c-brand-soft: #e0e0c0; */
+
   /* --vp-c-brand-3: #c5d23c; */
   --vp-c-brand-3: #19490b;
   --vp-c-brand-2: #c5d23c;
   --vp-c-brand-1: #19490b;
+
+  /* --vp-sidebar-bg-color: #fefff0; */
+}
+
+
+.dark {
+  --vp-c-bg: #051d0a;
+  --vp-c-bg-soft: #1c3416;
+  --vp-c-brand-soft: #3c3c36;
 }
 
 /**
@@ -125,6 +140,7 @@
     --vp-home-hero-image-filter: blur(68px);
   }
 }
+
 
 /**
  * Component: Custom Block
