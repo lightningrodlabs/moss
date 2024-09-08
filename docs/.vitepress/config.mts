@@ -8,7 +8,7 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' },
+      { text: 'Concepts', link: '/concepts/introduction' },
       { text: 'API', link: '/api-reference/api/we-applet' },
     ],
 
@@ -33,7 +33,7 @@ export default defineConfig({
             ],
           },
           {
-            text: '🧂 Step 2: Add Moss Sugar',
+            text: '🧂 Step 2: Add Weave Sugar',
             items: [
               {
                 text: 'Install Moss Dependencies',
@@ -49,10 +49,15 @@ export default defineConfig({
               },
             ],
           },
-          { text: 'Step 2: Add Moss sugar', link: '/markdown-examples' },
+          // { text: 'Step 2: Add Weave sugar', link: '/markdown-examples' },
           // { text: 'Markdown Examples', link: '/markdown-examples' },
           // { text: 'Runtime API Examples', link: '/api-examples' },
         ],
+      },
+      {
+        text: '📚 Concepts',
+        collapsed: false,
+        items: [{ text: 'Introduction', link: '/concepts/introduction' }],
       },
       {
         text: '📖 API Reference',

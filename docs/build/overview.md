@@ -1,4 +1,4 @@
-# Choose Your Path
+# Build a Tool for The Weave
 
 ## Option 1: Start from Scratch
 
