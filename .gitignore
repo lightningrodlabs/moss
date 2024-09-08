@@ -21,3 +21,6 @@ we.dev.config*
 *.dmg
 *.exe
 *.deb
+
+# vitepress
+**/.vitepress/cache/**

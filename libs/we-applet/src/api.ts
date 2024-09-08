@@ -49,7 +49,7 @@ export const NULL_HASH = new Uint8Array(39);
 
 /**
  *
- * @returns bool: Returns whether this function is being called in a We context.
+ * @returns bool: Returns whether this function is being called in a Weave context.
  */
 export const isWeContext = () =>
   window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
