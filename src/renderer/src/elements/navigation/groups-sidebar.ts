@@ -79,7 +79,7 @@ export class GroupsSidebar extends LitElement {
       <div style="height: 10px;"></div>
       <div
         class="column center-content dropzone"
-        style="position: absolute; top: 92px;"
+        style="position: absolute; top: 82px;"
         @dragenter=${(e: DragEvent) => {
           (e.target as HTMLElement).classList.add('active');
         }}
@@ -231,7 +231,7 @@ export class GroupsSidebar extends LitElement {
         return html`
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px;"
+            style="width: 60px; height: 58px; margin-bottom: 10px; margin-top: 15px;"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
