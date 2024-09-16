@@ -43,6 +43,14 @@ export class PersistedStore {
     set: (value) => this.store.setItem<Array<DnaHashB64>>('customGroupOrder', value),
   };
 
+  groupAppletOrder: SubStore<AppletId[], AppletId[], [DnaHashB64]> = {
+    value: (groupId: DnaHashB64) => {
+      const appletOrder = this.store.getItem<AppletId[]>(`groupAppletOrder#${groupId}`);
+      return appletOrder ? appletOrder : [];
+    },
+    set: (value, groupId: DnaHashB64) => this.store.setItem(`groupAppletOrder#${groupId}`, value),
+  };
+
   ignoredApplets: SubStore<AppletId[], AppletId[], [DnaHashB64]> = {
     value: (groupDnaHashB64: DnaHashB64) => {
       const ignoredApplets = this.store.getItem<AppletId[]>(`ignoredApplets#${groupDnaHashB64}`);

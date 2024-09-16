@@ -1,9 +1,9 @@
 import { AsyncReadable, pipe, sliceAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { DnaHashB64, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -24,6 +24,7 @@ import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
 import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';
+import { PersistedStore } from '../../persisted-store.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -40,6 +41,9 @@ export class GroupAppletsSidebar extends LitElement {
 
   @property()
   indicatedAppletHashes: AppletId[] = [];
+
+  @state()
+  dragged: AppletId | null = null;
 
   // All the Applets that are running and part of this Group
   _groupApplets = new StoreSubscriber(
@@ -63,39 +67,123 @@ export class GroupAppletsSidebar extends LitElement {
         </div>
       `;
     }
+    const groupId = encodeHashToBase64(this._groupStore!.groupDnaHash);
+
+    let customAppletOrder = this.mossStore.persistedStore.groupAppletOrder.value(groupId);
+    if (!customAppletOrder) {
+      customAppletOrder = Array.from(applets.entries())
+        .sort(([_, a], [__, b]) => a.applet.custom_name.localeCompare(b.applet.custom_name))
+        .map(([hash, _profile]) => encodeHashToBase64(hash));
+      this.mossStore.persistedStore.groupAppletOrder.set(customAppletOrder, groupId);
+    }
+    Array.from(applets.entries()).forEach(([hash, _]) => {
+      if (!customAppletOrder!.includes(encodeHashToBase64(hash))) {
+        customAppletOrder!.splice(0, 0, encodeHashToBase64(hash));
+      }
+      this.mossStore.persistedStore.groupAppletOrder.set(customAppletOrder!, groupId);
+      this.requestUpdate();
+    });
 
     return html`
-      <div class="row" style="align-items: flex-end;">
+      <div class="row" style="align-items: flex-end; position: relative;">
+        <div
+          class="row center-content dropzone"
+          style="position: absolute;"
+          @dragenter=${(e: DragEvent) => {
+            (e.target as HTMLElement).classList.add('active');
+          }}
+          @dragleave=${(e: DragEvent) => {
+            (e.target as HTMLElement).classList.remove('active');
+          }}
+          @dragover=${(e: DragEvent) => {
+            e.preventDefault();
+          }}
+          @drop=${(e: DragEvent) => {
+            e.preventDefault();
+            const dropAppletId = undefined;
+            storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
+            this.requestUpdate();
+          }}
+        >
+          <div class="dropzone-indicator"></div>
+        </div>
         ${repeat(
-          Array.from(applets.entries()).sort((a1, a2) =>
-            a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name),
+          Array.from(applets.entries()).sort(
+            ([a_hash, _a], [b_hash, _b]) =>
+              customAppletOrder!.indexOf(encodeHashToBase64(a_hash)) -
+              customAppletOrder!.indexOf(encodeHashToBase64(b_hash)),
           ),
           ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
-          ([_appletHash, appletStore]) => html`
-            <applet-topbar-button
-              .appletStore=${appletStore}
-              .selected=${this.selectedAppletHash &&
-              this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
-              .indicated=${this.indicatedAppletHashes.includes(
-                encodeHashToBase64(appletStore.appletHash),
-              )}
-              .tooltipText=${appletStore.applet.custom_name}
-              placement="bottom"
-              @click=${() => {
-                this.dispatchEvent(
-                  new CustomEvent('applet-selected', {
-                    detail: {
-                      groupDnaHash: this._groupStore!.groupDnaHash,
-                      appletHash: appletStore.appletHash,
-                    },
-                    bubbles: true,
-                    composed: true,
-                  }),
-                );
-                appletStore.clearNotificationStatus();
-              }}
-            >
-            </applet-topbar-button>
+          ([appletHash, appletStore]) => html`
+            <div style="position: relative;">
+              <applet-topbar-button
+                id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
+                .appletStore=${appletStore}
+                .selected=${this.selectedAppletHash &&
+                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+                .indicated=${this.indicatedAppletHashes.includes(
+                  encodeHashToBase64(appletStore.appletHash),
+                )}
+                .tooltipText=${appletStore.applet.custom_name}
+                placement="bottom"
+                @click=${() => {
+                  this.dispatchEvent(
+                    new CustomEvent('applet-selected', {
+                      detail: {
+                        groupDnaHash: this._groupStore!.groupDnaHash,
+                        appletHash: appletStore.appletHash,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                  appletStore.clearNotificationStatus();
+                }}
+                draggable="true"
+                @dragstart=${(e: DragEvent) => {
+                  console.log('DRAGSTART!');
+                  (e.target as HTMLElement).classList.add('dragging');
+                  this.dragged = encodeHashToBase64(appletHash);
+                }}
+                @dragend=${(e: DragEvent) => {
+                  (e.target as HTMLElement).classList.remove('dragging');
+                  Array.from(
+                    (
+                      e.target as HTMLElement
+                    ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
+                      'dropzone',
+                    ),
+                  ).forEach((el) => {
+                    el.classList.remove('active');
+                  });
+                  this.dragged = null;
+                }}
+              >
+              </applet-topbar-button>
+              <div
+                class="row center-content dropzone right"
+                style="position: absolute;"
+                @dragenter=${(e: DragEvent) => {
+                  (e.target as HTMLElement).classList.add('active');
+                }}
+                @dragleave=${(e: DragEvent) => {
+                  (e.target as HTMLElement).classList.remove('active');
+                }}
+                @dragover=${(e: DragEvent) => {
+                  e.preventDefault();
+                }}
+                @drop=${(e: DragEvent) => {
+                  e.preventDefault();
+                  const dropAppletId = (e.target as HTMLElement).previousElementSibling!.id.slice(
+                    16,
+                  );
+                  storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
+                  this.requestUpdate();
+                }}
+              >
+                <div class="dropzone-indicator"></div>
+              </div>
+            </div>
           `,
         )}
       </div>
@@ -179,6 +267,51 @@ export class GroupAppletsSidebar extends LitElement {
         height: 58px;
         box-shadow: 1px 2px 10px 0px #102520ab;
       }
+
+      .dropzone {
+        height: 58px;
+        width: 4px;
+        top: 6px;
+        padding: 4px 0;
+        z-index: 1;
+      }
+
+      .dropzone-indicator {
+        position: absolute;
+        bottom: 54px;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-right: 10px solid transparent;
+        border-top: 20px solid var(--sl-color-primary-100);
+        border-left: 10px solid transparent;
+        display: none;
+      }
+
+      .active .dropzone-indicator {
+        display: block;
+      }
+
+      .right {
+        position: absolute;
+        right: 0;
+      }
     `,
   ];
+}
+
+function storeNewAppletOrder(
+  draggedHash: AppletId,
+  droppedHash: AppletId | undefined,
+  groupId: DnaHashB64,
+) {
+  if (draggedHash === droppedHash) return;
+  // TODO potentially make this more resilient and remove elements of deleted groups
+  const persistedStore = new PersistedStore();
+  const groupAppletOrder = persistedStore.groupAppletOrder.value(groupId);
+  const currentIdx = groupAppletOrder.indexOf(draggedHash);
+  groupAppletOrder.splice(currentIdx, 1);
+  const newIdx = droppedHash ? groupAppletOrder.indexOf(droppedHash) + 1 : 0;
+  groupAppletOrder.splice(newIdx, 0, draggedHash);
+  persistedStore.groupAppletOrder.set(groupAppletOrder, groupId);
 }
