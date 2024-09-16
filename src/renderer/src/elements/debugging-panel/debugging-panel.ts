@@ -358,7 +358,7 @@ export class DebuggingPanel extends LitElement {
                   >
                   <sl-icon-button
                     @click=${async () => {
-                      this.toggleDebug(TOOLS_LIBRARY_APP_ID);
+                      this.toggleDebug(FEEDBACK_BOARD_APP_ID);
                     }}
                     .src=${wrapPathInSvg(mdiBug)}
                   >

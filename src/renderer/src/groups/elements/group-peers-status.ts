@@ -10,8 +10,6 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
-import './profile-detail.js';
-
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { GroupStore, IDLE_THRESHOLD, OFFLINE_THRESHOLD } from '../group-store.js';
