@@ -134,6 +134,7 @@ export class FeedElement extends LitElement {
                   <group-context .groupDnaHash=${this.groupDnaHash}>
                     <profile-detail
                       style="margin: 0 8px 0 0; color: white; font-weight: 900;"
+                      no-additional-fields
                       .agentPubKey=${decodeHashFromBase64(part.pubkey)}
                     ></profile-detail>
                   </group-context>

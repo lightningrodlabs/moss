@@ -91,7 +91,7 @@ export class YourSettings extends LitElement {
         <profiles-context .store=${this.groupStore.profilesStore}>
           <sl-card>
             <span class="title" slot="header">${msg('Your Profile')}</span>
-            <my-profile style="flex: 1"></my-profile
+            <my-profile no-additional-fields style="flex: 1"></my-profile
           ></sl-card>
         </profiles-context>
         <div class="row" style="flex: 1; margin-top: 60px;">

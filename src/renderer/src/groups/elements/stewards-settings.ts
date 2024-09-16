@@ -3,7 +3,6 @@ import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
-import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
 import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -181,7 +180,7 @@ export class StewardsSettings extends LitElement {
         ([pubkey, level]) => html`
           <sl-card class="permission">
             <div class="row" style="flex: 1; align-items: center;">
-              <profile-detail .agentPubKey=${pubkey}></profile-detail>
+              <profile-detail no-additional-fields .agentPubKey=${pubkey}></profile-detail>
               <span style="display: flex; flex: 1;"></span>
               <div class="column" style="align-items: flex-end;">
                 <div style="font-weight: bold;">

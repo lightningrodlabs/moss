@@ -4,7 +4,6 @@ import { localized, msg } from '@lit/localize';
 import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
-import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
