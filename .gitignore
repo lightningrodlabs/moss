@@ -21,3 +21,10 @@ we.dev.config*
 *.dmg
 *.exe
 *.deb
+
+# vitepress
+**/.vitepress/cache/**
+
+## doc temp/local files
+libs/*/docs/**
+libs/*/markdown/**

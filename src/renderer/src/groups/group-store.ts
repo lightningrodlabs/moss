@@ -118,7 +118,6 @@ export class GroupStore {
         const status =
           now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
         this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
-        console.log('this.mossStore.tzUtcOffset(): ', this.mossStore.tzUtcOffset());
         await this.peerStatusClient.pong([signal.from_agent], status, this.mossStore.tzUtcOffset());
       }
     });

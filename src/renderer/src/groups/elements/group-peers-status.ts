@@ -6,8 +6,8 @@ import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
+import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import { groupStoreContext } from '../context.js';
@@ -113,7 +113,7 @@ export class GroupPeersStatus extends LitElement {
               }
             }}
           >
-            <profile-detail .agentPubKey=${myPubKey}></profile-detail>
+            <profile-detail no-additional-fields .agentPubKey=${myPubKey}></profile-detail>
             <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
             <div
               class="inactive-indicator"
@@ -148,7 +148,10 @@ export class GroupPeersStatus extends LitElement {
                   }
                 }}
               >
-                <profile-detail .agentPubKey=${agentInfo.agent}></profile-detail>
+                <profile-detail
+                  no-additional-fields
+                  .agentPubKey=${agentInfo.agent}
+                ></profile-detail>
                 <div
                   class="status-indicator ${agentInfo.status === 'inactive' ? 'inactive' : ''}"
                 ></div>
@@ -191,6 +194,7 @@ export class GroupPeersStatus extends LitElement {
                     >
                       <profile-detail
                         style="opacity: 0.5;"
+                        no-additional-fields
                         .agentPubKey=${agentInfo.agent}
                       ></profile-detail>
                     </div>

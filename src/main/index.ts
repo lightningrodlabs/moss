@@ -138,6 +138,7 @@ weCli
     '--print-holochain-logs',
     'Print holochain logs directly to the terminal (they will be still written to the logfile as well)',
   )
+  .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
   .addOption(
     new Option(
       '--agent-idx <number>',
@@ -762,7 +763,7 @@ app.whenReady().then(async () => {
         SYSTRAY_ICON_STATE = 'medium';
         SYSTRAY!.setImage(SYSTRAY_ICON_MEDIUM);
       }
-      if (notifyOS) {
+      if (notifyOS && !RUN_OPTIONS.disableOsNotifications) {
         new Notification({
           title: `${appletName}: ${notification.title}`,
           body: notification.body,
@@ -783,6 +784,9 @@ app.whenReady().then(async () => {
   ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
     if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
     const messageId = nanoid(5);
+    if (message.request.type === 'open-view') {
+      MAIN_WINDOW.show();
+    }
     emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
       message,
       id: messageId,

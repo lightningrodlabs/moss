@@ -24,7 +24,8 @@ import {
   appletHashFromAppId,
   encodeAndStringify,
 } from '../../utils.js';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { AppletNotification } from '../../types.js';
 
 @localized()
 @customElement('activity-view')
@@ -56,6 +57,9 @@ export class ActivityView extends LitElement {
   @state()
   lookBackString2 = 'week';
 
+  @state()
+  maxNumShownNotifications: number = 50;
+
   _notificationFeed = new StoreSubscriber(
     this,
     () => this._mossStore.notificationFeed(),
@@ -63,16 +67,19 @@ export class ActivityView extends LitElement {
   );
 
   // function that combines notifications based on their aboutWal, if available
-  combineNotifications(notifications: Array<any>) {
-    const combinedNotifications = {};
+  combineNotifications(notifications: Array<AppletNotification>) {
+    const combinedNotifications: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    > = {};
     for (let i = 0; i < notifications.length; i++) {
       const notification = notifications[i];
       if (notification.notification.aboutWal) {
-        const aboutWalUrl = stringifyWal(notification.notification.aboutWal);
-        if (combinedNotifications[aboutWalUrl]) {
-          combinedNotifications[aboutWalUrl].notifications.push(notification);
+        const aboutWal = stringifyWal(notification.notification.aboutWal);
+        if (combinedNotifications[aboutWal]) {
+          combinedNotifications[aboutWal].notifications.push(notification);
         } else {
-          combinedNotifications[aboutWalUrl] = {
+          combinedNotifications[aboutWal] = {
             notifications: [notification],
             appletId: notification.appletId,
           };
@@ -82,7 +89,7 @@ export class ActivityView extends LitElement {
     return combinedNotifications;
   }
 
-  filterIndividualNotifications(notifications: Array<any>) {
+  filterIndividualNotifications(notifications: Array<AppletNotification>) {
     return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);
@@ -116,8 +123,16 @@ export class ActivityView extends LitElement {
     });
   }
 
-  sortNotifications(combinedNotifications: any) {
-    let filteredByTime = {};
+  sortNotifications(
+    combinedNotifications: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    >,
+  ) {
+    let filteredByTime: Record<
+      string,
+      { notifications: AppletNotification[]; appletId: AppletId }
+    > = {};
     let now = Date.now();
     let lookBackInt = 0;
     switch (this.lookBackString1) {
@@ -133,26 +148,26 @@ export class ActivityView extends LitElement {
       case 'week':
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
         break;
-        // case 'month':
-        //   lookBackInt = 30 * 24 * 60 * 60 * 1000;
-        //   break;
-        // case 'year':
-        //   lookBackInt = 365 * 24 * 60 * 60 * 1000;
-        break;
-      case 'all':
-        lookBackInt = 999999999999999999999999999999;
-        break;
+      // case 'month':
+      //   lookBackInt = 30 * 24 * 60 * 60 * 1000;
+      //   break;
+      // case 'year':
+      //   lookBackInt = 365 * 24 * 60 * 60 * 1000;
+      // break;
+      // case 'all':
+      //   lookBackInt = 999999999999999999999999999999;
+      //   break;
       default:
         lookBackInt = 7 * 24 * 60 * 60 * 1000;
     }
-    for (let key in combinedNotifications) {
-      let latestNotification = combinedNotifications[key].notifications.reduce(
+    for (let aboutWal in combinedNotifications) {
+      let latestNotification = combinedNotifications[aboutWal].notifications.reduce(
         (latest, current) => {
           return current.notification.timestamp > latest.notification.timestamp ? current : latest;
         },
       );
       if (now - latestNotification.notification.timestamp < lookBackInt) {
-        filteredByTime[key] = combinedNotifications[key];
+        filteredByTime[aboutWal] = combinedNotifications[aboutWal];
       }
     }
     switch (this.sortMethod1) {
@@ -251,9 +266,11 @@ export class ActivityView extends LitElement {
     const filteredIndividualNotifications = this.filterIndividualNotifications(
       this._notificationFeed.value,
     );
+    const displayShowMoreButton =
+      filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
     return html`
-      <div class="column">
+      <div class="column feed">
         <div class="sort-buttons">
           <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
             Activity currents
@@ -291,7 +308,7 @@ export class ActivityView extends LitElement {
             <option value="hour">Last hour</option>
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
-            <option value="month">Last month</option>
+            <!-- <option value="month">Last month</option> -->
             <!-- <option value="year">Last year</option>
             <option value="all">All time</option> -->
           </select>
@@ -305,14 +322,14 @@ export class ActivityView extends LitElement {
                   Your activity will appear here
                 </div>
               `
-            : sortedNotifications.map((key) => {
-                const notifications = combinedNotifications[key].notifications;
+            : sortedNotifications.map((aboutWal) => {
+                const notifications = combinedNotifications[aboutWal].notifications;
                 console.log(
                   'going to try to get appletHash for ',
-                  combinedNotifications[key].appletId,
+                  combinedNotifications[aboutWal].appletId,
                 );
                 const appletHash: AppletHash = appletHashFromAppId(
-                  appIdFromAppletId(combinedNotifications[key].appletId),
+                  appIdFromAppletId(combinedNotifications[aboutWal].appletId),
                 );
                 console.log('appletHash is ', appletHash);
                 return html`
@@ -327,14 +344,14 @@ export class ActivityView extends LitElement {
                       );
                     }}
                     .notifications=${notifications}
-                    .wal=${key}
+                    .wal=${aboutWal}
                     .appletHash=${appletHash}
                   ></activity-asset>
                 `;
               })}
         </div>
       </div>
-      <div class="column">
+      <div class="column feed">
         <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
           All notifications
         </div>
@@ -381,12 +398,12 @@ export class ActivityView extends LitElement {
             <option value="hour">Last hour</option>
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
-            <option value="month">Last month</option>
+            <!-- <option value="month">Last month</option> -->
             <!-- <option value="year">Last year</option>
             <option value="all">All time</option> -->
           </select>
         </div>
-        <div style="overflow-y: auto; padding-bottom: 15px;">
+        <div class="column" style="overflow-y: auto; padding-bottom: 80px;">
           ${filteredIndividualNotifications.length === 0
             ? html`
                 <div
@@ -395,9 +412,10 @@ export class ActivityView extends LitElement {
                   Your notifications will appear here
                 </div>
               `
-            : filteredIndividualNotifications.map(
+            : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
                 (notification) => html`
                   <notification-asset
+                    style="display: flex; flex: 1;"
                     .notification=${notification.notification}
                     .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
                     @open-applet-main=${(e) => {
@@ -413,6 +431,18 @@ export class ActivityView extends LitElement {
                   ></notification-asset>
                 `,
               )}
+          ${displayShowMoreButton
+            ? html`<div class="row" style="justify-content: center;">
+                <button
+                  @click=${() => {
+                    this.maxNumShownNotifications += 50;
+                  }}
+                  style="margin-top: 20px; with: 80px;"
+                >
+                  Show More
+                </button>
+              </div>`
+            : html``}
         </div>
       </div>
     `;
@@ -426,7 +456,7 @@ export class ActivityView extends LitElement {
         background-color: #224b21;
         border-radius: 5px 0 0 0;
       }
-      .column {
+      .feed {
         padding: 10px;
         height: calc(100vh - 70px);
       }
