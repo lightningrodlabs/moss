@@ -4,4 +4,4 @@ What we now call "The Web" was the result of three critical new open standards: 
 
 But none of those open standards enabled creation and management of **social spaces** by groups. So, that critical function has become siloed into the big corporate websites: Facebook holds group's "Page", GitHub holds your code, GSuite holds your collaboration tools.
 
-[Holochain]("https://holochain.org) is an open standard that delivers creating small functioning **social space** units, in a way that is both scalable, and decentralized. To that we now add the **Weave Interaction Pattern**, an open standard for creating, searching, linking and organizing these **social space** units into complex social fabric that yields "The Weave".
+[Holochain](https://holochain.org) is an open standard that delivers creating small functioning **social space** units, in a way that is both scalable, and decentralized. To that we now add the **Weave Interaction Pattern**, an open standard for creating, searching, linking and organizing these **social space** units into complex social fabric that yields "The Weave".
