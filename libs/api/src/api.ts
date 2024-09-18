@@ -56,6 +56,13 @@ export const isWeaveContext = () =>
 
 /**
  *
+ * @returns DEPRECATED - USE isWeaveContext instead
+ */
+export const isWeContext = () =>
+  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
+
+/**
+ *
  * @param appletHash Hash of the applet to generate the link for
  * @param webPrefix Whether to make the link work via web browsers. Default is true.
  * @returns
