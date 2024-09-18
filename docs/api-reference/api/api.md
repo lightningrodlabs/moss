@@ -79,6 +79,15 @@ Description
 </td></tr>
 <tr><td>
 
+[isWeaveContext()](./api.isweavecontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [isWeContext()](./api.iswecontext.md)
 
 

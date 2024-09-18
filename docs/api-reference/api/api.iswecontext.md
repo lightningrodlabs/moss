@@ -13,5 +13,5 @@ isWeContext: () => true
 
 true
 
-bool: Returns whether this function is being called in a Weave context.
+DEPRECATED - USE isWeaveContext instead
 
