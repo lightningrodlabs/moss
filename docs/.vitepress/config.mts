@@ -9,7 +9,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Concepts', link: '/concepts/introduction' },
-      { text: 'API', link: '/api-reference/api/we-applet' },
+      { text: 'API', link: '/api-reference/api/api' },
     ],
 
     sidebar: [
@@ -62,7 +62,7 @@ export default defineConfig({
       {
         text: '📖 API Reference',
         collapsed: false,
-        items: [{ text: '@theweave/api', link: '/api-reference/api/we-applet.html' }],
+        items: [{ text: '@theweave/api', link: '/api-reference/api/api.html' }],
       },
     ],
 

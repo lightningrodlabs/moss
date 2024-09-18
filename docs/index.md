@@ -12,7 +12,7 @@ hero:
       link: /build/overview
     - theme: alt
       text: Weave API
-      link: /api-reference/api/we-applet
+      link: /api-reference/api/api
 # features:
 #   - title: Feature A
 #     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
