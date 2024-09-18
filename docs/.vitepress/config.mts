@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'Weave/Moss',
   description: 'Build Tools for Social Fabric',
+  base: '/moss/',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
