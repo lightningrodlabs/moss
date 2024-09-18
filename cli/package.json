@@ -1,5 +1,5 @@
 {
-  "name": "@lightningrodlabs/we-dev-cli",
+  "name": "@theweave/we-dev-cli",
   "version": "0.13.0-beta.5",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
@@ -19,7 +19,7 @@
     "@electron-toolkit/utils": "^2.0.0",
     "@holochain/client": "0.18.0-dev.3",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
-    "@lightningrodlabs/we-applet": "0.17.1",
+    "@theweave/api": "0.17.1",
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",

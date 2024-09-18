@@ -11,7 +11,7 @@ At the top of `ui/src/holochain-app.ts`, add the following imports:
 <!-- DOCS_TODO Rename -->
 
 ```typescript
-import { WeaveClient, initializeHotReload, isWeContext } from '@lightningrodlabs/we-applet'; // [!code ++]
+import { WeaveClient, initializeHotReload, isWeContext } from '@theweave/api'; // [!code ++]
 ```
 
 ### 2. Add Hot-Reloading

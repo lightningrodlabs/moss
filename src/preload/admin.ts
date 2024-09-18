@@ -11,12 +11,7 @@ import {
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
-import {
-  AppletId,
-  AppletToParentMessage,
-  FrameNotification,
-  WAL,
-} from '@lightningrodlabs/we-applet';
+import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),

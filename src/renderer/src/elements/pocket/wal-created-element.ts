@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { encodeHashToBase64 } from '@holochain/client';
 
-import { WAL, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';

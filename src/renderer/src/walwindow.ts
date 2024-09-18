@@ -9,7 +9,7 @@ import {
   AppletToParentRequest,
   AssetLocationAndInfo,
   GroupProfile,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { decodeHashFromBase64 } from '@holochain/client';
 // import { ipcRenderer } from 'electron';
 

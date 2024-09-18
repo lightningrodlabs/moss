@@ -41,7 +41,7 @@ This command will
 - build the Moss group DNA and the zomes in the crates folder
 - fetch the required `holochain` and `lair-keystore` binaries from [here](https://github.com/matthme/holochain-binaries/releases)
 - fetch the default apps (at the time of writing those are the app library and the feedback board)
-- run the necessary commands to link the packages in `libs/we-applet` and `libs/we-elements` with `yarn link` to have them be hot-reloaded in the example applet
+- run the necessary commands to link the packages in `libs/api` and `libs/we-elements` with `yarn link` to have them be hot-reloaded in the example applet
 
 #### Development
 

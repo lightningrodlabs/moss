@@ -13,7 +13,7 @@ import { msg } from '@lit/localize';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { GroupProfile } from '@theweave/api';
 import { DnaHash, EntryHash } from '@holochain/client';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { mapValues } from '@holochain-open-dev/utils';

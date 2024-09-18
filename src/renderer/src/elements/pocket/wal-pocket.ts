@@ -11,10 +11,10 @@ import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { WAL } from '@lightningrodlabs/we-applet';
-import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
+import { WAL } from '@theweave/api';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 import { sharedStyles } from '@holochain-open-dev/elements';
-import { weaveClientContext } from '@lightningrodlabs/we-elements';
+import { weaveClientContext } from '@theweave/elements';
 
 @localized()
 @customElement('wal-pocket')

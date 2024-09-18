@@ -9,7 +9,7 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
 } from '@holochain/client';
-import { AppletHash, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, GroupProfile } from '@theweave/api';
 
 import {
   Applet,

@@ -18,8 +18,8 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import { WeaveUrl } from '@lightningrodlabs/we-applet';
-import '@lightningrodlabs/we-elements/dist/elements/wal-link.js';
+import { WeaveUrl } from '@theweave/api';
+import '@theweave/elements/dist/elements/wal-link.js';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';

@@ -31,9 +31,9 @@ export default defineConfig({
     exclude: [
       ...exclude,
       '@holochain-open-dev/elements/dist/elements/display-error.js',
-      '@lightningrodlabs/we-applet',
-      '@lightningrodlabs/we-elements',
-      '@lightningrodlabs/attachments',
+      '@theweave/api',
+      '@theweave/elements',
+      '@theweave/attachments',
     ],
   },
   plugins: [

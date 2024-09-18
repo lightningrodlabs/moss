@@ -2,7 +2,7 @@
 
 CLI to run Moss Tools in development mode.
 
-This version is compatible with `@lightningrodlabs/we-applet@0.17.1`.
+This version is compatible with `@theweave/api@0.17.1`.
 
 ```
 Usage: @lightningrodlabs/we-dev-cli [options]

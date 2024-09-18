@@ -5,11 +5,11 @@ import { localized, msg } from '@lit/localize';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@lightningrodlabs/we-applet';
+import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@theweave/api';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';

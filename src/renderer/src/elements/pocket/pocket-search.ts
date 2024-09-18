@@ -20,7 +20,7 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
-import { AssetLocationAndInfo, WAL } from '@lightningrodlabs/we-applet';
+import { AssetLocationAndInfo, WAL } from '@theweave/api';
 import { mdiArrowRight, mdiMagnify } from '@mdi/js';
 import { mossStoreContext } from '../../context';
 import { MossStore } from '../../moss-store';

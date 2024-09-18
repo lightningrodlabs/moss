@@ -22,7 +22,7 @@ import {
   AppAuthenticationToken,
   DnaModifiers,
 } from '@holochain/client';
-import { Hrl, WAL, RenderView, FrameNotification } from '@lightningrodlabs/we-applet';
+import { Hrl, WAL, RenderView, FrameNotification } from '@theweave/api';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';

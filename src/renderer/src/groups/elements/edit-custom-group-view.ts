@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ActionHash, EntryHash } from '@holochain/client';
 import { hashProperty, sharedStyles } from '@holochain-open-dev/elements';
-import { BlockType } from '@lightningrodlabs/we-applet';
+import { BlockType } from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
 import {
   asyncDeriveAndJoin,

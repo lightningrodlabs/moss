@@ -19,5 +19,5 @@ npm install -d @lightningrodlabs/we-dev-cli@0.13.0-beta.5
 The Weave API npm package will allow your Tool's frontend to interact with Moss using the `WeaveClient` class. Install it into the workspace of your frontend code:
 
 ```bash
-npm install -w ui @lightningrodlabs/we-applet@0.17.2
+npm install -w ui @theweave/api@0.17.2
 ```

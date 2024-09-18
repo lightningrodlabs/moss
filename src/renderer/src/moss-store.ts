@@ -41,7 +41,7 @@ import {
   ProfilesLocation,
   CreatableType,
   NULL_HASH,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 

@@ -1,7 +1,7 @@
 "use strict";
 // Note: This file is also being used by the dev cli
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineConfig = void 0;
+exports.defineConfig = defineConfig;
 /**
  * Define a configuration file to run We in development modes with groups
  * and applets pre-installed.
@@ -12,4 +12,3 @@ exports.defineConfig = void 0;
 function defineConfig(config) {
     return config;
 }
-exports.defineConfig = defineConfig;

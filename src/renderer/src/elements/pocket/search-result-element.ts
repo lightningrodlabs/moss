@@ -21,13 +21,10 @@ import {
   WAL,
   WeaveClient,
   WeaveServices,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import {
-  getAppletsInfosAndGroupsProfiles,
-  weaveClientContext,
-} from '@lightningrodlabs/we-elements';
+import { getAppletsInfosAndGroupsProfiles, weaveClientContext } from '@theweave/elements';
 
 /**
  * @element search-entry

@@ -10,7 +10,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { msg, localized } from '@lit/localize';
-import { ProfilesLocation, RenderView } from '@lightningrodlabs/we-applet';
+import { ProfilesLocation, RenderView } from '@theweave/api';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';

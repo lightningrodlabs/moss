@@ -4,7 +4,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
-import { PeerStatus, ReadonlyPeerStatusStore } from '@lightningrodlabs/we-applet';
+import { PeerStatus, ReadonlyPeerStatusStore } from '@theweave/api';
 import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';

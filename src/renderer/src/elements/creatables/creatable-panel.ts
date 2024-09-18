@@ -6,7 +6,7 @@ import { notify, notifyError, sharedStyles } from '@holochain-open-dev/elements'
 import { v4 as uuidv4 } from 'uuid';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
@@ -18,7 +18,7 @@ import {
   GroupProfile,
   WAL,
   CreatableType,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';

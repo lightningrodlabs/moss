@@ -9,12 +9,7 @@ import {
   FunctionName,
   DnaHashB64,
 } from '@holochain/client';
-import {
-  AppletId,
-  AppletToParentMessage,
-  FrameNotification,
-  WAL,
-} from '@lightningrodlabs/we-applet';
+import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 
 import { AppAssetsInfo, AppHashes, DistributionInfo, ToolWeaveConfig } from './types';
 

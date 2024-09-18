@@ -13,7 +13,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash } from '@theweave/api';
 
 type ToolIdentifier =
   | {
