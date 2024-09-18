@@ -15,7 +15,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { PostsStore } from '../posts-store';
 import { postsStoreContext } from '../context';
 import { Post } from '../types';
-import { type FrameNotification } from '@lightningrodlabs/we-applet';
+import { type FrameNotification } from '@theweave/api';
 
 /**
  * @element post-summary

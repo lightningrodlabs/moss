@@ -10,7 +10,7 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { notify, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiShareVariantOutline } from '@mdi/js';
 
-import { WAL } from '@lightningrodlabs/we-applet';
+import { WAL } from '@theweave/api';
 import { encodeContext } from '../utils';
 
 @localized()

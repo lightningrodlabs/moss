@@ -1,5 +1,5 @@
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { AppletId, FrameNotification } from '@lightningrodlabs/we-applet';
+import { AppletId, FrameNotification } from '@theweave/api';
 import { AppletNotificationSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
 

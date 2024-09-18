@@ -24,7 +24,7 @@ import {
   appletHashFromAppId,
   encodeAndStringify,
 } from '../../utils.js';
-import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@theweave/api';
 import { AppletNotification } from '../../types.js';
 
 @localized()

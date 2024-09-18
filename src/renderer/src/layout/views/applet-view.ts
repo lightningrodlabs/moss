@@ -6,7 +6,7 @@ import { customElement, property } from 'lit/decorators.js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import { AppletView, RenderView } from '@lightningrodlabs/we-applet';
+import { AppletView, RenderView } from '@theweave/api';
 
 import { weStyles } from '../../shared-styles.js';
 import './view-frame.js';

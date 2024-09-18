@@ -12,8 +12,8 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { weaveClientContext } from '../context';
-import { WAL } from '@lightningrodlabs/we-applet';
-import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
+import { WAL } from '@theweave/api';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiNotePlusOutline } from '@mdi/js';
 

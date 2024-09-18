@@ -20,7 +20,7 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
-import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletId, GroupProfile } from '@theweave/api';
 import {
   mdiArrowLeft,
   mdiCog,

@@ -10,20 +10,16 @@
 
 Package
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td>
 
-[@lightningrodlabs/we-applet](./we-applet.md)
-
+[@theweave/api](./we-applet.md)
 
 </td><td>
-
 
 </td></tr>
 </tbody></table>

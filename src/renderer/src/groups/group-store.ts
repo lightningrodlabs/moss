@@ -33,7 +33,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, ParentToAppletMessage, PeerStatus } from '@lightningrodlabs/we-applet';
+import { AppletHash, ParentToAppletMessage, PeerStatus } from '@theweave/api';
 
 import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';

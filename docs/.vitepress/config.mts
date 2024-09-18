@@ -62,7 +62,7 @@ export default defineConfig({
       {
         text: '📖 API Reference',
         collapsed: false,
-        items: [{ text: '@lightningrodlabs/we-applet', link: '/api-reference/api/we-applet.html' }],
+        items: [{ text: '@theweave/api', link: '/api-reference/api/we-applet.html' }],
       },
     ],
 

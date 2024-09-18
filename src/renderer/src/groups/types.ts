@@ -1,5 +1,5 @@
 import { AgentPubKey, DnaHash } from '@holochain/client';
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { GroupProfile } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;

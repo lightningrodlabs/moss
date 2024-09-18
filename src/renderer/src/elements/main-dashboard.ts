@@ -28,7 +28,7 @@ import {
   WeaveLocation,
   weaveUrlToLocation,
   weaveUrlFromWal,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -38,8 +38,8 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
-import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
+import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
 import '../personal-views/activity-view/activity-view.js';

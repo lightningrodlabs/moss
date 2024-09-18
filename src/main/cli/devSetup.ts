@@ -20,7 +20,7 @@ import {
   Record as HolochainRecord,
   GrantedFunctionsType,
 } from '@holochain/client';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash } from '@theweave/api';
 import { AppAssetsInfo, DistributionInfo, MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';

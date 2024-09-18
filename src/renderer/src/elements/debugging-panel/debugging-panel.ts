@@ -31,7 +31,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
-import { AppletId } from '@lightningrodlabs/we-applet';
+import { AppletId } from '@theweave/api';
 import { appIdFromAppletHash, getCellId } from '../../utils.js';
 import { DumpData } from '../../types.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';

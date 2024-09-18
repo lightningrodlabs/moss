@@ -3,7 +3,7 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { GroupProfile } from '@theweave/api';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { mdiAccountMultiplePlus, mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';

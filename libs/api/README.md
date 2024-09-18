@@ -1,4 +1,4 @@
-# @lightningrodlabs/we-applet
+# @theweave/api
 
 This package contains the interfaces and contracts that a Holochain app UI needs to implement in order to run as a Tool in a Weave Frame like [Moss](theweave.social#tryit).
 
@@ -21,7 +21,7 @@ The differences between a Weave Tool and a normal Holochain App are:
 ### Implementing a most basic applet UI
 
 ```typescript=
-import { WeaveClient, isWeContext } from '@lightningrodlabs/we-applet';
+import { WeaveClient, isWeContext } from '@theweave/api';
 
 if (!isWeContext) {
   // do non-the Frame related rendering logic (launcher, kangaroo, electron, ...)
@@ -44,7 +44,7 @@ const profilesClient = weaveClient.renderInfo.profilesClient;
 ### Implementing an (almost) full-fletched Weave Tool
 
 ```typescript=
-import { WeaveClient, AppletServices, WAL, AssetInfo } from '@lightningrodlabs/we-applet';
+import { WeaveClient, AppletServices, WAL, AssetInfo } from '@theweave/api';
 
 // First define your AppletServices that the Frame can call on your applet
 // to do things like search your applet or get information

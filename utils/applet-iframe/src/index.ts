@@ -37,7 +37,7 @@ import {
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
   AppletId,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { readable } from '@holochain-open-dev/stores';
 
 declare global {

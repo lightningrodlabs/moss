@@ -53,12 +53,7 @@ import {
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
-import {
-  AppletId,
-  AppletToParentMessage,
-  FrameNotification,
-  WAL,
-} from '@lightningrodlabs/we-applet';
+import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';

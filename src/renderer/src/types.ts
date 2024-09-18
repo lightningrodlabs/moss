@@ -9,7 +9,7 @@ import {
   EntryHashB64,
   FullStateDump,
 } from '@holochain/client';
-import { FrameNotification } from '@lightningrodlabs/we-applet';
+import { FrameNotification } from '@theweave/api';
 
 /**
  * EntryHashB64 of the Applet entry in the group's We DHT.

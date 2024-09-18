@@ -8,7 +8,7 @@ import {
   writable,
 } from '@holochain-open-dev/stores';
 import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochain/client';
-import { BlockType } from '@lightningrodlabs/we-applet';
+import { BlockType } from '@theweave/api';
 
 import { AppletHost } from './applet-host.js';
 import { Applet } from '../types.js';

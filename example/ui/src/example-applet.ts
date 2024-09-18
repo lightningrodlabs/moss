@@ -9,15 +9,15 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@lightningrodlabs/we-applet';
-import { weaveClientContext } from '@lightningrodlabs/we-elements';
+import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@theweave/api';
+import { weaveClientContext } from '@theweave/elements';
 
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
-import '@lightningrodlabs/attachments/dist/elements/attachments-context.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
+import '@theweave/attachments/dist/elements/attachments-context.js';
 
 import './applet-main.js';
 import './cross-applet-main.js';
-import { AttachmentsStore } from '@lightningrodlabs/attachments';
+import { AttachmentsStore } from '@theweave/attachments';
 import { ActionHash, CellType, DnaHash } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';

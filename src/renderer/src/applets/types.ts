@@ -1,4 +1,4 @@
-import { FrameNotification } from '@lightningrodlabs/we-applet';
+import { FrameNotification } from '@theweave/api';
 import { AppletId } from '../types.js';
 
 export type NotificationTimestamp = number;

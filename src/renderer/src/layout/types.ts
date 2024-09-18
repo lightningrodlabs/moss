@@ -1,5 +1,5 @@
 import { ActionHash, EntryHash } from '@holochain/client';
-import { WAL, OpenWalMode } from '@lightningrodlabs/we-applet';
+import { WAL, OpenWalMode } from '@theweave/api';
 
 export interface AppOpenViews {
   openAppletMain(appletHash: EntryHash): void;

@@ -14,8 +14,8 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
 
 import { weaveClientContext } from '../context';
-import { WeaveUrl, weaveUrlToWAL } from '@lightningrodlabs/we-applet';
-import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
+import { WeaveUrl, weaveUrlToWAL } from '@theweave/api';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 import { getAppletsInfosAndGroupsProfiles } from '../utils';
 import { sharedStyles } from '@holochain-open-dev/elements';
 

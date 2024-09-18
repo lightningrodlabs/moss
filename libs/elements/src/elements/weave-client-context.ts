@@ -3,7 +3,7 @@ import { provide } from '@lit/context';
 import { customElement, property } from 'lit/decorators.js';
 
 import { weaveClientContext } from '../context';
-import { WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 
 @customElement('weave-client-context')
 export class WeaveClientContext extends LitElement {

@@ -5,7 +5,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppletHash } from '@lightningrodlabs/we-applet';
+import { AppletHash } from '@theweave/api';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';

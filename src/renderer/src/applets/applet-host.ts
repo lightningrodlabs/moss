@@ -13,7 +13,7 @@ import {
   FrameNotification,
   RecordInfo,
   PeerStatusUpdate,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
 import { AppOpenViews } from '../layout/types.js';

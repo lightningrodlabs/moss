@@ -1,8 +1,8 @@
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { EntryHash, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { AppletHash, AppletInfo, GroupProfile } from '@lightningrodlabs/we-applet';
-import { WeaveClient } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletInfo, GroupProfile } from '@theweave/api';
+import { WeaveClient } from '@theweave/api';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 

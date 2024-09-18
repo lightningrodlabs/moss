@@ -18,7 +18,7 @@ import './tool-personal-bar-button.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppletId } from '@lightningrodlabs/we-applet';
+import { AppletId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiHome, mdiStoreSearch, mdiUpload } from '@mdi/js';

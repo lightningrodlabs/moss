@@ -3,7 +3,7 @@
 // IPC_CHANGE_HERE
 import { CallZomeRequest } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { AppletToParentMessage } from '@lightningrodlabs/we-applet';
+import { AppletToParentMessage } from '@theweave/api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   appletMessageToParent: (message: AppletToParentMessage) =>

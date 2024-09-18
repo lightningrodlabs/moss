@@ -1,5 +1,5 @@
 import { AdminWebsocket, AppClient, AppInfo, EntryHash } from '@holochain/client';
-import { Hrl } from '@lightningrodlabs/we-applet';
+import { Hrl } from '@theweave/api';
 import { hrlLocatorZome } from './hrl_locator.js';
 
 export interface EntryDefLocation {

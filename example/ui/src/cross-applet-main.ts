@@ -4,11 +4,8 @@ import { localized } from '@lit/localize';
 
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { lazyLoad, StoreSubscriber } from '@holochain-open-dev/stores';
-import { WeaveClient, type AppletClients, WeaveServices } from '@lightningrodlabs/we-applet';
-import {
-  getAppletsInfosAndGroupsProfiles,
-  weaveClientContext,
-} from '@lightningrodlabs/we-elements';
+import { WeaveClient, type AppletClients, WeaveServices } from '@theweave/api';
+import { getAppletsInfosAndGroupsProfiles, weaveClientContext } from '@theweave/elements';
 import { consume } from '@lit/context';
 import { EntryHash } from '@holochain/client';
 
