@@ -14,6 +14,14 @@ export default defineConfig({
 
     sidebar: [
       {
+        text: '📚 Concepts',
+        collapsed: false,
+        items: [
+          { text: 'Introduction', link: '/concepts/introduction' },
+          { text: 'Tech Overview', link: '/concepts/overview' },
+        ],
+      },
+      {
         text: '🛠️ Build a Weave Tool',
         collapsed: false,
         items: [
@@ -53,11 +61,6 @@ export default defineConfig({
           // { text: 'Markdown Examples', link: '/markdown-examples' },
           // { text: 'Runtime API Examples', link: '/api-examples' },
         ],
-      },
-      {
-        text: '📚 Concepts',
-        collapsed: false,
-        items: [{ text: 'Introduction', link: '/concepts/introduction' }],
       },
       {
         text: '📖 API Reference',
