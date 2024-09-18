@@ -1,6 +1,6 @@
 {
   "name": "@theweave/attachments",
-  "version": "0.6.0",
+  "version": "0.1.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
