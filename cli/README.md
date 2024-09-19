@@ -1,4 +1,4 @@
-# we-dev-cli
+# @theweave/cli
 
 CLI to run Moss Tools in development mode.
 
@@ -43,13 +43,13 @@ Options:
 ### 1. Define a config file
 
 The config file specifies the groups and Tools to install and run. The following is an example
-of a config file that will let the `we-dev-cli` install one group with 3 Tools from different
+of a config file that will let the `@theweave/cli` install one group with 3 Tools from different
 sources.
 
-`we.dev.config.ts`:
+`weave.dev.config.ts`:
 
 ```=typescript
-import { defineConfig } from '@lightningrodlabs/we-dev-cli';
+import { defineConfig } from '@theweave/cli';
 
 export default defineConfig({
   groups: [
@@ -157,11 +157,11 @@ will default to agentIdx=1).
 Run agent 1:
 
 ```
-we-dev-cli --agent-idx 1
+weave --agent-idx 1
 ```
 
 Run agent 2:
 
 ```
-we-dev-cli --agent-idx 2
+weave --agent-idx 2
 ```

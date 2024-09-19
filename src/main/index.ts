@@ -74,7 +74,7 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient('weave-0.13');
 }
 
-const ranViaCli = process.argv[3] && process.argv[3].endsWith('we-dev-cli');
+const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
 if (ranViaCli) {
   process.argv.splice(2, 2);
   const cliPackageJsonPath = path.resolve(path.join(app.getAppPath(), '../../package.json'));

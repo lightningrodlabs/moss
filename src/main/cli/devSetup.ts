@@ -77,7 +77,7 @@ export async function startLocalServices(): Promise<
     let bootstrapRunning = false;
     let signalRunnig = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      console.log(`[we-dev-cli] | [hc run-local-services]: ${line}`);
+      console.log(`[weave-cli] | [hc run-local-services]: ${line}`);
       if (line.includes('HC BOOTSTRAP - ADDR:')) {
         bootstrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
       }
@@ -95,7 +95,7 @@ export async function startLocalServices(): Promise<
         resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
-      console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
+      console.log(`[weave-cli] | [hc run-local-services] ERROR: ${line}`);
     });
   });
 }
@@ -105,7 +105,7 @@ export async function devSetup(
   holochainManager: HolochainManager,
   mossFileSystem: MossFileSystem,
 ): Promise<void> {
-  const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
+  const logDevSetup = (msg) => console.log(`[weave-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, EntryRecord<Tool>> = {};
   const installableApplets: Record<

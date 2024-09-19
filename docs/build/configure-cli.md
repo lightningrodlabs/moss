@@ -4,10 +4,10 @@ Your app's code should now be ready to run as a Tool inside Moss. To test it, le
 
 ### 1. Add Config File
 
-Create a file named `we.dev.config.json` and add it to the root of your project with the following content:
+Create a file named `weave.dev.config.ts` and add it to the root of your project with the following content:
 
 ```typescript
-import { defineConfig } from '@lightningrodlabs/we-dev-cli';
+import { defineConfig } from '@theweave/cli';
 
 export default defineConfig({
   groups: [
@@ -74,8 +74,8 @@ export default defineConfig({
 Now we can add npm scripts to run your Moss Tool in dev mode for 1 or 2 independent agents. In your root level `package.json` file add the following two scripts:
 
 ```json
-    "applet-dev": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"we-dev-cli --agent-idx 1 --dev-config ./we.dev.config.ts\" \"sleep 5 && we-dev-cli --agent-idx 2 --dev-config ./we.dev.config.ts --sync-time 20000\"",
-    "applet-dev-1": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"we-dev-cli --agent-idx 1 --dev-config ./we.dev.config.ts\"",
+    "applet-dev": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\" \"sleep 5 && weave --agent-idx 2 --dev-config ./weave.dev.config.ts --sync-time 20000\"",
+    "applet-dev-1": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\"",
 ```
 
 ### 3. Run your Tool
