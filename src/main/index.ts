@@ -85,7 +85,7 @@ if (ranViaCli) {
 const weCli = new Command();
 
 weCli
-  .name(ranViaCli ? '@lightningrodlabs/we-dev-cli' : 'Lightningrod Labs We')
+  .name(ranViaCli ? '@theweave/cli' : 'Lightningrod Labs We')
   .description(
     ranViaCli ? 'Running We applets in development mode.' : 'Running We via the command line.',
   )
