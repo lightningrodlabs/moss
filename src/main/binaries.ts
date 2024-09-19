@@ -17,7 +17,15 @@ const LAIR_BINARY = path.join(
   `lair-keystore-v${MOSS_CONFIG.lair.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
+/**
+ * Only used to run agents in dev mode uding the dev CLI - should not be shipped in the actual distributables for Moss
+ */
+const HC_BINARY = path.join(
+  BINARIES_DIRECTORY,
+  `hc-v${MOSS_CONFIG.hc.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
+);
+
 console.log('MOSS_CONFIG: ', MOSS_CONFIG);
 console.log('Holochain binaries: ', HOLOCHAIN_BINARIES);
 
-export { HOLOCHAIN_BINARIES, LAIR_BINARY };
+export { HOLOCHAIN_BINARIES, LAIR_BINARY, HC_BINARY };

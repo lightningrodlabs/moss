@@ -5,6 +5,7 @@ import { app } from 'electron';
 export type MossConfig = {
   holochain: VersionAndSha256;
   lair: VersionAndSha256;
+  hc: VersionAndSha256;
   groupHapp: VersionAndSha256;
   toolsLibrary: VersionAndSha256;
   kando: VersionAndSha256;

@@ -37,6 +37,7 @@ import {
 import { EntryRecord } from '@holochain-open-dev/utils';
 import * as rustUtils from '@lightningrodlabs/we-rust-utils';
 import * as yaml from 'js-yaml';
+import { HC_BINARY } from '../binaries';
 
 // const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -61,7 +62,15 @@ export async function startLocalServices(): Promise<
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
-  const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
+  const hcBinaryInResources = fs.existsSync(HC_BINARY);
+  if (!hcBinaryInResources)
+    console.warn(
+      '\n\n###################\n\nWARNING: No hc binary found in the resources folder. Using hc from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
+    );
+
+  const hcBinary = hcBinaryInResources ? HC_BINARY : 'hc';
+
+  const localServicesHandle = childProcess.spawn(hcBinary, ['run-local-services']);
   return new Promise((resolve) => {
     let bootstrapUrl;
     let signalingUrl;

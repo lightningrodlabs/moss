@@ -41,6 +41,10 @@ const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConf
   process.platform === 'win32' ? '.exe' : ''
 }`;
 
+const hcBinaryFilename = `hc-v${mossConfig.holochain.version}-${mossConfig.binariesAppendix}${
+  process.platform === 'win32' ? '.exe' : ''
+}`;
+
 function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
   console.log('Downloading from ', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
@@ -87,5 +91,13 @@ function downloadLairBinary() {
   downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256[targetEnding], true);
 }
 
+function downloadHcBinary() {
+  const hcBinaryRemoteFilename = `hc-v${mossConfig.holochain.version}-${targetEnding}`;
+  const hcBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/hc-binaries-${mossConfig.hc.version}/${hcBinaryRemoteFilename}`;
+  const destinationPath = path.join(binariesDir, hcBinaryFilename);
+  downloadFile(hcBinaryUrl, destinationPath, mossConfig.hc.sha256[targetEnding], true);
+}
+
 downloadHolochainBinary();
 downloadLairBinary();
+downloadHcBinary();
