@@ -170,10 +170,10 @@ const cliOpts = weCli.opts();
 
 console.log('GOT WE CLI OPTIONS: ', cliOpts);
 
-// If the app is being run via dev cli the --dev-config option is mandatory, otherwise We gets run with
+// If the app is being run via dev cli the --dev-config option is mandatory, otherwise Moss gets run with
 // the userData location .config/Electron
 if (ranViaCli) {
-  cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'we.dev.config.ts';
+  cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'weave.dev.config.ts';
 }
 
 const RUN_OPTIONS = validateArgs(cliOpts);
