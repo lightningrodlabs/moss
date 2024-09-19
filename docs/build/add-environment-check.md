@@ -11,7 +11,7 @@ At the top of `ui/src/holochain-app.ts`, add the following imports:
 <!-- DOCS_TODO Rename -->
 
 ```typescript
-import { WeaveClient, initializeHotReload, isWeContext } from '@theweave/api'; // [!code ++]
+import { WeaveClient, initializeHotReload, isWeaveContext } from '@theweave/api'; // [!code ++]
 ```
 
 ### 2. Add Hot-Reloading
@@ -66,7 +66,7 @@ Add a check to determine wheter your app is running in a Weave context and if ye
 
     try {
       this.client = await AppWebsocket.connect(); // [!code --]
-      if (isWeContext()) { // [!code ++]
+      if (isWeaveContext()) { // [!code ++]
         const weaveClient = await WeaveClient.connect(); // [!code ++]
         if (weaveClient.renderInfo.type !== "applet-view") throw new Error("This Tool does not implement cross-group views yet"); // [!code ++]
         this.client = weaveClient.renderInfo.appletClient; // [!code ++]

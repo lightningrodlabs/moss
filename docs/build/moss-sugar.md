@@ -9,7 +9,7 @@ Now that the holochain app works outside Moss, let's add some Weave/Moss specifi
 The Weave dev CLI will allow you to run yor Tool in a sandboxed instance of Moss with hot-reloading. Install it as a dev dependency:
 
 ```bash
-npm install -d @theweave/cli@0.13.0-beta.5
+npm install -d @theweave/cli@0.13.0-beta.6
 ```
 
 ### Weave Client
