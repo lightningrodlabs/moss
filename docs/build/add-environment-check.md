@@ -24,13 +24,17 @@ For this, modify the code in `ui/src/holochain-app.ts` to insert the following c
   async firstUpdated() {
     this.loading = true;
 
-    if ((import.meta as any).env.DEV) { // [!code ++]
+    // This line is assuming that you are using Vite as your dev server. If  // [!code ++]
+    // you are using a different bundler, you may need to adjust the logic // [!code ++]
+    // to determine whether your Tool is running in dev mode or not.  // [!code ++]
+    const isRunningInDevMode = (import.meta as any).env.DEV;  // [!code ++]
+      // [!code ++]
+    if (isRunningInDevMode) { // [!code ++]
       try { // [!code ++]
         await initializeHotReload(); // [!code ++]
       } catch (e) { // [!code ++]
-        // eslint-disable-next-line no-console // [!code ++]
         console.warn( // [!code ++]
-          'Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.' // [!code ++]
+          'Could not initialize applet hot-reloading. This is only expected to work in a Weave context in dev mode.' // [!code ++]
         ); // [!code ++]
       } // [!code ++]
     } // [!code ++]
@@ -57,9 +61,8 @@ Add a check to determine wheter your app is running in a Weave context and if ye
       try {
         await initializeHotReload();
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.warn(
-          'Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.'
+          'Could not initialize applet hot-reloading. This is only expected to work in a Weave context in dev mode.'
         );
       }
     }
