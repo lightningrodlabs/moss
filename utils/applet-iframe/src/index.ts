@@ -224,7 +224,13 @@ const weaveApi: WeaveServices = {
         const result = await handleMessage(appletClient, appletHash, m.data);
         m.ports[0].postMessage({ type: 'success', result });
       } catch (e) {
-        m.ports[0].postMessage({ type: 'error', error: (e as any).message });
+        console.error(
+          'Failed to send postMessage to applet ',
+          encodeHashToBase64(appletHash),
+          ': ',
+          e,
+        );
+        m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
       }
     });
 
@@ -351,8 +357,9 @@ const handleMessage = async (
           detail: message.payload,
         }),
       );
+      break;
     default:
-      throw new Error('Unknown ParentToAppletMessage');
+      throw new Error(`Unknown ParentToAppletMessage: '${(message as any).type}'`);
   }
 };
 
@@ -366,7 +373,20 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
     };
 
     // eslint-disable-next-line no-restricted-globals
-    top!.postMessage(message, '*', [channel.port2]);
+    try {
+      top!.postMessage(message, '*', [channel.port2]);
+    } catch (e: any) {
+      let couldNotBeClonedError = false;
+      if (e.toString) {
+        couldNotBeClonedError = e.toString().includes('could not be cloned');
+        console.error(
+          `Invalid iframe message format. Please check the format of the payload of your '${request.type}' request.\n\nError:\n`,
+          e,
+        );
+      } else {
+        console.error('Failed to send postMessage to Moss: ', e);
+      }
+    }
 
     channel.port1.onmessage = (m) => {
       if (m.data.type === 'success') {
