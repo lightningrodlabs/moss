@@ -380,7 +380,9 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
       if (e.toString) {
         couldNotBeClonedError = e.toString().includes('could not be cloned');
         console.error(
-          `Invalid iframe message format. Please check the format of the payload of your '${request.type}' request.\n\nError:\n`,
+          'Invalid iframe message format. Please check the format of the payload of your request. Your request:',
+          request,
+          '\n\nError:\n',
           e,
         );
       } else {

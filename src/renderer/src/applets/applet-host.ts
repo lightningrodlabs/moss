@@ -1,18 +1,18 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
-  AppletInfo,
-  AssetInfo,
-  AssetLocationAndInfo,
-  WAL,
-  AppletToParentRequest,
-  ParentToAppletMessage,
-  IframeConfig,
-  BlockType,
-  WeaveServices,
-  GroupProfile,
-  FrameNotification,
-  RecordInfo,
-  PeerStatusUpdate,
+  type AppletInfo,
+  type AssetInfo,
+  type AssetLocationAndInfo,
+  type WAL,
+  type AppletToParentRequest,
+  type ParentToAppletMessage,
+  type IframeConfig,
+  type BlockType,
+  type WeaveServices,
+  type GroupProfile,
+  type FrameNotification,
+  type RecordInfo,
+  type PeerStatusUpdate,
 } from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
@@ -39,8 +39,10 @@ import {
   toolBundleActionHashFromDistInfo,
   validateNotifications,
 } from '../utils.js';
+import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
+import { Value } from '@sinclair/typebox/value';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -261,6 +263,19 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
+  // Validate the format of the iframe message
+  try {
+    Value.Assert(AppletToParentRequestSchema, message);
+  } catch (e) {
+    console.error(
+      'Got invalid AppletToParentRequest format. Got request ',
+      message,
+      '\n\nError: ',
+      e,
+    );
+    return;
+  }
+
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
   switch (message.type) {
@@ -357,6 +372,7 @@ export async function handleAppletIframeMessage(
 
           return openViews.openWal(message.request.wal, message.request.mode);
       }
+      break;
     case 'wal-to-pocket':
       mossStore.walToPocket(message.wal);
       break;
