@@ -9,7 +9,8 @@
     "utils/applet-iframe",
     "utils/happ-iframe",
     "src/renderer",
-    "example/ui"
+    "example/ui",
+    "wdocker"
   ],
   "scripts": {
     "format": "prettier --write .",

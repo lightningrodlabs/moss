@@ -1,33 +1,29 @@
 {
-  "name": "@theweave/cli",
+  "name": "@theweave/wdocker",
   "version": "0.13.0-beta.6",
-  "description": "CLI to run Tools for the Weave in development mode",
+  "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lightningrodlabs/moss.git"
   },
-  "main": "defineConfig.js",
   "bin": {
-    "weave": "./cli.js"
+    "wdocker": "./src/cli.js"
   },
+  "type": "module",
   "scripts": {
-    "postinstall": "node ./fetch-binaries.mjs"
+    "postinstall": "node ./fetch-binaries.mjs",
+    "build": "tsc && cp ../moss.config.json ./dist/src"
   },
   "dependencies": {
-    "@electron-toolkit/preload": "^2.0.0",
-    "@electron-toolkit/utils": "^2.0.0",
+    "@folder/xdg": "4.0.1",
     "@holochain/client": "0.18.0-dev.3",
-    "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@theweave/api": "0.1.0",
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
-    "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
-    "adm-zip": "0.5.14",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
-    "electron-context-menu": "3.6.1",
-    "electron": "^29.3.1",
+    "get-port": "7.0.0",
     "mime": "4.0.0",
     "nanoid": "5.0.4",
     "split": "1.0.1",
