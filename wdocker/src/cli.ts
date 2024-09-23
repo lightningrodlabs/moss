@@ -50,7 +50,7 @@ hDocker.parse();
 const dirs = xdg();
 console.log(dirs.data);
 
-const wDockerFs = new WDockerFilesystem('test');
+const wDockerFs = new WDockerFilesystem();
 
 const allConductors = wDockerFs.listConductors();
 console.log('all conductors: ', allConductors);

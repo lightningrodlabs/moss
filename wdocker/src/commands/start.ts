@@ -22,7 +22,8 @@ import { downloadFile } from '../utils.js';
 // 2.
 
 export async function isConductorRunning(id: string, password): Promise<RunningInfo | undefined> {
-  const wDockerFs = new WDockerFilesystem(id);
+  const wDockerFs = new WDockerFilesystem();
+  wDockerFs.setConductorId(id);
   const runningInfo = wDockerFs.readRunningFile(password);
   if (runningInfo) {
     // Try to connect to conductor. If successful, return existing running info
@@ -37,8 +38,9 @@ export async function isConductorRunning(id: string, password): Promise<RunningI
   return undefined;
 }
 
-export async function startConductor(id: string, password: string): Promise<RunningInfo> {
-  const wDockerFs = new WDockerFilesystem(id);
+export async function startConductor(id: string, password: string): Promise<void> {
+  const wDockerFs = new WDockerFilesystem();
+  wDockerFs.setConductorId(id);
 
   const alreadyRunning = fs.existsSync(wDockerFs.runningInfoPath);
   if (alreadyRunning)
@@ -50,7 +52,7 @@ export async function startConductor(id: string, password: string): Promise<Runn
     await fetchHolochainBinary(wDockerFs.holochainBinaryPath);
   }
 
-  const conductorEnvDir = wDockerFs.conductorDir;
+  const conductorEnvDir = wDockerFs.conductorEnvDir;
   const keystoreEnvDir = wDockerFs.keystoreDir;
 
   const adminPort = await getPort();
@@ -115,6 +117,7 @@ export async function startConductor(id: string, password: string): Promise<Runn
         WASM_LOG: wasmLog ? wasmLog : 'warn',
         NO_COLOR: '1',
       },
+      detached: true,
     },
   );
   conductorHandle.stdin.write(password);
@@ -150,12 +153,14 @@ export async function startConductor(id: string, password: string): Promise<Runn
       }
       if (line.includes('Conductor ready.')) {
         console.log('Successfully started conductor.');
-        resolve({
+        const runningInfo = {
           adminPort,
           allowedOrigin,
           pid: conductorHandle.pid,
           startedAt: Date.now(),
-        });
+        };
+        wDockerFs.storeRunningFile(runningInfo, password);
+        resolve();
       }
     });
   });

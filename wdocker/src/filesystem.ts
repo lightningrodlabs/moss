@@ -28,59 +28,96 @@ const holochainBinaryName = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_
 export class WDockerFilesystem {
   rootDir: string;
   allConductorsDir: string;
-  conductorDataDir: string;
   binsDir: string;
-  logsDir: string;
-  /**
-   * The root directory of the actual conductor, containing the conductor-config.yaml
-   * and the holochain databases
-   */
-  conductorDir: string;
-  keystoreDir: string;
   happsDir: string;
+
+  conductorId: string | undefined;
 
   breakingVersion: string;
 
   // TODO pass logger here
-  constructor(conductorId: string) {
+  constructor() {
     const versionString = breakingVersion(packageJson.version);
     const dirs = xdg();
     const rootDir = path.join(dirs.data, 'wdocker', versionString);
 
     const allConductorsDir = path.join(rootDir, 'conductors');
     const binsDir = path.join(rootDir, 'bins');
-
-    const conductorDataDir = path.join(allConductorsDir, conductorId);
-
-    const logsDir = path.join(conductorDataDir, 'logs');
-    const conductorDir = path.join(conductorDataDir, 'conductor');
-    const keystoreDir = path.join(conductorDataDir, 'keystore');
-    const happsDir = path.join(conductorDataDir, 'happs');
-
-    createDirIfNotExists(binsDir);
-    createDirIfNotExists(logsDir);
-    createDirIfNotExists(conductorDir);
-    createDirIfNotExists(keystoreDir);
-    createDirIfNotExists(happsDir);
+    const happsDir = path.join(rootDir, 'happs');
 
     this.rootDir = rootDir;
     this.allConductorsDir = allConductorsDir;
-    this.conductorDataDir = conductorDataDir;
     this.binsDir = binsDir;
-    this.logsDir = logsDir;
-    this.conductorDir = conductorDir;
-    this.keystoreDir = keystoreDir;
     this.happsDir = happsDir;
+
+    createDirIfNotExists(binsDir);
+    createDirIfNotExists(happsDir);
 
     this.breakingVersion = versionString;
   }
 
+  setConductorId(conductorId: string) {
+    this.conductorId = conductorId;
+
+    createDirIfNotExists(this.conductorDataDir);
+    createDirIfNotExists(this.conductorLogsDir);
+    createDirIfNotExists(this.conductorEnvDir);
+    createDirIfNotExists(this.keystoreDir);
+  }
+
+  get conductorDataDir(): string {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.allConductorsDir, this.conductorId);
+  }
+
+  get conductorLogsDir(): string {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.conductorDataDir, 'logs');
+  }
+
+  /**
+   * The root directory of the actual holochain conductor, containing the
+   * conductor-config.yaml file and the holochain databases
+   *
+   * @param conductorId
+   * @returns
+   */
+  get conductorEnvDir(): string {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.conductorDataDir, 'conductor');
+  }
+
+  get keystoreDir(): string {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.conductorDataDir, 'keystore');
+  }
+
   get runningInfoPath() {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
     return path.join(this.conductorDataDir, '.running');
   }
 
   get conductorConfigPath() {
-    return path.join(this.conductorDir, 'conductor-config.yaml');
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.conductorEnvDir, 'conductor-config.yaml');
   }
 
   get holochainBinaryPath() {
