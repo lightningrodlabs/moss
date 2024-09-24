@@ -4,8 +4,7 @@ import path from 'path';
 import xdg from '@folder/xdg';
 import { breakingVersion, decrypt, encrypt } from './utils.js';
 import getFolderSize from 'get-folder-size';
-import packageJson from './../package.json' assert { type: 'json' };
-import { HOLOCHAIN_BINARY_NAME } from './const.js';
+import { HOLOCHAIN_BINARY_NAME, MOSS_CONFIG, PACKAGE_JSON } from './const.js';
 
 export type RunningInfo = {
   daemonPid: number;
@@ -51,7 +50,7 @@ export class WDockerFilesystem {
 
   // TODO pass logger here
   constructor() {
-    const versionString = breakingVersion(packageJson.version);
+    const versionString = breakingVersion(PACKAGE_JSON.version);
     const dirs = xdg();
     const rootDir = path.join(dirs.data, 'wdocker', versionString);
 
@@ -78,6 +77,10 @@ export class WDockerFilesystem {
     createDirIfNotExists(this.conductorLogsDir);
     createDirIfNotExists(this.conductorEnvDir);
     createDirIfNotExists(this.keystoreDir);
+  }
+
+  conductorExists(id: string): boolean {
+    return fs.existsSync(path.join(this.allConductorsDir, id));
   }
 
   get conductorDataDir(): string {
@@ -145,6 +148,14 @@ export class WDockerFilesystem {
 
   get holochainBinaryPath() {
     return path.join(this.binsDir, HOLOCHAIN_BINARY_NAME);
+  }
+
+  get groupHappPath() {
+    return path.join(this.happsDir, `${MOSS_CONFIG.groupHapp.sha256}.happ`);
+  }
+
+  get toolsLibraryHappPath() {
+    return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
   }
 
   async listConductors(): Promise<Array<ConductorInstanceInfo>> {

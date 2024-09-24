@@ -79,11 +79,11 @@ export async function startDaemon(id: string, init = false): Promise<void> {
       return;
     }
   } else {
-    pw = await passwordInput({ message: 'Enter password:' });
+    pw = await passwordInput({ message: 'conductor password:' });
   }
 
   const daemonHandle = childProcess.spawn('wdaemon', [id], {
-    detached: true,
+    detached: false,
   });
   daemonHandle.stdin.write(pw);
   daemonHandle.stdin.end();

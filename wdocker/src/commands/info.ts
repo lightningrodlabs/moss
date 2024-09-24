@@ -14,7 +14,7 @@ export async function info(id: string) {
     return;
   }
 
-  const pw = await passwordInput({ message: 'Enter password:' });
+  const pw = await passwordInput({ message: 'conductor password:' });
   const runningSecretInfo = wDockerFs.readRunningSecretFile(pw);
   if (!runningSecretInfo) {
     console.log('Failed to connect to conductor. No port file found.');

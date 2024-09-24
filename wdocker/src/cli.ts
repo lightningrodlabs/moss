@@ -7,6 +7,8 @@ import { run } from './commands/run.js';
 import { start } from './commands/start.js';
 import { stopConductor } from './commands/stop.js';
 import { info } from './commands/info.js';
+import { listApps } from './commands/conductor/list-apps.js';
+import { joinGroup } from './commands/conductor/join-group.js';
 import os from 'os';
 
 if (os.platform() === 'win32') throw new Error('wdocker is currently not supported on Windows.');
@@ -58,8 +60,40 @@ wDocker
     await list();
   });
 
+/**
+ * conductor command
+ */
+
+wDocker
+  .command('list-apps')
+  .description('list all installed apps for a conductor')
+  .argument('<conductor>', 'id (name) of the conductor')
+  .action(async (conductorId) => {
+    const response = await listApps(conductorId);
+    if (response) console.log('Installed apps: ', response);
+    return;
+  });
+
+wDocker
+  .command('join-group')
+  .description('Join a Moss group with a conductor')
+  .argument('<conductor>', 'id (name) of the conductor in which to install the group')
+  .argument('<invite-link-in-quotes>', 'invite link to the group, MUST BE WRAPPED in quotes ""')
+  .action(async (conductorId, inviteLink) => {
+    if (!inviteLink.includes('&progenitor')) {
+      console.warn(
+        'WARNING: It looks like you may not have wrapped the <invite-link> argument in quotes "". This is required for the command to work.',
+      );
+    }
+    console.log(
+      'Got join-group command with conductorId and inviteLink: ',
+      conductorId,
+      inviteLink,
+    );
+    const response = await joinGroup(conductorId, inviteLink);
+    console.log('Got response: ', response);
+    if (response) console.log('Joined group: ', response);
+    process.exit(0);
+  });
+
 wDocker.parse();
-
-// function collectPassword(): Promise<string> {
-
-// }

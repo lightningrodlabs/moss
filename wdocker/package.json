@@ -8,12 +8,12 @@
     "url": "git+https://github.com/lightningrodlabs/moss.git"
   },
   "bin": {
-    "wdocker": "./src/cli.js",
-    "wdaemon": "./src/daemon/daemon.js"
+    "wdocker": "./dist/cli.js",
+    "wdaemon": "./dist/daemon/daemon.js"
   },
   "type": "module",
   "scripts": {
-    "build": "tsc && cp ../moss.config.json ./dist/src"
+    "build": "tsc && cp ../moss.config.json ./dist"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
@@ -21,12 +21,14 @@
     "@inquirer/password": "3.0.1",
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
     "@msgpack/msgpack": "^2.8.0",
-    "@theweave/api": "0.1.0",
+    "@theweave/api": "file:../libs/api",
+    "@theweave/utils": "file:../libs/utils",
     "bufferutil": "4.0.8",
     "cli-table": "0.3.11",
     "commander": "11.1.0",
     "get-folder-size": "5.0.0",
     "get-port": "7.0.0",
+    "js-yaml": "^4.1.0",
     "mime": "4.0.0",
     "nanoid": "5.0.4",
     "ps-list": "8.1.1",

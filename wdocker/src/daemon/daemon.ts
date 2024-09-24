@@ -11,12 +11,6 @@ import { Command } from 'commander';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 
-const cleanExit = () => {
-  process.exit();
-};
-process.on('SIGINT', cleanExit); // catch Ctrl+C
-process.on('SIGTERM', cleanExit); // catch kill
-
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
 const wdaemon = new Command();
@@ -36,6 +30,14 @@ console.log(`Starting daemon for conductor '${CONDUCTOR_ID}'`);
 
 const WDOCKER_FILE_SYSTEM = new WDockerFilesystem();
 WDOCKER_FILE_SYSTEM.setConductorId(CONDUCTOR_ID);
+
+const cleanExit = () => {
+  WDOCKER_FILE_SYSTEM.clearRunningFile();
+  WDOCKER_FILE_SYSTEM.clearRunningSecretFile();
+  process.exit();
+};
+process.on('SIGINT', cleanExit); // catch Ctrl+C
+process.on('SIGTERM', cleanExit); // catch kill
 
 let password;
 process.stdin.resume();
@@ -58,4 +60,6 @@ setTimeout(async () => {
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
 
   // TODO connect to the admin websocket and do all the installation and scheduling logic
+
+  // Every X minutes, check all installed groups and for each group fetch unjoined tools and try to join
 }, 1000);

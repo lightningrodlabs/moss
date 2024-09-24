@@ -954,7 +954,7 @@ app.whenReady().then(async () => {
               appAssetsInfo.ui.location.type === 'localhost'
             ) {
               try {
-                console.log('Trying to fetch weave.config.json from localhost');
+                // console.log('Trying to fetch weave.config.json from localhost');
                 const resp = await net.fetch(
                   `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
                 );

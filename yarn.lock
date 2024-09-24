@@ -2809,8 +2809,8 @@
     "@material/web" "=1.0.0-pre.9"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "2.16.0"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-0784be6b-e49c-45db-85c3-8f498c60f68a-1727131542287/node_modules/@theweave/api"
-    "@theweave/elements" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-0784be6b-e49c-45db-85c3-8f498c60f68a-1727131542287/node_modules/@theweave/elements"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-8964e553-10ba-44c5-9d2e-56b6c919fcb8-1727172789464/node_modules/@theweave/api"
+    "@theweave/elements" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-8964e553-10ba-44c5-9d2e-56b6c919fcb8-1727172789464/node_modules/@theweave/elements"
     lit "^3.0.2"
 
 "@theweave/cli@0.13.0-beta.6":
@@ -2851,9 +2851,15 @@
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "2.16.0"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-elements-0.1.0-206f89d0-e8bd-4bed-bead-951fb84ec4d1-1727131542284/node_modules/@theweave/api"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-elements-0.1.0-96f2fcba-fc2b-4eaa-a2da-046466e2bdb0-1727172789462/node_modules/@theweave/api"
     js-base64 "^3.7.5"
     lit "^3.0.2"
+
+"@theweave/utils@file:libs/utils":
+  version "0.1.0"
+  dependencies:
+    "@holochain/client" "0.18.0-dev.3"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-utils-0.1.0-e260d619-ebe8-4be8-adbf-4b834cc2048a-1727172789463/node_modules/@theweave/api"
 
 "@tootallnate/once@2":
   version "2.0.0"

@@ -34,7 +34,6 @@ import {
   DistributionInfo,
   GroupDnaProperties,
   MessageContentPart,
-  PartialModifiers,
 } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
@@ -660,44 +659,6 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
   return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
-}
-
-export function invitePropsToPartialModifiers(props: string): PartialModifiers {
-  const [networkSeed, progenitorString] = props.split('&progenitor=');
-  if (!progenitorString) throw new Error('Invite string does not contain progenitor.');
-  let progenitor;
-  if (progenitorString === 'null') {
-    progenitor = null;
-  } else {
-    try {
-      const rawKey = decodeHashFromBase64(progenitorString);
-      if (rawKey.length !== 39) {
-        throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-      }
-    } catch (e) {
-      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-    }
-    if (!progenitorString.startsWith('uhCAk')) {
-      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-    }
-    progenitor = progenitorString;
-  }
-  return {
-    networkSeed,
-    progenitor,
-  };
-}
-
-export function partialModifiersFromInviteLink(inviteLink: string): PartialModifiers | undefined {
-  const split = inviteLink.trim().split('://');
-  const split2 = inviteLink.startsWith('https')
-    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.13://invite/aljsfkajsf
-    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.13://invite/aljsfkajsf
-  if (split2[0] === 'invite') {
-    return invitePropsToPartialModifiers(split2[1]);
-  } else {
-    return undefined;
-  }
 }
 
 export function markdownParseSafe(input: string) {

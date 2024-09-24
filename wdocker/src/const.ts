@@ -26,7 +26,16 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal.holo.host',
 ];
 
+const packageJsonPath = path.join(__dirname, '../package.json');
+const packageJsonJSON = fs.readFileSync(packageJsonPath, 'utf-8');
+export const PACKAGE_JSON = JSON.parse(packageJsonJSON);
+
 const mossConfigPath = path.join(__dirname, 'moss.config.json');
 const mossConfigJSON = fs.readFileSync(mossConfigPath, 'utf-8');
 export const MOSS_CONFIG = JSON.parse(mossConfigJSON);
 export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
+
+export const GROUP_HAPP_URL = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${MOSS_CONFIG.groupHapp.version}/group.happ`;
+export const TOOLS_LIBRARY_URL = `https://github.com/lightningrodlabs/tools-library/releases/download/v${MOSS_CONFIG.toolsLibrary.version}/tools-library.happ`;
+
+export const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
