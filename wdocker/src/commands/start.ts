@@ -9,7 +9,7 @@ export async function start(id: string): Promise<void> {
   const conductorDataDir = path.join(wDockerFs.allConductorsDir, id);
   if (!fs.existsSync(conductorDataDir)) {
     console.log(
-      `There is no conductor with name '${id}'. Run\n\nwdocker run <name>\n\nto initialize and run a new conductor.`,
+      `There is no conductor with name '${id}'. Run\n\n  wdocker run <name>\n\nto initialize and run a new conductor.`,
     );
     return;
   }

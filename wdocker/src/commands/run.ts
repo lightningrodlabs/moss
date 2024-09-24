@@ -9,7 +9,7 @@ export async function run(id: string): Promise<void> {
   const conductorDataDir = path.join(wDockerFs.allConductorsDir, id);
   if (fs.existsSync(conductorDataDir)) {
     console.log(
-      `A conductor with name '${id}' already exists. Use\n\nwdocker start <name>\n\nto start an existing conductor.`,
+      `A conductor with name '${id}' already exists. Use\n\n  wdocker start <name>\n\nto start an existing conductor.`,
     );
     return;
   }

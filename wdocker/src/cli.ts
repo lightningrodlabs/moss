@@ -6,6 +6,7 @@ import { list } from './commands/list.js';
 import { run } from './commands/run.js';
 import { start } from './commands/start.js';
 import { stopConductor } from './commands/stop.js';
+import { info } from './commands/info.js';
 import os from 'os';
 
 if (os.platform() === 'win32') throw new Error('wdocker is currently not supported on Windows.');
@@ -39,6 +40,15 @@ wDocker
   .argument('<name>')
   .action(async (conductorId) => {
     await stopConductor(conductorId);
+  });
+
+wDocker
+  .command('info')
+  .description('info about a running conductor')
+  .argument('<name>')
+  .action(async (conductorId) => {
+    await info(conductorId);
+    process.exit(0);
   });
 
 wDocker

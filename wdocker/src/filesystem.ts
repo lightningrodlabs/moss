@@ -191,7 +191,7 @@ export class WDockerFilesystem {
 
   readRunningSecretFile(password: string): RunningSecretInfo | undefined {
     if (!fs.existsSync(this.runningSecretInfoPath)) return undefined;
-    const encryptedData = fs.readFileSync(this.runningInfoPath, 'utf-8');
+    const encryptedData = fs.readFileSync(this.runningSecretInfoPath, 'utf-8');
     const key = crypto.createHash('sha256').update(String(password)).digest('base64').slice(0, 32);
     const decryptedData = decrypt(encryptedData, key);
     return JSON.parse(decryptedData);

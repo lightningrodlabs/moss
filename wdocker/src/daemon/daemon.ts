@@ -56,4 +56,6 @@ setTimeout(async () => {
     ...runningConductorAndInfo.runningInfo,
   });
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
+
+  // TODO connect to the admin websocket and do all the installation and scheduling logic
 }, 1000);
