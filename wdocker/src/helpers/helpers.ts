@@ -61,7 +61,7 @@ export async function downloadGroupHappIfNecessary() {
 /**
  * Downloads the tool library happ from github if necessary
  */
-export async function downloadToolLibraryHappIfNecessary() {
+export async function downloadToolLibraryHappIfNecessary(): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
   const happSha256 = MOSS_CONFIG.toolsLibrary.sha256;
   if (!happSha256) throw new Error('Tool library happ sha256 undefined.');
@@ -85,6 +85,6 @@ export async function downloadToolLibraryHappIfNecessary() {
   }
 
   if (needsToBeFetched) {
-    downloadFile(TOOLS_LIBRARY_URL, toolLibraryHappPath, happSha256, false);
+    await downloadFile(TOOLS_LIBRARY_URL, toolLibraryHappPath, happSha256, false);
   }
 }

@@ -91,8 +91,7 @@ wDocker
       inviteLink,
     );
     const response = await joinGroup(conductorId, inviteLink);
-    console.log('Got response: ', response);
-    if (response) console.log('Joined group: ', response);
+    if (response) console.log('Joined group:\n', response);
     process.exit(0);
   });
 

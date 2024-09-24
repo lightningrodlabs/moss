@@ -10,6 +10,8 @@ import { Command } from 'commander';
 
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
+import { getAdminWs } from '../helpers/helpers.js';
+import { installDefaultAppsIfNecessary } from './isntallDefaultApps.js';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -58,6 +60,10 @@ setTimeout(async () => {
     ...runningConductorAndInfo.runningInfo,
   });
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
+
+  // Install default apps if necessary
+  const adminWs = await getAdminWs(CONDUCTOR_ID, password);
+  await installDefaultAppsIfNecessary(adminWs);
 
   // TODO connect to the admin websocket and do all the installation and scheduling logic
 
