@@ -1,71 +1,55 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander';
 
-import xdg from '@folder/xdg';
+import { list } from './commands/list.js';
+import { run } from './commands/run.js';
+import { start } from './commands/start.js';
+import { stopConductor } from './commands/stop.js';
+import os from 'os';
 
-import packageJson from './../package.json' assert { type: 'json' };
-import { WDockerFilesystem } from './filesystem.js';
-import { startConductor } from './commands/start.js';
+if (os.platform() === 'win32') throw new Error('wdocker is currently not supported on Windows.');
 
-console.log(packageJson.version);
+const wDocker = new Command();
 
-// import * as childProcess from 'child_process';
+wDocker.name('wdocker').description('Run always-online nodes for the Weave');
 
-console.log('Hello!');
-
-const hDocker = new Command();
-
-hDocker.name('wdocker').description('Run always-online nodes for the Weave');
-
-hDocker
+wDocker
   .command('run')
   .description('run a new conductor')
   .argument('<name>')
-  .option('-d, --daemon', 'run as a background daemon')
-  .action((arg, opts) => {
-    console.log('Got inputs: ', arg, opts);
-    console.log('Started imaginary background conductor.');
+  .option('-d, --detached', 'run detached as a background process')
+  .action(async (conductorId, _opts) => {
+    await run(conductorId);
   });
 
-hDocker
+wDocker
   .command('start')
   .description('start an existing conductor')
   .argument('<name>')
-  .action(async (arg, _opts) => {
-    console.log(`Starting conductor with id '${arg}'`);
-    await startConductor(arg, 'test');
+  .option('-d, --detached', 'run detached as a background process')
+  .action(async (conductorId) => {
+    await start(conductorId);
+    // process.exit();
   });
 
-// .addCommand(
-//   new Command('run <name>')
-//     .description('run a new conductor')
-//     .option('-d', '--daemon', 'run as a daemon')
-//     .action((actionContent) => {
-//       console.log('actionContent: ', actionContent);
-//     }),
-// )
-// .addCommand(new Command('start <name>').description('start an existing conductor'));
+wDocker
+  .command('stop')
+  .description('stop a running conductor')
+  .argument('<name>')
+  .action(async (conductorId) => {
+    await stopConductor(conductorId);
+  });
 
-hDocker.parse();
+wDocker
+  .command('list')
+  .description('List all conductors')
+  .action(async () => {
+    await list();
+  });
 
-const dirs = xdg();
-console.log(dirs.data);
+wDocker.parse();
 
-const wDockerFs = new WDockerFilesystem();
+// function collectPassword(): Promise<string> {
 
-const allConductors = wDockerFs.listConductors();
-console.log('all conductors: ', allConductors);
-
-hDocker.commands[0];
-
-// wDockerFs.storeRunningFile(
-//   {
-//     adminPort: 1234,
-//     allowedOrigin: 'abc',
-//     pid: 234123,
-//   },
-//   'test',
-// );
-
-// const readContent = wDockerFs.readRunningFile('test');
-
-// console.log('READ CONTENT: ', readContent);
+// }

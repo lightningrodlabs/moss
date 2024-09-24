@@ -3,27 +3,41 @@ import fs from 'fs';
 import path from 'path';
 import xdg from '@folder/xdg';
 import { breakingVersion, decrypt, encrypt } from './utils.js';
+import getFolderSize from 'get-folder-size';
 import packageJson from './../package.json' assert { type: 'json' };
-import { MOSS_CONFIG } from './const.js';
+import { HOLOCHAIN_BINARY_NAME } from './const.js';
 
 export type RunningInfo = {
-  adminPort: number;
-  allowedOrigin: string;
-  pid: number | undefined;
+  daemonPid: number;
+  conductorPid: number;
   startedAt: number;
 };
 
+export type ConductorRunningInfo = Omit<RunningInfo, 'daemonPid'>;
+
+export type RunningSecretInfo = {
+  adminPort: number;
+  allowedOrigin: string;
+};
+
+export type ConductorRunningStatus = 'running' | 'stopped';
+
 export type ConductorInstanceInfo = {
   id: string;
+  status: ConductorRunningStatus;
+  /**
+   * Timestamp when the conductor has been created initially
+   */
   createdAt: number;
-  status: 'running' | 'stopped' | 'method not implemented';
+  /**
+   * Timestamp when the conductor has been started, if it is currently running
+   */
+  startedAt?: number;
   /**
    * Total size in bytes
    */
-  size: number;
+  size?: number;
 };
-
-const holochainBinaryName = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
 
 export class WDockerFilesystem {
   rootDir: string;
@@ -50,6 +64,7 @@ export class WDockerFilesystem {
     this.binsDir = binsDir;
     this.happsDir = happsDir;
 
+    createDirIfNotExists(allConductorsDir);
     createDirIfNotExists(binsDir);
     createDirIfNotExists(happsDir);
 
@@ -112,6 +127,14 @@ export class WDockerFilesystem {
     return path.join(this.conductorDataDir, '.running');
   }
 
+  get runningSecretInfoPath() {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.conductorDataDir, '.running_s');
+  }
+
   get conductorConfigPath() {
     if (!this.conductorId)
       throw Error(
@@ -121,45 +144,71 @@ export class WDockerFilesystem {
   }
 
   get holochainBinaryPath() {
-    return path.join(this.binsDir, holochainBinaryName);
+    return path.join(this.binsDir, HOLOCHAIN_BINARY_NAME);
   }
 
-  listConductors(): Array<ConductorInstanceInfo> {
-    //
+  async listConductors(): Promise<Array<ConductorInstanceInfo>> {
+    const infos: Array<ConductorInstanceInfo> = [];
+
     const allConductorsDir = fs.readdirSync(this.allConductorsDir);
-    return allConductorsDir
-      .map((name) => {
-        const stats = fs.statSync(path.join(this.allConductorsDir, name));
-        return [
-          {
+    await Promise.all(
+      allConductorsDir.map(async (name) => {
+        const conductorDataDir = path.join(this.allConductorsDir, name);
+        const stats = fs.statSync(conductorDataDir);
+        if (stats.isDirectory()) {
+          const runningInfoPath = path.join(this.allConductorsDir, name, '.running');
+          const isRunning = fs.existsSync(runningInfoPath);
+          let startedAt: number | undefined;
+          if (isRunning) {
+            const runningInfoString = fs.readFileSync(runningInfoPath, 'utf-8');
+            const runningInfo: RunningInfo = JSON.parse(runningInfoString);
+            startedAt = runningInfo.startedAt;
+          }
+          const status = isRunning ? 'running' : ('stopped' as ConductorRunningStatus);
+          const size = await getFolderSize.loose(conductorDataDir);
+          infos.push({
             id: name,
+            status,
             createdAt: stats.birthtimeMs,
-            size: stats.size,
-            status: 'method not implemented',
-          },
-          stats.isDirectory(),
-        ];
-      })
-      .filter((info) => !!info[1])
-      .map((info) => info[0] as ConductorInstanceInfo);
+            startedAt,
+            size,
+          });
+        }
+      }),
+    );
 
+    return infos;
     // TODO try connect to the conductor to verify that it's running;
-    // TODO read actual file
+    // TODO read actual file to get the size
   }
 
-  storeRunningFile(info: RunningInfo, password: string) {
+  storeRunningSecretFile(info: RunningSecretInfo, password: string) {
     // 1. password encrypt info
     const key = crypto.createHash('sha256').update(String(password)).digest('base64').slice(0, 32);
     const encryptedData = encrypt(JSON.stringify(info), key);
-    fs.writeFileSync(this.runningInfoPath, encryptedData);
+    fs.writeFileSync(this.runningSecretInfoPath, encryptedData);
   }
 
-  readRunningFile(password: string): RunningInfo | undefined {
-    if (!fs.existsSync(this.runningInfoPath)) return undefined;
+  readRunningSecretFile(password: string): RunningSecretInfo | undefined {
+    if (!fs.existsSync(this.runningSecretInfoPath)) return undefined;
     const encryptedData = fs.readFileSync(this.runningInfoPath, 'utf-8');
     const key = crypto.createHash('sha256').update(String(password)).digest('base64').slice(0, 32);
     const decryptedData = decrypt(encryptedData, key);
     return JSON.parse(decryptedData);
+  }
+
+  clearRunningSecretFile(): void {
+    fs.rmSync(this.runningSecretInfoPath);
+  }
+
+  storeRunningFile(info: RunningInfo) {
+    fs.writeFileSync(this.runningInfoPath, JSON.stringify(info, undefined, 2));
+  }
+
+  readRunningFile(): RunningInfo | undefined {
+    if (!fs.existsSync(this.runningInfoPath)) return undefined;
+    const infoString = fs.readFileSync(this.runningInfoPath, 'utf-8');
+    return JSON.parse(infoString);
   }
 
   clearRunningFile(): void {
@@ -179,9 +228,9 @@ export class WDockerFilesystem {
 //  |   |   |   |
 //  |   |   |   |-- conductor
 //  |   |   |   |
-//  |   |   |   |-- happs
-//  |   |   |   |
 //  |   |   |   |.running
+//  |   |   |   |
+//  |   |   |   |.running_s
 //  |   |   |
 //  |   |   |
 //  |   |   |
@@ -190,22 +239,16 @@ export class WDockerFilesystem {
 //  |   |
 //  |   |
 //  |   |-- bins
+//  |   |
+//  |   |-- happs
+//  |
+//  |
 //  |
 //  |-- 0.13.0
 //  |
 //  |
 //  |
-//  |
-//  |
 // conductors
-//
-//
-//
-//
-// cache
-//  |
-//  |--happs
-//
 //
 //
 //

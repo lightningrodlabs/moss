@@ -29,3 +29,4 @@ export const PRODUCTION_SIGNALING_URLS = [
 const mossConfigPath = path.join(__dirname, 'moss.config.json');
 const mossConfigJSON = fs.readFileSync(mossConfigPath, 'utf-8');
 export const MOSS_CONFIG = JSON.parse(mossConfigJSON);
+export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
