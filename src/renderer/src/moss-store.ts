@@ -71,11 +71,9 @@ import {
   AppletId,
   AppletNotification,
   DistributionInfo,
-  GroupProfile,
   WebHappSource,
 } from './types.js';
-import { Applet } from './types.js';
-import { GroupClient } from './groups/group-client.js';
+import { GroupClient, GroupProfile, Applet } from '@theweave/group-client';
 import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';

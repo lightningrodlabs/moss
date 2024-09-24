@@ -15,6 +15,7 @@
     "@theweave/api": "file:../../libs/api",
     "@theweave/elements": "file:../../libs/elements",
     "@theweave/utils": "file:../../libs/utils",
+    "@theweave/group-client": "file:../../libs/group-client",
     "@lit/context": "^1.0.1",
     "@lit-labs/task": "^1.1.2",
     "@lit/localize": "^0.12.0",

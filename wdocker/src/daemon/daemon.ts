@@ -65,7 +65,5 @@ setTimeout(async () => {
   const adminWs = await getAdminWs(CONDUCTOR_ID, password);
   await installDefaultAppsIfNecessary(adminWs);
 
-  // TODO connect to the admin websocket and do all the installation and scheduling logic
-
   // Every X minutes, check all installed groups and for each group fetch unjoined tools and try to join
 }, 1000);

@@ -28,13 +28,7 @@ import { fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import {
-  AppletHash,
-  AppletId,
-  DistributionInfo,
-  GroupDnaProperties,
-  MessageContentPart,
-} from './types.js';
+import { AppletHash, AppletId, DistributionInfo, MessageContentPart } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {

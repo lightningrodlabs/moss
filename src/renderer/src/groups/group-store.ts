@@ -35,11 +35,10 @@ import { DnaModifiers } from '@holochain/client';
 
 import { AppletHash, ParentToAppletMessage, PeerStatus } from '@theweave/api';
 
-import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
-import { Applet, JoinAppletInput } from '../types.js';
+import { Applet, JoinAppletInput, GroupClient, AppletAgent } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
   isAppDisabled,
@@ -48,7 +47,7 @@ import {
   reloadableLazyLoadAndPollUntil,
   toLowerCaseB64,
 } from '../utils.js';
-import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
+import { AppHashes, DistributionInfo } from '../types.js';
 import { Tool, UpdateableEntity } from '../personal-views/tool-library/types.js';
 import { FoyerStore } from './foyer.js';
 

@@ -23,6 +23,7 @@
     "@msgpack/msgpack": "^2.8.0",
     "@theweave/api": "file:../libs/api",
     "@theweave/utils": "file:../libs/utils",
+    "@theweave/group-client": "file:../libs/group-client",
     "bufferutil": "4.0.8",
     "cli-table": "0.3.11",
     "commander": "11.1.0",

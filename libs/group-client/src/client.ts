@@ -19,7 +19,7 @@ import {
   PermissionType,
   PrivateAppletEntry,
   StewardPermission,
-} from '../types.js';
+} from './types.js';
 
 export class GroupClient {
   constructor(
