@@ -2,6 +2,14 @@ import semver from 'semver';
 import crypto from 'crypto';
 import fs from 'fs';
 import { exec } from 'child_process';
+import {
+  CallZomeRequest,
+  CallZomeRequestSigned,
+  getNonceExpiration,
+  randomNonce,
+} from '@holochain/client';
+import { WeRustHandler, ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { encode } from '@msgpack/msgpack';
 
 export function breakingVersion(version: string): string {
   if (!semver.valid(version)) {
@@ -98,4 +106,38 @@ export function readYamlValue(yamlString: string, key: string) {
   }
   const relevantLine = lines[idx];
   return relevantLine.replace(`${key}:`, '').trim();
+}
+
+export async function signZomeCall(
+  request: CallZomeRequest,
+  handler: WeRustHandler,
+): Promise<CallZomeRequestSigned> {
+  const zomeCallUnsignedNapi: ZomeCallUnsignedNapi = {
+    provenance: Array.from(request.provenance),
+    cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
+    zomeName: request.zome_name,
+    fnName: request.fn_name,
+    payload: Array.from(encode(request.payload)),
+    nonce: Array.from(await randomNonce()),
+    expiresAt: getNonceExpiration(),
+  };
+
+  const zomeCallSignedNapi: ZomeCallNapi = await handler.signZomeCall(zomeCallUnsignedNapi);
+
+  const zomeCallSigned: CallZomeRequestSigned = {
+    provenance: Uint8Array.from(zomeCallSignedNapi.provenance),
+    cap_secret: null,
+    cell_id: [
+      Uint8Array.from(zomeCallSignedNapi.cellId[0]),
+      Uint8Array.from(zomeCallSignedNapi.cellId[1]),
+    ],
+    zome_name: zomeCallSignedNapi.zomeName,
+    fn_name: zomeCallSignedNapi.fnName,
+    payload: Uint8Array.from(zomeCallSignedNapi.payload),
+    signature: Uint8Array.from(zomeCallSignedNapi.signature),
+    expires_at: zomeCallSignedNapi.expiresAt,
+    nonce: Uint8Array.from(zomeCallSignedNapi.nonce),
+  };
+
+  return zomeCallSigned;
 }

@@ -11,7 +11,12 @@ import { Command } from 'commander';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWs } from '../helpers/helpers.js';
-import { installDefaultAppsIfNecessary } from './isntallDefaultApps.js';
+import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
+import { GroupClient } from '@theweave/group-client';
+import { AdminWebsocket, AppWebsocket, CallZomeTransform, InstalledAppId } from '@holochain/client';
+import rustUtils from '@lightningrodlabs/we-rust-utils';
+import { signZomeCall } from '../utils.js';
+import { decode } from '@msgpack/msgpack';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -65,5 +70,57 @@ setTimeout(async () => {
   const adminWs = await getAdminWs(CONDUCTOR_ID, password);
   await installDefaultAppsIfNecessary(adminWs);
 
+  // Get or attach app interface
+  const appInterfaces = await adminWs.listAppInterfaces();
+  let appPort: number;
+  if (appInterfaces.length > 0) {
+    appPort = appInterfaces[0].port;
+  } else {
+    const attachAppInterfaceResponse = await adminWs.attachAppInterface({
+      allowed_origins: 'wdocker',
+    });
+    console.log('Attached app interface port: ', attachAppInterfaceResponse);
+    appPort = attachAppInterfaceResponse.port;
+  }
+
+  const lairUrl = WDOCKER_FILE_SYSTEM.readLairUrl();
+  if (!lairUrl) throw new Error('Failed to read lair connection url');
+  const weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
+
   // Every X minutes, check all installed groups and for each group fetch unjoined tools and try to join
+
+  const allApps = await adminWs.listApps({});
+  const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
+
+  for (const groupApp of groupApps) {
+    const appWs = await getAppWebsocket(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+    const groupClient = new GroupClient(appWs, [], 'group');
+    const unjoinedTools = await groupClient.getUnjoinedApplets();
+    console.log('unjoined tools of group', groupApp.installed_app_id, ': ', unjoinedTools);
+  }
 }, 1000);
+
+async function getAppWebsocket(
+  adminWs: AdminWebsocket,
+  appPort: number,
+  installedAppId: InstalledAppId,
+  weRustHandler: rustUtils.WeRustHandler,
+): Promise<AppWebsocket> {
+  const authTokenResponse = await adminWs.issueAppAuthenticationToken({
+    installed_app_id: installedAppId,
+    expiry_seconds: 10,
+    single_use: true,
+  });
+  const callZomeTransform: CallZomeTransform = {
+    input: (req) => signZomeCall(req, weRustHandler),
+    output: (o) => decode(o as any),
+  };
+  return AppWebsocket.connect({
+    url: new URL(`ws://localhost:${appPort}`),
+    token: authTokenResponse.token,
+    callZomeTransform,
+    wsClientOptions: {
+      origin: 'wdocker',
+    },
+  });
+}

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import xdg from '@folder/xdg';
-import { breakingVersion, decrypt, encrypt } from './utils.js';
+import { breakingVersion, decrypt, encrypt, readYamlValue } from './utils.js';
 import getFolderSize from 'get-folder-size';
 import { HOLOCHAIN_BINARY_NAME, MOSS_CONFIG, PACKAGE_JSON } from './const.js';
 
@@ -146,6 +146,15 @@ export class WDockerFilesystem {
     return path.join(this.conductorEnvDir, 'conductor-config.yaml');
   }
 
+  get lairConfigPath() {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    return path.join(this.keystoreDir, 'lair-keystore-config.yaml');
+  }
+  s;
+
   get holochainBinaryPath() {
     return path.join(this.binsDir, HOLOCHAIN_BINARY_NAME);
   }
@@ -156,6 +165,15 @@ export class WDockerFilesystem {
 
   get toolsLibraryHappPath() {
     return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
+  }
+
+  readLairUrl(): string | undefined {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    const lairConfigString = fs.readFileSync(this.lairConfigPath, 'utf-8');
+    return readYamlValue(lairConfigString, 'connectionUrl');
   }
 
   async listConductors(): Promise<Array<ConductorInstanceInfo>> {
