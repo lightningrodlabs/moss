@@ -21,7 +21,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '../../custom-views/elements/edit-custom-view.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { Applet } from '../../types.js';
+import { Applet } from '@theweave/group-client';
 import { CustomView } from '../../custom-views/types.js';
 import { appletOrigin } from '../../utils.js';
 import { MossStore } from '../../moss-store.js';

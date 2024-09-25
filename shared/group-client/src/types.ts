@@ -1,4 +1,5 @@
 import { ActionHash, AgentPubKey, AgentPubKeyB64, DnaHash, EntryHash } from '@holochain/client';
+import { AppletHash, AppletId } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;
@@ -74,6 +75,13 @@ export type GroupMetaData = {
   name: string;
   data: string;
 };
+
+/**
+ * Default apps to be installed automatically by new people joining a group or
+ * by always-online nodes
+ */
+export type GroupDefaultAppletsB64 = AppletId[];
+export type GroupDefaultApplets = AppletHash[];
 
 export type Applet = {
   /**

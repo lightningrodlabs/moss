@@ -25,7 +25,7 @@ import {
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
-import { AppletHash, AppletId, PermissionType } from '../types.js';
+import { AppletHash, AppletId } from '@theweave/api';
 import {
   appIdFromAppletHash,
   getAppletNotificationSettings,
@@ -43,6 +43,7 @@ import { AppletToParentRequest as AppletToParentRequestSchema } from '../validat
 import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
+import { PermissionType } from '@theweave/group-client';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,

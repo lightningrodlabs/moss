@@ -41,6 +41,8 @@ import {
   ProfilesLocation,
   CreatableType,
   NULL_HASH,
+  AppletHash,
+  AppletId,
 } from '@theweave/api';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
@@ -65,15 +67,9 @@ import {
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import {
-  AppHashes,
-  AppletHash,
-  AppletId,
-  AppletNotification,
-  DistributionInfo,
-  WebHappSource,
-} from './types.js';
-import { GroupClient, GroupProfile, Applet } from '@theweave/group-client';
+import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
+import { AppletNotification } from './types.js';
+import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
 import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';

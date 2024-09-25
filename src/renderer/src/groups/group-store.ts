@@ -38,7 +38,12 @@ import { AppletHash, ParentToAppletMessage, PeerStatus } from '@theweave/api';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
-import { Applet, JoinAppletInput, GroupClient, AppletAgent } from '@theweave/group-client';
+import {
+  Applet,
+  JoinAppletInput,
+  GroupClient,
+  AppletAgent,
+} from '../../../../shared/group-client/dist/index.js';
 import {
   appIdFromAppletHash,
   isAppDisabled,
@@ -47,7 +52,7 @@ import {
   reloadableLazyLoadAndPollUntil,
   toLowerCaseB64,
 } from '../utils.js';
-import { AppHashes, DistributionInfo } from '../types.js';
+import { AppHashes, DistributionInfo } from '@theweave/moss-types';
 import { Tool, UpdateableEntity } from '../personal-views/tool-library/types.js';
 import { FoyerStore } from './foyer.js';
 
@@ -189,7 +194,7 @@ export class GroupStore {
 
   groupDescription = reloadableLazyLoadAndPollUntil(
     async () => {
-      const entryRecord = await this.groupClient.getGroupMetaData('description');
+      const entryRecord = await this.groupClient.getGroupDescription();
       return entryRecord?.entry;
     },
     undefined,

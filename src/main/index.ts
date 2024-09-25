@@ -34,7 +34,8 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
-import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo, ToolWeaveConfig } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, ConductorInfo, ToolWeaveConfig } from './sharedTypes';
+import { AppHashes } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,

@@ -8,12 +8,16 @@ import {
   encodeHashToBase64,
   InstalledAppId,
   AppAuthenticationToken,
+  ActionHash,
+  decodeHashFromBase64,
 } from '@holochain/client';
 import { AppletHash, GroupProfile } from '@theweave/api';
 
 import {
   Applet,
   AppletAgent,
+  GroupDefaultApplets,
+  GroupDefaultAppletsB64,
   GroupMetaData,
   JoinAppletInput,
   PermissionType,
@@ -196,6 +200,40 @@ export class GroupClient {
 
   async getAllAgentPermissionTypes(): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
     return this.callZome('get_all_agent_permission_types', null);
+  }
+
+  async setGroupDescription(
+    permissionHash: ActionHash | undefined,
+    content: string,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: 'description',
+      data: content,
+    });
+  }
+
+  async getGroupDescription(): Promise<EntryRecord<GroupMetaData> | undefined> {
+    return this.getGroupMetaData('description');
+  }
+
+  async setGroupDefaultApplets(
+    permissionHash: ActionHash | undefined,
+    content: GroupDefaultApplets,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    const defaultAppsB64 = content.map((appletHash) => encodeHashToBase64(appletHash));
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: 'DEFAULT_APPLETS',
+      data: JSON.stringify(defaultAppsB64),
+    });
+  }
+
+  async getGroupDefaultApplets(): Promise<GroupDefaultAppletsB64 | undefined> {
+    const metaDataRecord = await this.getGroupMetaData('DEFAULT_APPLETS');
+    const maybeDefaultAppsB64 = metaDataRecord?.entry.data;
+    if (!maybeDefaultAppsB64) return undefined;
+    return JSON.parse(maybeDefaultAppsB64);
   }
 
   async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {

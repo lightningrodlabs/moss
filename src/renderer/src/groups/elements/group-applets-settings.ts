@@ -24,7 +24,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import '../../elements/navigation/sidebar-button.js';
 import { weStyles } from '../../shared-styles.js';
-import { Applet } from '../../types.js';
+import { Applet } from '@theweave/group-client';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { repeat } from 'lit/directives/repeat.js';

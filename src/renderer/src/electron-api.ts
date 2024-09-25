@@ -11,7 +11,8 @@ import {
 } from '@holochain/client';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo, ToolWeaveConfig } from './types';
+import { AppAssetsInfo, AppHashes, DistributionInfo } from '@theweave/moss-types';
+import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 

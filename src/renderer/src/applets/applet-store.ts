@@ -11,7 +11,6 @@ import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochai
 import { BlockType } from '@theweave/api';
 
 import { AppletHost } from './applet-host.js';
-import { Applet } from '../types.js';
 import {
   clearAppletNotificationStatus,
   getAllIframes,
@@ -20,6 +19,7 @@ import {
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
 import { ToolsLibraryStore } from '../personal-views/tool-library/tool-library-store.js';
+import { Applet } from '@theweave/group-client';
 
 export class AppletStore {
   isAppletDev: boolean;

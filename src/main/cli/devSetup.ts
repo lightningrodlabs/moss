@@ -5,7 +5,8 @@ import mime from 'mime';
 
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { TOOLS_LIBRARY_APP_ID, AppHashes, Tool, DeveloperCollective } from '../sharedTypes';
+import { TOOLS_LIBRARY_APP_ID, Tool, DeveloperCollective } from '../sharedTypes';
+import { AppHashes } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,

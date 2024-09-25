@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { PermissionType } from '../../types.js';
+import { PermissionType } from '@theweave/group-client';
 import { weStyles } from '../../shared-styles.js';
 
 @customElement('agent-permission')
