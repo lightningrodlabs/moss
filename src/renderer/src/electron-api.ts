@@ -60,9 +60,7 @@ declare global {
         agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
-        sha256Happ: string,
-        sha256Ui?: string,
-        sha256Webhapp?: string,
+        appHashes: AppHashes,
         metadata?: string,
       ) => Promise<AppInfo>;
       isMainWindowFocused: () => Promise<boolean | undefined>;

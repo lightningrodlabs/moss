@@ -12,6 +12,7 @@ import {
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
+import { AppHashes } from '../main/sharedTypes';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -65,9 +66,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     agentPubKey: AgentPubKeyB64,
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
-    sha256Happ: string,
-    sha256Ui?: string,
-    sha256Webhapp?: string,
+    appHashes: AppHashes,
     metadata?: string,
   ) =>
     ipcRenderer.invoke(
@@ -78,9 +77,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       agentPubKey,
       happOrWebHappUrl,
       distributionInfo,
-      sha256Happ,
-      sha256Ui,
-      sha256Webhapp,
+      appHashes,
       metadata,
     ),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),

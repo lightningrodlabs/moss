@@ -954,7 +954,7 @@ app.whenReady().then(async () => {
               appAssetsInfo.ui.location.type === 'localhost'
             ) {
               try {
-                console.log('Trying to fetch weave.config.json from localhost');
+                // console.log('Trying to fetch weave.config.json from localhost');
                 const resp = await net.fetch(
                   `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
                 );
@@ -1263,7 +1263,7 @@ app.whenReady().then(async () => {
         } catch (e) {}
       } else {
         console.log(
-          '@install-applet-bundle: UI already on the filesystem. Skipping download from remote source.',
+          '@update-applet-ui: UI already on the filesystem. Skipping download from remote source.',
         );
       }
       // That the happ hash is the same as with the previous installation needs to be checked in the frontend
@@ -1304,11 +1304,12 @@ app.whenReady().then(async () => {
       agentPubKey,
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,
-      sha256Happ: string,
-      sha256Ui?: string,
-      sha256Webhapp?: string,
+      appHashes: AppHashes,
       metadata?: string,
     ): Promise<AppInfo> => {
+      const sha256Ui = appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined;
+      const sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
+      const sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
       console.log('INSTALLING APPLET BUNDLE. metadata: ', metadata);
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);

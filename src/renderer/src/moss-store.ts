@@ -918,8 +918,11 @@ export class MossStore {
       throw new Error(`Invalid applet source URL '${source.url}'`);
 
     const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-    if (appHashes.type !== 'webhapp')
-      throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+    // Only in dev mode AppHashes of type 'happ' are currently allowed
+    if (appHashes.type !== 'webhapp' && !this.isAppletDev)
+      throw new Error(
+        `Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${toolEntity.record.entry.hashes}`,
+      );
 
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
 
@@ -937,9 +940,7 @@ export class MossStore {
       encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       source.url,
       distributionInfo,
-      appHashes.happ.sha256,
-      appHashes.ui.sha256,
-      appHashes.sha256,
+      appHashes,
       toolEntity.record.entry.meta_data,
     );
 
