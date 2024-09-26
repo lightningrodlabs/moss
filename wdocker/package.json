@@ -24,6 +24,7 @@
     "@theweave/api": "file:../libs/api",
     "@theweave/utils": "file:../shared/utils",
     "@theweave/group-client": "file:../shared/group-client",
+    "@theweave/tool-library-client": "file:../shared/tool-library-client",
     "bufferutil": "4.0.8",
     "cli-table": "0.3.11",
     "commander": "11.1.0",

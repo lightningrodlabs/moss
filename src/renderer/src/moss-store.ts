@@ -70,7 +70,7 @@ import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
 import { AppletNotification } from './types.js';
 import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
-import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';

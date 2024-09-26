@@ -21,7 +21,7 @@ import { SelectGroupDialog } from '../../../elements/dialogs/select-group-dialog
 import '../../../elements/dialogs/select-group-dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
-import { Tool, UpdateableEntity } from '../types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 
 @localized()
 @customElement('installable-tools')

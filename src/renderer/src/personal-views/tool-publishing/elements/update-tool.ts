@@ -17,7 +17,12 @@ import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../../utils.js';
 import { AppHashes, WebHappSource } from '@theweave/moss-types';
 import { validateHappOrWebhapp } from '../../../electron-api.js';
-import { Tool, UpdateToolInput, UpdateableEntity, UpdatedTool } from '../../tool-library/types.js';
+import {
+  Tool,
+  UpdateToolInput,
+  UpdateableEntity,
+  UpdatedTool,
+} from '@theweave/tool-library-client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @localized()

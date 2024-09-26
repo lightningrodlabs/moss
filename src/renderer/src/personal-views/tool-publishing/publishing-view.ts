@@ -21,7 +21,7 @@ import { ActionHash, encodeHashToBase64 } from '@holochain/client';
 import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { DeveloperCollective } from '../tool-library/types.js';
+import { DeveloperCollective } from '@theweave/tool-library-client';
 
 enum PageView {
   Home,

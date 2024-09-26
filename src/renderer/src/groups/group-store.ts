@@ -53,7 +53,7 @@ import {
   toLowerCaseB64,
 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '@theweave/moss-types';
-import { Tool, UpdateableEntity } from '../personal-views/tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { FoyerStore } from './foyer.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;

@@ -77,7 +77,7 @@ import {
   relativeTzOffsetString,
 } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
-import { Tool, UpdateableEntity } from '../../personal-views/tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 

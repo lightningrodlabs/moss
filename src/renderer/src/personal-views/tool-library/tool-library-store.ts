@@ -9,8 +9,7 @@ import {
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import { ActionHash, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { ConductorInfo } from '../../electron-api.js';
-import { ToolsLibraryClient } from './tools-library-client.js';
-import { Tool, UpdateableEntity } from './types.js';
+import { Tool, UpdateableEntity, ToolsLibraryClient } from '@theweave/tool-library-client';
 
 export class ToolsLibraryStore {
   constructor(

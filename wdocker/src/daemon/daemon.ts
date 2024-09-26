@@ -23,7 +23,7 @@ import {
 import rustUtils from '@lightningrodlabs/we-rust-utils';
 import { signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
-import { AppletHash } from '@theweave/api';
+import { AppletId } from '@theweave/api';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -102,23 +102,13 @@ setTimeout(async () => {
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
   for (const groupApp of groupApps) {
-    console.log('Checking for tools to join for group ', groupApp.installed_app_id);
     const appWs = await getAppWebsocket(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
     const groupClient = new GroupClient(appWs, [], 'group');
-    const defaultGroupApplets = await groupClient.getGroupDefaultApplets();
-    if (!defaultGroupApplets) break;
-    const unjoinedApplets = await groupClient.getUnjoinedApplets();
-    const unjoinedAppletIds = unjoinedApplets.map(([appletHash, _addedByAgent, _addedTime]) =>
-      encodeHashToBase64(appletHash),
-    );
-    const unjoinedDefaultApplets = unjoinedAppletIds.filter((appletId) =>
-      defaultGroupApplets.includes(appletId),
-    );
-    if (unjoinedDefaultApplets.length === 0) {
-      console.log('No unjoined default Tools found.');
-      break;
-    }
-    console.log('Found unjoined default Tools: ', unjoinedDefaultApplets);
+
+    console.log('Checking for Tools to join for group ', groupApp.installed_app_id);
+    const unjoinedDefaultApplets = await checkForUnjoinedDefaultApplets(groupClient);
+    if (unjoinedDefaultApplets.length === 0) break;
+
     for (const unjoinedApplet of unjoinedDefaultApplets) {
       console.log('Joining Tool', unjoinedApplet);
     }
@@ -150,6 +140,27 @@ async function getAppWebsocket(
   });
 }
 
+async function checkForUnjoinedDefaultApplets(groupClient: GroupClient): Promise<AppletId[]> {
+  const defaultGroupApplets = await groupClient.getGroupDefaultApplets();
+  if (!defaultGroupApplets) return [];
+  const unjoinedApplets = await groupClient.getUnjoinedApplets();
+  const unjoinedAppletIds = unjoinedApplets.map(([appletHash, _addedByAgent, _addedTime]) =>
+    encodeHashToBase64(appletHash),
+  );
+  const unjoinedDefaultApplets = unjoinedAppletIds.filter((appletId) =>
+    defaultGroupApplets.includes(appletId),
+  );
+  if (unjoinedDefaultApplets.length === 0) {
+    console.log('No unjoined default Tools found.');
+    return [];
+  }
+  console.log('Found unjoined default Tools: ', unjoinedDefaultApplets);
+  return unjoinedDefaultApplets;
+}
+
+// async function tryJoinApplet(appletHash: AppletHash, groupClient: GroupClient): Promise<void> {
+
+// }
 // async function joinApplet(appletHash: AppletHash, groupClient: GroupClient): Promise<void> {
 //   // 1. Get Applet entry
 //   const applet = await groupClient.getApplet(appletHash);

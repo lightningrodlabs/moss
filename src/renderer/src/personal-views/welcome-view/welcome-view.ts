@@ -25,7 +25,7 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { AppHashes, AssetSource, DistributionInfo } from '@theweave/moss-types';
 import TimeAgo from 'javascript-time-ago';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { Tool, UpdateableEntity } from '../tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { markdownParseSafe } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';

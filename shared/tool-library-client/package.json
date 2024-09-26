@@ -1,0 +1,30 @@
+{
+  "name": "@theweave/tool-library-client",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "license": "MIT",
+  "exports": {
+    ".": "./dist/index.js",
+    "./dist/*": "./dist/*"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch --preserveWatchOutput"
+  },
+  "type": "module",
+  "dependencies": {
+    "@holochain/client": "0.18.0-dev.3",
+    "@holochain-open-dev/utils": "0.400.0-dev.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^5.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

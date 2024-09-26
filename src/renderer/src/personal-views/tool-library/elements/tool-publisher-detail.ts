@@ -13,7 +13,7 @@ import { hashProperty, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { weStyles } from '../../../shared-styles.js';
-import { DeveloperCollective, UpdateableEntity } from '../types.js';
+import { DeveloperCollective, UpdateableEntity } from '@theweave/tool-library-client';
 import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 
 @localized()
