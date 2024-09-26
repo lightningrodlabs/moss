@@ -16,8 +16,9 @@ import { AppletHash, GroupProfile } from '@theweave/api';
 import {
   Applet,
   AppletAgent,
-  GroupDefaultApplets,
-  GroupDefaultAppletsB64,
+  GROUP_APPLETS_META_DATA_NAME,
+  GROUP_DESCRIPTION_NAME,
+  GroupAppletsMetaData,
   GroupMetaData,
   JoinAppletInput,
   PermissionType,
@@ -208,32 +209,31 @@ export class GroupClient {
   ): Promise<EntryRecord<GroupMetaData>> {
     return this.setGroupMetaData({
       permission_hash: permissionHash,
-      name: 'description',
+      name: GROUP_DESCRIPTION_NAME,
       data: content,
     });
   }
 
   async getGroupDescription(): Promise<EntryRecord<GroupMetaData> | undefined> {
-    return this.getGroupMetaData('description');
+    return this.getGroupMetaData(GROUP_DESCRIPTION_NAME);
   }
 
-  async setGroupDefaultApplets(
+  async setGroupAppletsMetaData(
     permissionHash: ActionHash | undefined,
-    content: GroupDefaultApplets,
+    content: GroupAppletsMetaData,
   ): Promise<EntryRecord<GroupMetaData>> {
-    const defaultAppsB64 = content.map((appletHash) => encodeHashToBase64(appletHash));
     return this.setGroupMetaData({
       permission_hash: permissionHash,
-      name: 'DEFAULT_APPLETS',
-      data: JSON.stringify(defaultAppsB64),
+      name: GROUP_APPLETS_META_DATA_NAME,
+      data: JSON.stringify(content),
     });
   }
 
-  async getGroupDefaultApplets(): Promise<GroupDefaultAppletsB64 | undefined> {
-    const metaDataRecord = await this.getGroupMetaData('DEFAULT_APPLETS');
-    const maybeDefaultAppsB64 = metaDataRecord?.entry.data;
-    if (!maybeDefaultAppsB64) return undefined;
-    return JSON.parse(maybeDefaultAppsB64);
+  async getGroupAppletsMetaData(): Promise<GroupAppletsMetaData | undefined> {
+    const metaDataRecord = await this.getGroupMetaData(GROUP_APPLETS_META_DATA_NAME);
+    const maybeAppletsMetadata = metaDataRecord?.entry.data;
+    if (!maybeAppletsMetadata) return undefined;
+    return JSON.parse(maybeAppletsMetadata);
   }
 
   async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {

@@ -7,23 +7,32 @@
 
 // import * as childProcess from 'child_process';
 import { Command } from 'commander';
+import fetch from 'node-fetch';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWs } from '../helpers/helpers.js';
 import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
-import { GroupClient } from '../../../shared/group-client/dist/index.js';
+import { ALWAYS_ONLINE_TAG, GroupClient } from '@theweave/group-client';
 import {
   AdminWebsocket,
   AppWebsocket,
   CallZomeTransform,
+  decodeHashFromBase64,
   encodeHashToBase64,
   InstalledAppId,
 } from '@holochain/client';
-import rustUtils from '@lightningrodlabs/we-rust-utils';
 import { signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
-import { AppletId } from '@theweave/api';
+import { AppletHash, AppletId } from '@theweave/api';
+import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
+import { ToolsLibraryClient } from '@theweave/tool-library-client';
+import { appIdFromAppletHash, toolBundleActionHashFromDistInfo } from '@theweave/utils';
+import rustUtils from '@lightningrodlabs/we-rust-utils';
+import { nanoid } from 'nanoid';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -101,16 +110,40 @@ setTimeout(async () => {
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
+  const toolsLibraryAppWs = await getAppWebsocket(
+    adminWs,
+    appPort,
+    TOOLS_LIBRARY_APP_ID,
+    weRustHandler,
+  );
+  const toolsLibraryClient = new ToolsLibraryClient(toolsLibraryAppWs, 'tools', 'library');
+
+  // TODO wrap in try catch blocks
   for (const groupApp of groupApps) {
-    const appWs = await getAppWebsocket(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
-    const groupClient = new GroupClient(appWs, [], 'group');
+    const groupAppWs = await getAppWebsocket(
+      adminWs,
+      appPort,
+      groupApp.installed_app_id,
+      weRustHandler,
+    );
+    const groupClient = new GroupClient(groupAppWs, [], 'group');
 
     console.log('Checking for Tools to join for group ', groupApp.installed_app_id);
-    const unjoinedDefaultApplets = await checkForUnjoinedDefaultApplets(groupClient);
+    const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
     if (unjoinedDefaultApplets.length === 0) break;
 
     for (const unjoinedApplet of unjoinedDefaultApplets) {
       console.log('Joining Tool', unjoinedApplet);
+      try {
+        await tryJoinApplet(
+          decodeHashFromBase64(unjoinedApplet),
+          adminWs,
+          groupClient,
+          toolsLibraryClient,
+        );
+      } catch (e) {
+        console.error('Failed to join Tool: ', e);
+      }
     }
   }
 }, 1000);
@@ -140,78 +173,126 @@ async function getAppWebsocket(
   });
 }
 
-async function checkForUnjoinedDefaultApplets(groupClient: GroupClient): Promise<AppletId[]> {
-  const defaultGroupApplets = await groupClient.getGroupDefaultApplets();
-  if (!defaultGroupApplets) return [];
+async function checkForUnjoinedAppletsToJoin(groupClient: GroupClient): Promise<AppletId[]> {
+  const groupAppletsMetadata = await groupClient.getGroupAppletsMetaData();
+  if (!groupAppletsMetadata) return [];
+  const appletsToJoinByAlwaysOnlinNodes = Object.entries(groupAppletsMetadata)
+    .filter(([_appletId, metaData]) => metaData.tags.includes(ALWAYS_ONLINE_TAG))
+    .map(([appletId, _]) => appletId);
+
   const unjoinedApplets = await groupClient.getUnjoinedApplets();
   const unjoinedAppletIds = unjoinedApplets.map(([appletHash, _addedByAgent, _addedTime]) =>
     encodeHashToBase64(appletHash),
   );
-  const unjoinedDefaultApplets = unjoinedAppletIds.filter((appletId) =>
-    defaultGroupApplets.includes(appletId),
+  const unjoinedAppletsToJoin = unjoinedAppletIds.filter((appletId) =>
+    appletsToJoinByAlwaysOnlinNodes.includes(appletId),
   );
-  if (unjoinedDefaultApplets.length === 0) {
+  if (unjoinedAppletsToJoin.length === 0) {
     console.log('No unjoined default Tools found.');
     return [];
   }
-  console.log('Found unjoined default Tools: ', unjoinedDefaultApplets);
-  return unjoinedDefaultApplets;
+  console.log('Found unjoined Tools to join by always-online nodes: ', unjoinedAppletsToJoin);
+  return unjoinedAppletsToJoin;
 }
 
-// async function tryJoinApplet(appletHash: AppletHash, groupClient: GroupClient): Promise<void> {
+async function tryJoinApplet(
+  appletHash: AppletHash,
+  adminWs: AdminWebsocket,
+  groupClient: GroupClient,
+  toolsLibraryClient: ToolsLibraryClient,
+): Promise<void> {
+  // 1. Get Applet entry from group DHT
+  const applet = await groupClient.getApplet(appletHash);
+  if (!applet) throw new Error('Applet entry not found. Cannot join Tool.');
+  if (!applet.network_seed)
+    throw new Error(
+      'Network Seed not defined. Undefined network seed is currently not supported. Joining Tool aborted.',
+    );
 
-// }
-// async function joinApplet(appletHash: AppletHash, groupClient: GroupClient): Promise<void> {
-//   // 1. Get Applet entry
-//   const applet = await groupClient.getApplet(appletHash);
-//   if (!applet) throw new Error('Applet entry not found');
+  // 2. Get Tool entry from tool library DHT
+  const toolEntity = await toolsLibraryClient.getLatestTool(
+    toolBundleActionHashFromDistInfo(applet.distribution_info),
+  );
 
-//   // 2.
+  if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
 
-//   const appInfo = await this.mossStore.installApplet(appletHash, applet);
-//   const joinAppletInput = {
-//     applet,
-//     joining_pubkey: appInfo.agent_pub_key,
-//   };
-//   try {
-//     await groupClient.joinApplet(joinAppletInput);
-//   } catch (e) {
-//     console.error(
-//       `Failed to join applet in group dna after installation: ${e}\nUninstalling again.`,
-//     );
-//     try {
-//       await this.mossStore.uninstallApplet(appletHash);
-//     } catch (err) {
-//       console.error(
-//         `Failed to uninstall applet after joining of applet in group dna failed: ${err}`,
-//       );
-//     }
-//   }
-// }
+  const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
+  if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
+  if (!source.url.startsWith('https://'))
+    throw new Error(`Unsupported applet source URL '${source.url}'`);
 
-// const appId = appIdFromAppletHash(appletHash);
-// if (!applet.network_seed) {
-//   throw new Error(
-//     'Network Seed not defined. Undefined network seed is currently not supported.',
-//   );
-// }
+  const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
+  if (appHashes.type !== 'webhapp')
+    throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
 
-// const toolEntity = await this.toolsLibraryStore.getLatestToolEntry(
-//   toolBundleActionHashFromDistInfo(applet.distribution_info),
-// );
+  // 3. Fetch the happ bytes if necessary
+  await fetchAndStoreHappIfNecessary(source, appHashes, WDOCKER_FILE_SYSTEM.happsDir);
 
-// console.log('@installApplet: got ToolEntry: ', toolEntity.record.entry);
-// console.log('@installApplet: got Applet: ', applet);
+  // 4. Install the happ in the conductor and join the Applet in the group DHT
+  const appId = appIdFromAppletHash(appletHash);
 
-// if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
+  // Check that app with same id is not already installed
+  // This is to ensure that we can safely uninstall the app again in case of failure
+  // (On failure case is that an app with the same id is already installed, in which case
+  // we should NOT uninstall it)
+  const installedApps = await adminWs.listApps({});
+  if (installedApps.find((appInfo) => appInfo.installed_app_id === appId))
+    throw new Error('App with the same app id is already installed.');
 
-// const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-// if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-// if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
-//   throw new Error(`Invalid applet source URL '${source.url}'`);
+  const appInfo = await adminWs.installApp({
+    path: WDOCKER_FILE_SYSTEM.happFilePath(appHashes.happ.sha256),
+    installed_app_id: appId,
+    agent_key: toolsLibraryClient.client.myPubKey,
+    network_seed: applet.network_seed,
+    membrane_proofs: {},
+  });
 
-// const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-// if (appHashes.type !== 'webhapp')
-//   throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+  try {
+    const joinAppletInput = {
+      applet,
+      joining_pubkey: appInfo.agent_pub_key,
+    };
+    await groupClient.joinApplet(joinAppletInput);
+  } catch (e) {
+    console.error(
+      `Failed to join applet in group dna after installation: ${e}\nUninstalling again.`,
+    );
+    try {
+      await adminWs.uninstallApp({ installed_app_id: appId });
+    } catch (err) {
+      console.error(
+        `Failed to uninstall applet after joining of applet in group dna failed: ${err}`,
+      );
+    }
+  }
+}
 
-// const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+async function fetchAndStoreHappIfNecessary(
+  source: WebHappSource,
+  appHashes: AppHashes & { type: 'webhapp' },
+  happsDir: string,
+): Promise<void> {
+  const isAlreadyAvailable = WDOCKER_FILE_SYSTEM.isHappAvailableAndValid(appHashes.happ.sha256);
+  if (isAlreadyAvailable) return undefined;
+
+  const response = await fetch(source.url);
+  const buffer = await response.arrayBuffer();
+  const assetBytes = Array.from(new Uint8Array(buffer));
+  const { happSha256 } = await rustUtils.validateHappOrWebhapp(assetBytes);
+
+  if (happSha256 !== appHashes.happ.sha256)
+    throw new Error(
+      `The sha256 of the fetched webhapp does not match the expected sha256. Expected ${appHashes.happ.sha256} but got ${happSha256}`,
+    );
+
+  // TODO Store happ bytes on disk
+
+  const tmpDir = path.join(os.tmpdir(), `moss-applet-${nanoid(8)}`);
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+  fs.writeFileSync(webHappPath, new Uint8Array(buffer));
+  await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, undefined);
+  try {
+    fs.rmSync(tmpDir, { recursive: true });
+  } catch (e) {}
+}

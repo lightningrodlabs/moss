@@ -1,7 +1,5 @@
 import { ActionHash } from '@holochain/client';
 
-export const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
-
 export type Tool = {
   developer_collective: ActionHash;
   permission_hash: ActionHash; // Either the CreateAction hash of the DeveloperCollective entry or an ActionHash of a ContributorPermission entry

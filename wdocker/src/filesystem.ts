@@ -167,6 +167,10 @@ export class WDockerFilesystem {
     return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
   }
 
+  happFilePath(sha256: string): string {
+    return path.join(this.happsDir, `${sha256}.happ`);
+  }
+
   readLairUrl(): string | undefined {
     if (!this.conductorId)
       throw Error(
@@ -242,6 +246,23 @@ export class WDockerFilesystem {
 
   clearRunningFile(): void {
     fs.rmSync(this.runningInfoPath);
+  }
+
+  isHappAvailableAndValid(happSha256: string): boolean {
+    const happFilePath = this.happFilePath(happSha256);
+    if (!fs.existsSync(happFilePath)) {
+      return false;
+    }
+    const happBytes = fs.readFileSync(happFilePath);
+    const happHasher = crypto.createHash('sha256');
+    const happSha256Actual = happHasher.update(Buffer.from(happBytes)).digest('hex');
+    if (happSha256Actual !== happSha256) {
+      console.warn(
+        `Found corrupted .happ file on disk. Expected sha256: ${happSha256}. Actual sha256: ${happSha256Actual}`,
+      );
+      return false;
+    }
+    return true;
   }
 }
 

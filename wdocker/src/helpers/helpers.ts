@@ -37,7 +37,7 @@ export async function downloadGroupHappIfNecessary() {
 
   // Check presence and integrity of group happ
   let needsToBeFetched = false;
-  const groupHappPath = path.join(wDockerFs.happsDir, `${happSha256}.happ`);
+  const groupHappPath = wDockerFs.happFilePath(happSha256);
   if (fs.existsSync(groupHappPath)) {
     const fileBytes = fs.readFileSync(groupHappPath);
     const hasher = crypto.createHash('sha256');

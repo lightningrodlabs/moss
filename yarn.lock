@@ -1905,20 +1905,40 @@
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.400.0-dev.10.tgz#706fdeec886a01bfb878981bc820c0ea372cabb1"
   integrity sha512-yM1S3OuV3qmJjZcPRDax1GcfL5GyPt7ceRQg4DvigQwkjW3QOHJ1Slt7QtX1Mf7FJW8KuqkcT8WgsWfUlQHAZQ==
 
+"@lightningrodlabs/we-rust-utils-darwin-arm64@0.400.0-dev.11":
+  version "0.400.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.400.0-dev.11.tgz#6a0c96a8ffb6e79c88b9ee5479eb2d0ba7f705b0"
+  integrity sha512-jzH2/zX0RH1dgWgMJRgZRhQrUHn5UMubDy03PM/gUjFZ3QRk+D/g4D1mjRLlWMthwUqOz+AAmFQAsYyqSpC/bw==
+
 "@lightningrodlabs/we-rust-utils-darwin-x64@0.400.0-dev.10":
   version "0.400.0-dev.10"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.400.0-dev.10.tgz#3c4e5f256a7a7af153f608a508f7333ada1d9979"
   integrity sha512-OiypY/Q9JxQBAJDcMrplbQqo6IbjISPDGUigAKtmsETEYzktzVsCzQB5eRhc92i6mbbxv2jLcu0I4WsVpapJ2w==
+
+"@lightningrodlabs/we-rust-utils-darwin-x64@0.400.0-dev.11":
+  version "0.400.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.400.0-dev.11.tgz#68e1b3299c603e4b14d3ebe9ac60ebad0917f7d5"
+  integrity sha512-64cSpQyNPrDboLsGxKcpyS0lkHyO8Z1ZDWbUTSY84cOXb2svKlChBBTxt9nVyxTaVJIjXoqjkHJoGr5q6mP1Sw==
 
 "@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.400.0-dev.10":
   version "0.400.0-dev.10"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.400.0-dev.10.tgz#f870ecf1b99e3076a12e8156395119876e43dc1d"
   integrity sha512-maOFyrp3xfPtcVWTqROYX17XHsMKYnQHpzj8ibShq8vINxNCUQUWIwYG4Tz4Mk+HZWbDJCOOvDxCk9t2r+iRmQ==
 
+"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.400.0-dev.11":
+  version "0.400.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.400.0-dev.11.tgz#6ad9386b564609f0b840dfb9a5e5807c10f38849"
+  integrity sha512-tZqVaaGA5a/79vTnzzELFRA4aGSchGVt8VwGEcncV0ZTAhx20oCtOT9FDAcoMFhjYBVJ+Yqye72aa6yfFswi2A==
+
 "@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.400.0-dev.10":
   version "0.400.0-dev.10"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.400.0-dev.10.tgz#dee748b8c1153a28791be0ff31a6244be7fe7cc2"
   integrity sha512-MkkVQVGg39qEA6Sef80P5nuzER4s/pWwYfQvf8efif7KHFKri9YlF5o6l191p7ihJNuBgYzW4OlnZ/tauX30eQ==
+
+"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.400.0-dev.11":
+  version "0.400.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.400.0-dev.11.tgz#9ee4713efc1dd2d372f227721d4bfca05623327b"
+  integrity sha512-IDVJseSSy9Af1EpgmyKSpEsRQ8+mJnKe3gL9BG5RcFrGeZ+YkB2ZRntbiK01f+hpF/L+SzKj6Qkz2yFtJ242fA==
 
 "@lightningrodlabs/we-rust-utils@0.400.0-dev.10":
   version "0.400.0-dev.10"
@@ -1929,6 +1949,16 @@
     "@lightningrodlabs/we-rust-utils-darwin-x64" "0.400.0-dev.10"
     "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.400.0-dev.10"
     "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.400.0-dev.10"
+
+"@lightningrodlabs/we-rust-utils@0.400.0-dev.11":
+  version "0.400.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.400.0-dev.11.tgz#d8987027303cdaf7ca9c219506cce613fc717606"
+  integrity sha512-BGYknYN4m2De7XhzAS0yaJswLJdtCnhHxW+gaB4vvVngxkHwFxi3Fx0URjbDL4jHUxNZwdXTbz1KgJKkquR6bQ==
+  optionalDependencies:
+    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.400.0-dev.11"
+    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.400.0-dev.11"
+    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.400.0-dev.11"
+    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.400.0-dev.11"
 
 "@lion/accordion@^0.9.0":
   version "0.9.0"
@@ -2809,8 +2839,8 @@
     "@material/web" "=1.0.0-pre.9"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "2.16.0"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-f7740527-168f-43ad-aadd-815e01866723-1727342882987/node_modules/@theweave/api"
-    "@theweave/elements" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-f7740527-168f-43ad-aadd-815e01866723-1727342882987/node_modules/@theweave/elements"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-62a57ef0-44f0-4285-b003-9398b0044ada-1727357373523/node_modules/@theweave/api"
+    "@theweave/elements" "file:../../../../.cache/yarn/v6/npm-@theweave-attachments-0.1.0-62a57ef0-44f0-4285-b003-9398b0044ada-1727357373523/node_modules/@theweave/elements"
     lit "^3.0.2"
 
 "@theweave/cli@0.13.0-beta.6":
@@ -2851,7 +2881,7 @@
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "2.16.0"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-elements-0.1.0-e50429bc-da73-4e09-979b-317cac870bda-1727342882985/node_modules/@theweave/api"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-elements-0.1.0-f3140842-f210-4e4b-9745-8cd822000200-1727357373522/node_modules/@theweave/api"
     js-base64 "^3.7.5"
     lit "^3.0.2"
 
@@ -2865,7 +2895,7 @@
   version "0.1.0"
   dependencies:
     "@holochain/client" "0.18.0-dev.3"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-moss-types-0.1.0-8b60ea91-709c-4da9-99c6-88ad4938398b-1727342882528/node_modules/libs/api"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-moss-types-0.1.0-23e5110a-934f-4ffe-a08f-7b7f21ba7509-1727357372644/node_modules/libs/api"
 
 "@theweave/tool-library-client@file:shared/tool-library-client":
   version "0.1.0"
@@ -2873,12 +2903,12 @@
     "@holochain-open-dev/utils" "0.400.0-dev.0"
     "@holochain/client" "0.18.0-dev.3"
 
-"@theweave/utils@file:shared/utils":
+"@theweave/utils@file:./shared/utils", "@theweave/utils@file:shared/utils":
   version "0.1.0"
   dependencies:
     "@holochain/client" "0.18.0-dev.3"
-    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-utils-0.1.0-426fd51c-9470-49bb-a585-e4d7ab090a45-1727342882986/node_modules/libs/api"
-    "@theweave/moss-types" "file:../../../../.cache/yarn/v6/npm-@theweave-utils-0.1.0-426fd51c-9470-49bb-a585-e4d7ab090a45-1727342882986/node_modules/@theweave/types"
+    "@theweave/api" "file:../../../../.cache/yarn/v6/npm-@theweave-utils-0.1.0-f09d8c61-d50d-4482-a746-f89366d7b7ec-1727357372646/node_modules/libs/api"
+    "@theweave/moss-types" "file:../../../../.cache/yarn/v6/npm-@theweave-utils-0.1.0-f09d8c61-d50d-4482-a746-f89366d7b7ec-1727357372646/node_modules/@theweave/types"
 
 "@tootallnate/once@2":
   version "2.0.0"
@@ -5424,6 +5454,11 @@ dash-ast@^1.0.0:
   resolved "https://registry.yarnpkg.com/dash-ast/-/dash-ast-1.0.0.tgz#12029ba5fb2f8aa6f0a861795b23c1b4b6c27d37"
   integrity sha512-Vy4dx7gquTeMcQR/hDkYLGUnwVil6vk4FOOct+djUnHOUWt+zJPJAaRIXaAFkPXtJjvlY7o3rfRu0/3hpnwoUA==
 
+data-uri-to-buffer@^4.0.0:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/data-uri-to-buffer/-/data-uri-to-buffer-4.0.1.tgz#d8feb2b2881e6a4f58c2e08acfd0e2834e26222e"
+  integrity sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==
+
 data-view-buffer@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/data-view-buffer/-/data-view-buffer-1.0.1.tgz#8ea6326efec17a2e42620696e671d7d5a8bc66b2"
@@ -6621,6 +6656,14 @@ fecha@^4.2.0:
   resolved "https://registry.yarnpkg.com/fecha/-/fecha-4.2.3.tgz#4d9ccdbc61e8629b259fdca67e65891448d569fd"
   integrity sha512-OP2IUU6HeYKJi3i0z4A19kHMQoLVs4Hc+DPqqxI2h/DPZHTm/vjsfC6P0b4jCMy14XizLBqvndQ+UilD7707Jw==
 
+fetch-blob@^3.1.2, fetch-blob@^3.1.4:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/fetch-blob/-/fetch-blob-3.2.0.tgz#f09b8d4bbd45adc6f0c20b7e787e793e309dcce9"
+  integrity sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==
+  dependencies:
+    node-domexception "^1.0.0"
+    web-streams-polyfill "^3.0.3"
+
 figures@^3.0.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/figures/-/figures-3.2.0.tgz#625c18bd293c604dc4a8ddb2febf0c88341746af"
@@ -6748,6 +6791,13 @@ form-data@^4.0.0:
     asynckit "^0.4.0"
     combined-stream "^1.0.8"
     mime-types "^2.1.12"
+
+formdata-polyfill@^4.0.10:
+  version "4.0.10"
+  resolved "https://registry.yarnpkg.com/formdata-polyfill/-/formdata-polyfill-4.0.10.tgz#24807c31c9d402e002ab3d8c720144ceb8848423"
+  integrity sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==
+  dependencies:
+    fetch-blob "^3.1.2"
 
 fresh@~0.5.2:
   version "0.5.2"
@@ -9070,6 +9120,20 @@ node-addon-api@^1.6.3:
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-1.7.2.tgz#3df30b95720b53c24e59948b49532b662444f54d"
   integrity sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==
+
+node-domexception@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/node-domexception/-/node-domexception-1.0.0.tgz#6888db46a1f71c0b76b3f7555016b63fe64766e5"
+  integrity sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==
+
+node-fetch@3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-3.3.2.tgz#d1e889bacdf733b4ff3b2b243eb7a12866a0b78b"
+  integrity sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==
+  dependencies:
+    data-uri-to-buffer "^4.0.0"
+    fetch-blob "^3.1.4"
+    formdata-polyfill "^4.0.10"
 
 node-gyp-build@^4.3.0:
   version "4.8.2"
@@ -12138,6 +12202,11 @@ web-namespaces@^1.0.0:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/web-namespaces/-/web-namespaces-1.1.4.tgz#bc98a3de60dadd7faefc403d1076d529f5e030ec"
   integrity sha512-wYxSGajtmoP4WxfejAPIr4l0fVh+jeMXZb08wNc0tMg6xsfZXj3cECqIK0G7ZAqUq0PP8WlMDtaOGVBTAWztNw==
+
+web-streams-polyfill@^3.0.3:
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/web-streams-polyfill/-/web-streams-polyfill-3.3.3.tgz#2073b91a2fdb1fbfbd401e7de0ac9f8214cecb4b"
+  integrity sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==
 
 webcola@^3.4.0:
   version "3.4.0"

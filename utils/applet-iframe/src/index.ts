@@ -9,7 +9,6 @@ import {
   CallZomeRequest,
   CallZomeRequestSigned,
   EntryHash,
-  HoloHashB64,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -39,6 +38,7 @@ import {
   AppletId,
 } from '@theweave/api';
 import { readable } from '@holochain-open-dev/stores';
+import { toOriginalCaseB64 } from '@theweave/utils';
 
 declare global {
   interface Window {
@@ -458,20 +458,6 @@ function readAppletId(): AppletId {
   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
   return toOriginalCaseB64(lowercaseB64Id);
-}
-
-// IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs
-// to be changed accordingly
-function appIdFromAppletHash(appletHash: EntryHash): string {
-  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
-function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 async function getRenderView(): Promise<RenderView | undefined> {

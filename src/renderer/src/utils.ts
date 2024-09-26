@@ -12,8 +12,6 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
-  HoloHashB64,
-  ActionHash,
   CallZomeRequest,
   FunctionName,
   ZomeName,
@@ -29,7 +27,6 @@ import { fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { DistributionInfo } from '@theweave/moss-types';
 import { MessageContentPart } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
@@ -44,6 +41,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
+import { appIdFromAppletId, toLowerCaseB64 } from '@theweave/utils';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -82,32 +80,6 @@ export function findAppForDnaHash(
     }
   }
   return undefined;
-}
-
-// IMPORTANT: If this function is changed, the same function in utils/applet-iframe/index.ts needs
-// to be changed accordingly
-export function appIdFromAppletHash(appletHash: AppletHash): string {
-  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-export function appIdFromAppletId(appletId: AppletId): string {
-  return `applet#${toLowerCaseB64(appletId)}`;
-}
-
-export function appletHashFromAppId(installedAppId: string): AppletHash {
-  return decodeHashFromBase64(toOriginalCaseB64(installedAppId.slice(7)));
-}
-
-export function appletIdFromAppId(installedAppId: string): AppletId {
-  return toOriginalCaseB64(installedAppId.slice(7));
-}
-
-export function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
-export function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {
@@ -521,13 +493,6 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   const appletHashB64 = encodeHashToBase64(appletHash);
   const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
   return lowerCaseAppletId.replaceAll('$', '%24');
-}
-
-export function toolBundleActionHashFromDistInfo(distributionInfoString: string): ActionHash {
-  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'tools-library')
-    throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
-  return decodeHashFromBase64(distributionInfo.info.originalToolActionHash);
 }
 
 export function notifyAndThrow(message: string) {

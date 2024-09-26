@@ -1,5 +1,5 @@
 import { AdminWebsocket } from '@holochain/client';
-import { TOOLS_LIBRARY_APP_ID } from '../const.js';
+import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { downloadToolLibraryHappIfNecessary } from '../helpers/helpers.js';
 import { WDockerFilesystem } from '../filesystem.js';
 

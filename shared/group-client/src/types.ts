@@ -70,6 +70,9 @@ export type GroupProfile = {
   meta_data?: string;
 };
 
+export const GROUP_DESCRIPTION_NAME = 'description';
+export const GROUP_APPLETS_META_DATA_NAME = 'APPLETS_META_DATA';
+
 export type GroupMetaData = {
   permission_hash?: ActionHash;
   name: string;
@@ -77,11 +80,20 @@ export type GroupMetaData = {
 };
 
 /**
- * Default apps to be installed automatically by new people joining a group or
- * by always-online nodes
+ * Metadata about Applets. For example to use as a means to indicate which Applets
+ * should be joined by default by a new group member or to indicate which Applets
+ * should be installed by an always-online node
  */
-export type GroupDefaultAppletsB64 = AppletId[];
-export type GroupDefaultApplets = AppletHash[];
+export type GroupAppletsMetaData = Record<AppletId, AppletMetaData>;
+
+export type AppletMetaData = {
+  tags: string[];
+};
+
+// These tags are used and depended upon in different places. Only change if you know what
+// you're doing
+export const ALWAYS_ONLINE_TAG = 'always-online';
+export const DEFAULT_APPLET_TAG = 'default';
 
 export type Applet = {
   /**

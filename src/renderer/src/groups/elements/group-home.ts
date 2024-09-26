@@ -70,7 +70,6 @@ import { DistributionInfo } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import {
   UTCOffsetStringFromOffsetMinutes,
-  appIdFromAppletHash,
   localTimeFromUtcOffset,
   markdownParseSafe,
   modifiersToInviteUrl,
@@ -80,6 +79,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 type View =
   | {

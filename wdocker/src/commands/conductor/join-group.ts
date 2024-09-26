@@ -7,11 +7,11 @@ import os from 'os';
 import { nanoid } from 'nanoid';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
-import rustUtils from '@lightningrodlabs/we-rust-utils';
 
-import { TOOLS_LIBRARY_APP_ID } from '../../const.js';
+import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { downloadGroupHappIfNecessary, getAdminWs, getPassword } from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
+import rustUtils from '@lightningrodlabs/we-rust-utils';
 
 export async function joinGroup(conductorId: string, inviteLink: string): Promise<AppInfo | null> {
   const wDockerFs = new WDockerFilesystem();

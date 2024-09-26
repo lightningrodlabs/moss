@@ -20,7 +20,7 @@
     "@holochain/client": "0.18.0-dev.3",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@theweave/api": "0.1.0",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
     "adm-zip": "0.5.14",

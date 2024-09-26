@@ -6,15 +6,11 @@ import { consume } from '@lit/context';
 import { RenderView } from '@theweave/api';
 
 import { weStyles } from '../../shared-styles.js';
-import {
-  appIdFromAppletHash,
-  appletOrigin,
-  renderViewToQueryString,
-  urlFromAppletHash,
-} from '../../utils.js';
+import { appletOrigin, renderViewToQueryString, urlFromAppletHash } from '../../utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { getAppletDevPort } from '../../electron-api.js';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 @customElement('view-frame')
 export class ViewFrame extends LitElement {

@@ -27,7 +27,6 @@ import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import {
-  appIdFromAppletHash,
   dnaHashForCell,
   getCellNetworkSeed,
   getProvisionedCells,
@@ -36,6 +35,7 @@ import {
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 @localized()
 @customElement('applet-detail-card')

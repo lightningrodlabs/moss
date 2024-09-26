@@ -45,16 +45,15 @@ import {
   AppletAgent,
 } from '../../../../shared/group-client/dist/index.js';
 import {
-  appIdFromAppletHash,
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
-  toLowerCaseB64,
 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '@theweave/moss-types';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { FoyerStore } from './foyer.js';
+import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;

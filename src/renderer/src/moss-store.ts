@@ -52,9 +52,6 @@ import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
-  appIdFromAppletHash,
-  appletHashFromAppId,
-  appletIdFromAppId,
   deStringifyWal,
   destringifyAndDecode,
   encodeAndStringify,
@@ -63,11 +60,16 @@ import {
   isAppDisabled,
   isAppRunning,
   stringifyWal,
-  toolBundleActionHashFromDistInfo,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
+import {
+  appIdFromAppletHash,
+  appletHashFromAppId,
+  appletIdFromAppId,
+  toolBundleActionHashFromDistInfo,
+} from '@theweave/utils';
 import { AppletNotification } from './types.js';
 import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
