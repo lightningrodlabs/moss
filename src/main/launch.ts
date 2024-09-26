@@ -12,6 +12,7 @@ import { devSetup } from './cli/devSetup';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS = {
@@ -25,9 +26,7 @@ export async function launch(
   password: string,
   runOptions: RunOptions,
   customBinary?: string,
-): Promise<
-  [childProcess.ChildProcessWithoutNullStreams, HolochainManager, rustUtils.WeRustHandler]
-> {
+): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);

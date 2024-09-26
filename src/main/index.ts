@@ -58,6 +58,7 @@ import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -298,7 +299,7 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-let WE_RUST_HANDLER: rustUtils.WeRustHandler | undefined;
+let WE_RUST_HANDLER: WeRustHandler | undefined;
 // let ADMIN_WEBSOCKET: AdminWebsocket | undefined;
 // let ADMIN_PORT: number | undefined;
 // let APP_PORT: number | undefined;
