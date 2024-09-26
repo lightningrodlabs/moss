@@ -7,22 +7,15 @@ import { localized, msg } from '@lit/localize';
 import { mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
-import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 
-import { Applet } from '@theweave/group-client';
+import { ALWAYS_ONLINE_TAG, Applet, GroupAppletsMetaData } from '@theweave/group-client';
 import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -56,6 +49,18 @@ export class AppletDetailCard extends LitElement {
     () => [this.groupStore],
   );
 
+  permissionType = new StoreSubscriber(
+    this,
+    () => this.groupStore.permissionType,
+    () => [this.groupStore],
+  );
+
+  groupAppletsMetaData = new StoreSubscriber(
+    this,
+    () => this.groupStore.groupAppletsMetaData,
+    () => [this.groupStore],
+  );
+
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
 
@@ -67,6 +72,29 @@ export class AppletDetailCard extends LitElement {
 
   @state()
   appInfo: AppInfo | undefined | null;
+
+  amISteward() {
+    if (
+      this.permissionType.value.status === 'complete' &&
+      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
+    )
+      return true;
+    return false;
+  }
+
+  /**
+   * Whether this applet is set for always-online nodes to install
+   *
+   * @param metaData
+   * @returns
+   */
+  alwaysOnlineNodesShouldInstall(metaData: GroupAppletsMetaData | undefined): boolean {
+    if (!metaData) return false;
+    const appletMetaData = metaData[encodeHashToBase64(this.appletHash)];
+    if (appletMetaData && appletMetaData.tags && appletMetaData.tags.includes(ALWAYS_ONLINE_TAG))
+      return true;
+    return false;
+  }
 
   async firstUpdated() {
     const appletClient = await this.mossStore.getAppClient(appIdFromAppletHash(this.appletHash));
@@ -85,6 +113,42 @@ export class AppletDetailCard extends LitElement {
         detail: this.appletHash,
       }),
     );
+  }
+
+  async toggleAlwaysOnlineNodesSetting() {
+    console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
+    console.log('amISteward: ', this.amISteward());
+    if (
+      this.groupAppletsMetaData.value.status !== 'complete' ||
+      !this.amISteward() ||
+      this.permissionType.value.status !== 'complete' ||
+      !['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
+    )
+      return;
+    console.log('Changing setting.');
+    const groupAppletsMetaData = this.groupAppletsMetaData.value.value || {};
+    const appletId = encodeHashToBase64(this.appletHash);
+    const appletMetaData = groupAppletsMetaData[appletId]
+      ? groupAppletsMetaData[appletId]
+      : { tags: [] };
+
+    let message = '';
+    if (appletMetaData.tags.includes(ALWAYS_ONLINE_TAG)) {
+      appletMetaData.tags = appletMetaData.tags.filter((tag) => tag !== ALWAYS_ONLINE_TAG);
+      message = msg('Disabled.');
+    } else {
+      appletMetaData.tags = [...appletMetaData.tags, ALWAYS_ONLINE_TAG];
+      message = msg('Enabled.');
+    }
+
+    groupAppletsMetaData[appletId] = appletMetaData;
+    const permissionHash =
+      this.permissionType.value.value.type === 'Steward'
+        ? this.permissionType.value.value.content.permission_hash
+        : undefined;
+    await this.groupStore.groupClient.setGroupAppletsMetaData(permissionHash, groupAppletsMetaData);
+    notify(message);
+    await this.groupStore.groupAppletsMetaData.reload();
   }
 
   renderJoinedMembers() {
@@ -111,6 +175,29 @@ export class AppletDetailCard extends LitElement {
     }
   }
 
+  renderMetaSettings() {
+    if (this.groupAppletsMetaData.value.status === 'error') {
+      console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
+    }
+    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amISteward()) return html``;
+    return html`
+      <div class="column meta-settings">
+        <div class="font-bold">${msg('Advanced Settings')}</div>
+        <div class="row items-center">
+          <span>${msg('Always-online nodes should install this tool by default')}</span>
+          <span class="flex flex-1"></span>
+          <sl-switch
+            style="--sl-color-primary-600: #e5d825; margin-bottom: 5px;"
+            size="large"
+            ?checked=${this.alwaysOnlineNodesShouldInstall(this.groupAppletsMetaData.value.value)}
+            @sl-change=${async () => this.toggleAlwaysOnlineNodesSetting()}
+          >
+          </sl-switch>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     if (!this.appInfo) return html``;
     return html`
@@ -121,13 +208,16 @@ export class AppletDetailCard extends LitElement {
             <span style="flex: 1; font-size: 23px; font-weight: 600;"
               >${this.applet.custom_name}</span
             >
+            <span style="margin-right: 5px; font-weight;">
+              ${this.appInfo && isAppRunning(this.appInfo) ? msg('disable') : msg('enable')}
+            </span>
             <sl-tooltip
               .content=${this.appInfo && isAppRunning(this.appInfo)
-                ? msg('Disable')
+                ? msg('Disable the app for yourself')
                 : msg('Enable')}
             >
               <sl-switch
-                style="--sl-color-primary-600: #35bf20;"
+                style="--sl-color-primary-600: #35bf20; margin-bottom: 5px;"
                 size="large"
                 ?checked=${this.appInfo && isAppRunning(this.appInfo)}
                 ?disabled=${!this.appInfo}
@@ -170,6 +260,7 @@ export class AppletDetailCard extends LitElement {
             <span><b>joined by:&nbsp;</b></span>
             ${this.renderJoinedMembers()}
           </div>
+          ${this.renderMetaSettings()}
           <!-- Cells -->
           <div style="margin-top: 5px; margin-bottom: 3px;font-size: 20px;">
             <b>Cells:</b>
@@ -194,23 +285,25 @@ export class AppletDetailCard extends LitElement {
               : html``}
           </div>
           <div class="row" style="justify-content: flex-end; margin-top: 10px;">
-            <sl-button
-              variant="danger"
-              @click=${() => this.uninstallApplet()}
-              @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.uninstallApplet();
-                }
-              }}
-            >
-              <div class="row center-content">
-                <sl-icon
-                  style="height: 20px; width: 20px;"
-                  .src=${wrapPathInSvg(mdiTrashCanOutline)}
-                ></sl-icon
-                ><span style="margin-left: 5px;">${msg('Uninstall')}</span>
-              </div>
-            </sl-button>
+            <sl-tooltip content=${msg('Uninstall the app for yourself (irreversible)')}>
+              <sl-button
+                variant="danger"
+                @click=${() => this.uninstallApplet()}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this.uninstallApplet();
+                  }
+                }}
+              >
+                <div class="row center-content">
+                  <sl-icon
+                    style="height: 20px; width: 20px;"
+                    .src=${wrapPathInSvg(mdiTrashCanOutline)}
+                  ></sl-icon
+                  ><span style="margin-left: 5px;">${msg('Uninstall')}</span>
+                </div>
+              </sl-button>
+            </sl-tooltip>
           </div>
         </div>
       </sl-card>
@@ -231,6 +324,12 @@ export class AppletDetailCard extends LitElement {
         padding: 8px 12px;
         margin-top: 5px;
         box-shadow: 0 0 5px 0 black;
+      }
+      .meta-settings {
+        background: #cdcdcd;
+        border-radius: 10px;
+        padding: 5px 10px;
+        margin: 15px 0 10px 0;
       }
     `,
   ];

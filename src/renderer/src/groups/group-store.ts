@@ -200,6 +200,10 @@ export class GroupStore {
     10000,
   );
 
+  groupAppletsMetaData = lazyReloadableStore(async () =>
+    this.groupClient.getGroupAppletsMetaData(),
+  );
+
   peerStatuses(): Readable<Record<AgentPubKeyB64, PeerStatus> | undefined> {
     return derived(this._peerStatuses, (state) => state);
   }
