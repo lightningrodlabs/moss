@@ -19,7 +19,7 @@
     "@folder/xdg": "4.0.1",
     "@holochain/client": "0.18.0-dev.3",
     "@inquirer/password": "3.0.1",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
     "@msgpack/msgpack": "^2.8.0",
     "@theweave/api": "file:../libs/api",
     "@theweave/utils": "file:../shared/utils",

@@ -10,7 +10,7 @@ import {
   randomNonce,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
-const rustUtils = require('@lightningrodlabs/we-rust-utils');
+import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -107,9 +107,9 @@ export function defaultAppNetworkSeed(devConfig?: WeDevConfig): string {
 
 export async function signZomeCall(
   request: CallZomeRequest,
-  handler: rustUtils.WeRustHandler,
+  handler: WeRustHandler,
 ): Promise<CallZomeRequestSigned> {
-  const zomeCallUnsignedNapi: rustUtils.ZomeCallUnsignedNapi = {
+  const zomeCallUnsignedNapi: ZomeCallUnsignedNapi = {
     provenance: Array.from(request.provenance),
     cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
     zomeName: request.zome_name,

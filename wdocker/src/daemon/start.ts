@@ -46,10 +46,11 @@ export async function isConductorRunning(
 
 export async function isDaemonRunning(id: string): Promise<boolean> {
   const wDockerFs = new WDockerFilesystem();
-  if (!fs.existsSync(path.join(wDockerFs.allConductorsDir, 'conductors', id))) return false;
+  if (!fs.existsSync(path.join(wDockerFs.allConductorsDir, id))) return false;
   wDockerFs.setConductorId(id);
   const runningInfo = wDockerFs.readRunningFile();
   if (runningInfo) {
+    console.log('running info found.');
     const procs = await psList();
     const daemonProcess = procs.find((proc) => proc.pid === runningInfo.daemonPid);
     if (daemonProcess) {
@@ -102,7 +103,7 @@ export async function startConductor(
   conductorHandle: childProcess.ChildProcessWithoutNullStreams;
   runningInfo: ConductorRunningInfo;
   runningSecretInfo: RunningSecretInfo;
-} | null> {
+}> {
   const wDockerFs = new WDockerFilesystem();
   wDockerFs.setConductorId(id);
 
@@ -156,8 +157,6 @@ export async function startConductor(
     );
   }
 
-  console.log('Writing conductor-config.yaml...');
-
   fs.writeFileSync(configPath, conductorConfig);
 
   const conductorHandle = childProcess.spawn(
@@ -188,8 +187,14 @@ export async function startConductor(
     //   data: line,
     // });
   });
+  let wrongPassword = false;
   conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
-    console.log('[HOLOCHAIN]: ERROR: ', line);
+    if (line.includes('Failed to spawn Lair keystore') && line.includes('InternalSodium')) {
+      wrongPassword = true;
+    }
+    if (!wrongPassword) {
+      console.log('[HOLOCHAIN]: ERROR: ', line);
+    }
     // weEmitter.emitHolochainError({
     //   version,
     //   data: line,
@@ -198,6 +203,9 @@ export async function startConductor(
 
   return new Promise((resolve, reject) => {
     conductorHandle.stderr.pipe(split()).on('data', async (line: string) => {
+      if (line.includes('Failed to spawn Lair keystore') && line.includes('InternalSodium')) {
+        reject('WRONG_PASSWORD');
+      }
       if (line.includes('holochain had a problem and crashed')) {
         reject(
           `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,

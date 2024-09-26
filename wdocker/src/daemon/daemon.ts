@@ -31,7 +31,7 @@ import { AppletHash, AppletId } from '@theweave/api';
 import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
 import { ToolsLibraryClient } from '@theweave/tool-library-client';
 import { appIdFromAppletHash, toolBundleActionHashFromDistInfo } from '@theweave/utils';
-import rustUtils from '@lightningrodlabs/we-rust-utils';
+import rustUtils, { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { nanoid } from 'nanoid';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
@@ -71,8 +71,20 @@ process.stdin.on('data', (d) => {
 setTimeout(async () => {
   if (!password) return;
   // Start conductor and store RunningInfo to disk
-  const runningConductorAndInfo = await startConductor(CONDUCTOR_ID, password);
-  if (!runningConductorAndInfo) process.exit();
+  let runningConductorAndInfo;
+  try {
+    runningConductorAndInfo = await startConductor(CONDUCTOR_ID, password);
+  } catch (e) {
+    if (e === 'WRONG_PASSWORD') {
+      console.error('\nWRONG PASSWORD.\n');
+      return;
+    }
+    throw e;
+  }
+  if (!runningConductorAndInfo) {
+    console.error('Failed to start conductor.');
+    process.exit();
+  }
 
   // CONDUCTOR_HANDLE = runningConductorAndInfo.conductorHandle;
 
@@ -106,7 +118,29 @@ setTimeout(async () => {
   // Every X minutes, check all installed groups and for each group fetch the default apps
   // group metadata as well as the unjoined tools and try to join the ones that should
   // be joined
+  try {
+    await checkForNewGroupsAndApplets(adminWs, appPort, weRustHandler);
+  } catch (e) {
+    console.error('Failed to check for new groups and tools: ', e);
+  }
 
+  setInterval(async () => {
+    try {
+      await checkForNewGroupsAndApplets(adminWs, appPort, weRustHandler);
+    } catch (e) {
+      console.error('Failed to check for new groups and tools: ', e);
+    }
+  }, 300_000);
+}, 1000);
+
+async function checkForNewGroupsAndApplets(
+  adminWs: AdminWebsocket,
+  appPort: number,
+  weRustHandler: WeRustHandler,
+): Promise<void> {
+  console.log(
+    `\n\n************************************************\n${new Date()}\nChecking for new Groups and Tools`,
+  );
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
@@ -128,9 +162,12 @@ setTimeout(async () => {
     );
     const groupClient = new GroupClient(groupAppWs, [], 'group');
 
-    console.log('Checking for Tools to join for group ', groupApp.installed_app_id);
+    console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
     const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
-    if (unjoinedDefaultApplets.length === 0) break;
+    if (unjoinedDefaultApplets.length === 0) {
+      console.log('No new tools found.');
+      break;
+    }
 
     for (const unjoinedApplet of unjoinedDefaultApplets) {
       console.log('Joining Tool', unjoinedApplet);
@@ -146,7 +183,7 @@ setTimeout(async () => {
       }
     }
   }
-}, 1000);
+}
 
 async function getAppWebsocket(
   adminWs: AdminWebsocket,
