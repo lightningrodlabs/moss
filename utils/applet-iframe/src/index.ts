@@ -405,7 +405,10 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     url: new URL(`ws://127.0.0.1:${appPort}`),
     token,
     callZomeTransform: {
-      input: async (request) => signZomeCall(request),
+      input: async (request) => {
+        if ('signature' in request) return request;
+        return signZomeCall(request);
+      },
       output: (o) => decode(o as any),
     },
   });

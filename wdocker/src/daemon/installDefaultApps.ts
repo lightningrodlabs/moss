@@ -13,7 +13,7 @@ export async function installDefaultAppsIfNecessary(adminWs: AdminWebsocket): Pr
     console.log('Installing tool library happ.');
     await downloadToolLibraryHappIfNecessary();
 
-    const toolLibraryNetworkSeed = 'dummy-seed';
+    const toolLibraryNetworkSeed = 'wdocker-testing';
 
     const pubkey = await adminWs.generateAgentPubKey();
 

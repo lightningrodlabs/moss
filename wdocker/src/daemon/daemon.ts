@@ -124,13 +124,15 @@ setTimeout(async () => {
     console.error('Failed to check for new groups and tools: ', e);
   }
 
+  const CHECK_INTERVAL = 300_000;
+
   setInterval(async () => {
     try {
       await checkForNewGroupsAndApplets(adminWs, appPort, weRustHandler);
     } catch (e) {
       console.error('Failed to check for new groups and tools: ', e);
     }
-  }, 300_000);
+  }, CHECK_INTERVAL);
 }, 1000);
 
 async function checkForNewGroupsAndApplets(
@@ -181,6 +183,7 @@ async function checkForNewGroupsAndApplets(
       } catch (e) {
         console.error('Failed to join Tool: ', e);
       }
+      console.log('Tool Joined.');
     }
   }
 }

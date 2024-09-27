@@ -23,6 +23,7 @@ const FunctionName = Type.String();
 
 const CallZomeRequest = Type.Object(
   {
+    cap_secret: Type.Optional(Type.Union([Type.Uint8Array(), Type.Null()])),
     cell_id: CellId,
     zome_name: ZomeName,
     fn_name: FunctionName,
