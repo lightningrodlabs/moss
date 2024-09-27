@@ -133,3 +133,17 @@ export type AppletAgent = {
 export type GroupDnaProperties = {
   progenitor: AgentPubKeyB64 | null;
 };
+
+export type SignalPayload =
+  | {
+      type: 'Ping';
+      from_agent: AgentPubKey;
+      status: string;
+      tz_utc_offset: number;
+    }
+  | {
+      type: 'Pong';
+      from_agent: AgentPubKey;
+      status: string;
+      tz_utc_offset: number;
+    };

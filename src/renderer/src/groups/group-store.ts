@@ -16,18 +16,16 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, LazyHoloHashMap, ZomeClient, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppClient,
   AppWebsocket,
   CellType,
   DnaHash,
   EntryHash,
-  RoleName,
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -52,6 +50,7 @@ import {
 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '@theweave/moss-types';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
+import { PeerStatusClient, SignalPayload } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
 
@@ -650,38 +649,6 @@ export class GroupStore {
   }
 }
 
-export class PeerStatusClient extends ZomeClient<SignalPayload> {
-  constructor(
-    public client: AppClient,
-    public roleName: RoleName,
-    public zomeName = 'peer_status',
-  ) {
-    super(client, roleName, zomeName);
-  }
-
-  /**
-   * Ping all specified agents, expecting for their pong later
-   */
-  async ping(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('ping', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-
-  /**
-   * Pong all specified agents
-   */
-  async pong(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('pong', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-}
-
 async function retryUntilResolved<T>(
   fn: () => Promise<T>,
   retryInterval: number = 200,
@@ -712,17 +679,3 @@ function delay(ms: number): Promise<void> {
     setTimeout(resolve, ms);
   });
 }
-
-export type SignalPayload =
-  | {
-      type: 'Ping';
-      from_agent: AgentPubKey;
-      status: string;
-      tz_utc_offset: number;
-    }
-  | {
-      type: 'Pong';
-      from_agent: AgentPubKey;
-      status: string;
-      tz_utc_offset: number;
-    };

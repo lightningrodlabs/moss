@@ -16,8 +16,19 @@ import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
 import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
-import { ALWAYS_ONLINE_TAG, GroupClient } from '@theweave/group-client';
-import { AdminWebsocket, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import {
+  ALWAYS_ONLINE_TAG,
+  GroupClient,
+  PeerStatusClient,
+  SignalPayload,
+} from '@theweave/group-client';
+import {
+  AdminWebsocket,
+  AgentPubKey,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  InstalledAppId,
+} from '@holochain/client';
 import { AppletHash, AppletId } from '@theweave/api';
 import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
 import { ToolsLibraryClient } from '@theweave/tool-library-client';
@@ -53,6 +64,10 @@ const cleanExit = () => {
 };
 process.on('SIGINT', cleanExit); // catch Ctrl+C
 process.on('SIGTERM', cleanExit); // catch kill
+
+const PING_AGENTS_FREQUENCY_MS = 8000;
+
+const GROUP_ALL_AGENTS: Record<InstalledAppId, AgentPubKey[]> = {};
 
 let password;
 process.stdin.resume();
@@ -95,11 +110,56 @@ setTimeout(async () => {
   // This line is used by the parent process to return when run in detached mode.
   console.log('Daemon ready.');
 
-  fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
+  // // Some unused code to verify whether the daemon is still running
+  // fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
 
-  setInterval(() => {
-    fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
-  }, 2000);
+  // setInterval(() => {
+  //   fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
+  // }, 2000);
+
+  // Set up handler for remote signals and update agent profiles
+  const allApps = await adminWs.listApps({});
+  const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
+
+  const tzOffset = new Date().getTimezoneOffset();
+  // TODO wrap in try catch blocks
+  for (const groupApp of groupApps) {
+    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+    const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
+    peerStatusClient.onSignal(async (signal: SignalPayload) => {
+      if (signal.type == 'Ping') {
+        await peerStatusClient.pong([signal.from_agent], 'online', tzOffset);
+      }
+    });
+    const myPubkeySum = Array.from(groupAppWs.myPubKey).reduce((acc, curr) => acc + curr, 0);
+    const allAgents: AgentPubKey[] = await groupAppWs.callZome({
+      role_name: 'group',
+      zome_name: 'profiles',
+      fn_name: 'get_agents_with_profile',
+      payload: null,
+    });
+    GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
+    setInterval(async () => {
+      const allAgents: AgentPubKey[] = await groupAppWs.callZome({
+        role_name: 'group',
+        zome_name: 'profiles',
+        fn_name: 'get_agents_with_profile',
+        payload: null,
+      });
+      GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
+    }, 300_000);
+    // Ping all agents
+    setInterval(async () => {
+      const allAgents = GROUP_ALL_AGENTS[groupApp.installed_app_id];
+      if (!allAgents) return;
+      const agentsThatNeedPinging = allAgents.filter(
+        (agent) =>
+          encodeHashToBase64(agent) !== encodeHashToBase64(groupAppWs.myPubKey) &&
+          needsPinging(agent, myPubkeySum),
+      );
+      await peerStatusClient.ping(agentsThatNeedPinging, 'online', tzOffset);
+    }, PING_AGENTS_FREQUENCY_MS);
+  }
 
   // Every X minutes, check all installed groups and for each group fetch the default apps
   // group metadata as well as the unjoined tools and try to join the ones that should
@@ -284,4 +344,15 @@ async function fetchAndStoreHappIfNecessary(
   try {
     fs.rmSync(tmpDir, { recursive: true });
   } catch (e) {}
+}
+
+function needsPinging(agent: AgentPubKey, myPubkeySum: number): boolean {
+  const pubkeySum = Array.from(agent).reduce((acc, curr) => acc + curr, 0);
+  const diff = pubkeySum - myPubkeySum;
+  if (diff % 2 === 0) {
+    if (diff === 0) return true;
+    return myPubkeySum > pubkeySum;
+  } else {
+    return myPubkeySum < pubkeySum;
+  }
 }
