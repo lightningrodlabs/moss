@@ -1,7 +1,7 @@
 import { startDaemon } from '../daemon/start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 
-export async function start(id: string): Promise<void> {
+export async function start(id: string, detached: boolean): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
   if (!wDockerFs.conductorExists(id)) {
     console.log(
@@ -9,5 +9,5 @@ export async function start(id: string): Promise<void> {
     );
     return;
   }
-  startDaemon(id, false);
+  return startDaemon(id, false, detached);
 }

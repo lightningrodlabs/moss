@@ -11,7 +11,10 @@ export async function stopConductor(id: string): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
   wDockerFs.setConductorId(id);
   const runningInfo = wDockerFs.readRunningFile();
-  if (!runningInfo) return;
+  if (!runningInfo) {
+    console.log(`Conductor '${id}' was not running.`);
+    return;
+  }
   const { conductorPid, daemonPid } = runningInfo;
   // console.log(conductorPid, daemonPid);
   const procs = await psList();

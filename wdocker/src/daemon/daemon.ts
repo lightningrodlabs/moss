@@ -46,6 +46,7 @@ const WDOCKER_FILE_SYSTEM = new WDockerFilesystem();
 WDOCKER_FILE_SYSTEM.setConductorId(CONDUCTOR_ID);
 
 const cleanExit = () => {
+  console.log('CALLED TO EXIT!');
   WDOCKER_FILE_SYSTEM.clearRunningFile();
   WDOCKER_FILE_SYSTEM.clearRunningSecretFile();
   process.exit();
@@ -91,6 +92,15 @@ setTimeout(async () => {
 
   const weRustHandler = await getWeRustHandler(WDOCKER_FILE_SYSTEM, password);
 
+  // This line is used by the parent process to return when run in detached mode.
+  console.log('Daemon ready.');
+
+  fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
+
+  setInterval(() => {
+    fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
+  }, 2000);
+
   // Every X minutes, check all installed groups and for each group fetch the default apps
   // group metadata as well as the unjoined tools and try to join the ones that should
   // be joined
@@ -100,15 +110,13 @@ setTimeout(async () => {
     console.error('Failed to check for new groups and tools: ', e);
   }
 
-  const CHECK_INTERVAL = 300_000;
-
   setInterval(async () => {
     try {
       await checkForNewGroupsAndApplets(adminWs, appPort, weRustHandler);
     } catch (e) {
       console.error('Failed to check for new groups and tools: ', e);
     }
-  }, CHECK_INTERVAL);
+  }, WDOCKER_FILE_SYSTEM.wdockerConductorConfig.checkForGroupsAndToolsFrequencySeconds * 1000);
 }, 1000);
 
 async function checkForNewGroupsAndApplets(

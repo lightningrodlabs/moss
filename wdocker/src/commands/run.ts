@@ -4,7 +4,7 @@ import fs from 'fs';
 import { startDaemon } from '../daemon/start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 
-export async function run(id: string): Promise<void> {
+export async function run(id: string, detached: boolean): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
   const conductorDataDir = path.join(wDockerFs.allConductorsDir, id);
   if (fs.existsSync(conductorDataDir)) {
@@ -13,5 +13,5 @@ export async function run(id: string): Promise<void> {
     );
     return;
   }
-  startDaemon(id, true);
+  await startDaemon(id, true, detached);
 }

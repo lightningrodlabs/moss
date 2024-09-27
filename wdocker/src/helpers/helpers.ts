@@ -2,8 +2,16 @@ import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
 import rustUtils from '@lightningrodlabs/we-rust-utils';
+import Table from 'cli-table';
 
-import { AdminWebsocket, AppWebsocket, CallZomeTransform, InstalledAppId } from '@holochain/client';
+import {
+  AdminWebsocket,
+  AppWebsocket,
+  CallZomeTransform,
+  CellId,
+  CellInfo,
+  InstalledAppId,
+} from '@holochain/client';
 import { password as passwordInput } from '@inquirer/prompts';
 
 import { WDockerFilesystem } from '../filesystem.js';
@@ -146,4 +154,37 @@ export async function downloadToolLibraryHappIfNecessary(): Promise<void> {
   if (needsToBeFetched) {
     await downloadFile(TOOLS_LIBRARY_URL, toolLibraryHappPath, happSha256, false);
   }
+}
+
+export function cleanTable() {
+  return new Table({
+    chars: {
+      top: '',
+      'top-mid': '',
+      'top-left': '',
+      'top-right': '',
+      bottom: '',
+      'bottom-mid': '',
+      'bottom-left': '',
+      'bottom-right': '',
+      left: '',
+      'left-mid': '',
+      mid: '',
+      'mid-mid': '',
+      right: '',
+      'right-mid': '',
+      middle: ' ',
+    },
+    style: { 'padding-left': 0, 'padding-right': 10 },
+  });
+}
+
+export function getCellId(cellInfo: CellInfo): CellId | undefined {
+  if ('provisioned' in cellInfo) {
+    return cellInfo.provisioned.cell_id;
+  }
+  if ('cloned' in cellInfo) {
+    return cellInfo.cloned.cell_id;
+  }
+  return undefined;
 }

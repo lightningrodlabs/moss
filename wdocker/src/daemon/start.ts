@@ -52,9 +52,10 @@ export async function isDaemonRunning(id: string): Promise<boolean> {
   if (runningInfo) {
     console.log('running info found.');
     const procs = await psList();
+    console.log('runningInfo.daemonPid: ', runningInfo.daemonPid);
     const daemonProcess = procs.find((proc) => proc.pid === runningInfo.daemonPid);
     if (daemonProcess) {
-      // console.log('daemonProcess: ', daemonProcess);
+      console.log('daemonProcess: ', daemonProcess);
       const cmdParts = daemonProcess.cmd?.split(' ');
       if (cmdParts && cmdParts[1] && cmdParts[1].endsWith('wdaemon')) {
         return true;
@@ -64,7 +65,7 @@ export async function isDaemonRunning(id: string): Promise<boolean> {
   return false;
 }
 
-export async function startDaemon(id: string, init = false): Promise<void> {
+export async function startDaemon(id: string, init: boolean, detached: boolean): Promise<void> {
   const daemonAlreadyRunning = await isDaemonRunning(id);
   if (daemonAlreadyRunning) {
     console.log(`The conductor with id '${id}' is already running.`);
@@ -83,8 +84,9 @@ export async function startDaemon(id: string, init = false): Promise<void> {
     pw = await passwordInput({ message: 'conductor password:' });
   }
 
+  // https://stackoverflow.com/questions/35357853/how-to-close-the-stdio-pipes-of-child-processes-in-node-js
   const daemonHandle = childProcess.spawn('wdaemon', [id], {
-    detached: false,
+    detached,
   });
   daemonHandle.stdin.write(pw);
   daemonHandle.stdin.end();
@@ -93,6 +95,16 @@ export async function startDaemon(id: string, init = false): Promise<void> {
   });
   daemonHandle.stderr.pipe(split()).on('data', (line: string) => {
     console.log('[wdocker]: ERROR: ', line);
+  });
+
+  return new Promise((resolve, _reject) => {
+    daemonHandle.stdout.pipe(split()).on('data', async (line: string) => {
+      if (line.includes('Daemon ready.')) {
+        // console.log("\nRun 'wdocker list' to check the status of your daemons.");
+        // daemonHandle.unref();
+        resolve();
+      }
+    });
   });
 }
 
@@ -214,9 +226,7 @@ export async function startConductor(
     });
     conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
       if (line.includes('could not be parsed, because it is not valid YAML')) {
-        reject(
-          `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
-        );
+        reject(`Holochain failed to start up and crashed.`);
       }
       if (line.includes('Conductor ready.')) {
         const conductorPid = conductorHandle.pid;

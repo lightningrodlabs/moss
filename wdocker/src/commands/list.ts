@@ -1,30 +1,11 @@
 import { WDockerFilesystem } from '../filesystem.js';
-import Table from 'cli-table';
 import { format } from 'timeago.js';
+import { cleanTable } from '../helpers/helpers.js';
 
 export async function list(): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
   const allConductorInfos = await wDockerFs.listConductors();
-  const table = new Table({
-    chars: {
-      top: '',
-      'top-mid': '',
-      'top-left': '',
-      'top-right': '',
-      bottom: '',
-      'bottom-mid': '',
-      'bottom-left': '',
-      'bottom-right': '',
-      left: '',
-      'left-mid': '',
-      mid: '',
-      'mid-mid': '',
-      right: '',
-      'right-mid': '',
-      middle: ' ',
-    },
-    style: { 'padding-left': 0, 'padding-right': 10 },
-  });
+  const table = cleanTable();
   table.push(['CONDUCTOR ID', 'CREATED', 'STATUS', 'SIZE']);
   const infos = allConductorInfos
     .sort((info_a, info_b) => {
