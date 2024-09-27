@@ -1,13 +1,15 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
+import rustUtils from '@lightningrodlabs/we-rust-utils';
 
-import { AdminWebsocket } from '@holochain/client';
-import passwordInput from '@inquirer/password';
+import { AdminWebsocket, AppWebsocket, CallZomeTransform, InstalledAppId } from '@holochain/client';
+import { password as passwordInput } from '@inquirer/prompts';
 
 import { WDockerFilesystem } from '../filesystem.js';
 import { GROUP_HAPP_URL, MOSS_CONFIG, TOOLS_LIBRARY_URL } from '../const.js';
-import { downloadFile } from '../utils.js';
+import { downloadFile, signZomeCall } from '../utils.js';
+import { decode } from '@msgpack/msgpack';
 
 export async function getPassword(): Promise<string> {
   return passwordInput({ message: 'conductor password:' });
@@ -25,6 +27,63 @@ export async function getAdminWs(id: string, password: string): Promise<AdminWeb
     url: new URL(`ws://localhost:${runningInfo.adminPort}`),
     wsClientOptions: { origin: runningInfo.allowedOrigin },
   });
+}
+
+export async function getAdminWsAndAppPort(
+  id: string,
+  password: string,
+): Promise<{ adminWs: AdminWebsocket; appPort: number }> {
+  const adminWs = await getAdminWs(id, password);
+  // Get or attach app interface
+  const appInterfaces = await adminWs.listAppInterfaces();
+  let appPort: number;
+  if (appInterfaces.length > 0) {
+    appPort = appInterfaces[0].port;
+  } else {
+    const attachAppInterfaceResponse = await adminWs.attachAppInterface({
+      allowed_origins: 'wdocker',
+    });
+    console.log('Attached app interface port: ', attachAppInterfaceResponse);
+    appPort = attachAppInterfaceResponse.port;
+  }
+  return {
+    adminWs,
+    appPort,
+  };
+}
+
+export async function getAppWs(
+  adminWs: AdminWebsocket,
+  appPort: number,
+  installedAppId: InstalledAppId,
+  weRustHandler: rustUtils.WeRustHandler,
+): Promise<AppWebsocket> {
+  const authTokenResponse = await adminWs.issueAppAuthenticationToken({
+    installed_app_id: installedAppId,
+    expiry_seconds: 10,
+    single_use: true,
+  });
+  const callZomeTransform: CallZomeTransform = {
+    input: (req) => signZomeCall(req, weRustHandler),
+    output: (o) => decode(o as any),
+  };
+  return AppWebsocket.connect({
+    url: new URL(`ws://localhost:${appPort}`),
+    token: authTokenResponse.token,
+    callZomeTransform,
+    wsClientOptions: {
+      origin: 'wdocker',
+    },
+  });
+}
+
+export async function getWeRustHandler(
+  wDockerFs: WDockerFilesystem,
+  password: string,
+): Promise<rustUtils.WeRustHandler> {
+  const lairUrl = wDockerFs.readLairUrl();
+  if (!lairUrl) throw new Error('Failed to read lair connection url');
+  return rustUtils.WeRustHandler.connect(lairUrl, password);
 }
 
 /**

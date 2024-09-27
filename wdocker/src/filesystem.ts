@@ -4,7 +4,15 @@ import path from 'path';
 import xdg from '@folder/xdg';
 import { breakingVersion, decrypt, encrypt, readYamlValue } from './utils.js';
 import getFolderSize from 'get-folder-size';
-import { HOLOCHAIN_BINARY_NAME, MOSS_CONFIG, PACKAGE_JSON } from './const.js';
+import {
+  DEFAULT_CHECK_INTERVAL_S,
+  HOLOCHAIN_BINARY_NAME,
+  MOSS_CONFIG,
+  PACKAGE_JSON,
+} from './const.js';
+import { nanoid } from 'nanoid';
+import { Type } from '@sinclair/typebox';
+import { Value } from '@sinclair/typebox/value';
 
 export type RunningInfo = {
   daemonPid: number;
@@ -37,6 +45,30 @@ export type ConductorInstanceInfo = {
    */
   size?: number;
 };
+
+/**
+ * Configuration file specific to a conductor
+ */
+export type WDockerConductorConfig = {
+  /**
+   * Frequency in seconds with which to check for Groups and Tools
+   */
+  checkForGroupsAndToolsFrequencySeconds: number;
+  /**
+   * Default name to use when creating a profile upon joining a group
+   */
+  defaultProfileName: string;
+  /**
+   * Default description of this node to be shown in a Moss group
+   */
+  defaultNodeDescription: string;
+};
+
+const WDockerConductorConfigSchema = Type.Object({
+  checkForGroupsAndToolsFrequencySeconds: Type.Number(),
+  defaultProfileName: Type.String(),
+  defaultNodeDescription: Type.String(),
+});
 
 export class WDockerFilesystem {
   rootDir: string;
@@ -165,6 +197,38 @@ export class WDockerFilesystem {
 
   get toolsLibraryHappPath() {
     return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
+  }
+
+  /**
+   *
+   * @returns
+   */
+  get wdockerConductorConfig(): WDockerConductorConfig {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    const configPath = path.join(this.conductorDataDir, '._config.json');
+    if (!fs.existsSync(configPath)) {
+      const defaultConfig = {
+        checkForGroupsAndToolsFrequencySeconds: DEFAULT_CHECK_INTERVAL_S,
+        defaultProfileName: `wdocker-${nanoid(4)}`,
+        defaultNodeDescription: 'always-online node for the Weave',
+      };
+      fs.writeFileSync(configPath, JSON.stringify(defaultConfig, undefined, 2), 'utf-8');
+      return defaultConfig;
+    }
+    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  }
+
+  setWdockerConductorConfig(config: WDockerConductorConfig): void {
+    if (!this.conductorId)
+      throw Error(
+        'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
+      );
+    Value.Assert(WDockerConductorConfigSchema, config);
+    const configPath = path.join(this.conductorDataDir, '._config.json');
+    fs.writeFileSync(configPath, JSON.stringify(config, undefined, 2), 'utf-8');
   }
 
   happFilePath(sha256: string): string {

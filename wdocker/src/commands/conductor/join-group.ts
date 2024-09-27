@@ -7,9 +7,16 @@ import os from 'os';
 import { nanoid } from 'nanoid';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
+import { input } from '@inquirer/prompts';
 
 import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
-import { downloadGroupHappIfNecessary, getAdminWs, getPassword } from '../../helpers/helpers.js';
+import {
+  downloadGroupHappIfNecessary,
+  getAdminWsAndAppPort,
+  getAppWs,
+  getPassword,
+  getWeRustHandler,
+} from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
 import rustUtils from '@lightningrodlabs/we-rust-utils';
 
@@ -21,12 +28,39 @@ export async function joinGroup(conductorId: string, inviteLink: string): Promis
   }
   wDockerFs.setConductorId(conductorId);
   const password = await getPassword();
+  const config = wDockerFs.wdockerConductorConfig;
+  const profileName = await input({
+    message: 'How do you want this node to be named inside the group?',
+    default: config.defaultProfileName,
+  });
+  const wdockerNodeDescription = await input({
+    message: 'Choose a description for this node',
+    default: config.defaultNodeDescription,
+  });
+  wDockerFs.setWdockerConductorConfig({
+    ...config,
+    defaultNodeDescription: wdockerNodeDescription,
+    defaultProfileName: profileName,
+  });
   console.log('Getting admin ws');
-  const adminWs = await getAdminWs(conductorId, password);
+  const { adminWs, appPort } = await getAdminWsAndAppPort(conductorId, password);
   console.log('Installing group');
   const appInfo = await installGroup(inviteLink, adminWs, wDockerFs);
-
-  console.log('Done.');
+  console.log('Creating profile');
+  const weRustHandler = await getWeRustHandler(wDockerFs, password);
+  const groupAppWs = await getAppWs(adminWs, appPort, appInfo.installed_app_id, weRustHandler);
+  await groupAppWs.callZome({
+    role_name: 'group',
+    zome_name: 'profiles',
+    fn_name: 'create_profile',
+    payload: {
+      nickname: profileName,
+      fields: {
+        wdockerNode: wdockerNodeDescription,
+      },
+    },
+  });
+  console.log('Group joined successfully.');
 
   // Create profile in group
 

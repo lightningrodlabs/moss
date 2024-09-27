@@ -6,6 +6,7 @@ import { list } from './commands/list.js';
 import { run } from './commands/run.js';
 import { start } from './commands/start.js';
 import { stopConductor } from './commands/stop.js';
+import { purgeConductor } from './commands/purge.js';
 import { info } from './commands/info.js';
 import { listApps } from './commands/conductor/list-apps.js';
 import { joinGroup } from './commands/conductor/join-group.js';
@@ -42,6 +43,14 @@ wDocker
   .argument('<name>')
   .action(async (conductorId) => {
     await stopConductor(conductorId);
+  });
+
+wDocker
+  .command('purge')
+  .description('Completely remove a conductor and delete all associated data.')
+  .argument('<name>')
+  .action(async (conductorId) => {
+    await purgeConductor(conductorId);
   });
 
 wDocker

@@ -14,19 +14,10 @@ import fs from 'fs';
 
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
-import { getAdminWs } from '../helpers/helpers.js';
+import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
 import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
 import { ALWAYS_ONLINE_TAG, GroupClient } from '@theweave/group-client';
-import {
-  AdminWebsocket,
-  AppWebsocket,
-  CallZomeTransform,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-  InstalledAppId,
-} from '@holochain/client';
-import { signZomeCall } from '../utils.js';
-import { decode } from '@msgpack/msgpack';
+import { AdminWebsocket, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { AppletHash, AppletId } from '@theweave/api';
 import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
 import { ToolsLibraryClient } from '@theweave/tool-library-client';
@@ -95,25 +86,10 @@ setTimeout(async () => {
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
 
   // Install default apps if necessary
-  const adminWs = await getAdminWs(CONDUCTOR_ID, password);
+  const { adminWs, appPort } = await getAdminWsAndAppPort(CONDUCTOR_ID, password);
   await installDefaultAppsIfNecessary(adminWs);
 
-  // Get or attach app interface
-  const appInterfaces = await adminWs.listAppInterfaces();
-  let appPort: number;
-  if (appInterfaces.length > 0) {
-    appPort = appInterfaces[0].port;
-  } else {
-    const attachAppInterfaceResponse = await adminWs.attachAppInterface({
-      allowed_origins: 'wdocker',
-    });
-    console.log('Attached app interface port: ', attachAppInterfaceResponse);
-    appPort = attachAppInterfaceResponse.port;
-  }
-
-  const lairUrl = WDOCKER_FILE_SYSTEM.readLairUrl();
-  if (!lairUrl) throw new Error('Failed to read lair connection url');
-  const weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
+  const weRustHandler = await getWeRustHandler(WDOCKER_FILE_SYSTEM, password);
 
   // Every X minutes, check all installed groups and for each group fetch the default apps
   // group metadata as well as the unjoined tools and try to join the ones that should
@@ -146,22 +122,12 @@ async function checkForNewGroupsAndApplets(
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
-  const toolsLibraryAppWs = await getAppWebsocket(
-    adminWs,
-    appPort,
-    TOOLS_LIBRARY_APP_ID,
-    weRustHandler,
-  );
+  const toolsLibraryAppWs = await getAppWs(adminWs, appPort, TOOLS_LIBRARY_APP_ID, weRustHandler);
   const toolsLibraryClient = new ToolsLibraryClient(toolsLibraryAppWs, 'tools', 'library');
 
   // TODO wrap in try catch blocks
   for (const groupApp of groupApps) {
-    const groupAppWs = await getAppWebsocket(
-      adminWs,
-      appPort,
-      groupApp.installed_app_id,
-      weRustHandler,
-    );
+    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
     const groupClient = new GroupClient(groupAppWs, [], 'group');
 
     console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
@@ -186,31 +152,6 @@ async function checkForNewGroupsAndApplets(
       console.log('Tool Joined.');
     }
   }
-}
-
-async function getAppWebsocket(
-  adminWs: AdminWebsocket,
-  appPort: number,
-  installedAppId: InstalledAppId,
-  weRustHandler: rustUtils.WeRustHandler,
-): Promise<AppWebsocket> {
-  const authTokenResponse = await adminWs.issueAppAuthenticationToken({
-    installed_app_id: installedAppId,
-    expiry_seconds: 10,
-    single_use: true,
-  });
-  const callZomeTransform: CallZomeTransform = {
-    input: (req) => signZomeCall(req, weRustHandler),
-    output: (o) => decode(o as any),
-  };
-  return AppWebsocket.connect({
-    url: new URL(`ws://localhost:${appPort}`),
-    token: authTokenResponse.token,
-    callZomeTransform,
-    wsClientOptions: {
-      origin: 'wdocker',
-    },
-  });
 }
 
 async function checkForUnjoinedAppletsToJoin(groupClient: GroupClient): Promise<AppletId[]> {

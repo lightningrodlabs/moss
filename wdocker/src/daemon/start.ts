@@ -7,7 +7,7 @@ import getPort from 'get-port';
 import fs from 'fs';
 import split from 'split';
 import * as childProcess from 'child_process';
-import passwordInput from '@inquirer/password';
+import { password as passwordInput } from '@inquirer/prompts';
 
 import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';

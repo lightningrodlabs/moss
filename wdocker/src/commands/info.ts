@@ -1,4 +1,4 @@
-import passwordInput from '@inquirer/password';
+import { password as passwordInput } from '@inquirer/prompts';
 
 import { WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';
