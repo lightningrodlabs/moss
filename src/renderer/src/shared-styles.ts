@@ -22,5 +22,25 @@ export const weStyles = [
       /* Fonts */
       --sl-font-mono: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
     }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-center {
+      justify-content: center;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .flex-1 {
+      flex: 1;
+    }
+
+    .font-bold {
+      font-weight: bold;
+    }
   `,
 ];

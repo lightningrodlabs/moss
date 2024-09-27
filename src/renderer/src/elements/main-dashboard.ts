@@ -29,6 +29,7 @@ import {
   weaveUrlToLocation,
   weaveUrlFromWal,
 } from '@theweave/api';
+import { invitePropsToPartialModifiers } from '@theweave/utils';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -72,7 +73,6 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  invitePropsToPartialModifiers,
   logMossZomeCall,
   progenitorFromProperties,
 } from '../utils.js';

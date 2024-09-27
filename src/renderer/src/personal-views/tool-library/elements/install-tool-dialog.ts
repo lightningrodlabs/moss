@@ -20,7 +20,7 @@ import { weStyles } from '../../../shared-styles.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { Tool, UpdateableEntity } from '../types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 
 @localized()
 @customElement('install-tool-dialog')

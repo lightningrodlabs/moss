@@ -10,7 +10,7 @@ _Moss_ used to be called _We_, and you can read about it's early instantiation i
 
 You can download the latest public release [here](https://theweave.social/moss/#download).
 
-If you want to install an unstable dev release, you can pick one on [the releases page](https://github.com/lightningrodlabs/we/releases).
+If you want to install an unstable dev release, you can pick one on [the releases page](https://github.com/lightningrodlabs/moss/releases).
 
 ## Developers
 

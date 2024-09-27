@@ -1,0 +1,31 @@
+{
+  "name": "@theweave/utils",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "license": "MIT",
+  "exports": {
+    ".": "./dist/index.js",
+    "./dist/*": "./dist/*"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch --preserveWatchOutput"
+  },
+  "type": "module",
+  "dependencies": {
+    "@holochain/client": "0.18.0-dev.3",
+    "@theweave/api": "file:../../libs/api",
+    "@theweave/moss-types": "file:../types"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^5.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

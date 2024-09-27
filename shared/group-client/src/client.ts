@@ -1,4 +1,4 @@
-import { EntryRecord } from '@holochain-open-dev/utils';
+import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
 import {
   EntryHash,
   AppCallZomeRequest,
@@ -8,18 +8,26 @@ import {
   encodeHashToBase64,
   InstalledAppId,
   AppAuthenticationToken,
+  ActionHash,
+  decodeHashFromBase64,
+  AppClient,
+  RoleName,
 } from '@holochain/client';
 import { AppletHash, GroupProfile } from '@theweave/api';
 
 import {
   Applet,
   AppletAgent,
+  GROUP_APPLETS_META_DATA_NAME,
+  GROUP_DESCRIPTION_NAME,
+  GroupAppletsMetaData,
   GroupMetaData,
   JoinAppletInput,
   PermissionType,
   PrivateAppletEntry,
+  SignalPayload,
   StewardPermission,
-} from '../types.js';
+} from './types.js';
 
 export class GroupClient {
   constructor(
@@ -198,6 +206,39 @@ export class GroupClient {
     return this.callZome('get_all_agent_permission_types', null);
   }
 
+  async setGroupDescription(
+    permissionHash: ActionHash | undefined,
+    content: string,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: GROUP_DESCRIPTION_NAME,
+      data: content,
+    });
+  }
+
+  async getGroupDescription(): Promise<EntryRecord<GroupMetaData> | undefined> {
+    return this.getGroupMetaData(GROUP_DESCRIPTION_NAME);
+  }
+
+  async setGroupAppletsMetaData(
+    permissionHash: ActionHash | undefined,
+    content: GroupAppletsMetaData,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: GROUP_APPLETS_META_DATA_NAME,
+      data: JSON.stringify(content),
+    });
+  }
+
+  async getGroupAppletsMetaData(): Promise<GroupAppletsMetaData | undefined> {
+    const metaDataRecord = await this.getGroupMetaData(GROUP_APPLETS_META_DATA_NAME);
+    const maybeAppletsMetadata = metaDataRecord?.entry.data;
+    if (!maybeAppletsMetadata) return undefined;
+    return JSON.parse(maybeAppletsMetadata);
+  }
+
   async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {
     const record = await this.callZome('get_group_meta_data', name);
     return record ? new EntryRecord(record) : undefined;
@@ -216,5 +257,37 @@ export class GroupClient {
       payload,
     };
     return this.appClient.callZome(req);
+  }
+}
+
+export class PeerStatusClient extends ZomeClient<SignalPayload> {
+  constructor(
+    public client: AppClient,
+    public roleName: RoleName,
+    public zomeName = 'peer_status',
+  ) {
+    super(client, roleName, zomeName);
+  }
+
+  /**
+   * Ping all specified agents, expecting for their pong later
+   */
+  async ping(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
+    return this.callZome('ping', {
+      to_agents: agentPubKeys,
+      status,
+      tz_utc_offset: tzUtcOffset,
+    });
+  }
+
+  /**
+   * Pong all specified agents
+   */
+  async pong(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
+    return this.callZome('pong', {
+      to_agents: agentPubKeys,
+      status,
+      tz_utc_offset: tzUtcOffset,
+    });
   }
 }

@@ -7,13 +7,6 @@ import { encodeHashToBase64, EntryHash } from '@holochain/client';
 import { hashState } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/alert/alert.js';
-import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 
 import './applet-detail-card.js';
 import './group-context.js';
@@ -24,7 +17,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import '../../elements/navigation/sidebar-button.js';
 import { weStyles } from '../../shared-styles.js';
-import { Applet } from '../../types.js';
+import { Applet } from '@theweave/group-client';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -55,6 +48,11 @@ export class GroupAppletsSettings extends LitElement {
 
   @state()
   unarchiving = false;
+
+  async firstUpdated() {
+    // Load group applets metadata to be used by <applet-detail-card> components
+    await this._groupStore.groupAppletsMetaData.reload();
+  }
 
   renderInstalledApplets(applets: ReadonlyMap<EntryHash, Applet>) {
     const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(

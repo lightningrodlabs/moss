@@ -16,9 +16,9 @@ import { MossStore } from '../../../moss-store.js';
 import { consume } from '@lit/context';
 import { ActionHash } from '@holochain/client';
 import { resizeAndExport } from '../../../utils.js';
-import { AppHashes, WebHappSource } from '../../../types.js';
+import { AppHashes, WebHappSource } from '@theweave/moss-types';
 import { validateHappOrWebhapp } from '../../../electron-api.js';
-import { Tool } from '../../tool-library/types.js';
+import { Tool } from '@theweave/tool-library-client';
 
 @localized()
 @customElement('publish-tool')

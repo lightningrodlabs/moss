@@ -17,8 +17,8 @@ import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { PartialModifiers } from '../../types.js';
-import { partialModifiersFromInviteLink } from '../../utils.js';
+import { PartialModifiers } from '@theweave/moss-types';
+import { partialModifiersFromInviteLink } from '@theweave/utils';
 
 /**
  * @element join-group-dialog

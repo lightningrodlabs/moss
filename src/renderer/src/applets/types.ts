@@ -1,5 +1,4 @@
-import { FrameNotification } from '@theweave/api';
-import { AppletId } from '../types.js';
+import { FrameNotification, AppletId } from '@theweave/api';
 
 export type NotificationTimestamp = number;
 

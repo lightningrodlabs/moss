@@ -12,7 +12,7 @@ import { mdiChevronLeft, mdiTools } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/installable-tools.js';
 import './elements/tool-publisher-detail.js';
-import { Tool, UpdateableEntity } from './types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';

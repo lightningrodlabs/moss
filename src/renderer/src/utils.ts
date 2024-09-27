@@ -12,8 +12,6 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
-  HoloHashB64,
-  ActionHash,
   CallZomeRequest,
   FunctionName,
   ZomeName,
@@ -22,20 +20,14 @@ import {
   AppAuthenticationToken,
   DnaModifiers,
 } from '@holochain/client';
-import { Hrl, WAL, RenderView, FrameNotification } from '@theweave/api';
+import { Hrl, WAL, RenderView, FrameNotification, AppletHash, AppletId } from '@theweave/api';
+import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import {
-  AppletHash,
-  AppletId,
-  DistributionInfo,
-  GroupDnaProperties,
-  MessageContentPart,
-  PartialModifiers,
-} from './types.js';
+import { MessageContentPart } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -49,6 +41,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
+import { appIdFromAppletId, toLowerCaseB64 } from '@theweave/utils';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -87,32 +80,6 @@ export function findAppForDnaHash(
     }
   }
   return undefined;
-}
-
-// IMPORTANT: If this function is changed, the same function in utils/applet-iframe/index.ts needs
-// to be changed accordingly
-export function appIdFromAppletHash(appletHash: AppletHash): string {
-  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-export function appIdFromAppletId(appletId: AppletId): string {
-  return `applet#${toLowerCaseB64(appletId)}`;
-}
-
-export function appletHashFromAppId(installedAppId: string): AppletHash {
-  return decodeHashFromBase64(toOriginalCaseB64(installedAppId.slice(7)));
-}
-
-export function appletIdFromAppId(installedAppId: string): AppletId {
-  return toOriginalCaseB64(installedAppId.slice(7));
-}
-
-export function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
-export function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {
@@ -528,13 +495,6 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   return lowerCaseAppletId.replaceAll('$', '%24');
 }
 
-export function toolBundleActionHashFromDistInfo(distributionInfoString: string): ActionHash {
-  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'tools-library')
-    throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
-  return decodeHashFromBase64(distributionInfo.info.originalToolActionHash);
-}
-
 export function notifyAndThrow(message: string) {
   notifyError(message);
   throw new Error(message);
@@ -660,44 +620,6 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
   return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
-}
-
-export function invitePropsToPartialModifiers(props: string): PartialModifiers {
-  const [networkSeed, progenitorString] = props.split('&progenitor=');
-  if (!progenitorString) throw new Error('Invite string does not contain progenitor.');
-  let progenitor;
-  if (progenitorString === 'null') {
-    progenitor = null;
-  } else {
-    try {
-      const rawKey = decodeHashFromBase64(progenitorString);
-      if (rawKey.length !== 39) {
-        throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-      }
-    } catch (e) {
-      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-    }
-    if (!progenitorString.startsWith('uhCAk')) {
-      throw new Error(`Progenitor key is not a valid agent key. Got ${progenitorString}`);
-    }
-    progenitor = progenitorString;
-  }
-  return {
-    networkSeed,
-    progenitor,
-  };
-}
-
-export function partialModifiersFromInviteLink(inviteLink: string): PartialModifiers | undefined {
-  const split = inviteLink.trim().split('://');
-  const split2 = inviteLink.startsWith('https')
-    ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.13://invite/aljsfkajsf
-    : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.13://invite/aljsfkajsf
-  if (split2[0] === 'invite') {
-    return invitePropsToPartialModifiers(split2[1]);
-  } else {
-    return undefined;
-  }
 }
 
 export function markdownParseSafe(input: string) {

@@ -3,7 +3,7 @@ import path from 'path';
 import url from 'url';
 import { MossFileSystem } from './filesystem';
 import { setLinkOpenHandlers } from './utils';
-import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { is } from '@electron-toolkit/utils';
 import { ICONS_DIRECTORY } from './paths';
 

@@ -27,7 +27,7 @@ import {
   UpdateToolInput,
   UpdateableEntity,
   UpdatedTool,
-} from '../../tool-library/types.js';
+} from '@theweave/tool-library-client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 

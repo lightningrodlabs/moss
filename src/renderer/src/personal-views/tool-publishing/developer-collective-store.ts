@@ -1,6 +1,6 @@
 import { manualReloadStore } from '@holochain-open-dev/stores';
 import { ActionHash } from '@holochain/client';
-import { ToolsLibraryClient } from '../tool-library/tools-library-client.js';
+import { ToolsLibraryClient } from '@theweave/tool-library-client';
 
 export class DeveloperCollectiveStore {
   developerCollectiveHash: ActionHash;

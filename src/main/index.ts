@@ -26,7 +26,6 @@ import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
 import { AppAssetsInfo, DistributionInfo, MossFileSystem, deriveAppAssetsInfo } from './filesystem';
-import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -34,7 +33,8 @@ import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
-import { TOOLS_LIBRARY_APP_ID, AppHashes, ConductorInfo, ToolWeaveConfig } from './sharedTypes';
+import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
+import { AppHashes, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -58,7 +58,7 @@ import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
-
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -1100,23 +1100,23 @@ app.whenReady().then(async () => {
     },
   );
   ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
-    const hashResult = await rustUtils.validateHappOrWebhapp(bytes);
-    const [happHash, uiHash, webHappHash] = hashResult.split('$');
-    if (uiHash) {
+    const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(bytes);
+    if (uiSha256) {
+      if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
       return {
         type: 'webhapp',
-        sha256: webHappHash,
+        sha256: webhappSha256,
         happ: {
-          sha256: happHash,
+          sha256: happSha256,
         },
         ui: {
-          sha256: uiHash,
+          sha256: uiSha256,
         },
       };
     } else {
       return {
         type: 'happ',
-        sha256: happHash,
+        sha256: happSha256,
       };
     }
   });
@@ -1144,20 +1144,20 @@ app.whenReady().then(async () => {
         const response = await net.fetch(happOrWebHappUrl);
         const buffer = await response.arrayBuffer();
         const assetBytes = Array.from(new Uint8Array(buffer));
-        const result: string = await rustUtils.validateHappOrWebhapp(assetBytes);
-        const [happHash, uiHash, webHappHash] = result.split('$');
+        const { happSha256, webhappSha256, uiSha256 } =
+          await rustUtils.validateHappOrWebhapp(assetBytes);
 
-        if (happHash !== sha256Happ)
+        if (happSha256 !== sha256Happ)
           throw new Error(
-            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHash}' but expected hash ${sha256Happ}`,
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
           );
-        if (webHappHash && webHappHash !== sha256Webhapp)
+        if (webhappSha256 && webhappSha256 !== sha256Webhapp)
           throw new Error(
-            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHash}' but expected hash ${sha256Webhapp}`,
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
           );
-        if (uiHash && uiHash !== sha256Ui)
+        if (uiSha256 && uiSha256 !== sha256Ui)
           throw new Error(
-            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHash}' but expected hash ${sha256Ui}`,
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiSha256}' but expected hash ${sha256Ui}`,
           );
         if (sha256Webhapp && !sha256Ui)
           throw new Error('Got applet with a webhapp hash but no UI hash.');
@@ -1169,7 +1169,7 @@ app.whenReady().then(async () => {
         const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
         const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
         // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-        await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
         try {
           // clean up
           fs.rmSync(tmpDir, { recursive: true });
@@ -1231,20 +1231,20 @@ app.whenReady().then(async () => {
         const response = await net.fetch(happOrWebHappUrl);
         const buffer = await response.arrayBuffer();
         const assetBytes = Array.from(new Uint8Array(buffer));
-        const result: string = await rustUtils.validateHappOrWebhapp(assetBytes);
-        const [happHash, uiHash, webHappHash] = result.split('$');
+        const { happSha256, webhappSha256, uiSha256 } =
+          await rustUtils.validateHappOrWebhapp(assetBytes);
 
-        if (happHash !== sha256Happ)
+        if (happSha256 !== sha256Happ)
           throw new Error(
-            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHash}' but expected hash ${sha256Happ}`,
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
           );
-        if (webHappHash && webHappHash !== sha256Webhapp)
+        if (webhappSha256 && webhappSha256 !== sha256Webhapp)
           throw new Error(
-            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHash}' but expected hash ${sha256Webhapp}`,
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
           );
-        if (uiHash && uiHash !== sha256Ui)
+        if (uiSha256 && uiSha256 !== sha256Ui)
           throw new Error(
-            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHash}' but expected hash ${sha256Ui}`,
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiSha256}' but expected hash ${sha256Ui}`,
           );
         if (sha256Webhapp && !sha256Ui)
           throw new Error('Got applet with a webhapp hash but no UI hash.');
@@ -1256,7 +1256,7 @@ app.whenReady().then(async () => {
         const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
         const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
         // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-        await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
+        await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
         try {
           // clean up
           fs.rmSync(tmpDir, { recursive: true });
@@ -1340,20 +1340,20 @@ app.whenReady().then(async () => {
         const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
         const assetBytes = Array.from(new Uint8Array(buffer));
-        const validationResult: string = await rustUtils.validateHappOrWebhapp(assetBytes);
-        const [happHashVal, uiHashVal, webHappHashVal] = validationResult.split('$');
+        const { happSha256, webhappSha256, uiSha256 } =
+          await rustUtils.validateHappOrWebhapp(assetBytes);
 
-        if (happHashVal !== sha256Happ)
+        if (happSha256 !== sha256Happ)
           throw new Error(
-            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happHashVal}' but expected hash ${sha256Happ}`,
+            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
           );
-        if (webHappHashVal && webHappHashVal !== sha256Webhapp)
+        if (webhappSha256 && webhappSha256 !== sha256Webhapp)
           throw new Error(
-            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webHappHashVal}' but expected hash ${sha256Webhapp}`,
+            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
           );
-        if (uiHashVal && uiHashVal !== sha256Ui)
+        if (uiSha256 && uiSha256 !== sha256Ui)
           throw new Error(
-            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiHashVal}' but expected hash ${sha256Ui}`,
+            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiSha256}' but expected hash ${sha256Ui}`,
           );
         if (sha256Webhapp && !sha256Ui)
           throw new Error('Got applet with a webhapp hash but no UI hash.');
@@ -1363,9 +1363,9 @@ app.whenReady().then(async () => {
         const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
         fs.writeFileSync(webHappPath, new Uint8Array(buffer));
         // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-        const result: string = await rustUtils.saveHappOrWebhapp(webHappPath, uisDir, happsDir);
-        const [happFilePath, _] = result.split('$');
-        happToBeInstalledPath = happFilePath;
+        const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+
+        happToBeInstalledPath = happPath;
         try {
           // clean up
           fs.rmSync(tmpDir, { recursive: true });

@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lightningrodlabs/we.git"
+    "url": "git+https://github.com/lightningrodlabs/moss.git"
   },
   "keywords": [
     "holochain"

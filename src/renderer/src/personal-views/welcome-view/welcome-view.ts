@@ -22,13 +22,14 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
-import { AppHashes, AssetSource, DistributionInfo, UpdateFeedMessage } from '../../types.js';
+import { AppHashes, AssetSource, DistributionInfo } from '@theweave/moss-types';
 import TimeAgo from 'javascript-time-ago';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { Tool, UpdateableEntity } from '../tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { markdownParseSafe } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
+import { UpdateFeedMessage } from '../../types.js';
 
 type UpdateFeedMessageGeneric =
   | {

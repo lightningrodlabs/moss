@@ -41,6 +41,8 @@ import {
   ProfilesLocation,
   CreatableType,
   NULL_HASH,
+  AppletHash,
+  AppletId,
 } from '@theweave/api';
 import { notify } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
@@ -50,9 +52,6 @@ import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
-  appIdFromAppletHash,
-  appletHashFromAppId,
-  appletIdFromAppId,
   deStringifyWal,
   destringifyAndDecode,
   encodeAndStringify,
@@ -61,22 +60,19 @@ import {
   isAppDisabled,
   isAppRunning,
   stringifyWal,
-  toolBundleActionHashFromDistInfo,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
+import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
 import {
-  AppHashes,
-  AppletHash,
-  AppletId,
-  AppletNotification,
-  DistributionInfo,
-  GroupProfile,
-  WebHappSource,
-} from './types.js';
-import { Applet } from './types.js';
-import { GroupClient } from './groups/group-client.js';
-import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
+  appIdFromAppletHash,
+  appletHashFromAppId,
+  appletIdFromAppId,
+  toolBundleActionHashFromDistInfo,
+} from '@theweave/utils';
+import { AppletNotification } from './types.js';
+import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';

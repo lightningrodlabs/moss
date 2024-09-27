@@ -19,7 +19,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
-import { toolBundleActionHashFromDistInfo } from '../../utils.js';
+import { toolBundleActionHashFromDistInfo } from '@theweave/utils';
 
 @localized()
 @customElement('applets-sidebar')
