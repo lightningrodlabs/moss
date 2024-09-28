@@ -19,7 +19,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiClose, mdiMagnify } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiMagnify } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -65,7 +65,7 @@ import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
 import './pocket/pocket.js';
-import './pocket/overlay-pocket.js';
+import './pocket/pocket-drop.js';
 import './creatables/creatable-panel.js';
 import { MossPocket } from './pocket/pocket.js';
 import { CreatablePanel } from './creatables/creatable-panel.js';
@@ -169,7 +169,7 @@ export class MainDashboard extends LitElement {
   showCreatablePanel: boolean = false;
 
   @state()
-  _pocketOverlay: 'open' | 'select' | undefined;
+  _pocketDrop = false;
 
   @state()
   _openTabs: Record<string, TabInfo> = {}; // open tabs by id
@@ -210,6 +210,12 @@ export class MainDashboard extends LitElement {
   _draggedWal = new StoreSubscriber(
     this,
     () => this._mossStore.draggedWal(),
+    () => [this._mossStore],
+  );
+
+  _addedToPocket = new StoreSubscriber(
+    this,
+    () => this._mossStore.addedToPocket(),
     () => [this._mossStore],
   );
 
@@ -522,26 +528,18 @@ export class MainDashboard extends LitElement {
 
     // add eventlistener for pocket
     window.addEventListener('keydown', (zEvent) => {
-      if (zEvent.key === 'Escape' && this._pocketOverlay) {
-        this._pocketOverlay = undefined;
-      }
       if (zEvent.altKey && zEvent.key === 's') {
-        if (this._pocketOverlay) {
-          this._pocketOverlay = undefined;
-        } else {
-          this._pocketOverlay = 'open';
+        // case sensitive
+        switch (this.showClipboard) {
+          case false:
+            this.showClipboard = true;
+            this._pocket.show('open');
+            this._pocket.focus();
+            break;
+          case true:
+            this._pocket.hide();
+            break;
         }
-        // // case sensitive
-        // switch (this.showClipboard) {
-        //   case false:
-        //     this.showClipboard = true;
-        //     this._pocket.show('open');
-        //     this._pocket.focus();
-        //     break;
-        //   case true:
-        //     this._pocket.hide();
-        //     break;
-        // }
       }
     });
 
@@ -583,10 +581,9 @@ export class MainDashboard extends LitElement {
   }
 
   openClipboard() {
-    this._pocketOverlay = 'open';
-    // this.showClipboard = true;
-    // this._pocket.show('open');
-    // this._pocket.focus();
+    this.showClipboard = true;
+    this._pocket.show('open');
+    this._pocket.focus();
   }
 
   openCreatablePanel() {
@@ -1382,7 +1379,7 @@ export class MainDashboard extends LitElement {
             </button>
           </sl-tooltip>
         </div>
-        <div class="row center-content" style="margin-bottom: 5px;">
+        <div class="row center-content" style="margin-bottom: 5px; position: relative">
           <sl-tooltip content="Search" placement="right" hoist>
             <button
               class="moss-button"
@@ -1401,6 +1398,21 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
             </button>
           </sl-tooltip>
+          ${this._addedToPocket.value
+            ? html`
+                <div
+                  class="row items-center"
+                  style="position: absolute; left: calc(100% - 17px); cursor: default;"
+                  @click=${() => this.openClipboard()}
+                >
+                  <div class="arrow-left" style="z-index: 0"></div>
+                  <div class="row items-center justify-center added-to-pocket">
+                    <img style="height: 30px;" src="pocket_black.png" />
+                    <span style="margin-left: 10px;">Added to Pocket</span>
+                  </div>
+                </div>
+              `
+            : html``}
         </div>
         <div
           @dblclick=${() => this.openZomeCallPanel()}
@@ -1555,45 +1567,16 @@ export class MainDashboard extends LitElement {
               }}"
             >
               <div class="column center-content">
-                <img src="sidebar.svg" style="height: 34px; fill-color: red;" />
+                <img src="sidebar.svg" style="height: 34px;" />
               </div>
             </div>
           </sl-tooltip>
         </div>
       </div>
       <!-- POCKET OVERLAY -->
-      ${this._draggedWal.value || this._pocketOverlay
+      ${this._draggedWal.value
         ? html` <div class="overlay column">
-            <div class="esc-pocket-msg">Press 'Alt+S' or 'Esc' to exit</div>
-            <div style="position: fixed; bottom: 10px; right: 10px; color: white;">
-              <span style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
-                >Alt + S</span
-              >
-              to open Pocket
-            </div>
-            <div
-              class="column items-center justify-center"
-              style="position: relative; height: 100vh; width: 100vw;"
-            >
-              <overlay-pocket
-                class="flex flex-1"
-                style="width: 100vw;"
-                .hoverArea=${!!this._draggedWal.value}
-                @wal-dropped=${() => {
-                  this._pocketOverlay = undefined;
-                }}
-              ></overlay-pocket>
-            </div>
-
-            <button
-              @click=${() => {
-                console.log('Clicked');
-                this._pocketOverlay = undefined;
-              }}
-              class="close-overlay-btn"
-            >
-              <sl-icon src=${wrapPathInSvg(mdiClose)}></sl-icon>
-            </button>
+            <pocket-drop class="flex flex-1"></pocket-drop>
           </div>`
         : html``}
     `;
@@ -1614,33 +1597,48 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           left: 0;
           right: 0;
-          background: #011801e0;
+          background: #ffffff00;
           z-index: 99;
           display: flex;
         }
 
-        .esc-pocket-msg {
+        /* .esc-pocket-msg {
           position: fixed;
           top: 13px;
           left: 15px;
           font-size: 23px;
           color: white;
-        }
+        } */
 
-        .close-overlay-btn {
+        /* .close-overlay-btn {
           all: unset;
           color: white;
           cursor: pointer;
           position: fixed;
-          /* position: absolute; */
           top: 10px;
           right: 20px;
           font-size: 60px;
           font-weight: 500;
+        } */
+
+        /* .close-overlay-btn:hover {
+          color: #c3ffc7;
+        } */
+
+        .arrow-left {
+          width: 0;
+          height: 0;
+          border-top: 15px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-right: 15px solid #dbe755;
         }
 
-        .close-overlay-btn:hover {
-          color: #c3ffc7;
+        .added-to-pocket {
+          padding: 20px 15px;
+          border-radius: 10px;
+          background: #dbe755;
+          min-width: 200px;
+          box-shadow: 0 0 2px 2px #042007b4;
         }
 
         sl-dialog {

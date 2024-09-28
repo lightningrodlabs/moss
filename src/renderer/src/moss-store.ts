@@ -44,8 +44,6 @@ import {
   AppletHash,
   AppletId,
 } from '@theweave/api';
-import { notify } from '@holochain-open-dev/elements';
-import { msg } from '@lit/localize';
 
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
@@ -143,6 +141,8 @@ export class MossStore {
 
   _dragWal: Writable<WAL | undefined> = writable(undefined);
 
+  _addedToPocket: Writable<boolean> = writable(false);
+
   // Contains a record of CreatableContextRestult ordered by dialog id.
   _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
 
@@ -164,6 +164,10 @@ export class MossStore {
 
   clearDraggedWal() {
     this._dragWal.set(undefined);
+  }
+
+  addedToPocket() {
+    return derived(this._addedToPocket, (store) => store);
   }
 
   tzUtcOffset(): number {
@@ -1033,14 +1037,14 @@ export class MossStore {
       pocketContent.push(walStringified);
     }
     this.persistedStore.pocket.set(pocketContent);
-    notify(msg('Added to Pocket.'));
-    document.dispatchEvent(new CustomEvent('added-to-pocket'));
+    this._addedToPocket.set(true);
+    setTimeout(() => {
+      this._addedToPocket.set(false);
+    }, 2200);
   }
 
   clearPocket() {
     this.persistedStore.pocket.set([]);
-    notify(msg('Pocket cleared.'));
-    document.dispatchEvent(new CustomEvent('pocket-cleared'));
   }
 
   walToRecentlyCreated(wal: WAL) {
