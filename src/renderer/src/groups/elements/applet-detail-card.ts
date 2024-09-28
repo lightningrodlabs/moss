@@ -1,10 +1,10 @@
 import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64 } from '@holochain/client';
-import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { hashProperty, notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { mdiTrashCanOutline } from '@mdi/js';
+import { mdiArchiveArrowDownOutline, mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -73,12 +73,26 @@ export class AppletDetailCard extends LitElement {
   @state()
   appInfo: AppInfo | undefined | null;
 
+  @state()
+  showAdvanced = false;
+
   amISteward() {
     if (
       this.permissionType.value.status === 'complete' &&
       ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
     )
       return true;
+    return false;
+  }
+
+  canIArchive() {
+    const addedByMe =
+      this.addedBy &&
+      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
+    const iAmProgenitor =
+      this.permissionType.value.status === 'complete' &&
+      this.permissionType.value.value.type === 'Progenitor';
+    if (iAmProgenitor || addedByMe) return true;
     return false;
   }
 
@@ -113,6 +127,16 @@ export class AppletDetailCard extends LitElement {
         detail: this.appletHash,
       }),
     );
+  }
+
+  async archiveApplet() {
+    try {
+      await this.groupStore.groupClient.archiveApplet(this.appletHash);
+      notify(msg('Tool archived.'));
+    } catch (e) {
+      notifyError(msg('Failed to archive Tool (see console for details)'));
+      console.error(e);
+    }
   }
 
   async toggleAlwaysOnlineNodesSetting() {
@@ -209,7 +233,7 @@ export class AppletDetailCard extends LitElement {
               >${this.applet.custom_name}</span
             >
             <span style="margin-right: 5px; font-weight;">
-              ${this.appInfo && isAppRunning(this.appInfo) ? msg('disable') : msg('enable')}
+              ${this.appInfo && isAppRunning(this.appInfo) ? msg('enabled') : msg('disabled')}
             </span>
             <sl-tooltip
               .content=${this.appInfo && isAppRunning(this.appInfo)
@@ -260,32 +284,49 @@ export class AppletDetailCard extends LitElement {
             <span><b>joined by:&nbsp;</b></span>
             ${this.renderJoinedMembers()}
           </div>
-          ${this.renderMetaSettings()}
-          <!-- Cells -->
-          <div style="margin-top: 5px; margin-bottom: 3px;font-size: 20px;">
-            <b>Cells:</b>
-          </div>
-          <div>
-            ${this.appInfo
-              ? getProvisionedCells(this.appInfo).map(
-                  ([roleName, cellInfo]) => html`
-                    <div class="column cell-card">
-                      <div class="row" style="justify-content: flex-end;">
-                        <span><b>${roleName} </b></span><br />
+
+          <div class="row" style="margin-top: 10px; align-items: flex-end;">
+            <div class="row">
+              <button
+                @click=${() => {
+                  this.showAdvanced = !this.showAdvanced;
+                }}
+                style="all: unset; cursor: pointer;"
+              >
+                ${this.showAdvanced ? msg('Hide Advanced Settings') : msg('Show Advanced Settings')}
+              </button>
+            </div>
+            <span class="flex flex-1"></span>
+            ${this.canIArchive()
+              ? html`
+                  <sl-tooltip
+                    content=${msg(
+                      'Archiving will make it not show up anymore for new members in the "Unjoined Tools" section',
+                    )}
+                  >
+                    <sl-button
+                      variant="warning"
+                      style="margin-right: 5px;"
+                      @click=${() => this.archiveApplet()}
+                      @keypress=${async (e: KeyboardEvent) => {
+                        if (e.key === 'Enter') {
+                          this.archiveApplet();
+                        }
+                      }}
+                    >
+                      <div class="row center-content">
+                        <sl-icon
+                          style="height: 20px; width: 20px;"
+                          .src=${wrapPathInSvg(mdiArchiveArrowDownOutline)}
+                        ></sl-icon
+                        ><span style="margin-left: 5px;">${msg('Archive')}</span>
                       </div>
-                      <div style="margin-bottom: 3px;">
-                        <b>DNA hash:</b> ${dnaHashForCell(cellInfo)}
-                      </div>
-                      <div style="margin-bottom: 4px;">
-                        <b>network seed:</b> ${getCellNetworkSeed(cellInfo)}
-                      </div>
-                    </div>
-                  `,
-                )
+                    </sl-button>
+                  </sl-tooltip>
+                `
               : html``}
-          </div>
-          <div class="row" style="justify-content: flex-end; margin-top: 10px;">
-            <sl-tooltip content=${msg('Uninstall the app for yourself (irreversible)')}>
+
+            <sl-tooltip content=${msg('Uninstall this Tool for yourself (irreversible)')}>
               <sl-button
                 variant="danger"
                 @click=${() => this.uninstallApplet()}
@@ -305,6 +346,35 @@ export class AppletDetailCard extends LitElement {
               </sl-button>
             </sl-tooltip>
           </div>
+
+          ${this.showAdvanced
+            ? html`
+                ${this.renderMetaSettings()}
+                <!-- Cells -->
+                <div style="margin-top: 5px; margin-bottom: 3px;font-size: 20px;">
+                  <b>Cells:</b>
+                </div>
+                <div>
+                  ${this.appInfo
+                    ? getProvisionedCells(this.appInfo).map(
+                        ([roleName, cellInfo]) => html`
+                          <div class="column cell-card">
+                            <div class="row" style="justify-content: flex-end;">
+                              <span><b>${roleName} </b></span><br />
+                            </div>
+                            <div style="margin-bottom: 3px;">
+                              <b>DNA hash:</b> ${dnaHashForCell(cellInfo)}
+                            </div>
+                            <div style="margin-bottom: 4px;">
+                              <b>network seed:</b> ${getCellNetworkSeed(cellInfo)}
+                            </div>
+                          </div>
+                        `,
+                      )
+                    : html``}
+                </div>
+              `
+            : html``}
         </div>
       </sl-card>
     `;

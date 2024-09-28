@@ -48,7 +48,11 @@ export class TabGroup extends LitElement {
                 )}
               </div>
             </div>
-            <div class="content flex-scrollable-container" style="display: flex; flex: 1;">
+            <!-- content -->
+            <div
+              class="content flex-scrollable-container"
+              style="display: flex; flex: 1; overflow-x: auto;"
+            >
               ${this.selectedTab
                 ? this.tabs.filter((tab) => tab[0] === this.selectedTab![0])[0][1]
                 : this.tabs[0][1]}
