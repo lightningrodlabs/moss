@@ -139,6 +139,12 @@ const weaveApi: WeaveServices = {
       wal,
     }),
 
+  dragWal: (wal: WAL) =>
+    postMessage({
+      type: 'drag-wal',
+      wal,
+    }),
+
   userSelectWal: () =>
     postMessage({
       type: 'user-select-wal',

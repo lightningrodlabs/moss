@@ -556,10 +556,9 @@ async function fetchHappOrWebHappIfNecessary(
     }
     case 'localhost':
       const happBytes = fs.readFileSync(source.happPath);
-      const result: string = await rustUtils.validateHappOrWebhapp(
+      const { happSha256 } = await rustUtils.validateHappOrWebhapp(
         Array.from(new Uint8Array(happBytes)),
       );
-      const [happSha256] = result.split('$');
       return [source.happPath, happSha256, undefined, undefined, undefined];
     default:
       throw new Error(`Got invalid applet source: ${source}`);

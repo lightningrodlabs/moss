@@ -345,6 +345,10 @@ export type AppletToParentRequest =
       wal: WAL;
     }
   | {
+      type: 'drag-wal';
+      wal: WAL;
+    }
+  | {
       type: 'request-bind';
       srcWal: WAL;
       dstWal: WAL;

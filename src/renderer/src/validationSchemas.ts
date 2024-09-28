@@ -253,6 +253,13 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('drag-wal'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('request-bind'),
       srcWal: WAL,
       dstWal: WAL,
