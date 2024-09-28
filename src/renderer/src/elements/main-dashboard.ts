@@ -19,7 +19,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiMagnify } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiClose, mdiMagnify } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -36,6 +36,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
@@ -64,6 +65,7 @@ import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
 import './pocket/pocket.js';
+import './pocket/overlay-pocket.js';
 import './creatables/creatable-panel.js';
 import { MossPocket } from './pocket/pocket.js';
 import { CreatablePanel } from './creatables/creatable-panel.js';
@@ -167,6 +169,9 @@ export class MainDashboard extends LitElement {
   showCreatablePanel: boolean = false;
 
   @state()
+  _pocketOverlay: 'open' | 'select' | undefined;
+
+  @state()
   _openTabs: Record<string, TabInfo> = {}; // open tabs by id
 
   @state()
@@ -199,6 +204,12 @@ export class MainDashboard extends LitElement {
   _assetViewerState = new StoreSubscriber(
     this,
     () => this._mossStore.assetViewerState(),
+    () => [this._mossStore],
+  );
+
+  _draggedWal = new StoreSubscriber(
+    this,
+    () => this._mossStore.draggedWal(),
     () => [this._mossStore],
   );
 
@@ -511,18 +522,26 @@ export class MainDashboard extends LitElement {
 
     // add eventlistener for pocket
     window.addEventListener('keydown', (zEvent) => {
+      if (zEvent.key === 'Escape' && this._pocketOverlay) {
+        this._pocketOverlay = undefined;
+      }
       if (zEvent.altKey && zEvent.key === 's') {
-        // case sensitive
-        switch (this.showClipboard) {
-          case false:
-            this.showClipboard = true;
-            this._pocket.show('open');
-            this._pocket.focus();
-            break;
-          case true:
-            this._pocket.hide();
-            break;
+        if (this._pocketOverlay) {
+          this._pocketOverlay = undefined;
+        } else {
+          this._pocketOverlay = 'open';
         }
+        // // case sensitive
+        // switch (this.showClipboard) {
+        //   case false:
+        //     this.showClipboard = true;
+        //     this._pocket.show('open');
+        //     this._pocket.focus();
+        //     break;
+        //   case true:
+        //     this._pocket.hide();
+        //     break;
+        // }
       }
     });
 
@@ -564,9 +583,10 @@ export class MainDashboard extends LitElement {
   }
 
   openClipboard() {
-    this.showClipboard = true;
-    this._pocket.show('open');
-    this._pocket.focus();
+    this._pocketOverlay = 'open';
+    // this.showClipboard = true;
+    // this._pocket.show('open');
+    // this._pocket.focus();
   }
 
   openCreatablePanel() {
@@ -1257,7 +1277,15 @@ export class MainDashboard extends LitElement {
       </div>
 
       <!-- LEFT SIDEBAR -->
-      <div class="column left-sidebar">
+      <div
+        @dragover=${(e: DragEvent) => {
+          e.preventDefault();
+        }}
+        @drop=${(e: any) => {
+          console.log('GOT DROP EVENT: ', e);
+        }}
+        class="column left-sidebar"
+      >
         <div
           class="column top-left-corner ${this._dashboardState.value.viewType === 'personal' ||
           this.hoverPersonalView
@@ -1533,6 +1561,41 @@ export class MainDashboard extends LitElement {
           </sl-tooltip>
         </div>
       </div>
+      <!-- POCKET OVERLAY -->
+      ${this._draggedWal.value || this._pocketOverlay
+        ? html` <div class="overlay column">
+            <div class="esc-pocket-msg">Press 'Alt+S' or 'Esc' to exit</div>
+            <div style="position: fixed; bottom: 10px; right: 10px; color: white;">
+              <span style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
+                >Alt + S</span
+              >
+              to open Pocket
+            </div>
+            <div
+              class="column items-center justify-center"
+              style="position: relative; height: 100vh; width: 100vw;"
+            >
+              <overlay-pocket
+                class="flex flex-1"
+                style="width: 100vw;"
+                .hoverArea=${!!this._draggedWal.value}
+                @wal-dropped=${() => {
+                  this._pocketOverlay = undefined;
+                }}
+              ></overlay-pocket>
+            </div>
+
+            <button
+              @click=${() => {
+                console.log('Clicked');
+                this._pocketOverlay = undefined;
+              }}
+              class="close-overlay-btn"
+            >
+              <sl-icon src=${wrapPathInSvg(mdiClose)}></sl-icon>
+            </button>
+          </div>`
+        : html``}
     `;
   }
 
@@ -1543,6 +1606,41 @@ export class MainDashboard extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        .overlay {
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #011801e0;
+          z-index: 99;
+          display: flex;
+        }
+
+        .esc-pocket-msg {
+          position: fixed;
+          top: 13px;
+          left: 15px;
+          font-size: 23px;
+          color: white;
+        }
+
+        .close-overlay-btn {
+          all: unset;
+          color: white;
+          cursor: pointer;
+          position: fixed;
+          /* position: absolute; */
+          top: 10px;
+          right: 20px;
+          font-size: 60px;
+          font-weight: 500;
+        }
+
+        .close-overlay-btn:hover {
+          color: #c3ffc7;
         }
 
         sl-dialog {

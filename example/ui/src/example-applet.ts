@@ -85,6 +85,14 @@ export class ExampleApplet extends LitElement {
                           .cell_id[0];
                         this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'side');
                       }}
+                      @drag-post=${async (e: CustomEvent) => {
+                        console.log('GOT DRAG POST EVENT!');
+                        const appInfo = await client.appInfo();
+                        if (!appInfo) throw new Error('AppInfo is null.');
+                        const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
+                          .cell_id[0];
+                        this.weaveClient!.dragWal({ hrl: [dnaHash, e.detail] });
+                      }}
                     ></applet-main>
                   </profiles-context>
                 </attachments-context>

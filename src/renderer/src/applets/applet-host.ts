@@ -379,6 +379,9 @@ export async function handleAppletIframeMessage(
     case 'wal-to-pocket':
       mossStore.walToPocket(message.wal);
       break;
+    case 'drag-wal':
+      mossStore.dragWal(message.wal);
+      break;
     case 'user-select-wal':
       return openViews.userSelectWal();
     case 'user-select-screen':

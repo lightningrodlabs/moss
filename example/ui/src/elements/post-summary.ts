@@ -111,6 +111,7 @@ export class PostSummary extends LitElement {
 
   render() {
     return html`<sl-card
+      draggable="true"
       style="flex: 1; cursor: pointer;"
       tabindex="0"
       @click=${() =>
@@ -135,6 +136,16 @@ export class PostSummary extends LitElement {
             })
           );
         }
+      }}
+      @dragstart=${(e: DragEvent) => {
+        console.log('DRAGGING POST');
+        this.dispatchEvent(
+          new CustomEvent('drag-post', {
+            detail: this.postHash,
+            bubbles: true,
+            composed: true,
+          })
+        );
       }}
     >
       ${this.renderPost()}

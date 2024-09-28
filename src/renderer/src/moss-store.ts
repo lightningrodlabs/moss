@@ -141,6 +141,8 @@ export class MossStore {
     {},
   );
 
+  _dragWal: Writable<WAL | undefined> = writable(undefined);
+
   // Contains a record of CreatableContextRestult ordered by dialog id.
   _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
 
@@ -151,6 +153,18 @@ export class MossStore {
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
+
+  dragWal(wal: WAL) {
+    this._dragWal.set(wal);
+  }
+
+  draggedWal(): Readable<WAL | undefined> {
+    return derived(this._dragWal, (store) => store);
+  }
+
+  clearDraggedWal() {
+    this._dragWal.set(undefined);
+  }
 
   tzUtcOffset(): number {
     return this._tzUtcOffset ? this._tzUtcOffset : new Date().getTimezoneOffset();

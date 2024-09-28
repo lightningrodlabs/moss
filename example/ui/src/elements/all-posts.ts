@@ -1,5 +1,5 @@
 import { LitElement, html } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
@@ -17,6 +17,9 @@ import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { Post } from '../types.js';
+import { ActionHash } from '@holochain/client';
+import { weaveClientContext } from '@theweave/elements';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 
 /**
  * @element all-posts

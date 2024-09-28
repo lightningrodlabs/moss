@@ -261,6 +261,13 @@ export interface WeaveServices {
    */
   openWal: (wal: WAL, mode?: OpenWalMode) => Promise<void>;
   /**
+   * Request to drop a WAL into the pocket
+   * @param wal
+   * @param context
+   * @returns
+   */
+  dragWal: (wal: WAL) => Promise<void>;
+  /**
    * Get the group profile of the specified group
    * @param groupHash
    * @returns
@@ -376,6 +383,8 @@ export class WeaveClient implements WeaveServices {
 
   openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> =>
     window.__WEAVE_API__.openWal(wal, mode);
+
+  dragWal = (wal: WAL): Promise<void> => window.__WEAVE_API__.dragWal(wal);
 
   groupProfile = (groupHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
