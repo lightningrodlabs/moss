@@ -48,7 +48,7 @@ if [ -e /etc/lsb-release ]; then
   if [ $release_version == "24.04" ]; then
 
   # chown the sandbox on Ubuntu 24.04
-  chown '/opt/${productName}/chrome-sandbox' || true
+  chown root '/opt/${productName}/chrome-sandbox' || true
 
   # add AppArmor profile on Ubuntu 24.04
   profile_content="# This profile allows everything and only exists to give the
@@ -57,7 +57,7 @@ if [ -e /etc/lsb-release ]; then
 abi <abi/4.0>,
 include <tunables/global>
 
-profile ${appId} '/opt/${productName}/${appId}' flags=(unconfined) {
+profile ${appId} \\"/opt/${productName}/${appId}\\" flags=(unconfined) {
   userns,
 
   # Site-specific additions and overrides. See local/README for details.
