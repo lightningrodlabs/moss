@@ -539,7 +539,7 @@ export class GroupStore {
         false,
       );
     }
-    return this.groupClient.getMyJoinedAppletsHashes();
+    return this.groupClient.getGroupApplets();
   });
 
   // Applets that have been registered in the group by someone else but have never been installed

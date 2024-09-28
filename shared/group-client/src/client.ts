@@ -124,6 +124,10 @@ export class GroupClient {
     return this.callZome('get_joined_applet_agents', appletHash);
   }
 
+  async getAbandonedAppletAgents(appletHash: EntryHash): Promise<Array<AppletAgent>> {
+    return this.callZome('get_abandoned_applet_agents', appletHash);
+  }
+
   /**
    * Advertises the Applet in the group DNA, adds the Applet entry as a private
    * entry to the source chain and creates links from the applet to the public
