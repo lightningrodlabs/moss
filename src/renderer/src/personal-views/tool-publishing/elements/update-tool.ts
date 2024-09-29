@@ -15,9 +15,14 @@ import { MossStore } from '../../../moss-store.js';
 import { consume } from '@lit/context';
 import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../../utils.js';
-import { AppHashes, WebHappSource } from '../../../types.js';
+import { AppHashes, WebHappSource } from '@theweave/moss-types';
 import { validateHappOrWebhapp } from '../../../electron-api.js';
-import { Tool, UpdateToolInput, UpdateableEntity, UpdatedTool } from '../../tool-library/types.js';
+import {
+  Tool,
+  UpdateToolInput,
+  UpdateableEntity,
+  UpdatedTool,
+} from '@theweave/tool-library-client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 @localized()
@@ -130,12 +135,12 @@ export class UpdateTool extends LitElement {
       if (currentHashes.type === 'happ') {
         notifyAndThrow('Updating .happ files of headless applets is currently not supported.');
       } else if (currentHashes.type === 'webhapp') {
-        if (newHashes.type !== 'webhapp') {
+        if (newHashes!.type !== 'webhapp') {
           this._updating = undefined;
           notifyAndThrow("Previous applet version was of type 'webhapp' but got type 'happ' now.");
           return;
         }
-        if (currentHashes.happ.sha256 !== newHashes.happ.sha256) {
+        if (currentHashes.happ.sha256 !== newHashes!.happ.sha256) {
           this._updating = undefined;
           notifyAndThrow(
             'happ file hash does not match with the previous version. If you want to upload an applet with a new .happ file you need to create a new App entry.',

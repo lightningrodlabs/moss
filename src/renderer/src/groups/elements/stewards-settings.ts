@@ -15,7 +15,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64 } from '@holochain/client';
-import { PermissionType } from '../../types.js';
+import { PermissionType } from '@theweave/group-client';
 import { weStyles } from '../../shared-styles.js';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 

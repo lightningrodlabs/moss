@@ -200,7 +200,7 @@ function readAndValidateDevConfig(
   if (agentIdx && agentIdx > 10) throw new Error('the --agent-idx argument cannot exceed 10.');
   if (!fs.existsSync(configPath)) {
     throw new Error(
-      'No dev config found at the given path. If run via we-dev-cli and not specified otherwise via --dev-config, a dev config called we.dev.config.ts is expected in the current working directory',
+      'No dev config found at the given path. If run via @theweave/cli and not specified otherwise via --dev-config, a dev config called weave.dev.config.ts is expected in the current working directory',
     );
   }
 

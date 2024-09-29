@@ -31,14 +31,13 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
-import { AppletId } from '@lightningrodlabs/we-applet';
-import { appIdFromAppletHash, getCellId } from '../../utils.js';
+import { AppletId } from '@theweave/api';
+import { getCellId } from '../../utils.js';
 import { DumpData } from '../../types.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
-
-const TOOLS_LIBRARY_APP_ID = 'default-app#tool-library';
-const FEEDBACK_BOARD_APP_ID = 'default-app#feedback-board';
+import { FEEDBACK_BOARD_APP_ID, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 @localized()
 @customElement('debugging-panel')

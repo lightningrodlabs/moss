@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { EntryHash } from '@holochain/client';
 import { sharedStyles } from '@holochain-open-dev/elements';
-import { BlockType } from '@lightningrodlabs/we-applet';
+import { BlockType } from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
 import { asyncDeriveAndJoin, mapAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 
@@ -14,7 +14,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '../../custom-views/elements/create-custom-view.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { Applet } from '../../types.js';
+import { Applet } from '@theweave/group-client';
 import { appletOrigin } from '../../utils.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';

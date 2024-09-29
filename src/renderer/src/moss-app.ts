@@ -13,7 +13,7 @@ import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { getConductorInfo, isAppletDev } from './electron-api.js';
-import { ToolsLibraryClient } from './personal-views/tool-library/tools-library-client.js';
+import { ToolsLibraryClient } from '@theweave/tool-library-client';
 
 type State = { state: 'loading' } | { state: 'running' };
 

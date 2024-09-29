@@ -9,14 +9,10 @@ import {
   FunctionName,
   DnaHashB64,
 } from '@holochain/client';
-import {
-  AppletId,
-  AppletToParentMessage,
-  FrameNotification,
-  WAL,
-} from '@lightningrodlabs/we-applet';
+import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo, ToolWeaveConfig } from './types';
+import { AppAssetsInfo, AppHashes, DistributionInfo } from '@theweave/moss-types';
+import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -65,9 +61,7 @@ declare global {
         agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
-        sha256Happ: string,
-        sha256Ui?: string,
-        sha256Webhapp?: string,
+        appHashes: AppHashes,
         metadata?: string,
       ) => Promise<AppInfo>;
       isMainWindowFocused: () => Promise<boolean | undefined>;

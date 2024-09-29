@@ -8,7 +8,7 @@ const mossConfig = JSON.parse(mossConfigJSON);
 
 const targetDir = path.join('resources', 'default-apps');
 
-const groupHappUrl = `https://github.com/lightningrodlabs/we/releases/download/group-happ-v${mossConfig.groupHapp.version}/group.happ`;
+const groupHappUrl = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${mossConfig.groupHapp.version}/group.happ`;
 
 function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
   console.log('Downloading from ', url);

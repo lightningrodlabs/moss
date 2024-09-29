@@ -8,18 +8,18 @@ import {
   writable,
 } from '@holochain-open-dev/stores';
 import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochain/client';
-import { BlockType } from '@lightningrodlabs/we-applet';
+import { BlockType } from '@theweave/api';
 
 import { AppletHost } from './applet-host.js';
-import { Applet } from '../types.js';
 import {
   clearAppletNotificationStatus,
   getAllIframes,
   loadAppletNotificationStatus,
-  toolBundleActionHashFromDistInfo,
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
 import { ToolsLibraryStore } from '../personal-views/tool-library/tool-library-store.js';
+import { Applet } from '@theweave/group-client';
+import { toolBundleActionHashFromDistInfo } from '@theweave/utils';
 
 export class AppletStore {
   isAppletDev: boolean;

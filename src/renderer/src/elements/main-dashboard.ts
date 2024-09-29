@@ -28,18 +28,20 @@ import {
   WeaveLocation,
   weaveUrlToLocation,
   weaveUrlFromWal,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
+import { invitePropsToPartialModifiers } from '@theweave/utils';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
-import '@lightningrodlabs/we-elements/dist/elements/wal-to-pocket.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
+import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
 import '../personal-views/activity-view/activity-view.js';
@@ -63,6 +65,7 @@ import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
 import './pocket/pocket.js';
+import './pocket/pocket-drop.js';
 import './creatables/creatable-panel.js';
 import { MossPocket } from './pocket/pocket.js';
 import { CreatablePanel } from './creatables/creatable-panel.js';
@@ -72,7 +75,6 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  invitePropsToPartialModifiers,
   logMossZomeCall,
   progenitorFromProperties,
 } from '../utils.js';
@@ -167,6 +169,9 @@ export class MainDashboard extends LitElement {
   showCreatablePanel: boolean = false;
 
   @state()
+  _pocketDrop = false;
+
+  @state()
   _openTabs: Record<string, TabInfo> = {}; // open tabs by id
 
   @state()
@@ -199,6 +204,18 @@ export class MainDashboard extends LitElement {
   _assetViewerState = new StoreSubscriber(
     this,
     () => this._mossStore.assetViewerState(),
+    () => [this._mossStore],
+  );
+
+  _draggedWal = new StoreSubscriber(
+    this,
+    () => this._mossStore.draggedWal(),
+    () => [this._mossStore],
+  );
+
+  _addedToPocket = new StoreSubscriber(
+    this,
+    () => this._mossStore.addedToPocket(),
     () => [this._mossStore],
   );
 
@@ -1257,7 +1274,15 @@ export class MainDashboard extends LitElement {
       </div>
 
       <!-- LEFT SIDEBAR -->
-      <div class="column left-sidebar">
+      <div
+        @dragover=${(e: DragEvent) => {
+          e.preventDefault();
+        }}
+        @drop=${(e: any) => {
+          console.log('GOT DROP EVENT: ', e);
+        }}
+        class="column left-sidebar"
+      >
         <div
           class="column top-left-corner ${this._dashboardState.value.viewType === 'personal' ||
           this.hoverPersonalView
@@ -1354,7 +1379,7 @@ export class MainDashboard extends LitElement {
             </button>
           </sl-tooltip>
         </div>
-        <div class="row center-content" style="margin-bottom: 5px;">
+        <div class="row center-content" style="margin-bottom: 5px; position: relative">
           <sl-tooltip content="Search" placement="right" hoist>
             <button
               class="moss-button"
@@ -1373,6 +1398,21 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
             </button>
           </sl-tooltip>
+          ${this._addedToPocket.value
+            ? html`
+                <div
+                  class="row items-center"
+                  style="position: absolute; left: calc(100% - 17px); cursor: default;"
+                  @click=${() => this.openClipboard()}
+                >
+                  <div class="arrow-left" style="z-index: 0"></div>
+                  <div class="row items-center justify-center added-to-pocket">
+                    <img style="height: 30px;" src="pocket_black.png" />
+                    <span style="margin-left: 10px;">Added to Pocket</span>
+                  </div>
+                </div>
+              `
+            : html``}
         </div>
         <div
           @dblclick=${() => this.openZomeCallPanel()}
@@ -1527,12 +1567,18 @@ export class MainDashboard extends LitElement {
               }}"
             >
               <div class="column center-content">
-                <img src="sidebar.svg" style="height: 34px; fill-color: red;" />
+                <img src="sidebar.svg" style="height: 34px;" />
               </div>
             </div>
           </sl-tooltip>
         </div>
       </div>
+      <!-- POCKET OVERLAY -->
+      ${this._draggedWal.value
+        ? html` <div class="overlay column">
+            <pocket-drop class="flex flex-1"></pocket-drop>
+          </div>`
+        : html``}
     `;
   }
 
@@ -1543,6 +1589,56 @@ export class MainDashboard extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        .overlay {
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #ffffff00;
+          z-index: 99;
+          display: flex;
+        }
+
+        /* .esc-pocket-msg {
+          position: fixed;
+          top: 13px;
+          left: 15px;
+          font-size: 23px;
+          color: white;
+        } */
+
+        /* .close-overlay-btn {
+          all: unset;
+          color: white;
+          cursor: pointer;
+          position: fixed;
+          top: 10px;
+          right: 20px;
+          font-size: 60px;
+          font-weight: 500;
+        } */
+
+        /* .close-overlay-btn:hover {
+          color: #c3ffc7;
+        } */
+
+        .arrow-left {
+          width: 0;
+          height: 0;
+          border-top: 15px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-right: 15px solid #dbe755;
+        }
+
+        .added-to-pocket {
+          padding: 20px 15px;
+          border-radius: 10px;
+          background: #dbe755;
+          min-width: 200px;
+          box-shadow: 0 0 2px 2px #042007b4;
         }
 
         sl-dialog {

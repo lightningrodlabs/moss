@@ -9,8 +9,8 @@ import {
   getNonceExpiration,
   randomNonce,
 } from '@holochain/client';
-import { WeRustHandler, ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 import { encode } from '@msgpack/msgpack';
+import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -119,7 +119,7 @@ export async function signZomeCall(
     expiresAt: getNonceExpiration(),
   };
 
-  const zomeCallSignedNapi: ZomeCallNapi = await handler.signZomeCall(zomeCallUnsignedNapi);
+  const zomeCallSignedNapi = await handler.signZomeCall(zomeCallUnsignedNapi);
 
   const zomeCallSigned: CallZomeRequestSigned = {
     provenance: Uint8Array.from(zomeCallSignedNapi.provenance),

@@ -20,15 +20,15 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 
-import '@lightningrodlabs/attachments/dist/elements/attachments-card.js';
-import '@lightningrodlabs/attachments/dist/elements/attachments-bar.js';
+import '@theweave/attachments/dist/elements/attachments-card.js';
+import '@theweave/attachments/dist/elements/attachments-bar.js';
 
 import './edit-post.js';
 
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { Post } from '../types.js';
-import { WAL, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 /**
  * @element post-detail

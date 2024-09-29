@@ -15,7 +15,7 @@ import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { consume } from '@lit/context';
 import { resizeAndExport } from '../../../utils.js';
-import { DeveloperCollective } from '../../tool-library/types.js';
+import { DeveloperCollective } from '@theweave/tool-library-client';
 
 @localized()
 @customElement('create-developer-collective')

@@ -1,0 +1,49 @@
+{
+  "name": "@theweave/wdocker",
+  "version": "0.13.0-beta.6",
+  "description": "CLI to run always-online nodes for the Weave",
+  "license": "CAL-1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/moss.git"
+  },
+  "bin": {
+    "wdocker": "./dist/cli.js",
+    "wdaemon": "./dist/daemon/daemon.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc && cp ../moss.config.json ./dist"
+  },
+  "dependencies": {
+    "@folder/xdg": "4.0.1",
+    "@holochain/client": "0.18.0-dev.3",
+    "@inquirer/prompts": "6.0.1",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
+    "@msgpack/msgpack": "^2.8.0",
+    "@sinclair/typebox": "0.33.12",
+    "@theweave/api": "file:../libs/api",
+    "@theweave/utils": "file:../shared/utils",
+    "@theweave/group-client": "file:../shared/group-client",
+    "@theweave/tool-library-client": "file:../shared/tool-library-client",
+    "bufferutil": "4.0.8",
+    "cli-table": "0.3.11",
+    "commander": "11.1.0",
+    "get-folder-size": "5.0.0",
+    "get-port": "7.0.0",
+    "js-yaml": "^4.1.0",
+    "mime": "4.0.0",
+    "nanoid": "5.0.4",
+    "node-fetch": "3.3.2",
+    "ps-list": "8.1.1",
+    "split": "1.0.1",
+    "timeago.js": "4.0.2",
+    "ts-node": "10.9.2",
+    "utf-8-validate": "^6.0.3",
+    "uuid": "9.0.1",
+    "winston": "3.11.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

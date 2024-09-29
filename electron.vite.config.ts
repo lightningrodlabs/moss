@@ -6,7 +6,15 @@ export default defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin({
-        exclude: ['@holochain/client', '@holochain-open-dev/utils', 'nanoid', 'mime'],
+        exclude: [
+          '@holochain/client',
+          '@holochain-open-dev/utils',
+          'nanoid',
+          'mime',
+          '@theweave/moss-types',
+          '@theweave/utils',
+          '@lightningrodlabs/we-rust-utils',
+        ],
       }),
     ],
     build: {

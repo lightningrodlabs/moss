@@ -7,7 +7,7 @@ import { encodeHashToBase64 } from '@holochain/client';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { AssetInfo, WAL } from '@lightningrodlabs/we-applet';
+import { AssetInfo, WAL } from '@theweave/api';
 
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';

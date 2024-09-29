@@ -8,11 +8,14 @@ hero:
   tagline: Developer Documentation for Moss/The Weave<br><br>🚧 This documentation is still under construction 🚧
   actions:
     - theme: brand
-      text: Get Started
+      text: Start Building
       link: /build/overview
     - theme: alt
+      text: Concepts
+      link: /concepts/introduction
+    - theme: alt
       text: Weave API
-      link: /api-reference/api/we-applet
+      link: /api-reference/api/api
 # features:
 #   - title: Feature A
 #     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit

@@ -20,7 +20,7 @@ import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { groupStoreContext } from '../../groups/context.js';
-import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId } from '@theweave/api';
 import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';

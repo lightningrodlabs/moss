@@ -1,15 +1,15 @@
 {
-  "name": "@lightningrodlabs/we-dev-cli",
-  "version": "0.13.0-beta.5",
+  "name": "@theweave/cli",
+  "version": "0.13.0-beta.7",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lightningrodlabs/we.git"
+    "url": "git+https://github.com/lightningrodlabs/moss.git"
   },
   "main": "defineConfig.js",
   "bin": {
-    "we-dev-cli": "./cli.js"
+    "weave": "./cli.js"
   },
   "scripts": {
     "postinstall": "node ./fetch-binaries.mjs"
@@ -19,8 +19,8 @@
     "@electron-toolkit/utils": "^2.0.0",
     "@holochain/client": "0.18.0-dev.3",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
-    "@lightningrodlabs/we-applet": "0.17.1",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.10",
+    "@theweave/api": "0.1.0",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
     "adm-zip": "0.5.14",
@@ -35,5 +35,8 @@
     "utf-8-validate": "^6.0.3",
     "uuid": "9.0.1",
     "winston": "3.11.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -13,7 +13,7 @@ import { hashProperty } from '@holochain-open-dev/elements';
 import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { weStyles } from '../../../shared-styles.js';
-import { Tool, UpdateableEntity } from '../types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 
 @customElement('tool-bundle-title')
 export class AppletBundleTitle extends LitElement {

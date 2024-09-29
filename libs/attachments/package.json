@@ -1,6 +1,6 @@
 {
-  "name": "@lightningrodlabs/attachments",
-  "version": "0.6.0",
+  "name": "@theweave/attachments",
+  "version": "0.1.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -22,13 +22,13 @@
     "@holochain-open-dev/stores": "0.400.0-dev.0",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@holochain/client": "0.18.0-dev.3",
-    "@lightningrodlabs/we-applet": "file:../we-applet",
-    "@lightningrodlabs/we-elements": "file:../we-elements",
+    "@theweave/api": "0.1.0",
+    "@theweave/elements": "0.1.1",
     "@lit/context": "^1.0.1",
     "@lit/localize": "^0.12.0",
     "@material/web": "=1.0.0-pre.9",
     "@mdi/js": "^7.2.0",
-    "@shoelace-style/shoelace": "2.15.1",
+    "@shoelace-style/shoelace": "2.16.0",
     "lit": "^3.0.2"
   },
   "devDependencies": {

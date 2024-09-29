@@ -1,5 +1,5 @@
 import { LitElement, html } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
@@ -10,13 +10,16 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-//import '@lightningrodlabs/attachments/dist/elements/add-attachment.js';
+//import '@theweave/attachments/dist/elements/add-attachment.js';
 
 import './post-summary.js';
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { Post } from '../types.js';
+import { ActionHash } from '@holochain/client';
+import { weaveClientContext } from '@theweave/elements';
+import { WeaveClient, WeaveServices } from '@theweave/api';
 
 /**
  * @element all-posts

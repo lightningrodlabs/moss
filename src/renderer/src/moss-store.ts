@@ -41,18 +41,15 @@ import {
   ProfilesLocation,
   CreatableType,
   NULL_HASH,
-} from '@lightningrodlabs/we-applet';
-import { notify } from '@holochain-open-dev/elements';
-import { msg } from '@lit/localize';
+  AppletHash,
+  AppletId,
+} from '@theweave/api';
 
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
 import {
-  appIdFromAppletHash,
-  appletHashFromAppId,
-  appletIdFromAppId,
   deStringifyWal,
   destringifyAndDecode,
   encodeAndStringify,
@@ -61,22 +58,19 @@ import {
   isAppDisabled,
   isAppRunning,
   stringifyWal,
-  toolBundleActionHashFromDistInfo,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
+import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
 import {
-  AppHashes,
-  AppletHash,
-  AppletId,
-  AppletNotification,
-  DistributionInfo,
-  GroupProfile,
-  WebHappSource,
-} from './types.js';
-import { Applet } from './types.js';
-import { GroupClient } from './groups/group-client.js';
-import { Tool, UpdateableEntity } from './personal-views/tool-library/types.js';
+  appIdFromAppletHash,
+  appletHashFromAppId,
+  appletIdFromAppId,
+  toolBundleActionHashFromDistInfo,
+} from '@theweave/utils';
+import { AppletNotification } from './types.js';
+import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
@@ -145,6 +139,10 @@ export class MossStore {
     {},
   );
 
+  _dragWal: Writable<WAL | undefined> = writable(undefined);
+
+  _addedToPocket: Writable<boolean> = writable(false);
+
   // Contains a record of CreatableContextRestult ordered by dialog id.
   _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
 
@@ -155,6 +153,22 @@ export class MossStore {
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
+
+  dragWal(wal: WAL) {
+    this._dragWal.set(wal);
+  }
+
+  draggedWal(): Readable<WAL | undefined> {
+    return derived(this._dragWal, (store) => store);
+  }
+
+  clearDraggedWal() {
+    this._dragWal.set(undefined);
+  }
+
+  addedToPocket() {
+    return derived(this._addedToPocket, (store) => store);
+  }
 
   tzUtcOffset(): number {
     return this._tzUtcOffset ? this._tzUtcOffset : new Date().getTimezoneOffset();
@@ -918,8 +932,11 @@ export class MossStore {
       throw new Error(`Invalid applet source URL '${source.url}'`);
 
     const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-    if (appHashes.type !== 'webhapp')
-      throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+    // Only in dev mode AppHashes of type 'happ' are currently allowed
+    if (appHashes.type !== 'webhapp' && !this.isAppletDev)
+      throw new Error(
+        `Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${toolEntity.record.entry.hashes}`,
+      );
 
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
 
@@ -937,9 +954,7 @@ export class MossStore {
       encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       source.url,
       distributionInfo,
-      appHashes.happ.sha256,
-      appHashes.ui.sha256,
-      appHashes.sha256,
+      appHashes,
       toolEntity.record.entry.meta_data,
     );
 
@@ -1022,14 +1037,14 @@ export class MossStore {
       pocketContent.push(walStringified);
     }
     this.persistedStore.pocket.set(pocketContent);
-    notify(msg('Added to Pocket.'));
-    document.dispatchEvent(new CustomEvent('added-to-pocket'));
+    this._addedToPocket.set(true);
+    setTimeout(() => {
+      this._addedToPocket.set(false);
+    }, 2200);
   }
 
   clearPocket() {
     this.persistedStore.pocket.set([]);
-    notify(msg('Pocket cleared.'));
-    document.dispatchEvent(new CustomEvent('pocket-cleared'));
   }
 
   walToRecentlyCreated(wal: WAL) {

@@ -28,8 +28,8 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { WeaveClient, WeaveServices, weaveUrlFromWal } from '@lightningrodlabs/we-applet';
-import { weaveClientContext } from '@lightningrodlabs/we-elements';
+import { WeaveClient, WeaveServices, weaveUrlFromWal } from '@theweave/api';
+import { weaveClientContext } from '@theweave/elements';
 
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';

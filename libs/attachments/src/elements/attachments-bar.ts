@@ -9,8 +9,8 @@
 // import { consume } from '@lit/context';
 // import { AttachmentsStore } from '../attachments-store.js';
 // import { attachmentsStoreContext } from '../context.js';
-// import { weaveClientContext } from '@lightningrodlabs/we-elements';
-// import { WAL, WeaveClient, WeaveServices } from '@lightningrodlabs/we-applet';
+// import { weaveClientContext } from '@theweave/elements';
+// import { WAL, WeaveClient, WeaveServices } from '@theweave/api';
 // import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 // @localized()

@@ -21,7 +21,7 @@ import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { groupStoreContext } from '../../groups/context.js';
-import { AppletId } from '@lightningrodlabs/we-applet';
+import { AppletId } from '@theweave/api';
 
 // Sidebar for the applet instances of a group
 @localized()

@@ -4,16 +4,15 @@ import path from 'path';
 import { BrowserWindow } from 'electron';
 import { DistributionInfo, MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { TOOLS_LIBRARY_APP_ID } from './sharedTypes';
+import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './cli/devSetup';
-import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
-
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS = {
@@ -87,7 +86,7 @@ export async function launch(
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   // APP_PORT = holochainManager.appPort;cd di
 
-  const weRustHandler: WeRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
+  const weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
 
   // Install default appstore if necessary:
   if (
@@ -140,10 +139,11 @@ export async function launch(
           ) {
             const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
             const webHappBytes = fs.readFileSync(webHappPath);
-            const hashResult = await rustUtils.validateHappOrWebhapp(Array.from(webHappBytes));
-            const [happHash, uiHash, webHappHash] = hashResult.split('$');
-            console.log('READ uiHash: ', uiHash);
-            if (happHash !== currentAppAssetsInfo.happ.sha256) {
+            const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(
+              Array.from(webHappBytes),
+            );
+            console.log('READ uiHash: ', uiSha256);
+            if (happSha256 !== currentAppAssetsInfo.happ.sha256) {
               // In case that the previous happ sha256 is not the one of KanDo 0.9.1, replace it fully
               // const sha256Happ_0_9_1 =
               //   'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
@@ -181,17 +181,17 @@ export async function launch(
               return;
               // }
             }
-            if (uiHash && uiHash !== currentAppAssetsInfo.ui.location.sha256) {
+            if (uiSha256 && uiSha256 !== currentAppAssetsInfo.ui.location.sha256) {
               // TODO emit this to the logs
               console.log(`Found new UI for default app '${appId}'. Installing.`);
               const newAppAssetsInfo = currentAppAssetsInfo;
-              newAppAssetsInfo.sha256 = webHappHash;
+              newAppAssetsInfo.sha256 = webhappSha256;
               (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
-                uiHash;
+                uiSha256;
               await rustUtils.saveHappOrWebhapp(
                 webHappPath,
-                mossFileSystem.uisDir,
                 mossFileSystem.happsDir,
+                mossFileSystem.uisDir,
               );
               mossFileSystem.backupAppAssetsInfo(appId);
               mossFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);

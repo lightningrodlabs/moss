@@ -9,7 +9,6 @@ import {
   CallZomeRequest,
   CallZomeRequestSigned,
   EntryHash,
-  HoloHashB64,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -37,8 +36,9 @@ import {
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
   AppletId,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { readable } from '@holochain-open-dev/stores';
+import { toOriginalCaseB64 } from '@theweave/utils';
 
 declare global {
   interface Window {
@@ -139,6 +139,12 @@ const weaveApi: WeaveServices = {
       wal,
     }),
 
+  dragWal: (wal: WAL) =>
+    postMessage({
+      type: 'drag-wal',
+      wal,
+    }),
+
   userSelectWal: () =>
     postMessage({
       type: 'user-select-wal',
@@ -224,7 +230,13 @@ const weaveApi: WeaveServices = {
         const result = await handleMessage(appletClient, appletHash, m.data);
         m.ports[0].postMessage({ type: 'success', result });
       } catch (e) {
-        m.ports[0].postMessage({ type: 'error', error: (e as any).message });
+        console.error(
+          'Failed to send postMessage to applet ',
+          encodeHashToBase64(appletHash),
+          ': ',
+          e,
+        );
+        m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
       }
     });
 
@@ -351,8 +363,9 @@ const handleMessage = async (
           detail: message.payload,
         }),
       );
+      break;
     default:
-      throw new Error('Unknown ParentToAppletMessage');
+      throw new Error(`Unknown ParentToAppletMessage: '${(message as any).type}'`);
   }
 };
 
@@ -366,7 +379,22 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
     };
 
     // eslint-disable-next-line no-restricted-globals
-    top!.postMessage(message, '*', [channel.port2]);
+    try {
+      top!.postMessage(message, '*', [channel.port2]);
+    } catch (e: any) {
+      let couldNotBeClonedError = false;
+      if (e.toString) {
+        couldNotBeClonedError = e.toString().includes('could not be cloned');
+        console.error(
+          'Invalid iframe message format. Please check the format of the payload of your request. Your request:',
+          request,
+          '\n\nError:\n',
+          e,
+        );
+      } else {
+        console.error('Failed to send postMessage to Moss: ', e);
+      }
+    }
 
     channel.port1.onmessage = (m) => {
       if (m.data.type === 'success') {
@@ -383,7 +411,10 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     url: new URL(`ws://127.0.0.1:${appPort}`),
     token,
     callZomeTransform: {
-      input: async (request) => signZomeCall(request),
+      input: async (request) => {
+        if ('signature' in request) return request;
+        return signZomeCall(request);
+      },
       output: (o) => decode(o as any),
     },
   });
@@ -436,20 +467,6 @@ function readAppletId(): AppletId {
   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
   return toOriginalCaseB64(lowercaseB64Id);
-}
-
-// IMPORTANT: If this function is changed, the same function in src/renderer/src/utils.ts needs
-// to be changed accordingly
-function appIdFromAppletHash(appletHash: EntryHash): string {
-  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
-function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 async function getRenderView(): Promise<RenderView | undefined> {

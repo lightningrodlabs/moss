@@ -15,7 +15,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { PostsStore } from '../posts-store';
 import { postsStoreContext } from '../context';
 import { Post } from '../types';
-import { type FrameNotification } from '@lightningrodlabs/we-applet';
+import { type FrameNotification } from '@theweave/api';
 
 /**
  * @element post-summary
@@ -111,6 +111,7 @@ export class PostSummary extends LitElement {
 
   render() {
     return html`<sl-card
+      draggable="true"
       style="flex: 1; cursor: pointer;"
       tabindex="0"
       @click=${() =>
@@ -135,6 +136,16 @@ export class PostSummary extends LitElement {
             })
           );
         }
+      }}
+      @dragstart=${(e: DragEvent) => {
+        console.log('DRAGGING POST');
+        this.dispatchEvent(
+          new CustomEvent('drag-post', {
+            detail: this.postHash,
+            bubbles: true,
+            composed: true,
+          })
+        );
       }}
     >
       ${this.renderPost()}

@@ -184,16 +184,18 @@ export class HolochainManager {
     console.log(`Installing webhapp '${appId}'...`);
     const uisDir = this.fs.uisDir;
     const happsDir = this.fs.happsDir;
-    const result: string = await rustUtils.saveHappOrWebhapp(filePath, uisDir, happsDir);
-    // webHappHash should only be returned if it is actually a webhapp
-    const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
+    const { happPath, happSha256, webhappSha256, uiSha256 } = await rustUtils.saveHappOrWebhapp(
+      filePath,
+      happsDir,
+      uisDir,
+    );
 
-    if (!webHappHash) throw new Error('Got no webhapp hash.');
-    if (!happHash) throw new Error('Got no happ hash.');
-    if (!uiHash) throw new Error('Got no UI hash.');
+    if (!webhappSha256) throw new Error('Got no webhapp hash.');
+    if (!happSha256) throw new Error('Got no happ hash.');
+    if (!uiSha256) throw new Error('Got no UI hash.');
 
     console.log(
-      `Saved webhapp and got hashes:\nhapp: ${happHash}\nui:${uiHash}\nwebhapp: ${webHappHash}`,
+      `Saved webhapp and got hashes:\nhapp: ${happSha256}\nui:${uiSha256}\nwebhapp: ${webhappSha256}`,
     );
 
     // Use dedicated agent public keys for webhapps (i.e. not Applets)
@@ -202,25 +204,25 @@ export class HolochainManager {
       agent_key: pubKey,
       installed_app_id: appId,
       membrane_proofs: {},
-      path: happFilePath,
+      path: happPath,
       network_seed: networkSeed,
     });
 
     // Store app assets info
     const appAssetsInfo: AppAssetsInfo = {
       type: 'webhapp',
-      sha256: webHappHash,
+      sha256: webhappSha256,
       assetSource: {
         type: 'default-app',
       },
       distributionInfo,
       happ: {
-        sha256: happHash,
+        sha256: happSha256,
       },
       ui: {
         location: {
           type: 'filesystem',
-          sha256: uiHash,
+          sha256: uiSha256,
         },
       },
     };

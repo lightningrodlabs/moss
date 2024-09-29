@@ -1,4 +1,4 @@
-import { AppletHash, AppletInfo, AssetLocationAndInfo, WAL } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletInfo, AssetLocationAndInfo, WAL } from '@theweave/api';
 import { stringifyWal } from './utils';
 import { SubStore } from './persisted-store';
 import { encodeHashToBase64 } from '@holochain/client';

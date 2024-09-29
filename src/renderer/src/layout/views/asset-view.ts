@@ -8,10 +8,10 @@ import { mdiHomeImportOutline, mdiOpenInNew, mdiShareVariantOutline } from '@mdi
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@lightningrodlabs/we-elements/dist/elements/share-wal.js';
-import '@lightningrodlabs/we-elements/dist/elements/weave-client-context.js';
+import '@theweave/elements/dist/elements/share-wal.js';
+import '@theweave/elements/dist/elements/weave-client-context.js';
 
-import { encodeContext, WAL } from '@lightningrodlabs/we-applet';
+import { encodeContext, WAL } from '@theweave/api';
 
 import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';

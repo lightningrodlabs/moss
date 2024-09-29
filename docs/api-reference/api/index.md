@@ -19,7 +19,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[@lightningrodlabs/we-applet](./we-applet.md)
+[@theweave/api](./api.md)
 
 
 </td><td>

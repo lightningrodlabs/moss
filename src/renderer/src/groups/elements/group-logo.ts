@@ -3,7 +3,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
-import { GroupProfile } from '@lightningrodlabs/we-applet';
+import { GroupProfile } from '@theweave/api';
 import { DnaHash, encodeHashToBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';

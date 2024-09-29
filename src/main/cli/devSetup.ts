@@ -5,7 +5,8 @@ import mime from 'mime';
 
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
-import { TOOLS_LIBRARY_APP_ID, AppHashes, Tool, DeveloperCollective } from '../sharedTypes';
+import { Tool, DeveloperCollective } from '../sharedTypes';
+import { AppHashes, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
@@ -14,13 +15,11 @@ import {
   AppInfo,
   DnaHashB64,
   EntryHash,
-  HoloHashB64,
   Link,
   encodeHashToBase64,
   Record as HolochainRecord,
   GrantedFunctionsType,
 } from '@holochain/client';
-import { AppletHash } from '@lightningrodlabs/we-applet';
 import { AppAssetsInfo, DistributionInfo, MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
@@ -35,10 +34,10 @@ import {
   WebHappLocation,
 } from './defineConfig';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import * as rustUtils from '@lightningrodlabs/we-rust-utils';
 import * as yaml from 'js-yaml';
-
-// const rustUtils = require('@lightningrodlabs/we-rust-utils');
+import { HC_BINARY } from '../binaries';
+import { appIdFromAppletHash } from '@theweave/utils';
+const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function readLocalServices(): Promise<[string, string]> {
   if (!fs.existsSync('.hc_local_services')) {
@@ -61,14 +60,22 @@ export async function startLocalServices(): Promise<
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
-  const localServicesHandle = childProcess.spawn('hc', ['run-local-services']);
+  const hcBinaryInResources = fs.existsSync(HC_BINARY);
+  if (!hcBinaryInResources)
+    console.warn(
+      '\n\n###################\n\nWARNING: No hc binary found in the resources folder. Using hc from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
+    );
+
+  const hcBinary = hcBinaryInResources ? HC_BINARY : 'hc';
+
+  const localServicesHandle = childProcess.spawn(hcBinary, ['run-local-services']);
   return new Promise((resolve) => {
     let bootstrapUrl;
     let signalingUrl;
     let bootstrapRunning = false;
     let signalRunnig = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      console.log(`[we-dev-cli] | [hc run-local-services]: ${line}`);
+      console.log(`[weave-cli] | [hc run-local-services]: ${line}`);
       if (line.includes('HC BOOTSTRAP - ADDR:')) {
         bootstrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
       }
@@ -86,7 +93,7 @@ export async function startLocalServices(): Promise<
         resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
-      console.log(`[we-dev-cli] | [hc run-local-services] ERROR: ${line}`);
+      console.log(`[weave-cli] | [hc run-local-services] ERROR: ${line}`);
     });
   });
 }
@@ -96,7 +103,7 @@ export async function devSetup(
   holochainManager: HolochainManager,
   mossFileSystem: MossFileSystem,
 ): Promise<void> {
-  const logDevSetup = (msg) => console.log(`[we-dev-cli] | [Agent ${config.agentIdx}]: ${msg}`);
+  const logDevSetup = (msg) => console.log(`[weave-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, EntryRecord<Tool>> = {};
   const installableApplets: Record<
@@ -430,14 +437,6 @@ async function joinGroup(
   return groupWebsocket;
 }
 
-function appIdFromAppletHash(appletHash: AppletHash): string {
-  return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
 async function readIcon(location: ResourceLocation) {
   switch (location.type) {
     case 'filesystem': {
@@ -524,38 +523,43 @@ async function fetchHappOrWebHappIfNecessary(
 
       const uisDir = path.join(mossFileSystem.uisDir);
       const happsDir = path.join(mossFileSystem.happsDir);
-      const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
+      const { happPath, happSha256, webhappSha256, uiSha256 } = await rustUtils.saveHappOrWebhapp(
+        happOrWebHappPath,
+        happsDir,
+        uisDir,
+      );
       fs.rmSync(tmpDir, { recursive: true });
-      // webHappHash should only be returned if it is actually a webhapp
-      const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
       return [
-        happFilePath,
-        happHash,
-        uiHash ? uiHash : undefined,
-        webHappHash ? webHappHash : undefined,
-        webHappHash ? happOrWebHappPath : undefined,
+        happPath,
+        happSha256,
+        uiSha256,
+        webhappSha256,
+        webhappSha256 ? happOrWebHappPath : undefined,
       ];
     }
     case 'filesystem': {
       const happOrWebHappPath = source.path;
       const uisDir = path.join(mossFileSystem.uisDir);
       const happsDir = path.join(mossFileSystem.happsDir);
-      const result: string = await rustUtils.saveHappOrWebhapp(happOrWebHappPath, uisDir, happsDir);
-      const [happFilePath, happHash, uiHash, webHappHash] = result.split('$');
+      const { happPath, happSha256, webhappSha256, uiSha256 } = await rustUtils.saveHappOrWebhapp(
+        happOrWebHappPath,
+        happsDir,
+        uisDir,
+      );
       return [
-        happFilePath,
-        happHash,
-        uiHash ? uiHash : undefined,
-        webHappHash ? webHappHash : undefined,
-        webHappHash ? happOrWebHappPath : undefined,
+        happPath,
+        happSha256,
+        uiSha256,
+        webhappSha256,
+        webhappSha256 ? happOrWebHappPath : undefined,
       ];
     }
     case 'localhost':
       const happBytes = fs.readFileSync(source.happPath);
-      const hash = createHash('sha256');
-      hash.update(happBytes);
-      const happHash = hash.digest('hex');
-      return [source.happPath, happHash, undefined, undefined, undefined];
+      const { happSha256 } = await rustUtils.validateHappOrWebhapp(
+        Array.from(new Uint8Array(happBytes)),
+      );
+      return [source.happPath, happSha256, undefined, undefined, undefined];
     default:
       throw new Error(`Got invalid applet source: ${source}`);
   }

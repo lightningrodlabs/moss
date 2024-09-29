@@ -11,9 +11,9 @@ import {
   WeaveUrl,
   weaveUrlToLocation,
   WeaveClient,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-import { appletOrigin, urlFromAppletHash } from '@lightningrodlabs/we-elements';
+import { appletOrigin, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash, EntryHash } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';

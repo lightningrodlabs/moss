@@ -1,4 +1,4 @@
-import { ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
+import { Profile, ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   AsyncReadable,
   AsyncStatus,
@@ -16,41 +16,43 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, LazyHoloHashMap, ZomeClient, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, EntryRecord, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppClient,
   AppWebsocket,
   CellType,
   DnaHash,
   EntryHash,
-  RoleName,
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, ParentToAppletMessage, PeerStatus } from '@lightningrodlabs/we-applet';
+import { AppletHash, ParentToAppletMessage, PeerStatus } from '@theweave/api';
 
-import { GroupClient } from './group-client.js';
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
-import { Applet, JoinAppletInput } from '../types.js';
 import {
-  appIdFromAppletHash,
+  Applet,
+  JoinAppletInput,
+  GroupClient,
+  AppletAgent,
+} from '../../../../shared/group-client/dist/index.js';
+import {
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
-  toLowerCaseB64,
 } from '../utils.js';
-import { AppHashes, AppletAgent, DistributionInfo } from '../types.js';
-import { Tool, UpdateableEntity } from '../personal-views/tool-library/types.js';
+import { AppHashes, DistributionInfo } from '@theweave/moss-types';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
+import { PeerStatusClient, SignalPayload } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
+import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
@@ -69,6 +71,8 @@ export class GroupStore {
   customViewsStore: CustomViewsStore;
 
   members: AsyncReadable<Array<AgentPubKey>>;
+
+  membersWithProfiles: AsyncReadable<ReadonlyMap<Uint8Array, EntryRecord<Profile>>>;
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
@@ -97,6 +101,7 @@ export class GroupStore {
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket as any, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
+    this.membersWithProfiles = this.profilesStore.allProfiles;
 
     this.foyerStore = new FoyerStore(
       this.profilesStore,
@@ -190,11 +195,15 @@ export class GroupStore {
 
   groupDescription = reloadableLazyLoadAndPollUntil(
     async () => {
-      const entryRecord = await this.groupClient.getGroupMetaData('description');
+      const entryRecord = await this.groupClient.getGroupDescription();
       return entryRecord?.entry;
     },
     undefined,
     10000,
+  );
+
+  groupAppletsMetaData = lazyReloadableStore(async () =>
+    this.groupClient.getGroupAppletsMetaData(),
   );
 
   peerStatuses(): Readable<Record<AgentPubKeyB64, PeerStatus> | undefined> {
@@ -533,7 +542,7 @@ export class GroupStore {
         false,
       );
     }
-    return this.groupClient.getMyJoinedAppletsHashes();
+    return this.groupClient.getGroupApplets();
   });
 
   // Applets that have been registered in the group by someone else but have never been installed
@@ -643,38 +652,6 @@ export class GroupStore {
   }
 }
 
-export class PeerStatusClient extends ZomeClient<SignalPayload> {
-  constructor(
-    public client: AppClient,
-    public roleName: RoleName,
-    public zomeName = 'peer_status',
-  ) {
-    super(client, roleName, zomeName);
-  }
-
-  /**
-   * Ping all specified agents, expecting for their pong later
-   */
-  async ping(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('ping', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-
-  /**
-   * Pong all specified agents
-   */
-  async pong(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('pong', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-}
-
 async function retryUntilResolved<T>(
   fn: () => Promise<T>,
   retryInterval: number = 200,
@@ -705,17 +682,3 @@ function delay(ms: number): Promise<void> {
     setTimeout(resolve, ms);
   });
 }
-
-export type SignalPayload =
-  | {
-      type: 'Ping';
-      from_agent: AgentPubKey;
-      status: string;
-      tz_utc_offset: number;
-    }
-  | {
-      type: 'Pong';
-      from_agent: AgentPubKey;
-      status: string;
-      tz_utc_offset: number;
-    };

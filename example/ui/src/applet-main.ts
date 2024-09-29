@@ -13,14 +13,15 @@ import {
   weaveUrlToLocation,
   ReadonlyPeerStatusStore,
   GroupPermissionType,
-} from '@lightningrodlabs/we-applet';
+} from '@theweave/api';
 import { AgentPubKey, AppClient } from '@holochain/client';
-import '@lightningrodlabs/we-elements/dist/elements/wal-embed.js';
+import '@theweave/elements/dist/elements/wal-embed.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { consume } from '@lit/context';
+import { consume, provide } from '@lit/context';
 import './elements/agent-status.js';
 import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
+import { weaveClientContext } from '@theweave/elements';
 
 @localized()
 @customElement('applet-main')
@@ -28,6 +29,7 @@ export class AppletMain extends LitElement {
   @property()
   client!: AppClient;
 
+  @provide({ context: weaveClientContext })
   @property()
   weaveClient!: WeaveClient;
 

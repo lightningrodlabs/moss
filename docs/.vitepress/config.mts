@@ -9,10 +9,18 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Concepts', link: '/concepts/introduction' },
-      { text: 'API', link: '/api-reference/api/we-applet' },
+      { text: 'API', link: '/api-reference/api/api' },
     ],
 
     sidebar: [
+      {
+        text: '📚 Concepts',
+        collapsed: false,
+        items: [
+          { text: 'Introduction', link: '/concepts/introduction' },
+          { text: 'Tech Overview', link: '/concepts/overview' },
+        ],
+      },
       {
         text: '🛠️ Build a Weave Tool',
         collapsed: false,
@@ -55,14 +63,9 @@ export default defineConfig({
         ],
       },
       {
-        text: '📚 Concepts',
-        collapsed: false,
-        items: [{ text: 'Introduction', link: '/concepts/introduction' }],
-      },
-      {
         text: '📖 API Reference',
         collapsed: false,
-        items: [{ text: '@lightningrodlabs/we-applet', link: '/api-reference/api/we-applet.html' }],
+        items: [{ text: '@theweave/api', link: '/api-reference/api/api.html' }],
       },
     ],
 

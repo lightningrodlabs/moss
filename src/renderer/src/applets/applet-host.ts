@@ -1,19 +1,19 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
-  AppletInfo,
-  AssetInfo,
-  AssetLocationAndInfo,
-  WAL,
-  AppletToParentRequest,
-  ParentToAppletMessage,
-  IframeConfig,
-  BlockType,
-  WeaveServices,
-  GroupProfile,
-  FrameNotification,
-  RecordInfo,
-  PeerStatusUpdate,
-} from '@lightningrodlabs/we-applet';
+  type AppletInfo,
+  type AssetInfo,
+  type AssetLocationAndInfo,
+  type WAL,
+  type AppletToParentRequest,
+  type ParentToAppletMessage,
+  type IframeConfig,
+  type BlockType,
+  type WeaveServices,
+  type GroupProfile,
+  type FrameNotification,
+  type RecordInfo,
+  type PeerStatusUpdate,
+} from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 
 import { AppOpenViews } from '../layout/types.js';
@@ -25,9 +25,8 @@ import {
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
-import { AppletHash, AppletId, PermissionType } from '../types.js';
+import { AppletHash, AppletId } from '@theweave/api';
 import {
-  appIdFromAppletHash,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
@@ -35,12 +34,18 @@ import {
   openWalInWindow,
   storeAppletNotifications,
   stringifyWal,
-  toOriginalCaseB64,
-  toolBundleActionHashFromDistInfo,
   validateNotifications,
 } from '../utils.js';
+import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
+import { Value } from '@sinclair/typebox/value';
+import { PermissionType } from '@theweave/group-client';
+import {
+  appIdFromAppletHash,
+  toolBundleActionHashFromDistInfo,
+  toOriginalCaseB64,
+} from '@theweave/utils';
 // import {
 //   getAppletNotificationSettings,
 //   getNotificationState,
@@ -246,6 +251,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async walToPocket(wal: WAL): Promise<void> {
       mossStore.walToPocket(wal);
     },
+    async dragWal(wal: WAL): Promise<void> {
+      mossStore.dragWal(wal);
+    },
     async myGroupPermissionType() {
       throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
     },
@@ -261,6 +269,19 @@ export async function handleAppletIframeMessage(
   appletId: AppletId,
   message: AppletToParentRequest,
 ) {
+  // Validate the format of the iframe message
+  try {
+    Value.Assert(AppletToParentRequestSchema, message);
+  } catch (e) {
+    console.error(
+      'Got invalid AppletToParentRequest format. Got request ',
+      message,
+      '\n\nError: ',
+      e,
+    );
+    return;
+  }
+
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
   switch (message.type) {
@@ -359,6 +380,9 @@ export async function handleAppletIframeMessage(
       }
     case 'wal-to-pocket':
       mossStore.walToPocket(message.wal);
+      break;
+    case 'drag-wal':
+      mossStore.dragWal(message.wal);
       break;
     case 'user-select-wal':
       return openViews.userSelectWal();

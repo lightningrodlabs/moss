@@ -20,7 +20,7 @@ import {
   toPromise,
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
-import { AppletId, GroupProfile } from '@lightningrodlabs/we-applet';
+import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
 import {
   mdiArrowLeft,
   mdiCog,
@@ -66,20 +66,20 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { AppletAgent, AppletHash, DistributionInfo } from '../../types.js';
-import { Applet } from '../../types.js';
+import { DistributionInfo } from '@theweave/moss-types';
+import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import {
   UTCOffsetStringFromOffsetMinutes,
-  appIdFromAppletHash,
   localTimeFromUtcOffset,
   markdownParseSafe,
   modifiersToInviteUrl,
   relativeTzOffsetString,
 } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
-import { Tool, UpdateableEntity } from '../../personal-views/tool-library/types.js';
+import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 type View =
   | {
@@ -520,14 +520,13 @@ export class GroupHome extends LitElement {
                   } else {
                     console.log('Saving decription...');
                     console.log('Value: ', descriptionInput.value);
-                    const result = await this.groupStore.groupClient.setGroupMetaData({
-                      permission_hash:
-                        myPermission.type === 'Steward'
-                          ? myPermission.content.permission_hash
-                          : undefined,
-                      name: 'description',
-                      data: descriptionInput.value,
-                    });
+                    const result = await this.groupStore.groupClient.setGroupDescription(
+                      myPermission.type === 'Steward'
+                        ? myPermission.content.permission_hash
+                        : undefined,
+                      descriptionInput.value,
+                    );
+
                     console.log('decription saved: ', result.entry);
 
                     await this.groupStore.groupDescription.reload();

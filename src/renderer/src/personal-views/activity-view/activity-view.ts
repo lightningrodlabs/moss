@@ -18,14 +18,10 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import TimeAgo from 'javascript-time-ago';
-import {
-  stringifyWal,
-  appIdFromAppletId,
-  appletHashFromAppId,
-  encodeAndStringify,
-} from '../../utils.js';
-import { AppletHash, AppletId } from '@lightningrodlabs/we-applet';
+import { stringifyWal, encodeAndStringify } from '../../utils.js';
+import { AppletHash, AppletId } from '@theweave/api';
 import { AppletNotification } from '../../types.js';
+import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
 
 @localized()
 @customElement('activity-view')

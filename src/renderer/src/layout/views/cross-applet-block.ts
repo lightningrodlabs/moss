@@ -8,7 +8,7 @@ import {
 } from '@holochain/client';
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { ProfilesLocation, RenderView } from '@lightningrodlabs/we-applet';
+import { ProfilesLocation, RenderView } from '@theweave/api';
 import { consume } from '@lit/context';
 import { msg, localized } from '@lit/localize';
 
