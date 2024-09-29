@@ -128,6 +128,7 @@ setTimeout(async () => {
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
     peerStatusClient.onSignal(async (signal: SignalPayload) => {
       if (signal.type == 'Ping') {
+        // console.log('Received ping from ', encodeHashToBase64(signal.from_agent));
         await peerStatusClient.pong([signal.from_agent], 'online', tzOffset);
       }
     });
@@ -157,6 +158,10 @@ setTimeout(async () => {
           encodeHashToBase64(agent) !== encodeHashToBase64(groupAppWs.myPubKey) &&
           needsPinging(agent, myPubkeySum),
       );
+      // console.log(
+      //   'Pinging agents: ',
+      //   agentsThatNeedPinging.map((hash) => encodeHashToBase64(hash)),
+      // );
       await peerStatusClient.ping(agentsThatNeedPinging, 'online', tzOffset);
     }, PING_AGENTS_FREQUENCY_MS);
   }

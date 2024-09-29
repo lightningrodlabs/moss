@@ -15,6 +15,8 @@ import { weStyles } from '../../shared-styles.js';
 import { GroupStore, IDLE_THRESHOLD, OFFLINE_THRESHOLD } from '../group-store.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
+import { Profile } from '@holochain-open-dev/profiles';
 
 export type AgentAndTzOffset = {
   agent: AgentPubKey;
@@ -33,9 +35,9 @@ export class GroupPeersStatus extends LitElement {
   @property(hashProperty('group-dna-hash'))
   groupDnaHash!: DnaHash;
 
-  _group = new StoreSubscriber(
+  _groupMemberWithProfiles = new StoreSubscriber(
     this,
-    () => this._groupStore?.members,
+    () => this._groupStore?.membersWithProfiles,
     () => [this._groupStore, this.groupDnaHash],
   );
 
@@ -45,19 +47,38 @@ export class GroupPeersStatus extends LitElement {
     () => [this._groupStore],
   );
 
-  renderPeersStatus(members: AgentPubKey[]) {
+  renderPeersStatus(members: ReadonlyMap<Uint8Array, EntryRecord<Profile>>) {
+    const headlessNodes = Array.from(members.entries()).filter(
+      ([_pubKey, profile]) => !!profile.entry.fields.wdockerNode,
+    );
+    let normalMembers = Array.from(members.entries()).filter(
+      ([_pubKey, profile]) => !profile.entry.fields.wdockerNode,
+    );
     if (!this._peerStatuses.value) return html``;
     const now = Date.now();
     const myPubKey = this._groupStore.groupClient.myPubKey;
     const myStatus =
       now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-    members = members.filter((agent) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey));
-    const onlineAgents = members
-      .filter((agent) => {
-        const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
-        return !!agentStatus && now - agentStatus.lastSeen < OFFLINE_THRESHOLD;
+    normalMembers = normalMembers.filter(
+      ([agent, _]) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey),
+    );
+
+    const headlessAgents = headlessNodes.map(([agent, _]) => {
+      const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      const online = !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
+      return {
+        agent,
+        tzUtcOffset: online ? statusInfo.tzUtcOffset : undefined,
+        status: online ? statusInfo.status : undefined,
+      };
+    });
+
+    const onlineAgents = normalMembers
+      .filter(([agent, _]) => {
+        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
       })
-      .map((agent) => {
+      .map(([agent, _]) => {
         const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
         return {
           agent,
@@ -66,12 +87,12 @@ export class GroupPeersStatus extends LitElement {
         };
       });
 
-    const offlineAgents: AgentAndTzOffset[] = members
-      .filter((agent) => {
-        const agentStatus = this._peerStatuses.value![encodeHashToBase64(agent)];
-        return !agentStatus || now - agentStatus.lastSeen > OFFLINE_THRESHOLD;
+    const offlineAgents: AgentAndTzOffset[] = normalMembers
+      .filter(([agent, _]) => {
+        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+        return !statusInfo || now - statusInfo.lastSeen > OFFLINE_THRESHOLD;
       })
-      .map((agent) => {
+      .map(([agent, _]) => {
         return {
           agent,
           tzUtcOffset: undefined,
@@ -202,22 +223,62 @@ export class GroupPeersStatus extends LitElement {
                 )}
               </div>`
           : html``}
+        ${headlessAgents.length > 0 || true
+          ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Headless Nodes')}</div>
+              <div class="column">
+                ${headlessAgents.map(
+                  (agentInfo) => html`
+                    <div
+                      class="row profile"
+                      style="position: relative;"
+                      @click=${() => {
+                        this.dispatchEvent(
+                          new CustomEvent('profile-selected', {
+                            detail: agentInfo,
+                            bubbles: true,
+                            composed: true,
+                          }),
+                        );
+                      }}
+                      @keypress=${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          this.dispatchEvent(
+                            new CustomEvent('profile-selected', {
+                              detail: agentInfo,
+                              bubbles: true,
+                              composed: true,
+                            }),
+                          );
+                        }
+                      }}
+                    >
+                      <profile-detail
+                        style="${agentInfo.status ? '' : 'opacity: 0.5'}"
+                        no-additional-fields
+                        .agentPubKey=${agentInfo.agent}
+                      ></profile-detail>
+                      ${agentInfo.status ? html`<div class="status-indicator"></div>` : html``}
+                    </div>
+                  `,
+                )}
+              </div>`
+          : html``}
       </div>
     `;
   }
 
   render() {
-    switch (this._group.value?.status) {
+    switch (this._groupMemberWithProfiles.value?.status) {
       case 'pending':
         return html`<div class="row center-content" style="flex: 1;">
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderPeersStatus(this._group.value.value);
+        return this.renderPeersStatus(this._groupMemberWithProfiles.value.value);
       case 'error':
         return html`<display-error
           .headline=${msg('Error displaying the peers of the group')}
-          .error=${this._group.value.error}
+          .error=${this._groupMemberWithProfiles.value.error}
         ></display-error>`;
     }
   }

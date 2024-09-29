@@ -1,4 +1,4 @@
-import { ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
+import { Profile, ProfilesClient, ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   AsyncReadable,
   AsyncStatus,
@@ -16,7 +16,7 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import { EntryHashMap, EntryRecord, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
@@ -72,6 +72,8 @@ export class GroupStore {
 
   members: AsyncReadable<Array<AgentPubKey>>;
 
+  membersWithProfiles: AsyncReadable<ReadonlyMap<Uint8Array, EntryRecord<Profile>>>;
+
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
   foyerStore!: FoyerStore;
@@ -99,6 +101,7 @@ export class GroupStore {
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket as any, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
+    this.membersWithProfiles = this.profilesStore.allProfiles;
 
     this.foyerStore = new FoyerStore(
       this.profilesStore,
