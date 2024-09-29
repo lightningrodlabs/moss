@@ -87,6 +87,23 @@ Description
 </td></tr>
 <tr><td>
 
+[dragWal](./api.weaveclient.dragwal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [groupProfile](./api.weaveclient.groupprofile.md)
 
 
