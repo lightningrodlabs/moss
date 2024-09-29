@@ -223,7 +223,7 @@ export class GroupPeersStatus extends LitElement {
                 )}
               </div>`
           : html``}
-        ${headlessAgents.length > 0 || true
+        ${headlessAgents.length > 0
           ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Headless Nodes')}</div>
               <div class="column">
                 ${headlessAgents.map(

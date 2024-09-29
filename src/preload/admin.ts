@@ -12,7 +12,7 @@ import {
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
-import { AppHashes } from '../main/sharedTypes';
+import { AppHashes } from '@theweave/moss-types';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),

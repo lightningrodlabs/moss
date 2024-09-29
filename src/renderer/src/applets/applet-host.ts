@@ -251,6 +251,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async walToPocket(wal: WAL): Promise<void> {
       mossStore.walToPocket(wal);
     },
+    async dragWal(wal: WAL): Promise<void> {
+      mossStore.dragWal(wal);
+    },
     async myGroupPermissionType() {
       throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
     },
@@ -375,7 +378,6 @@ export async function handleAppletIframeMessage(
 
           return openViews.openWal(message.request.wal, message.request.mode);
       }
-      break;
     case 'wal-to-pocket':
       mossStore.walToPocket(message.wal);
       break;
