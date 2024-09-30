@@ -19,7 +19,7 @@
   "dependencies": {
     "@holochain/client": "0.18.0-dev.3",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
-    "@theweave/api": "file:../../libs/api"
+    "@theweave/api": "*"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

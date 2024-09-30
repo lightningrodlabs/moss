@@ -18,8 +18,8 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "0.18.0-dev.3",
-    "@theweave/api": "file:../../libs/api",
-    "@theweave/moss-types": "file:../types"
+    "@theweave/api": "*",
+    "@theweave/moss-types": "*"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
