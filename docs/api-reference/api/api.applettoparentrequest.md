@@ -40,6 +40,9 @@ export type AppletToParentRequest = {
     type: 'wal-to-pocket';
     wal: WAL;
 } | {
+    type: 'drag-wal';
+    wal: WAL;
+} | {
     type: 'request-bind';
     srcWal: WAL;
     dstWal: WAL;

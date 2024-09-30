@@ -92,6 +92,25 @@ Gets information about an entry in any other Applet in We
 </td></tr>
 <tr><td>
 
+[dragWal](./api.weaveservices.dragwal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+Request to drop a WAL into the pocket
+
+
+</td></tr>
+<tr><td>
+
 [groupProfile](./api.weaveservices.groupprofile.md)
 
 

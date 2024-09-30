@@ -8,8 +8,8 @@
     "@holochain-open-dev/profiles": "0.400.0-dev.2",
     "@holochain-open-dev/utils": "0.400.0-dev.0",
     "@holochain/client": "0.18.0-dev.3",
-    "@theweave/api": "file:../../libs/api",
-    "@theweave/utils": "file:../../shared/utils",
+    "@theweave/api": "*",
+    "@theweave/utils": "*",
     "inline-module": "^0.6.1"
   },
   "devDependencies": {
