@@ -79,6 +79,11 @@ import { WeCache } from './cache.js';
 
 export type SearchStatus = 'complete' | 'loading';
 
+export type WalInPocket = {
+  addedAt: number;
+  wal: string;
+};
+
 export class MossStore {
   constructor(
     public adminWebsocket: AdminWebsocket,
@@ -1029,14 +1034,15 @@ export class MossStore {
     wal = validateWal(wal);
     const pocketContent = this.persistedStore.pocket.value();
     const walStringified = fromUint8Array(encode(wal));
-    // Only add if it's not already there
-    if (
-      pocketContent.filter((walStringifiedStored) => walStringifiedStored === walStringified)
-        .length === 0
-    ) {
-      pocketContent.push(walStringified);
-    }
-    this.persistedStore.pocket.set(pocketContent);
+    const walToAdd: WalInPocket = {
+      addedAt: Date.now(),
+      wal: walStringified,
+    };
+    const newPocketContent = pocketContent.filter(
+      (walInPocket) => walInPocket.wal !== walToAdd.wal,
+    );
+    newPocketContent.push(walToAdd);
+    this.persistedStore.pocket.set(newPocketContent);
     this._addedToPocket.set(true);
     setTimeout(() => {
       this._addedToPocket.set(false);
@@ -1067,10 +1073,10 @@ export class MossStore {
   removeWalFromPocket(wal: WAL) {
     const pocketContent = this.persistedStore.pocket.value();
     const walStringified = fromUint8Array(encode(wal));
-    const newClipboardContent = pocketContent.filter(
-      (walStringifiedStored) => walStringifiedStored !== walStringified,
+    const newPocketContent = pocketContent.filter(
+      (walInPocket) => walInPocket.wal !== walStringified,
     );
-    this.persistedStore.pocket.set(newClipboardContent);
+    this.persistedStore.pocket.set(newPocketContent);
   }
 
   async search(filter: string) {

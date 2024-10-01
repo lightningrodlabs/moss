@@ -2,6 +2,7 @@ import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
 import { AppletNotificationSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
+import { WalInPocket } from './moss-store';
 
 /**
  * A store that's persisted.
@@ -15,13 +16,13 @@ export class PersistedStore {
 
   keys;
 
-  pocket: SubStore<string[], string[], []> = {
+  pocket: SubStore<WalInPocket[], WalInPocket[], []> = {
     value: () => {
-      const pocketContent = this.store.getItem<Array<string>>('pocket');
+      const pocketContent = this.store.getItem<Array<WalInPocket>>('pocket');
       return pocketContent ? pocketContent : [];
     },
     set: (value) => {
-      this.store.setItem<string[]>('pocket', value);
+      this.store.setItem<WalInPocket[]>('pocket', value);
     },
   };
 
