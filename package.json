@@ -74,7 +74,7 @@
     "@theweave/api": "*",
     "@theweave/moss-types": "*",
     "@theweave/utils": "*",
-    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
+    "@lightningrodlabs/we-rust-utils": "0.400.0-dev.12",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
