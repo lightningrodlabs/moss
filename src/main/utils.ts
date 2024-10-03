@@ -138,3 +138,13 @@ export async function signZomeCall(
 
   return zomeCallSigned;
 }
+
+export function readYamlValue(yamlString: string, key: string) {
+  const lines = yamlString.split('\n');
+  const idx = lines.findIndex((line) => line.includes(`${key}:`));
+  if (idx === -1) {
+    return undefined;
+  }
+  const relevantLine = lines[idx];
+  return relevantLine.replace(`${key}:`, '').trim();
+}

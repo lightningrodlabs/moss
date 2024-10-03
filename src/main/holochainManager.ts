@@ -70,6 +70,7 @@ export class HolochainManager {
       bootstrapUrl,
       signalingUrl,
       '*',
+      process.platform === 'win32' ? launcherFileSystem.keystoreDir : undefined,
     );
     console.log('Writing conductor-config.yaml...');
 

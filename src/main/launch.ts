@@ -13,6 +13,7 @@ import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
+import { readYamlValue } from './utils';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -27,7 +28,9 @@ export async function launch(
   password: string,
   runOptions: RunOptions,
   customBinary?: string,
-): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
+): Promise<
+  [childProcess.ChildProcessWithoutNullStreams | undefined, HolochainManager, WeRustHandler]
+> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);
@@ -50,14 +53,27 @@ export async function launch(
   if (splashscreenWindow)
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
 
-  // launch lair keystore
-  const [lairHandle, lairUrl] = await launchLairKeystore(
-    LAIR_BINARY,
-    weFileSystem.keystoreDir,
-    weEmitter,
-    password,
-    runOptions.lairRustLog,
-  );
+  let lairHandle;
+  let lairUrl: string;
+
+  if (process.platform === 'win32') {
+    const lairConfigString = fs.readFileSync(
+      path.join(weFileSystem.keystoreDir, 'lair-keystore-config.yaml'),
+      'utf-8',
+    );
+    const maybeLairUrl = readYamlValue(lairConfigString, 'connectionUrl');
+    if (!maybeLairUrl) throw new Error('Failed to read lair connection URL');
+    lairUrl = maybeLairUrl;
+  } else {
+    // launch lair keystore
+    [lairHandle, lairUrl] = await launchLairKeystore(
+      LAIR_BINARY,
+      weFileSystem.keystoreDir,
+      weEmitter,
+      password,
+      runOptions.lairRustLog,
+    );
+  }
 
   const holochainVersion = MOSS_CONFIG.holochainVersion;
 
