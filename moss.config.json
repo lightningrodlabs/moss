@@ -27,8 +27,8 @@
     }
   },
   "groupHapp": {
-    "version": "0.13.0-beta.0",
-    "sha256": "3666a12e8c3d1df60e956ccdc4be608752ec41251bec22d73e45c33108c94fe7"
+    "version": "0.13.0-gamma.0",
+    "sha256": "3a480f35091be18e15a3d442c7c30130165ebe89ea04000dae1d586532cf93b8"
   },
   "toolsLibrary": {
     "version": "0.0.6",
