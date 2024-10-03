@@ -11,7 +11,7 @@ import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@theweave/api';
 import { mossStoreContext } from '../../context.js';
-import { MossStore } from '../../moss-store.js';
+import { MossStore, WalInPocket } from '../../moss-store.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
 import './wal-element.js';
 import './wal-created-element.js';
@@ -52,7 +52,7 @@ export class OverlayPocket extends LitElement {
   mode: 'open' | 'select' = 'open';
 
   @state()
-  pocketContent: Array<string> = [];
+  pocketContent: Array<WalInPocket> = [];
 
   @state()
   recentlyCreatedContent: Array<string> = [];
@@ -301,9 +301,9 @@ export class OverlayPocket extends LitElement {
             <div class="row flex-1" style="margin-top: 20px; flex-wrap: wrap; z-index: 0;">
               ${this.pocketContent.length > 0
                 ? this.pocketContent.map(
-                    (walStringified) => html`
+                    (walInPocket) => html`
                       <wal-element
-                        .wal=${deStringifyWal(walStringified)}
+                        .wal=${deStringifyWal(walInPocket.wal)}
                         .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
                         @wal-removed=${() => this.loadPocketContent()}
                         @wal-selected=${(e) => this.handleWalSelected(e)}
