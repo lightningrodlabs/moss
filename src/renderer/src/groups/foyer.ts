@@ -7,6 +7,7 @@ import {
   AppAuthenticationToken,
   InstalledAppId,
   AppCallZomeRequest,
+  SignalType,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
@@ -164,7 +165,8 @@ export class FoyerStore {
     this.newStream('_all');
 
     this.client.client.on('signal', async (sig) => {
-      const signal = sig.payload;
+      if (!(SignalType.App in sig)) return;
+      const signal = sig[SignalType.App].payload;
       // @ts-ignore
       if (signal.type == 'Message') {
         // @ts-ignore
