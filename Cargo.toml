@@ -15,21 +15,21 @@ lto = true
 
 
 [workspace.dependencies]
-hdi = { version = "0.5.0-dev.12" }
-hdk = { version = "0.4.0-dev.14" }
-holochain = { version = "0.4.0-dev.20" }
+hdi = { version = "0.5.0-dev.17" }
+hdk = { version = "0.4.0-dev.19" }
+holochain = { version = "0.4.0-dev.27" }
 
-holochain_client = "0.6.0-dev.5"
-holochain_conductor_api = "0.4.0-dev.20"
-holochain_integrity_types = "0.4.0-dev.12"
-holochain_p2p = "0.4.0-dev.12"
-holochain_state = "0.4.0-dev.20"
-holochain_types = "0.4.0-dev.20"
-holochain_websocket = "0.4.0-dev.20"
-holochain_zome_types = "0.4.0-dev.14"
-holo_hash = "0.4.0-dev.11"
+holochain_client = "0.6.0-dev.10"
+holochain_conductor_api = "0.4.0-dev.27"
+holochain_integrity_types = "0.4.0-dev.15"
+holochain_p2p = "0.4.0-dev.27"
+holochain_state = "0.4.0-dev.27"
+holochain_types = "0.4.0-dev.26"
+holochain_websocket = "0.4.0-dev.26"
+holochain_zome_types = "0.4.0-dev.18"
+holo_hash = "0.4.0-dev.13"
 kitsune_p2p_timestamp = "0.4.0-dev.4"
-lair_keystore_api = "0.5.0"
+lair_keystore_api = "0.5.2"
 
 serde = "1"
 

@@ -98,7 +98,7 @@ export class GroupStore {
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
     this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
-    this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket as any, 'group'));
+    this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
     this.members = this.profilesStore.agentsWithProfile;
     this.membersWithProfiles = this.profilesStore.allProfiles;

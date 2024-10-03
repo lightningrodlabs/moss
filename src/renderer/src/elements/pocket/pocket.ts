@@ -12,7 +12,7 @@ import { DnaHash } from '@holochain/client';
 import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@theweave/api';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
-import { MossStore } from '../../moss-store.js';
+import { MossStore, WalInPocket } from '../../moss-store.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
 import './wal-element.js';
 import './wal-created-element.js';
@@ -48,7 +48,7 @@ export class MossPocket extends LitElement {
   mode: 'open' | 'select' = 'open';
 
   @state()
-  pocketContent: Array<string> = [];
+  pocketContent: Array<WalInPocket> = [];
 
   @state()
   recentlyCreatedContent: Array<string> = [];
@@ -269,17 +269,19 @@ export class MossPocket extends LitElement {
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
             ${
               this.pocketContent.length > 0
-                ? this.pocketContent.map(
-                    (walStringified) => html`
-                      <wal-element
-                        .wal=${deStringifyWal(walStringified)}
-                        .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
-                        @wal-removed=${() => this.loadPocketContent()}
-                        @wal-selected=${(e) => this.handleWalSelected(e)}
-                        style="margin: 0 7px 7px 0;"
-                      ></wal-element>
-                    `,
-                  )
+                ? this.pocketContent
+                    .sort((wal_a, wal_b) => wal_b.addedAt - wal_a.addedAt)
+                    .map(
+                      (walInPocket) => html`
+                        <wal-element
+                          .wal=${deStringifyWal(walInPocket.wal)}
+                          .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
+                          @wal-removed=${() => this.loadPocketContent()}
+                          @wal-selected=${(e) => this.handleWalSelected(e)}
+                          style="margin: 0 7px 7px 0;"
+                        ></wal-element>
+                      `,
+                    )
                 : html`Nothing in your pocket. Watch out for pocket icons to add things to your
                   pocket.`
             }

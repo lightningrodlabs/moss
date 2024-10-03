@@ -17,8 +17,8 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain/client": "0.18.0-dev.3",
-    "@holochain-open-dev/utils": "0.400.0-dev.0",
+    "@holochain/client": "0.18.0-dev.13",
+    "@holochain-open-dev/utils": "0.400.0-dev.4",
     "@theweave/api": "0.1.0",
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.11",
     "@matthme/electron-updater": "6.3.0-alpha.1",
