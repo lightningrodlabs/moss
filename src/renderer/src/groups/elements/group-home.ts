@@ -33,7 +33,6 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 import TimeAgo from 'javascript-time-ago';
 
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
-import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -60,6 +59,7 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
+import '../../elements/reusable/profile-detail.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -636,10 +636,10 @@ export class GroupHome extends LitElement {
   renderMemberProfile() {
     return html`
       <div class="column">
-        <profile-detail
+        <profile-detail-moss
           no-additional-fields
           .agentPubKey=${this._selectedAgent?.agent}
-        ></profile-detail>
+        ></profile-detail-moss>
         <div class="row" style="align-items: center; margin-top: 20px;">
           <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Role:</span>
           <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
