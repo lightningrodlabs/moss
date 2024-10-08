@@ -5,12 +5,12 @@ import { localized } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 
 import '../../../elements/dialogs/select-group-dialog.js';
 import '../../../applets/elements/applet-logo.js';
 import '../../../applets/elements/applet-title.js';
 import '../../../groups/elements/group-context.js';
+import '../../../elements/reusable/profile-detail.js';
 
 import { consume } from '@lit/context';
 import { decodeHashFromBase64 } from '@holochain/client';
@@ -132,11 +132,11 @@ export class FeedElement extends LitElement {
                 if (!this.groupDnaHash) return html`[unknown]`;
                 return html`
                   <group-context .groupDnaHash=${this.groupDnaHash}>
-                    <profile-detail
+                    <profile-detail-moss
                       style="margin: 0 8px 0 0; color: white; font-weight: 900;"
                       no-additional-fields
                       .agentPubKey=${decodeHashFromBase64(part.pubkey)}
-                    ></profile-detail>
+                    ></profile-detail-moss>
                   </group-context>
                 `;
             }

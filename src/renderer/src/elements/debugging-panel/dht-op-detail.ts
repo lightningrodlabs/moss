@@ -10,51 +10,24 @@ import {
   encodeHashToBase64,
   Entry,
   HoloHash,
-  SourceChainJsonRecord,
   WarrantOp,
 } from '@holochain/client';
 
-import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-
-import '../../groups/elements/group-context.js';
-import '../../applets/elements/applet-logo.js';
-import '../dialogs/create-group-dialog.js';
-import '../reusable/groups-for-applet.js';
 
 import { weStyles } from '../../shared-styles.js';
 import { dateStr } from '../../utils.js';
-import { DumpData } from '../../types.js';
 import { decode } from '@msgpack/msgpack';
 
-const PAGE_SIZE = 10;
-
 @localized()
-@customElement('state-dump')
-export class StateDump extends LitElement {
+@customElement('dht-op-detail')
+export class DhtOpDetail extends LitElement {
   @property()
-  dump!: DumpData;
+  dhtOp!: DhtOp;
 
   renderCreateLink(createLink: CreateLink) {
     return html` Base: ${this.renderHash(createLink.base_address)}; Target:
     ${this.renderHash(createLink.target_address)}`;
-  }
-
-  @state()
-  opsPage = 0;
-
-  renderDhtOps() {
-    const start = this.dump.dump.integration_dump.integrated.length - 1 - PAGE_SIZE * this.opsPage;
-    const end = start - PAGE_SIZE;
-    const opsHtml = [];
-    for (let i = start; i > end && i >= 0; i -= 1) {
-      const r = this.dump.dump.integration_dump.integrated[i];
-      // @ts-ignore
-      opsHtml.push(html`<div class="list-item">${this.renderDhtOp(r)}</div>`);
-    }
-    return opsHtml;
   }
 
   renderDhtOp(op: DhtOp) {
@@ -162,104 +135,9 @@ export class StateDump extends LitElement {
       </div>
     `;
   }
-  renderRecord(record: SourceChainJsonRecord) {
-    return html`
-      <span class="record">
-        <span class="action-type">${record.action.type}</span>
-        ${this.renderHash(record.action_address)}
-        <span class="date">${dateStr(record.action.timestamp)}</span>
-        ${record.entry ? this.renderEntry(record.entry) : ''}
-        ${record.action.type == 'CreateLink' ? this.renderCreateLink(record.action) : ''}
-      </span>
-    `;
-  }
 
-  @state()
-  recordPage = 0;
-
-  renderRecords() {
-    const start = this.dump.dump.source_chain_dump.records.length - 1 - PAGE_SIZE * this.recordPage;
-    const end = start - PAGE_SIZE;
-    const recordsHtml = [];
-    for (let i = start; i > end && i >= 0; i -= 1) {
-      const r = this.dump.dump.source_chain_dump.records[i];
-      // @ts-ignore
-      recordsHtml.push(html` <div class="list-item">${this.renderRecord(r)}</div>`);
-    }
-    return recordsHtml;
-  }
   render() {
-    return html`
-      <div class="column">
-        <span>
-          Peers: (${Object.keys(this.dump.dump.peer_dump.peers).length})
-          <div class="long-list">
-            ${Object.entries(this.dump.dump.peer_dump.peers).map(
-              (p) =>
-                html` <div class="list-item">
-                  ${p[0]}: ${this.renderHash(p[1].kitsune_agent)}-- ${p[1].dump}
-                </div>`,
-            )}
-          </div>
-        </span>
-        <span> integrated Ops since last Dump: ${this.dump.newOpsCount}</span>
-        <div>
-          <div style="display:flex; flex-direction:column;">
-            <span>Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor}</span>
-            <div style="display:flex;">
-              Page:
-              <div
-                class="pager"
-                @click=${() => {
-                  if (this.opsPage > 0) this.opsPage -= 1;
-                }}
-              >
-                -
-              </div>
-              ${this.opsPage}
-              <div
-                class="pager"
-                @click=${() => {
-                  if (this.opsPage < this.dump.dump.integration_dump.integrated.length / PAGE_SIZE)
-                    this.opsPage += 1;
-                }}
-              >
-                +
-              </div>
-            </div>
-          </div>
-          <div class="long-list">${this.renderDhtOps()}</div>
-        </div>
-        <span> published ops count: ${this.dump.dump.source_chain_dump.published_ops_count}</span>
-        <div>
-          <div style="display:flex; flex-direction:column;">
-            <span>Source Chain: (${this.dump.dump.source_chain_dump.records.length} records) </span>
-            <div style="display:flex;">
-              Page:
-              <div
-                class="pager"
-                @click=${() => {
-                  if (this.recordPage > 0) this.recordPage -= 1;
-                }}
-              >
-                -
-              </div>
-              ${this.recordPage}
-              <div
-                class="pager"
-                @click=${() => {
-                  if (this.recordPage < this.dump.dump.source_chain_dump.records.length / PAGE_SIZE)
-                    this.recordPage += 1;
-                }}
-              >
-                +
-              </div>
-            </div>
-          </div>
-          <div class="long-list">${this.renderRecords()}</div>
-        </div>
-      </div>
-    `;
+    return this.renderDhtOp(this.dhtOp);
   }
 
   static styles = [

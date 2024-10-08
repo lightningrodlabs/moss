@@ -1,4 +1,4 @@
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -8,11 +8,9 @@ import {
   CellId,
   DnaHash,
   DnaHashB64,
-  DumpFullStateRequest,
   encodeHashToBase64,
   EntryHash,
   InstalledAppId,
-  NetworkInfo,
 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -26,14 +24,15 @@ import '../dialogs/create-group-dialog.js';
 import '../reusable/groups-for-applet.js';
 import './state-dump.js';
 import './net-info.js';
+import './cell-details.js';
+import './app-debugging-details.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellId } from '../../utils.js';
-import { DumpData } from '../../types.js';
+import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { FEEDBACK_BOARD_APP_ID, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
@@ -73,6 +72,9 @@ export class DebuggingPanel extends LitElement {
   _toolsLibraryCellIds: CellId[] = [];
 
   @state()
+  _groupAppIds: Record<DnaHashB64, InstalledAppId> = {};
+
+  @state()
   _showFeedbackBoardDetails = false;
 
   @state()
@@ -80,12 +82,6 @@ export class DebuggingPanel extends LitElement {
 
   @state()
   _appsWithDebug: InstalledAppId[] = [];
-
-  @state()
-  _appsWithDumps: { [key: InstalledAppId]: DumpData } = {};
-
-  @state()
-  _appsWithNetInfo: { [key: InstalledAppId]: NetworkInfo } = {};
 
   @state()
   _toolLibraryTotalAgents: number | undefined;
@@ -131,49 +127,29 @@ export class DebuggingPanel extends LitElement {
     return cellIds as CellId[];
   }
 
-  async dumpState(appId: InstalledAppId) {
-    const appClient = await this._mossStore.getAppClient(appId);
-    const cellIds = await this.getCellIds(appClient);
-    const cell_id = cellIds[0]!;
+  async getCellsAndIds(appClient: AppClient): Promise<Record<string, CellId>> {
+    const appInfo = await appClient.appInfo();
+    // if (!appInfo) throw new Error(`AppInfo of app '${appClient}' undefined.`);
+    const cellInfos = Object.values(appInfo!.cell_info).flat();
+    const cellAndIds: Record<string, CellId> = {};
 
-    let currentDump = this._appsWithDumps[appClient.installedAppId];
-
-    const req: DumpFullStateRequest = {
-      cell_id,
-      dht_ops_cursor: currentDump ? currentDump.dump.integration_dump.dht_ops_cursor : 0,
-    };
-    const resp = await this._mossStore.adminWebsocket.dumpFullState(req);
-    let newOpsCount = 0;
-    if (!currentDump) {
-      newOpsCount = resp.integration_dump.dht_ops_cursor;
-      currentDump = {
-        dump: resp,
-        newOpsCount,
-      };
-    } else {
-      newOpsCount =
-        resp.integration_dump.dht_ops_cursor - currentDump.dump.integration_dump.dht_ops_cursor;
-      if (newOpsCount > 0) {
-        const currentIntegrated = currentDump.dump.integration_dump.integrated;
-        currentIntegrated.concat([...currentDump.dump.integration_dump.integrated]);
+    cellInfos.forEach((cellInfo) => {
+      const cellName = getCellName(cellInfo);
+      const cellId = getCellId(cellInfo);
+      if (cellName && cellId) {
+        cellAndIds[cellName] = cellId;
       }
-      currentDump.dump.peer_dump = resp.peer_dump;
-      currentDump.dump.source_chain_dump = resp.source_chain_dump;
-      currentDump.newOpsCount = newOpsCount;
-    }
-    this._appsWithDumps[appClient.installedAppId] = currentDump;
+    });
+    return cellAndIds;
   }
 
-  async networkInfo(appId: InstalledAppId) {
-    const appClient = await this._mossStore.getAppClient(appId);
-    const cellIds = await this.getCellIds(appClient);
-    const networkInfo = await appClient.networkInfo({
-      dnas: cellIds.map((id) => id![0]),
-      last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
-    });
-    this._appsWithNetInfo[appClient.installedAppId] = networkInfo[0];
-
-    console.log('networkInfo: ', networkInfo);
+  async getGroupAppId(groupDnaHash: Uint8Array) {
+    const groupStore = await this._mossStore.groupStore(groupDnaHash);
+    if (!groupStore) throw new Error('No group store found for dna hash');
+    const modifiers = await toPromise(groupStore.modifiers);
+    const appId = await groupModifiersToAppId(modifiers);
+    console.log('Got group app id: ', appId);
+    return appId;
   }
 
   toggleAppletDetails(appletId: AppletId) {
@@ -229,37 +205,6 @@ export class DebuggingPanel extends LitElement {
     );
   }
 
-  renderDebugInfo(appId: InstalledAppId, netInfo: NetworkInfo, dump: DumpData) {
-    return html`
-      <div class="debug-data">
-        <div class="row" style="align-items: center;">
-          <span class="debug-title">Network Info</span>
-          <sl-button
-            size="small"
-            style="margin-left:5px;"
-            @click=${async () => {
-              this.networkInfo(appId);
-            }}
-            >Query</sl-button
-          >
-        </div>
-        ${netInfo ? html`<net-info .networkInfo=${netInfo}></net-info>` : html``}
-        <div style="display:flex;align-items:center;">
-          <span class="debug-title">State Dump</span>
-          <sl-button
-            size="small"
-            style="margin-left:5px;"
-            @click=${async () => {
-              await this.dumpState(appId);
-            }}
-            >Query</sl-button
-          >
-        </div>
-        ${dump ? html`<state-dump .dump=${dump}></state-dump>` : html``}
-      </div>
-    `;
-  }
-
   renderDefaultApps() {
     const toolsLibraryZomeCallCount =
       this._toolsLibraryCellIds.length > 0
@@ -271,12 +216,7 @@ export class DebuggingPanel extends LitElement {
         : undefined;
 
     const showToolsLibraryDebug = this._appsWithDebug.includes(TOOLS_LIBRARY_APP_ID);
-    const toolsLibraryNetInfo = this._appsWithNetInfo[TOOLS_LIBRARY_APP_ID];
-    const toolsLibraryDump = this._appsWithDumps[TOOLS_LIBRARY_APP_ID];
-
     const showfeedbackBoardDebug = this._appsWithDebug.includes(FEEDBACK_BOARD_APP_ID);
-    const feedbackBoardNetInfo = this._appsWithNetInfo[FEEDBACK_BOARD_APP_ID];
-    const feedbackBoardDump = this._appsWithDumps[FEEDBACK_BOARD_APP_ID];
 
     return html`
       <div class="column" style="align-items: flex-start;">
@@ -326,7 +266,7 @@ export class DebuggingPanel extends LitElement {
             : html``}
         </div>
         ${showToolsLibraryDebug
-          ? this.renderDebugInfo(TOOLS_LIBRARY_APP_ID, toolsLibraryNetInfo, toolsLibraryDump)
+          ? html`<app-debugging-details .appId=${TOOLS_LIBRARY_APP_ID}></app-debugging-details>`
           : html``}
 
         <div class="column" style="margin-top: 20px;">
@@ -370,7 +310,7 @@ export class DebuggingPanel extends LitElement {
             : html``}
         </div>
         ${showfeedbackBoardDebug
-          ? this.renderDebugInfo(FEEDBACK_BOARD_APP_ID, feedbackBoardNetInfo, feedbackBoardDump)
+          ? html`<app-debugging-details .appId=${FEEDBACK_BOARD_APP_ID}></app-debugging-details>`
           : html``}
       </div>
     `;
@@ -406,6 +346,8 @@ export class DebuggingPanel extends LitElement {
             const groupId = encodeHashToBase64(groupDnaHash);
             const zomeCallCount = window[`__mossZomeCallCount_${groupId}`];
             const showDetails = this._groupsWithDetails.includes(groupId);
+            const groupAppId = this._groupAppIds[groupId];
+            const showDebug = this._appsWithDebug.includes(groupAppId);
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -434,9 +376,24 @@ export class DebuggingPanel extends LitElement {
                     @click=${() => this.toggleGroupDetails(groupId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
+
+                  <sl-icon-button
+                    @click=${async () => {
+                      const groupAppId = await this.getGroupAppId(groupDnaHash);
+                      const newGroupAppIds = this._groupAppIds;
+                      newGroupAppIds[groupId] = groupAppId;
+                      this._groupAppIds = newGroupAppIds;
+                      this.toggleDebug(groupAppId);
+                    }}
+                    .src=${wrapPathInSvg(mdiBug)}
+                  >
+                  </sl-icon-button>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
+              ${showDebug
+                ? html`<app-debugging-details .appId=${groupAppId}></app-debugging-details>`
+                : html``}
             `;
           })}
       </div>
@@ -475,8 +432,6 @@ export class DebuggingPanel extends LitElement {
             const appId = appIdFromAppletHash(appletHash);
             const zomeCallCount = window[`__appletZomeCallCount_${appletId}`];
             const showDetails = this._appletsWithDetails.includes(appletId);
-            const dump = this._appsWithDumps[appId];
-            const netInfo = this._appsWithNetInfo[appId];
             const showDebug = this._appsWithDebug.includes(appId);
             return html`
               <div class="column">
@@ -521,7 +476,9 @@ export class DebuggingPanel extends LitElement {
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
-              ${showDebug ? this.renderDebugInfo(appId, netInfo, dump) : html``}
+              ${showDebug
+                ? html`<app-debugging-details .appId=${appId}></app-debugging-details>`
+                : html``}
             `;
           })}
       </div>
@@ -590,19 +547,6 @@ export class DebuggingPanel extends LitElement {
     css`
       :host {
         display: flex;
-      }
-
-      .debug-data {
-        padding: 5px;
-        display: flex;
-        flex-direction: column;
-        background-color: #fff;
-        border-radius: 5px;
-      }
-
-      .debug-title {
-        font-weight: bold;
-        font-size: 105%;
       }
     `,
   ];

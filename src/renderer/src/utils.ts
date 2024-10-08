@@ -19,11 +19,12 @@ import {
   Timestamp,
   AppAuthenticationToken,
   DnaModifiers,
+  InstalledAppId,
 } from '@holochain/client';
 import { Hrl, WAL, RenderView, FrameNotification, AppletHash, AppletId } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
-import { fromUint8Array, toUint8Array } from 'js-base64';
+import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
@@ -620,6 +621,18 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
   return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+}
+
+export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {
+  const hashBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(modifiers.network_seed),
+  );
+  const hashArray = new Uint8Array(hashBuffer);
+  const hashedSeed = Base64.fromUint8Array(hashArray);
+  // const hashedSeed = hashArray.map((item) => item.toString(16).padStart(2, '0')).join('');
+  const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
+  return `group#${hashedSeed}#${groupDnaProperties.progenitor ? groupDnaProperties.progenitor : null}`;
 }
 
 export function markdownParseSafe(input: string) {

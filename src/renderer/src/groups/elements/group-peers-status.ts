@@ -7,16 +7,15 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@holochain-open-dev/profiles/dist/elements/profile-detail.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import { groupStoreContext } from '../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { GroupStore, IDLE_THRESHOLD, OFFLINE_THRESHOLD } from '../group-store.js';
+import { GroupStore, IDLE_THRESHOLD, MaybeProfile, OFFLINE_THRESHOLD } from '../group-store.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { EntryRecord } from '@holochain-open-dev/utils';
-import { Profile } from '@holochain-open-dev/profiles';
+
+import '../../elements/reusable/profile-detail.js';
 
 export type AgentAndTzOffset = {
   agent: AgentPubKey;
@@ -37,7 +36,7 @@ export class GroupPeersStatus extends LitElement {
 
   _groupMemberWithProfiles = new StoreSubscriber(
     this,
-    () => this._groupStore?.membersWithProfiles,
+    () => this._groupStore?.allProfiles,
     () => [this._groupStore, this.groupDnaHash],
   );
 
@@ -47,12 +46,14 @@ export class GroupPeersStatus extends LitElement {
     () => [this._groupStore],
   );
 
-  renderPeersStatus(members: ReadonlyMap<Uint8Array, EntryRecord<Profile>>) {
+  renderPeersStatus(members: ReadonlyMap<Uint8Array, MaybeProfile>) {
     const headlessNodes = Array.from(members.entries()).filter(
-      ([_pubKey, profile]) => !!profile.entry.fields.wdockerNode,
+      ([_pubKey, maybeProfile]) =>
+        maybeProfile.type === 'profile' && !!maybeProfile.profile.entry.fields.wdockerNode,
     );
     let normalMembers = Array.from(members.entries()).filter(
-      ([_pubKey, profile]) => !profile.entry.fields.wdockerNode,
+      ([_pubKey, maybeProfile]) =>
+        maybeProfile.type === 'unknown' || !maybeProfile.profile.entry.fields.wdockerNode,
     );
     if (!this._peerStatuses.value) return html``;
     const now = Date.now();
@@ -134,7 +135,11 @@ export class GroupPeersStatus extends LitElement {
               }
             }}
           >
-            <profile-detail no-additional-fields .agentPubKey=${myPubKey}></profile-detail>
+            <profile-detail-moss
+              style="color: white"
+              no-additional-fields
+              .agentPubKey=${myPubKey}
+            ></profile-detail-moss>
             <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
             <div
               class="inactive-indicator"
@@ -169,10 +174,11 @@ export class GroupPeersStatus extends LitElement {
                   }
                 }}
               >
-                <profile-detail
+                <profile-detail-moss
+                  style="color: white"
                   no-additional-fields
                   .agentPubKey=${agentInfo.agent}
-                ></profile-detail>
+                ></profile-detail-moss>
                 <div
                   class="status-indicator ${agentInfo.status === 'inactive' ? 'inactive' : ''}"
                 ></div>
@@ -213,11 +219,11 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail
-                        style="opacity: 0.5;"
+                      <profile-detail-moss
+                        style="opacity: 0.5; color: white;"
                         no-additional-fields
                         .agentPubKey=${agentInfo.agent}
-                      ></profile-detail>
+                      ></profile-detail-moss>
                     </div>
                   `,
                 )}
@@ -252,11 +258,11 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail
-                        style="${agentInfo.status ? '' : 'opacity: 0.5'}"
+                      <profile-detail-moss
+                        style="color: white; ${agentInfo.status ? '' : 'opacity: 0.5'}"
                         no-additional-fields
                         .agentPubKey=${agentInfo.agent}
-                      ></profile-detail>
+                      ></profile-detail-moss>
                       ${agentInfo.status ? html`<div class="status-indicator"></div>` : html``}
                     </div>
                   `,

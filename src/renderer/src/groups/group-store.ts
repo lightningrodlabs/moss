@@ -4,6 +4,7 @@ import {
   AsyncStatus,
   Readable,
   Writable,
+  asyncReadable,
   completed,
   derived,
   joinMap,
@@ -53,12 +54,22 @@ import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { PeerStatusClient, SignalPayload } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
+import { encode } from '@msgpack/msgpack';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
 export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
+
+export type MaybeProfile =
+  | {
+      type: 'unknown';
+    }
+  | {
+      type: 'profile';
+      profile: EntryRecord<Profile>;
+    };
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -70,9 +81,7 @@ export class GroupStore {
 
   customViewsStore: CustomViewsStore;
 
-  members: AsyncReadable<Array<AgentPubKey>>;
-
-  membersWithProfiles: AsyncReadable<ReadonlyMap<Uint8Array, EntryRecord<Profile>>>;
+  allProfiles: AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>>;
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
@@ -100,8 +109,6 @@ export class GroupStore {
     this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
-    this.members = this.profilesStore.agentsWithProfile;
-    this.membersWithProfiles = this.profilesStore.allProfiles;
 
     this.foyerStore = new FoyerStore(
       this.profilesStore,
@@ -126,6 +133,10 @@ export class GroupStore {
         await this.peerStatusClient.pong([signal.from_agent], status, this.mossStore.tzUtcOffset());
       }
     });
+
+    this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) =>
+      this.agentsProfiles(agents),
+    );
 
     setTimeout(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
@@ -204,6 +215,39 @@ export class GroupStore {
 
   groupAppletsMetaData = lazyReloadableStore(async () =>
     this.groupClient.getGroupAppletsMetaData(),
+  );
+
+  agentsProfiles(
+    agents: Array<AgentPubKey>,
+  ): AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>> {
+    return sliceAndJoin(this.membersProfiles, agents);
+  }
+
+  membersProfiles = new LazyHoloHashMap((agent: AgentPubKey) =>
+    asyncReadable<MaybeProfile | undefined>(async (set) => {
+      try {
+        const profile = await this.profilesStore.client.getAgentProfile(agent);
+        profile ? set({ type: 'profile', profile }) : set({ type: 'unknown' });
+      } catch (e) {
+        console.error('Failed to fetch profile: ', e);
+        set({ type: 'unknown' });
+      }
+
+      return this.profilesStore.client.onSignal((signal) => {
+        if (this.profilesStore.client.client.myPubKey.toString() !== agent.toString()) return;
+        if (!(signal.type === 'EntryCreated' || signal.type === 'EntryUpdated')) return;
+        const record = new EntryRecord<Profile>({
+          entry: {
+            Present: {
+              entry_type: 'App',
+              entry: encode(signal.app_entry),
+            },
+          },
+          signed_action: signal.action,
+        });
+        set({ type: 'profile', profile: record });
+      });
+    }),
   );
 
   peerStatuses(): Readable<Record<AgentPubKeyB64, PeerStatus> | undefined> {
