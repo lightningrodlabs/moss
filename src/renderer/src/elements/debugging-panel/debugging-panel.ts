@@ -1,4 +1,4 @@
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -32,7 +32,7 @@ import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellId } from '../../utils.js';
+import { getCellId, groupModifiersToAppId } from '../../utils.js';
 import { DumpData } from '../../types.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
@@ -71,6 +71,9 @@ export class DebuggingPanel extends LitElement {
 
   @state()
   _toolsLibraryCellIds: CellId[] = [];
+
+  @state()
+  _groupAppIds: Record<DnaHashB64, InstalledAppId> = {};
 
   @state()
   _showFeedbackBoardDetails = false;
@@ -176,6 +179,15 @@ export class DebuggingPanel extends LitElement {
     console.log('networkInfo: ', networkInfo);
   }
 
+  async getGroupAppId(groupDnaHash: Uint8Array) {
+    const groupStore = await this._mossStore.groupStore(groupDnaHash);
+    if (!groupStore) throw new Error('No group store found for dna hash');
+    const modifiers = await toPromise(groupStore.modifiers);
+    const appId = await groupModifiersToAppId(modifiers);
+    console.log('Got group app id: ', appId);
+    return appId;
+  }
+
   toggleAppletDetails(appletId: AppletId) {
     const appletsWithDetails = this._appletsWithDetails;
     if (appletsWithDetails.includes(appletId)) {
@@ -229,7 +241,11 @@ export class DebuggingPanel extends LitElement {
     );
   }
 
-  renderDebugInfo(appId: InstalledAppId, netInfo: NetworkInfo, dump: DumpData) {
+  renderDebugInfo(
+    appId: InstalledAppId,
+    netInfo: NetworkInfo | undefined,
+    dump: DumpData | undefined,
+  ) {
     return html`
       <div class="debug-data">
         <div class="row" style="align-items: center;">
@@ -406,6 +422,10 @@ export class DebuggingPanel extends LitElement {
             const groupId = encodeHashToBase64(groupDnaHash);
             const zomeCallCount = window[`__mossZomeCallCount_${groupId}`];
             const showDetails = this._groupsWithDetails.includes(groupId);
+            const groupAppId = this._groupAppIds[groupId];
+            const netInfo = groupAppId ? this._appsWithNetInfo[groupAppId] : undefined;
+            const dump = groupAppId ? this._appsWithDumps[groupAppId] : undefined;
+            const showDebug = this._appsWithDebug.includes(groupAppId);
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -434,9 +454,22 @@ export class DebuggingPanel extends LitElement {
                     @click=${() => this.toggleGroupDetails(groupId)}
                     >${showDetails ? 'Hide' : 'Details'}</span
                   >
+
+                  <sl-icon-button
+                    @click=${async () => {
+                      const groupAppId = await this.getGroupAppId(groupDnaHash);
+                      const newGroupAppIds = this._groupAppIds;
+                      newGroupAppIds[groupId] = groupAppId;
+                      this._groupAppIds = newGroupAppIds;
+                      this.toggleDebug(groupAppId);
+                    }}
+                    .src=${wrapPathInSvg(mdiBug)}
+                  >
+                  </sl-icon-button>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
+              ${showDebug ? this.renderDebugInfo(groupAppId, netInfo, dump) : html``}
             `;
           })}
       </div>
