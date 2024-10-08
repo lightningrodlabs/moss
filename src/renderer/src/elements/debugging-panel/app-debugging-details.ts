@@ -48,8 +48,10 @@ export class AppDebuggingDetails extends LitElement {
 
   render() {
     return html` <div class="column">
-      ${Object.entries(this.cellsAndIds).map(
-        ([cellName, cellId]) => html`
+      ${Object.entries(this.cellsAndIds)
+        .sort(([name_a, _a], [name_b, _b]) => name_a.localeCompare(name_b))
+        .map(
+          ([cellName, cellId]) => html`
           <sl-card style="width: 570px; position: relative; margin: 5px 0;">
             <div
               style="font-weight: bold; position: absolute; top: 6px; right: 10px;"
@@ -61,7 +63,7 @@ export class AppDebuggingDetails extends LitElement {
           </sl-card>
         </div>
       `,
-      )}
+        )}
     </div>`;
   }
 

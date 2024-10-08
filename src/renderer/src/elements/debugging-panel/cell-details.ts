@@ -3,21 +3,16 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import { CellId, DumpFullStateRequest, InstalledAppId, NetworkInfo } from '@holochain/client';
 
-import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-
-import '../../groups/elements/group-context.js';
-import '../../applets/elements/applet-logo.js';
-import '../dialogs/create-group-dialog.js';
-import '../reusable/groups-for-applet.js';
 
 import { weStyles } from '../../shared-styles.js';
 import { DumpData } from '../../types.js';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
+
+import './dht-op-detail.js';
+import { notify } from '@holochain-open-dev/elements';
 
 @localized()
 @customElement('cell-details')
@@ -36,6 +31,15 @@ export class CellDetails extends LitElement {
 
   @state()
   dumpData: DumpData | undefined;
+
+  @state()
+  showFullDetail = false;
+
+  @state()
+  showValidationLimbo = false;
+
+  @state()
+  showIntegrationLimbo = false;
 
   async networkInfo() {
     const appClient = await this._mossStore.getAppClient(this.appId);
@@ -77,6 +81,73 @@ export class CellDetails extends LitElement {
     console.log('dump data: ', this.dumpData);
   }
 
+  renderDumpData() {
+    return html`
+      <div class="column">
+        <div>
+          Validation Limbo: ${this.dumpData?.dump.integration_dump.validation_limbo.length}
+          <button
+            @click=${() => {
+              this.showValidationLimbo = !this.showValidationLimbo;
+            }}
+          >
+            ${this.showValidationLimbo ? 'Hide' : 'Show'} DhtOps
+          </button>
+        </div>
+        ${this.showValidationLimbo && this.dumpData
+          ? html` <div class="column">
+              ${this.dumpData.dump.integration_dump.validation_limbo.map(
+                (dhtOp) =>
+                  html`<dht-op-detail
+                    @click=${() => {
+                      console.log(dhtOp);
+                      notify('DhtOp logged to console.');
+                    }}
+                    style="border: 1px solid black; border-radius: 5px; padding: 3px; cursor: pointer;"
+                    .dhtOp=${dhtOp}
+                  ></dht-op-detail>`,
+              )}
+            </div>`
+          : html``}
+        <div>
+          Integration Limbo: ${this.dumpData?.dump.integration_dump.integration_limbo.length}
+          <button
+            @click=${() => {
+              this.showIntegrationLimbo = !this.showIntegrationLimbo;
+            }}
+          >
+            ${this.showIntegrationLimbo ? 'Hide' : 'Show'} DhtOps
+          </button>
+        </div>
+        ${this.showIntegrationLimbo && this.dumpData
+          ? html` <div class="column">
+              ${this.dumpData.dump.integration_dump.integration_limbo.map(
+                (dhtOp) =>
+                  html`<dht-op-detail
+                    @click=${() => {
+                      console.log(dhtOp);
+                      notify('DhtOp logged to console.');
+                    }}
+                    style="border: 1px solid black; border-radius: 5px; padding: 3px; cursor: pointer;"
+                    .dhtOp=${dhtOp}
+                  ></dht-op-detail>`,
+              )}
+            </div>`
+          : html``}
+        <div>Integrated: ${this.dumpData?.dump.integration_dump.integrated.length}</div>
+        <button
+          style="margin-top: 5px;"
+          @click=${() => {
+            this.showFullDetail = !this.showFullDetail;
+          }}
+        >
+          ${this.showFullDetail ? 'Hide Full Dump' : 'Show Full Dump'}
+        </button>
+        ${this.showFullDetail ? html`<state-dump .dump=${this.dumpData}></state-dump>` : html``}
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <div class="debug-data">
@@ -109,7 +180,7 @@ export class CellDetails extends LitElement {
                 >Query</sl-button
               >
             </div>
-            ${this.dumpData ? html`<state-dump .dump=${this.dumpData}></state-dump>` : html``}
+            ${this.dumpData ? this.renderDumpData() : html``}
           </div>
         </div>
       </div>
