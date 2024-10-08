@@ -4,12 +4,14 @@ import { localized } from '@lit/localize';
 import {
   Action,
   AgentPubKey,
+  ChainOp,
   CreateLink,
   DhtOp,
   encodeHashToBase64,
   Entry,
   HoloHash,
   SourceChainJsonRecord,
+  WarrantOp,
 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -49,6 +51,7 @@ export class StateDump extends LitElement {
     const opsHtml = [];
     for (let i = start; i > end && i >= 0; i -= 1) {
       const r = this.dump.dump.integration_dump.integrated[i];
+      console.log('DhtOP: ', r);
       // @ts-ignore
       opsHtml.push(html` <div class="list-item">${this.renderDhtOp(r)}</div>`);
     }
@@ -56,29 +59,41 @@ export class StateDump extends LitElement {
   }
 
   renderDhtOp(op: DhtOp) {
-    const opName = Object.keys(op)[0];
-    const opValue = Object.values(op)[0];
-    const action: Action = opValue[1];
+    const opType = Object.keys(op)[0]; // ChainOp or WarrantOp
+    if (opType === 'ChainOp') {
+      const opContent: ChainOp = op[opType];
+      const opName = Object.keys(opContent)[0];
+      const opValue = Object.values(opContent)[0];
+      const action: Action = opValue[1];
 
-    let entry: Entry | undefined;
-    if (opName == 'StoreEntry') {
-      entry = opValue[2];
-    } else if (opName == 'StoreRecord' && action.type == 'Create') {
-      if (opValue[2]['Present']) {
-        entry = opValue[2]['Present'];
+      let entry: Entry | undefined;
+      if (opName == 'StoreEntry') {
+        entry = opValue[2];
+      } else if (opName == 'StoreRecord' && action.type == 'Create') {
+        if (opValue[2]['Present']) {
+          entry = opValue[2]['Present'];
+        }
       }
-    }
 
-    return html`
-      <div class="dht-op">
-        ${opName}: ${action.type}
-        <span class="date">${dateStr(action.timestamp)}</span>
-        ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
-        ${action.type == 'CreateLink' ? this.renderCreateLink(action) : ''}
-        ${entry ? this.renderEntry(entry) : ''}
-        ${opName == 'RegisterAddLink' ? this.renderCreateLink(action as CreateLink) : ''}
-      </div>
-    `;
+      return html`
+        <div class="dht-op">
+          ${opName}: ${action.type}
+          <span class="date">${dateStr(action.timestamp)}</span>
+          ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
+          ${action.type == 'CreateLink' ? this.renderCreateLink(action) : ''}
+          ${entry ? this.renderEntry(entry) : ''}
+          ${opName == 'RegisterAddLink' ? this.renderCreateLink(action as CreateLink) : ''}
+        </div>
+      `;
+    } else {
+      const opContent: WarrantOp = op[opType];
+      return html`
+        <div class="warrant-op column">
+          <span style="font-weight: bold;">WARRANT</span>
+          <span class="date">${dateStr(opContent.timestamp)}</span>
+        </div>
+      `;
+    }
   }
 
   renderHash(hash: HoloHash) {
@@ -253,6 +268,10 @@ export class StateDump extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .warrant-op {
+        background: #b000007c;
       }
 
       .long-list {
