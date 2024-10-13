@@ -40,6 +40,9 @@ export class SplashScreen extends LitElement {
   @state()
   view: SplashScreenMode = SplashScreenMode.Loading;
 
+  @state()
+  version: string | undefined;
+
   async firstUpdated() {
     (window as any).electronAPI.onProgressUpdate((e, payload) => {
       console.log('RECEIVED PROGRESS UPDATE: ', e, payload);
@@ -53,6 +56,7 @@ export class SplashScreen extends LitElement {
       this.view = SplashScreenMode.EnterPassword;
     }
     this.profile = await (window as any).electronAPI.getProfile();
+    this.version = await (window as any).electronAPI.getVersion();
   }
 
   async setupAndLaunch() {
@@ -203,7 +207,7 @@ export class SplashScreen extends LitElement {
   }
 
   renderLaunching() {
-    return html` <h1>Starting up...</h1> `;
+    return html` <h1>${this.progressState}</h1> `;
   }
 
   renderExitButton() {
@@ -229,9 +233,9 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="background">
         ${this.renderContent()}
-        ${this.profile && this.progressState === ''
-          ? html`<span class="bottom-left">profile: ${this.profile}</span>`
-          : html``}
+        <span class="bottom-left"
+          >v${this.version}${this.profile ? ` (profile: "${this.profile}")` : ''}</span
+        >
         <img
           class="top-left"
           src="icon.png"
@@ -239,7 +243,6 @@ export class SplashScreen extends LitElement {
           alt="Moss icon"
           title="Moss"
         />
-        <div class="bottom-left">${this.progressState}</div>
         <div class="bottom-right">
           <div class="row" style="align-items: center;">
             <span style="color: white; margin-left: 6px;">Lightningrod Labs</span>
@@ -336,7 +339,7 @@ export class SplashScreen extends LitElement {
 
         .bottom-left {
           position: absolute;
-          bottom: 5px;
+          bottom: 3px;
           left: 5px;
           color: #ffffff;
           font-size: 15px;
