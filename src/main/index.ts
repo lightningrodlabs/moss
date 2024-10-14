@@ -1444,7 +1444,7 @@ app.whenReady().then(async () => {
       WE_FILE_SYSTEM,
       WE_EMITTER,
       undefined,
-      'dummy-dev-password :)',
+      'pass',
       RUN_OPTIONS,
     );
     MAIN_WINDOW = createOrShowMainWindow();

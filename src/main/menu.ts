@@ -28,7 +28,7 @@ export const mossMenu = (mossFileSystem: MossFileSystem) => {
             const exportToPathResponse = await dialog.showSaveDialog({
               title: 'Export Logs',
               buttonLabel: 'Export',
-              defaultPath: `Moss_${app.getVersion()}_logs_${new Date().toISOString()}.zip`,
+              defaultPath: `Moss_${app.getVersion()}_logs_${Date.now()}.zip`,
             });
             if (exportToPathResponse.filePath) {
               zip.writeZip(exportToPathResponse.filePath);
