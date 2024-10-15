@@ -2,10 +2,10 @@ import { html, LitElement, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
-import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
@@ -27,7 +27,7 @@ import TimeAgo from 'javascript-time-ago';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { markdownParseSafe } from '../../utils.js';
-import { dialogMessagebox } from '../../electron-api.js';
+import { dialogMessagebox, MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { UpdateFeedMessage } from '../../types.js';
 
@@ -68,6 +68,12 @@ export class WelcomeView extends LitElement {
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
 
+  @state()
+  availableMossUpdate: MossUpdateInfo | undefined;
+
+  @state()
+  mossUpdatePrecentage: number | undefined;
+
   availableToolUpdates = new StoreSubscriber(
     this,
     () => this._mossStore.availableToolUpdates(),
@@ -81,6 +87,42 @@ export class WelcomeView extends LitElement {
   //   () => this._mossStore.notificationFeed(),
   //   () => [this._mossStore],
   // );
+
+  async firstUpdated() {
+    const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
+    const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();
+    if (availableMossUpdate && !declinedUdpates.includes(availableMossUpdate.version)) {
+      this.availableMossUpdate = availableMossUpdate;
+      window.electronAPI.onMossUpdateProgress((_, progressInfo) => {
+        this.mossUpdatePrecentage = progressInfo.percent;
+        console.log('Download progress: ', progressInfo);
+      });
+    }
+  }
+
+  async declineMossUpdate() {
+    if (this.availableMossUpdate) {
+      const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();
+      declinedUdpates.push(this.availableMossUpdate.version);
+      this._mossStore.persistedStore.declinedMossUpdates.set(declinedUdpates);
+    }
+    this.availableMossUpdate = undefined;
+  }
+
+  async installMossUpdate() {
+    if (!this.availableMossUpdate) {
+      notifyError('No update available.');
+      return;
+    }
+    try {
+      this.mossUpdatePrecentage = 1;
+      await window.electronAPI.installMossUpdate();
+    } catch (e) {
+      console.error('Moss udpate failed: ', e);
+      notifyError('Update failed (see console for details).');
+      this.mossUpdatePrecentage = undefined;
+    }
+  }
 
   async updateTool(toolEntity: UpdateableEntity<Tool>) {
     const confirmation = await dialogMessagebox({
@@ -208,6 +250,61 @@ export class WelcomeView extends LitElement {
     `;
   }
 
+  renderMossUpdateAvailable() {
+    return html`
+      <div class="update-feed-el bg-highlighted">
+        <div class="update-date">
+          ${this.availableMossUpdate?.releaseDate
+            ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
+            : ''}
+        </div>
+        <div class="update-type"></div>
+        <div class="column">
+          <div class="row" style="align-items: center;">
+            <div class="moss-icon column center-content">
+              <img src="moss-icon.svg" style="width: 40px; height: 40px; border-radius: 14px;" />
+            </div>
+            <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
+              Moss Update Available:
+            </div>
+            <div style="margin-left: 10px; font-size: 28px;">
+              v${this.availableMossUpdate?.version}
+            </div>
+            <span style="display: flex; flex: 1;"></span>
+          </div>
+          <div>
+            ${this.availableMossUpdate?.releaseNotes
+              ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+              : ''}
+          </div>
+          <div class="row center-content" style="margin-top: 15px;">
+            ${this.mossUpdatePrecentage
+              ? html`<span class="flex flex-1"></span>
+                  <div class="column">
+                    <div>Installing...</div>
+                    <sl-progress-bar
+                      value="${this.mossUpdatePrecentage}"
+                      style="width: 200px; --height: 15px;"
+                    ></sl-progress-bar>
+                  </div> `
+              : html`
+                  <span class="flex flex-1"></span>
+                  <sl-button
+                    variant="danger"
+                    style="margin-right: 5px;"
+                    @click=${() => this.declineMossUpdate()}
+                    >${msg('Decline')}</sl-button
+                  >
+                  <sl-button variant="primary" @click=${() => this.installMossUpdate()}
+                    >${msg('Install and Restart')}</sl-button
+                  >
+                `}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderUpdateFeed() {
     const mossFeed: UpdateFeedMessageGeneric[] = this.updateFeed.map((el) => ({
       type: 'Moss',
@@ -238,7 +335,7 @@ export class WelcomeView extends LitElement {
           <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are relevant
           updates for early weavers.</span
         >
-
+        ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
         ${composedFeed.length === 0
           ? html`No big waves lately...`
           : composedFeed.map(
@@ -307,6 +404,15 @@ export class WelcomeView extends LitElement {
         background-color: #224b21;
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
+      }
+
+      .moss-icon {
+        background: linear-gradient(0deg, #203923 0%, #527a22 100%);
+        border-radius: 15px;
+        border: none;
+        width: 58px;
+        height: 58px;
+        outline: none;
       }
 
       .recent-activity-header {
@@ -402,6 +508,11 @@ export class WelcomeView extends LitElement {
 
       .update-feed-el a {
         color: #07cd07;
+      }
+
+      .bg-highlighted {
+        background: #7e9100;
+        box-shadow: 0 0 2px 2px #333b00;
       }
 
       .update-date {
