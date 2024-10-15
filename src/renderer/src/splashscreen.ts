@@ -215,7 +215,7 @@ export class SplashScreen extends LitElement {
   }
 
   renderLaunching() {
-    return html` <h1>${this.progressState}</h1> `;
+    return html` <h2>${this.progressState}</h2> `;
   }
 
   renderExitButton() {
@@ -303,7 +303,7 @@ export class SplashScreen extends LitElement {
           padding: 0;
           color: white;
         }
-        h1 {
+        h2 {
           color: #ffffff;
         }
 
