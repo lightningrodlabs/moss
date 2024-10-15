@@ -115,7 +115,7 @@ export class WelcomeView extends LitElement {
       return;
     }
     try {
-      this.mossUpdatePrecentage = 0;
+      this.mossUpdatePrecentage = 1;
       await window.electronAPI.installMossUpdate();
     } catch (e) {
       console.error('Moss udpate failed: ', e);
