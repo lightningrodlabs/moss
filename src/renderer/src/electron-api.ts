@@ -34,6 +34,7 @@ declare global {
       ) => any;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => any;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
+      onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => any;
       onZomeCallSigned: (
         callback: (
           e: any,
@@ -54,6 +55,8 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      mossUpdateAvailable: () => Promise<MossUpdateInfo | undefined>;
+      installMossUpdate: () => Promise<void>;
       installAppletBundle: (
         appId: string,
         networkSeed: string,
@@ -102,6 +105,19 @@ declare global {
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
+}
+
+export interface MossUpdateInfo {
+  version: string;
+  releaseDate: string;
+  releaseNotes: string | undefined;
+}
+export interface ProgressInfo {
+  total: number;
+  delta: number;
+  transferred: number;
+  percent: number;
+  bytesPerSecond: number;
 }
 
 export interface ConductorInfo {
