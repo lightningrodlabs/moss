@@ -3,6 +3,8 @@ import fs from 'fs';
 import semver from 'semver';
 import { ActionHashB64, DnaHashB64, EntryHashB64, InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
+import { session } from 'electron';
+import { platform } from '@electron-toolkit/utils';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -75,9 +77,9 @@ export type DistributionInfo =
     };
 
 export class MossFileSystem {
-  public appDataDir: string;
-  public appConfigDir: string;
-  public appLogsDir: string;
+  public profileDataDir: string;
+  public profileConfigDir: string;
+  public profileLogsDir: string;
 
   public conductorDir: string;
   public keystoreDir: string;
@@ -91,18 +93,18 @@ export class MossFileSystem {
   public uisDir: string;
   public iconsDir: string;
 
-  constructor(appDataDir: string, appConfigDir: string, appLogsDir: string) {
-    this.appDataDir = appDataDir;
-    this.appConfigDir = appConfigDir;
-    this.appLogsDir = appLogsDir;
+  constructor(profileDataDir: string, profileConfigDir: string, profileLogsDir: string) {
+    this.profileDataDir = profileDataDir;
+    this.profileConfigDir = profileConfigDir;
+    this.profileLogsDir = profileLogsDir;
 
-    this.conductorDir = path.join(appDataDir, 'conductor');
-    this.keystoreDir = path.join(appDataDir, 'keystore');
-    this.appsDir = path.join(appDataDir, 'apps');
-    this.toolsDir = path.join(appDataDir, 'tools');
-    this.happsDir = path.join(appDataDir, 'happs');
-    this.uisDir = path.join(appDataDir, 'uis');
-    this.iconsDir = path.join(appDataDir, 'icons');
+    this.conductorDir = path.join(profileDataDir, 'conductor');
+    this.keystoreDir = path.join(profileDataDir, 'keystore');
+    this.appsDir = path.join(profileDataDir, 'apps');
+    this.toolsDir = path.join(profileDataDir, 'tools');
+    this.happsDir = path.join(profileDataDir, 'happs');
+    this.uisDir = path.join(profileDataDir, 'uis');
+    this.iconsDir = path.join(profileDataDir, 'icons');
 
     createDirIfNotExists(this.conductorDir);
     createDirIfNotExists(this.keystoreDir);
@@ -350,6 +352,23 @@ export class MossFileSystem {
       fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
     }
   }
+
+  async factoryReset(keepLogs = false) {
+    if (keepLogs) throw new Error('Keeping logs across factory reset is currently not supported.');
+    if (platform.isWindows) {
+      try {
+        await session.defaultSession.clearCache();
+        await session.defaultSession.clearStorageData();
+        await session.defaultSession.clearAuthCache();
+        await session.defaultSession.clearCodeCaches({});
+        await session.defaultSession.clearHostResolverCache();
+      } catch (e) {
+        console.warn('Failed to clear cache or parts of it: ', e);
+      }
+    }
+    deleteRecursively(this.profileDataDir);
+    deleteRecursively(this.profileLogsDir);
+  }
 }
 
 function createDirIfNotExists(path: fs.PathLike) {
@@ -433,5 +452,27 @@ export function breakingAppVersion(app: Electron.App): string {
       }
     default:
       return `${semver.major(version)}.x.x`;
+  }
+}
+
+/**
+ * Deletes a folder recursively and if a file or folder fails with an EPERM error,
+ * it deletes all other folders
+ * @param root
+ */
+export function deleteRecursively(root: string) {
+  try {
+    console.log('Attempting to remove file or folder: ', root);
+    fs.rmSync(root, { recursive: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
+    if (e.toString && e.toString().includes('EPERM')) {
+      console.log('Got EPERM error for file or folder: ', root);
+      if (fs.statSync(root).isDirectory()) {
+        console.log('Removing files and subfolders.');
+        const filesAndSubFolders = fs.readdirSync(root);
+        filesAndSubFolders.forEach((file) => deleteRecursively(path.join(root, file)));
+      }
+    }
   }
 }

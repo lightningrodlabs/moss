@@ -38,16 +38,6 @@ export class MossApp extends LitElement {
   _mossStore!: MossStore;
 
   async firstUpdated() {
-    // await listen('clear-systray-notification-state', async () => {
-    //   await invoke('clear_systray_notification_state', {});
-    // });
-    // await listen('request-factory-reset', () => {
-    //   console.log('Received factory reset event.');
-    //   this.previousState = this.state;
-    //   this.state = { state: 'factoryReset' };
-    // });
-    // const launched = await isLaunched();
-    // if (launched) {
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.13';
     window.__ZOME_CALL_LOGGING_ENABLED__ = true;
     try {

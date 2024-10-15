@@ -736,7 +736,42 @@ app.whenReady().then(async () => {
   ipcMain.handle('exit', () => {
     app.exit(0);
   });
-  ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
+  ipcMain.handle('factory-reset', async () => {
+    const userDecision = await dialog.showMessageBox({
+      title: 'Factory Reset',
+      type: 'warning',
+      buttons: ['Confirm', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      message: `Are you sure you want to fully reset Moss? This will delete all your Moss related data.`,
+    });
+    if (userDecision.response === 0) {
+      // Close all windows
+      if (MAIN_WINDOW) MAIN_WINDOW.close();
+      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+      for (const window of Object.values(WAL_WINDOWS)) {
+        window.window.close();
+      }
+      // Kill holochain and lair
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      // Remove all data
+      await WE_FILE_SYSTEM.factoryReset();
+      // restart Moss
+      const options: Electron.RelaunchOptions = {
+        args: process.argv,
+      };
+      // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+      if (process.env.APPIMAGE) {
+        console.log('process.execPath: ', process.execPath);
+        options.args!.unshift('--appimage-extract-and-run');
+        options.execPath = process.env.APPIMAGE;
+      }
+      app.relaunch(options);
+      app.quit();
+    }
+  }),
+    ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
   ipcMain.handle(
     'notification',
     (
@@ -1292,7 +1327,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
     const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
-    const filePath = path.join(WE_FILE_SYSTEM.appLogsDir, 'network_stats.json');
+    const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
     fs.writeFileSync(filePath, stats, 'utf-8');
   });
   ipcMain.handle(
