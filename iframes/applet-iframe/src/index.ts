@@ -365,7 +365,9 @@ const handleMessage = async (
       );
       break;
     default:
-      throw new Error(`Unknown ParentToAppletMessage: '${(message as any).type}'`);
+      throw new Error(
+        `Unknown ParentToAppletMessage type: '${(message as any).type}'. Message: ${message}`,
+      );
   }
 };
 
