@@ -77,6 +77,7 @@ import {
   getAllIframes,
   logMossZomeCall,
   progenitorFromProperties,
+  refreshAllAppletIframes,
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';

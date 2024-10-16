@@ -60,6 +60,7 @@ import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { appletIdFromAppId } from '@theweave/utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -1267,7 +1268,8 @@ app.whenReady().then(async () => {
       });
 
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
-      return allAppletAppIds;
+
+      return allAppletAppIds.map((id) => appletIdFromAppId(id));
     },
   );
   ipcMain.handle(

@@ -26,8 +26,8 @@ import { AppHashes, AssetSource, DistributionInfo } from '@theweave/moss-types';
 import TimeAgo from 'javascript-time-ago';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
-import { markdownParseSafe } from '../../utils.js';
-import { dialogMessagebox, MossUpdateInfo } from '../../electron-api.js';
+import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
+import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { UpdateFeedMessage } from '../../types.js';
 
@@ -73,6 +73,9 @@ export class WelcomeView extends LitElement {
 
   @state()
   mossUpdatePrecentage: number | undefined;
+
+  @state()
+  updatingTool = false;
 
   availableToolUpdates = new StoreSubscriber(
     this,
@@ -125,16 +128,8 @@ export class WelcomeView extends LitElement {
   }
 
   async updateTool(toolEntity: UpdateableEntity<Tool>) {
-    const confirmation = await dialogMessagebox({
-      message:
-        'Updating a Tool UI will refresh the full Moss window. If you have unsaved changes in one of your Tools, save them first.',
-      type: 'warning',
-      buttons: ['Cancel', 'Continue'],
-    });
-    if (confirmation.response === 0) return;
-    (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).show();
-
     try {
+      this.updatingTool = true;
       const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
       if (assetsSource.type !== 'https')
         throw new Error("Updating of applets is only implemented for sources of type 'http'");
@@ -152,7 +147,7 @@ export class WelcomeView extends LitElement {
       if (appHashes.type !== 'webhapp')
         throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
 
-      await window.electronAPI.batchUpdateAppletUis(
+      const appletIds = await window.electronAPI.batchUpdateAppletUis(
         encodeHashToBase64(toolEntity.originalActionHash),
         encodeHashToBase64(toolEntity.record.actionHash),
         assetsSource.url,
@@ -161,13 +156,15 @@ export class WelcomeView extends LitElement {
         appHashes.ui.sha256,
         appHashes.sha256,
       );
+      console.log('UPDATED UI FOR APPLET IDS: ', appletIds);
       await this._mossStore.checkForUiUpdates();
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
       notify(msg('Tool updated.'));
-      // Required to have the browser refetch the UI. A nicer approach would be to selectively only
-      // reload the iframes associated to that applet
-      window.location.reload();
+      // Reload all the associated UIs
+      appletIds.forEach((id) => refreshAllAppletIframes(id));
+      this.updatingTool = false;
     } catch (e) {
+      this.updatingTool = false;
       console.error(`Failed to update Tool: ${e}`);
       notifyError(msg('Failed to update Tool.'));
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
@@ -239,7 +236,10 @@ export class WelcomeView extends LitElement {
           <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">${tool.title}</div>
           <div style="margin-left: 10px; font-size: 28px; opacity: 0.6;">${tool.version}</div>
           <span style="display: flex; flex: 1;"></span>
-          <sl-button @click=${() => this.updateTool(toolEntity)}
+          <sl-button
+            ?disabled=${this.updatingTool}
+            ?loading=${this.updatingTool}
+            @click=${() => this.updateTool(toolEntity)}
             >${msg('Install Update')}</sl-button
           >
         </div>
