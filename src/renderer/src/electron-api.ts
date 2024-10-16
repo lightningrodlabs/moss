@@ -90,7 +90,7 @@ declare global {
         sha256Happ: string,
         sha256Ui: string,
         sha256Webhapp: string,
-      ) => Promise<void>;
+      ) => Promise<AppletId[]>;
       updateAppletUi: (
         appId: string,
         happOrWebHappUrl: string,

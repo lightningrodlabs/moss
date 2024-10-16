@@ -1192,7 +1192,7 @@ app.whenReady().then(async () => {
       sha256Happ: string,
       sha256Ui: string,
       sha256Webhapp: string,
-    ): Promise<void> => {
+    ): Promise<AppletId[]> => {
       // Check if UI assets need to be downloaded at all
       const uiAlreadyInstalled = fs.existsSync(
         path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'),
@@ -1267,6 +1267,7 @@ app.whenReady().then(async () => {
       });
 
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+      return allAppletAppIds;
     },
   );
   ipcMain.handle(
