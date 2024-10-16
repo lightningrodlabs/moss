@@ -34,9 +34,15 @@ export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
       );
     }
 
+    const absolutePath = path.join(uiAssetsDir, ...uriComponents.slice(1));
+
+    // TODO possible performance optimization to not do the fs.existSync here but just
+    // fall back if net.fetch fails for the absoultePath in the else clause
     if (
       uriComponents.length === 1 ||
-      (uriComponents.length === 2 && (uriComponents[1] === '' || uriComponents[1] === 'index.html'))
+      (uriComponents.length === 2 &&
+        (uriComponents[1] === '' || uriComponents[1] === 'index.html')) ||
+      !fs.existsSync(absolutePath)
     ) {
       let indexHtmlResponse: Response;
       try {
@@ -63,9 +69,7 @@ export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
       const response = new Response(modifiedContent, indexHtmlResponse);
       return response;
     } else {
-      return net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
-      );
+      return net.fetch(url.pathToFileURL(absolutePath).toString());
     }
   });
 }
