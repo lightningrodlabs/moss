@@ -222,6 +222,15 @@ const weaveApi: WeaveServices = {
   if (view.type === 'applet-view') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
+    const [profilesClient, appletClient] = await Promise.all([
+      setupProfilesClient(
+        iframeConfig.appPort,
+        iframeConfig.profilesLocation.authenticationToken,
+        iframeConfig.profilesLocation.profilesRoleName,
+      ),
+      setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
+    ]);
+
     const appletHash = window.__WEAVE_APPLET_HASH__;
 
     // message handler for ParentToApplet messages - Only added for applet main-view
@@ -248,15 +257,6 @@ const weaveApi: WeaveServices = {
         });
       },
     );
-
-    const [profilesClient, appletClient] = await Promise.all([
-      setupProfilesClient(
-        iframeConfig.appPort,
-        iframeConfig.profilesLocation.authenticationToken,
-        iframeConfig.profilesLocation.profilesRoleName,
-      ),
-      setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
-    ]);
 
     window.__WEAVE_RENDER_INFO__ = {
       type: 'applet-view',
