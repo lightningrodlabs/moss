@@ -18,6 +18,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import url from 'url';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
 import { Command, Option } from 'commander';
@@ -287,6 +288,13 @@ setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 
 protocol.registerSchemesAsPrivileged([
   {
+    scheme: 'moss',
+    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+  },
+]);
+
+protocol.registerSchemesAsPrivileged([
+  {
     scheme: 'default-app',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
@@ -392,7 +400,7 @@ const createOrShowMainWindow = (): BrowserWindow => {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadURL('moss://admin.renderer/index.html');
   }
 
   // // and load the index.html of the app.
@@ -514,6 +522,15 @@ Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
+
+  session.defaultSession.protocol.handle('moss', (request) => {
+    const uriWithoutProtocol = request.url.slice('moss://'.length);
+    const filePathComponents = uriWithoutProtocol.split('/').slice(1);
+    const filePath = path.join(...filePathComponents);
+    const absolutePath = path.join(__dirname, '..', 'renderer', filePath);
+    return net.fetch(url.pathToFileURL(absolutePath).toString());
+  });
+
   session.defaultSession.setPermissionRequestHandler(
     async (webContents, permission, callback, details) => {
       if (permission === 'media') {

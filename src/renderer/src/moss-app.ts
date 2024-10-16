@@ -93,7 +93,7 @@ export class MossApp extends LitElement {
       await adminWebsocket.issueAppAuthenticationToken({
         installed_app_id: toolsLibraryAppId,
         single_use: false,
-        expiry_seconds: 99999999,
+        expiry_seconds: 0,
       })
     ).token;
 

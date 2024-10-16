@@ -1128,7 +1128,7 @@ export class MossStore {
         await this.adminWebsocket.issueAppAuthenticationToken({
           installed_app_id: appId,
           single_use: false,
-          expiry_seconds: 99999999,
+          expiry_seconds: 0,
         })
       ).token;
       this._authenticationTokens[appId] = token;

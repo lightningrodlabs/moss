@@ -133,7 +133,7 @@ export async function devSetup(
     await holochainManager.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: TOOLS_LIBRARY_APP_ID,
       single_use: false,
-      expiry_seconds: 99999999,
+      expiry_seconds: 0,
     });
 
   const toolsLibraryClient = await AppWebsocket.connect({
@@ -408,7 +408,7 @@ async function joinGroup(
     await holochainManager.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: groupAppInfo.installed_app_id,
       single_use: false,
-      expiry_seconds: 99999999,
+      expiry_seconds: 0,
     });
   const groupWebsocket = await AppWebsocket.connect({
     url: new URL(`ws://127.0.0.1:${appPort}`),
