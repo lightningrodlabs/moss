@@ -242,7 +242,6 @@ export class ActivityView extends LitElement {
               .filter((notification) => notification.notification.fromAgent)
               .map((notification) => encodeAndStringify(notification.notification.fromAgent)),
           ).size;
-          console.log('Number of Agents Count A: ', numberOfAgentsCountA, numberOfAgentsCountB);
           return numberOfAgentsCountB - numberOfAgentsCountA;
         });
       default:
@@ -320,14 +319,9 @@ export class ActivityView extends LitElement {
               `
             : sortedNotifications.map((aboutWal) => {
                 const notifications = combinedNotifications[aboutWal].notifications;
-                console.log(
-                  'going to try to get appletHash for ',
-                  combinedNotifications[aboutWal].appletId,
-                );
                 const appletHash: AppletHash = appletHashFromAppId(
                   appIdFromAppletId(combinedNotifications[aboutWal].appletId),
                 );
-                console.log('appletHash is ', appletHash);
                 return html`
                   <activity-asset
                     @open-wal=${async (e) => {

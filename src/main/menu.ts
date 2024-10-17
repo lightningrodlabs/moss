@@ -13,7 +13,7 @@ export const mossMenu = (mossFileSystem: MossFileSystem) => {
         label: 'Open Logs',
         async click() {
           try {
-            await shell.openPath(mossFileSystem.appLogsDir);
+            await shell.openPath(mossFileSystem.profileLogsDir);
           } catch (e) {
             dialog.showErrorBox('Failed to open logs folder', (e as any).toString());
           }
@@ -24,11 +24,11 @@ export const mossMenu = (mossFileSystem: MossFileSystem) => {
         async click() {
           try {
             const zip = new AdmZip();
-            zip.addLocalFolder(mossFileSystem.appLogsDir);
+            zip.addLocalFolder(mossFileSystem.profileLogsDir);
             const exportToPathResponse = await dialog.showSaveDialog({
               title: 'Export Logs',
               buttonLabel: 'Export',
-              defaultPath: `Moss_${app.getVersion()}_logs_${new Date().toISOString()}.zip`,
+              defaultPath: `Moss_${app.getVersion()}_logs_${Date.now()}.zip`,
             });
             if (exportToPathResponse.filePath) {
               zip.writeZip(exportToPathResponse.filePath);

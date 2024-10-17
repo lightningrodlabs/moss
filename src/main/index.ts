@@ -18,6 +18,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import url from 'url';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
 import { Command, Option } from 'commander';
@@ -55,10 +56,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
-import { autoUpdater } from '@matthme/electron-updater';
+import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { appletIdFromAppId } from '@theweave/utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -287,6 +289,13 @@ setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 
 protocol.registerSchemesAsPrivileged([
   {
+    scheme: 'moss',
+    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+  },
+]);
+
+protocol.registerSchemesAsPrivileged([
+  {
     scheme: 'default-app',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
   },
@@ -320,6 +329,13 @@ const WAL_WINDOWS: Record<
     wal: WAL;
   }
 > = {};
+let UPDATE_AVAILABLE:
+  | {
+      version: string;
+      releaseDate: string;
+      releaseNotes: string | undefined;
+    }
+  | undefined;
 
 // icons
 const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
@@ -385,7 +401,7 @@ const createOrShowMainWindow = (): BrowserWindow => {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadURL('moss://admin.renderer/index.html');
   }
 
   // // and load the index.html of the app.
@@ -507,6 +523,15 @@ Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   console.log('BEING RUN IN __dirnmane: ', __dirname);
+
+  session.defaultSession.protocol.handle('moss', (request) => {
+    const uriWithoutProtocol = request.url.slice('moss://'.length);
+    const filePathComponents = uriWithoutProtocol.split('/').slice(1);
+    const filePath = path.join(...filePathComponents);
+    const absolutePath = path.join(__dirname, '..', 'renderer', filePath);
+    return net.fetch(url.pathToFileURL(absolutePath).toString());
+  });
+
   session.defaultSession.setPermissionRequestHandler(
     async (webContents, permission, callback, details) => {
       if (permission === 'media') {
@@ -736,7 +761,42 @@ app.whenReady().then(async () => {
   ipcMain.handle('exit', () => {
     app.exit(0);
   });
-  ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
+  ipcMain.handle('factory-reset', async () => {
+    const userDecision = await dialog.showMessageBox({
+      title: 'Factory Reset',
+      type: 'warning',
+      buttons: ['Confirm', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      message: `Are you sure you want to fully reset Moss? This will delete all your Moss related data.`,
+    });
+    if (userDecision.response === 0) {
+      // Close all windows
+      if (MAIN_WINDOW) MAIN_WINDOW.close();
+      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+      for (const window of Object.values(WAL_WINDOWS)) {
+        window.window.close();
+      }
+      // Kill holochain and lair
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      // Remove all data
+      await WE_FILE_SYSTEM.factoryReset();
+      // restart Moss
+      const options: Electron.RelaunchOptions = {
+        args: process.argv,
+      };
+      // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+      if (process.env.APPIMAGE) {
+        console.log('process.execPath: ', process.execPath);
+        options.args!.unshift('--appimage-extract-and-run');
+        options.execPath = process.env.APPIMAGE;
+      }
+      app.relaunch(options);
+      app.quit();
+    }
+  }),
+    ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
   ipcMain.handle(
     'notification',
     (
@@ -989,6 +1049,7 @@ app.whenReady().then(async () => {
     return HOLOCHAIN_MANAGER!.installedApps;
   });
   ipcMain.handle('get-profile', (): string | undefined => RUN_OPTIONS.profile);
+  ipcMain.handle('get-version', (): string => app.getVersion());
   ipcMain.handle('get-conductor-info', (): ConductorInfo => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,
@@ -1132,7 +1193,7 @@ app.whenReady().then(async () => {
       sha256Happ: string,
       sha256Ui: string,
       sha256Webhapp: string,
-    ): Promise<void> => {
+    ): Promise<AppletId[]> => {
       // Check if UI assets need to be downloaded at all
       const uiAlreadyInstalled = fs.existsSync(
         path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'),
@@ -1207,6 +1268,8 @@ app.whenReady().then(async () => {
       });
 
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+
+      return allAppletAppIds.map((id) => appletIdFromAppId(id));
     },
   );
   ipcMain.handle(
@@ -1291,7 +1354,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
     const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
-    const filePath = path.join(WE_FILE_SYSTEM.appLogsDir, 'network_stats.json');
+    const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
     fs.writeFileSync(filePath, stats, 'utf-8');
   });
   ipcMain.handle(
@@ -1437,13 +1500,25 @@ app.whenReady().then(async () => {
       }, 8000);
     }
   });
+  ipcMain.handle('moss-update-available', () => UPDATE_AVAILABLE);
+  ipcMain.handle('install-moss-update', async () => {
+    if (!UPDATE_AVAILABLE) throw new Error('No update available.');
+    // downloading means that with the next start of the application it's automatically going to be installed
+    autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
+    autoUpdater.on('download-progress', (progressInfo) => {
+      if (MAIN_WINDOW) {
+        emitToWindow(MAIN_WINDOW, 'moss-update-progress', progressInfo);
+      }
+    });
+    await autoUpdater.downloadUpdate();
+  });
 
   if (RUN_OPTIONS.devInfo) {
     [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
       WE_FILE_SYSTEM,
       WE_EMITTER,
       undefined,
-      'dummy-dev-password :)',
+      'pass',
       RUN_OPTIONS,
     );
     MAIN_WINDOW = createOrShowMainWindow();
@@ -1458,7 +1533,7 @@ app.whenReady().then(async () => {
       autoUpdater.allowPrerelease = true;
       autoUpdater.autoDownload = false;
 
-      let updateCheckResult;
+      let updateCheckResult: UpdateCheckResult | null | undefined;
 
       try {
         updateCheckResult = await autoUpdater.checkForUpdates();
@@ -1474,33 +1549,11 @@ app.whenReady().then(async () => {
         breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
         semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
-        const userDecision = await dialog.showMessageBox({
-          title: 'Update Available',
-          type: 'question',
-          buttons: ['Deny', 'Install and Restart'],
-          defaultId: 1,
-          cancelId: 0,
-          message: `A new compatible version of Moss is available (${updateCheckResult.updateInfo.version}). Do you want to install it? You will need to restart Moss for the Update to take effect.\n\nRelease notes can be found at:\nhttps://github.com/lightningrodlabs/we/releases/v${updateCheckResult.updateInfo.version}`,
-        });
-        if (userDecision.response === 1) {
-          // downloading means that with the next start of the application it's automatically going to be installed
-          autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
-          await autoUpdater.downloadUpdate();
-
-          // let options: Electron.RelaunchOptions = {
-          //   args: process.argv,
-          // };
-          // // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
-          // if (process.env.APPIMAGE) {
-          //   options.args!.unshift('--appimage-extract-and-run');
-          //   options.execPath = process.env.APPIMAGE.replace(
-          //     appVersion,
-          //     updateCheckResult.updateInfo.version,
-          //   );
-          // }
-          // app.relaunch(options);
-          // app.exit(0);
-        }
+        UPDATE_AVAILABLE = {
+          version: updateCheckResult.updateInfo.version,
+          releaseDate: updateCheckResult.updateInfo.releaseDate,
+          releaseNotes: updateCheckResult.updateInfo.releaseNotes as string | undefined,
+        };
       }
     }
   }

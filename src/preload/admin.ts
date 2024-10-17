@@ -13,6 +13,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 import { AppHashes } from '@theweave/moss-types';
+import { ProgressInfo } from '@matthme/electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -28,6 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
+  onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
+    ipcRenderer.on('moss-update-progress', callback),
   onAppletToParentMessage: (
     callback: (
       e: Electron.IpcRendererEvent,
@@ -59,6 +62,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),
+  installMossUpdate: () => ipcRenderer.invoke('install-moss-update'),
   installAppletBundle: (
     appId: string,
     networkSeed: string,

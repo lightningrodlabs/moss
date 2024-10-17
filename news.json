@@ -2,6 +2,11 @@
   "0.13.x": [
     {
       "type": "Release",
+      "timestamp": 1729023365412,
+      "message": "## Moss 0.13.0-gamma.1 released\n\nChangelog:\n- updates to holochain 0.4.0-rc.0\n- better debugging\n- and more...\n\nNote: this version is not compatible with previous 0.13.x versions, and must be installed manually from [the releases page](https://github.com/lightningrodlabs/moss/releases/tag/v0.13.0-gamma.1) "
+    },
+    {
+      "type": "Release",
       "timestamp": 1722197574129,
       "message": "## Moss 0.13.0-alpha.9 released\n\nChangelog:\n- add persistent Tool settings/preferences (e.g. camera permission)\n- improved personal view bar UI"
     },

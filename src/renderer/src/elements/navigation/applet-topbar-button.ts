@@ -72,7 +72,7 @@ export class AppletTopBarButton extends LitElement {
         <sl-tooltip
           hoist
           placement="right"
-          content=${msg('Reload Applet')}
+          content=${msg('Reload Tool')}
         >
           <sl-icon
             class="refresh"

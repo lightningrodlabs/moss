@@ -26,7 +26,7 @@ export function setupLogs(
   mossFileSystem: MossFileSystem,
   holochainLogsToTerminal: boolean,
 ) {
-  const logFilePath = path.join(mossFileSystem.appLogsDir, 'we.log');
+  const logFilePath = path.join(mossFileSystem.profileLogsDir, 'we.log');
   if (fs.existsSync(logFilePath)) {
     const stats = fs.statSync(logFilePath);
     // If existing logfile is larger than 1GB, delete it

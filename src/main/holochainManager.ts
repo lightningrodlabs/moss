@@ -6,6 +6,7 @@ import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
 import { AdminWebsocket, AppAuthenticationToken, AppInfo, InstalledAppId } from '@holochain/client';
 import { AppAssetsInfo, DistributionInfo, MossFileSystem } from './filesystem';
+import { app } from 'electron';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -64,6 +65,10 @@ export class HolochainManager {
 
     let conductorConfig: string;
 
+    const allowedOrigins = app.isPackaged
+      ? 'moss://admin.main,moss://admin.renderer'
+      : 'moss://admin.main,http://localhost:5173';
+
     if (fs.existsSync(configPath)) {
       conductorConfig = rustUtils.overwriteConfig(
         adminPort,
@@ -71,7 +76,7 @@ export class HolochainManager {
         lairUrl,
         bootstrapUrl,
         signalingUrl,
-        '*',
+        allowedOrigins,
         false,
         iceUrls,
       );
@@ -83,7 +88,7 @@ export class HolochainManager {
         lairUrl,
         bootstrapUrl,
         signalingUrl,
-        '*',
+        allowedOrigins,
         false,
         iceUrls,
       );
@@ -141,7 +146,7 @@ export class HolochainManager {
           const adminWebsocket = await AdminWebsocket.connect({
             url: new URL(`ws://127.0.0.1:${adminPort}`),
             wsClientOptions: {
-              origin: 'moss-admin-main',
+              origin: 'moss://admin.main',
             },
           });
           console.log('Connected to admin websocket.');
@@ -271,7 +276,7 @@ export class HolochainManager {
     const response = await this.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: appId,
       single_use: false,
-      expiry_seconds: 99999999,
+      expiry_seconds: 0,
     });
     this.appTokens[appId] = response.token;
     return response.token;

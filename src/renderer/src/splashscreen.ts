@@ -2,8 +2,13 @@ import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiClose } from '@mdi/js';
+import { mdiClose, mdiCog } from '@mdi/js';
+import { SlDialog } from '@shoelace-style/shoelace';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import { msg } from '@lit/localize';
 // import { ipcRenderer } from 'electron';
 
 enum SplashScreenMode {
@@ -37,8 +42,14 @@ export class SplashScreen extends LitElement {
   @query('#confirm-password-input')
   confirmPasswordInput!: HTMLInputElement | undefined;
 
+  @query('#settings-dialog')
+  settingsDialog!: SlDialog;
+
   @state()
   view: SplashScreenMode = SplashScreenMode.Loading;
+
+  @state()
+  version: string | undefined;
 
   async firstUpdated() {
     (window as any).electronAPI.onProgressUpdate((e, payload) => {
@@ -53,6 +64,7 @@ export class SplashScreen extends LitElement {
       this.view = SplashScreenMode.EnterPassword;
     }
     this.profile = await (window as any).electronAPI.getProfile();
+    this.version = await (window as any).electronAPI.getVersion();
   }
 
   async setupAndLaunch() {
@@ -203,7 +215,7 @@ export class SplashScreen extends LitElement {
   }
 
   renderLaunching() {
-    return html` <h1>Starting up...</h1> `;
+    return html` <h2>${this.progressState}</h2> `;
   }
 
   renderExitButton() {
@@ -227,11 +239,32 @@ export class SplashScreen extends LitElement {
 
   render() {
     return html`
+      <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
+        <div class="column">
+          <div><b>Factory Reset</b></div>
+          <div
+            class="row items-center"
+            style="background: #ffaaaa; padding: 10px 5px; border-radius: 5px;"
+          >
+            <span style="margin-right: 20px;"
+              >Fully reset Moss and <b>delete all associated data</b></span
+            >
+            <sl-button
+              variant="danger"
+              @click=${async () => await (window as any).electronAPI.factoryReset()}
+              >Factory Reset</sl-button
+            >
+          </div>
+        </div>
+        <sl-button slot="footer" variant="primary" @click=${() => this.settingsDialog.hide()}
+          >Close</sl-button
+        >
+      </sl-dialog>
       <div class="background">
         ${this.renderContent()}
-        ${this.profile && this.progressState === ''
-          ? html`<span class="bottom-left">profile: ${this.profile}</span>`
-          : html``}
+        <span class="bottom-left"
+          >v${this.version}${this.profile ? ` (profile: "${this.profile}")` : ''}</span
+        >
         <img
           class="top-left"
           src="icon.png"
@@ -239,7 +272,13 @@ export class SplashScreen extends LitElement {
           alt="Moss icon"
           title="Moss"
         />
-        <div class="bottom-left">${this.progressState}</div>
+        <sl-icon-button
+          .src=${wrapPathInSvg(mdiCog)}
+          ?disabled=${this.view === SplashScreenMode.Launching}
+          class="top-right"
+          style="font-size: 20px;"
+          @click=${() => this.settingsDialog.show()}
+        ></sl-icon-button>
         <div class="bottom-right">
           <div class="row" style="align-items: center;">
             <span style="color: white; margin-left: 6px;">Lightningrod Labs</span>
@@ -262,10 +301,9 @@ export class SplashScreen extends LitElement {
           display: flex;
           margin: 0;
           padding: 0;
-          color: #e6e3fc;
+          color: white;
         }
-
-        h1 {
+        h2 {
           color: #ffffff;
         }
 
@@ -336,7 +374,7 @@ export class SplashScreen extends LitElement {
 
         .bottom-left {
           position: absolute;
-          bottom: 5px;
+          bottom: 3px;
           left: 5px;
           color: #ffffff;
           font-size: 15px;
@@ -360,7 +398,7 @@ export class SplashScreen extends LitElement {
         .top-right {
           position: absolute;
           top: 5px;
-          right: 10px;
+          right: 5px;
           color: #ffffff;
         }
 

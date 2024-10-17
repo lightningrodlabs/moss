@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
   launch: (password: string) => ipcRenderer.invoke('launch', password),
   getProfile: () => ipcRenderer.invoke('get-profile'),
+  getVersion: () => ipcRenderer.invoke('get-version'),
+  factoryReset: () => ipcRenderer.invoke('factory-reset'),
   exit: () => ipcRenderer.invoke('exit'),
 });

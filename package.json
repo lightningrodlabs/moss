@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.13",
-  "version": "0.13.0-gamma.1",
+  "version": "0.13.0-gamma.2",
   "private": true,
   "description": "Moss (0.13)",
   "main": "./out/main/index.js",
@@ -96,7 +96,7 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron/notarize": "^2.1.0",
     "@holochain-playground/cli": "^0.1.1",
-    "@theweave/cli": "0.13.0-beta.6",
+    "@theweave/cli": "0.13.0-gamma.3",
     "@microsoft/api-extractor": "7.47.7",
     "@microsoft/api-documenter": "7.25.12",
     "@types/adm-zip": "0.5.5",

@@ -16,6 +16,19 @@ export class PersistedStore {
 
   keys;
 
+  /**
+   * Array of Moss versions that have been declined
+   */
+  declinedMossUpdates: SubStore<string[], string[], []> = {
+    value: () => {
+      const declinedUpdates = this.store.getItem<string[]>('declinedMossUpdates');
+      return declinedUpdates ? declinedUpdates : [];
+    },
+    set: (value) => {
+      this.store.setItem<string[]>('declinedMossUpdates', value);
+    },
+  };
+
   pocket: SubStore<WalInPocket[], WalInPocket[], []> = {
     value: () => {
       const pocketContent = this.store.getItem<Array<WalInPocket>>('pocket');

@@ -8,7 +8,6 @@ files:
   - moss.config.json
 asarUnpack:
   - resources/**
-  - '**/*.node'
 afterSign: scripts/notarize.js
 protocols:
   - name: Weave URL

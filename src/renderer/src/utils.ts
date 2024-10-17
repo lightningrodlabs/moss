@@ -61,6 +61,10 @@ export function appletOrigin(appletHash: AppletHash): string {
   return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
 }
 
+export function appletOriginFromAppletId(appletId: AppletId): string {
+  return `applet://${toLowerCaseB64(appletId)}`;
+}
+
 export function findAppForDnaHash(
   apps: ListAppsResponse,
   dnaHash: DnaHash,
@@ -516,6 +520,18 @@ export function stringToMessageParts(input: string): Array<MessageContentPart> {
       ? { type: 'agent', pubkey: part }
       : { type: 'text', content: part };
   });
+}
+
+export function refreshAllAppletIframes(appletId: AppletId): void {
+  const appletIframes = getAllIframesFromApplet(appletId);
+  appletIframes.forEach((iframe) => {
+    iframe.src += '';
+  });
+}
+
+export function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
+  const allIframes = getAllIframes();
+  return allIframes.filter((iframe) => iframe.src.startsWith(appletOriginFromAppletId(appletId)));
 }
 
 export function getAllIframes() {
