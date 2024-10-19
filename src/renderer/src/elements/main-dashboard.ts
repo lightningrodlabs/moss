@@ -76,6 +76,7 @@ import {
   decodeContext,
   getAllIframes,
   logMossZomeCall,
+  postMessageToIframe,
   progenitorFromProperties,
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
@@ -236,6 +237,8 @@ export class MainDashboard extends LitElement {
     () => this._mossStore.runningAppletClasses,
     () => [this, this._mossStore],
   );
+
+  _reloadingApplets: Array<AppletId> = [];
 
   // _unlisten: UnlistenFn | undefined;
 
@@ -733,7 +736,23 @@ export class MainDashboard extends LitElement {
           (appletHash) => html`
             <applet-main
               .appletHash=${appletHash}
+              .reloading=${this._reloadingApplets.includes(encodeHashToBase64(appletHash))}
               style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
+              @hard-refresh=${async () => {
+                // emit onBeforeUnload event and wait for callback to be executed
+                const appletId = encodeHashToBase64(appletHash);
+
+                const allIframes = getAllIframes();
+                const appletIframe = allIframes.find((iframe) => iframe.id === appletId);
+                if (appletIframe) {
+                  appletIframe.src += '';
+                }
+                const reloadingApplets = this._reloadingApplets;
+
+                // Remove AppletId from reloading applets
+                this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
+                console.log('this._reloadingApplets after reloading: ', this._reloadingApplets);
+              }}
             ></applet-main>
           `,
         );
@@ -1497,14 +1516,32 @@ export class MainDashboard extends LitElement {
                         appletHash: e.detail.appletHash,
                       });
                     }}
-                    @refresh-applet=${(e: CustomEvent) => {
+                    @refresh-applet=${async (e: CustomEvent) => {
+                      // emit onBeforeUnload event and wait for callback to be executed
+                      const appletId = encodeHashToBase64(e.detail.appletHash);
+
+                      const reloadingApplets = this._reloadingApplets;
+                      reloadingApplets.push(appletId);
+                      this._reloadingApplets = reloadingApplets;
+
                       const allIframes = getAllIframes();
-                      const appletIframe = allIframes.find(
-                        (iframe) => iframe.id === encodeHashToBase64(e.detail.appletHash),
-                      );
+                      const appletIframe = allIframes.find((iframe) => iframe.id === appletId);
                       if (appletIframe) {
+                        try {
+                          await postMessageToIframe(appletIframe, { type: 'on-before-unload' });
+                        } catch (e) {
+                          console.warn(
+                            'WARNING: onBeforeUnload callback failed for applet with id',
+                            appletId,
+                            ':',
+                            e,
+                          );
+                        }
                         appletIframe.src += '';
                       }
+
+                      // Remove AppletId from reloading applets
+                      this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
                     }}
                   ></group-applets-sidebar>
                 </group-context>

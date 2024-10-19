@@ -1,4 +1,4 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { encodeHashToBase64, EntryHash } from '@holochain/client';
@@ -9,9 +9,9 @@ import { weStyles } from '../../shared-styles.js';
 import { appletOrigin, renderViewToQueryString, urlFromAppletHash } from '../../utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { getAppletDevPort } from '../../electron-api.js';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { localized, msg } from '@lit/localize';
 
+@localized()
 @customElement('view-frame')
 export class ViewFrame extends LitElement {
   @consume({ context: mossStoreContext })
@@ -24,19 +24,83 @@ export class ViewFrame extends LitElement {
   @property()
   renderView!: RenderView;
 
+  @property()
+  reloading = false;
+
   @state()
   appletDevPort: number | undefined;
 
   @state()
   loading = true;
 
+  @state()
+  slowLoading = false;
+
+  @state()
+  slowReloadTimeout: number | undefined;
+
   async firstUpdated() {
-    console.log('@view-frame: IS APPLET DEV: ', this.mossStore.isAppletDev);
     if (this.mossStore.isAppletDev) {
-      const appId = appIdFromAppletHash(this.appletHash);
-      this.appletDevPort = await getAppletDevPort(appId);
-      console.log('@view-frame @devmode: Got applet dev port: ', this.appletDevPort);
+      this.appletDevPort = await this.mossStore.getAppletDevPort(
+        encodeHashToBase64(this.appletHash),
+      );
     }
+  }
+
+  willUpdate(changedProperties: PropertyValues<this>) {
+    if (changedProperties.has('reloading')) {
+      if (this.reloading) {
+        // If it takes longer than 5 seconds to unload, offer to hard reload
+        this.slowReloadTimeout = window.setTimeout(() => {
+          if (this.reloading) {
+            this.slowLoading = true;
+          }
+        }, 5000);
+        this.loading = true;
+      } else {
+        if (this.slowReloadTimeout) window.clearTimeout(this.slowReloadTimeout);
+        this.loading = false;
+        this.slowLoading = false;
+      }
+    }
+  }
+
+  hardRefresh() {
+    this.slowLoading = false;
+    this.dispatchEvent(new CustomEvent('hard-refresh', { bubbles: true, composed: true }));
+  }
+
+  renderLoading() {
+    return html`
+      <div
+        class="column center-content"
+        style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
+      >
+        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
+        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+          ${this.reloading ? msg('reloading...') : msg('loading...')}
+        </div>
+        ${this.slowLoading
+          ? html`
+              <div
+                class="column items-center"
+                style="margin-top: 50px; max-width: 600px;color: white;"
+              >
+                <div>This Tool takes unusually long to reload. Do you want to force reload?</div>
+                <div style="margin-top: 10px;">
+                  (force reloading may interrupt the Tool from saving unsaved content)
+                </div>
+                <sl-button
+                  variant="danger"
+                  @click=${() => this.hardRefresh()}
+                  style="margin-top: 20px; width: 150px;"
+                  >Force Reload</sl-button
+                >
+              </div>
+            `
+          : html``}
+      </div>
+    `;
   }
 
   renderProductionFrame() {
@@ -53,15 +117,7 @@ export class ViewFrame extends LitElement {
           this.loading = false;
         }}
       ></iframe>
-      <div
-        class="column center-content"
-        style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
-      >
-        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
-        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
-          loading...
-        </div>
-      </div>`;
+      ${this.renderLoading()}`;
   }
 
   render() {
@@ -88,15 +144,7 @@ export class ViewFrame extends LitElement {
               this.loading = false;
             }}
           ></iframe>
-          <div
-            class="column center-content"
-            style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
-          >
-            <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
-            <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
-              loading...
-            </div>
-          </div> `;
+          ${this.renderLoading()}`;
     }
   }
 

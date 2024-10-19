@@ -290,18 +290,8 @@ setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'moss',
-    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+    privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true },
   },
-]);
-
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'default-app',
-    privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
-  },
-]);
-
-protocol.registerSchemesAsPrivileged([
   {
     scheme: 'applet',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },

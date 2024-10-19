@@ -13,6 +13,7 @@ import {
   weaveUrlToLocation,
   ReadonlyPeerStatusStore,
   GroupPermissionType,
+  UnsubscribeFunction,
 } from '@theweave/api';
 import { AgentPubKey, AppClient } from '@holochain/client';
 import '@theweave/elements/dist/elements/wal-embed.js';
@@ -78,9 +79,33 @@ export class AppletMain extends LitElement {
   // @state()
   // unsubscribe: undefined | (() => void);
 
+  @query('#failUnbeforeUnloadCheckmark')
+  failUnbeforeUnloadCheckmark!: HTMLInputElement;
+
+  onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
+  onBeforeUnloadUnsubscribe2: UnsubscribeFunction | undefined;
+
   async firstUpdated() {
+    this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
+      console.log('Unloading in 20 seconds');
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+      console.log('Unloading now.');
+    });
+    this.onBeforeUnloadUnsubscribe2 = this.weaveClient.onBeforeUnload(() => {
+      if (this.failUnbeforeUnloadCheckmark.checked)
+        throw new Error(
+          'The onbeforeunload callback failed (intentionally for testing purposes) in the example applet :(.'
+        );
+      console.log('@example-applet: Running second unbeforeunload callback.');
+    });
+
     this.groupPermissionType = await this.weaveClient.myGroupPermissionType();
     this.appletParticipants = await this.weaveClient.appletParticipants();
+  }
+
+  disconnectedCallback(): void {
+    if (this.onBeforeUnloadUnsubscribe) this.onBeforeUnloadUnsubscribe();
+    if (this.onBeforeUnloadUnsubscribe2) this.onBeforeUnloadUnsubscribe2();
   }
 
   // disconnectedCallback(): void {
@@ -247,6 +272,7 @@ export class AppletMain extends LitElement {
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>
+            <h2>Notifications</h2>
             <button @click=${() => this.sendLowNotification(5000)}>
               Send Low Urgency Notification with 5 seconds delay
             </button>
@@ -256,6 +282,17 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
+
+            <h2>on-before-unload behavior</h2>
+
+            <div class="row">
+            <input type="checkbox" id="failUnbeforeUnloadCheckmark"/>
+            Make the on-before-unload callback fail when reloading the applet to test how Moss handles this case.
+            </div>
+
+
+            <h2>Activity Notification</h2>
+
             <search-agent
                 @agent-selected=${this.handleAgentSelected}
             ></search-agent>
@@ -265,6 +302,9 @@ export class AppletMain extends LitElement {
             }}>
               Send Activity Notification
             </button>
+
+            <h2>Links</h2>
+
             <div>Enter WAL:</div>
             <textarea
               id="wal-input-field"
@@ -282,6 +322,9 @@ export class AppletMain extends LitElement {
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
             <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
+
+            <h2>Clipboard</h2>
+
             <button
               @click=${() => {
                 navigator.clipboard.writeText('Easter Egg.');
@@ -289,6 +332,8 @@ export class AppletMain extends LitElement {
             >
               Copy Something To Clipboard
             </button>
+
+            <h2>Bindings</h2>
 
             <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
               <div><b>Create Binding:</b></div>
@@ -318,6 +363,8 @@ export class AppletMain extends LitElement {
                 Bind!
               </button>
             </div>
+
+            <h2>WAL Embeds</h2>
 
             <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
               <div><b>Embed WAL:</b></div>

@@ -12,10 +12,14 @@ export class AppletMain extends LitElement {
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
 
+  @property()
+  reloading = false;
+
   render() {
     return html`<applet-view
       .view=${{ type: 'main' }}
       .appletHash=${this.appletHash}
+      .reloading=${this.reloading}
       .hostColor=${'#588121'}
       style="flex: 1"
     ></applet-view>`;

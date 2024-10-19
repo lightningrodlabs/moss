@@ -40,6 +40,11 @@ import {
 import { readable } from '@holochain-open-dev/stores';
 import { toOriginalCaseB64 } from '@theweave/utils';
 
+type CallbackWithId = {
+  id: number;
+  callback: () => any;
+};
+
 declare global {
   interface Window {
     __WEAVE_API__: WeaveServices;
@@ -49,6 +54,7 @@ declare global {
     __WEAVE_APPLET_ID__: AppletId;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
+    __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
   }
 
   interface WindowEventMap {
@@ -60,11 +66,40 @@ const weaveApi: WeaveServices = {
   mossVersion: () => {
     return window.__MOSS_VERSION__;
   },
+
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
     const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
     window.addEventListener('peer-status-update', listener);
     return () => window.removeEventListener('peer-status-update', listener);
   },
+
+  onBeforeUnload: (callback: () => void) => {
+    // registers a callback on the window object that will be called before
+    // the iframe gets unloaded
+    const existingCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
+    let newCallbackId = 0;
+    const existingCallbackIds = existingCallbacks.map((callbackWithId) => callbackWithId.id);
+    if (existingCallbackIds && existingCallbackIds.length > 0) {
+      // every new callback gets a new id in increasing manner
+      const highestId = existingCallbackIds.sort((a, b) => b - a)[0];
+      newCallbackId = highestId + 1;
+    }
+
+    existingCallbacks.push({ id: newCallbackId, callback });
+
+    window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ = existingCallbacks;
+
+    const unlisten = () => {
+      const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
+      window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ = allCallbacks.filter(
+        (callbackWithId) => callbackWithId.id !== newCallbackId,
+      );
+    };
+
+    // We return an unlistener function which removes the callback from the list of callbacks
+    return unlisten;
+  },
+
   openAppletMain: async (appletHash: EntryHash): Promise<void> =>
     postMessage({
       type: 'open-view',
@@ -233,7 +268,7 @@ const weaveApi: WeaveServices = {
 
     const appletHash = window.__WEAVE_APPLET_HASH__;
 
-    // message handler for ParentToApplet messages - Only added for applet main-view
+    // message handler for ParentToApplet messages
     window.addEventListener('message', async (m: MessageEvent<any>) => {
       try {
         const result = await handleMessage(appletClient, appletHash, m.data);
@@ -290,6 +325,17 @@ const weaveApi: WeaveServices = {
       ),
     );
 
+    // message handler for ParentToApplet messages - Only events are handled in the cross-group view
+    window.addEventListener('message', async (m: MessageEvent<any>) => {
+      try {
+        const result = await handleEventMessage(m.data);
+        m.ports[0].postMessage({ type: 'success', result });
+      } catch (e) {
+        console.error('Failed to send postMessage to cross-group-view', e);
+        m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
+      }
+    });
+
     window.__WEAVE_RENDER_INFO__ = {
       type: 'cross-applet-view',
       view: view.view,
@@ -329,6 +375,20 @@ async function fetchLocalStorage() {
   );
 }
 
+const handleEventMessage = async (message: ParentToAppletMessage) => {
+  switch (message.type) {
+    case 'on-before-unload':
+      console.log('@applet-iframe: got on-before-unload event in cross-group-view');
+      const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
+      await Promise.all(
+        allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
+      );
+      return;
+    default:
+      return;
+  }
+};
+
 const handleMessage = async (
   appletClient: AppClient,
   appletHash: AppletHash,
@@ -364,6 +424,15 @@ const handleMessage = async (
         }),
       );
       break;
+    case 'on-before-unload': {
+      // Call all registered callbacks
+      console.log('@applet-iframe: got on-before-unload event');
+      const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
+      await Promise.all(
+        allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
+      );
+      return;
+    }
     default:
       throw new Error(
         `Unknown ParentToAppletMessage type: '${(message as any).type}'. Message: ${message}`,

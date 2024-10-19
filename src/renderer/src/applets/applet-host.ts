@@ -137,6 +137,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     onPeerStatusUpdate(_) {
       return () => undefined;
     },
+    onBeforeUnload(_) {
+      return () => undefined;
+    },
     async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
       const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
       if (maybeCachedInfo) return maybeCachedInfo;
