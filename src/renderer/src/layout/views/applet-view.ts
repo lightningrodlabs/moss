@@ -22,9 +22,8 @@ export class AppletViewEl extends LitElement {
   @property()
   hostColor: string | undefined;
 
-  firstUpdated() {
-    this.shadowRoot!.host.classList.add();
-  }
+  @property()
+  reloading = false;
 
   hostStyle() {
     if (this.hostColor) {
@@ -49,6 +48,7 @@ export class AppletViewEl extends LitElement {
       <view-frame
         .renderView=${renderView}
         .appletHash=${this.appletHash}
+        .reloading=${this.reloading}
         class="elevated"
         style="flex: 1; overflow: hidden;"
       ></view-frame>

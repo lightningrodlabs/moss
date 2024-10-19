@@ -16,7 +16,7 @@ import { consume } from '@lit/context';
 import { ActionHash } from '@holochain/client';
 import { notifyAndThrow, resizeAndExport } from '../../../utils.js';
 import { AppHashes, WebHappSource } from '@theweave/moss-types';
-import { validateHappOrWebhapp } from '../../../electron-api.js';
+import { fetchAndValidateHappOrWebhapp } from '../../../electron-api.js';
 import {
   Tool,
   UpdateToolInput,
@@ -112,23 +112,15 @@ export class UpdateTool extends LitElement {
         url: fields.webhapp_url,
       };
       this._updating = 'Fetching new resource for validation...';
-      // try to fetch (web)happ from new source to verify link
-      let byteArray: number[];
-      try {
-        const response = await fetch(fields.webhapp_url);
-        byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-      } catch (e) {
-        this._updating = undefined;
-        notifyError('Failed to fetch new resource at the specified URL');
-        throw new Error(`Failed to fetch new resource at the specified URL: ${e}`);
-      }
       // verify that new resource is of the right format (happ or webhapp) and compute the new hashes
       try {
         this._updating = 'Validating resource format and computing hashes...';
-        newHashes = await validateHappOrWebhapp(byteArray);
+        newHashes = await fetchAndValidateHappOrWebhapp(fields.webhapp_url);
       } catch (e) {
         this._updating = undefined;
-        notifyError(`Failed to validate resources: ${e}`);
+        notifyError(
+          `Asset format validation failed. Make sure the URL is valid and points to a valid .webhapp or .happ file.`,
+        );
         throw new Error(`Asset format validation failed: ${e}`);
       }
       this._updating = 'Comparing hashes with previous app version...';

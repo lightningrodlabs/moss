@@ -17,7 +17,7 @@ import { consume } from '@lit/context';
 import { ActionHash } from '@holochain/client';
 import { resizeAndExport } from '../../../utils.js';
 import { AppHashes, WebHappSource } from '@theweave/moss-types';
-import { validateHappOrWebhapp } from '../../../electron-api.js';
+import { fetchAndValidateHappOrWebhapp } from '../../../electron-api.js';
 import { Tool } from '@theweave/tool-library-client';
 
 @localized()
@@ -79,32 +79,22 @@ export class PublishTool extends LitElement {
     version: string;
     webhapp_url: string;
   }) {
-    this._publishing = 'Fetching resource for validation...';
     console.log('TRYING TO PUBLISH TOOL...');
     if (!this._toolIconSrc) {
       this._publishing = undefined;
       notifyError('No Icon provided.');
       throw new Error('Icon is required.');
     }
-    // try to fetch (web)happ from source to verify link
-    let byteArray: number[];
-    try {
-      const response = await fetch(fields.webhapp_url);
-      byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-    } catch (e) {
-      this._publishing = undefined;
-      notifyError('Failed to fetch resource at the specified URL');
-      throw new Error(`Failed to fetch resource at the specified URL: ${e}`);
-    }
+
     // verify that resource is of the right format (happ or webhapp) and compute the hashes
     let hashes: AppHashes;
     try {
-      this._publishing = 'Validating resource format and computing hashes...';
-      hashes = await validateHappOrWebhapp(byteArray);
+      this._publishing = 'Fetching and validating resource and computing hashes...';
+      hashes = await fetchAndValidateHappOrWebhapp(fields.webhapp_url);
     } catch (e) {
       this._publishing = undefined;
       notifyError(
-        `Asset format validation failed. Make sure the URL points to a valid .webhapp or .happ file.`,
+        `Asset format validation failed. Make sure the URL is valid and points to a valid .webhapp or .happ file.`,
       );
       throw new Error(`Asset format validation failed: ${e}`);
     }
