@@ -83,15 +83,9 @@ export class AppletMain extends LitElement {
   failUnbeforeUnloadCheckmark!: HTMLInputElement;
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
-  onBeforeUnloadUnsubscribe2: UnsubscribeFunction | undefined;
 
   async firstUpdated() {
-    this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
-      console.log('Unloading in 20 seconds');
-      await new Promise((resolve) => setTimeout(resolve, 20000));
-      console.log('Unloading now.');
-    });
-    this.onBeforeUnloadUnsubscribe2 = this.weaveClient.onBeforeUnload(() => {
+    this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(() => {
       if (this.failUnbeforeUnloadCheckmark.checked)
         throw new Error(
           'The onbeforeunload callback failed (intentionally for testing purposes) in the example applet :(.'
@@ -105,7 +99,6 @@ export class AppletMain extends LitElement {
 
   disconnectedCallback(): void {
     if (this.onBeforeUnloadUnsubscribe) this.onBeforeUnloadUnsubscribe();
-    if (this.onBeforeUnloadUnsubscribe2) this.onBeforeUnloadUnsubscribe2();
   }
 
   // disconnectedCallback(): void {

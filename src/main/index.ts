@@ -887,8 +887,15 @@ app.whenReady().then(async () => {
       return;
     }
     const newWalWindow = createWalWindow();
+    // on-before-unload (added here for searchability of event-related code)
+    // This event is forwarded to the window in order to discern in the
+    // onbeforeunload callback between reloading and closing of the window
     newWalWindow.on('close', () => {
-      delete WAL_WINDOWS[src];
+      // on-before-unload
+      // closing may be prevented by the beforeunload event listener in the window
+      // the first time. The window should however be hidden already anyway.
+      newWalWindow.hide();
+      emitToWindow(newWalWindow, 'window-closing', null);
     });
     WAL_WINDOWS[src] = {
       window: newWalWindow,

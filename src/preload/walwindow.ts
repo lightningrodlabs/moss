@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   focusMainWindow: () => ipcRenderer.invoke('focus-main-window'),
   focusMyWindow: () => ipcRenderer.invoke('focus-my-window'),
   getMySrc: () => ipcRenderer.invoke('get-my-src'),
+  onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('window-closing', callback),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   setMyIcon: (icon: string) => ipcRenderer.invoke('set-my-icon', icon),
   setMyTitle: (title: string) => ipcRenderer.invoke('set-my-title', title),

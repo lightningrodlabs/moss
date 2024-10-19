@@ -887,7 +887,6 @@ export async function postMessageToAppletIframes(
   if (appletIds.type === 'some') {
     const relevantSrcs = appletIds.ids.map((id) => appletOriginFromAppletId(id));
     allAppletIframes = allAppletIframes.filter((iframe) => {
-      console.log('IFRAME SRC: ', iframe.src);
       let matches = false;
       if (extraOrigins) {
         extraOrigins.forEach((origin) => {
@@ -911,9 +910,7 @@ export async function postMessageToAppletIframes(
 
   return Promise.allSettled(
     allAppletIframes.map(async (iframe) => {
-      console.log('seinding msg');
       await postMessageToIframe(iframe, message);
-      console.log('msg done.');
     }),
   );
 }

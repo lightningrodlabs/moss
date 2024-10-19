@@ -11,6 +11,8 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { localized, msg } from '@lit/localize';
 
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+
 @localized()
 @customElement('view-frame')
 export class ViewFrame extends LitElement {
