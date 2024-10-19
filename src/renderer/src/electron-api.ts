@@ -45,6 +45,7 @@ declare global {
           },
         ) => any,
       ) => any;
+      closeMainWindow: () => Promise<void>;
       openApp: (appId: string) => Promise<void>;
       openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<
@@ -101,6 +102,7 @@ declare global {
       ) => Promise<void>;
       uninstallApplet: (appId: string) => Promise<void>;
       dumpNetworkStats: () => Promise<void>;
+      fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
@@ -189,6 +191,10 @@ export async function disableDevMode(): Promise<void> {
 
 export async function selectScreenOrWindow(): Promise<string> {
   return window.electronAPI.selectScreenOrWindow();
+}
+
+export async function fetchAndValidateHappOrWebhapp(url: string) {
+  return window.electronAPI.fetchAndValidateHappOrWebhapp(url);
 }
 
 export async function validateHappOrWebhapp(bytes: number[]) {

@@ -293,6 +293,9 @@ export type ParentToAppletMessage =
   | {
       type: 'peer-status-update';
       payload: PeerStatusUpdate;
+    }
+  | {
+      type: 'on-before-unload';
     };
 
 export type AppletToParentMessage = {

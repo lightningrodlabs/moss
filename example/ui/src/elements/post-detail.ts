@@ -28,7 +28,7 @@ import './edit-post.js';
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { Post } from '../types.js';
-import { WAL, weaveUrlFromWal } from '@theweave/api';
+import { WAL, WeaveClient, weaveUrlFromWal } from '@theweave/api';
 
 /**
  * @element post-detail
@@ -40,6 +40,9 @@ export class PostDetail extends LitElement {
   // REQUIRED. The hash of the Post to show
   @property(hashProperty('post-hash'))
   postHash!: ActionHash;
+
+  @property()
+  weaveClient!: WeaveClient;
 
   /**
    * @internal
@@ -126,6 +129,12 @@ export class PostDetail extends LitElement {
         </sl-card>
         <attachments-card .wal=${weaveUrlFromWal(this.WAL!, false)}></attachments-card>
       </div>
+      <sl-button
+        style="margin-top: 20px;"
+        variant="danger"
+        @click=${() => this.weaveClient.requestClose()}
+        >Close Window (only works if open in separate Window)</sl-button
+      >
     `;
   }
 

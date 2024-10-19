@@ -41,6 +41,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('deep-link-received', callback),
   onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
     ipcRenderer.on('switch-to-applet', callback),
+  onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('window-closing', callback),
   onZomeCallSigned: (
     callback: (
       e: Electron.IpcRendererEvent,
@@ -51,6 +53,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       },
     ) => any,
   ) => ipcRenderer.on('zome-call-signed', callback),
+  closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) =>
@@ -141,6 +144,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   uninstallApplet: (appId: string) => ipcRenderer.invoke('uninstall-applet', appId),
   dumpNetworkStats: () => ipcRenderer.invoke('dump-network-stats'),
+  fetchAndValidateHappOrWebhapp: (url: string) =>
+    ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
 });
 

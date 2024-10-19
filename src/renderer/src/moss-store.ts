@@ -48,7 +48,13 @@ import {
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
-import { ConductorInfo, createGroup, getAllAppAssetsInfos, joinGroup } from './electron-api.js';
+import {
+  ConductorInfo,
+  createGroup,
+  getAllAppAssetsInfos,
+  getAppletDevPort,
+  joinGroup,
+} from './electron-api.js';
 import {
   deStringifyWal,
   destringifyAndDecode,
@@ -64,6 +70,7 @@ import { AppletStore } from './applets/applet-store.js';
 import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
 import {
   appIdFromAppletHash,
+  appIdFromAppletId,
   appletHashFromAppId,
   appletIdFromAppId,
   toolBundleActionHashFromDistInfo,
@@ -155,6 +162,11 @@ export class MossStore {
 
   _appClients: Record<InstalledAppId, AppClient> = {};
 
+  /**
+   * Ports of applets running with hot-reloading in dev mode
+   */
+  _appletDevPorts: Record<AppletId, number> = {};
+
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
@@ -195,6 +207,16 @@ export class MossStore {
       delete store[dialogId];
       return store;
     });
+  }
+
+  async getAppletDevPort(appletId: AppletId) {
+    const maybePort = this._appletDevPorts[appletId];
+    if (maybePort) return maybePort;
+    const port = await getAppletDevPort(appIdFromAppletId(appletId));
+    const appletPorts = this._appletDevPorts;
+    appletPorts[appletId] = port;
+    this._appletDevPorts = appletPorts;
+    return port;
   }
 
   async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {

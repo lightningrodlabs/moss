@@ -21,7 +21,15 @@ import {
   DnaModifiers,
   InstalledAppId,
 } from '@holochain/client';
-import { Hrl, WAL, RenderView, FrameNotification, AppletHash, AppletId } from '@theweave/api';
+import {
+  Hrl,
+  WAL,
+  RenderView,
+  FrameNotification,
+  AppletHash,
+  AppletId,
+  ParentToAppletMessage,
+} from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
 import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
@@ -855,4 +863,75 @@ export function localTimeFromUtcOffset(offsetMinues: number): string {
 
   // Format the time in HH:MM format
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Posts a message to all iframes of the specified AppletIds and returns the settled promises.
+ * This includes iframes of assets associated to the AppletIds, not only the main view.
+ *
+ * TODO: Add option to only target main view or specific views
+ *
+ * @param appletIds
+ * @param message
+ * @returns
+ */
+export async function postMessageToAppletIframes(
+  appletIds: { type: 'all' } | { type: 'some'; ids: AppletId[] },
+  message: ParentToAppletMessage,
+  extraOrigins?: Array<string>,
+) {
+  const allIframes = getAllIframes();
+  let allAppletIframes = allIframes.filter(
+    (iframe) => iframe.src.startsWith('applet://') || iframe.src.startsWith('http://localhost'),
+  );
+  if (appletIds.type === 'some') {
+    const relevantSrcs = appletIds.ids.map((id) => appletOriginFromAppletId(id));
+    allAppletIframes = allAppletIframes.filter((iframe) => {
+      let matches = false;
+      if (extraOrigins) {
+        extraOrigins.forEach((origin) => {
+          if (iframe.src.startsWith(origin)) {
+            matches = true;
+          }
+        });
+      }
+      relevantSrcs.forEach((origin) => {
+        if (iframe.src.startsWith(origin)) {
+          matches = true;
+        }
+      });
+      return matches;
+    });
+  }
+  console.log(
+    'Sending postMessate to the following iframes: ',
+    allAppletIframes.map((iframe) => iframe.src),
+  );
+
+  return Promise.allSettled(
+    allAppletIframes.map(async (iframe) => {
+      await postMessageToIframe(iframe, message);
+    }),
+  );
+}
+
+export async function postMessageToIframe<T>(
+  iframe: HTMLIFrameElement,
+  message: ParentToAppletMessage,
+) {
+  return new Promise<T>((resolve, reject) => {
+    const { port1, port2 } = new MessageChannel();
+
+    if (iframe.contentWindow) {
+      iframe.contentWindow!.postMessage(message, '*', [port2]);
+
+      port1.onmessage = (m) => {
+        if (m.data.type === 'success') {
+          resolve(m.data.result);
+        } else if (m.data.type === 'error') {
+          reject(m.data.error);
+        }
+      };
+    }
+  });
 }

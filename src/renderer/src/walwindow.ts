@@ -11,8 +11,14 @@ import {
   GroupProfile,
 } from '@theweave/api';
 import { decodeHashFromBase64 } from '@holochain/client';
+import { localized, msg } from '@lit/localize';
+import { postMessageToAppletIframes } from './utils';
+
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+
 // import { ipcRenderer } from 'electron';
 
+@localized()
 @customElement('wal-window')
 export class WalWindow extends LitElement {
   @state()
@@ -21,7 +27,49 @@ export class WalWindow extends LitElement {
   @state()
   appletHash: AppletHash | undefined;
 
+  @state()
+  loading: string | undefined = msg('loading...');
+
+  @state()
+  slowLoading = false;
+
+  @state()
+  slowReloadTimeout: number | undefined;
+
+  @state()
+  onBeforeUnloadHandler: ((e) => Promise<void>) | undefined;
+
+  @state()
+  shouldClose = false;
+
+  beforeUnloadListener = async (e) => {
+    e.preventDefault();
+    console.log('onbeforeunload event');
+    this.loading = 'Saving...';
+    // If it takes longer than 5 seconds to unload, offer to hard reload
+    this.slowReloadTimeout = window.setTimeout(() => {
+      this.slowLoading = true;
+    }, 4500);
+    await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+    console.log('on-before-unload callbacks finished.');
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    // The logic to set this variable lives in walwindow.html
+    if ((window as any).__WINDOW_CLOSING__) {
+      console.log('__WINDOW_CLOSING__ is true.');
+      (window as any).electronAPI.closeWindow();
+    } else {
+      window.location.reload();
+    }
+  };
+
   async firstUpdated() {
+    // add the beforeunload listener only 5 seconds later as there won't be anything
+    // meaningful to save by applets before and it will ensure that the iframes
+    // are ready to respond to the on-before-reload event
+    setTimeout(() => {
+      window.addEventListener('beforeunload', this.beforeUnloadListener);
+    }, 5000);
+
     // set up handler to handle iframe messages
     window.addEventListener('message', async (message) => {
       const request = message.data.request as AppletToParentRequest;
@@ -128,15 +176,64 @@ export class WalWindow extends LitElement {
     }
   }
 
+  hardRefresh() {
+    this.slowLoading = false;
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    // The logic to set this variable lives in walwindow.html
+    if ((window as any).__WINDOW_CLOSING__) {
+      (window as any).electronAPI.closeWindow();
+    } else {
+      window.location.reload();
+    }
+  }
+
+  renderLoading() {
+    return html`
+      <div
+        class="column center-content"
+        style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
+      >
+        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
+        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+          ${this.loading}
+        </div>
+        ${this.slowLoading
+          ? html`
+              <div
+                class="column items-center"
+                style="margin-top: 50px; max-width: 600px;color: white;"
+              >
+                <div>This Tool takes unusually long to reload. Do you want to force reload?</div>
+                <div style="margin-top: 10px;">
+                  (force reloading may interrupt the Tool from saving unsaved content)
+                </div>
+                <sl-button
+                  variant="danger"
+                  @click=${() => this.hardRefresh()}
+                  style="margin-top: 20px; width: 150px;"
+                  >Force Reload</sl-button
+                >
+              </div>
+            `
+          : html``}
+      </div>
+    `;
+  }
+
   render() {
     if (!this.iframeSrc) return html`<div class="center-content">Loading...</div>`;
     return html`
       <iframe
+        id="wal-iframe"
         frameborder="0"
         src="${this.iframeSrc}"
-        style="flex: 1; display: block; padding: 0; margin: 0; height: 100vh;"
+        style=${`flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0; height: 100vh;`}
         allow="camera *; microphone *; clipboard-write *;"
+        @load=${() => {
+          this.loading = undefined;
+        }}
       ></iframe>
+      ${this.renderLoading()}
     `;
   }
 
@@ -149,6 +246,8 @@ export class WalWindow extends LitElement {
           display: flex;
           margin: 0;
           padding: 0;
+          background-color: #588121;
+          font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         }
       `,
     ];

@@ -226,6 +226,18 @@ export interface WeaveServices {
    */
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
   /**
+   * Event listener allowing to register a callback that will get executed before the
+   * applet gets reloaded, for example to save intermediate user input (e.g. commit
+   * the most recent changes of a document to the source chain).
+   *
+   * If this callback takes too long, users may be offered to force reload, thereby
+   * ignoring/cancelling the pending callback.
+   *
+   * @param callback Callback that gets called before the Applet gets reloaded
+   * @returns
+   */
+  onBeforeUnload: (callback: () => void) => UnsubscribeFunction;
+  /**
    * Open the main view of the specified Applet
    * @param appletHash
    * @returns
@@ -367,6 +379,10 @@ export class WeaveClient implements WeaveServices {
 
   onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
     return window.__WEAVE_API__.onPeerStatusUpdate(callback);
+  };
+
+  onBeforeUnload = (callback: () => any): UnsubscribeFunction => {
+    return window.__WEAVE_API__.onBeforeUnload(callback);
   };
 
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
