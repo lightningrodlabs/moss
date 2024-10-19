@@ -49,12 +49,13 @@ export class WalWindow extends LitElement {
     // If it takes longer than 5 seconds to unload, offer to hard reload
     this.slowReloadTimeout = window.setTimeout(() => {
       this.slowLoading = true;
-    }, 5000);
+    }, 4500);
     await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
     console.log('on-before-unload callbacks finished.');
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     // The logic to set this variable lives in walwindow.html
     if ((window as any).__WINDOW_CLOSING__) {
+      console.log('__WINDOW_CLOSING__ is true.');
       (window as any).electronAPI.closeWindow();
     } else {
       window.location.reload();
@@ -62,7 +63,12 @@ export class WalWindow extends LitElement {
   };
 
   async firstUpdated() {
-    window.addEventListener('beforeunload', this.beforeUnloadListener);
+    // add the beforeunload listener only 5 seconds later as there won't be anything
+    // meaningful to save by applets before and it will ensure that the iframes
+    // are ready to respond to the on-before-reload event
+    setTimeout(() => {
+      window.addEventListener('beforeunload', this.beforeUnloadListener);
+    }, 5000);
 
     // set up handler to handle iframe messages
     window.addEventListener('message', async (message) => {
@@ -76,7 +82,6 @@ export class WalWindow extends LitElement {
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
-              window.removeEventListener('beforeunload', this.beforeUnloadListener);
               return (window.electronAPI as any).closeWindow();
             case 'user-select-wal': {
               await (window.electronAPI as any).focusMainWindow();

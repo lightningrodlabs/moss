@@ -76,6 +76,7 @@ import {
   decodeContext,
   getAllIframes,
   logMossZomeCall,
+  postMessageToAppletIframes,
   postMessageToIframe,
   progenitorFromProperties,
 } from '../utils.js';
@@ -195,6 +196,15 @@ export class MainDashboard extends LitElement {
 
   @state()
   hoverTopBar = false;
+
+  @state()
+  reloading = false;
+
+  @state()
+  slowLoading = false;
+
+  @state()
+  slowReloadTimeout: number | undefined;
 
   _dashboardState = new StoreSubscriber(
     this,
@@ -474,7 +484,46 @@ export class MainDashboard extends LitElement {
     this.openViews.openAppletMain(appletHash);
   }
 
+  hardRefresh() {
+    this.slowLoading = false;
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    // The logic to set this variable lives in walwindow.html
+    if ((window as any).__WINDOW_CLOSING__) {
+      (window as any).electronAPI.closeWindow();
+    } else {
+      window.location.reload();
+    }
+  }
+
+  beforeUnloadListener = async (e) => {
+    e.preventDefault();
+    this.reloading = true;
+    console.log('onbeforeunload event');
+    // If it takes longer than 5 seconds to unload, offer to hard reload
+    this.slowReloadTimeout = window.setTimeout(() => {
+      this.slowLoading = true;
+    }, 4500);
+    await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+    console.log('on-before-unload callbacks finished.');
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    // The logic to set this variable lives in index.html
+    window.location.reload();
+    if ((window as any).__WINDOW_CLOSING__) {
+      console.log('__WINDOW_CLOSING__ is true.');
+      window.electronAPI.closeMainWindow();
+    } else {
+      window.location.reload();
+    }
+  };
+
   async firstUpdated() {
+    // add the beforeunload listener only 10 seconds later as there won't be anything
+    // meaningful to save by applets before and it will ensure that the iframes
+    // are ready to respond to the on-before-reload event
+    setTimeout(() => {
+      window.addEventListener('beforeunload', this.beforeUnloadListener);
+    }, 10000);
+
     window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       console.log('Got cross window applet to parent message: ', payload);
@@ -1349,7 +1398,7 @@ export class MainDashboard extends LitElement {
               }
             }}
           >
-            <img class="moss-icon" src="moss-icon.svg" />
+            <img src="moss-icon.svg" />
           </button>
         </div>
 
@@ -1616,6 +1665,39 @@ export class MainDashboard extends LitElement {
             <pocket-drop class="flex flex-1"></pocket-drop>
           </div>`
         : html``}
+
+      <!-- Reloading overlay -->
+
+      <div
+        class="overlay column center-content reloading-overlay"
+        style="${this.reloading ? '' : 'display: none;'}"
+      >
+        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
+        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+          ${this.reloading ? msg('reloading...') : msg('loading...')}
+        </div>
+        ${this.slowLoading
+          ? html`
+              <div
+                class="column items-center"
+                style="margin-top: 50px; max-width: 600px;color: white;"
+              >
+                <div>
+                  One or more Tools take unusually long to unload. Do you want to force reload?
+                </div>
+                <div style="margin-top: 10px;">
+                  (force reloading may interrupt the Tool from saving unsaved content)
+                </div>
+                <sl-button
+                  variant="danger"
+                  @click=${() => this.hardRefresh()}
+                  style="margin-top: 20px; width: 150px;"
+                  >Force Reload</sl-button
+                >
+              </div>
+            `
+          : html``}
+      </div>
     `;
   }
 
@@ -1637,6 +1719,10 @@ export class MainDashboard extends LitElement {
           background: #ffffff00;
           z-index: 99;
           display: flex;
+        }
+
+        .reloading-overlay {
+          background: #588121;
         }
 
         /* .esc-pocket-msg {

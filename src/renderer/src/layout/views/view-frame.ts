@@ -57,7 +57,7 @@ export class ViewFrame extends LitElement {
           if (this.reloading) {
             this.slowLoading = true;
           }
-        }, 5000);
+        }, 4500);
         this.loading = true;
       } else {
         if (this.slowReloadTimeout) window.clearTimeout(this.slowReloadTimeout);

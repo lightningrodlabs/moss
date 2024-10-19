@@ -221,23 +221,25 @@ if (app.isPackaged) {
     // This event will always be triggered in the first instance, no matter with which profile
     // it is being run. On Linux and Windows it is also how deeplinks get in.
     app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
-      console.log('second-instance event triggered. argv: ', argv);
-      console.log('additionalData: ', additionalData);
-      if (process.platform !== 'darwin') {
-        console.log('Option 3');
+      if (!isAppQuitting) {
+        console.log('second-instance event triggered. argv: ', argv);
+        console.log('additionalData: ', additionalData);
+        if (process.platform !== 'darwin') {
+          console.log('Option 3');
 
-        // deeplink case
-        const url = argv.pop();
-        if (SPLASH_SCREEN_WINDOW) {
-          CACHED_DEEP_LINK = url;
-          SPLASH_SCREEN_WINDOW.show();
-        } else if (MAIN_WINDOW) {
-          console.log('RECEIVED DEEP LINK: url', argv, url);
-          // main window is already open
-          createOrShowMainWindow();
-          emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
-        } else {
-          CACHED_DEEP_LINK = url;
+          // deeplink case
+          const url = argv.pop();
+          if (SPLASH_SCREEN_WINDOW) {
+            CACHED_DEEP_LINK = url;
+            SPLASH_SCREEN_WINDOW.show();
+          } else if (MAIN_WINDOW) {
+            console.log('RECEIVED DEEP LINK: url', argv, url);
+            // main window is already open
+            createOrShowMainWindow();
+            emitToWindow(MAIN_WINDOW, 'deep-link-received', url);
+          } else {
+            CACHED_DEEP_LINK = url;
+          }
         }
       }
     });
@@ -289,12 +291,17 @@ setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'moss',
-    privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true },
-  },
-  {
     scheme: 'applet',
     privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+  },
+  {
+    scheme: 'moss',
+    privileges: {
+      standard: true,
+      secure: true,
+      stream: true,
+      supportFetchAPI: true,
+    },
   },
 ]);
 
@@ -329,6 +336,10 @@ let UPDATE_AVAILABLE:
 
 // icons
 const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '32x32@2x.png'));
+const SYSTRAY_ICON_QUITTING = nativeImage.createFromPath(
+  path.join(ICONS_DIRECTORY, 'transparent32x32@2x.png'),
+);
+
 const SYSTRAY_ICON_HIGH = nativeImage.createFromPath(
   path.join(ICONS_DIRECTORY, 'icon_priority_high_32x32@2x.png'),
 );
@@ -815,6 +826,7 @@ app.whenReady().then(async () => {
           icon: notificationIcon,
         })
           .on('click', () => {
+            console.log('Clicked on OS notification');
             createOrShowMainWindow();
             emitToWindow(MAIN_WINDOW!, 'switch-to-applet', appletId);
             SYSTRAY_ICON_STATE = undefined;
@@ -897,6 +909,9 @@ app.whenReady().then(async () => {
       newWalWindow.hide();
       emitToWindow(newWalWindow, 'window-closing', null);
     });
+    newWalWindow.on('closed', () => {
+      delete WAL_WINDOWS[src];
+    });
     WAL_WINDOWS[src] = {
       window: newWalWindow,
       appletId,
@@ -920,13 +935,15 @@ app.whenReady().then(async () => {
       return undefined;
     },
   );
+  ipcMain.handle('close-main-window', () => {
+    if (MAIN_WINDOW) MAIN_WINDOW.close();
+  });
   ipcMain.handle('close-window', (e) => {
     const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
       ([_src, window]) => window.window.webContents.id === e.sender.id,
     );
     if (walAndWindowInfo) {
       walAndWindowInfo[1].window.close();
-      delete WAL_WINDOWS[walAndWindowInfo[0]];
     }
   });
   ipcMain.handle('focus-main-window', (): void => {
@@ -1155,6 +1172,33 @@ app.whenReady().then(async () => {
       fs.rmSync(modifiedHappPath);
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       return appInfo;
+    },
+  );
+  ipcMain.handle(
+    'fetch-and-validate-happ-or-webhapp',
+    async (_e, url: string): Promise<AppHashes> => {
+      const response = await net.fetch(url);
+      const byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+      const { happSha256, webhappSha256, uiSha256 } =
+        await rustUtils.validateHappOrWebhapp(byteArray);
+      if (uiSha256) {
+        if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
+        return {
+          type: 'webhapp',
+          sha256: webhappSha256,
+          happ: {
+            sha256: happSha256,
+          },
+          ui: {
+            sha256: uiSha256,
+          },
+        };
+      } else {
+        return {
+          type: 'happ',
+          sha256: happSha256,
+        };
+      }
     },
   );
   ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
@@ -1569,7 +1613,36 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
+  if (!isAppQuitting) {
+    // If the quitting process takes longer than 15 seconds, force quit.
+    setTimeout(() => {
+      WE_EMITTER.emitMossError('FORCE QUITTING. Quitting Moss took longer than 15 seconds.');
+      // ignore beforeunload of all windows
+      MAIN_WINDOW?.webContents.on('will-prevent-unload', (e) => {
+        e.preventDefault();
+      });
+      MAIN_WINDOW?.close();
+      Object.values(WAL_WINDOWS).forEach((windowInfo) => {
+        const walWindow = windowInfo.window;
+        if (walWindow) {
+          walWindow.webContents.on('will-prevent-unload', (e) => {
+            e.preventDefault();
+          });
+          walWindow.webContents.close();
+        }
+      });
+    }, 15000);
+  }
   isAppQuitting = true;
+  // on-before-unload
+  // This is to discern in the beforeunload listener between a reaload
+  // and a window close
+  if (MAIN_WINDOW) MAIN_WINDOW.hide();
+  if (SYSTRAY) {
+    SYSTRAY.setImage(SYSTRAY_ICON_QUITTING);
+    SYSTRAY.setContextMenu(Menu.buildFromTemplate([]));
+  }
+  if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'window-closing', null);
 });
 
 app.on('quit', () => {

@@ -225,6 +225,22 @@ const weaveApi: WeaveServices = {
   window.__WEAVE_API__ = weaveApi;
   window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
+  // message handler for ParentToApplet messages
+  // This one is registered early here for any type of iframe
+  // to be able to respond also in case of page refreshes in short time
+  // intervals. Otherwise the message handler may not be registered in time
+  // when the on-before-unload message is sent to the iframe and Moss
+  // is waiting for a response and will never get one.
+  window.addEventListener('message', async (m: MessageEvent<any>) => {
+    try {
+      const result = await handleEventMessage(m.data);
+      m.ports[0].postMessage({ type: 'success', result });
+    } catch (e) {
+      console.error('Failed to send postMessage to cross-group-view', e);
+      m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
+    }
+  });
+
   const [_, view] = await Promise.all([fetchLocalStorage(), getRenderView()]);
 
   if (!view) {
@@ -325,17 +341,6 @@ const weaveApi: WeaveServices = {
       ),
     );
 
-    // message handler for ParentToApplet messages - Only events are handled in the cross-group view
-    window.addEventListener('message', async (m: MessageEvent<any>) => {
-      try {
-        const result = await handleEventMessage(m.data);
-        m.ports[0].postMessage({ type: 'success', result });
-      } catch (e) {
-        console.error('Failed to send postMessage to cross-group-view', e);
-        m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
-      }
-    });
-
     window.__WEAVE_RENDER_INFO__ = {
       type: 'cross-applet-view',
       view: view.view,
@@ -378,7 +383,6 @@ async function fetchLocalStorage() {
 const handleEventMessage = async (message: ParentToAppletMessage) => {
   switch (message.type) {
     case 'on-before-unload':
-      console.log('@applet-iframe: got on-before-unload event in cross-group-view');
       const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
       await Promise.all(
         allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
@@ -425,12 +429,7 @@ const handleMessage = async (
       );
       break;
     case 'on-before-unload': {
-      // Call all registered callbacks
-      console.log('@applet-iframe: got on-before-unload event');
-      const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
-      await Promise.all(
-        allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
-      );
+      // This case is handled in handleEventMessage
       return;
     }
     default:

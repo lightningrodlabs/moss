@@ -124,6 +124,7 @@ export class ExampleApplet extends LitElement {
                               <attachments-context .store=${this.attachmentsStore}>
                                 <post-detail
                                   .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
+                                  .weaveClient=${this.weaveClient}
                                 ></post-detail>
                               </attachments-context>
                             </posts-context>
