@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.13.0-gamma.3",
+  "version": "0.13.0-gamma.4",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
