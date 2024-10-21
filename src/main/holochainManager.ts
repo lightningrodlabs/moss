@@ -67,7 +67,7 @@ export class HolochainManager {
 
     const allowedOrigins = app.isPackaged
       ? 'moss://admin.main,moss://admin.renderer'
-      : 'moss://admin.main,http://localhost:5173';
+      : 'moss://admin.main,moss://admin.renderer,http://localhost:5173';
 
     if (fs.existsSync(configPath)) {
       conductorConfig = rustUtils.overwriteConfig(
