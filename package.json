@@ -85,6 +85,7 @@
     "electron-context-menu": "3.6.1",
     "mime": "4.0.0",
     "nanoid": "5.0.4",
+    "semver": "^7.6.2",
     "split": "1.0.1",
     "ts-node": "10.9.2",
     "utf-8-validate": "^6.0.3",
