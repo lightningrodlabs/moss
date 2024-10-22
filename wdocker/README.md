@@ -1,4 +1,4 @@
-# hdocker
+# wdocker
 
 CLI to run Moss always-online nodes.
 
@@ -20,7 +20,7 @@ wdocker run [name of your choice]
 
 This will prompt you to enter a password which that you will have to enter for any commands that want to access this conductor later.
 
-2. In a separate terminal, you can now join a Moss group with this running conductor.
+2. In a separate terminal, you can now join a Moss group with this running conductor.<br>
    ⚠️ **IMPORTANT**: The invite link must be entered in "quotes".
 
 ```
