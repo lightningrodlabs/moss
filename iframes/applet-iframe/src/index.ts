@@ -234,9 +234,12 @@ const weaveApi: WeaveServices = {
   window.addEventListener('message', async (m: MessageEvent<any>) => {
     try {
       const result = await handleEventMessage(m.data);
-      m.ports[0].postMessage({ type: 'success', result });
+      // Only send result succcess if truthy, indicating that the message was
+      // actually handled, otherwise the `handleMessage` message handler further
+      // below will be ignored
+      if (result) m.ports[0].postMessage({ type: 'success', result });
     } catch (e) {
-      console.error('Failed to send postMessage to cross-group-view', e);
+      console.error('Failed to handle postMessage\nError:', e, '\nMessage: ', m);
       m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
     }
   });
@@ -293,8 +296,10 @@ const weaveApi: WeaveServices = {
         console.error(
           'Failed to send postMessage to applet ',
           encodeHashToBase64(appletHash),
-          ': ',
+          '.\nError:',
           e,
+          '\nMessage: ',
+          m,
         );
         m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
       }
@@ -387,9 +392,11 @@ const handleEventMessage = async (message: ParentToAppletMessage) => {
       await Promise.all(
         allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
       );
-      return;
+      // return 1 to indicate that message was handled
+      return 1;
     default:
-      return;
+      // return 0 to indicate that message was not handled
+      return 0;
   }
 };
 
