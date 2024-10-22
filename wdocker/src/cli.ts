@@ -13,12 +13,16 @@ import { joinGroup } from './commands/conductor/join-group.js';
 import { listGroups } from './commands/conductor/list-groups.js';
 import { groupInfo } from './commands/conductor/group-info.js';
 import os from 'os';
+import { PACKAGE_JSON } from './const.js';
 
 if (os.platform() === 'win32') throw new Error('wdocker is currently not supported on Windows.');
 
 const wDocker = new Command();
 
-wDocker.name('wdocker').description('Run always-online nodes for the Weave');
+wDocker
+  .name('wdocker')
+  .description('Run always-online nodes for the Weave')
+  .version(PACKAGE_JSON.version);
 
 wDocker
   .command('run')
