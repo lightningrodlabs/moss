@@ -13,6 +13,7 @@ import {
   WeaveClient,
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { appletOrigin, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash, EntryHash } from '@holochain/client';

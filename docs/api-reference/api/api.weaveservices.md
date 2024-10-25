@@ -185,6 +185,27 @@ Sends notifications to We and depending on user settings and urgency level furth
 </td></tr>
 <tr><td>
 
+[onBeforeUnload](./api.weaveservices.onbeforeunload.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: () =&gt; void) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+Event listener allowing to register a callback that will get executed before the applet gets reloaded, for example to save intermediate user input (e.g. commit the most recent changes of a document to the source chain).
+
+If this callback takes too long, users may be offered to force reload, thereby ignoring/cancelling the pending callback.
+
+
+</td></tr>
+<tr><td>
+
 [onPeerStatusUpdate](./api.weaveservices.onpeerstatusupdate.md)
 
 

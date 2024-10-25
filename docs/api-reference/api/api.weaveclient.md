@@ -172,6 +172,23 @@ Description
 </td></tr>
 <tr><td>
 
+[onBeforeUnload](./api.weaveclient.onbeforeunload.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: () =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [onPeerStatusUpdate](./api.weaveclient.onpeerstatusupdate.md)
 
 

@@ -24,6 +24,8 @@ export type ParentToAppletMessage = {
 } | {
     type: 'peer-status-update';
     payload: PeerStatusUpdate;
+} | {
+    type: 'on-before-unload';
 };
 ```
 **References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)
