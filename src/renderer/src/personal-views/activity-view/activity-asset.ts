@@ -165,10 +165,17 @@ export class ActivityAsset extends LitElement {
                   <div
                     style="display: flex; align-items: center; margin-right: 10px;"
                   >
-                    <sl-icon
-                      .src=${this.assetInfo.value.value!.icon_src}
-                      style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 50px;"
-                    ></sl-icon>
+                  ${
+                    this.assetInfo.value.value
+                      ? html`
+                          <sl-icon
+                            .src=${this.assetInfo.value.value.icon_src}
+                            style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 50px;"
+                          ></sl-icon>
+                        `
+                      : html` <div style="width: 50px; height: 50px;"></div> `
+                  }
+
                   </div>
                   <div style="display: flex; flex-direction: column; margin-right: 10px;">
                     <div class="asset-title">
