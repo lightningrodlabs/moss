@@ -990,9 +990,8 @@ export class MossStore {
 
   async uninstallApplet(appletHash: EntryHash): Promise<void> {
     // console.warn("@we-store: Uninstalling applet.");
-    await this.adminWebsocket.uninstallApp({
-      installed_app_id: appIdFromAppletHash(appletHash),
-    });
+    const appId = appIdFromAppletHash(appletHash);
+    await window.electronAPI.uninstallAppletBundle(appId);
     const iframe = document.getElementById(encodeHashToBase64(appletHash)) as
       | HTMLIFrameElement
       | undefined;

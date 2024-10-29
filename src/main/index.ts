@@ -1421,16 +1421,16 @@ app.whenReady().then(async () => {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
         return alreadyInstalled;
       }
-      // Check if .happ and ui assets are already installed on the filesystem and don't need to get fetched from the source
-      let happAlreadyInstalledPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
-      const happAlreadyInstalled = fs.existsSync(happAlreadyInstalledPath);
-      const uiAlreadyInstalled =
+      // Check if .happ and ui assets are already stored on the filesystem and don't need to get fetched from the source
+      let happAlreadyStoredPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
+      const happAlreadyStored = fs.existsSync(happAlreadyStoredPath);
+      const uiAlreadyStored =
         !!sha256Ui && fs.existsSync(path.join(WE_FILE_SYSTEM.uisDir, sha256Ui, 'assets'));
 
       let happToBeInstalledPath: string | undefined;
       let tmpDir: string | undefined;
 
-      if (!happAlreadyInstalled || !uiAlreadyInstalled) {
+      if (!happAlreadyStored || !uiAlreadyStored) {
         // fetch webhapp from URL
         const fixedHappOrWebHappUrl = happOrWebHappUrl.startsWith('file://./')
           ? `file://${process.cwd()}${happOrWebHappUrl.slice(8)}`
@@ -1481,7 +1481,7 @@ app.whenReady().then(async () => {
       }
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyInstalledPath,
+        path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
@@ -1517,6 +1517,12 @@ app.whenReady().then(async () => {
       return appInfo;
     },
   );
+  ipcMain.handle('uninstall-applet-bundle', async (_e, appId: string): Promise<void> => {
+    await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
+      installed_app_id: appId,
+    });
+    WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+  });
   ipcMain.handle('launch', async (_e, password) => {
     // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     // await delay(5000);

@@ -68,6 +68,7 @@ declare global {
         appHashes: AppHashes,
         metadata?: string,
       ) => Promise<AppInfo>;
+      uninstallAppletBundle: (appId: string) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;

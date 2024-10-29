@@ -88,6 +88,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       appHashes,
       metadata,
     ),
+  uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
