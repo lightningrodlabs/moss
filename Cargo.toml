@@ -27,3 +27,9 @@ path = "dnas/group/zomes/coordinator/group"
 
 [workspace.dependencies.group_integrity]
 path = "dnas/group/zomes/integrity/group"
+
+[workspace.dependencies.assets]
+path = "dnas/assets/zomes/coordinator/assets"
+
+[workspace.dependencies.assets_integrity]
+path = "dnas/assets/zomes/integrity/assets"
