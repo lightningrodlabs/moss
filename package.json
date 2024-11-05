@@ -10,6 +10,7 @@
     "iframes/*",
     "src/renderer",
     "example/ui",
+    "tests",
     "wdocker"
   ],
   "scripts": {
@@ -62,7 +63,8 @@
     "build:api-docs": "yarn workspace @theweave/api build:api-docs && rimraf ./docs/api-reference/api/* && mv ./libs/api/markdown/* ./docs/api-reference/api",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "test": "yarn workspace tests test"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
