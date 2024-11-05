@@ -1,5 +1,5 @@
 import { ActionHash, AgentPubKey, AgentPubKeyB64, DnaHash, EntryHash } from '@holochain/client';
-import { AppletHash, AppletId } from '@theweave/api';
+import { AppletHash, AppletId, WAL } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;
@@ -147,3 +147,31 @@ export type SignalPayload =
       status: string;
       tz_utc_offset: number;
     };
+
+/**
+ * Assets dna
+ */
+
+export type AssetRelation = {
+  src_wal: WAL;
+  dst_wal: WAL;
+};
+
+export type AssetRelationAndHash = {
+  src_wal: WAL;
+  dst_wal: WAL;
+  relation_hash: EntryHash;
+};
+
+export type AssetRelationWithTags = {
+  src_wal: WAL;
+  dst_wal: WAL;
+  tags: string[];
+  relation_hash: EntryHash;
+};
+
+export type RelateAssetsInput = {
+  src_wal: WAL;
+  dst_wal: WAL;
+  tags: string[];
+};
