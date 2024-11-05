@@ -3,12 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:group": "vitest --dir ./src/group/group run"
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "@holochain/client": "0.18.0-dev.0",
     "@holochain/tryorama": "0.18.0-dev.0",
+    "@holochain-open-dev/utils": "0.400.0-dev.4",
+    "@theweave/group-client": "*",
     "@theweave/api": "*",
     "typescript": "^4.9.4",
     "vitest": "^0.28.4"

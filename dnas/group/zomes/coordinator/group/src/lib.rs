@@ -141,3 +141,19 @@ fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTy
     };
     EntryTypes::deserialize_from_type(*zome_index, *entry_index, entry)
 }
+
+/// Assumes that the passed links has an action hash as target and tries to get the Record
+/// associated to the target of the link with the latest timestamp
+pub fn get_latest_record_from_links(mut links: Vec<Link>) -> ExternResult<Option<Record>> {
+    links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+
+    for link in links {
+        if let Some(action_hash) = link.target.into_action_hash() {
+            let maybe_record = get(action_hash, GetOptions::default())?;
+            if let Some(record) = maybe_record {
+                return Ok(Some(record));
+            }
+        }
+    }
+    Ok(None)
+}

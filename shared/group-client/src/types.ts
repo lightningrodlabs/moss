@@ -1,5 +1,5 @@
 import { ActionHash, AgentPubKey, AgentPubKeyB64, DnaHash, EntryHash } from '@holochain/client';
-import { AppletHash, AppletId, WAL } from '@theweave/api';
+import { AppletId, WAL } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;

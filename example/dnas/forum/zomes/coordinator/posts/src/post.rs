@@ -20,16 +20,7 @@ pub fn get_post(original_post_hash: ActionHash) -> ExternResult<Option<Record>> 
     let links = get_links(
         GetLinksInputBuilder::try_new(original_post_hash.clone(), LinkTypes::PostUpdates)?.build(),
     )?;
-    let latest_link = links
-        .into_iter()
-        .max_by(|link_a, link_b| link_a.timestamp.cmp(&link_b.timestamp));
-    let latest_post_hash = match latest_link {
-        Some(link) => ActionHash::try_from(link.target.clone())
-            .map_err(|e| wasm_error!(WasmErrorInner::from(e)))?,
-        // Some(link) => ActionHash::from(link.target.clone()),
-        None => original_post_hash.clone(),
-    };
-    get(latest_post_hash, GetOptions::default())
+    get_latest_record_from_links(links)
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdatePostInput {
@@ -54,4 +45,20 @@ pub fn update_post(input: UpdatePostInput) -> ExternResult<Record> {
 #[hdk_extern]
 pub fn delete_post(original_post_hash: ActionHash) -> ExternResult<ActionHash> {
     delete_entry(original_post_hash)
+}
+
+/// Assumes that the passed links has an action hash as target and tries to get the Record
+/// associated to the target of the link with the latest timestamp
+pub fn get_latest_record_from_links(mut links: Vec<Link>) -> ExternResult<Option<Record>> {
+    links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+
+    for link in links {
+        if let Some(action_hash) = link.target.into_action_hash() {
+            let maybe_record = get(action_hash, GetOptions::default())?;
+            if let Some(record) = maybe_record {
+                return Ok(Some(record));
+            }
+        }
+    }
+    Ok(None)
 }

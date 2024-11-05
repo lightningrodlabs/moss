@@ -4,7 +4,7 @@ import { runScenario, dhtSync } from '@holochain/tryorama';
 import { fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
 
-import { getCellByRoleName, GROUP_HAPP_PATH } from '../shared.js';
+import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 
 type TagsToAssetInput = {
   wal: WAL;

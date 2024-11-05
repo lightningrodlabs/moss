@@ -4,7 +4,7 @@ import { runScenario, dhtSync } from '@holochain/tryorama';
 import { encodeHashToBase64, fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
 
-import { getCellByRoleName, GROUP_HAPP_PATH } from '../shared.js';
+import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 import {
   AssetRelation,
   AssetRelationAndHash,
@@ -12,13 +12,6 @@ import {
   RelateAssetsInput,
   RemoveTagsFromAssetRelationInput,
 } from './common.js';
-
-function walToB64(wal: WAL) {
-  return {
-    hrl: wal.hrl.map((a) => encodeHashToBase64(a)),
-    context: wal.context,
-  };
-}
 
 test('Add two asset relations between 3 WALs and read them', async () => {
   await runScenario(async (scenario) => {
