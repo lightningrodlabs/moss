@@ -1751,6 +1751,21 @@
     lodash-es "^4.17.21"
     ws "^8.14.2"
 
+"@holochain/client@0.18.0-rc.0":
+  version "0.18.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.18.0-rc.0.tgz#1ff5e6331387cfd929670148be256a067f7ad431"
+  integrity sha512-y9dfvrnUL4OeIhW+yHUnsjsBMoWvL1HnvUKGjfoBQDBsqJGpanmysV6ALScNErF5axPVZ30/m0nmQ9NgpFzUGg==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@holochain/serialization" "^0.1.0-beta-rc.3"
+    "@msgpack/msgpack" "^2.8.0"
+    emittery "^1.0.1"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.5"
+    libsodium-wrappers "^0.7.13"
+    lodash-es "^4.17.21"
+    ws "^8.14.2"
+
 "@holochain/client@^0.19.0-dev.0":
   version "0.19.0-dev.1"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0-dev.1.tgz#88fd985d3d0d9ecb3801b5cdda63a0f756442577"
@@ -2916,7 +2931,7 @@
   version "0.2.1"
   dependencies:
     "@holochain-open-dev/profiles" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-dev.13"
+    "@holochain/client" "0.18.0-rc.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
@@ -2953,7 +2968,7 @@
     "@holochain-open-dev/profiles" "0.400.0-dev.4"
     "@holochain-open-dev/stores" "0.400.0-dev.3"
     "@holochain-open-dev/utils" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-dev.13"
+    "@holochain/client" "0.18.0-rc.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -2966,13 +2981,13 @@
   version "0.1.1"
   dependencies:
     "@holochain-open-dev/utils" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-dev.13"
+    "@holochain/client" "0.18.0-rc.0"
     "@theweave/api" "*"
 
 "@theweave/utils@file:shared/utils":
   version "0.1.0"
   dependencies:
-    "@holochain/client" "0.18.0-dev.13"
+    "@holochain/client" "0.18.0-rc.0"
     "@theweave/api" "*"
     "@theweave/moss-types" "*"
 

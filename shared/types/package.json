@@ -17,7 +17,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "0.18.0-dev.13",
+    "@holochain/client": "0.18.0-rc.0",
     "@theweave/api": "*"
   },
   "devDependencies": {
