@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use group_integrity::*;
 use hdk::prelude::*;
@@ -36,6 +36,7 @@ fn register_applet(input: Applet) -> ExternResult<EntryHash> {
 struct JoinAppletInput {
     applet: Applet,
     joining_pubkey: AgentPubKey,
+    membrane_proofs: Option<BTreeMap<String, SerializedBytes>>,
 }
 
 /// Adds the Applet entry as a private entry to the source chain and creates
@@ -54,10 +55,11 @@ fn join_applet(input: JoinAppletInput) -> ExternResult<EntryHash> {
     )?;
 
     // Store a local copy of the Applet struct to the source chain as a private entry
-    create_entry(EntryTypes::AppletPrivate(PrivateAppletEntry {
+    create_entry(EntryTypes::AppletPrivate(AppletEntryPrivate {
         public_entry_hash: applet_hash.clone(),
         applet: input.applet,
         applet_pubkey: input.joining_pubkey,
+        membrane_proofs: input.membrane_proofs,
     }))?;
 
     Ok(applet_hash)
@@ -145,7 +147,7 @@ fn get_applet(applet_hash: EntryHash) -> ExternResult<Option<Applet>> {
 
 /// Gets the private entry copy for the given public Applet entry.
 #[hdk_extern]
-fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<PrivateAppletEntry>> {
+fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<AppletEntryPrivate>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(private_applet_entry_type)
@@ -154,10 +156,10 @@ fn get_private_applet_copy(applet_hash: EntryHash) -> ExternResult<Option<Privat
     let records = query(filter)?;
     let applet_copies = records
         .into_iter()
-        .map(|record| record.entry.to_app_option::<PrivateAppletEntry>().ok())
+        .map(|record| record.entry.to_app_option::<AppletEntryPrivate>().ok())
         .filter_map(|ac| ac)
         .filter_map(|ac| ac)
-        .collect::<Vec<PrivateAppletEntry>>();
+        .collect::<Vec<AppletEntryPrivate>>();
     Ok(applet_copies
         .into_iter()
         .find(|copy| copy.public_entry_hash == applet_hash))
@@ -169,7 +171,7 @@ fn get_public_applet(applet_hash: EntryHash) -> ExternResult<Option<Record>> {
 }
 
 #[hdk_extern]
-fn get_my_joined_applets(_: ()) -> ExternResult<Vec<PrivateAppletEntry>> {
+fn get_my_joined_applets(_: ()) -> ExternResult<Vec<AppletEntryPrivate>> {
     let private_applet_entry_type: EntryType = UnitEntryTypes::AppletPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(private_applet_entry_type)
@@ -179,9 +181,8 @@ fn get_my_joined_applets(_: ()) -> ExternResult<Vec<PrivateAppletEntry>> {
 
     Ok(records
         .into_iter()
-        .map(|record| record.entry.to_app_option::<PrivateAppletEntry>().ok())
-        .filter_map(|ac| ac)
-        .filter_map(|ac| ac)
+        .filter_map(|record| record.entry.to_app_option::<AppletEntryPrivate>().ok())
+        .flatten()
         .collect())
 }
 

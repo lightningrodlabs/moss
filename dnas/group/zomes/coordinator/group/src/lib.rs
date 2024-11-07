@@ -1,7 +1,7 @@
-pub mod all_applets;
 pub mod all_group_profiles;
 pub mod all_steward_permissions;
 pub mod applet;
+pub mod cloned_cell;
 pub mod group_meta_data;
 pub mod group_profile;
 pub mod steward_permission;

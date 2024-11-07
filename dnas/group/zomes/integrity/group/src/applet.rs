@@ -66,7 +66,7 @@ pub fn validate_create_link_all_applets(
             "AllApplets link is not pointing away from the all_applets anchor".into(),
         ));
     }
-    // Check the entry type for the given action hash
+    // Check that the link is pointing to an entry hash
     let _entry_hash =
         target_address
             .into_entry_hash()

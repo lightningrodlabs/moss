@@ -1,4 +1,12 @@
-import { ActionHash, AgentPubKey, AgentPubKeyB64, DnaHash, EntryHash } from '@holochain/client';
+import {
+  ActionHash,
+  AgentPubKey,
+  AgentPubKeyB64,
+  DnaHash,
+  Duration,
+  EntryHash,
+  Timestamp,
+} from '@holochain/client';
 import { AppletId, WAL } from '@theweave/api';
 
 export interface RelatedGroup {
@@ -114,7 +122,7 @@ export type Applet = {
   meta_data?: string;
 };
 
-export type PrivateAppletEntry = {
+export type AppletEntryPrivate = {
   public_entry_hash: EntryHash;
   applet: Applet;
   applet_pubkey: AgentPubKey;
@@ -173,5 +181,25 @@ export type AssetRelationWithTags = {
 export type RelateAssetsInput = {
   src_wal: WAL;
   dst_wal: WAL;
+  tags: string[];
+};
+
+export type AppletClonedCell = {
+  applet_hash: EntryHash;
+  dna_hash: DnaHash;
+  role_name: String;
+  network_seed: String;
+  properties: Uint8Array;
+  origin_time: Timestamp;
+  quantum_time: Duration;
+};
+
+export type TagsToAssetInput = {
+  wal: WAL;
+  tags: string[];
+};
+
+export type RemoveTagsFromAssetRelationInput = {
+  relation_hash: EntryHash;
   tags: string[];
 };

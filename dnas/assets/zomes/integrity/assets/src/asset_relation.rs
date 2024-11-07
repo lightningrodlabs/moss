@@ -17,14 +17,15 @@ pub struct AssetRelation {
     pub dst_wal: WAL,
 }
 
+/// Anyone can create an asset relation
 pub fn validate_create_asset_relation(
     _action: EntryCreationAction,
     _asset_relation: AssetRelation,
 ) -> ExternResult<ValidateCallbackResult> {
-    /// TODO: add the appropriate validation rules
     Ok(ValidateCallbackResult::Valid)
 }
 
+/// Updating asset relation is meaningless and therefore not allowed
 pub fn validate_update_asset_relation(
     _action: Update,
     _asset_relation: AssetRelation,
@@ -36,11 +37,11 @@ pub fn validate_update_asset_relation(
     ))
 }
 
+/// Anyone can delete an asset relation. Restrictions would need to be enorced at the UI level
 pub fn validate_delete_asset_relation(
     _action: Delete,
     _original_action: EntryCreationAction,
     _original_asset_relation: AssetRelation,
 ) -> ExternResult<ValidateCallbackResult> {
-    /// TODO: add the appropriate validation rules
     Ok(ValidateCallbackResult::Valid)
 }

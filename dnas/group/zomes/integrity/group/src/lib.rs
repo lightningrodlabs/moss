@@ -6,6 +6,10 @@ pub mod applet;
 pub use applet::*;
 pub mod applet_private;
 pub use applet_private::*;
+pub mod cloned_cell;
+pub use cloned_cell::*;
+pub mod cloned_cell_private;
+pub use cloned_cell_private::*;
 pub mod joined_agent;
 pub use joined_agent::*;
 pub mod abandoned_agent;
@@ -31,7 +35,10 @@ pub enum EntryTypes {
     StewardPermissionClaim(StewardPermissionClaim),
     Applet(Applet),
     #[entry_type(visibility = "private")]
-    AppletPrivate(PrivateAppletEntry),
+    AppletPrivate(AppletEntryPrivate),
+    AppletClonedCell(AppletClonedCell),
+    #[entry_type(visibility = "private")]
+    AppletClonedCellPrivate(AppletClonedCellPrivate),
     GroupProfile(GroupProfile),
     GroupMetaData(GroupMetaData),
 }
@@ -42,6 +49,7 @@ pub enum LinkTypes {
     AllStewardPermissions,
     AllApplets,
     AllGroupProfiles,
+    AppletToAppletClonedCell,
     AppletToJoinedAgent,
     AppletToAbandonedAgent,
     GroupMetaDataToAnchor,
@@ -70,6 +78,22 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::Applet(applet) => {
                     validate_create_applet(EntryCreationAction::Create(action), applet)
                 }
+                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
+                    EntryCreationAction::Create(action),
+                    applet_private,
+                ),
+                EntryTypes::AppletClonedCell(applet_cloned_cell) => {
+                    validate_create_applet_cloned_cell(
+                        EntryCreationAction::Create(action),
+                        applet_cloned_cell,
+                    )
+                }
+                EntryTypes::AppletClonedCellPrivate(applet_cloned_cell_private) => {
+                    validate_create_applet_cloned_cell_private(
+                        EntryCreationAction::Create(action),
+                        applet_cloned_cell_private,
+                    )
+                }
                 EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
                     EntryCreationAction::Create(action),
                     group_profile,
@@ -77,10 +101,6 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
                     EntryCreationAction::Create(action),
                     group_meta_data,
-                ),
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Create(action),
-                    applet_private,
                 ),
                 EntryTypes::StewardPermissionClaim(claim) => {
                     validate_create_steward_permission_claim(
@@ -101,6 +121,19 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::Applet(applet) => {
                     validate_create_applet(EntryCreationAction::Update(action), applet)
                 }
+                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
+                    EntryCreationAction::Update(action),
+                    applet_private,
+                ),
+                EntryTypes::AppletClonedCell(entry) => {
+                    validate_create_applet_cloned_cell(EntryCreationAction::Update(action), entry)
+                }
+                EntryTypes::AppletClonedCellPrivate(entry) => {
+                    validate_create_applet_cloned_cell_private(
+                        EntryCreationAction::Update(action),
+                        entry,
+                    )
+                }
                 EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
                     EntryCreationAction::Update(action),
                     group_profile,
@@ -108,10 +141,6 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
                     EntryCreationAction::Update(action),
                     group_meta_data,
-                ),
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Update(action),
-                    applet_private,
                 ),
                 EntryTypes::StewardPermissionClaim(claim) => {
                     validate_create_steward_permission_claim(
@@ -192,6 +221,25 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             original_applet,
                         )
                     }
+                    EntryTypes::AppletClonedCell(applet_cloned_cell) => {
+                        let original_app_entry =
+                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_applet_cloned_cell =
+                            match AppletClonedCell::try_from(original_app_entry) {
+                                Ok(entry) => entry,
+                                Err(e) => {
+                                    return Ok(ValidateCallbackResult::Invalid(format!(
+                                        "Expected to get AppletClonedCell from Record: {e:?}"
+                                    )));
+                                }
+                            };
+                        validate_update_applet_cloned_cell(
+                            action,
+                            applet_cloned_cell,
+                            original_create_action,
+                            original_applet_cloned_cell,
+                        )
+                    }
                     EntryTypes::StewardPermission(steward_permission) => {
                         let original_app_entry =
                             must_get_valid_record(action.clone().original_action_address)?;
@@ -213,6 +261,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::AppletPrivate(_) => Ok(ValidateCallbackResult::Invalid(
                         "A private applet entry cannot be updated".into(),
+                    )),
+                    EntryTypes::AppletClonedCellPrivate(_) => Ok(ValidateCallbackResult::Invalid(
+                        "A private AppletClonedCell entry cannot be updated".into(),
                     )),
                     EntryTypes::StewardPermissionClaim(_) => Ok(ValidateCallbackResult::Invalid(
                         "A private steward permission claim entry cannot be updated".into(),
@@ -317,6 +368,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             LinkTypes::AllApplets => {
                 validate_create_link_all_applets(action, base_address, target_address, tag)
             }
+            LinkTypes::AppletToAppletClonedCell => {
+                validate_create_link_applet_to_applet_cloned_cell(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                )
+            }
             LinkTypes::AllGroupProfiles => {
                 validate_create_link_all_group_profiles(action, base_address, target_address, tag)
             }
@@ -364,6 +423,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 target_address,
                 tag,
             ),
+            LinkTypes::AppletToAppletClonedCell => {
+                validate_delete_link_applet_to_applet_cloned_cell(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                )
+            }
             LinkTypes::AllGroupProfiles => validate_delete_link_all_group_profiles(
                 action,
                 original_action,
@@ -404,6 +472,19 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::Applet(applet) => {
                     validate_create_applet(EntryCreationAction::Create(action), applet)
                 }
+                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
+                    EntryCreationAction::Create(action),
+                    applet_private,
+                ),
+                EntryTypes::AppletClonedCell(entry) => {
+                    validate_create_applet_cloned_cell(EntryCreationAction::Create(action), entry)
+                }
+                EntryTypes::AppletClonedCellPrivate(entry) => {
+                    validate_create_applet_cloned_cell_private(
+                        EntryCreationAction::Create(action),
+                        entry,
+                    )
+                }
                 EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
                     EntryCreationAction::Create(action),
                     group_profile,
@@ -411,10 +492,6 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
                     EntryCreationAction::Create(action),
                     group_meta_data,
-                ),
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Create(action),
-                    applet_private,
                 ),
                 EntryTypes::StewardPermissionClaim(claim) => {
                     validate_create_steward_permission_claim(
@@ -485,7 +562,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 .to_app_option()
                                 .map_err(|e| wasm_error!(e))?;
                             let original_applet = match original_applet {
-                                Some(applet) => applet,
+                                Some(a) => a,
                                 None => {
                                     return Ok(
                                             ValidateCallbackResult::Invalid(
@@ -496,6 +573,38 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 }
                             };
                             validate_update_applet(action, applet, original_action, original_applet)
+                        } else {
+                            Ok(result)
+                        }
+                    }
+                    EntryTypes::AppletClonedCell(applet_cloned_cell) => {
+                        let result = validate_create_applet_cloned_cell(
+                            EntryCreationAction::Update(action.clone()),
+                            applet_cloned_cell.clone(),
+                        )?;
+                        if let ValidateCallbackResult::Valid = result {
+                            let original_applet_cloned_cell: Option<AppletClonedCell> =
+                                original_record
+                                    .entry()
+                                    .to_app_option()
+                                    .map_err(|e| wasm_error!(e))?;
+                            let original_applet_cloned_cell = match original_applet_cloned_cell {
+                                Some(a) => a,
+                                None => {
+                                    return Ok(
+                                            ValidateCallbackResult::Invalid(
+                                                "The updated entry type must be the same as the original entry type"
+                                                    .to_string(),
+                                            ),
+                                        );
+                                }
+                            };
+                            validate_update_applet_cloned_cell(
+                                action,
+                                applet_cloned_cell,
+                                original_action,
+                                original_applet_cloned_cell,
+                            )
                         } else {
                             Ok(result)
                         }
@@ -564,6 +673,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::AppletPrivate(_) => Ok(ValidateCallbackResult::Invalid(
                         "AppletPrivate entry cannot be updated.".into(),
+                    )),
+                    EntryTypes::AppletClonedCellPrivate(_) => Ok(ValidateCallbackResult::Invalid(
+                        "AppletClonedCellPrivate entry cannot be updated.".into(),
                     )),
                     EntryTypes::StewardPermissionClaim(_) => Ok(ValidateCallbackResult::Invalid(
                         "StewardPermissionClaim entry cannot be updated.".into(),
@@ -673,6 +785,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 LinkTypes::AllApplets => {
                     validate_create_link_all_applets(action, base_address, target_address, tag)
                 }
+                LinkTypes::AppletToAppletClonedCell => {
+                    validate_create_link_applet_to_applet_cloned_cell(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
                 LinkTypes::AllGroupProfiles => validate_create_link_all_group_profiles(
                     action,
                     base_address,
@@ -739,6 +859,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         create_link.target_address,
                         create_link.tag,
                     ),
+                    LinkTypes::AppletToAppletClonedCell => {
+                        validate_delete_link_applet_to_applet_cloned_cell(
+                            action,
+                            create_link.clone(),
+                            base_address,
+                            create_link.target_address,
+                            create_link.tag,
+                        )
+                    }
                     LinkTypes::AllGroupProfiles => validate_delete_link_all_group_profiles(
                         action,
                         create_link.clone(),

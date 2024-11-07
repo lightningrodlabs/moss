@@ -11,7 +11,7 @@ import {
   AssetRelationWithTags,
   RelateAssetsInput,
   RemoveTagsFromAssetRelationInput,
-} from './common.js';
+} from '@theweave/group-client';
 
 test('Add two asset relations between 3 WALs and read them', async () => {
   await runScenario(async (scenario) => {

@@ -26,10 +26,12 @@ import {
   GroupMetaData,
   JoinAppletInput,
   PermissionType,
-  PrivateAppletEntry,
+  AppletEntryPrivate,
   RelateAssetsInput,
   SignalPayload,
   StewardPermission,
+  AppletClonedCell,
+  TagsToAssetInput,
 } from './types.js';
 
 export class GroupClient {
@@ -77,7 +79,7 @@ export class GroupClient {
    * Gets all the private Applet entries from the source chain
    * @returns
    */
-  async getMyJoinedApplets(): Promise<Array<PrivateAppletEntry>> {
+  async getMyJoinedApplets(): Promise<Array<AppletEntryPrivate>> {
     return this.callZome('get_my_joined_applets', null);
   }
 
@@ -86,7 +88,7 @@ export class GroupClient {
    * @returns
    */
   async getMyJoinedAppletsHashes(): Promise<Array<AppletHash>> {
-    const applets: Array<PrivateAppletEntry> = await this.callZome('get_my_joined_applets', null);
+    const applets: Array<AppletEntryPrivate> = await this.callZome('get_my_joined_applets', null);
     return applets.map((applet) => applet.public_entry_hash);
   }
 
@@ -256,6 +258,22 @@ export class GroupClient {
     return new EntryRecord(record);
   }
 
+  async joinClonedCell(input: AppletClonedCell): Promise<EntryHash> {
+    return this.callZome('join_cloned_cell', input);
+  }
+
+  async getAllClonedCellEntryHashesForApplet(appletHash: EntryHash): Promise<EntryHash[]> {
+    return this.callZome('get_all_cloned_cell_entry_hashes_for_applet', appletHash);
+  }
+
+  async getAllClonedCellsForApplet(appletHash: EntryHash): Promise<AppletClonedCell[]> {
+    return this.callZome('get_all_cloned_cells_for_applet', appletHash);
+  }
+
+  async getUnjoinedClonedCellsForApplet(appletHash: EntryHash): Promise<EntryHash[]> {
+    return this.callZome('get_unjoined_cloned_cells_for_applet', appletHash);
+  }
+
   private callZome(fn_name: string, payload: any) {
     const req: AppCallZomeRequest = {
       role_name: this.roleName,
@@ -356,10 +374,11 @@ export class AssetsClient extends ZomeClient<SignalPayload> {
   }
 
   async addTagsToAsset(wal: WAL, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset', {
+    const input: TagsToAssetInput = {
       wal,
       tags,
-    });
+    };
+    return this.callZome('add_tags_to_asset', input);
   }
 
   async removeTagsFromAsset(wal: WAL, tags: string[]): Promise<void> {
