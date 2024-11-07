@@ -1,4 +1,4 @@
-import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
+import { EntryRecord } from '@holochain-open-dev/utils';
 import {
   EntryHash,
   AppCallZomeRequest,
@@ -9,17 +9,12 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
   ActionHash,
-  decodeHashFromBase64,
-  AppClient,
-  RoleName,
 } from '@holochain/client';
-import { AppletHash, GroupProfile, WAL } from '@theweave/api';
+import { AppletHash, GroupProfile } from '@theweave/api';
 
 import {
   Applet,
   AppletAgent,
-  AssetRelationAndHash,
-  AssetRelationWithTags,
   GROUP_APPLETS_META_DATA_NAME,
   GROUP_DESCRIPTION_NAME,
   GroupAppletsMetaData,
@@ -27,11 +22,8 @@ import {
   JoinAppletInput,
   PermissionType,
   AppletEntryPrivate,
-  RelateAssetsInput,
-  SignalPayload,
   StewardPermission,
   AppletClonedCell,
-  TagsToAssetInput,
 } from './types.js';
 
 export class GroupClient {
@@ -278,6 +270,16 @@ export class GroupClient {
     return this.callZome('get_unjoined_cloned_cells_for_applet', appletHash);
   }
 
+  /**
+   * Send arbitrary data to peers via remote signal
+   */
+  async remoteSignalArbitrary(content: string, toAgents: AgentPubKey[]): Promise<void> {
+    return this.callZome('remote_signal_arbitrary', {
+      to_agents: toAgents,
+      content,
+    });
+  }
+
   private callZome(fn_name: string, payload: any) {
     const req: AppCallZomeRequest = {
       role_name: this.roleName,
@@ -286,109 +288,5 @@ export class GroupClient {
       payload,
     };
     return this.appClient.callZome(req);
-  }
-}
-
-export class PeerStatusClient extends ZomeClient<SignalPayload> {
-  constructor(
-    public client: AppClient,
-    public roleName: RoleName,
-    public zomeName = 'peer_status',
-  ) {
-    super(client, roleName, zomeName);
-  }
-
-  /**
-   * Ping all specified agents, expecting for their pong later
-   */
-  async ping(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('ping', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-
-  /**
-   * Pong all specified agents
-   */
-  async pong(agentPubKeys: AgentPubKey[], status, tzUtcOffset?: number): Promise<void> {
-    return this.callZome('pong', {
-      to_agents: agentPubKeys,
-      status,
-      tz_utc_offset: tzUtcOffset,
-    });
-  }
-}
-
-export class AssetsClient extends ZomeClient<SignalPayload> {
-  constructor(
-    public client: AppClient,
-    public roleName: RoleName,
-    public zomeName = 'assets',
-  ) {
-    super(client, roleName, zomeName);
-  }
-
-  async addAssetRelation(
-    srcWal: WAL,
-    dstWal: WAL,
-    tags?: string[],
-  ): Promise<AssetRelationWithTags> {
-    let input: RelateAssetsInput = {
-      src_wal: srcWal,
-      dst_wal: dstWal,
-      tags: tags ? tags : [],
-    };
-    return this.callZome('add_asset_relation', input);
-  }
-
-  async removeAssetRelation(relationHash: EntryHash): Promise<AssetRelationWithTags> {
-    return this.callZome('remove_asset_relation', relationHash);
-  }
-
-  async addTagsToAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset_relation', {
-      relation_hash: relationHash,
-      tags,
-    });
-  }
-
-  async removeTagsFromAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset_relation', {
-      relation_hash: relationHash,
-      tags,
-    });
-  }
-
-  async getOutgoingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    return this.callZome('get_outgoing_asset_relations', srcWal);
-  }
-
-  async getOutgoingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    return this.callZome('get_outgoing_asset_relations_with_tags', srcWal);
-  }
-
-  async getIncomingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    return this.callZome('get_outgoing_asset_relations', srcWal);
-  }
-
-  async getIncomingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    return this.callZome('get_incoming_asset_relations_with_tags', srcWal);
-  }
-
-  async addTagsToAsset(wal: WAL, tags: string[]): Promise<void> {
-    const input: TagsToAssetInput = {
-      wal,
-      tags,
-    };
-    return this.callZome('add_tags_to_asset', input);
-  }
-
-  async removeTagsFromAsset(wal: WAL, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset', {
-      wal,
-      tags,
-    });
   }
 }

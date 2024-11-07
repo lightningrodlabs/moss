@@ -1,2 +1,4 @@
 export * from './types.js';
-export * from './client.js';
+export * from './groupClient.js';
+export * from './assetsClient.js';
+export * from './peerStatusClient.js';
