@@ -1,7 +1,7 @@
 import { assert, test } from 'vitest';
-
+import { encode } from '@msgpack/msgpack';
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { encodeHashToBase64, fakeActionHash } from '@holochain/client';
+import { encodeHashToBase64, EntryHash, fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
@@ -12,6 +12,115 @@ import {
   RelateAssetsInput,
   RemoveTagsFromAssetRelationInput,
 } from '@theweave/group-client';
+
+test('Add an asset relation, remove it again and try to get it from the ALL_ASSET_RELATIONS_ANCHOR', async () => {
+  await runScenario(async (scenario) => {
+    // Construct proper paths for your app.
+    // This assumes app bundle created by the `hc app pack` command.
+    const testAppPath = GROUP_HAPP_PATH;
+
+    // Set up the app to be installed
+    const appSource = { appBundleSource: { path: testAppPath } };
+
+    // Add 2 players with the test app to the Scenario. The returned players
+    // can be destructured.
+    const [alice, bob] = await scenario.addPlayersWithApps([appSource, appSource]);
+
+    // Shortcut peer discovery through gossip and register all agents in every
+    // conductor of the scenario.
+    await scenario.shareAllAgents();
+
+    const assetsCellAlice = getCellByRoleName(alice, 'assets');
+    const assetsCellBob = getCellByRoleName(bob, 'assets');
+
+    // 1. Alice adds two asset relations between two WALs, then both Alice and Bob try to read it
+    const wal1: WAL = {
+      hrl: [assetsCellAlice.cell_id[0], await fakeActionHash()],
+      context: new Uint8Array(4),
+    };
+
+    const wal2: WAL = {
+      hrl: [assetsCellAlice.cell_id[0], await fakeActionHash()],
+      context: new Uint8Array(5),
+    };
+
+    const input1: RelateAssetsInput = {
+      src_wal: wal1,
+      dst_wal: wal2,
+      tags: ['depends_on', 'loves', 'cares_about'],
+    };
+
+    const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
+      zome_name: 'assets',
+      fn_name: 'add_asset_relation',
+      payload: input1,
+    });
+
+    await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
+
+    // Bob tries to get it from the anchor
+    const allAssetRelations: AssetRelationAndHash[] = await assetsCellBob.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_all_asset_relations',
+      payload: null,
+    });
+
+    assert(allAssetRelations.length === 1);
+    assert.deepEqual(allAssetRelations[0], {
+      src_wal: assetRelation1.src_wal,
+      dst_wal: assetRelation1.dst_wal,
+      relation_hash: assetRelation1.relation_hash,
+    });
+
+    const allAssetRelationHashes: EntryHash[] = await assetsCellBob.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_all_asset_relation_hashes',
+      payload: null,
+    });
+
+    assert(allAssetRelationHashes.length === 1);
+    assert(
+      encodeHashToBase64(assetRelation1.relation_hash),
+      encodeHashToBase64(allAssetRelationHashes[0]),
+    );
+
+    const assetRelation2: AssetRelation | undefined = await assetsCellBob.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_asset_relation_by_hash',
+      payload: assetRelation1.relation_hash,
+    });
+
+    assert(!!assetRelation2);
+    assert.deepEqual(assetRelation2.src_wal.hrl, wal1.hrl);
+    assert.deepEqual(assetRelation2.dst_wal.hrl, wal2.hrl);
+
+    //- Remove the AssetRelation and check that it is not discoverable anymore
+
+    await assetsCellBob.callZome({
+      zome_name: 'assets',
+      fn_name: 'remove_asset_relation',
+      payload: { src_wal: wal1, dst_wal: wal2 },
+    });
+
+    await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
+
+    const allAssetRelationsAlice: AssetRelationAndHash[] = await assetsCellAlice.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_all_asset_relations',
+      payload: null,
+    });
+
+    assert(allAssetRelationsAlice.length === 0);
+
+    const allAssetRelationHashesAlice: EntryHash[] = await assetsCellAlice.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_all_asset_relation_hashes',
+      payload: null,
+    });
+
+    assert(allAssetRelationHashesAlice.length === 0);
+  });
+});
 
 test('Add two asset relations between 3 WALs and read them', async () => {
   await runScenario(async (scenario) => {

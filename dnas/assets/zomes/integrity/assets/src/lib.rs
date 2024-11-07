@@ -29,6 +29,7 @@ pub enum LinkTypes {
     DstWalToAssetRelations,
     WalToAssociationTags,
     AssociationTagToWals,
+    AllAssetRelations,
 }
 
 // Validation you perform during the genesis process. Nobody else on the network performs it, only you.
@@ -218,6 +219,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 target_address,
                 tag,
             ),
+            LinkTypes::AllAssetRelations => {
+                validate_create_link_all_asset_relations(action, base_address, target_address, tag)
+            }
         },
         FlatOp::RegisterDeleteLink {
             link_type,
@@ -267,6 +271,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 tag,
             ),
             LinkTypes::AssociationTagToWals => validate_delete_link_association_tag_to_wals(
+                action,
+                original_action,
+                base_address,
+                target_address,
+                tag,
+            ),
+            LinkTypes::AllAssetRelations => validate_delete_link_all_asset_relations(
                 action,
                 original_action,
                 base_address,
@@ -458,6 +469,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             tag,
                         )
                     }
+                    LinkTypes::AllAssetRelations => validate_create_link_all_asset_relations(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    ),
                 },
                 // Complementary validation to the `RegisterDeleteLink` Op, in which the record itself is validated
                 // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `RegisterDeleteLink`
@@ -541,6 +558,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 create_link.tag,
                             )
                         }
+                        LinkTypes::AllAssetRelations => validate_delete_link_all_asset_relations(
+                            action,
+                            create_link.clone(),
+                            base_address,
+                            create_link.target_address,
+                            create_link.tag,
+                        ),
                     }
                 }
                 OpRecord::CreatePrivateEntry { .. } => Ok(ValidateCallbackResult::Valid),

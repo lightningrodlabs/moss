@@ -2,7 +2,7 @@ pub mod associations;
 pub mod relations;
 use assets_integrity::*;
 use hdk::prelude::*;
-use relations::AssetRelationWithTags;
+use relations::{AssetRelationAndHash, AssetRelationWithTags};
 
 // Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]
@@ -32,7 +32,7 @@ pub enum SignalKind {
         relation: AssetRelationWithTags,
     },
     AssetRelationRemoved {
-        relation: AssetRelationWithTags,
+        relation: AssetRelationAndHash,
     },
     RelationTagsAdded {
         relation_hash: EntryHash,

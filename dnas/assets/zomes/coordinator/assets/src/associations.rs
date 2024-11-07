@@ -1,3 +1,4 @@
+use crate::{Signal, SignalKind};
 use assets_integrity::*;
 use hdk::prelude::*;
 
@@ -9,8 +10,8 @@ pub struct TagsToAssetInput {
 
 #[hdk_extern]
 pub fn add_tags_to_asset(input: TagsToAssetInput) -> ExternResult<()> {
-    let wal_hash = hash_entry(input.wal)?;
-    for tag in input.tags {
+    let wal_hash = hash_entry(input.wal.clone())?;
+    for tag in input.tags.clone() {
         let tag_entry_hash = association_tag_entry_hash(&tag)?;
         create_link(
             wal_hash.clone(),
@@ -25,12 +26,18 @@ pub fn add_tags_to_asset(input: TagsToAssetInput) -> ExternResult<()> {
             (),
         )?;
     }
+
+    emit_signal(Signal::Local(SignalKind::AssetTagsAdded {
+        wal: input.wal,
+        tags: input.tags,
+    }))?;
+
     Ok(())
 }
 
 #[hdk_extern]
 pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
-    let wal_hash = hash_entry(input.wal)?;
+    let wal_hash = hash_entry(input.wal.clone())?;
     // 1. Remove links from WAL to tags
     let links = get_links(
         GetLinksInputBuilder::try_new(wal_hash.clone(), LinkTypes::WalToAssociationTags)?.build(),
@@ -49,7 +56,7 @@ pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
     }
 
     // 2. Remove links from tags to WAL
-    for tag in input.tags {
+    for tag in input.tags.clone() {
         let tag_entry_hash = association_tag_entry_hash(&tag)?;
         let links = get_links(
             GetLinksInputBuilder::try_new(tag_entry_hash, LinkTypes::AssociationTagToWals)?.build(),
@@ -60,6 +67,12 @@ pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
             }
         }
     }
+
+    emit_signal(Signal::Local(SignalKind::AssetTagsRemoved {
+        wal: input.wal,
+        tags: input.tags,
+    }))?;
+
     Ok(())
 }
 

@@ -1,6 +1,8 @@
 use crate::{validate_steward_permission, GroupDnaProperties};
 use hdi::prelude::*;
 use std::collections::BTreeMap;
+
+pub const ALL_APPLETS_ANCHOR: &str = "ALL_APPLETS";
 #[hdk_entry_helper]
 #[derive(Clone, PartialEq)]
 pub struct Applet {
@@ -54,26 +56,28 @@ pub fn validate_create_link_all_applets(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    // Check that base address is pointing away from the all_applets anchor
-    let base_address_entry_hash = EntryHash::try_from(base_address).map_err(|_| {
-        wasm_error!(WasmErrorInner::Guest(
-            "Base address is not an entry hash".into()
-        ))
-    })?;
-    let path = Path::from("all_applets");
-    if path.path_entry_hash()? != base_address_entry_hash {
+    if let None = target_address.into_entry_hash() {
         return Ok(ValidateCallbackResult::Invalid(
-            "AllApplets link is not pointing away from the all_applets anchor".into(),
+            "Target address is not an entry hash.".into(),
         ));
     }
-    // Check that the link is pointing to an entry hash
-    let _entry_hash =
-        target_address
-            .into_entry_hash()
-            .ok_or(wasm_error!(WasmErrorInner::Guest(
-                "No entry hash associated with link".to_string()
-            )))?;
-    Ok(ValidateCallbackResult::Valid)
+    // Check that base address is pointing away from the all_applets anchor
+    match base_address.into_entry_hash() {
+        None => {
+            return Ok(ValidateCallbackResult::Invalid(
+                "Base address is not an entry hash.".into(),
+            ))
+        }
+        Some(eh) => {
+            let path = Path::from(ALL_APPLETS_ANCHOR);
+            if path.path_entry_hash()? != eh {
+                return Ok(ValidateCallbackResult::Invalid(
+                    "AllApplets link is not pointing away from the correct anchor".into(),
+                ));
+            }
+            Ok(ValidateCallbackResult::Valid)
+        }
+    }
 }
 
 /// Rules

@@ -3,10 +3,6 @@ use std::collections::{BTreeMap, HashMap};
 use group_integrity::*;
 use hdk::prelude::*;
 
-fn get_group_applets_path() -> Path {
-    Path::from("all_applets")
-}
-
 #[hdk_extern]
 fn hash_applet(applet: Applet) -> ExternResult<EntryHash> {
     hash_entry(&applet)
@@ -25,7 +21,7 @@ fn register_applet(input: Applet) -> ExternResult<EntryHash> {
 
     create_entry(EntryTypes::Applet(input.clone()))?;
 
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
     let anchor_hash = path.path_entry_hash()?;
     create_link(anchor_hash, applet_hash.clone(), LinkTypes::AllApplets, ())?;
 
@@ -97,7 +93,7 @@ fn abandon_applet(applet_hash: EntryHash) -> ExternResult<()> {
 /// installed it yet.
 #[hdk_extern]
 fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?.build(),
@@ -116,7 +112,7 @@ fn archive_applet(applet_hash: EntryHash) -> ExternResult<()> {
 
 #[hdk_extern]
 fn unarchive_applet(applet_hash: EntryHash) -> ExternResult<()> {
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
     let anchor_hash = path.path_entry_hash()?;
     create_link(anchor_hash, applet_hash.clone(), LinkTypes::AllApplets, ())?;
 
@@ -188,7 +184,7 @@ fn get_my_joined_applets(_: ()) -> ExternResult<Vec<AppletEntryPrivate>> {
 
 #[hdk_extern]
 fn get_group_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?.build(),
@@ -213,7 +209,7 @@ fn get_unjoined_applets(_: ()) -> ExternResult<Vec<(EntryHash, AgentPubKey, Time
         .map(|ac| ac.public_entry_hash)
         .collect::<Vec<EntryHash>>();
 
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?.build(),
@@ -260,7 +256,7 @@ fn get_unjoined_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
 
 #[hdk_extern]
 fn get_archived_applets(_: ()) -> ExternResult<Vec<EntryHash>> {
-    let path = get_group_applets_path();
+    let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links_details = get_link_details(
         path.path_entry_hash()?,
