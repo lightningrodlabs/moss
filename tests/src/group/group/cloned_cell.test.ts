@@ -1,15 +1,7 @@
 import { assert, test } from 'vitest';
 
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { GroupProfile, WAL } from '@theweave/api';
-import {
-  encodeHashToBase64,
-  EntryHash,
-  fakeDnaHash,
-  fakeEntryHash,
-  Record as HolochainRecord,
-} from '@holochain/client';
-import { EntryRecord } from '@holochain-open-dev/utils';
+import { encodeHashToBase64, EntryHash, fakeDnaHash, fakeEntryHash } from '@holochain/client';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 import { AppletClonedCell } from '@theweave/group-client';

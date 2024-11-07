@@ -262,6 +262,10 @@ export class GroupClient {
     return this.callZome('join_cloned_cell', input);
   }
 
+  async getAppletClonedCell(input: AppletClonedCell): Promise<AppletClonedCell | undefined> {
+    return this.callZome('get_applet_cloned_cell', input);
+  }
+
   async getAllClonedCellEntryHashesForApplet(appletHash: EntryHash): Promise<EntryHash[]> {
     return this.callZome('get_all_cloned_cell_entry_hashes_for_applet', appletHash);
   }
