@@ -3,7 +3,7 @@ use core::str;
 use assets_integrity::*;
 use hdk::prelude::*;
 
-use crate::{Signal, SignalKind};
+use crate::{associations::get_tags_for_asset, Signal, SignalKind};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AssetRelationAndHash {
@@ -127,10 +127,7 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
 
 #[hdk_extern]
 pub fn remove_asset_relation(asset_relation: AssetRelation) -> ExternResult<()> {
-    let relation_hash = hash_asset_relation(
-        asset_relation.src_wal.clone(),
-        asset_relation.dst_wal.clone(),
-    )?;
+    let relation_hash = hash_asset_relation(asset_relation.clone())?;
 
     // 0. This operation does not delete the Entry since there is no point in doing so.
     // It would only create an unnecessary delete action but an AssetRelation entry
@@ -542,10 +539,42 @@ pub fn get_asset_relations_for_relationship_tag(
     Ok(asset_relations)
 }
 
-fn hash_asset_relation(src_wal: WAL, dst_wal: WAL) -> ExternResult<EntryHash> {
-    let asset_relation = AssetRelation {
-        src_wal: src_wal.clone(),
-        dst_wal: dst_wal.clone(),
-    };
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RelationsForWal {
+    pub wal: WAL,
+    pub tags: Vec<String>,
+    pub linked_to: Vec<AssetRelationWithTags>,
+    pub linked_from: Vec<AssetRelationWithTags>,
+}
+
+#[hdk_extern]
+pub fn get_all_relations_for_wal(wal: WAL) -> ExternResult<RelationsForWal> {
+    let tags = get_tags_for_asset(wal.clone())?;
+    let linked_to = get_outgoing_asset_relations_with_tags(wal.clone())?;
+    let linked_from = get_incoming_asset_relations_with_tags(wal.clone())?;
+    Ok(RelationsForWal {
+        wal,
+        tags,
+        linked_to,
+        linked_from,
+    })
+}
+
+#[hdk_extern]
+pub fn batch_get_all_relations_for_wal(wals: Vec<WAL>) -> ExternResult<Vec<RelationsForWal>> {
+    let mut result: Vec<RelationsForWal> = Vec::new();
+    for wal in wals {
+        result.push(get_all_relations_for_wal(wal)?)
+    }
+    Ok(result)
+}
+
+#[hdk_extern]
+fn hash_asset_relation(asset_relation: AssetRelation) -> ExternResult<EntryHash> {
     hash_entry(asset_relation)
+}
+
+#[hdk_extern]
+fn hash_wal(wal: WAL) -> ExternResult<EntryHash> {
+    hash_entry(wal)
 }
