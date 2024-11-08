@@ -34,16 +34,21 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
         dst_wal: input.dst_wal.clone(),
     };
 
-    // 1. Create entry and add it to the ALL_ASSET_RELATIONS_ANCHOR
-    create_entry(&EntryTypes::AssetRelation(asset_relation.clone()))?;
-    let relation_hash = hash_entry(asset_relation)?;
-    let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
-    create_link(
-        path.path_entry_hash()?,
-        relation_hash.clone(),
-        LinkTypes::AllAssetRelations,
-        (),
-    )?;
+    // 1. Create entry and add it to the ALL_ASSET_RELATIONS_ANCHOR if no entry exists yet
+    let relation_hash = hash_entry(asset_relation.clone())?;
+    match get(relation_hash.clone(), GetOptions::default()) {
+        Ok(Some(_r)) => (),
+        _ => {
+            create_entry(&EntryTypes::AssetRelation(asset_relation.clone()))?;
+            let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
+            create_link(
+                path.path_entry_hash()?,
+                relation_hash.clone(),
+                LinkTypes::AllAssetRelations,
+                (),
+            )?;
+        }
+    }
 
     // 2. Add tags to the asset relation entry hash
     add_tags_to_asset_relation(AddTagsToAssetRelationInput {
