@@ -4,6 +4,10 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/moss"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"

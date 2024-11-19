@@ -262,7 +262,9 @@ export class WalEmbed extends LitElement {
           frameborder="0"
           title="TODO"
           src="${iframeSrc}"
-          style="flex: 1; display: block; padding: 5px; margin: 0; resize: both; width: calc(100% - 10px);"
+          style="flex: 1; display: block; padding: 5px; margin: 0; ${this.bare
+            ? 'resize:both; '
+            : ''} width: calc(100% - 10px);"
           allow="clipboard-write;"
           @load=${() => {
             console.log('iframe loaded.');
@@ -274,12 +276,10 @@ export class WalEmbed extends LitElement {
 
   render() {
     return this.bare
-      ? this.renderContent()
-      : html`
-          <div class="container">
-            ${this.renderHeader()} ${this.collapsed ? '' : this.renderContent()}
-          </div>
-        `;
+      ? html`<div class="container">${this.renderContent()}</div>`
+      : this.collapsed
+        ? html` <div class="container">${this.renderHeader()}</div> `
+        : html` <div class="container">${this.renderHeader()} ${this.renderContent()}</div> `;
   }
 
   static styles = [
@@ -293,6 +293,8 @@ export class WalEmbed extends LitElement {
         resize: both;
         font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         overflow: auto;
+        display: flex;
+        flex-direction: column;
       }
 
       .top-bar {
