@@ -160,6 +160,50 @@ export type SignalPayload =
  * Assets dna
  */
 
+export type SignalPayloadAssets =
+  | {
+      type: 'local';
+      content: SignalPayloadContent;
+    }
+  | {
+      type: 'remote';
+      content: SignalPayloadContent;
+    };
+
+export type SignalPayloadContent =
+  | {
+      type: 'AssetTagsAdded';
+      wal: WAL;
+      tags: string[];
+    }
+  | {
+      type: 'AssetTagsRemoved';
+      wal: WAL;
+      tags: string[];
+    }
+  | {
+      type: 'AssetRelationCreated';
+      relation: AssetRelationWithTags;
+    }
+  | {
+      type: 'AssetRelationRemoved';
+      relation: AssetRelationAndHash;
+    }
+  | {
+      type: 'RelationTagsAdded';
+      relation_hash: EntryHash;
+      src_wal: WAL;
+      dst_wal: WAL;
+      tags: string[];
+    }
+  | {
+      type: 'RelationTagsRemoved';
+      relation_hash: EntryHash;
+      src_wal: WAL;
+      dst_wal: WAL;
+      tags: string[];
+    };
+
 export type AssetRelation = {
   src_wal: WAL;
   dst_wal: WAL;
@@ -202,4 +246,11 @@ export type TagsToAssetInput = {
 export type RemoveTagsFromAssetRelationInput = {
   relation_hash: EntryHash;
   tags: string[];
+};
+
+export type RelationsForWal = {
+  wal: WAL;
+  tags: string[];
+  linked_to: AssetRelationWithTags[];
+  linked_from: AssetRelationWithTags[];
 };

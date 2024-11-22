@@ -14,7 +14,7 @@ import {
   type RecordInfo,
   type PeerStatusUpdate,
 } from '@theweave/api';
-import { decodeHashFromBase64, DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import { AppOpenViews } from '../layout/types.js';
 import {
@@ -25,7 +25,7 @@ import {
 } from '../electron-api.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
-import { AppletHash, AppletId } from '@theweave/api';
+import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
   getAppletNotificationSettings,
   getNotificationState,
@@ -33,7 +33,6 @@ import {
   logAppletZomeCall,
   openWalInWindow,
   storeAppletNotifications,
-  stringifyWal,
   validateNotifications,
 } from '../utils.js';
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
@@ -46,12 +45,8 @@ import {
   toolBundleActionHashFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
-// import {
-//   getAppletNotificationSettings,
-//   getNotificationState,
-//   storeAppletNotifications,
-//   validateNotifications,
-// } from '../utils.js';
+import { GroupStore } from '../groups/group-store.js';
+import { HrlLocation } from '../processes/hrl/locate-hrl.js';
 
 function getAppletIdFromOrigin(origin: string): AppletId {
   const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
@@ -140,64 +135,67 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     onBeforeUnload(_) {
       return () => undefined;
     },
-    async assetInfo(wal: WAL): Promise<AssetLocationAndInfo | undefined> {
-      const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
-      if (maybeCachedInfo) return maybeCachedInfo;
+    assets: {
+      assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
+        const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
+        if (maybeCachedInfo) return maybeCachedInfo;
 
-      const dnaHash = wal.hrl[0];
+        const dnaHash = wal.hrl[0];
 
-      try {
-        const location = await toPromise(mossStore.hrlLocations.get(dnaHash).get(wal.hrl[1]));
-        if (!location) return undefined;
-        const assetInfo = await toPromise(mossStore.assetInfo.get(stringifyWal(wal)));
+        try {
+          const location = await toPromise(mossStore.hrlLocations.get(dnaHash).get(wal.hrl[1]));
+          if (!location) return undefined;
+          const assetInfo = await toPromise(mossStore.assetInfo.get(stringifyWal(wal)));
 
-        if (!assetInfo) return undefined;
+          if (!assetInfo) return undefined;
 
-        const assetAndAppletInfo: AssetLocationAndInfo = {
-          appletHash: location.dnaLocation.appletHash,
-          assetInfo,
-        };
+          const assetAndAppletInfo: AssetLocationAndInfo = {
+            appletHash: location.dnaLocation.appletHash,
+            assetInfo,
+          };
 
-        mossStore.weCache.assetInfo.set(assetAndAppletInfo, wal);
+          mossStore.weCache.assetInfo.set(assetAndAppletInfo, wal);
 
-        return assetAndAppletInfo;
-      } catch (e) {
-        console.warn(
-          `Failed to get assetInfo for hrl ${wal.hrl.map((hash) =>
-            encodeHashToBase64(hash),
-          )} with context ${wal.context}: ${e}`,
-        );
-        return undefined;
-      }
-    },
-    async requestBind(srcWal: WAL, dstWal: WAL): Promise<void> {
-      const dstLocation = await toPromise(
-        mossStore.hrlLocations.get(dstWal.hrl[0]).get(dstWal.hrl[1]),
-      );
-      if (!dstLocation) throw new Error('No applet found for the given dstWal');
-      const appletStore = await toPromise(
-        mossStore.appletStores.get(dstLocation.dnaLocation.appletHash),
-      );
-      const appletHost = await toPromise(appletStore.host);
-      if (!appletHost) throw new Error('No applet host found for applet of dstWal');
-      try {
-        const result = await appletHost.bindAsset(
-          srcWal,
-          dstWal,
-          dstLocation.entryDefLocation
-            ? {
-                roleName: dstLocation.dnaLocation.roleName,
-                integrityZomeName: dstLocation.entryDefLocation.integrity_zome,
-                entryType: dstLocation.entryDefLocation.entry_def,
-              }
-            : undefined,
-        );
-        // TODO sanitize result format
-        return result;
-      } catch (e) {
-        console.error('Binding failed due to an error in the destination applet: ', e);
-        throw new Error(`Binding failed due to an error in the destination applet.`);
-      }
+          return assetAndAppletInfo;
+        } catch (e) {
+          console.warn(
+            `Failed to get assetInfo for hrl ${wal.hrl.map((hash) =>
+              encodeHashToBase64(hash),
+            )} with context ${wal.context}: ${e}`,
+          );
+          return undefined;
+        }
+      },
+      userSelectAsset: () => {
+        throw new Error('userSelectWal is not supported in headless WeaveServices.');
+      },
+      assetToPocket: async (wal: WAL) => {
+        mossStore.walToPocket(wal);
+      },
+      dragAsset: async (wal: WAL) => {
+        mossStore.dragWal(wal);
+      },
+      addTagsToAsset: (_wal: WAL, _tags: string[]) => {
+        throw new Error('addTagsToAsset is not supported in headless WeaveServices.');
+      },
+      removeTagsFromAsset: (_wal: WAL, _tags: string[]) => {
+        throw new Error('removeTagsFromAsset is not supported in headless WeaveServices.');
+      },
+      addAssetRelation: (_srcWal: WAL, _dstWal: WAL, _tags?: string[]) => {
+        throw new Error('removeTagsFromAsset is not supported in headless WeaveServices.');
+      },
+      removeAssetRelation: (_relationHash: EntryHash) => {
+        throw new Error('removeAssetRelation is not supported in headless WeaveServices.');
+      },
+      addTagsToAssetRelation: (_relationHash: EntryHash, _tags: string[]) => {
+        throw new Error('addTagsToAssetRelation is not supported in headless WeaveServices.');
+      },
+      removeTagsFromAssetRelation: (_relationHash: EntryHash, _tags: string[]) => {
+        throw new Error('removeTagsFromAssetRelation is not supported in headless WeaveServices.');
+      },
+      assetStore: (_wal: WAL) => {
+        throw new Error('assetStore is not supported in headless WeaveServices.');
+      },
     },
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
@@ -242,20 +240,11 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     },
     openAppletMain: async () => {},
     openCrossAppletMain: async () => {},
-    openWal: async () => {},
+    openAsset: async () => {},
     openCrossAppletBlock: async () => {},
     openAppletBlock: async () => {},
-    async userSelectWal() {
-      throw new Error('userSelectWal is not supported in headless WeaveServices.');
-    },
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeaveServices.');
-    },
-    async walToPocket(wal: WAL): Promise<void> {
-      mossStore.walToPocket(wal);
-    },
-    async dragWal(wal: WAL): Promise<void> {
-      mossStore.dragWal(wal);
     },
     async myGroupPermissionType() {
       throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
@@ -374,21 +363,13 @@ export async function handleAppletIframeMessage(
             message.request.block,
             message.request.context,
           );
-        case 'wal':
+        case 'asset':
           if (message.request.mode === 'window') {
             return openWalInWindow(message.request.wal, appletId, mossStore);
           }
 
-          return openViews.openWal(message.request.wal, message.request.mode);
+          return openViews.openAsset(message.request.wal, message.request.mode);
       }
-    case 'wal-to-pocket':
-      mossStore.walToPocket(message.wal);
-      break;
-    case 'drag-wal':
-      mossStore.dragWal(message.wal);
-      break;
-    case 'user-select-wal':
-      return openViews.userSelectWal();
     case 'user-select-screen':
       return selectScreenOrWindow();
     case 'toggle-pocket':
@@ -473,7 +454,7 @@ export async function handleAppletIframeMessage(
     case 'get-group-profile':
       return weaveServices.groupProfile(message.groupHash);
     case 'get-global-asset-info':
-      let assetInfo = await weaveServices.assetInfo(message.wal);
+      let assetInfo = await weaveServices.assets.assetInfo(message.wal);
       if (assetInfo && mossStore.isAppletDev) {
         const appletDevPort = await getAppletDevPort(appIdFromAppletHash(assetInfo.appletHash));
         if (appletDevPort) {
@@ -481,16 +462,6 @@ export async function handleAppletIframeMessage(
         }
       }
       return assetInfo;
-    case 'request-bind': {
-      const srcLocation = await toPromise(
-        mossStore.hrlLocations.get(message.srcWal.hrl[0]).get(message.srcWal.hrl[1]),
-      );
-      if (!srcLocation) throw new Error('No applet found for srcWal.');
-      if (encodeHashToBase64(srcLocation.dnaLocation.appletHash) !== appletId)
-        throw new Error('Bad bind request: srcWal does not belong to the requesting applet.');
-
-      return weaveServices.requestBind(message.srcWal, message.dstWal);
-    }
     case 'my-group-permission-type': {
       const appletHash = decodeHashFromBase64(appletId);
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
@@ -577,6 +548,146 @@ export async function handleAppletIframeMessage(
     case 'request-close':
       // Only supported in external windows
       return;
+    /**
+     * Asset related messages
+     */
+    case 'asset-to-pocket':
+      mossStore.walToPocket(message.wal);
+      break;
+    case 'drag-asset':
+      mossStore.dragWal(message.wal);
+      break;
+    case 'user-select-asset':
+      return openViews.userSelectWal();
+    case 'add-tags-to-asset': {
+      // We want to make sure that
+      const hrl = message.wal.hrl;
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      if (!hrlLocation) throw new Error('Failed to resolve WAL.');
+      // Only allow adding to assets from the same applet
+      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+        throw new Error('Cannot add tags to an asset that belongs to another Tool.');
+      // Add tags to all group stores that the asset belongs to
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.addTagsToAsset(message.wal, message.tags),
+        ),
+      );
+    }
+    case 'remove-tags-from-asset': {
+      const hrl = message.wal.hrl;
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      if (!hrlLocation) throw new Error('Failed to resolve WAL.');
+      // Only allow removing to assets from the same applet
+      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+        throw new Error('Cannot remove tags from an asset that belongs to another Tool.');
+      // Add tags to all group stores that the asset belongs to
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.removeTagsFromAsset(message.wal, message.tags),
+        ),
+      );
+    }
+    case 'add-asset-relation': {
+      const hrl = message.srcWal.hrl;
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      if (!hrlLocation) throw new Error('Failed to resolve WAL.');
+      // Only allow removing to assets from the same applet
+      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+        throw new Error('Cannot relation to an asset that belongs to another Tool.');
+      // Add tags to all group stores that the asset belongs to
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.addAssetRelation(message.srcWal, message.dstWal),
+        ),
+      );
+    }
+    case 'remove-asset-relation': {
+      // Note: We assume here that the asset relation that gets removed lives inside the
+      // Tool that requests the removal. If that's not the case it fails. And it probably
+      // shouldn't be allowed to remove an asset relation belonging to another Tool anyway
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.removeAssetRelation(message.relationHash),
+        ),
+      );
+    }
+    case 'add-tags-to-asset-relation': {
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.addTagsToAssetRelation(message.relationHash, message.tags),
+        ),
+      );
+    }
+    case 'remove-tags-from-asset-relation': {
+      const groupStores = await toPromise(
+        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
+      );
+      if (groupStores.size === 0) {
+        throw new Error('No associated group found for the provided WAL.');
+      }
+      return Promise.all(
+        Array.from(groupStores.values()).map((groupStore) =>
+          groupStore.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags),
+        ),
+      );
+    }
+    case 'subscribe-to-asset-store': {
+      const hrl = message.wal.hrl;
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      if (!hrlLocation) throw new Error('Failed to resolve WAL.');
+      const groupStore = await getFirstGroupStoreForHrl(mossStore, hrlLocation);
+      if (!groupStore) {
+        throw new Error(
+          'Failed to unsubscribe from Asset store: No associated group store found for the provided WAL.',
+        );
+      }
+      groupStore.subscribeToAssetStore(message.wal, [appletId]);
+      return;
+    }
+    case 'unsubscribe-from-asset-store': {
+      const hrl = message.wal.hrl;
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      if (!hrlLocation) throw new Error('Failed to resolve WAL.');
+      const groupStore = await getFirstGroupStoreForHrl(mossStore, hrlLocation);
+      if (!groupStore) {
+        throw new Error(
+          'Failed to unsubscribe from Asset store: No associated group store found for the provided WAL.',
+        );
+      }
+      groupStore.unsubscribeFromAssetStore(message.wal, appletId);
+      return;
+    }
     default:
       throw Error(`Got unsupported message type: '${message.type}'`);
   }
@@ -597,15 +708,6 @@ export class AppletHost {
       type: 'get-applet-asset-info',
       wal,
       recordInfo,
-    });
-  }
-
-  bindAsset(srcWal: WAL, dstWal: WAL, dstRecordInfo?: RecordInfo): Promise<void> {
-    return this.postMessage({
-      type: 'bind-asset',
-      srcWal,
-      dstWal,
-      dstRecordInfo,
     });
   }
 
@@ -644,4 +746,17 @@ export class AppletHost {
       };
     });
   }
+}
+
+async function getFirstGroupStoreForHrl(
+  mossStore: MossStore,
+  hrlLocation: HrlLocation,
+): Promise<GroupStore | undefined> {
+  const groupsForApplet = await toPromise(
+    mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+  );
+  if (groupsForApplet.size === 0) {
+    return undefined;
+  }
+  return Array.from(groupsForApplet.values())[0];
 }

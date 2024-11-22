@@ -24,7 +24,7 @@ import {
   AppletHash,
   AppletId,
   WAL,
-  OpenWalMode,
+  OpenAssetMode,
   WeaveLocation,
   weaveUrlToLocation,
   weaveUrlFromWal,
@@ -286,7 +286,7 @@ export class MainDashboard extends LitElement {
     openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
-    openWal: async (wal: WAL, mode?: OpenWalMode) => {
+    openAsset: async (wal: WAL, mode?: OpenAssetMode) => {
       const tabId = weaveUrlFromWal(wal);
       try {
         const [groupContextHashesB64, appletContextIds] = await this.getRelatedGroupsAndApplets(
@@ -364,7 +364,7 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async openTab(tabInfo: TabInfo, mode?: OpenWalMode) {
+  async openTab(tabInfo: TabInfo, mode?: OpenAssetMode) {
     if (mode === 'window') throw Error("Mode 'window' cannot be opened in a tab");
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,
@@ -666,7 +666,7 @@ export class MainDashboard extends LitElement {
     this._resizeDrawerX = e.clientX;
     this.addEventListener('mousemove', this.resizeMouseMoveHandler);
     this.addEventListener('mouseup', this.resizeMouseUpHandler);
-    console.log('this._resizeDrawerX: ', this._resizeDrawerX);
+    // console.log('this._resizeDrawerX: ', this._resizeDrawerX);
   }
 
   resizeMouseMoveHandler(e: MouseEvent) {

@@ -2,7 +2,7 @@ import { pipe, completed, StoreSubscriber, toPromise } from '@holochain-open-dev
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import { deStringifyWal, encodeAndStringify } from '../../utils.js';
+import { encodeAndStringify } from '../../utils.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -18,6 +18,7 @@ import { AppletHash } from '@theweave/api';
 import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
 import { AppletNotification } from '../../types.js';
+import { deStringifyWal } from '@theweave/api';
 
 @localized()
 @customElement('activity-asset')

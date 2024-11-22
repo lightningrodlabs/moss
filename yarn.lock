@@ -2927,14 +2927,6 @@
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
-"@theweave/api@file:libs/api":
-  version "0.2.1"
-  dependencies:
-    "@holochain-open-dev/profiles" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-rc.0"
-    "@msgpack/msgpack" "^2.8.0"
-    js-base64 "^3.7.2"
-
 "@theweave/cli@0.13.0-gamma.3":
   version "0.13.0-gamma.3"
   resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.13.0-gamma.3.tgz#d62f7bc62b98e14f424069f96707c7b64c5c0bbf"
@@ -2960,36 +2952,6 @@
     utf-8-validate "^6.0.3"
     uuid "9.0.1"
     winston "3.11.0"
-
-"@theweave/elements@file:libs/elements":
-  version "0.2.0"
-  dependencies:
-    "@holochain-open-dev/elements" "0.400.0-dev.3"
-    "@holochain-open-dev/profiles" "0.400.0-dev.4"
-    "@holochain-open-dev/stores" "0.400.0-dev.3"
-    "@holochain-open-dev/utils" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-rc.0"
-    "@lit/context" "^1.0.1"
-    "@lit/localize" "^0.12.0"
-    "@mdi/js" "^7.2.0"
-    "@shoelace-style/shoelace" "2.16.0"
-    "@theweave/api" "*"
-    js-base64 "^3.7.5"
-    lit "^3.0.2"
-
-"@theweave/group-client@file:shared/group-client":
-  version "0.1.1"
-  dependencies:
-    "@holochain-open-dev/utils" "0.400.0-dev.4"
-    "@holochain/client" "0.18.0-rc.0"
-    "@theweave/api" "*"
-
-"@theweave/utils@file:shared/utils":
-  version "0.1.0"
-  dependencies:
-    "@holochain/client" "0.18.0-rc.0"
-    "@theweave/api" "*"
-    "@theweave/moss-types" "*"
 
 "@tootallnate/once@2":
   version "2.0.0"

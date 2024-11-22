@@ -25,7 +25,7 @@ export type NullHash = Uint8Array;
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-export type OpenWalMode = 'front' | 'side' | 'window';
+export type OpenAssetMode = 'front' | 'side' | 'window';
 
 /**
  * String of the format weave-0.13://
@@ -193,7 +193,7 @@ export type AppletView =
       cancel: () => Promise<void>;
     };
 
-export type CrossAppletView =
+export type CrossGroupView =
   | {
       type: 'main';
     }
@@ -234,7 +234,7 @@ export type CreatableResult =
 export type BlockType = {
   label: string;
   icon_src: string;
-  view: 'applet-view' | 'cross-applet-view';
+  view: 'applet-view' | 'cross-group-view';
 };
 
 export type BlockName = string;
@@ -256,8 +256,8 @@ export type RenderInfo =
       groupProfiles: GroupProfile[];
     }
   | {
-      type: 'cross-applet-view';
-      view: CrossAppletView;
+      type: 'cross-group-view';
+      view: CrossGroupView;
       applets: ReadonlyMap<EntryHash, AppletClients>;
     };
 
@@ -267,8 +267,8 @@ export type RenderView =
       view: AppletView;
     }
   | {
-      type: 'cross-applet-view';
-      view: CrossAppletView;
+      type: 'cross-group-view';
+      view: CrossGroupView;
     };
 
 export type ParentToAppletMessage =
@@ -296,6 +296,15 @@ export type ParentToAppletMessage =
     }
   | {
       type: 'on-before-unload';
+    }
+  | {
+      type: 'asset-store-update';
+      /**
+       * We can save ourselves one unnecessary stringification step
+       * by sending it as stringified
+       */
+      walStringified: string;
+      value: AsyncStatus<AssetStoreContent>;
     };
 
 export type AppletToParentMessage = {
@@ -340,30 +349,10 @@ export type AppletToParentRequest =
       groupHash: DnaHash;
     }
   | {
-      type: 'get-global-asset-info';
-      wal: WAL;
-    }
-  | {
-      type: 'wal-to-pocket';
-      wal: WAL;
-    }
-  | {
-      type: 'drag-wal';
-      wal: WAL;
-    }
-  | {
-      type: 'request-bind';
-      srcWal: WAL;
-      dstWal: WAL;
-    }
-  | {
       type: 'my-group-permission-type';
     }
   | {
       type: 'applet-participants';
-    }
-  | {
-      type: 'user-select-wal';
     }
   | {
       type: 'user-select-screen';
@@ -403,6 +392,62 @@ export type AppletToParentRequest =
     }
   | {
       type: 'request-close';
+    }
+  /**
+   * Asset related requests
+   */
+  | {
+      type: 'asset-to-pocket';
+      wal: WAL;
+    }
+  | {
+      type: 'user-select-asset';
+    }
+  | {
+      type: 'get-global-asset-info';
+      wal: WAL;
+    }
+  | {
+      type: 'drag-asset';
+      wal: WAL;
+    }
+  | {
+      type: 'add-tags-to-asset';
+      wal: WAL;
+      tags: string[];
+    }
+  | {
+      type: 'remove-tags-from-asset';
+      wal: WAL;
+      tags: string[];
+    }
+  | {
+      type: 'add-asset-relation';
+      srcWal: WAL;
+      dstWal: WAL;
+      tags?: string[];
+    }
+  | {
+      type: 'remove-asset-relation';
+      relationHash: EntryHash;
+    }
+  | {
+      type: 'add-tags-to-asset-relation';
+      relationHash: EntryHash;
+      tags: string[];
+    }
+  | {
+      type: 'remove-tags-from-asset-relation';
+      relationHash: EntryHash;
+      tags: string[];
+    }
+  | {
+      type: 'subscribe-to-asset-store';
+      wal: WAL;
+    }
+  | {
+      type: 'unsubscribe-from-asset-store';
+      wal: WAL;
     };
 
 export type OpenViewRequest =
@@ -427,9 +472,9 @@ export type OpenViewRequest =
       context: any;
     }
   | {
-      type: 'wal';
+      type: 'asset';
       wal: WAL;
-      mode?: OpenWalMode;
+      mode?: OpenAssetMode;
     };
 
 export type IframeConfig =
@@ -504,3 +549,30 @@ export type GroupPermissionType =
        */
       type: 'Ambiguous';
     };
+
+export type WalAndTags = {
+  wal: WAL;
+  relationHash: EntryHash;
+  tags: string[];
+};
+
+export type AssetStoreContent = {
+  linkedTo: WalAndTags[];
+  linkedFrom: WalAndTags[];
+  tags: string[];
+};
+
+export type AsyncStatus<T> =
+  | {
+      status: 'pending';
+    }
+  | {
+      status: 'complete';
+      value: T;
+    }
+  | {
+      status: 'error';
+      error: any;
+    };
+
+export type AssetStore = Readable<AsyncStatus<AssetStoreContent>>;

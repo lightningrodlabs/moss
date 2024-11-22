@@ -1,9 +1,9 @@
 import { AppletHash, AppletInfo, AssetLocationAndInfo, WAL } from '@theweave/api';
-import { stringifyWal } from './utils';
 import { SubStore } from './persisted-store';
 import { encodeHashToBase64 } from '@holochain/client';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
+import { stringifyWal } from '@theweave/api';
 
 /**
  * Cache for We

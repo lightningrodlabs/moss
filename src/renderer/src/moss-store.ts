@@ -43,11 +43,13 @@ import {
   NULL_HASH,
   AppletHash,
   AppletId,
+  stringifyWal,
+  deStringifyWal,
 } from '@theweave/api';
 
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
-import { DnaLocation, locateHrl } from './processes/hrl/locate-hrl.js';
+import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import {
   ConductorInfo,
   createGroup,
@@ -56,14 +58,12 @@ import {
   joinGroup,
 } from './electron-api.js';
 import {
-  deStringifyWal,
   destringifyAndDecode,
   encodeAndStringify,
   findAppForDnaHash,
   initAppClient,
   isAppDisabled,
   isAppRunning,
-  stringifyWal,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
@@ -76,7 +76,7 @@ import {
   toolBundleActionHashFromDistInfo,
 } from '@theweave/utils';
 import { AppletNotification } from './types.js';
-import { GroupClient, GroupProfile, Applet } from '../../../shared/group-client/dist/index.js';
+import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
@@ -625,8 +625,12 @@ export class MossStore {
 
         const token = await this.getAuthenticationToken(app.installed_app_id);
         const groupAppWebsocket = await initAppClient(token);
+        const assetsClient = new AssetsClient(groupAppWebsocket);
 
-        groupStores.set(groupDnaHash, new GroupStore(groupAppWebsocket, token, groupDnaHash, this));
+        groupStores.set(
+          groupDnaHash,
+          new GroupStore(groupAppWebsocket, token, groupDnaHash, this, assetsClient),
+        );
       }),
     );
 
@@ -844,7 +848,7 @@ export class MossStore {
             return {
               dnaLocation,
               entryDefLocation: undefined,
-            };
+            } as HrlLocation;
           }
           const appToken = await this.getAuthenticationToken(dnaLocation.appInfo.installed_app_id);
           const appClient = await initAppClient(appToken);
@@ -857,7 +861,7 @@ export class MossStore {
           return {
             dnaLocation,
             entryDefLocation,
-          };
+          } as HrlLocation;
         });
       }),
   );

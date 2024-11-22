@@ -27,7 +27,7 @@ export class WalToPocket extends LitElement {
   weaveClient!: WeaveClient | WeaveServices;
 
   async walToPocket() {
-    await this.weaveClient.walToPocket(this.wal);
+    await this.weaveClient.assets.assetToPocket(this.wal);
   }
 
   render() {

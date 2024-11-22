@@ -11,3 +11,4 @@ name = "assets"
 hdk = { workspace = true }
 serde = { workspace = true }
 assets_integrity = { workspace = true }
+itertools = "0.13.0"

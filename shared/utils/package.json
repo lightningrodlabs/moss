@@ -19,7 +19,9 @@
   "dependencies": {
     "@holochain/client": "0.18.0-rc.0",
     "@theweave/api": "*",
-    "@theweave/moss-types": "*"
+    "@theweave/moss-types": "*",
+    "@msgpack/msgpack": "^2.7.2",
+    "js-base64": "^3.7.2"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

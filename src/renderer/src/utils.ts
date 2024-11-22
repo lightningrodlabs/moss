@@ -73,6 +73,13 @@ export function appletOriginFromAppletId(appletId: AppletId): string {
   return `applet://${toLowerCaseB64(appletId)}`;
 }
 
+/**
+ * This function assumes that there is only a single app with this same dna
+ *
+ * @param apps
+ * @param dnaHash
+ * @returns
+ */
 export function findAppForDnaHash(
   apps: ListAppsResponse,
   dnaHash: DnaHash,
@@ -417,14 +424,6 @@ export function encodeAndStringify(input: unknown): string {
 
 export function destringifyAndDecode<T>(input: string): T {
   return decode(toUint8Array(input)) as T;
-}
-
-export function stringifyWal(wal: WAL): string {
-  return fromUint8Array(encode(wal));
-}
-
-export function deStringifyWal(walStringified: string): WAL {
-  return decode(toUint8Array(walStringified)) as WAL;
 }
 
 export function renderViewToQueryString(
@@ -884,8 +883,15 @@ export async function postMessageToAppletIframes(
   let allAppletIframes = allIframes.filter(
     (iframe) => iframe.src.startsWith('applet://') || iframe.src.startsWith('http://localhost'),
   );
+  console.log('postMessageToAppletIframes: allAppletIframes', allAppletIframes);
+  console.log('postMessageToAppletIframes: appletIds', appletIds);
+  console.log(
+    'postMessageToAppletIframes: iframeSrcs: ',
+    allAppletIframes.map((iframe) => iframe.src),
+  );
   if (appletIds.type === 'some') {
     const relevantSrcs = appletIds.ids.map((id) => appletOriginFromAppletId(id));
+    console.log('relevantSrcs', relevantSrcs);
     allAppletIframes = allAppletIframes.filter((iframe) => {
       let matches = false;
       if (extraOrigins) {
@@ -896,7 +902,7 @@ export async function postMessageToAppletIframes(
         });
       }
       relevantSrcs.forEach((origin) => {
-        if (iframe.src.startsWith(origin)) {
+        if (iframe.src.startsWith(origin) || iframe.src.startsWith('http://localhost')) {
           matches = true;
         }
       });

@@ -10,7 +10,6 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { mdiPaperclipPlus } from '@mdi/js';
 import { msg, localized } from '@lit/localize';
-import { AnyDhtHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -28,9 +27,7 @@ import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@material/web/menu/menu.js';
 import '@material/web/menu/menu-item.js';
 
-import { WeaveClient, WeaveServices, weaveUrlFromWal } from '@theweave/api';
-import { weaveClientContext } from '@theweave/elements';
-
+import { weaveUrlFromWal } from '@theweave/api';
 import { AttachmentsStore } from '../attachments-store';
 import { attachmentsStoreContext } from '../context';
 import { Wal } from '../attachments-client';
@@ -46,7 +43,7 @@ export class AddOutgoingLink extends LitElement {
 
   async createOutgoingLink() {
     try {
-      const dstWAL = await window.__WEAVE_API__.userSelectWal();
+      const dstWAL = await window.__WEAVE_API__.assets.userSelectAsset();
       if (dstWAL) {
         const linkingInput = {
           src_wal: this.wal,

@@ -35,7 +35,7 @@ export class WalLink extends LitElement {
     this,
     () =>
       lazyLoad(async () => {
-        const assetInfo = await window.__WEAVE_API__.assetInfo(weaveUrlToWAL(this.wal));
+        const assetInfo = await window.__WEAVE_API__.assets.assetInfo(weaveUrlToWAL(this.wal));
         if (!assetInfo) return undefined;
 
         const { groupsProfiles, appletsInfos } = await getAppletsInfosAndGroupsProfiles(
@@ -82,10 +82,10 @@ export class WalLink extends LitElement {
               pill
               style="cursor: pointer"
               tabindex="0"
-              @click=${() => window.__WEAVE_API__.openWal(weaveUrlToWAL(this.wal))}
+              @click=${() => window.__WEAVE_API__.openAsset(weaveUrlToWAL(this.wal))}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  window.__WEAVE_API__.openWal(weaveUrlToWAL(this.wal));
+                  window.__WEAVE_API__.openAsset(weaveUrlToWAL(this.wal));
                 }
               }}
             >

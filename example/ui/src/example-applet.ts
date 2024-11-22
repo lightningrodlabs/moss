@@ -90,7 +90,7 @@ export class ExampleApplet extends LitElement {
                         if (!appInfo) throw new Error('AppInfo is null.');
                         const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                           .cell_id[0];
-                        this.weaveClient!.openWal({ hrl: [dnaHash, e.detail.postHash] }, 'side');
+                        this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
                       }}
                       @drag-post=${async (e: CustomEvent) => {
                         console.log('GOT DRAG POST EVENT!');
@@ -98,7 +98,7 @@ export class ExampleApplet extends LitElement {
                         if (!appInfo) throw new Error('AppInfo is null.');
                         const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                           .cell_id[0];
-                        this.weaveClient!.dragWal({ hrl: [dnaHash, e.detail] });
+                        this.weaveClient!.assets.dragAsset({ hrl: [dnaHash, e.detail] });
                       }}
                     ></applet-main>
                   </profiles-context>
@@ -200,7 +200,7 @@ export class ExampleApplet extends LitElement {
           default:
             throw new Error(`Unknown applet-view type.`);
         }
-      case 'cross-applet-view':
+      case 'cross-group-view':
         return html`
           <cross-applet-main .applets=${this.weaveClient.renderInfo.applets}></cross-applet-main>
         `;

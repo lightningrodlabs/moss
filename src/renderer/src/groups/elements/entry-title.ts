@@ -12,7 +12,7 @@ import { AssetInfo, WAL } from '@theweave/api';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { stringifyWal } from '../../utils.js';
+import { stringifyWal } from '@theweave/api';
 
 @customElement('entry-title')
 export class EntryTitle extends LitElement {
