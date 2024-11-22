@@ -488,34 +488,6 @@ export class GroupStore {
           break;
         }
       }
-      //   | {
-      //     type: 'AssetTagsAdded';
-      //     wal: WAL;
-      //     tags: string[];
-      //   }
-      // | {
-      //     type: 'AssetTagsRemoved';
-      //     wal: WAL;
-      //     tags: string[];
-      //   }
-      // | {
-      //     type: 'AssetRelationCreated';
-      //     relation: AssetRelationWithTags;
-      //   }
-      // | {
-      //     type: 'AssetRelationRemoved';
-      //     relation: AssetRelationAndHash;
-      //   }
-      // | {
-      //     type: 'RelationTagsAdded';
-      //     relation_hash: EntryHash;
-      //     tags: string[];
-      //   }
-      // | {
-      //     type: 'RelationTagsRemoved';
-      //     relation_hash: EntryHash;
-      //     tags: string[];
-      //   };
     });
 
     this.constructed = true;
