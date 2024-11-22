@@ -11,17 +11,8 @@ pub fn init() -> ExternResult<InitCallbackResult> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type", content = "content")]
-pub enum Signal {
-    Local(SignalKind),
-    // We may not actually use the remote option and send remote signals through
-    // the group dna instead
-    Remote(SignalKind),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
-pub enum SignalKind {
+pub enum Signal {
     AssetTagsAdded {
         wal: WAL,
         tags: Vec<String>,

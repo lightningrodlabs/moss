@@ -1,9 +1,9 @@
 import { ZomeClient } from '@holochain-open-dev/utils';
 import { AgentPubKey, AppClient, RoleName } from '@holochain/client';
 
-import { SignalPayload } from './types.js';
+import { SignalPayloadPeerStatus } from './types.js';
 
-export class PeerStatusClient extends ZomeClient<SignalPayload> {
+export class PeerStatusClient extends ZomeClient<SignalPayloadPeerStatus> {
   constructor(
     public client: AppClient,
     public roleName: RoleName,

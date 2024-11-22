@@ -4,7 +4,7 @@ use assets_integrity::*;
 use hdk::prelude::*;
 use itertools::Itertools;
 
-use crate::{associations::get_tags_for_asset, Signal, SignalKind};
+use crate::{associations::get_tags_for_asset, Signal};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AssetRelationAndHash {
@@ -80,9 +80,9 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
         relation_hash,
     };
 
-    emit_signal(Signal::Local(SignalKind::AssetRelationCreated {
+    emit_signal(Signal::AssetRelationCreated {
         relation: asset_relation_with_tags.clone(),
-    }))?;
+    })?;
 
     Ok(asset_relation_with_tags)
 }
@@ -143,12 +143,12 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
         )?;
     }
 
-    emit_signal(Signal::Local(SignalKind::RelationTagsAdded {
+    emit_signal(Signal::RelationTagsAdded {
         relation_hash: input.relation_hash,
         src_wal: asset_relation.src_wal,
         dst_wal: asset_relation.dst_wal,
         tags: input.tags,
-    }))?;
+    })?;
     Ok(())
 }
 
@@ -220,13 +220,13 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
         }
     }
 
-    emit_signal(Signal::Local(SignalKind::AssetRelationRemoved {
+    emit_signal(Signal::AssetRelationRemoved {
         relation: AssetRelationAndHash {
             src_wal: asset_relation.src_wal,
             dst_wal: asset_relation.dst_wal,
             relation_hash,
         },
-    }))?;
+    })?;
 
     Ok(())
 }
@@ -309,12 +309,12 @@ pub fn remove_tags_from_asset_relation(
             }
         }
     }
-    emit_signal(Signal::Local(SignalKind::RelationTagsRemoved {
+    emit_signal(Signal::RelationTagsRemoved {
         relation_hash: input.relation_hash,
         src_wal: asset_relation.src_wal,
         dst_wal: asset_relation.dst_wal,
         tags: input.tags,
-    }))?;
+    })?;
     Ok(())
 }
 

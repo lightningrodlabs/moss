@@ -15,30 +15,6 @@ export interface RelatedGroup {
   group_dna_hash: DnaHash;
 }
 
-export type PeerStatusSignal =
-  | {
-      type: 'Ping';
-      from_agent: AgentPubKey;
-      status: string;
-    }
-  | {
-      type: 'Pong';
-      from_agent: AgentPubKey;
-      status: string;
-    };
-
-export type PingPayload = {
-  to_agents: AgentPubKey[];
-  status: string;
-  tz_utc_offset?: number;
-};
-
-export type PongPayload = {
-  to_agent: AgentPubKey;
-  status: string;
-  tz_utc_offset?: number;
-};
-
 export type StewardPermission = {
   /**
    * ActionHash of the StewardPermission based on which this permission has been issued
@@ -142,7 +118,15 @@ export type GroupDnaProperties = {
   progenitor: AgentPubKeyB64 | null;
 };
 
-export type SignalPayload =
+export type SignalPayloadGroup = {
+  type: 'Arbitrary';
+  /**
+   * Arbitrary string content but should be parseable to type GroupRemoteSignal
+   */
+  content: Uint8Array;
+};
+
+export type SignalPayloadPeerStatus =
   | {
       type: 'Ping';
       from_agent: AgentPubKey;
@@ -161,16 +145,6 @@ export type SignalPayload =
  */
 
 export type SignalPayloadAssets =
-  | {
-      type: 'local';
-      content: SignalPayloadContent;
-    }
-  | {
-      type: 'remote';
-      content: SignalPayloadContent;
-    };
-
-export type SignalPayloadContent =
   | {
       type: 'AssetTagsAdded';
       wal: WAL;
@@ -253,4 +227,9 @@ export type RelationsForWal = {
   tags: string[];
   linked_to: AssetRelationWithTags[];
   linked_from: AssetRelationWithTags[];
+};
+
+export type GroupRemoteSignal = {
+  type: 'assets-signal';
+  content: SignalPayloadAssets;
 };

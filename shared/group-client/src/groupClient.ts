@@ -1,4 +1,4 @@
-import { EntryRecord } from '@holochain-open-dev/utils';
+import { EntryRecord, isSignalFromCellWithRole } from '@holochain-open-dev/utils';
 import {
   EntryHash,
   AppCallZomeRequest,
@@ -9,8 +9,10 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
   ActionHash,
+  SignalType,
 } from '@holochain/client';
-import { AppletHash, GroupProfile } from '@theweave/api';
+import { AppletHash, GroupProfile, UnsubscribeFunction } from '@theweave/api';
+import { encode } from '@msgpack/msgpack';
 
 import {
   Applet,
@@ -24,6 +26,8 @@ import {
   AppletEntryPrivate,
   StewardPermission,
   AppletClonedCell,
+  GroupRemoteSignal,
+  SignalPayloadGroup,
 } from './types.js';
 
 export class GroupClient {
@@ -40,6 +44,18 @@ export class GroupClient {
 
   get installedAppId(): InstalledAppId {
     return this.appClient.installedAppId;
+  }
+
+  onSignal(listener: (eventData: SignalPayloadGroup) => void | Promise<void>): UnsubscribeFunction {
+    return this.appClient.on('signal', async (signal) => {
+      if (
+        SignalType.App in signal &&
+        (await isSignalFromCellWithRole(this.appClient, this.roleName, signal.App)) &&
+        this.zomeName === signal.App.zome_name
+      ) {
+        listener(signal.App.payload as SignalPayloadGroup);
+      }
+    });
   }
 
   /** GroupProfile */
@@ -273,10 +289,10 @@ export class GroupClient {
   /**
    * Send arbitrary data to peers via remote signal
    */
-  async remoteSignalArbitrary(content: string, toAgents: AgentPubKey[]): Promise<void> {
+  async remoteSignalArbitrary(content: GroupRemoteSignal, toAgents: AgentPubKey[]): Promise<void> {
     return this.callZome('remote_signal_arbitrary', {
       to_agents: toAgents,
-      content,
+      content: encode(content),
     });
   }
 

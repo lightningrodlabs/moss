@@ -25,7 +25,7 @@ pub fn init() -> ExternResult<InitCallbackResult> {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum SignalPayload {
-    Arbitrary { content: String },
+    Arbitrary { content: Vec<u8> },
 }
 
 #[hdk_extern(infallible)]
@@ -47,7 +47,7 @@ pub fn recv_remote_signal(signal: ExternIO) -> ExternResult<()> {
 #[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone)]
 pub struct ArbitrarySignalPayload {
     pub to_agents: Vec<AgentPubKey>,
-    pub content: String,
+    pub content: Vec<u8>,
 }
 
 #[hdk_extern]

@@ -1,4 +1,4 @@
-use crate::{Signal, SignalKind};
+use crate::Signal;
 use assets_integrity::*;
 use hdk::prelude::*;
 
@@ -27,10 +27,10 @@ pub fn add_tags_to_asset(input: TagsToAssetInput) -> ExternResult<()> {
         )?;
     }
 
-    emit_signal(Signal::Local(SignalKind::AssetTagsAdded {
+    emit_signal(Signal::AssetTagsAdded {
         wal: input.wal,
         tags: input.tags,
-    }))?;
+    })?;
 
     Ok(())
 }
@@ -68,10 +68,10 @@ pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
         }
     }
 
-    emit_signal(Signal::Local(SignalKind::AssetTagsRemoved {
+    emit_signal(Signal::AssetTagsRemoved {
         wal: input.wal,
         tags: input.tags,
-    }))?;
+    })?;
 
     Ok(())
 }
