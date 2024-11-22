@@ -10,7 +10,6 @@ import {
   type WAL,
   type FrameNotification,
   WeaveClient,
-  weaveUrlToLocation,
   ReadonlyPeerStatusStore,
   GroupPermissionType,
   UnsubscribeFunction,
@@ -186,7 +185,7 @@ export class AppletMain extends LitElement {
   }
 
   async sendActivityNotification(delay: number, agent: AgentPubKey | undefined) {
-    const selectedWal = await this.weaveClient.userSelectWal();
+    const selectedWal = await this.weaveClient.assets.userSelectAsset();
     const notification: FrameNotification = {
       title: 'Activity Notification Title',
       body: 'Message body',
@@ -209,7 +208,7 @@ export class AppletMain extends LitElement {
   }
 
   async userSelectWal() {
-    const selectedWal = await this.weaveClient.userSelectWal();
+    const selectedWal = await this.weaveClient.assets.userSelectAsset();
     this.selectedWal = selectedWal;
   }
 
@@ -325,37 +324,6 @@ export class AppletMain extends LitElement {
             >
               Copy Something To Clipboard
             </button>
-
-            <h2>Bindings</h2>
-
-            <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
-              <div><b>Create Binding:</b></div>
-              <div class="row">
-                <span>srcWal: </span>
-                <input id="src-wal-input" />
-              </div>
-              <div class="row">
-                <span>dstWal: </span>
-                <input id="dst-wal-input" />
-              </div>
-              <button
-                @click=${async () => {
-                  const srcValInput = this.shadowRoot!.getElementById(
-                    'src-wal-input'
-                  ) as HTMLInputElement;
-                  const dstWalInput = this.shadowRoot!.getElementById(
-                    'dst-wal-input'
-                  ) as HTMLInputElement;
-                  const srcWal = weaveUrlToLocation(srcValInput.value);
-                  if (srcWal.type !== 'asset') throw new Error('Invalid srcVal.');
-                  const dstWal = weaveUrlToLocation(dstWalInput.value);
-                  if (dstWal.type !== 'asset') throw new Error('Invalid dstVal.');
-                  await this.weaveClient.requestBind(srcWal.wal, dstWal.wal);
-                }}
-              >
-                Bind!
-              </button>
-            </div>
 
             <h2>WAL Embeds</h2>
 

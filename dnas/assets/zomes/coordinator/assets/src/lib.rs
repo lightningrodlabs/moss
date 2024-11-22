@@ -14,6 +14,8 @@ pub fn init() -> ExternResult<InitCallbackResult> {
 #[serde(tag = "type", content = "content")]
 pub enum Signal {
     Local(SignalKind),
+    // We may not actually use the remote option and send remote signals through
+    // the group dna instead
     Remote(SignalKind),
 }
 
@@ -36,10 +38,14 @@ pub enum SignalKind {
     },
     RelationTagsAdded {
         relation_hash: EntryHash,
+        src_wal: WAL,
+        dst_wal: WAL,
         tags: Vec<String>,
     },
     RelationTagsRemoved {
         relation_hash: EntryHash,
+        src_wal: WAL,
+        dst_wal: WAL,
         tags: Vec<String>,
     },
 }

@@ -26,7 +26,7 @@ import {
   ParentToAppletMessage,
   AppletHash,
   AppletServices,
-  OpenWalMode,
+  OpenAssetMode,
   CreatableName,
   CreatableType,
   RecordInfo,
@@ -36,8 +36,10 @@ import {
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
   AppletId,
+  AssetStoreContent,
+  stringifyWal,
 } from '@theweave/api';
-import { readable } from '@holochain-open-dev/stores';
+import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { toOriginalCaseB64 } from '@theweave/utils';
 
 type CallbackWithId = {
@@ -59,10 +61,115 @@ declare global {
 
   interface WindowEventMap {
     'peer-status-update': CustomEvent<PeerStatusUpdate>;
+    'asset-store-update': CustomEvent<{
+      type: 'asset-store-update';
+      walStringified: string;
+      value: AsyncStatus<AssetStoreContent>;
+    }>;
   }
 }
 
 const weaveApi: WeaveServices = {
+  assets: {
+    assetInfo: (wal: WAL) =>
+      postMessage({
+        type: 'get-global-asset-info',
+        wal,
+      }),
+    assetToPocket: (wal: WAL) =>
+      postMessage({
+        type: 'asset-to-pocket',
+        wal,
+      }),
+    dragAsset: (wal: WAL) =>
+      postMessage({
+        type: 'drag-asset',
+        wal,
+      }),
+    userSelectAsset: () =>
+      postMessage({
+        type: 'user-select-asset',
+      }),
+    addTagsToAsset: (wal, tags) =>
+      postMessage({
+        type: 'add-tags-to-asset',
+        wal,
+        tags,
+      }),
+    removeTagsFromAsset: (wal, tags) =>
+      postMessage({
+        type: 'remove-tags-from-asset',
+        wal,
+        tags,
+      }),
+    addAssetRelation: (srcWal, dstWal, tags) =>
+      postMessage({
+        type: 'add-asset-relation',
+        srcWal,
+        dstWal,
+        tags,
+      }),
+    removeAssetRelation: (relationHash) =>
+      postMessage({
+        type: 'remove-asset-relation',
+        relationHash,
+      }),
+    addTagsToAssetRelation: (relationHash, tags) =>
+      postMessage({
+        type: 'add-tags-to-asset-relation',
+        relationHash,
+        tags,
+      }),
+    removeTagsFromAssetRelation: (relationHash, tags) =>
+      postMessage({
+        type: 'remove-tags-from-asset-relation',
+        relationHash,
+        tags,
+      }),
+    assetStore: (wal) => {
+      const readableStore = readable<AsyncStatus<AssetStoreContent>>(
+        { status: 'pending' },
+        (set) => {
+          const listener = (
+            e: CustomEvent<{
+              type: 'asset-store-update';
+              walStringified: string;
+              value: AsyncStatus<AssetStoreContent>;
+            }>,
+          ) => {
+            // Check whether the WAL is meant for the given store
+            if (stringifyWal(wal) === e.detail.walStringified) {
+              console.log(
+                '@applet-iframe: got asset-store-update event for the correct wal and resetting the store.',
+              );
+              set(e.detail.value);
+            }
+          };
+          window.addEventListener('asset-store-update', listener);
+          return () => {
+            // TODO verify that this does not remove the event listener for other
+            // subscribers to the same WAL
+            window.removeEventListener('asset-store-update', listener);
+            console.log('UNSUBSCRIBING.');
+            setTimeout(async () => {
+              await postMessage({
+                type: 'unsubscribe-from-asset-store',
+                wal,
+              });
+            });
+          };
+        },
+      );
+      setTimeout(async () => {
+        await postMessage({
+          type: 'subscribe-to-asset-store',
+          wal,
+        });
+      });
+      return readableStore;
+    },
+  },
+
   mossVersion: () => {
     return window.__MOSS_VERSION__;
   },
@@ -140,11 +247,11 @@ const weaveApi: WeaveServices = {
       },
     }),
 
-  openWal: (wal: WAL, mode?: OpenWalMode): Promise<void> =>
+  openAsset: (wal: WAL, mode?: OpenAssetMode): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
-        type: 'wal',
+        type: 'asset',
         wal,
         mode,
       },
@@ -162,29 +269,6 @@ const weaveApi: WeaveServices = {
       appletHash,
     }),
 
-  assetInfo: (wal: WAL) =>
-    postMessage({
-      type: 'get-global-asset-info',
-      wal,
-    }),
-
-  walToPocket: (wal: WAL) =>
-    postMessage({
-      type: 'wal-to-pocket',
-      wal,
-    }),
-
-  dragWal: (wal: WAL) =>
-    postMessage({
-      type: 'drag-wal',
-      wal,
-    }),
-
-  userSelectWal: () =>
-    postMessage({
-      type: 'user-select-wal',
-    }),
-
   notifyFrame: (notifications: Array<FrameNotification>) =>
     postMessage({
       type: 'notify-frame',
@@ -194,13 +278,6 @@ const weaveApi: WeaveServices = {
   userSelectScreen: () =>
     postMessage({
       type: 'user-select-screen',
-    }),
-
-  requestBind: (srcWal: WAL, dstWal: WAL) =>
-    postMessage({
-      type: 'request-bind',
-      srcWal,
-      dstWal,
     }),
 
   requestClose: () =>
@@ -250,7 +327,7 @@ const weaveApi: WeaveServices = {
     throw new Error('RenderView undefined.');
   }
 
-  const crossApplet = view ? view.type === 'cross-applet-view' : false;
+  const crossApplet = view ? view.type === 'cross-group-view' : false;
 
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
@@ -323,7 +400,7 @@ const weaveApi: WeaveServices = {
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
     };
-  } else if (view.type === 'cross-applet-view') {
+  } else if (view.type === 'cross-group-view') {
     const applets: EntryHashMap<{
       appletClient: AppClient;
       profilesClient: ProfilesClient;
@@ -347,7 +424,7 @@ const weaveApi: WeaveServices = {
     );
 
     window.__WEAVE_RENDER_INFO__ = {
-      type: 'cross-applet-view',
+      type: 'cross-group-view',
       view: view.view,
       applets,
     };
@@ -414,13 +491,6 @@ const handleMessage = async (
       );
     case 'get-block-types':
       return window.__WEAVE_APPLET_SERVICES__.blockTypes;
-    case 'bind-asset':
-      return window.__WEAVE_APPLET_SERVICES__.bindAsset(
-        appletClient,
-        message.srcWal,
-        message.dstWal,
-        message.dstRecordInfo,
-      );
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
         appletClient,
@@ -432,6 +502,13 @@ const handleMessage = async (
       window.dispatchEvent(
         new CustomEvent('peer-status-update', {
           detail: message.payload,
+        }),
+      );
+      break;
+    case 'asset-store-update':
+      window.dispatchEvent(
+        new CustomEvent('asset-store-update', {
+          detail: message,
         }),
       );
       break;
@@ -459,9 +536,9 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
     try {
       top!.postMessage(message, '*', [channel.port2]);
     } catch (e: any) {
-      let couldNotBeClonedError = false;
+      // let couldNotBeClonedError = false;
       if (e.toString) {
-        couldNotBeClonedError = e.toString().includes('could not be cloned');
+        // couldNotBeClonedError = e.toString().includes('could not be cloned');
         console.error(
           'Invalid iframe message format. Please check the format of the payload of your request. Your request:',
           request,
@@ -555,7 +632,7 @@ async function getRenderView(): Promise<RenderView | undefined> {
 async function queryStringToRenderView(s: string): Promise<RenderView> {
   const args = s.split('&');
 
-  const view = args[0].split('=')[1] as 'applet-view' | 'cross-applet-view';
+  const view = args[0].split('=')[1] as 'applet-view' | 'cross-group-view';
   let viewType: string | undefined;
   let block: string | undefined;
   let hrl: Hrl | undefined;
@@ -587,7 +664,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case undefined:
       throw new Error('view is undefined');
     case 'main':
-      if (view !== 'applet-view' && view !== 'cross-applet-view') {
+      if (view !== 'applet-view' && view !== 'cross-group-view') {
         throw new Error(`invalid query string: ${s}.`);
       }
       return {
@@ -597,7 +674,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
         },
       };
     case 'block':
-      if (view !== 'applet-view' && view !== 'cross-applet-view') {
+      if (view !== 'applet-view' && view !== 'cross-group-view') {
         throw new Error(`invalid query string: ${s}.`);
       }
       if (!block) throw new Error(`Invalid query string: ${s}. Missing block name.`);

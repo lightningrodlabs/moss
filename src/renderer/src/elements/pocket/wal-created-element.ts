@@ -16,9 +16,10 @@ import { WAL, weaveUrlFromWal } from '@theweave/api';
 import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { encodeContext, stringifyWal } from '../../utils.js';
+import { encodeContext } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiShareVariantOutline } from '@mdi/js';
+import { stringifyWal } from '@theweave/api';
 
 @localized()
 @customElement('wal-created-element')

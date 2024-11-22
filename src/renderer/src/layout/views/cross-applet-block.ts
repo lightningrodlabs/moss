@@ -43,7 +43,7 @@ export class CrossAppletBlock extends LitElement {
 
   renderBlock(applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>) {
     const renderView: RenderView = {
-      type: 'cross-applet-view',
+      type: 'cross-group-view',
       view: {
         type: 'block',
         block: this.block,

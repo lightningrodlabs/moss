@@ -65,11 +65,6 @@
             },
           },
           blockTypes: {},
-          bindAsset: () => {
-            console.log(
-              "@example-applet: Not binding asset because it's not implemented. But I could if I wanted to :)"
-            );
-          },
           search: async (appletClient, _appletHash, _weaveServices, searchFilter) => {
             const postsClient = new PostsClient(weaveClient.renderInfo.appletClient, 'forum');
             const appInfo = await appletClient.appInfo();

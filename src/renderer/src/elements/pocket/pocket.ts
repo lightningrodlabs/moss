@@ -9,7 +9,7 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@theweave/api';
+import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL, deStringifyWal } from '@theweave/api';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore, WalInPocket } from '../../moss-store.js';
@@ -18,7 +18,6 @@ import './wal-element.js';
 import './wal-created-element.js';
 import './pocket-search.js';
 import { PocketSearch } from './pocket-search.js';
-import { deStringifyWal } from '../../utils.js';
 import { mdiDelete } from '@mdi/js';
 
 export interface SearchResult {

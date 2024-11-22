@@ -24,11 +24,21 @@ import '@theweave/attachments/dist/elements/attachments-card.js';
 import '@theweave/attachments/dist/elements/attachments-bar.js';
 
 import './edit-post.js';
+import './asset-element.js';
 
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
 import { Post } from '../types.js';
-import { WAL, WeaveClient, weaveUrlFromWal } from '@theweave/api';
+import {
+  AssetStore,
+  AssetStoreContent,
+  AsyncStatus,
+  stringifyWal,
+  WAL,
+  WeaveClient,
+  weaveUrlFromWal,
+} from '@theweave/api';
+import { repeat } from 'lit/directives/repeat.js';
 
 /**
  * @element post-detail
@@ -49,6 +59,12 @@ export class PostDetail extends LitElement {
    */
   @consume({ context: postsStoreContext, subscribe: true })
   postsStore!: PostsStore;
+
+  @state()
+  assetStore: AssetStore | undefined;
+
+  @state()
+  assetStoreContent: AsyncStatus<AssetStoreContent> | undefined;
 
   /**
    * @internal
@@ -73,6 +89,11 @@ export class PostDetail extends LitElement {
     this.WAL = {
       hrl: [dnaHash, this.postHash],
     };
+    this.weaveClient.assets.assetStore(this.WAL).subscribe((val) => {
+      console.log('Got new value: ', val);
+      this.assetStoreContent = val;
+      this.requestUpdate();
+    });
   }
 
   async deletePost() {
@@ -92,6 +113,30 @@ export class PostDetail extends LitElement {
       console.error(e);
       notifyError(msg('Error deleting the post'));
     }
+  }
+
+  renderAssets() {
+    if (!this.assetStoreContent || this.assetStoreContent.status === 'pending')
+      return html`loading...`;
+    if (this.assetStoreContent.status === 'error') {
+      console.log(this.assetStoreContent.error);
+      return html`ERROR`;
+    }
+    console.log('Rendering assets: ', this.assetStoreContent);
+    return html`ae
+      <div class="column">
+        ${repeat(
+          this.assetStoreContent.value.linkedTo,
+          (walAndTags) => stringifyWal(walAndTags.wal),
+          (walAndTags) =>
+            html`<asset-element
+              .wal=${walAndTags.wal}
+              @remove-wal=${() => {
+                this.weaveClient.assets.removeAssetRelation(walAndTags.relationHash);
+              }}
+            ></asset-element>`
+        )}
+      </div>`;
   }
 
   renderDetail(entryRecord: EntryRecord<Post>) {
@@ -127,6 +172,19 @@ export class PostDetail extends LitElement {
             </div>
           </div>
         </sl-card>
+        <div class="column">
+          <button
+            @click=${async () => {
+              const wal = await this.weaveClient.assets.userSelectAsset();
+              if (wal && this.WAL) {
+                await this.weaveClient.assets.addAssetRelation(this.WAL, wal);
+              }
+            }}
+          >
+            Select Asset to attach
+          </button>
+          <div class="column">${this.renderAssets()}</div>
+        </div>
         <attachments-card .wal=${weaveUrlFromWal(this.WAL!, false)}></attachments-card>
       </div>
       <sl-button

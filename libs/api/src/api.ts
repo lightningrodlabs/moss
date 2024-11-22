@@ -15,7 +15,7 @@ import {
   AppletHash,
   AppletInfo,
   AssetLocationAndInfo,
-  OpenWalMode,
+  OpenAssetMode,
   CreatableType,
   CreatableName,
   Hrl,
@@ -25,6 +25,7 @@ import {
   PeerStatusUpdate,
   UnsubscribeFunction,
   GroupPermissionType,
+  AssetStore,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -135,6 +136,21 @@ export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
+export function stringifyWal(wal: WAL): string {
+  // If the context field is missing, it will be encoded differently than if it's undefined
+  // or null so the field needs to be explicitly added here to make sure it leads to a
+  // consistent result in both cases
+  wal = {
+    hrl: wal.hrl,
+    context: 'context' in wal ? wal.context : null,
+  };
+  return fromUint8Array(encode(wal));
+}
+
+export function deStringifyWal(walStringified: string): WAL {
+  return decode(toUint8Array(walStringified)) as WAL;
+}
+
 export function encodeContext(context: any) {
   return fromUint8Array(encode(context), true);
 }
@@ -161,8 +177,7 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined),
-      (this.bindAsset = async () => {});
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined);
   }
 
   /**
@@ -191,28 +206,99 @@ export class AppletServices {
     weaveServices: WeaveServices,
     searchFilter: string,
   ) => Promise<Array<WAL>>;
+}
 
+export interface AssetServices {
   /**
-   * Bind an asset (srcWal) to an asset in your applet (dstWal).
+   * Gets information about an entry in any other Applet in We
+   * @param wal
+   * @returns
    */
-  bindAsset: (
-    appletClient: AppClient,
-    /**
-     * Waeve Asset Locator in the applet requesting the binding
-     */
-    srcWal: WAL,
-    /**
-     * Weave Asset Locator to which the srcWal should be bound to
-     */
-    dstWal: WAL,
-    /**
-     * Record location of the dna containing the destination WAL
-     */
-    dstRecordInfo?: RecordInfo,
-  ) => Promise<void>;
+  assetInfo: (wal: WAL) => Promise<AssetLocationAndInfo | undefined>;
+  /**
+   * Communicate that an asset is being dragged
+   * @param wal
+   * @param context
+   * @returns
+   */
+  dragAsset: (wal: WAL) => Promise<void>;
+  /**
+   * Adds the specified HRL to the We-internal clipboard
+   * @param wal
+   * @returns
+   */
+  assetToPocket: (wal: WAL) => Promise<void>;
+  /**
+   * Prompts the user with the search bar and Moss pocket to select an Asset.
+   * Returns the associated WAL as soon as the user has selected an asset
+   * or undefined if the user cancels the selection process.
+   * @returns
+   */
+  userSelectAsset: () => Promise<WAL | undefined>;
+  /**
+   * Adds new tags to an asset
+   *
+   * @param wal
+   * @param tags
+   * @returns
+   */
+  addTagsToAsset: (wal: WAL, tags: string[]) => Promise<void>;
+  /**
+   * Removes the given tags from an asset.
+   *
+   * @param wal
+   * @param tags
+   * @returns
+   */
+  removeTagsFromAsset: (wal: WAL, tags: string[]) => Promise<void>;
+  /**
+   * Adds a new asset relation. This function deliberately returns no value because
+   * Tool frontends should subscribe to the AssetStore(s) to update their frontend
+   * state.
+   *
+   * @param srcWal
+   * @param dstWal
+   * @param tags
+   * @returns
+   */
+  addAssetRelation: (srcWal: WAL, dstWal: WAL, tags?: string[]) => Promise<void>;
+  /**
+   * Removes an asset relation and all its tags. This function deliberately returns
+   * no value because Tool frontends should subscribe to the AssetStore(s) to update
+   * their frontend state.
+   *
+   * @param relationHash
+   * @returns
+   */
+  removeAssetRelation: (relationHash: EntryHash) => Promise<void>;
+  /**
+   * Adds new tags to an existing asset relation
+   *
+   * @param relationHash
+   * @param tags
+   * @returns
+   */
+  addTagsToAssetRelation: (relationHash: EntryHash, tags: string[]) => Promise<void>;
+  /**
+   * Removes the specified tags from an asset relation
+   *
+   * @param relationHash
+   * @param tags
+   * @returns
+   */
+  removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) => Promise<void>;
+  /**
+   * Returns a Svelte readable store that can be subscribed to in order to get updated
+   * about the latest information about this asset (tags and other related assets)
+   *
+   * @param wal
+   * @returns
+   */
+  assetStore: (wal: WAL) => AssetStore;
 }
 
 export interface WeaveServices {
+  assets: AssetServices;
   /**
    *
    * @returns Version of Moss within which this method is being called in
@@ -266,19 +352,12 @@ export interface WeaveServices {
    */
   openCrossAppletBlock: (appletBundleId: ActionHash, block: string, context: any) => Promise<void>;
   /**
-   * Open the specified WAL
+   * Open the asset associated to the specified WAL
    * @param wal
    * @param context
    * @returns
    */
-  openWal: (wal: WAL, mode?: OpenWalMode) => Promise<void>;
-  /**
-   * Request to drop a WAL into the pocket
-   * @param wal
-   * @param context
-   * @returns
-   */
-  dragWal: (wal: WAL) => Promise<void>;
+  openAsset: (wal: WAL, mode?: OpenAssetMode) => Promise<void>;
   /**
    * Get the group profile of the specified group
    * @param groupHash
@@ -292,25 +371,6 @@ export interface WeaveServices {
    */
   appletInfo: (appletHash) => Promise<AppletInfo | undefined>;
   /**
-   * Gets information about an entry in any other Applet in We
-   * @param wal
-   * @returns
-   */
-  assetInfo: (wal: WAL) => Promise<AssetLocationAndInfo | undefined>;
-  /**
-   * Adds the specified HRL to the We-internal clipboard
-   * @param wal
-   * @returns
-   */
-  walToPocket: (wal: WAL) => Promise<void>;
-  /**
-   * Prompts the user with the search bar and We clipboard to select a WAL.
-   * Returns a WAL as soon as the user has selected a WAL
-   * or undefined if the user cancels the selection process.
-   * @returns
-   */
-  userSelectWal: () => Promise<WAL | undefined>;
-  /**
    * Sends notifications to We and depending on user settings and urgency level
    * further to the operating system.
    * @param notifications
@@ -322,12 +382,6 @@ export interface WeaveServices {
    * for screen sharing applications.
    */
   userSelectScreen: () => Promise<string>;
-  /**
-   * Request the applet holding the destination WAL (dstWal) to bind the source
-   * WAL (srcWal) to it.
-   * The source WAL must belong to the requesting applet.
-   */
-  requestBind: (srcWal: WAL, dstWal: WAL) => Promise<void>;
   /**
    * Requests to close the containing window. Will only work if the applet is being run in its
    * own window
@@ -397,27 +451,37 @@ export class WeaveClient implements WeaveServices {
   openCrossAppletBlock = (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
     window.__WEAVE_API__.openCrossAppletBlock(appletBundleId, block, context);
 
-  openWal = (wal: WAL, mode?: OpenWalMode): Promise<void> =>
-    window.__WEAVE_API__.openWal(wal, mode);
+  openAsset = (wal: WAL, mode?: OpenAssetMode): Promise<void> =>
+    window.__WEAVE_API__.openAsset(wal, mode);
 
-  dragWal = (wal: WAL): Promise<void> => window.__WEAVE_API__.dragWal(wal);
+  assets = {
+    dragAsset: (wal: WAL): Promise<void> => window.__WEAVE_API__.assets.dragAsset(wal),
+    assetInfo: (wal: WAL) => window.__WEAVE_API__.assets.assetInfo(wal),
+    assetToPocket: (wal: WAL) => window.__WEAVE_API__.assets.assetToPocket(wal),
+    userSelectAsset: () => window.__WEAVE_API__.assets.userSelectAsset(),
+    addTagsToAsset: (wal: WAL, tags: string[]) =>
+      window.__WEAVE_API__.assets.addTagsToAsset(wal, tags),
+    removeTagsFromAsset: (wal: WAL, tags: string[]) =>
+      window.__WEAVE_API__.assets.removeTagsFromAsset(wal, tags),
+    addAssetRelation: (srcWal: WAL, dstWal: WAL, tags?: string[]) =>
+      window.__WEAVE_API__.assets.addAssetRelation(srcWal, dstWal, tags),
+    removeAssetRelation: (relationHash: EntryHash) =>
+      window.__WEAVE_API__.assets.removeAssetRelation(relationHash),
+    addTagsToAssetRelation: (relationHash: EntryHash, tags: string[]) =>
+      window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
+    removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) =>
+      window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
+    assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
+  };
 
   groupProfile = (groupHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
   appletInfo = (appletHash) => window.__WEAVE_API__.appletInfo(appletHash);
 
-  assetInfo = (wal: WAL) => window.__WEAVE_API__.assetInfo(wal);
-
-  walToPocket = (wal: WAL) => window.__WEAVE_API__.walToPocket(wal);
-
-  userSelectWal = () => window.__WEAVE_API__.userSelectWal();
-
   notifyFrame = (notifications: Array<FrameNotification>) =>
     window.__WEAVE_API__.notifyFrame(notifications);
 
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
-
-  requestBind = (srcWal: WAL, dstWal: WAL) => window.__WEAVE_API__.requestBind(srcWal, dstWal);
 
   requestClose = () => window.__WEAVE_API__.requestClose();
 

@@ -241,6 +241,7 @@ version = "0.0.1"
 dependencies = [
  "assets_integrity",
  "hdk",
+ "itertools 0.13.0",
  "serde",
 ]
 

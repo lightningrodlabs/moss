@@ -2,6 +2,7 @@ use core::str;
 
 use assets_integrity::*;
 use hdk::prelude::*;
+use itertools::Itertools;
 
 use crate::{associations::get_tags_for_asset, Signal, SignalKind};
 
@@ -95,7 +96,26 @@ pub struct AddTagsToAssetRelationInput {
 /// Adds tags to an asset relation
 #[hdk_extern]
 pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternResult<()> {
-    // 1. Derive the hash of the entry
+    // 1. Get the AssetRelation entry to a) check that it exists and b) be able to return
+    //    the src_wal and dst_wal in the signal
+    let asset_relation_record =
+        get(input.relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
+        ))?;
+
+    let asset_relation = asset_relation_record
+        .entry()
+        .to_app_option::<AssetRelation>()
+        .map_err(|e| {
+            wasm_error!(WasmErrorInner::Guest(format!(
+                "Failed to deserialize AssetRelation record: {}",
+                e
+            )))
+        })?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found in the Record associated to the provided hash.".into()
+        )))?;
+
     for tag in input.tags.clone() {
         let rt_entry_hash = relationship_tag_entry_hash(&tag)?;
         let backlink_action_hash = create_link(
@@ -125,18 +145,39 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
 
     emit_signal(Signal::Local(SignalKind::RelationTagsAdded {
         relation_hash: input.relation_hash,
+        src_wal: asset_relation.src_wal,
+        dst_wal: asset_relation.dst_wal,
         tags: input.tags,
     }))?;
     Ok(())
 }
 
 #[hdk_extern]
-pub fn remove_asset_relation(asset_relation: AssetRelation) -> ExternResult<()> {
-    let relation_hash = hash_asset_relation(asset_relation.clone())?;
+pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
+    let asset_relation_record =
+        get(relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
+        ))?;
+
+    let asset_relation = asset_relation_record
+        .entry()
+        .to_app_option::<AssetRelation>()
+        .map_err(|e| {
+            wasm_error!(WasmErrorInner::Guest(format!(
+                "Failed to deserialize AssetRelation record: {}",
+                e
+            )))
+        })?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found in the Record associated to the provided hash.".into()
+        )))?;
 
     // 0. This operation does not delete the Entry since there is no point in doing so.
     // It would only create an unnecessary delete action but an AssetRelation entry
-    // is never being addressed by its ActionHash anyway.
+    // is never being addressed by its ActionHash anyway. And also this is just an excuse
+    // for the fact that we don't know the ActionHash anymore here in order to be able
+    // to delete it. We would need to store it somewhere, for example in the tag
+    // of the link to the AllAssetRelations anchor.
 
     // 1. remove all links from the ALL_ASSETS_RELATIONS_ANCHOR
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
@@ -222,6 +263,26 @@ pub struct RemoveTagsFromAssetRelationInput {
 pub fn remove_tags_from_asset_relation(
     input: RemoveTagsFromAssetRelationInput,
 ) -> ExternResult<()> {
+    // 1. Get the AssetRelation entry to a) check that it exists and b) be able to return
+    //    the src_wal and dst_wal in the signal
+    let asset_relation_record =
+        get(input.relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
+        ))?;
+
+    let asset_relation = asset_relation_record
+        .entry()
+        .to_app_option::<AssetRelation>()
+        .map_err(|e| {
+            wasm_error!(WasmErrorInner::Guest(format!(
+                "Failed to deserialize AssetRelation record: {}",
+                e
+            )))
+        })?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found in the Record associated to the provided hash.".into()
+        )))?;
+
     let links = get_links(
         GetLinksInputBuilder::try_new(
             input.relation_hash.clone(),
@@ -250,6 +311,8 @@ pub fn remove_tags_from_asset_relation(
     }
     emit_signal(Signal::Local(SignalKind::RelationTagsRemoved {
         relation_hash: input.relation_hash,
+        src_wal: asset_relation.src_wal,
+        dst_wal: asset_relation.dst_wal,
         tags: input.tags,
     }))?;
     Ok(())
@@ -358,17 +421,9 @@ pub fn get_outgoing_asset_relations(src_wal: WAL) -> ExternResult<Vec<AssetRelat
     )?;
     let get_input: Vec<GetInput> = src_wal_links
         .into_iter()
-        .map(|link| {
-            Ok(GetInput::new(
-                link.target
-                    .into_entry_hash()
-                    .ok_or(wasm_error!(WasmErrorInner::Guest(
-                        "Link target is not an entry hash".to_string()
-                    )))?
-                    .into(),
-                GetOptions::default(),
-            ))
-        })
+        .filter_map(|l| l.target.into_entry_hash())
+        .unique() // We filter out duplicate links here
+        .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
@@ -445,17 +500,9 @@ pub fn get_incoming_asset_relations(dst_wal: WAL) -> ExternResult<Vec<AssetRelat
     )?;
     let get_input: Vec<GetInput> = dst_wal_links
         .into_iter()
-        .map(|link| {
-            Ok(GetInput::new(
-                link.target
-                    .into_entry_hash()
-                    .ok_or(wasm_error!(WasmErrorInner::Guest(
-                        "Link target is not an entry hash".to_string()
-                    )))?
-                    .into(),
-                GetOptions::default(),
-            ))
-        })
+        .filter_map(|l| l.target.into_entry_hash())
+        .unique() // We filter out duplicate links here
+        .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();

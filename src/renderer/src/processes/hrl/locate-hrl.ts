@@ -13,6 +13,11 @@ export interface DnaLocation {
   roleName: string;
 }
 
+export type HrlLocation = {
+  dnaLocation: DnaLocation;
+  entryDefLocation?: EntryDefLocation;
+};
+
 export const HRL_LOCATOR_COORDINATOR_ZOME = '__hrl_locator';
 export const HRL_LOCATOR_GET_FN_NAME = 'locate_hrl';
 

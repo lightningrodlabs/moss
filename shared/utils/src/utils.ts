@@ -5,7 +5,9 @@ import {
   encodeHashToBase64,
   HoloHashB64,
 } from '@holochain/client';
-import { AppletId, AppletHash } from '@theweave/api';
+import { AppletId, AppletHash, WAL } from '@theweave/api';
+import { encode, decode } from '@msgpack/msgpack';
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
   const [networkSeed, progenitorString] = props.split('&progenitor=');

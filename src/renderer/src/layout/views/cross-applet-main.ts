@@ -53,7 +53,7 @@ export class CrossAppletMain extends LitElement {
 
   renderMain(applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>) {
     const renderView: RenderView = {
-      type: 'cross-applet-view',
+      type: 'cross-group-view',
       view: {
         type: 'main',
       },

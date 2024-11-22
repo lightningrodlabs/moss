@@ -41,7 +41,7 @@ const AppletHash = EntryHash;
 const Hrl = Type.Tuple([DnaHash, Type.Union([ActionHash, EntryHash])]);
 // const HrlB64 = Type.Tuple([DnaHashB64, Type.Union([ActionHashB64, EntryHashB64])]);
 
-const OpenWalMode = Type.Union([
+const OpenAssetMode = Type.Union([
   Type.Literal('front'),
   Type.Literal('side'),
   Type.Literal('window'),
@@ -127,9 +127,9 @@ const OpenViewRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('wal'),
+      type: Type.Literal('asset'),
       wal: WAL,
-      mode: Type.Optional(OpenWalMode),
+      mode: Type.Optional(OpenAssetMode),
     },
     { additionalProperties: false },
   ),
@@ -239,35 +239,6 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('get-global-asset-info'),
-      wal: WAL,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('wal-to-pocket'),
-      wal: WAL,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('drag-wal'),
-      wal: WAL,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('request-bind'),
-      srcWal: WAL,
-      dstWal: WAL,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
       type: Type.Literal('my-group-permission-type'),
     },
     { additionalProperties: false },
@@ -275,12 +246,6 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('applet-participants'),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('user-select-wal'),
     },
     { additionalProperties: false },
   ),
@@ -347,6 +312,112 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('request-close'),
+    },
+    { additionalProperties: false },
+  ),
+  /**
+   * Asset related requests
+   */
+  Type.Object(
+    {
+      type: Type.Literal('asset-to-pocket'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('asset-to-pocket'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('user-select-asset'),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('get-global-asset-info'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('drag-asset'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('add-tags-to-asset'),
+      wal: WAL,
+      tags: Type.Array(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('remove-tags-from-asset'),
+      wal: WAL,
+      tags: Type.Array(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('add-asset-relation'),
+      srcWal: WAL,
+      dstWal: WAL,
+      tags: Type.Optional(Type.Array(Type.String())),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('remove-asset-relation'),
+      relationHash: EntryHash,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('add-tags-to-asset-relation'),
+      relationHash: EntryHash,
+      tags: Type.Array(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('remove-tags-from-asset-relation'),
+      relationHash: EntryHash,
+      tags: Type.Array(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('subscribe-to-asset-store'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('unsubscribe-from-asset-store'),
+      wal: WAL,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('unsubscribe-from-asset-store'),
+      wal: WAL,
     },
     { additionalProperties: false },
   ),

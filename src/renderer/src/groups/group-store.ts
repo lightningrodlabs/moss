@@ -3,10 +3,12 @@ import {
   AsyncReadable,
   AsyncStatus,
   Readable,
+  Unsubscriber,
   Writable,
   asyncReadable,
   completed,
   derived,
+  get,
   joinMap,
   lazyLoad,
   lazyLoadAndPoll,
@@ -32,21 +34,25 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
 
-import { AppletHash, ParentToAppletMessage, PeerStatus } from '@theweave/api';
+import {
+  AppletHash,
+  AppletId,
+  AssetStoreContent,
+  ParentToAppletMessage,
+  PeerStatus,
+  WAL,
+  deStringifyWal,
+  stringifyWal,
+} from '@theweave/api';
 
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
-  Applet,
-  JoinAppletInput,
-  GroupClient,
-  AppletAgent,
-} from '../../../../shared/group-client/dist/index.js';
-import {
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
+  postMessageToAppletIframes,
   reloadableLazyLoadAndPollUntil,
 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '@theweave/moss-types';
@@ -55,12 +61,21 @@ import { PeerStatusClient, SignalPayload } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
 import { encode } from '@msgpack/msgpack';
+import {
+  AssetsClient,
+  Applet,
+  JoinAppletInput,
+  GroupClient,
+  AppletAgent,
+} from '@theweave/group-client';
+import isEqual from 'lodash-es/isEqual.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
 export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
+const ASSET_RELATION_POLLING_PERIOD = 10000;
 
 export type MaybeProfile =
   | {
@@ -98,11 +113,21 @@ export class GroupStore {
 
   _myPubkeySum: number;
 
+  _assetStores: Record<
+    string,
+    {
+      subscriberCounts: Record<AppletId, number>;
+      store: Writable<AsyncStatus<AssetStoreContent>>;
+      unsubscribe: Unsubscriber | undefined;
+    }
+  > = {};
+
   constructor(
     public appWebsocket: AppWebsocket,
     public authenticationToken: AppAuthenticationToken,
     public groupDnaHash: DnaHash,
     public mossStore: MossStore,
+    public assetsClient: AssetsClient,
   ) {
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
@@ -165,7 +190,442 @@ export class GroupStore {
       await this.pingAgentsAndCleanPeerStatuses();
     }, PING_AGENTS_FREQUENCY_MS);
 
+    window.setInterval(async () => {
+      const walsToPoll = Object.entries(this._assetStores)
+        .filter(([_, storeAndSubscribers]) => {
+          // We only poll for stores with active subscribers
+          return (
+            Object.values(storeAndSubscribers.subscriberCounts).reduce(
+              (acc, currentVal) => acc + currentVal,
+              0,
+            ) > 0
+          );
+        })
+        .map(([stringifiedWal, _]) => deStringifyWal(stringifiedWal));
+      const relations = await this.assetsClient.batchGetAllRelationsForWal(walsToPoll);
+      console.log('Got relations: ', relations);
+      console.log('this._assetStores', this._assetStores);
+      relations.forEach((relationsForWal) => {
+        console.log('WAL FROM BATCHGET: ', relationsForWal.wal);
+        const walStringified = stringifyWal(relationsForWal.wal);
+        console.log('walStringified: ', walStringified);
+        const storeAndSubscribers = this._assetStores[walStringified];
+        const linkedTo = relationsForWal.linked_to.map((v) => ({
+          wal: v.dst_wal,
+          tags: v.tags,
+          relationHash: v.relation_hash,
+        }));
+        const linkedFrom = relationsForWal.linked_from.map((v) => ({
+          wal: v.dst_wal,
+          tags: v.tags,
+          relationHash: v.relation_hash,
+        }));
+        const newValue = {
+          status: 'complete',
+          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+        };
+        if (!isEqual(newValue, get(storeAndSubscribers.store))) {
+          storeAndSubscribers.store.set({
+            status: 'complete',
+            value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+          });
+        }
+      });
+    }, ASSET_RELATION_POLLING_PERIOD);
+    // TODO add onSignal listener
+    this.assetsClient.onSignal((signal) => {
+      if (signal.type === 'local') {
+        // TODO Send remote signal to other peers
+        // But the remote signal actually arrives from the group dna client, not the assets client
+      }
+      const signalContent = signal.content;
+
+      switch (signalContent.type) {
+        case 'AssetTagsAdded': {
+          const walStringified = stringifyWal(signalContent.wal);
+          const storeAndSubscribers = this._assetStores[walStringified];
+          // If there are no subscribers, we can just drop it here
+          if (!storeAndSubscribers) return;
+          storeAndSubscribers.store.update((store) => {
+            if (store.status !== 'complete') return store;
+            store.value.tags = Array.from(new Set([...store.value.tags, ...signalContent.tags]));
+            return store;
+          });
+          break;
+        }
+        case 'AssetTagsRemoved': {
+          const walStringified = stringifyWal(signalContent.wal);
+          const storeAndSubscribers = this._assetStores[walStringified];
+          // If there are no subscribers, we can just drop it here
+          if (!storeAndSubscribers) return;
+          storeAndSubscribers.store.update((store) => {
+            if (store.status !== 'complete') return store;
+            store.value.tags = store.value.tags.filter((tag) => !signalContent.tags.includes(tag));
+            return store;
+          });
+          break;
+        }
+        case 'AssetRelationCreated': {
+          // Add it to the asset store of the srcWal
+          const srcWalStringified = stringifyWal(signalContent.relation.src_wal);
+          const dstWalStringified = stringifyWal(signalContent.relation.dst_wal);
+          const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
+          const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
+          if (srcStoreAndSubscribers) {
+            srcStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+                ({ wal }) => stringifyWal(wal) === dstWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+                const newTags = Array.from(
+                  new Set([...existingWalAndTags.tags, ...signalContent.relation.tags]),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedTo[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              } else {
+                store.value.linkedTo = [
+                  ...store.value.linkedTo,
+                  {
+                    wal: signalContent.relation.dst_wal,
+                    relationHash: signalContent.relation.relation_hash,
+                    tags: signalContent.relation.tags,
+                  },
+                ];
+              }
+              return store;
+            });
+          }
+
+          // add it to the asset store of the dstWal
+          if (dstStoreAndSubscribers) {
+            dstStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              // TODO deduplicate
+              const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+                ({ wal }) => stringifyWal(wal) === srcWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+                const newTags = Array.from(
+                  new Set([...existingWalAndTags.tags, ...signalContent.relation.tags]),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedFrom[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              } else {
+                store.value.linkedFrom = [
+                  ...store.value.linkedFrom,
+                  {
+                    wal: signalContent.relation.src_wal,
+                    relationHash: signalContent.relation.relation_hash,
+                    tags: signalContent.relation.tags,
+                  },
+                ];
+              }
+              return store;
+            });
+          }
+          break;
+        }
+        case 'AssetRelationRemoved': {
+          const srcWalStringified = stringifyWal(signalContent.relation.src_wal);
+          const dstWalStringified = stringifyWal(signalContent.relation.dst_wal);
+          const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
+          const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
+          if (srcStoreAndSubscribers) {
+            srcStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              store.value.linkedTo = store.value.linkedTo.filter(
+                ({ wal }) => stringifyWal(wal) !== dstWalStringified,
+              );
+              return store;
+            });
+          }
+          if (dstStoreAndSubscribers) {
+            dstStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              store.value.linkedFrom = store.value.linkedFrom.filter(
+                ({ wal }) => stringifyWal(wal) !== srcWalStringified,
+              );
+              return store;
+            });
+          }
+          break;
+        }
+        case 'RelationTagsAdded': {
+          const srcWalStringified = stringifyWal(signalContent.src_wal);
+          const dstWalStringified = stringifyWal(signalContent.dst_wal);
+          const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
+          const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
+
+          // Add the new tags to the asset store of the srcWal
+          if (srcStoreAndSubscribers) {
+            srcStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+                ({ wal }) => stringifyWal(wal) === dstWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+                const newTags = Array.from(
+                  new Set([...existingWalAndTags.tags, ...signalContent.tags]),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedTo[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              } else {
+                store.value.linkedTo = [
+                  ...store.value.linkedTo,
+                  {
+                    wal: signalContent.dst_wal,
+                    relationHash: signalContent.relation_hash,
+                    tags: signalContent.tags,
+                  },
+                ];
+              }
+              return store;
+            });
+          }
+
+          // Add the new tags to the asset store of the dstWal
+          if (dstStoreAndSubscribers) {
+            dstStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              // TODO deduplicate
+              const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+                ({ wal }) => stringifyWal(wal) === srcWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+                const newTags = Array.from(
+                  new Set([...existingWalAndTags.tags, ...signalContent.tags]),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedFrom[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              } else {
+                store.value.linkedFrom = [
+                  ...store.value.linkedFrom,
+                  {
+                    wal: signalContent.src_wal,
+                    relationHash: signalContent.relation_hash,
+                    tags: signalContent.tags,
+                  },
+                ];
+              }
+              return store;
+            });
+          }
+          break;
+        }
+        case 'RelationTagsRemoved': {
+          const srcWalStringified = stringifyWal(signalContent.src_wal);
+          const dstWalStringified = stringifyWal(signalContent.dst_wal);
+          const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
+          const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
+
+          // Remove tags from asset store of the srcWal
+          if (srcStoreAndSubscribers) {
+            srcStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+                ({ wal }) => stringifyWal(wal) === dstWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+                const newTags = existingWalAndTags.tags.filter(
+                  (tag) => !signalContent.tags.includes(tag),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedTo[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              }
+              return store;
+            });
+          }
+
+          // Remove tags from asset store of the dstWal
+          if (dstStoreAndSubscribers) {
+            dstStoreAndSubscribers.store.update((store) => {
+              if (store.status !== 'complete') return store;
+              // TODO deduplicate
+              const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+                ({ wal }) => stringifyWal(wal) === srcWalStringified,
+              );
+              if (existingWalAndTagsIdx !== -1) {
+                const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+                const newTags = existingWalAndTags.tags.filter(
+                  (tag) => !signalContent.tags.includes(tag),
+                );
+                // overwrite existing item with the one containing merged tags
+                store.value.linkedFrom[existingWalAndTagsIdx] = {
+                  wal: existingWalAndTags.wal,
+                  relationHash: existingWalAndTags.relationHash,
+                  tags: newTags,
+                };
+              }
+              return store;
+            });
+          }
+          break;
+        }
+      }
+      //   | {
+      //     type: 'AssetTagsAdded';
+      //     wal: WAL;
+      //     tags: string[];
+      //   }
+      // | {
+      //     type: 'AssetTagsRemoved';
+      //     wal: WAL;
+      //     tags: string[];
+      //   }
+      // | {
+      //     type: 'AssetRelationCreated';
+      //     relation: AssetRelationWithTags;
+      //   }
+      // | {
+      //     type: 'AssetRelationRemoved';
+      //     relation: AssetRelationAndHash;
+      //   }
+      // | {
+      //     type: 'RelationTagsAdded';
+      //     relation_hash: EntryHash;
+      //     tags: string[];
+      //   }
+      // | {
+      //     type: 'RelationTagsRemoved';
+      //     relation_hash: EntryHash;
+      //     tags: string[];
+      //   };
+    });
+
     this.constructed = true;
+  }
+
+  /**
+   * This function is here to be called when an AppletToParent request
+   * of type 'subscribe-to-asset-store' is received from an iframe.
+   *
+   * @param wal
+   * @param appletIds
+   */
+  subscribeToAssetStore(wal: WAL, appletIds: AppletId[]) {
+    console.log('SUBSCRIBING: ', wal);
+    console.log('SUBSCRIBING: ', encodeHashToBase64(wal.hrl[0]), encodeHashToBase64(wal.hrl[1]));
+    const walStringified = stringifyWal(wal);
+    let storeAndSubscribers = this._assetStores[walStringified];
+    if (!storeAndSubscribers) {
+      storeAndSubscribers = {
+        subscriberCounts: {},
+        store: writable({ status: 'pending' }),
+        unsubscribe: undefined,
+      };
+      appletIds.forEach((id) => {
+        storeAndSubscribers.subscriberCounts[id] = 1;
+      });
+      this._assetStores[walStringified] = storeAndSubscribers;
+      // subscribe to the store to send a message to all iframe messages whenever
+      // the value changes
+      const unsubscribe = storeAndSubscribers.store.subscribe((asyncStatus) => {
+        const appletIds = Object.entries(this._assetStores[walStringified].subscriberCounts)
+          .filter(([_appletId, count]) => count > 0)
+          .map(([appletId, _]) => appletId);
+        postMessageToAppletIframes(
+          { type: 'some', ids: appletIds },
+          {
+            type: 'asset-store-update',
+            value: asyncStatus,
+            walStringified,
+          },
+        );
+      });
+      storeAndSubscribers.unsubscribe = unsubscribe;
+      // poll current value
+      setTimeout(async () => {
+        const relationsForWal = await this.assetsClient.getAllRelationsForWal(wal);
+        const linkedTo = relationsForWal.linked_to.map((v) => ({
+          wal: v.dst_wal,
+          tags: v.tags,
+          relationHash: v.relation_hash,
+        }));
+        const linkedFrom = relationsForWal.linked_from.map((v) => ({
+          wal: v.dst_wal,
+          tags: v.tags,
+          relationHash: v.relation_hash,
+        }));
+        console.log('@subscribe: setting assetstore', {
+          tags: relationsForWal.tags,
+          linkedFrom,
+          linkedTo,
+        });
+        storeAndSubscribers.store.set({
+          status: 'complete',
+          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+        });
+      });
+    } else {
+      // Add the new subscriber to the list of subscribers
+      appletIds.forEach((id) => {
+        const currentSubscriberCounts = storeAndSubscribers.subscriberCounts[id];
+        if (!currentSubscriberCounts || currentSubscriberCounts < 0) {
+          storeAndSubscribers.subscriberCounts[id] = 0;
+        }
+        storeAndSubscribers.subscriberCounts[id] += 1;
+      });
+      // Send message to iframes with updated value
+      postMessageToAppletIframes(
+        { type: 'some', ids: appletIds },
+        {
+          type: 'asset-store-update',
+          value: get(storeAndSubscribers.store),
+          walStringified,
+        },
+      );
+    }
+  }
+
+  /**
+   * This function is here to be called when an AppletToParent request
+   * of type 'unsubscribe-from-asset-store' is received from an iframe.
+   *
+   * @param wal
+   */
+  unsubscribeFromAssetStore(wal: WAL, appletId: AppletId) {
+    const walStringified = stringifyWal(wal);
+    // Reduce the subscriber count
+    const storeAndSubscribers = this._assetStores[walStringified];
+    if (!storeAndSubscribers) return;
+    if (storeAndSubscribers.subscriberCounts[appletId]) {
+      storeAndSubscribers.subscriberCounts[appletId] -= 1;
+      // If the overall subscriber count is zero, unsbscribe from and remove the store
+      const overallCount = Object.values(storeAndSubscribers.subscriberCounts).reduce(
+        (acc, currentVal) => acc + currentVal,
+        0,
+      );
+      if (overallCount < 1) {
+        if (storeAndSubscribers.unsubscribe) storeAndSubscribers.unsubscribe();
+        delete this._assetStores[walStringified];
+      }
+    }
   }
 
   async groupDnaModifiers(): Promise<DnaModifiers> {
