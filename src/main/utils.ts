@@ -32,7 +32,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     if (
       e.url.startsWith('http://') ||
       e.url.startsWith('https://') ||
-      e.url.startsWith('mailto://')
+      e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
       shell.openExternal(e.url);
@@ -53,7 +53,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     if (
       e.url.startsWith('http://') ||
       e.url.startsWith('https://') ||
-      e.url.startsWith('mailto://')
+      e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
       shell.openExternal(e.url);
