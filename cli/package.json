@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.13.0-gamma.6",
+  "version": "0.13.0-delta.0",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -22,7 +22,7 @@
     "@lightningrodlabs/we-rust-utils": "0.400.0-dev.12",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
-    "@theweave/api": "0.2.0",
+    "@theweave/api": "0.3.0-alpha.0",
     "adm-zip": "0.5.14",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
