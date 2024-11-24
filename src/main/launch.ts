@@ -15,9 +15,7 @@ import { MOSS_CONFIG } from './mossConfig';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-const DEFAULT_APPS = {
-  'feedback-board': 'kando.webhapp',
-};
+const DEFAULT_APPS: Record<string, string> = {};
 
 export async function launch(
   mossFileSystem: MossFileSystem,

@@ -9,7 +9,6 @@ const mossConfig = JSON.parse(mossConfigJSON);
 const targetDir = path.join('resources', 'default-apps');
 
 const toolsLibraryUrl = `https://github.com/lightningrodlabs/tools-library/releases/download/v${mossConfig.toolsLibrary.version}/tools-library.happ`;
-const kandoUrl = `https://github.com/holochain-apps/kando/releases/download/v${mossConfig.kando.version}/kando.webhapp`;
 
 function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
   console.log('Downloading from ', url);
@@ -37,5 +36,3 @@ function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
 
 console.log('Fetching tool library from ', toolsLibraryUrl);
 downloadFile(toolsLibraryUrl, targetDir, 'tools-library.happ', mossConfig.toolsLibrary.sha256);
-console.log('Fetching kando from ', kandoUrl);
-downloadFile(kandoUrl, targetDir, 'kando.webhapp', mossConfig.kando.sha256);

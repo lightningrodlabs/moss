@@ -53,7 +53,7 @@ import {
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
-import { handleAppletProtocol, handleDefaultAppsProtocol } from './customSchemes';
+import { handleAppletProtocol } from './customSchemes';
 import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
@@ -1536,8 +1536,6 @@ app.whenReady().then(async () => {
       RUN_OPTIONS,
     );
 
-    handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
-
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
     MAIN_WINDOW = createOrShowMainWindow();
     // Send cached deep link to main window after a timeout to make sure the event listener is ready
@@ -1616,8 +1614,6 @@ app.whenReady().then(async () => {
       LAIR_PASSWORD,
       RUN_OPTIONS,
     );
-
-    handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
 
     if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
     MAIN_WINDOW = createOrShowMainWindow();

@@ -35,7 +35,7 @@ import { AppletId } from '@theweave/api';
 import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
-import { FEEDBACK_BOARD_APP_ID, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { appIdFromAppletHash } from '@theweave/utils';
 
 @localized()
@@ -66,16 +66,10 @@ export class DebuggingPanel extends LitElement {
   _groupsWithDetails: DnaHashB64[] = [];
 
   @state()
-  _feedbackBoardCellIds: CellId[] = [];
-
-  @state()
   _toolsLibraryCellIds: CellId[] = [];
 
   @state()
   _groupAppIds: Record<DnaHashB64, InstalledAppId> = {};
-
-  @state()
-  _showFeedbackBoardDetails = false;
 
   @state()
   _showToolsLibraryDetails = false;
@@ -89,14 +83,6 @@ export class DebuggingPanel extends LitElement {
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
-    try {
-      const feedbackAppClient = await this._mossStore.getAppClient(FEEDBACK_BOARD_APP_ID);
-      const cellIds = await this.getCellIds(feedbackAppClient);
-      this._feedbackBoardCellIds = cellIds;
-    } catch (e) {
-      console.warn('Failed to get feedback-board cellIds: ', e);
-    }
-
     try {
       const toolsLibraryAppClient = await this._mossStore.getAppClient(TOOLS_LIBRARY_APP_ID);
       const cellIds = await this.getCellIds(toolsLibraryAppClient);
@@ -210,13 +196,8 @@ export class DebuggingPanel extends LitElement {
       this._toolsLibraryCellIds.length > 0
         ? window[`__mossZomeCallCount_${encodeHashToBase64(this._toolsLibraryCellIds[0][0])}`]
         : undefined;
-    const feedbackBoardZomeCallCount =
-      this._feedbackBoardCellIds.length > 0
-        ? window[`__mossZomeCallCount_${encodeHashToBase64(this._feedbackBoardCellIds[0][0])}`]
-        : undefined;
 
     const showToolsLibraryDebug = this._appsWithDebug.includes(TOOLS_LIBRARY_APP_ID);
-    const showfeedbackBoardDebug = this._appsWithDebug.includes(FEEDBACK_BOARD_APP_ID);
 
     return html`
       <div class="column" style="align-items: flex-start;">
@@ -267,50 +248,6 @@ export class DebuggingPanel extends LitElement {
         </div>
         ${showToolsLibraryDebug
           ? html`<app-debugging-details .appId=${TOOLS_LIBRARY_APP_ID}></app-debugging-details>`
-          : html``}
-
-        <div class="column" style="margin-top: 20px;">
-          <div class="row" style="align-items: center; flex: 1;">
-            <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
-              Feedback Board
-            </div>
-            <div style="display: flex; flex: 1;"></div>
-            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-              ${feedbackBoardZomeCallCount ? feedbackBoardZomeCallCount.totalCounts : ''}
-            </div>
-            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-              ${feedbackBoardZomeCallCount
-                ? Math.round(
-                    feedbackBoardZomeCallCount.totalCounts /
-                      ((Date.now() - feedbackBoardZomeCallCount.firstCall) / (1000 * 60)),
-                  )
-                : ''}
-            </div>
-            ${feedbackBoardZomeCallCount
-              ? html`
-                  <span
-                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                    @click=${() => {
-                      this._showFeedbackBoardDetails = !this._showFeedbackBoardDetails;
-                    }}
-                    >${this._showFeedbackBoardDetails ? 'Hide' : 'Details'}</span
-                  >
-                  <sl-icon-button
-                    @click=${async () => {
-                      this.toggleDebug(FEEDBACK_BOARD_APP_ID);
-                    }}
-                    .src=${wrapPathInSvg(mdiBug)}
-                  >
-                  </sl-icon-button>
-                `
-              : html``}
-          </div>
-          ${this._showFeedbackBoardDetails
-            ? this.renderZomeCallDetails(feedbackBoardZomeCallCount)
-            : html``}
-        </div>
-        ${showfeedbackBoardDebug
-          ? html`<app-debugging-details .appId=${FEEDBACK_BOARD_APP_ID}></app-debugging-details>`
           : html``}
       </div>
     `;
