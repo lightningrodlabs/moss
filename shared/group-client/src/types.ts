@@ -7,7 +7,7 @@ import {
   EntryHash,
   Timestamp,
 } from '@holochain/client';
-import { AppletId, WAL } from '@theweave/api';
+import { AppletHash, AppletId, WAL } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;
@@ -229,7 +229,13 @@ export type RelationsForWal = {
   linked_from: AssetRelationWithTags[];
 };
 
-export type GroupRemoteSignal = {
-  type: 'assets-signal';
-  content: SignalPayloadAssets;
-};
+export type GroupRemoteSignal =
+  | {
+      type: 'assets-signal';
+      content: SignalPayloadAssets;
+    }
+  | {
+      type: 'applet-signal';
+      appletId: AppletId;
+      payload: Uint8Array;
+    };

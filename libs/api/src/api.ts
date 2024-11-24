@@ -57,13 +57,6 @@ export const isWeaveContext = () =>
 
 /**
  *
- * @returns DEPRECATED - USE isWeaveContext instead
- */
-export const isWeContext = () =>
-  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
-
-/**
- *
  * @param appletHash Hash of the applet to generate the link for
  * @param webPrefix Whether to make the link work via web browsers. Default is true.
  * @returns
@@ -397,6 +390,22 @@ export interface WeaveServices {
    * @returns
    */
   appletParticipants: () => Promise<AgentPubKey[]>;
+  /**
+   * Allows to send small sized "fire-and-forget" signals to all group participants
+   * that are currently online.
+   *
+   * @param payload Arbitrary payload, for example any msgpack encoded javascript object
+   * @returns
+   */
+  sendRemoteSignal: (payload: Uint8Array) => Promise<void>;
+  /**
+   * Event listener allowing to register a callback that will get executed if a remote
+   * signal that had been sent with `WeaveClient.sendRemoteSignal()` arrives.
+   *
+   * @param callback
+   * @returns
+   */
+  onRemoteSignal: (callback: (payload: Uint8Array) => any) => UnsubscribeFunction;
 }
 
 export class WeaveClient implements WeaveServices {
@@ -431,13 +440,11 @@ export class WeaveClient implements WeaveServices {
 
   mossVersion = () => window.__MOSS_VERSION__;
 
-  onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction => {
-    return window.__WEAVE_API__.onPeerStatusUpdate(callback);
-  };
+  onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction =>
+    window.__WEAVE_API__.onPeerStatusUpdate(callback);
 
-  onBeforeUnload = (callback: () => any): UnsubscribeFunction => {
-    return window.__WEAVE_API__.onBeforeUnload(callback);
-  };
+  onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
+    window.__WEAVE_API__.onBeforeUnload(callback);
 
   openAppletMain = async (appletHash: EntryHash): Promise<void> =>
     window.__WEAVE_API__.openAppletMain(appletHash);
@@ -488,4 +495,9 @@ export class WeaveClient implements WeaveServices {
   myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
 
   appletParticipants = () => window.__WEAVE_API__.appletParticipants();
+
+  sendRemoteSignal = (payload: Uint8Array) => window.__WEAVE_API__.sendRemoteSignal(payload);
+
+  onRemoteSignal = (callback: (payload: Uint8Array) => any) =>
+    window.__WEAVE_API__.onRemoteSignal(callback);
 }

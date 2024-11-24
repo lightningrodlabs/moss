@@ -22,6 +22,7 @@ import { consume, provide } from '@lit/context';
 import './elements/agent-status.js';
 import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
 import { weaveClientContext } from '@theweave/elements';
+import { decode, encode } from '@msgpack/msgpack';
 
 @localized()
 @customElement('applet-main')
@@ -78,6 +79,12 @@ export class AppletMain extends LitElement {
   // @state()
   // unsubscribe: undefined | (() => void);
 
+  @state()
+  lastRemoteSignal: string | undefined;
+
+  @state()
+  remoteSignalPayload = '';
+
   @query('#failUnbeforeUnloadCheckmark')
   failUnbeforeUnloadCheckmark!: HTMLInputElement;
 
@@ -94,6 +101,10 @@ export class AppletMain extends LitElement {
 
     this.groupPermissionType = await this.weaveClient.myGroupPermissionType();
     this.appletParticipants = await this.weaveClient.appletParticipants();
+
+    this.weaveClient.onRemoteSignal((payload) => {
+      this.lastRemoteSignal = decode(payload) as string;
+    });
   }
 
   disconnectedCallback(): void {
@@ -356,6 +367,21 @@ export class AppletMain extends LitElement {
                     `
                   : html``
               }
+            </div>
+
+            <h2>Remote Signals</h2>
+            <div style="border-radius: 5px; ${
+              this.lastRemoteSignal ? 'background: lightgreen;' : ''
+            }">${
+      this.lastRemoteSignal ? this.lastRemoteSignal : 'No remote signal received yet.'
+    }</div>
+            <div class="row items-center">
+              <input type="text" @input=${(e: CustomEvent) => {
+                this.remoteSignalPayload = (e.target as any).value;
+              }} />
+              <button .disabled=${!this.remoteSignalPayload} @click=${async () => {
+      await this.weaveClient.sendRemoteSignal(encode(this.remoteSignalPayload));
+    }}>Send Remote Signal</button>
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap;">
