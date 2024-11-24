@@ -241,6 +241,14 @@ export class GroupStore {
         const signalContent = decode(signal.content) as GroupRemoteSignal;
         if (signalContent.type === 'assets-signal') {
           this.assetSignalHandler(signalContent.content, false);
+        } else if (signalContent.type === 'applet-signal') {
+          postMessageToAppletIframes(
+            { type: 'some', ids: [signalContent.appletId] },
+            {
+              type: 'remote-signal-received',
+              payload: signalContent.payload,
+            },
+          );
         }
       }
     });

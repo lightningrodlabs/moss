@@ -39,13 +39,13 @@ import { AppletToParentRequest as AppletToParentRequestSchema } from '../validat
 import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
-import { PermissionType } from '@theweave/group-client';
+import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
   toolBundleActionHashFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
-import { GroupStore } from '../groups/group-store.js';
+import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
 
 function getAppletIdFromOrigin(origin: string): AppletId {
@@ -133,6 +133,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       return () => undefined;
     },
     onBeforeUnload(_) {
+      return () => undefined;
+    },
+    onRemoteSignal(_) {
       return () => undefined;
     },
     assets: {
@@ -251,6 +254,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     },
     async appletParticipants() {
       throw new Error('appletParticipants is not supported in headless WeaveServices.');
+    },
+    sendRemoteSignal(_) {
+      throw new Error('sendRemoteSignal is not supported in headless WeaveServices.');
     },
   };
 }
@@ -548,6 +554,33 @@ export async function handleAppletIframeMessage(
     case 'request-close':
       // Only supported in external windows
       return;
+    case 'send-remote-signal': {
+      const appletHash = decodeHashFromBase64(appletId);
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      const remoteSignalPayload: GroupRemoteSignal = {
+        type: 'applet-signal',
+        appletId,
+        payload: message.payload,
+      };
+      // For every group store, get the currently online peers and send a remote signal to them;
+      await Promise.all(
+        Array.from(groupStores.values()).map(async (store) => {
+          const peerStatuses = get(store.peerStatuses());
+          if (peerStatuses) {
+            const peersToSendSignal = Object.entries(peerStatuses)
+              .filter(
+                ([pubkeyB64, status]) =>
+                  status.lastSeen > Date.now() - OFFLINE_THRESHOLD &&
+                  pubkeyB64 !== encodeHashToBase64(store.groupClient.myPubKey),
+              )
+              .map(([pubkeyB64, _]) => decodeHashFromBase64(pubkeyB64));
+
+            await store.groupClient.remoteSignalArbitrary(remoteSignalPayload, peersToSendSignal);
+          }
+        }),
+      );
+      break;
+    }
     /**
      * Asset related messages
      */

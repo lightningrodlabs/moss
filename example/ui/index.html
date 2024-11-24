@@ -21,7 +21,7 @@
       import '@shoelace-style/shoelace/dist/themes/light.css';
       // import './src/example-applet.ts';
       import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
-      import { WeaveClient, isWeContext, initializeHotReload } from '@theweave/api';
+      import { WeaveClient, isWeaveContext, initializeHotReload } from '@theweave/api';
       import '@theweave/elements/dist/elements/weave-client-context.js';
       import { AttachmentsClient, AttachmentsStore } from '@theweave/attachments';
       import { CellType, encodeHashToBase64 } from '@holochain/client';
@@ -50,7 +50,7 @@
 
       console.log('window.__WEAVE_API__: ', window.__WEAVE_API__);
 
-      console.log('isWeContext? ', isWeContext());
+      console.log('isWeaveContext? ', isWeaveContext());
 
       setBasePath('shoelace');
 

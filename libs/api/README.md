@@ -21,9 +21,9 @@ The differences between a Weave Tool and a normal Holochain App are:
 ### Implementing a most basic applet UI
 
 ```typescript=
-import { WeaveClient, isWeContext } from '@theweave/api';
+import { WeaveClient, isWeaveContext } from '@theweave/api';
 
-if (!isWeContext) {
+if (!isWeaveContext) {
   // do non-the Frame related rendering logic (launcher, kangaroo, electron, ...)
 }
 

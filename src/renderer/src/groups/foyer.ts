@@ -133,7 +133,7 @@ export class FoyerStore {
 
     stream.addMessage(message);
     if (message.payload.type == 'Msg') {
-      //   if (isWeContext()) {
+      //   if (isWeaveContext()) {
       //     this.weaveClient.notifyFrame([
       //       {
       //         title: `message from ${encodeHashToBase64(message.from)}`,

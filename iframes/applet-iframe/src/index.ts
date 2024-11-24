@@ -66,6 +66,7 @@ declare global {
       walStringified: string;
       value: AsyncStatus<AssetStoreContent>;
     }>;
+    'remote-signal-received': CustomEvent<Uint8Array>;
   }
 }
 
@@ -294,6 +295,18 @@ const weaveApi: WeaveServices = {
     postMessage({
       type: 'applet-participants',
     }),
+
+  sendRemoteSignal: (payload: Uint8Array) =>
+    postMessage({
+      type: 'send-remote-signal',
+      payload,
+    }),
+
+  onRemoteSignal: (callback: (payload: Uint8Array) => any) => {
+    const listener = (e: CustomEvent<Uint8Array>) => callback(e.detail);
+    window.addEventListener('remote-signal-received', listener);
+    return () => window.removeEventListener('remote-signal-received', listener);
+  },
 };
 
 (async () => {
@@ -512,6 +525,13 @@ const handleMessage = async (
         }),
       );
       break;
+    case 'remote-signal-received': {
+      window.dispatchEvent(
+        new CustomEvent('remote-signal-received', {
+          detail: message.payload,
+        }),
+      );
+    }
     case 'on-before-unload': {
       // This case is handled in handleEventMessage
       return;

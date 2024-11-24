@@ -315,6 +315,13 @@ export const AppletToParentRequest = Type.Union([
     },
     { additionalProperties: false },
   ),
+  Type.Object(
+    {
+      type: Type.Literal('send-remote-signal'),
+      payload: Type.Uint8Array(),
+    },
+    { additionalProperties: false },
+  ),
   /**
    * Asset related requests
    */

@@ -281,12 +281,6 @@ export type ParentToAppletMessage =
       type: 'get-block-types';
     }
   | {
-      type: 'bind-asset';
-      srcWal: WAL;
-      dstWal: WAL;
-      dstRecordInfo?: RecordInfo;
-    }
-  | {
       type: 'search';
       filter: string;
     }
@@ -305,6 +299,10 @@ export type ParentToAppletMessage =
        */
       walStringified: string;
       value: AsyncStatus<AssetStoreContent>;
+    }
+  | {
+      type: 'remote-signal-received';
+      payload: Uint8Array;
     };
 
 export type AppletToParentMessage = {
@@ -392,6 +390,10 @@ export type AppletToParentRequest =
     }
   | {
       type: 'request-close';
+    }
+  | {
+      type: 'send-remote-signal';
+      payload: Uint8Array;
     }
   /**
    * Asset related requests
