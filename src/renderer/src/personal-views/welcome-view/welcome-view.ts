@@ -8,8 +8,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAlert } from '@mdi/js';
+import { notify, notifyError } from '@holochain-open-dev/elements';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
@@ -30,6 +29,7 @@ import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { UpdateFeedMessage } from '../../types.js';
+import { commentHeartIconFilled } from '../../icons/icons.js';
 
 type UpdateFeedMessageGeneric =
   | {
@@ -62,8 +62,8 @@ export class WelcomeView extends LitElement {
   @state()
   view: WelcomePageView = WelcomePageView.Main;
 
-  @query('#disclaimer-dialog')
-  _disclaimerDialog!: SlDialog;
+  @query('#feedback-dialog')
+  _feedbackDialog!: SlDialog;
 
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
@@ -175,53 +175,34 @@ export class WelcomeView extends LitElement {
     this.view = WelcomePageView.Main;
   }
 
-  renderDisclaimerDialog() {
+  renderFeedbackDialog() {
     return html` <sl-dialog
-      id="disclaimer-dialog"
-      style="--width: 900px; --sl-panel-background-color: #f0f59d;"
+      id="feedback-dialog"
+      style="--width: 900px; --sl-panel-background-color: #fff4f4;"
       no-header
     >
-      <div class="disclaimer">
+      <div class="feedback">
         <div
           class="row"
           style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
         >
-          <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
-          <span style="margin-left: 5px;">Moss is Alpha Software</span>
+          ${commentHeartIconFilled(28)}
+          <span style="margin-left: 5px;">Feedback</span>
         </div>
         <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
-          Moss development is in alpha stage. It is best suited for
-          <b>adventurous early-adopters</b>. Please
-          <b>don't expect it to be stable or bug free!</b> That said, we use Moss in-house daily for
-          doing our work on Moss itself, using the tools for planning, chatting, video calls, etc.
-          <br /><br />
-          We <b>export data from our Tools/Applets frequently</b> and sometimes have to recover from
-          these backups. We recommend you do the same. <br /><br />
-          What you can/should expect:
-          <ul>
-            <li>
-              If Moss offers you to install an update on startup, this update will always be
-              compatible with your current version of Moss. Compatible versions of Moss are
-              indicated by the first non-zero number in the version name. If you are using Moss
-              0.11.5 it is compatible with Moss 0.11.8 but it is <i>not</i> compatible with Moss
-              0.12.0.
-            </li>
-            <li>
-              You can <b>not</b> expect your current version of Moss to receive ongoing bugfixes
-              until we explicitly say so. That said, we are targeting to release a version "Moss
-              Sprout" in the coming months that will receive support in the form of bugfixes and UI
-              improvements for a defined period of time. Until that point there will be a succession
-              of breaking releases of Moss (0.12.x, 0.13.x, ...) that are going to be incompatible
-              between each other, meaning that if you decide to go to a newer version, you will not
-              be able to access or join groups created in the previous version.
-            </li>
-            <li>
-              As we are developing Moss and the Weave, we are also continually trying to find the
-              most suitable naming and terminology. Expect therefore names of things to keep
-              changing in the near future. One notable change is likely going to be "Applet" to
-              "Tool".
-            </li>
-          </ul>
+          Moss development is in alpha stage. We highly appreciate active feedback.<br /><br />
+
+          If you are encountering a problem and are familiar with Github, you can<br /><br />
+
+          <a href="https://github.com/lightningrodlabs/moss/issues/new"
+            >create an issue on Github</a
+          >
+          <br />
+          <br />
+          If you have more general feedback or are not familiar with Github, you can write to the
+          following email address:<br /><br />
+
+          <a href="mailto:moss.0.13.feedback@theweave.social">moss.0.13.feedback@theweave.social</a>
         </div>
       </div>
     </sl-dialog>`;
@@ -360,27 +341,24 @@ export class WelcomeView extends LitElement {
       case WelcomePageView.Main:
         return html`
           <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
-          ${this.renderDisclaimerDialog()}
+          ${this.renderFeedbackDialog()}
           <div class="flex-scrollable-parent" style="width: 870px;">
             <div class="flex-scrollable-container">
               <div class="column flex-scrollable-y">
                 <div class="column" style="align-items: center; flex: 1; overflow: auto;">
                   <div
-                    class="disclaimer-btn"
+                    class="feedback-btn"
                     tabindex="0"
-                    @click=${() => this._disclaimerDialog.show()}
+                    @click=${() => this._feedbackDialog.show()}
                     @keypress=${(e: KeyboardEvent) => {
                       if (e.key === 'Enter' || e.key === ' ') {
-                        this._disclaimerDialog.show();
+                        this._feedbackDialog.show();
                       }
                     }}
                   >
-                    <div
-                      class="row"
-                      style="align-items: center; font-size: 26px; justify-content: center;"
-                    >
-                      <sl-icon .src=${wrapPathInSvg(mdiAlert)}></sl-icon>
-                      <span style="margin-left: 5px;">Disclaimer</span>
+                    <div class="row items-center" style="font-size: 26px; justify-content: center;">
+                      <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
+                      <span style="margin-left: 5px;">${msg('Feedback')}</span>
                     </div>
                   </div>
 
@@ -450,7 +428,7 @@ export class WelcomeView extends LitElement {
         margin-top: 12px;
       }
 
-      .disclaimer {
+      .feedback {
         color: #002a00;
         /* border: 2px solid #fff78e; */
         padding: 20px;
@@ -459,12 +437,12 @@ export class WelcomeView extends LitElement {
         line-height: 1.2;
       }
 
-      .disclaimer-btn {
+      .feedback-btn {
         position: absolute;
         top: 10px;
         right: 10px;
         /* background: #f4fb86; */
-        background: linear-gradient(#e0e871, #acb520);
+        background: linear-gradient(#ffa1a1, #d3364c);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -474,8 +452,8 @@ export class WelcomeView extends LitElement {
         cursor: pointer;
       }
 
-      .disclaimer-btn:hover {
-        background: linear-gradient(#f2f98e, #b6c027);
+      .feedback-btn:hover {
+        background: linear-gradient(#ffbebe, #d2485a);
       }
 
       .button-section {
