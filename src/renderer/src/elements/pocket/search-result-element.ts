@@ -61,7 +61,7 @@ export class SearchResultElement extends LitElement {
   // _appletStore: StoreSubscriber<AsyncStatus<AppletStore>> | undefined;
 
   async firstUpdated() {
-    const assetInfo = await this.weaveClient.assetInfo(this.wal);
+    const assetInfo = await this.weaveClient.assets.assetInfo(this.wal);
     this._assetInfo = assetInfo;
     this._loading = false;
     if (assetInfo) {

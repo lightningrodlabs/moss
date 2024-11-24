@@ -83,7 +83,7 @@ export class WalWindow extends LitElement {
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
               return (window.electronAPI as any).closeWindow();
-            case 'user-select-wal': {
+            case 'user-select-asset': {
               await (window.electronAPI as any).focusMainWindow();
               let error;
               let response;
