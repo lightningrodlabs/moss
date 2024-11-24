@@ -115,13 +115,13 @@ export class CreatablePanel extends LitElement {
     switch (creatableResult.type) {
       case 'error':
         notifyError(
-          `Failed to create new ${this._showCreatableView?.creatable.label}: ${creatableResult.reason}`,
+          `Failed to create new ${this._showCreatableView?.creatable.label}: ${creatableResult.error}`,
         );
         console.error(
           'Failed to create new ',
           this._showCreatableView?.creatable.label,
           ': ',
-          creatableResult.reason,
+          creatableResult.error,
         );
         this._activeDialogId = undefined;
         this._showCreatableView = undefined;

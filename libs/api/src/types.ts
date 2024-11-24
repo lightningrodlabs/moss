@@ -183,10 +183,10 @@ export type AppletView =
       resolve: (wal: WAL) => Promise<void>;
       /**
        * To be called if creation fails due to an error
-       * @param reason
+       * @param error
        * @returns
        */
-      reject: (reason: any) => Promise<void>;
+      reject: (error: any) => Promise<void>;
       /**
        * To be called if user cancels the creation
        */
@@ -228,7 +228,7 @@ export type CreatableResult =
     }
   | {
       type: 'error';
-      reason: any;
+      error: any;
     };
 
 export type BlockType = {

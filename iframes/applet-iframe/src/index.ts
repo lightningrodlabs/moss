@@ -730,10 +730,10 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
               result: { type: 'success', wal },
               dialogId: dialogId!,
             }),
-          reject: (reason: any) =>
+          reject: (error: any) =>
             postMessage({
               type: 'creatable-result',
-              result: { type: 'error', reason },
+              result: { type: 'error', error },
               dialogId: dialogId!,
             }),
           cancel: () =>

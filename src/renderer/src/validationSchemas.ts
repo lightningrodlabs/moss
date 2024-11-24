@@ -168,7 +168,7 @@ const CreatableResult = Type.Union([
   Type.Object(
     {
       type: Type.Literal('error'),
-      reason: Type.Any(),
+      error: Type.Any(),
     },
     { additionalProperties: false },
   ),
