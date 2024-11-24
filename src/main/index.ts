@@ -203,6 +203,7 @@ contextMenu({
 console.log('APP PATH: ', app.getAppPath());
 console.log('RUNNING ON PLATFORM: ', process.platform);
 
+const LAIR_PASSWORD = 'moss is growing, our relationships are flowing';
 let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
 if (app.isPackaged) {
@@ -1523,6 +1524,7 @@ app.whenReady().then(async () => {
     });
     WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
   });
+  // Not currently in use
   ipcMain.handle('launch', async (_e, password) => {
     // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     // await delay(5000);
@@ -1577,6 +1579,8 @@ app.whenReady().then(async () => {
 
     // Check for updates
     if (app.isPackaged) {
+      SPLASH_SCREEN_WINDOW.webContents.send('loading-progress-update', 'Checking for updates...');
+
       autoUpdater.allowPrerelease = true;
       autoUpdater.autoDownload = false;
 
@@ -1602,6 +1606,28 @@ app.whenReady().then(async () => {
           releaseNotes: updateCheckResult.updateInfo.releaseNotes as string | undefined,
         };
       }
+    }
+
+    // launch
+    [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
+      WE_FILE_SYSTEM,
+      WE_EMITTER,
+      SPLASH_SCREEN_WINDOW,
+      LAIR_PASSWORD,
+      RUN_OPTIONS,
+    );
+
+    handleDefaultAppsProtocol(WE_FILE_SYSTEM, HOLOCHAIN_MANAGER);
+
+    if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+    MAIN_WINDOW = createOrShowMainWindow();
+    // Send cached deep link to main window after a timeout to make sure the event listener is ready
+    if (CACHED_DEEP_LINK) {
+      setTimeout(() => {
+        if (MAIN_WINDOW) {
+          emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
+        }
+      }, 8000);
     }
   }
 });
