@@ -36,7 +36,10 @@ export async function launch(
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
   if (!mossFileSystem.keystoreInitialized()) {
     if (splashscreenWindow)
-      splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
+      splashscreenWindow.webContents.send(
+        'loading-progress-update',
+        'Initializing lair keystore...',
+      );
     // TODO: https://github.com/holochain/launcher/issues/144
     // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: WE_FILE_SYSTEM.keystoreDir });
     // lairHandle.stdin.write(password);

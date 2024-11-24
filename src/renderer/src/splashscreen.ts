@@ -56,13 +56,14 @@ export class SplashScreen extends LitElement {
       console.log('RECEIVED PROGRESS UPDATE: ', e, payload);
       this.progressState = payload;
     });
-    const lairSetupRequired = await (window as any).electronAPI.lairSetupRequired();
-    console.log('lairSetupRequired: ', lairSetupRequired);
-    if (lairSetupRequired) {
-      this.view = SplashScreenMode.SetupLair;
-    } else {
-      this.view = SplashScreenMode.EnterPassword;
-    }
+    // const lairSetupRequired = await (window as any).electronAPI.lairSetupRequired();
+    // console.log('lairSetupRequired: ', lairSetupRequired);
+    // if (lairSetupRequired) {
+    //   this.view = SplashScreenMode.SetupLair;
+    // } else {
+    //   this.view = SplashScreenMode.EnterPassword;
+    // }
+    this.view = SplashScreenMode.Launching;
     this.profile = await (window as any).electronAPI.getProfile();
     this.version = await (window as any).electronAPI.getVersion();
   }
