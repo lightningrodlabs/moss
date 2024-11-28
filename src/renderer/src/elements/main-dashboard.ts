@@ -796,7 +796,7 @@ export class MainDashboard extends LitElement {
                 if (appletIframe) {
                   appletIframe.src += '';
                 }
-                const reloadingApplets = this._reloadingApplets;
+                const reloadingApplets = [...this._reloadingApplets];
 
                 // Remove AppletId from reloading applets
                 this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
@@ -1569,7 +1569,7 @@ export class MainDashboard extends LitElement {
                       // emit onBeforeUnload event and wait for callback to be executed
                       const appletId = encodeHashToBase64(e.detail.appletHash);
 
-                      const reloadingApplets = this._reloadingApplets;
+                      const reloadingApplets = [...this._reloadingApplets];
                       reloadingApplets.push(appletId);
                       this._reloadingApplets = reloadingApplets;
 
