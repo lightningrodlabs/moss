@@ -934,7 +934,6 @@ export class GroupStore {
       });
       appletsToDisable.push(appletHash);
     }
-    await this.mossStore.reloadManualStores();
     return appletsToDisable;
   }
 
