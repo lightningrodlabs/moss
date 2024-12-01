@@ -42,6 +42,7 @@ import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
+  appIdFromAppletId,
   toolBundleActionHashFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
@@ -257,6 +258,15 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     },
     sendRemoteSignal(_) {
       throw new Error('sendRemoteSignal is not supported in headless WeaveServices.');
+    },
+    createCloneCell(_) {
+      throw new Error('createCloneCell is not supported in headless WeaveServices.');
+    },
+    enableCloneCell(_) {
+      throw new Error('enableCloneCell is not supported in headless WeaveServices.');
+    },
+    disableCloneCell(_) {
+      throw new Error('disableCloneCell is not supported in headless WeaveServices.');
     },
   };
 }
@@ -580,6 +590,40 @@ export async function handleAppletIframeMessage(
         }),
       );
       break;
+    }
+    case 'create-clone-cell': {
+      const appletHash = decodeHashFromBase64(appletId);
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      if (groupStores.size === 0) throw new Error('No group store found.');
+      // Install the clone in the group
+      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      const clonedCell = await appletClient.createCloneCell(message.req);
+      // Register the clone in the group dna(s) if it's supposed to be public
+      if (message.publicToGroupMembers) {
+        await Promise.all(
+          Array.from(groupStores.values()).map(async (groupStore) => {
+            await groupStore.groupClient.joinClonedCell({
+              applet_hash: appletHash,
+              dna_hash: clonedCell.cell_id[0],
+              role_name: message.req.role_name,
+              network_seed: message.req.modifiers.network_seed,
+              properties: message.req.modifiers.properties,
+              origin_time: message.req.modifiers.origin_time,
+              quantum_time: message.req.modifiers.quantum_time,
+            });
+          }),
+        );
+      }
+      return clonedCell;
+    }
+    case 'enable-clone-cell': {
+      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      const clonedCell = await appletClient.enableCloneCell(message.req);
+      return clonedCell;
+    }
+    case 'disable-clone-cell': {
+      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      return appletClient.disableCloneCell(message.req);
     }
     /**
      * Asset related messages

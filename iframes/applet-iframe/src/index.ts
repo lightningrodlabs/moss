@@ -593,6 +593,10 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     },
   });
 
+  appletClient.createCloneCell = (_) => {
+    throw new Error('Please use the createCloneCell method on the WeaveClient instead.');
+  };
+
   return appletClient;
 }
 

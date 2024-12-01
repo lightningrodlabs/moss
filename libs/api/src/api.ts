@@ -2,6 +2,10 @@ import {
   ActionHash,
   AgentPubKey,
   AppClient,
+  CreateCloneCellRequest,
+  CreateCloneCellResponse,
+  DisableCloneCellRequest,
+  EnableCloneCellRequest,
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
@@ -406,6 +410,24 @@ export interface WeaveServices {
    * @returns
    */
   onRemoteSignal: (callback: (payload: Uint8Array) => any) => UnsubscribeFunction;
+
+  /**
+   * Create a cloned cell and optionally have it be registered in the group DNA for other
+   * group members or always-online nodes to be able to automatically join it too.
+   *
+   * @param req
+   * @param publicToGroupMembers Whether this cloned cell should be registered in the group DNA such that
+   * other group members or alway-online nodes may automatically install it too.
+   * @returns
+   */
+  createCloneCell: (
+    req: CreateCloneCellRequest,
+    publicToGroupMembers: boolean,
+  ) => Promise<CreateCloneCellResponse>;
+
+  enableCloneCell: (req: EnableCloneCellRequest) => Promise<CreateCloneCellResponse>;
+
+  disableCloneCell: (req: DisableCloneCellRequest) => Promise<void>;
 }
 
 export class WeaveClient implements WeaveServices {
@@ -500,4 +522,11 @@ export class WeaveClient implements WeaveServices {
 
   onRemoteSignal = (callback: (payload: Uint8Array) => any) =>
     window.__WEAVE_API__.onRemoteSignal(callback);
+
+  createCloneCell = (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =>
+    window.__WEAVE_API__.createCloneCell(req, publicToGroupMembers);
+
+  enableCloneCell = (req: EnableCloneCellRequest) => window.__WEAVE_API__.enableCloneCell(req);
+
+  disableCloneCell = (req: DisableCloneCellRequest) => window.__WEAVE_API__.disableCloneCell(req);
 }
