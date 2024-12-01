@@ -1,14 +1,14 @@
 ---
-manifest_version: "1"
+manifest_version: '1'
 name: example-applet
-description: "Example forum app"
+description: 'Example forum app'
 roles:
   - name: forum
     provisioning:
       strategy: create
       deferred: false
     dna:
-      bundled: "../dnas/forum/workdir/forum.dna"
+      bundled: '../dnas/forum/workdir/forum.dna'
       modifiers:
         network_seed: ~
         properties: ~
@@ -16,4 +16,4 @@ roles:
         quantum_time: ~
       installed_hash: ~
       version: ~
-      clone_limit: 0
+      clone_limit: 10

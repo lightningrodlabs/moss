@@ -2,7 +2,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 
 import { localized } from '@lit/localize';
-import { sharedStyles } from '@holochain-open-dev/elements';
+import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
 
 import './elements/all-posts.js';
 import './elements/create-post.js';
@@ -14,7 +14,14 @@ import {
   GroupPermissionType,
   UnsubscribeFunction,
 } from '@theweave/api';
-import { AgentPubKey, AppClient } from '@holochain/client';
+import {
+  AgentPubKey,
+  AppClient,
+  CellInfo,
+  CellType,
+  ClonedCell,
+  ProvisionedCell,
+} from '@holochain/client';
 import '@theweave/elements/dist/elements/wal-embed.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
@@ -85,6 +92,9 @@ export class AppletMain extends LitElement {
   @state()
   remoteSignalPayload = '';
 
+  @state()
+  cells: CellInfo[] = [];
+
   @query('#failUnbeforeUnloadCheckmark')
   failUnbeforeUnloadCheckmark!: HTMLInputElement;
 
@@ -105,15 +115,22 @@ export class AppletMain extends LitElement {
     this.weaveClient.onRemoteSignal((payload) => {
       this.lastRemoteSignal = decode(payload) as string;
     });
+
+    await this.updateCellInfos();
   }
 
   disconnectedCallback(): void {
     if (this.onBeforeUnloadUnsubscribe) this.onBeforeUnloadUnsubscribe();
   }
 
-  // disconnectedCallback(): void {
-  //   if (this.unsubscribe) this.unsubscribe();
-  // }
+  async updateCellInfos() {
+    if (this.weaveClient.renderInfo.type !== 'applet-view') return;
+    const appletClient = this.weaveClient.renderInfo.appletClient;
+    const appInfo = await appletClient.appInfo();
+    if (!appInfo) return;
+    const cellInfos = appInfo?.cell_info['forum'];
+    this.cells = cellInfos;
+  }
 
   _allProfiles = new StoreSubscriber(
     this,
@@ -262,6 +279,24 @@ export class AppletMain extends LitElement {
     `;
   }
 
+  renderCells() {
+    const provisionedCells = this.cells
+      .filter((cell) => CellType.Provisioned in cell)
+      .map((cell) => cell[CellType.Provisioned] as ProvisionedCell);
+    const clonedCells = this.cells
+      .filter((cell) => CellType.Cloned in cell)
+      .map((cell) => cell[CellType.Cloned] as ClonedCell);
+
+    console.log('Provisioned Cells: ', provisionedCells);
+    console.log('ALL CELLS: ', this.cells);
+    return html`
+      ${provisionedCells.map(
+        (cell) => html`<div class="cell-card">${cell.name} (provisioned)</div>`
+      )}
+      ${clonedCells.map((cell) => html`<div class="cell-card">${cell.clone_id} (cloned)</div>`)}
+    `;
+  }
+
   render() {
     return html`
       <div class="column" style="margin-bottom: 500px;">
@@ -383,6 +418,46 @@ export class AppletMain extends LitElement {
       await this.weaveClient.sendRemoteSignal(encode(this.remoteSignalPayload));
     }}>Send Remote Signal</button>
             </div>
+
+            <h2>Cloned Cells</h2>
+            <button @click=${async () => {
+              if (this.weaveClient.renderInfo.type !== 'applet-view') return;
+              const appletClient = this.weaveClient.renderInfo.appletClient;
+              try {
+                await appletClient.createCloneCell({
+                  role_name: 'forum',
+                  modifiers: {
+                    network_seed: 'blabla',
+                  },
+                });
+              } catch (e: any) {
+                notifyError(e.toString());
+              }
+            }}
+            style="margin-bottom: 5px;"
+            >Try Creating Cloned Cell with AppletClient (should fail)</button>
+            <button @click=${async () => {
+              try {
+                await this.weaveClient.createCloneCell(
+                  {
+                    role_name: 'forum',
+                    modifiers: {
+                      network_seed: Math.random().toString(),
+                    },
+                  },
+                  true
+                );
+                await this.updateCellInfos();
+              } catch (e: any) {
+                notifyError(e.toString());
+              }
+            }}
+            style="margin-bottom: 5px;"
+            >Create Cloned Cell with WeaveClient (random seed, should succeed)</button>
+            <div class="column">
+              All Cells:
+              ${this.renderCells()}
+            </div>
           </div>
           <div class="row" style="flex-wrap: wrap;">
             <all-posts
@@ -407,6 +482,14 @@ export class AppletMain extends LitElement {
       :host {
         display: flex;
         flex: 1;
+      }
+
+      .cell-card {
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid black;
+        margin: 3px;
+        background: #c3e2ff;
       }
     `,
     sharedStyles,

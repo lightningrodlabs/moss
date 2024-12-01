@@ -8,6 +8,9 @@ import {
   AppWebsocket,
   CallZomeRequest,
   CallZomeRequestSigned,
+  CreateCloneCellRequest,
+  DisableCloneCellRequest,
+  EnableCloneCellRequest,
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
@@ -307,6 +310,25 @@ const weaveApi: WeaveServices = {
     window.addEventListener('remote-signal-received', listener);
     return () => window.removeEventListener('remote-signal-received', listener);
   },
+
+  createCloneCell: (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =>
+    postMessage({
+      type: 'create-clone-cell',
+      req,
+      publicToGroupMembers,
+    }),
+
+  enableCloneCell: (req: EnableCloneCellRequest) =>
+    postMessage({
+      type: 'enable-clone-cell',
+      req,
+    }),
+
+  disableCloneCell: (req: DisableCloneCellRequest) =>
+    postMessage({
+      type: 'disable-clone-cell',
+      req,
+    }),
 };
 
 (async () => {
@@ -614,7 +636,7 @@ async function setupProfilesClient(
 ) {
   const client = await setupAppClient(appPort, token);
 
-  return new ProfilesClient(client, roleName);
+  return new ProfilesClient(client as any, roleName);
 }
 
 async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSigned> {
