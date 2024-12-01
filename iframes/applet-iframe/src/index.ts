@@ -636,7 +636,7 @@ async function setupProfilesClient(
 ) {
   const client = await setupAppClient(appPort, token);
 
-  return new ProfilesClient(client as any, roleName);
+  return new ProfilesClient(client, roleName);
 }
 
 async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSigned> {
