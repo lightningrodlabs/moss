@@ -1,7 +1,7 @@
 use group_integrity::*;
 use hdk::prelude::*;
 
-/// Registeds the Cloned cell in the group DNA. This is probably mainly useful
+/// Registers the cloned cell in the group DNA. This is probably mainly useful
 /// for always-online nodes and has implications for privacy in case that there
 /// are cloned cells that are not supposed to be joined by all group members
 #[hdk_extern]

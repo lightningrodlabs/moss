@@ -12,6 +12,9 @@ import {
   AppAuthenticationToken,
   AgentPubKeyB64,
   AgentPubKey,
+  CreateCloneCellRequest,
+  DisableCloneCellRequest,
+  EnableCloneCellRequest,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -394,6 +397,19 @@ export type AppletToParentRequest =
   | {
       type: 'send-remote-signal';
       payload: Uint8Array;
+    }
+  | {
+      type: 'create-clone-cell';
+      req: CreateCloneCellRequest;
+      publicToGroupMembers: boolean;
+    }
+  | {
+      type: 'disable-clone-cell';
+      req: DisableCloneCellRequest;
+    }
+  | {
+      type: 'enable-clone-cell';
+      req: EnableCloneCellRequest;
     }
   /**
    * Asset related requests

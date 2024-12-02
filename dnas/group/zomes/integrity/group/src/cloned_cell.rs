@@ -12,6 +12,8 @@ pub struct AppletClonedCell {
     pub properties: Option<SerializedBytes>,
     pub origin_time: Option<Timestamp>,
     pub quantum_time: Option<Duration>,
+    // NOTE: It might in some cases in the future be desirable to share a membrane proof here
+    // too in case it is not bound to an agent.
 }
 pub fn validate_create_applet_cloned_cell(
     _action: EntryCreationAction,

@@ -206,10 +206,13 @@ export type AppletClonedCell = {
   applet_hash: EntryHash;
   dna_hash: DnaHash;
   role_name: String;
-  network_seed: String;
-  properties: Uint8Array;
-  origin_time: Timestamp;
-  quantum_time: Duration;
+  network_seed?: String;
+  /**
+   * Any yaml serializable properties
+   */
+  properties?: unknown;
+  origin_time?: Timestamp;
+  quantum_time?: Duration;
 };
 
 export type TagsToAssetInput = {

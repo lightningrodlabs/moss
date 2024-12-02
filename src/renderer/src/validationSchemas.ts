@@ -18,6 +18,7 @@ const AgentPubKey = Type.Uint8Array({ minByteLength: 39, maxByteLength: 39 });
 // const AgentPubKeyB64 = Type.String({ pattern: '^uhCAk' });
 
 const CellId = Type.Tuple([DnaHash, AgentPubKey]);
+const RoleName = Type.String();
 const ZomeName = Type.String();
 const FunctionName = Type.String();
 
@@ -32,6 +33,49 @@ const CallZomeRequest = Type.Object(
   },
   { additionalProperties: false },
 );
+
+const MembraneProof = Type.Uint8Array();
+const Timestamp = Type.Number();
+/**
+ * Any Yaml serializable properties
+ */
+const DnaProperties = Type.Unknown();
+const Duration = Type.Object(
+  {
+    secs: Type.Number(),
+    nanos: Type.Number(),
+  },
+  { additionalProperties: false },
+);
+
+const DnaModifiersOpt = Type.Object(
+  {
+    network_seed: Type.Optional(Type.String()),
+    properties: Type.Optional(DnaProperties),
+    origin_time: Type.Optional(Timestamp),
+    quantum_time: Type.Optional(Duration),
+  },
+  { additionalProperties: false },
+);
+
+const CreateCloneCellRequest = Type.Object(
+  {
+    role_name: RoleName,
+    modifiers: DnaModifiersOpt,
+    membrane_proof: Type.Optional(MembraneProof),
+    name: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
+
+const DisableCloneCellRequest = Type.Object(
+  {
+    clone_cell_id: Type.Union([RoleName, DnaHash]),
+  },
+  { additionalProperties: false },
+);
+
+const EnableCloneCellRequest = DisableCloneCellRequest;
 
 // const AppAuthenticationToken = Type.Array(Type.Number());
 
@@ -319,6 +363,28 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('send-remote-signal'),
       payload: Type.Uint8Array(),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('create-clone-cell'),
+      req: CreateCloneCellRequest,
+      publicToGroupMembers: Type.Boolean(),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('enable-clone-cell'),
+      req: EnableCloneCellRequest,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('disable-clone-cell'),
+      req: DisableCloneCellRequest,
     },
     { additionalProperties: false },
   ),
