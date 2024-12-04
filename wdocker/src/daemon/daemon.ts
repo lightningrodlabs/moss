@@ -298,7 +298,6 @@ async function tryJoinApplet(
     installed_app_id: appId,
     agent_key: toolsLibraryClient.client.myPubKey,
     network_seed: applet.network_seed,
-    membrane_proofs: {},
   });
 
   try {

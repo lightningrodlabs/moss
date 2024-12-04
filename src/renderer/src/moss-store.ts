@@ -991,7 +991,6 @@ export class MossStore {
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
-      {},
       encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       source.url,
       distributionInfo,

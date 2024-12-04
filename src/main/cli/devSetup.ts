@@ -501,7 +501,6 @@ async function installGroup(
     installed_app_id: appId,
     agent_key: appStoreAppInfo.agent_pub_key,
     network_seed: networkSeed,
-    membrane_proofs: {},
   });
   fs.rmSync(modifiedHappPath);
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
@@ -577,7 +576,6 @@ async function installHapp(
     installed_app_id: appId,
     agent_key: pubKey,
     network_seed: networkSeed,
-    membrane_proofs: {},
   });
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
 }

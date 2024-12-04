@@ -208,7 +208,6 @@ export class HolochainManager {
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
-      membrane_proofs: {},
       path: happPath,
       network_seed: networkSeed,
     });
@@ -251,7 +250,6 @@ export class HolochainManager {
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
-      membrane_proofs: {},
       path: filePath,
       network_seed: networkSeed,
     });

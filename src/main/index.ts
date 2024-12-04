@@ -1420,7 +1420,6 @@ app.whenReady().then(async () => {
       _e,
       appId: string,
       networkSeed: string,
-      membraneProofs,
       agentPubKey,
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,

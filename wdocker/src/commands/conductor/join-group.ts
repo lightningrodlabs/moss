@@ -122,7 +122,6 @@ export async function installGroup(
     installed_app_id: appId,
     agent_key: toolLibraryAppInfo.agent_pub_key,
     network_seed: partialModifiers.networkSeed,
-    membrane_proofs: {},
   });
   fs.rmSync(modifiedHappPath);
 

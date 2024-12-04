@@ -71,7 +71,6 @@ declare global {
       installAppletBundle: (
         appId: string,
         networkSeed: string,
-        membraneProofs: any,
         agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,

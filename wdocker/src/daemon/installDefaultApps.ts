@@ -22,7 +22,6 @@ export async function installDefaultAppsIfNecessary(adminWs: AdminWebsocket): Pr
       installed_app_id: TOOLS_LIBRARY_APP_ID,
       agent_key: pubkey,
       network_seed: toolLibraryNetworkSeed,
-      membrane_proofs: {},
     });
 
     await adminWs.enableApp({ installed_app_id: TOOLS_LIBRARY_APP_ID });
