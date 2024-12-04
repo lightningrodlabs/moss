@@ -45,6 +45,7 @@ import {
   AppletId,
   stringifyWal,
   deStringifyWal,
+  ParentToAppletMessage,
 } from '@theweave/api';
 
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
@@ -64,6 +65,7 @@ import {
   initAppClient,
   isAppDisabled,
   isAppRunning,
+  postMessageToAppletIframes,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
@@ -393,6 +395,14 @@ export class MossStore {
       store[appletId] = creatableTypes;
       return store;
     });
+  }
+
+  async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
+    // Send to iframes of main window
+    postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    // Send to iframes of WAL windows
+    console.log('@MossStore: emitParentToAppletMessage. Message: ', message);
+    return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
 
   /**

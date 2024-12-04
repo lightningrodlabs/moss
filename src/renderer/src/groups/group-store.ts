@@ -53,7 +53,6 @@ import {
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
-  postMessageToAppletIframes,
   reloadableLazyLoadAndPollUntil,
 } from '../utils.js';
 import { AppHashes, DistributionInfo } from '@theweave/moss-types';
@@ -242,12 +241,12 @@ export class GroupStore {
         if (signalContent.type === 'assets-signal') {
           this.assetSignalHandler(signalContent.content, false);
         } else if (signalContent.type === 'applet-signal') {
-          postMessageToAppletIframes(
-            { type: 'some', ids: [signalContent.appletId] },
+          this.mossStore.emitParentToAppletMessage(
             {
               type: 'remote-signal-received',
               payload: signalContent.payload,
             },
+            [signalContent.appletId],
           );
         }
       }
@@ -552,13 +551,13 @@ export class GroupStore {
         const appletIds = Object.entries(this._assetStores[walStringified].subscriberCounts)
           .filter(([_appletId, count]) => count > 0)
           .map(([appletId, _]) => appletId);
-        postMessageToAppletIframes(
-          { type: 'some', ids: appletIds },
+        this.mossStore.emitParentToAppletMessage(
           {
             type: 'asset-store-update',
             value: asyncStatus,
             walStringified,
           },
+          appletIds,
         );
       });
       storeAndSubscribers.unsubscribe = unsubscribe;
@@ -595,13 +594,13 @@ export class GroupStore {
         storeAndSubscribers.subscriberCounts[id] += 1;
       });
       // Send message to iframes with updated value
-      postMessageToAppletIframes(
-        { type: 'some', ids: appletIds },
+      this.mossStore.emitParentToAppletMessage(
         {
           type: 'asset-store-update',
           value: get(storeAndSubscribers.store),
           walStringified,
         },
+        appletIds,
       );
     }
   }

@@ -3,7 +3,7 @@
 // IPC_CHANGE_HERE
 import { CallZomeRequest } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { AppletToParentMessage } from '@theweave/api';
+import { AppletId, AppletToParentMessage, ParentToAppletMessage } from '@theweave/api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   appletMessageToParent: (message: AppletToParentMessage) =>
@@ -14,6 +14,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getMySrc: () => ipcRenderer.invoke('get-my-src'),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
+  onParentToAppletMessage: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      message: ParentToAppletMessage,
+      forApplets: AppletId[],
+    ) => any,
+  ) => ipcRenderer.on('parent-to-applet-message', callback),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   setMyIcon: (icon: string) => ipcRenderer.invoke('set-my-icon', icon),
   setMyTitle: (title: string) => ipcRenderer.invoke('set-my-title', title),

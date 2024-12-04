@@ -54,7 +54,13 @@ import {
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { handleAppletProtocol } from './customSchemes';
-import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  ParentToAppletMessage,
+  WAL,
+} from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
@@ -863,6 +869,17 @@ app.whenReady().then(async () => {
   ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
     WE_EMITTER.emit(id, response);
   });
+  ipcMain.handle(
+    'parent-to-applet-message',
+    (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
+      // We send this to all wal windows as they may also contain embeddables
+      console.log('Sending parent-to-applet-message to windows. Message: ', message);
+      console.log('Sending parent-to-applet-message to windows. forApplets: ', forApplets);
+      Object.values(WAL_WINDOWS).forEach(({ window }) =>
+        emitToWindow(window, 'parent-to-applet-message', { message, forApplets }),
+      );
+    },
+  );
   ipcMain.handle('get-app-version', (): string => app.getVersion());
   ipcMain.handle(
     'dialog-messagebox',
@@ -1120,7 +1137,6 @@ app.whenReady().then(async () => {
       installed_app_id: appId,
       agent_key: toolsLibraryAppInfo.agent_pub_key,
       network_seed: networkSeed,
-      membrane_proofs: {},
     });
     fs.rmSync(modifiedHappPath);
     await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
@@ -1168,7 +1184,6 @@ app.whenReady().then(async () => {
         installed_app_id: appId,
         agent_key: toolsLibraryAppInfo.agent_pub_key,
         network_seed: networkSeed,
-        membrane_proofs: {},
       });
       fs.rmSync(modifiedHappPath);
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
@@ -1486,7 +1501,6 @@ app.whenReady().then(async () => {
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
-        membrane_proofs: membraneProofs,
       });
       // TODO Store more app metadata
       // Store app metadata

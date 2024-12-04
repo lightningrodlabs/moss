@@ -27,7 +27,6 @@ export class PostsClient extends ZomeClient<PostsSignal> {
 
   async getPost(postHash: ActionHash): Promise<EntryRecord<Post> | undefined> {
     const record: Record | null = await this.callZome('get_post', postHash);
-    console.log('Tried to get post for hash ', encodeHashToBase64(postHash), 'and got: ', record);
     return record ? new EntryRecord(record) : undefined;
   }
 

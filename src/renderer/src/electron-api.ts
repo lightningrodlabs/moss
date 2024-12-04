@@ -9,7 +9,13 @@ import {
   FunctionName,
   DnaHashB64,
 } from '@holochain/client';
-import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  ParentToAppletMessage,
+  WAL,
+} from '@theweave/api';
 
 import { AppAssetsInfo, AppHashes, DistributionInfo } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
@@ -24,17 +30,21 @@ declare global {
     electronAPI: {
       signZomeCallApplet: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
       appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
+      parentToAppletMessage: (
+        message: ParentToAppletMessage,
+        forApplets: AppletId[],
+      ) => Promise<void>;
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       onAppletToParentMessage: (
-        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => any,
-      ) => any;
-      onDeepLinkReceived: (callback: (e: any, payload: string) => any) => any;
-      onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => any;
-      onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => any;
+        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
+      ) => void;
+      onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
+      onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => void;
+      onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onZomeCallSigned: (
         callback: (
           e: any,
@@ -44,7 +54,7 @@ declare global {
             zomeName: ZomeName;
           },
         ) => any,
-      ) => any;
+      ) => void;
       closeMainWindow: () => Promise<void>;
       openApp: (appId: string) => Promise<void>;
       openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;

@@ -11,7 +11,13 @@ import {
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { DistributionInfo } from '../main/filesystem';
-import { AppletId, AppletToParentMessage, FrameNotification, WAL } from '@theweave/api';
+import {
+  AppletId,
+  AppletToParentMessage,
+  FrameNotification,
+  ParentToAppletMessage,
+  WAL,
+} from '@theweave/api';
 import { AppHashes } from '@theweave/moss-types';
 import { ProgressInfo } from '@matthme/electron-updater';
 
@@ -24,6 +30,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('sign-zome-call-applet', request),
   appletMessageToParentResponse: (response: any, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
+  parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
+    ipcRenderer.invoke('parent-to-applet-message', message, forApplet),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>

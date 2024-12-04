@@ -4,19 +4,60 @@ import { weStyles } from './shared-styles';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import {
   AppletHash,
+  AppletId,
   AppletInfo,
   AppletToParentMessage,
   AppletToParentRequest,
   AssetLocationAndInfo,
   GroupProfile,
+  ParentToAppletMessage,
+  WAL,
 } from '@theweave/api';
-import { decodeHashFromBase64 } from '@holochain/client';
+import { CallZomeRequest, CallZomeRequestSigned, decodeHashFromBase64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { postMessageToAppletIframes } from './utils';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 // import { ipcRenderer } from 'electron';
+
+type ParentToAppletMessagePayload = {
+  message: ParentToAppletMessage;
+  forApplets: AppletId[];
+};
+
+// IPC_CHANGE here
+declare global {
+  interface Window {
+    __WINDOW_CLOSING__: boolean | undefined;
+  }
+  interface WALWindow {
+    electronAPI: {
+      appletMessageToParent: (message: AppletToParentMessage) => Promise<any>;
+      closeWindow: () => Promise<void>;
+      focusMainWindow: () => Promise<void>;
+      focusMyWindow: () => Promise<void>;
+      getMySrc: () => Promise<
+        | {
+            iframeSrc: string;
+            appletId: AppletId;
+            wal: WAL;
+          }
+        | undefined
+      >;
+      onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) => void;
+      onParentToAppletMessage: (
+        callback: (e: Electron.IpcRendererEvent, payload: ParentToAppletMessagePayload) => any,
+      ) => void;
+      selectScreenOrWindow: () => Promise<string>;
+      setMyIcon: (icon: string) => Promise<void>;
+      setMyTitle: (title: string) => Promise<void>;
+      signZomeCallApplet: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
+    };
+  }
+}
+
+const walWindow = window as unknown as WALWindow;
 
 @localized()
 @customElement('wal-window')
@@ -54,9 +95,9 @@ export class WalWindow extends LitElement {
     console.log('on-before-unload callbacks finished.');
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     // The logic to set this variable lives in walwindow.html
-    if ((window as any).__WINDOW_CLOSING__) {
+    if (window.__WINDOW_CLOSING__) {
       console.log('__WINDOW_CLOSING__ is true.');
-      (window as any).electronAPI.closeWindow();
+      walWindow.electronAPI.closeWindow();
     } else {
       window.location.reload();
     }
@@ -70,6 +111,12 @@ export class WalWindow extends LitElement {
       window.addEventListener('beforeunload', this.beforeUnloadListener);
     }, 5000);
 
+    walWindow.electronAPI.onParentToAppletMessage(async (_e, { message, forApplets }) => {
+      console.log('got parent to applet message: ', message);
+      console.log('got parent to applet forApplets: ', forApplets);
+      await postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    });
+
     // set up handler to handle iframe messages
     window.addEventListener('message', async (message) => {
       const request = message.data.request as AppletToParentRequest;
@@ -82,7 +129,7 @@ export class WalWindow extends LitElement {
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
-              return (window.electronAPI as any).closeWindow();
+              return walWindow.electronAPI.closeWindow();
             case 'user-select-asset': {
               await (window.electronAPI as any).focusMainWindow();
               let error;
@@ -92,13 +139,11 @@ export class WalWindow extends LitElement {
                 appletHash: this.appletHash,
               };
               try {
-                response = await (window.electronAPI as any).appletMessageToParent(
-                  appletToParentMessage,
-                );
+                response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
               } catch (e) {
                 error = e;
               }
-              await (window.electronAPI as any).focusMyWindow();
+              await walWindow.electronAPI.focusMyWindow();
               if (error) return Promise.reject(`Failed to select WAL: ${error}`);
               return response;
             }
@@ -108,7 +153,7 @@ export class WalWindow extends LitElement {
                 request: message.data.request,
                 appletHash: this.appletHash,
               };
-              return (window.electronAPI as any).appletMessageToParent(appletToParentMessage);
+              return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
           }
         }
       };
@@ -126,7 +171,8 @@ export class WalWindow extends LitElement {
       }
     });
 
-    const appletSrcInfo = await (window as any).electronAPI.getMySrc();
+    const appletSrcInfo = await walWindow.electronAPI.getMySrc();
+    if (!appletSrcInfo) throw new Error('No associated applet info found.');
     this.iframeSrc = appletSrcInfo.iframeSrc;
     this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
     try {
@@ -180,7 +226,7 @@ export class WalWindow extends LitElement {
     this.slowLoading = false;
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     // The logic to set this variable lives in walwindow.html
-    if ((window as any).__WINDOW_CLOSING__) {
+    if (window.__WINDOW_CLOSING__) {
       (window as any).electronAPI.closeWindow();
     } else {
       window.location.reload();
