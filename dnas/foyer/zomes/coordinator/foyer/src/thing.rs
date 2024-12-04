@@ -22,7 +22,7 @@ pub fn get_thing(original_thing_hash: ActionHash) -> ExternResult<Option<Record>
         GetLinksInputBuilder::try_new(original_thing_hash.clone(), LinkTypes::ThingUpdates)?
             .build();
     let links = get_links(input)?;
-    get_latest_record_from_links(links)
+    get_latest_record_from_links_with_original_hash(links, original_thing_hash)
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateThingInput {
@@ -62,7 +62,10 @@ pub fn get_things(_: ()) -> ExternResult<Vec<Link>> {
 
 /// Assumes that the passed links has an action hash as target and tries to get the Record
 /// associated to the target of the link with the latest timestamp
-pub fn get_latest_record_from_links(mut links: Vec<Link>) -> ExternResult<Option<Record>> {
+pub fn get_latest_record_from_links_with_original_hash(
+    mut links: Vec<Link>,
+    original_hash: ActionHash,
+) -> ExternResult<Option<Record>> {
     links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
     for link in links {
@@ -73,5 +76,5 @@ pub fn get_latest_record_from_links(mut links: Vec<Link>) -> ExternResult<Option
             }
         }
     }
-    Ok(None)
+    Ok(get(original_hash, GetOptions::default())?)
 }

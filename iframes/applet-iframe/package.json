@@ -5,10 +5,10 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@holochain-open-dev/profiles": "0.400.0-dev.4",
-    "@holochain-open-dev/utils": "0.400.0-dev.4",
-    "@holochain-open-dev/stores": "0.400.0-dev.3",
-    "@holochain/client": "0.18.0-rc.0",
+    "@holochain-open-dev/profiles": "0.400.0-rc.0",
+    "@holochain-open-dev/utils": "0.400.0-rc.0",
+    "@holochain-open-dev/stores": "0.400.0-rc.0",
+    "@holochain/client": "0.18.0-rc.1",
     "@theweave/api": "*",
     "@theweave/utils": "*",
     "inline-module": "^0.6.1"

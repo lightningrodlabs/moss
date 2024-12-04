@@ -116,7 +116,15 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                             .iter()
                             .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
                             .collect::<Vec<AgentPubKey>>();
-                        send_remote_signal(ExternIO::encode(signal), peers)?;
+                        send_remote_signal(
+                            ExternIO::encode(signal).map_err(|e| {
+                                wasm_error!(WasmErrorInner::Guest(format!(
+                                    "Failed to encode remote signal payload: {}",
+                                    e
+                                )))
+                            })?,
+                            peers,
+                        )?;
                     }
                     _ => (),
                 }
