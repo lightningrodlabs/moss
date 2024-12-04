@@ -31,8 +31,8 @@
     "sha256": "3a480f35091be18e15a3d442c7c30130165ebe89ea04000dae1d586532cf93b8"
   },
   "toolsLibrary": {
-    "version": "0.0.6",
-    "sha256": "5bf708efdfbc2111e58aa89bac5028c0ec9f094db3167e0e1989b5686c5fdf6e"
+    "version": "0.0.8",
+    "sha256": "a785b01d6ea165a4c6338d34e00eb3ca40cf6262bf5bb639e446b271d1cdbddf"
   },
   "binariesAppendix": "moss-0.13"
 }

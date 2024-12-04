@@ -1,6 +1,6 @@
 import { Post } from './types';
 
-import { AppClient, Record, ActionHash, DnaHash } from '@holochain/client';
+import { AppClient, Record, ActionHash, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { EntryRecord, ZomeClient, getCellIdFromRoleName } from '@holochain-open-dev/utils';
 
 import { PostsSignal } from './types.js';
@@ -26,7 +26,8 @@ export class PostsClient extends ZomeClient<PostsSignal> {
   }
 
   async getPost(postHash: ActionHash): Promise<EntryRecord<Post> | undefined> {
-    const record: Record = await this.callZome('get_post', postHash);
+    const record: Record | null = await this.callZome('get_post', postHash);
+    console.log('Tried to get post for hash ', encodeHashToBase64(postHash), 'and got: ', record);
     return record ? new EntryRecord(record) : undefined;
   }
 
