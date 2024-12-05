@@ -351,4 +351,4 @@ test('Steward can NOT nominate additional stewards without providing a valid per
 // TODO
 // - test that no steward permission returns member
 // - test that Steward permission entries cannot be created for oneself
-// - test retrieval of all steward permissions
+// - test retrieval of all agents' permission types
