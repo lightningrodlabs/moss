@@ -11,7 +11,7 @@ import {
   ActionHash,
   SignalType,
 } from '@holochain/client';
-import { AppletHash, GroupProfile, UnsubscribeFunction } from '@theweave/api';
+import { AppletHash, UnsubscribeFunction } from '@theweave/api';
 import { encode } from '@msgpack/msgpack';
 
 import {
@@ -28,6 +28,7 @@ import {
   AppletClonedCell,
   GroupRemoteSignal,
   SignalPayloadGroup,
+  GroupProfile,
 } from './types.js';
 
 export class GroupClient {

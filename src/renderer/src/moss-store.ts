@@ -425,6 +425,8 @@ export class MossStore {
 
     try {
       if (!groupStore) throw new Error('GroupStore still undefined after joining group.');
+      // Note that the person that creates the group is always the progenitor so they
+      // don't need to provide a permission_hash in the GroupProfile
       await groupStore.groupClient.setGroupProfile(groupProfile);
     } catch (e) {
       if ((e as any).toString().includes('source chain head has moved')) {
