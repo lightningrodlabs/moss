@@ -99,7 +99,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'remove_asset_relation',
-      payload: { src_wal: wal1, dst_wal: wal2 },
+      payload: assetRelation1.relation_hash,
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
@@ -341,7 +341,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
       tags: ['depends_on', 'loves', 'cares_about', 'likes'],
     };
 
-    const _assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
+    const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
       payload: input1,
@@ -459,14 +459,10 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     );
 
     // Remove the asset relation alltogether and verify that nothing is returned anymore.
-    const removeAssetRelationInput: AssetRelation = {
-      src_wal: wal1,
-      dst_wal: wal2,
-    };
     await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'remove_asset_relation',
-      payload: removeAssetRelationInput,
+      payload: assetRelation1.relation_hash,
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
