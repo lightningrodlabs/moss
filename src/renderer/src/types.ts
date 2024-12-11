@@ -1,5 +1,12 @@
 import { AgentPubKeyB64, DnaHash, FullStateDump } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
+import {
+  CuratedTool,
+  ToolCompatibilityId,
+  ToolCurator,
+  ToolInfoAndVersions,
+  ToolVersionInfo,
+} from '@theweave/moss-types';
 
 /**
  * DnaHash of a We group
@@ -41,4 +48,18 @@ export type DumpData = {
 
 export type ToolWeaveConfig = {
   crossGroupView: boolean;
+};
+
+export type ToolListUrl = string;
+
+export type ToolAndCurationInfo = {
+  toolCompatibilityId: ToolCompatibilityId;
+  toolInfoAndVersions: ToolInfoAndVersions;
+  curationInfos: Array<{
+    info: CuratedTool;
+    curator: ToolCurator;
+  }>;
+  latestVersion: ToolVersionInfo;
+  toolListUrl: string;
+  developerCollectiveId: string;
 };

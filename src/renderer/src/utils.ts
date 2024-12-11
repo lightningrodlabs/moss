@@ -1,5 +1,4 @@
 import {
-  EntryHash,
   CellId,
   CellInfo,
   DisabledAppReason,
@@ -36,7 +35,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo, ToolListUrl } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -51,6 +50,7 @@ import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
 import { appIdFromAppletId, toLowerCaseB64 } from '@theweave/utils';
+import { DeveloperCollecive, ToolCompatibilityId, WeDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -102,8 +102,12 @@ export function findAppForDnaHash(
   return undefined;
 }
 
-export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {
-  return new Uint8Array([0x84, 0x21, 0x24, ...md5Hash, ...new Uint8Array(20)]);
+export function deriveToolCompatibilityId(input: {
+  toolListUrl: string;
+  toolId: string;
+  versionBranch: string;
+}): ToolCompatibilityId {
+  return `${input.toolListUrl}#${input.toolId}#${input.versionBranch}`;
 }
 
 export function getStatus(app: AppInfo): string {
@@ -940,4 +944,100 @@ export async function postMessageToIframe<T>(
       };
     }
   });
+}
+
+/**
+ * Creates tool library content based on the Tools specified in the dev config.
+ *
+ * @param config
+ */
+export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
+  tools: ToolAndCurationInfo[];
+  devCollective: DeveloperCollecive;
+} {
+  const devModeDeveloperCollective: DeveloperCollecive = {
+    id: '###DEVMODE###',
+    name: 'This Tool is listed in the dev config file.',
+    description: 'Moss dev mode test dev collective',
+    contact: {},
+    icon: 'garbl',
+  };
+
+  const tools: ToolAndCurationInfo[] = config.applets.map((toolConfig) => {
+    let toolUrl: string;
+    switch (toolConfig.source.type) {
+      case 'filesystem':
+        toolUrl = `file://${toolConfig.source.path}`;
+        break;
+      case 'https':
+        toolUrl = toolConfig.source.url;
+        break;
+      case 'localhost':
+        toolUrl = `file://${toolConfig.source.happPath}`;
+        break;
+    }
+    return {
+      toolCompatibilityId: deriveToolCompatibilityId({
+        toolListUrl: '###DEVMODE###',
+        toolId: toolConfig.name,
+        versionBranch: '###DEVMODE###',
+      }),
+      developerCollectiveId: 'Moss dev mode test collective',
+      toolListUrl: '###DEVMODE###',
+      curationInfos: [
+        {
+          info: {
+            toolListUrl: '###DEVMODE###',
+            toolId: 'REPLACE',
+            versionBranch: '###DEVMODE###',
+            tags: [],
+          },
+          curator: {
+            name: 'Moss dev mode test curator',
+            icon: 'asdfas',
+            description: 'Moss dev mode test curator',
+            contact: {},
+          },
+        },
+      ],
+      toolInfoAndVersions: {
+        id: toolConfig.name,
+        title: toolConfig.name,
+        subtitle: toolConfig.subtitle,
+        description: toolConfig.description,
+        tags: [],
+        versionBranch: '###DEVMODE###',
+        icon: toolConfig.icon.type === 'filesystem' ? toolConfig.icon.path : toolConfig.icon.url,
+        versions: [
+          {
+            version: '0.1.0',
+            url: toolUrl,
+            changelog: 'Same same. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVMODE###',
+              happSha256: '###DEVMODE###',
+              uiSha256: '###DEVMODE###',
+            },
+          },
+        ],
+      },
+      latestVersion: {
+        version: '0.1.0',
+        url: toolUrl,
+        changelog: 'Same same. Just an example changelog.',
+        releasedAt: Date.now(),
+        hashes: {
+          webhappSha256: '###DEVMODE###',
+          happSha256: '###DEVMODE###',
+          uiSha256: '###DEVMODE###',
+        },
+      },
+    };
+  });
+
+  return {
+    tools,
+    devCollective: devModeDeveloperCollective,
+  };
 }

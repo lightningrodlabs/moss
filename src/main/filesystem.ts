@@ -1,73 +1,19 @@
 import path from 'path';
 import fs from 'fs';
 import semver from 'semver';
-import { ActionHashB64, DnaHashB64, EntryHashB64, InstalledAppId } from '@holochain/client';
+import { InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
 import { session } from 'electron';
 import { platform } from '@electron-toolkit/utils';
+import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
 
 export type Profile = string;
 export type UiIdentifier = string;
-
-export type AppAssetsInfo =
-  | {
-      type: 'happ';
-      assetSource: AssetSource; // Source of the actual asset bytes
-      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
-      sha256: string; // sha256 hash of the .happ file
-    }
-  | {
-      type: 'webhapp';
-      assetSource: AssetSource;
-      distributionInfo: DistributionInfo; // Info about the distribution channel (e.g. appstore hashes)
-      sha256?: string; // sha256 hash of the .webhapp file
-      happ: {
-        sha256: string; // sha256 hash of the .happ file. Will also define the name of the .happ file
-        dnas?: any; // sha256 hashes of dnas and zomes
-      };
-      ui: {
-        location:
-          | {
-              type: 'filesystem';
-              sha256: string; // Also defines the foldername where the unzipped assets are stored
-            }
-          | {
-              type: 'localhost';
-              port: number;
-            };
-      };
-    };
 
 export type AssetSource =
   | {
       type: 'https';
       url: string;
-    }
-  | {
-      type: 'filesystem'; // Installed from filesystem
-    }
-  | {
-      type: 'default-app'; // Shipped with the We executable by default
-    };
-
-/**
- * Info about the distribution channel of said app
- */
-export type DistributionInfo =
-  | {
-      type: 'tools-library';
-      info: {
-        toolsLibraryDnaHash: DnaHashB64;
-        /**
-         * Action Hash B64 of the original Tool entry
-         */
-        originalToolActionHash: ActionHashB64;
-        /**
-         * ActionHashB64 of the (updated) Tool entry this applet has been installed from
-         */
-        toolVersionActionHash: ActionHashB64;
-        toolVersionEntryHash: EntryHashB64;
-      };
     }
   | {
       type: 'filesystem'; // Installed from filesystem
@@ -259,15 +205,17 @@ export class MossFileSystem {
   }
 
   /**
-   * Deletes information about happ and (optionally) UI of an installed app
+   * Stores information about happ and (optionally) UI of an installed app
    *
    * @param installedAppId
+   * @param info
    */
-  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
+  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
+    const filePath = this.appAssetInfoPath(installedAppId);
     try {
-      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
+      fs.rmSync(filePath);
     } catch (e) {
-      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
+      throw new Error(`Failed to delete app assets info json file: ${e}`);
     }
   }
 
@@ -294,6 +242,19 @@ export class MossFileSystem {
       return appAssetsInfo;
     } catch (e) {
       throw new Error(`Failed to parse app assets info: ${e}`);
+    }
+  }
+
+  /**
+   * Deletes information about happ and (optionally) UI of an installed app
+   *
+   * @param installedAppId
+   */
+  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
+    try {
+      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
+    } catch (e) {
+      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
     }
   }
 

@@ -20,11 +20,11 @@ import { weStyles } from '../../../shared-styles.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
+import { ToolAndCurationInfo } from '../../../types.js';
 
 @localized()
-@customElement('install-tool-dialog')
-export class InstallToolDialog extends LitElement {
+@customElement('install-tool-dialog-web2')
+export class InstallToolDialogWeb2 extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
@@ -65,18 +65,17 @@ export class InstallToolDialog extends LitElement {
   _installationProgress: string | undefined;
 
   @state()
-  _toolEntity: UpdateableEntity<Tool> | undefined;
+  _tool: ToolAndCurationInfo | undefined;
 
   @state()
   _showAdvanced: boolean = false;
 
   // _unlisten: UnlistenFn | undefined;
 
-  async open(toolEntity: UpdateableEntity<Tool>) {
-    console.log('OPENING Tool APPLETINFO: ', toolEntity);
+  async open(tool: ToolAndCurationInfo) {
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
-    this._toolEntity = toolEntity;
+    this._tool = tool;
     setTimeout(() => {
       this.form.reset();
       this._appletDialog.show();
@@ -85,7 +84,7 @@ export class InstallToolDialog extends LitElement {
 
   close() {
     this.form.reset();
-    this._toolEntity = undefined;
+    this._tool = undefined;
     this._appletDialog.hide();
     this.dispatchEvent(
       new CustomEvent('install-tool-dialog-closed', {
@@ -105,13 +104,14 @@ export class InstallToolDialog extends LitElement {
 
   async installApplet(fields: { custom_name: string; network_seed?: string }) {
     if (this._installing) return;
+    if (!this._tool) {
+      notifyError('Tool undefined.');
+      throw new Error('Tool undefined.');
+    }
     this._installing = true;
     try {
       // Trigger the download of the icon
-      this._installationProgress = 'Fetching app icon...';
-      await toPromise(
-        this.mossStore.toolsLibraryStore.toolLogo.get(this._toolEntity!.originalActionHash),
-      );
+      // TODO convert icon to base64 and store it on disk
       this._installationProgress = 'Checking permission type...';
       const permissionType = await toPromise(this.groupStore.permissionType);
       if (permissionType.type === 'Member') {
@@ -125,8 +125,8 @@ export class InstallToolDialog extends LitElement {
       this._installationProgress = 'Downloading and installing Tool...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         {
-          type: 'tool-library',
-          toolBundleEntity: this._toolEntity!,
+          type: 'web2-developer-collective-list',
+          tool: this._tool,
         },
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
@@ -160,7 +160,7 @@ export class InstallToolDialog extends LitElement {
   }
 
   renderForm() {
-    if (!this._toolEntity) return html`Error.`;
+    if (!this._tool) return html`Error.`;
 
     switch (this._registeredApplets.value.status) {
       case 'pending':
@@ -181,10 +181,7 @@ export class InstallToolDialog extends LitElement {
             ${ref((input) => {
               if (!input) return;
               setTimeout(() => {
-                if (
-                  this._toolEntity &&
-                  allAppletsNames.includes(this._toolEntity!.record.entry.title)
-                ) {
+                if (this._tool && allAppletsNames.includes(this._tool.toolInfoAndVersions.title)) {
                   (input as HTMLInputElement).setCustomValidity('Name already exists');
                 } else {
                   (input as HTMLInputElement).setCustomValidity('');
@@ -200,7 +197,7 @@ export class InstallToolDialog extends LitElement {
                 e.target.setCustomValidity('');
               }
             }}
-            .defaultValue=${this._toolEntity.record.entry.title}
+            .defaultValue=${this._tool.toolInfoAndVersions.title}
           ></sl-input>
 
           <span

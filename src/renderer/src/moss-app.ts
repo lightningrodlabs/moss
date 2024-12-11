@@ -12,7 +12,7 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
 import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
-import { getConductorInfo, isAppletDev } from './electron-api.js';
+import { appletDevConfig, getConductorInfo } from './electron-api.js';
 import { ToolsLibraryClient } from '@theweave/tool-library-client';
 
 type State = { state: 'loading' } | { state: 'running' };
@@ -84,7 +84,7 @@ export class MossApp extends LitElement {
 
     const toolsLibraryAppClient = await initAppClient(toolsLibraryToken);
 
-    const isAppletDevMode = await isAppletDev();
+    const devConfig = await appletDevConfig();
 
     this._mossStore = new MossStore(
       adminWebsocket,
@@ -93,7 +93,7 @@ export class MossApp extends LitElement {
         new ToolsLibraryClient(toolsLibraryAppClient, 'tools', 'library'),
         info,
       ),
-      isAppletDevMode,
+      devConfig,
       {
         toolsLibraryAppId: toolsLibraryToken,
       },

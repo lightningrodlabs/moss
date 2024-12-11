@@ -2,9 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { nanoid } from 'nanoid';
-import { AppletConfig, GroupConfig, WeDevConfig } from './defineConfig';
+import { AppletConfig, GroupConfig, WeDevConfig } from '@theweave/moss-types';
 import tsNode from 'ts-node';
 import { defaultAppNetworkSeed } from '../utils';
+import { WeAppletDevInfo } from '@theweave/moss-types';
 
 const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // The first one will be picked by default. But all production bootstrap servers should be listed
@@ -28,14 +29,6 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal.holo.host',
 ];
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
-
-export interface WeAppletDevInfo {
-  config: WeDevConfig;
-  tempDir: string;
-  tempDirRoot: string;
-  agentIdx: number;
-  syncTime: number;
-}
 
 export interface CliOpts {
   profile?: string;

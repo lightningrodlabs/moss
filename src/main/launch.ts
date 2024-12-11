@@ -2,9 +2,9 @@ import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { BrowserWindow } from 'electron';
-import { DistributionInfo, MossFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import { DistributionInfo, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
@@ -202,7 +202,7 @@ export async function launch(
       }),
     );
   } else {
-    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem);
+    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, true);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

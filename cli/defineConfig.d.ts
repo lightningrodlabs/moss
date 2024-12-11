@@ -1,3 +1,10 @@
+export interface WeAppletDevInfo {
+    config: WeDevConfig;
+    tempDir: string;
+    tempDirRoot: string;
+    agentIdx: number;
+    syncTime: number;
+}
 /**
  * Define a configuration file to run We in development modes with groups
  * and applets pre-installed.
@@ -15,7 +22,22 @@ export interface WeDevConfig {
      * Configuration of available applets to install into groups
      */
     applets: AppletConfig[];
+    /**
+     * A list of URLs to Tool curations to use to populate the tool library additionally
+     * to the Tools specified in the applets field. Can also be left empty.
+     */
+    toolCurations: ToolCurationConfig[];
 }
+export type ToolCurationConfig = {
+    /**
+     * URL to the curator's list of Tool curations
+     */
+    url: string;
+    /**
+     * Which curation lists to use from the curator at the given url
+     */
+    useLists: string[];
+};
 export interface AppletConfig {
     /**
      * Name of the applet as it should appear in the applet library

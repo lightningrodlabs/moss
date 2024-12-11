@@ -2,7 +2,6 @@ import { BrowserWindow, app, shell } from 'electron';
 import semver from 'semver';
 import os from 'os';
 import { breakingAppVersion } from './filesystem';
-import { WeDevConfig } from './cli/defineConfig';
 import {
   CallZomeRequest,
   CallZomeRequestSigned,
@@ -11,6 +10,7 @@ import {
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { WeDevConfig } from '@theweave/moss-types';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';

@@ -74,6 +74,7 @@ import {
   AppletAgent,
 } from '@theweave/group-client';
 import isEqual from 'lodash-es/isEqual.js';
+import { ToolAndCurationInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const AGENTS_REFETCH_FREQUENCY = 10;
@@ -839,7 +840,15 @@ export class GroupStore {
    * Stewards.
    */
   async installAndAdvertiseApplet(
-    toolBundleEntity: UpdateableEntity<Tool>,
+    input:
+      | {
+          type: 'tool-library';
+          toolBundleEntity: UpdateableEntity<Tool>;
+        }
+      | {
+          type: 'web2-developer-collective-list';
+          tool: ToolAndCurationInfo;
+        },
     customName: string,
     networkSeed?: string,
     permissionHash?: ActionHash,
@@ -848,30 +857,64 @@ export class GroupStore {
       networkSeed = uuidv4();
     }
 
-    const appHashes: AppHashes = JSON.parse(toolBundleEntity.record.entry.hashes);
-    const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
+    let applet: Applet;
 
-    const distributionInfo: DistributionInfo = {
-      type: 'tools-library',
-      info: {
-        toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-        originalToolActionHash: encodeHashToBase64(toolBundleEntity.originalActionHash),
-        toolVersionActionHash: encodeHashToBase64(toolBundleEntity.record.actionHash),
-        toolVersionEntryHash: encodeHashToBase64(toolBundleEntity.record.entryHash),
-      },
-    };
+    if (input.type === 'tool-library') {
+      const appHashes: AppHashes = JSON.parse(input.toolBundleEntity.record.entry.hashes);
+      const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
 
-    const applet: Applet = {
-      permission_hash: permissionHash,
-      custom_name: customName,
-      description: toolBundleEntity.record.entry.description,
-      sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
-      sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
-      sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,
-      distribution_info: JSON.stringify(distributionInfo),
-      network_seed: networkSeed,
-      properties: {},
-    };
+      const distributionInfo: DistributionInfo = {
+        type: 'tools-library',
+        info: {
+          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+          originalToolActionHash: encodeHashToBase64(input.toolBundleEntity.originalActionHash),
+          toolVersionActionHash: encodeHashToBase64(input.toolBundleEntity.record.actionHash),
+          toolVersionEntryHash: encodeHashToBase64(input.toolBundleEntity.record.entryHash),
+        },
+      };
+
+      applet = {
+        permission_hash: permissionHash,
+        custom_name: customName,
+        description: input.toolBundleEntity.record.entry.description,
+        sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
+        sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
+        sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,
+        distribution_info: JSON.stringify(distributionInfo),
+        network_seed: networkSeed,
+        properties: {},
+      };
+    } else {
+      const latestVersion = input.tool.latestVersion;
+      if (!latestVersion.hashes.webhappSha256) throw new Error('webhappSha256 not defined.');
+      if (!latestVersion.hashes.happSha256) throw new Error('happSha256 not defined.');
+      if (!latestVersion.hashes.uiSha256) throw new Error('uiSha256 not defined.');
+
+      const distributionInfo: DistributionInfo = {
+        type: 'web2-developer-collective-list',
+        info: {
+          developerCollectiveId: input.tool.developerCollectiveId,
+          toolListUrl: input.tool.toolListUrl,
+          toolId: input.tool.toolInfoAndVersions.id,
+          versionBranch: input.tool.toolInfoAndVersions.versionBranch,
+          toolVersion: latestVersion.version,
+        },
+      };
+
+      console.log('INSTALLING WITH distributionInfo: ', distributionInfo);
+
+      applet = {
+        permission_hash: permissionHash,
+        custom_name: customName,
+        description: input.tool.toolInfoAndVersions.description,
+        sha256_happ: latestVersion.hashes.happSha256,
+        sha256_ui: latestVersion.hashes.uiSha256,
+        sha256_webhapp: latestVersion.hashes.webhappSha256,
+        distribution_info: JSON.stringify(distributionInfo),
+        network_seed: networkSeed,
+        properties: {},
+      };
+    }
 
     const appletHash = await this.groupClient.hashApplet(applet);
 

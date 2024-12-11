@@ -5,8 +5,9 @@ import * as childProcess from 'child_process';
 import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
 import { AdminWebsocket, AppAuthenticationToken, AppInfo, InstalledAppId } from '@holochain/client';
-import { AppAssetsInfo, DistributionInfo, MossFileSystem } from './filesystem';
+import { MossFileSystem } from './filesystem';
 import { app } from 'electron';
+import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 

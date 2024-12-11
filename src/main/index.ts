@@ -26,7 +26,7 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
-import { AppAssetsInfo, DistributionInfo, MossFileSystem, deriveAppAssetsInfo } from './filesystem';
+import { MossFileSystem, deriveAppAssetsInfo } from './filesystem';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -35,7 +35,13 @@ import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
 import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
 import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
-import { AppHashes, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import {
+  AppAssetsInfo,
+  AppHashes,
+  DistributionInfo,
+  TOOLS_LIBRARY_APP_ID,
+  WeDevConfig,
+} from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -71,7 +77,7 @@ const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
 
-console.log('process.argv: ', process.argv);
+// console.log('process.argv: ', process.argv);
 
 // Set as default protocol client for weave-0.13 deep links
 if (process.defaultApp) {
@@ -93,9 +99,9 @@ if (ranViaCli) {
 const weCli = new Command();
 
 weCli
-  .name(ranViaCli ? '@theweave/cli' : 'Lightningrod Labs We')
+  .name(ranViaCli ? '@theweave/cli' : 'Moss')
   .description(
-    ranViaCli ? 'Running We applets in development mode.' : 'Running We via the command line.',
+    ranViaCli ? 'Running Moss Tools in development mode.' : 'Running Moss via the command line.',
   )
   .version(appVersion)
   .option(
@@ -530,6 +536,28 @@ Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
+  // if (hashWebhappCommand) {
+  //   const pathOrUrl = hashWebhappCommand.args[0];
+  //   if (pathOrUrl.startsWith('https://')) {
+  //     console.log('Fetching webhapp from ', pathOrUrl);
+  //     const webhapp = await fetch(pathOrUrl);
+  //     console.log('Computing hashes...');
+  //     const appHashes = await rustUtils.validateHappOrWebhapp(
+  //       Array.from(new Uint8Array(await webhapp.arrayBuffer())),
+  //     );
+  //     console.log('Result:');
+  //     console.log(JSON.stringify(appHashes, undefined, 4));
+  //   } else {
+  //     console.log('Loading webhapp from path', pathOrUrl);
+  //     const webhapp = fs.readFileSync(pathOrUrl);
+  //     console.log('Computing hashes...');
+  //     const appHashes = await rustUtils.validateHappOrWebhapp(Array.from(webhapp));
+  //     console.log('Result:');
+  //     console.log(JSON.stringify(appHashes, undefined, 4));
+  //   }
+  //   process.exit(0);
+  // }
+
   console.log('BEING RUN IN __dirnmane: ', __dirname);
 
   session.defaultSession.protocol.handle('moss', (request) => {
@@ -1011,6 +1039,7 @@ app.whenReady().then(async () => {
     },
   );
   ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
+  ipcMain.handle('applet-dev-config', (_e): WeDevConfig | undefined => RUN_OPTIONS.devInfo?.config);
   ipcMain.handle(
     'get-all-app-assets-infos',
     async (): Promise<Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>> => {
@@ -1424,12 +1453,12 @@ app.whenReady().then(async () => {
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,
       appHashes: AppHashes,
-      metadata?: string,
+      uiPort?: number,
     ): Promise<AppInfo> => {
       const sha256Ui = appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined;
       const sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
       const sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
-      console.log('INSTALLING APPLET BUNDLE. metadata: ', metadata);
+      console.log('INSTALLING APPLET BUNDLE. uiPort: ', uiPort);
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
@@ -1462,20 +1491,28 @@ app.whenReady().then(async () => {
         const { happSha256, webhappSha256, uiSha256 } =
           await rustUtils.validateHappOrWebhapp(assetBytes);
 
-        if (happSha256 !== sha256Happ)
-          throw new Error(
-            `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-          );
-        if (webhappSha256 && webhappSha256 !== sha256Webhapp)
-          throw new Error(
-            `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
-          );
-        if (uiSha256 && uiSha256 !== sha256Ui)
-          throw new Error(
-            `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiSha256}' but expected hash ${sha256Ui}`,
-          );
-        if (sha256Webhapp && !sha256Ui)
-          throw new Error('Got applet with a webhapp hash but no UI hash.');
+        // Check the hashes unless we're in dev mode and it's a Tool from the dev config
+        const isTrustedToolFromDevConfig =
+          RUN_OPTIONS.devInfo &&
+          distributionInfo.type === 'web2-developer-collective-list' &&
+          distributionInfo.info.toolListUrl.startsWith('###DEVMODE###');
+
+        if (!isTrustedToolFromDevConfig) {
+          if (happSha256 !== sha256Happ)
+            throw new Error(
+              `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
+            );
+          if (webhappSha256 && webhappSha256 !== sha256Webhapp)
+            throw new Error(
+              `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
+            );
+          if (uiSha256 && uiSha256 !== sha256Ui)
+            throw new Error(
+              `The downloaded resource has an invalid UI hash. The source may be corrupted.\nGot hash '${uiSha256}' but expected hash ${sha256Ui}`,
+            );
+          if (sha256Webhapp && !sha256Ui)
+            throw new Error('Got applet with a webhapp hash but no UI hash.');
+        }
 
         tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -1495,23 +1532,7 @@ app.whenReady().then(async () => {
         );
       }
 
-      const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
-        installed_app_id: appId,
-        agent_key: agentPubKey,
-        network_seed: networkSeed,
-      });
-      // TODO Store more app metadata
       // Store app metadata
-      let uiPort: number | undefined;
-      if (metadata) {
-        try {
-          const metadataObject = JSON.parse(metadata);
-          if (metadataObject.uiPort) {
-            uiPort = metadataObject.uiPort;
-          }
-        } catch (e) {}
-      }
       const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
         distributionInfo,
         happOrWebHappUrl,
@@ -1521,12 +1542,28 @@ app.whenReady().then(async () => {
         uiPort,
       );
       WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
-      // remove temp dir again
-      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+
+      let appInfo: AppInfo;
+      try {
+        appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+          path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+          installed_app_id: appId,
+          agent_key: agentPubKey,
+          network_seed: networkSeed,
+        });
+      } catch (e) {
+        // Remove AppMetaData directory again
+        WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+        throw new Error(`Failed to install app: ${e}`);
+      }
+
       console.log('@install-applet-bundle: app installed.');
 
       // Enable the app after storing metadata in case enabling fails
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+
+      // remove temp dir again
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
 
       return appInfo;
     },

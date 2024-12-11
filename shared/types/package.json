@@ -18,7 +18,8 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "0.18.0-rc.1",
-    "@theweave/api": "*"
+    "@theweave/api": "*",
+    "@sinclair/typebox": "0.33.12"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

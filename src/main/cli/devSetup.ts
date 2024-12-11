@@ -6,7 +6,13 @@ import mime from 'mime';
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
 import { Tool, DeveloperCollective } from '../sharedTypes';
-import { AppHashes, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import {
+  AppAssetsInfo,
+  AppHashes,
+  DistributionInfo,
+  TOOLS_LIBRARY_APP_ID,
+  WeAppletDevInfo,
+} from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from '../paths';
 import {
   ActionHash,
@@ -20,10 +26,9 @@ import {
   Record as HolochainRecord,
   GrantedFunctionsType,
 } from '@holochain/client';
-import { AppAssetsInfo, DistributionInfo, MossFileSystem } from '../filesystem';
+import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
-import { WeAppletDevInfo } from './cli';
 import * as childProcess from 'child_process';
 import split from 'split';
 import {
@@ -32,7 +37,7 @@ import {
   GroupConfig,
   ResourceLocation,
   WebHappLocation,
-} from './defineConfig';
+} from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import * as yaml from 'js-yaml';
 import { HC_BINARY } from '../binaries';
@@ -102,6 +107,7 @@ export async function devSetup(
   config: WeAppletDevInfo,
   holochainManager: HolochainManager,
   mossFileSystem: MossFileSystem,
+  useToolLibrary: boolean,
 ): Promise<void> {
   const logDevSetup = (msg) => console.log(`[weave-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
@@ -129,32 +135,35 @@ export async function devSetup(
     }
   }
 
-  const toolsLibraryAuthenticationResponse =
-    await holochainManager.adminWebsocket.issueAppAuthenticationToken({
-      installed_app_id: TOOLS_LIBRARY_APP_ID,
-      single_use: false,
-      expiry_seconds: 0,
+  let toolsLibraryClient: AppWebsocket | undefined;
+  let toolsLibraryDnaHash: DnaHashB64 | undefined;
+  if (useToolLibrary) {
+    const toolsLibraryAuthenticationResponse =
+      await holochainManager.adminWebsocket.issueAppAuthenticationToken({
+        installed_app_id: TOOLS_LIBRARY_APP_ID,
+        single_use: false,
+        expiry_seconds: 0,
+      });
+
+    toolsLibraryClient = await AppWebsocket.connect({
+      url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
+      wsClientOptions: {
+        origin: 'moss-admin',
+      },
+      token: toolsLibraryAuthenticationResponse.token,
+      defaultTimeout: 4000,
     });
+    const toolsLibraryCells = await toolsLibraryClient.appInfo();
+    for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
+      await holochainManager.adminWebsocket.authorizeSigningCredentials(
+        cell['provisioned'].cell_id,
+        GrantedFunctionsType.All,
+      );
+      toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+    }
 
-  const toolsLibraryClient = await AppWebsocket.connect({
-    url: new URL(`ws://127.0.0.1:${holochainManager.appPort}`),
-    wsClientOptions: {
-      origin: 'moss-admin',
-    },
-    token: toolsLibraryAuthenticationResponse.token,
-    defaultTimeout: 4000,
-  });
-  const toolsLibraryCells = await toolsLibraryClient.appInfo();
-  let toolsLibraryDnaHash: DnaHashB64 | undefined = undefined;
-  for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(
-      cell['provisioned'].cell_id,
-      GrantedFunctionsType.All,
-    );
-    toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+    if (!toolsLibraryDnaHash) throw new Error('Failed to determine appstore DNA hash.');
   }
-
-  if (!toolsLibraryDnaHash) throw new Error('Failed to determine appstore DNA hash.');
 
   for (const group of config.config.groups) {
     // If the running agent is supposed to create the group
@@ -274,29 +283,46 @@ export async function devSetup(
                   sha256: happHash,
                 };
 
-          // Check whether applet is already published to the appstore - if not publish it
-          if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
-            logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
-            const toolRecord = await publishApplet(
-              toolsLibraryClient,
-              appletConfig,
-              maybeWebHappPath ? maybeWebHappPath : happPath,
-              appHashes,
-            );
-            publishedApplets[appletConfig.name] = toolRecord;
+          let distributionInfo: DistributionInfo;
+
+          if (useToolLibrary && toolsLibraryClient && toolsLibraryDnaHash) {
+            // Check whether applet is already published to the appstore - if not publish it
+            if (!Object.keys(publishedApplets).includes(appletConfig.name)) {
+              logDevSetup(`Publishing applet '${appletInstallConfig.name}' to appstore...`);
+              const toolRecord = await publishApplet(
+                toolsLibraryClient,
+                appletConfig,
+                maybeWebHappPath ? maybeWebHappPath : happPath,
+                appHashes,
+              );
+              publishedApplets[appletConfig.name] = toolRecord;
+            }
+
+            const toolRecord = publishedApplets[appletConfig.name];
+
+            distributionInfo = {
+              type: 'tools-library',
+              info: {
+                toolsLibraryDnaHash,
+                originalToolActionHash: encodeHashToBase64(toolRecord.actionHash),
+                toolVersionActionHash: encodeHashToBase64(toolRecord.actionHash),
+                toolVersionEntryHash: encodeHashToBase64(toolRecord.entryHash),
+              },
+            };
+          } else {
+            const uiPort =
+              appletConfig.source.type === 'localhost' ? appletConfig.source.uiPort : undefined;
+            distributionInfo = {
+              type: 'web2-developer-collective-list',
+              info: {
+                toolListUrl: `###DEVMODE###${uiPort ? uiPort : ''}`, // Add uiPort here
+                developerCollectiveId: '###DEVMODE###',
+                toolId: appletConfig.name,
+                versionBranch: '###DEVMODE###',
+                toolVersion: '###DEVMODE###',
+              },
+            };
           }
-
-          const toolRecord = publishedApplets[appletConfig.name];
-
-          const distributionInfo: DistributionInfo = {
-            type: 'tools-library',
-            info: {
-              toolsLibraryDnaHash,
-              originalToolActionHash: encodeHashToBase64(toolRecord.actionHash),
-              toolVersionActionHash: encodeHashToBase64(toolRecord.actionHash),
-              toolVersionEntryHash: encodeHashToBase64(toolRecord.entryHash),
-            },
-          };
 
           const networkSeed = randomUUID();
           const applet: Applet = {
@@ -621,7 +647,7 @@ async function publishApplet(
   // Create Tool entry
 
   // TODO: Potentially change this to be taken from the original source or a local cache
-  // Instead of pointing to local temp files
+  // instead of pointing to local temp files
   const source = JSON.stringify({
     type: 'https',
     url: `file://${happOrWebHappPath}`,

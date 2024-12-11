@@ -17,8 +17,6 @@ type VersionAndSha256 = {
   sha256: string;
 };
 
-console.log('APP PATH: ', app.getAppPath());
-
 const mossConfigPath = path.join(app.getAppPath(), 'moss.config.json');
 
 const mossConfigJSON = fs.readFileSync(mossConfigPath, 'utf-8');

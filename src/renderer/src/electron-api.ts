@@ -17,7 +17,7 @@ import {
   WAL,
 } from '@theweave/api';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo } from '@theweave/moss-types';
+import { AppAssetsInfo, AppHashes, DistributionInfo, WeDevConfig } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
@@ -39,6 +39,7 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
+      appletDevConfig: () => Promise<WeDevConfig | undefined>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
@@ -75,7 +76,7 @@ declare global {
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
-        metadata?: string,
+        uiPort?: number,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
@@ -189,6 +190,10 @@ export async function isDevModeEnabled(): Promise<boolean> {
 
 export async function isAppletDev(): Promise<boolean> {
   return window.electronAPI.isAppletDev();
+}
+
+export async function appletDevConfig(): Promise<WeDevConfig | undefined> {
+  return window.electronAPI.appletDevConfig();
 }
 
 export async function enableDevMode(): Promise<void> {

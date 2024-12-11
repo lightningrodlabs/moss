@@ -52,7 +52,7 @@ import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/cross-applet-main.js';
-import '../personal-views/tool-library/tool-library.js';
+import '../personal-views/tool-library/tool-library-web2.js';
 import '../personal-views/tool-publishing/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
@@ -867,7 +867,7 @@ export class MainDashboard extends LitElement {
           : ''} overflow-x: hidden; overflow-y: auto;"
       ></activity-view>
 
-      <tool-library
+      <tool-library-web2
         style="${this.displayMossView('tool-library')
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing
@@ -892,7 +892,7 @@ export class MainDashboard extends LitElement {
             appletHash: e.detail.appletEntryHash,
           });
         }}
-      ></tool-library>
+      ></tool-library-web2>
 
       <publishing-view
         style="${this.displayMossView('publisher-panel')

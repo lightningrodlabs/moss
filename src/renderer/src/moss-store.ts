@@ -69,7 +69,13 @@ import {
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
+import {
+  AppHashes,
+  DeveloperCollectiveToolList,
+  DistributionInfo,
+  WebHappSource,
+  WeDevConfig,
+} from '@theweave/moss-types';
 import {
   appIdFromAppletHash,
   appIdFromAppletId,
@@ -85,6 +91,7 @@ import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
+import { compareVersions, validate } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -94,16 +101,19 @@ export type WalInPocket = {
 };
 
 export class MossStore {
+  public isAppletDev: boolean;
+
   constructor(
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
     public toolsLibraryStore: ToolsLibraryStore,
-    public isAppletDev: boolean,
+    public appletDevConfig: WeDevConfig | undefined,
     authenticationTokens: Record<InstalledAppId, AppAuthenticationToken>,
   ) {
     this._authenticationTokens = authenticationTokens;
     this.myLatestActivity = Date.now();
     this._version = conductorInfo.moss_version;
+    this.isAppletDev = !!appletDevConfig;
   }
 
   private _availableToolUpdates: Writable<Record<ActionHashB64, UpdateableEntity<Tool>>> = writable(
@@ -234,7 +244,6 @@ export class MossStore {
     // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
     const allLatestToolEntities =
       await this.toolsLibraryStore.toolsLibraryClient.getAllToolEntites();
-    console.log('@checkForUiUpdates:  allLatestToolEntities: ', allLatestToolEntities);
 
     Object.values(appAssetsInfos).forEach(([appAssetInfo, _weaveConfig]) => {
       if (
@@ -960,44 +969,142 @@ export class MossStore {
       );
     }
 
-    const toolEntity = await this.toolsLibraryStore.getLatestToolEntry(
-      toolBundleActionHashFromDistInfo(applet.distribution_info),
-    );
-
-    console.log('@installApplet: got ToolEntry: ', toolEntity.record.entry);
-    console.log('@installApplet: got Applet: ', applet);
-
-    if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
-
-    const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-    if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-    if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
-      throw new Error(`Invalid applet source URL '${source.url}'`);
-
-    const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-    // Only in dev mode AppHashes of type 'happ' are currently allowed
-    if (appHashes.type !== 'webhapp' && !this.isAppletDev)
-      throw new Error(
-        `Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${toolEntity.record.entry.hashes}`,
-      );
+    console.log('@moss-store: INSTALLING WITH distributionInfo: ', applet.distribution_info);
 
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+    let metaData: any;
+    let appHashes: AppHashes;
+    let happOrWebhappUrl: string;
+    let uiPort: number | undefined;
 
-    if (
-      distributionInfo.type === 'tools-library' &&
-      distributionInfo.info.originalToolActionHash !==
-        encodeHashToBase64(toolEntity.originalActionHash)
-    )
-      throw new Error('Original ToolEntry action hash does not match the one in the AppletEntry');
+    case1: if (distributionInfo.type === 'web2-developer-collective-list') {
+      // In case it's applet dev mode *and* it's a tool from the dev config
+      // then derive the relevant info right here
+      if (this.appletDevConfig) {
+        if (distributionInfo.info.toolListUrl.startsWith('###DEVMODE###')) {
+          const toolConfig = this.appletDevConfig.applets.find(
+            (config) => config.name === distributionInfo.info.toolId,
+          );
+          if (!toolConfig) throw new Error('No matching Tool found in the dev config.');
+
+          switch (toolConfig.source.type) {
+            case 'filesystem':
+              happOrWebhappUrl = `file://${toolConfig.source.path}`;
+              break;
+            case 'https':
+              happOrWebhappUrl = toolConfig.source.url;
+              break;
+            case 'localhost':
+              happOrWebhappUrl = `file://${toolConfig.source.happPath}`;
+              break;
+          }
+
+          appHashes =
+            toolConfig.source.type === 'localhost'
+              ? {
+                  type: 'happ',
+                  sha256: '###DEVMODE###',
+                }
+              : {
+                  type: 'webhapp',
+                  sha256: '###DEVMODE###',
+                  happ: {
+                    sha256: '###DEVMODE###',
+                  },
+                  ui: {
+                    sha256: '###DEVMODE###',
+                  },
+                };
+
+          const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVMODE###', '');
+          if (uiPortString) {
+            uiPort = parseInt(uiPortString);
+          }
+
+          break case1;
+        }
+      }
+
+      // Fetch latest version of the Tool
+      const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
+      const toolList: DeveloperCollectiveToolList = await resp.json();
+
+      // take all apps and add them to the list of all apps
+      const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId);
+      if (!toolInfo) throw new Error('No tool info found in developer collective.');
+      // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
+      const latestVersion = toolInfo.versions
+        .filter(
+          (version) =>
+            validate(version.version) && applet.sha256_happ === version.hashes.happSha256,
+        )
+        .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
+      if (!latestVersion)
+        throw new Error(
+          'No version found for the Tool with a valid semver version and the correct happ sha256.',
+        );
+
+      appHashes = {
+        type: 'webhapp',
+        sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
+        happ: {
+          sha256: applet.sha256_happ,
+        },
+        ui: {
+          sha256: latestVersion.hashes.uiSha256,
+        },
+      };
+
+      happOrWebhappUrl = latestVersion.url;
+    } else {
+      const toolEntity = await this.toolsLibraryStore.getLatestToolEntry(
+        toolBundleActionHashFromDistInfo(applet.distribution_info),
+      );
+
+      if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
+
+      metaData = toolEntity.record.entry.meta_data;
+
+      const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
+      if (source.type !== 'https')
+        throw new Error(`Unsupported applet source type '${source.type}'`);
+      if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
+        throw new Error(`Invalid applet source URL '${source.url}'`);
+
+      appHashes = JSON.parse(toolEntity.record.entry.hashes);
+
+      happOrWebhappUrl = source.url;
+
+      // Read ui port in dev mode
+      if (metaData) {
+        try {
+          const metadataObject = JSON.parse(metaData);
+          if (metadataObject.uiPort) {
+            uiPort = metadataObject.uiPort;
+          }
+        } catch (e) {}
+      }
+
+      if (
+        distributionInfo.type === 'tools-library' &&
+        distributionInfo.info.originalToolActionHash !==
+          encodeHashToBase64(toolEntity.originalActionHash)
+      )
+        throw new Error('Original ToolEntry action hash does not match the one in the AppletEntry');
+    }
+
+    // Only in dev mode AppHashes of type 'happ' are currently allowed
+    if (appHashes.type !== 'webhapp' && !this.isAppletDev)
+      throw new Error(`Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${appHashes}`);
 
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
       encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
-      source.url,
+      happOrWebhappUrl,
       distributionInfo,
       appHashes,
-      toolEntity.record.entry.meta_data,
+      uiPort,
     );
 
     return appInfo;
