@@ -22,7 +22,7 @@ import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
-  WeDevConfig,
+  WeaveDevConfig,
 } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
 
@@ -45,7 +45,7 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
-      appletDevConfig: () => Promise<WeDevConfig | undefined>;
+      appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
@@ -208,7 +208,7 @@ export async function isAppletDev(): Promise<boolean> {
   return window.electronAPI.isAppletDev();
 }
 
-export async function appletDevConfig(): Promise<WeDevConfig | undefined> {
+export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
   return window.electronAPI.appletDevConfig();
 }
 

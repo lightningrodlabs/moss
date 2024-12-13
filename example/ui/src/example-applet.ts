@@ -16,7 +16,7 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 import '@theweave/attachments/dist/elements/attachments-context.js';
 
 import './applet-main.js';
-import './cross-applet-main.js';
+import './cross-group-main.js';
 import { AttachmentsStore } from '@theweave/attachments';
 import { ActionHash, CellType, DnaHash } from '@holochain/client';
 import { consume } from '@lit/context';
@@ -202,7 +202,7 @@ export class ExampleApplet extends LitElement {
         }
       case 'cross-group-view':
         return html`
-          <cross-applet-main .applets=${this.weaveClient.renderInfo.applets}></cross-applet-main>
+          <cross-group-main .applets=${this.weaveClient.renderInfo.applets}></cross-group-main>
         `;
       default:
         throw new Error('Unknown render view type');

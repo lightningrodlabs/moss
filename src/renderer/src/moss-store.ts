@@ -78,7 +78,7 @@ import {
   TDistributionInfo,
   ToolCompatibilityId,
   ToolInfoAndVersions,
-  WeDevConfig,
+  WeaveDevConfig,
 } from '@theweave/moss-types';
 import {
   appIdFromAppletHash,
@@ -120,7 +120,7 @@ export class MossStore {
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
     // public toolsLibraryStore: ToolsLibraryStore,
-    public appletDevConfig: WeDevConfig | undefined,
+    public appletDevConfig: WeaveDevConfig | undefined,
   ) {
     this.myLatestActivity = Date.now();
     this._version = conductorInfo.moss_version;

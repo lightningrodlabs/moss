@@ -242,9 +242,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       throw new Error('notify is not implemented on headless WeaveServices.');
     },
     openAppletMain: async () => {},
-    openCrossAppletMain: async () => {},
+    openCrossGroupMain: async () => {},
     openAsset: async () => {},
-    openCrossAppletBlock: async () => {},
+    openCrossGroupBlock: async () => {},
     openAppletBlock: async () => {},
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeaveServices.');
@@ -304,8 +304,8 @@ export async function handleAppletIframeMessage(
         return iframeConfig;
       }
 
-      const crossApplet = message.crossApplet;
-      if (crossApplet) {
+      const crossGroup = message.crossGroup;
+      if (crossGroup) {
         const applets = await toPromise(
           mossStore.appletsForToolId.get(
             toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
@@ -370,10 +370,10 @@ export async function handleAppletIframeMessage(
             message.request.block,
             message.request.context,
           );
-        case 'cross-applet-main':
-          return openViews.openCrossAppletMain(message.request.appletBundleId);
-        case 'cross-applet-block':
-          return openViews.openCrossAppletBlock(
+        case 'cross-group-main':
+          return openViews.openCrossGroupMain(message.request.appletBundleId);
+        case 'cross-group-block':
+          return openViews.openCrossGroupBlock(
             message.request.appletBundleId,
             message.request.block,
             message.request.context,

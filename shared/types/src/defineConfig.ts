@@ -1,7 +1,7 @@
 // Note: This file is also being used by the dev cli
 
 export interface WeAppletDevInfo {
-  config: WeDevConfig;
+  config: WeaveDevConfig;
   tempDir: string;
   tempDirRoot: string;
   agentIdx: number;
@@ -15,11 +15,11 @@ export interface WeAppletDevInfo {
  * @param config
  * @returns
  */
-export function defineConfig(config: WeDevConfig) {
+export function defineConfig(config: WeaveDevConfig) {
   return config;
 }
 
-export interface WeDevConfig {
+export interface WeaveDevConfig {
   /**
    * Configuration for groups to create on startup
    */

@@ -138,8 +138,8 @@ export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openWal(wal: WAL): void;
-  openCrossAppletMain(appletBundleId: string): void;
-  openCrossAppletBlock(appletBundleId: string, block: string, context: any): void;
+  openCrossGroupMain(appletBundleId: string): void;
+  openCrossGroupBlock(appletBundleId: string, block: string, context: any): void;
 }
 
 export type AssetLocationAndInfo = {
@@ -319,7 +319,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'get-iframe-config';
-      crossApplet: boolean;
+      crossGroup: boolean;
     }
   | {
       type: 'get-record-info';
@@ -474,7 +474,7 @@ export type OpenViewRequest =
       appletHash: EntryHash;
     }
   | {
-      type: 'cross-applet-main';
+      type: 'cross-group-main';
       appletBundleId: string;
     }
   | {
@@ -484,7 +484,7 @@ export type OpenViewRequest =
       context: any;
     }
   | {
-      type: 'cross-applet-block';
+      type: 'cross-group-block';
       appletBundleId: string;
       block: string;
       context: any;

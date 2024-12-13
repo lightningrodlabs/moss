@@ -16,8 +16,8 @@ import { weStyles } from '../../shared-styles.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 @localized()
-@customElement('cross-applet-main')
-export class CrossAppletMain extends LitElement {
+@customElement('cross-group-main')
+export class CrossGroupMain extends LitElement {
   @property()
   toolCompatibilityId!: ToolCompatibilityId;
 

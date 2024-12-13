@@ -1,5 +1,4 @@
 import {
-  ActionHash,
   AgentPubKey,
   AppClient,
   CreateCloneCellRequest,
@@ -339,7 +338,7 @@ export interface WeaveServices {
    * @param appletBundleId
    * @returns
    */
-  openCrossAppletMain: (appletBundleId: string) => Promise<void>;
+  openCrossGroupMain: (appletBundleId: string) => Promise<void>;
   /**
    * Open the specified block view of the specified Applet Type
    * @param appletBundleId
@@ -347,7 +346,7 @@ export interface WeaveServices {
    * @param context
    * @returns
    */
-  openCrossAppletBlock: (appletBundleId: string, block: string, context: any) => Promise<void>;
+  openCrossGroupBlock: (appletBundleId: string, block: string, context: any) => Promise<void>;
   /**
    * Open the asset associated to the specified WAL
    * @param wal
@@ -474,11 +473,11 @@ export class WeaveClient implements WeaveServices {
   openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
     window.__WEAVE_API__.openAppletBlock(appletHash, block, context);
 
-  openCrossAppletMain = (appletBundleId: string): Promise<void> =>
-    window.__WEAVE_API__.openCrossAppletMain(appletBundleId);
+  openCrossGroupMain = (appletBundleId: string): Promise<void> =>
+    window.__WEAVE_API__.openCrossGroupMain(appletBundleId);
 
-  openCrossAppletBlock = (appletBundleId: string, block: string, context: any): Promise<void> =>
-    window.__WEAVE_API__.openCrossAppletBlock(appletBundleId, block, context);
+  openCrossGroupBlock = (appletBundleId: string, block: string, context: any): Promise<void> =>
+    window.__WEAVE_API__.openCrossGroupBlock(appletBundleId, block, context);
 
   openAsset = (wal: WAL, mode?: OpenAssetMode): Promise<void> =>
     window.__WEAVE_API__.openAsset(wal, mode);

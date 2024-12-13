@@ -45,7 +45,7 @@ import './navigation/group-applets-sidebar.js';
 import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
 import '../layout/views/applet-main.js';
-import '../layout/views/cross-applet-main.js';
+import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
 import '../personal-views/tool-publishing/publishing-view.js';
 import '../layout/views/asset-view.js';
@@ -275,10 +275,10 @@ export class MainDashboard extends LitElement {
     openAppletBlock: (_appletHash, _block, _context) => {
       throw new Error('Opening applet blocks is currently not implemented.');
     },
-    openCrossAppletMain: (_appletBundleHash) => {
+    openCrossGroupMain: (_appletBundleHash) => {
       throw new Error('Opening cross-applet main views is currently not implemented.');
     },
-    openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
+    openCrossGroupBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
     openAsset: async (wal: WAL, mode?: OpenAssetMode) => {
@@ -814,7 +814,7 @@ export class MainDashboard extends LitElement {
           Object.keys(this._runningAppletClasses.value.value),
           (toolCompatibilityId) => toolCompatibilityId,
           (toolCompatibilityId) => html`
-            <cross-applet-main
+            <cross-group-main
               .toolCompatibilityId=${toolCompatibilityId}
               hostColor="#224b21"
               style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
@@ -822,7 +822,7 @@ export class MainDashboard extends LitElement {
                 : 'display: none;'}
                 ${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}
                 overflow-x: auto;"
-            ></cross-applet-main>
+            ></cross-group-main>
           `,
         );
       default:

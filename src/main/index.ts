@@ -46,7 +46,7 @@ import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
-  WeDevConfig,
+  WeaveDevConfig,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
@@ -1045,7 +1045,10 @@ app.whenReady().then(async () => {
     },
   );
   ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
-  ipcMain.handle('applet-dev-config', (_e): WeDevConfig | undefined => RUN_OPTIONS.devInfo?.config);
+  ipcMain.handle(
+    'applet-dev-config',
+    (_e): WeaveDevConfig | undefined => RUN_OPTIONS.devInfo?.config,
+  );
   ipcMain.handle(
     'get-all-app-assets-infos',
     async (): Promise<Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>> => {

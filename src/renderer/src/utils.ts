@@ -50,7 +50,7 @@ import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
 import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
-import { DeveloperCollecive, WeDevConfig } from '@theweave/moss-types';
+import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -965,7 +965,7 @@ export async function postMessageToIframe<T>(
  *
  * @param config
  */
-export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
+export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
   tools: ToolAndCurationInfo[];
   devCollective: DeveloperCollecive;
 } {

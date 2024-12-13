@@ -12,7 +12,7 @@ import {
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
-import { ResourceLocation, WeDevConfig } from '@theweave/moss-types';
+import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -101,7 +101,7 @@ export function breakingVersion(version: string): string {
   }
 }
 
-export function defaultAppNetworkSeed(devConfig?: WeDevConfig): string {
+export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
   return devConfig || !app.isPackaged
     ? `moss-applet-dev-${os.hostname()}`
     : `moss-${breakingAppVersion(app)}`;

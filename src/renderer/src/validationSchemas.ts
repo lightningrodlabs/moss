@@ -146,7 +146,7 @@ const OpenViewRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('cross-applet-main'),
+      type: Type.Literal('cross-group-main'),
       appletBundleId: Type.String(),
     },
     { additionalProperties: false },
@@ -162,7 +162,7 @@ const OpenViewRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('cross-applet-block'),
+      type: Type.Literal('cross-group-block'),
       appletBundleId: Type.String(),
       block: Type.String(),
       context: Type.Any(),
@@ -228,7 +228,7 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('get-iframe-config'),
-      crossApplet: Type.Boolean(),
+      crossGroup: Type.Boolean(),
     },
     { additionalProperties: false },
   ),
