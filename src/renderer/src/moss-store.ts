@@ -220,7 +220,9 @@ export class MossStore {
     try {
       const resp = await fetch(toolListUrl, { cache: 'no-cache' });
       const toolList: DeveloperCollectiveToolList = await resp.json();
-      const toolInfo = toolList.tools.find((tool) => tool.id === toolId);
+      const toolInfo = toolList.tools.find(
+        (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
+      );
       if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
       return toolInfo;
     } catch (e) {

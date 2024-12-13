@@ -2974,6 +2974,16 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
+"@theweave/api@*", "@theweave/api@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.3.0.tgz#f961fd8ebea75c0bdf2dcac7fd12a6af5ab7d26a"
+  integrity sha512-MJObLpV/wLdrayeyF5GpOtlPPUoc3U05REZZav5Q/wFrsMYpzZsHdMUzr0NYlxSm9rbZE6Any/u4A34YdYA9og==
+  dependencies:
+    "@holochain-open-dev/profiles" "0.400.0-rc.0"
+    "@holochain/client" "0.18.0-rc.1"
+    "@msgpack/msgpack" "^2.8.0"
+    js-base64 "^3.7.2"
+
 "@theweave/api@0.2.1":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.2.1.tgz#e75b0481a387933cf941aa48feb8b0340c9c11e2"
@@ -2981,16 +2991,6 @@
   dependencies:
     "@holochain-open-dev/profiles" "0.400.0-dev.4"
     "@holochain/client" "0.18.0-dev.13"
-    "@msgpack/msgpack" "^2.8.0"
-    js-base64 "^3.7.2"
-
-"@theweave/api@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.3.0.tgz#f961fd8ebea75c0bdf2dcac7fd12a6af5ab7d26a"
-  integrity sha512-MJObLpV/wLdrayeyF5GpOtlPPUoc3U05REZZav5Q/wFrsMYpzZsHdMUzr0NYlxSm9rbZE6Any/u4A34YdYA9og==
-  dependencies:
-    "@holochain-open-dev/profiles" "0.400.0-rc.0"
-    "@holochain/client" "0.18.0-rc.1"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
@@ -3021,6 +3021,14 @@
     utf-8-validate "^6.0.3"
     uuid "9.0.1"
     winston "3.11.0"
+
+"@theweave/moss-types@*", "@theweave/moss-types@0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@theweave/moss-types/-/moss-types-0.2.0.tgz#68039ba4c6dcac169bf97921a5944e99da5da2a2"
+  integrity sha512-f/N6MOV4D/JzeVmK0lUE4fubgNVjmZSmgXpSg5I/EoJh4+KQlRvqFs98ZmsxgfRADrCA1uLqxKGVIM3NTs+BIQ==
+  dependencies:
+    "@holochain/client" "0.18.0-rc.1"
+    "@theweave/api" "0.3.0"
 
 "@tootallnate/once@2":
   version "2.0.0"
