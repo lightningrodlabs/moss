@@ -1,18 +1,18 @@
-import { BrowserWindow, app, shell } from 'electron';
+import { BrowserWindow, app, net, shell } from 'electron';
+import fs from 'fs';
+import mime from 'mime';
 import semver from 'semver';
 import os from 'os';
 import { breakingAppVersion } from './filesystem';
 import {
-  AgentPubKey,
   CallZomeRequest,
   CallZomeRequestSigned,
   getNonceExpiration,
-  ListAppsResponse,
   randomNonce,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
-import { WeDevConfig } from '@theweave/moss-types';
+import { ResourceLocation, WeDevConfig } from '@theweave/moss-types';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -139,4 +139,37 @@ export async function signZomeCall(
   };
 
   return zomeCallSigned;
+}
+
+export async function readIcon(location: ResourceLocation) {
+  switch (location.type) {
+    case 'filesystem': {
+      const data = fs.readFileSync(location.path);
+      const mimeType = mime.getType(location.path);
+      return `data:${mimeType};base64,${data.toString('base64')}`;
+    }
+    case 'https': {
+      const response = await net.fetch(location.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const mimeType = mime.getType(location.url);
+      return `data:${mimeType};base64,${_arrayBufferToBase64(arrayBuffer)}`;
+    }
+
+    default:
+      throw new Error(
+        `Fetching icon from source type ${
+          (location as any).type
+        } is not implemented. Got icon source: ${location}.`,
+      );
+  }
+}
+
+function _arrayBufferToBase64(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }

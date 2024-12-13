@@ -819,15 +819,24 @@ export class GroupStore {
     console.log('@groupstore: @installApplet: Got applet: ', applet);
     if (!applet) throw new Error('Given applet instance hash was not found');
 
-    // TODO Check whether icon is already available and if not, fetch it
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
     Value.Assert(TDistributionInfo, distributionInfo);
 
     if (distributionInfo.type !== 'web2-tool-list')
       throw new Error("Tool source types other than 'web2-tool-list' are currently not supported.");
 
+    // If it's a Tool from the dev config, we will need to fetch it differently in the main process
+    const isToolFromDevConfig =
+      this.mossStore.isAppletDev && distributionInfo.info.toolListUrl.startsWith('###DEVMODE###');
+
+    console.log('isToolFromDevConfig: ', isToolFromDevConfig);
+
     const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
-    let toolIcon = await this.mossStore.toolIcon(toolCompatibilityId);
+    let toolIcon = await this.mossStore.toolIcon(
+      toolCompatibilityId,
+      isToolFromDevConfig ? distributionInfo.info.toolName : undefined,
+    );
+    console.log('Got toolIcon: ', toolIcon);
     if (!toolIcon) {
       const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
       const toolList: DeveloperCollectiveToolList = await resp.json();

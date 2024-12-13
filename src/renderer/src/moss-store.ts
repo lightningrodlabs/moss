@@ -59,6 +59,7 @@ import {
 } from './electron-api.js';
 import {
   destringifyAndDecode,
+  devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
   initAppClient,
@@ -70,8 +71,10 @@ import {
 import { AppletStore } from './applets/applet-store.js';
 import {
   AppHashes,
+  DeveloperCollecive,
   DeveloperCollectiveToolList,
   DistributionInfo,
+  ResourceLocation,
   TDistributionInfo,
   ToolCompatibilityId,
   ToolInfoAndVersions,
@@ -87,7 +90,7 @@ import {
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
-import { AppletNotification } from './types.js';
+import { AppletNotification, ToolAndCurationInfo } from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
@@ -104,8 +107,14 @@ export type WalInPocket = {
   wal: string;
 };
 
+export type DevModeToolLibrary = {
+  tools: ToolAndCurationInfo[];
+  devCollective: DeveloperCollecive;
+};
+
 export class MossStore {
   public isAppletDev: boolean;
+  public devModeToolLibrary: DevModeToolLibrary | undefined;
 
   constructor(
     public adminWebsocket: AdminWebsocket,
@@ -116,6 +125,7 @@ export class MossStore {
     this.myLatestActivity = Date.now();
     this._version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
+    if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
   }
 
   private _availableToolUpdates: Writable<Record<ActionHashB64, UpdateableEntity<Tool>>> = writable(
@@ -195,25 +205,50 @@ export class MossStore {
     versionBranch: string,
     noCache = false,
   ): Promise<ToolInfoAndVersions | undefined> {
-    const maybeCachedInfo =
-      this._toolInfoRemoteCache[
-        deriveToolCompatibilityId({
-          toolListUrl,
-          toolId,
-          versionBranch,
-        })
-      ];
+    const toolCompatibilityId = deriveToolCompatibilityId({
+      toolListUrl,
+      toolId,
+      versionBranch,
+    });
+    if (this.devModeToolLibrary && toolListUrl.startsWith('###DEVMODE###')) {
+      return this.devModeToolLibrary.tools.find(
+        (tool) => tool.toolCompatibilityId === toolCompatibilityId,
+      )?.toolInfoAndVersions;
+    }
+    const maybeCachedInfo = this._toolInfoRemoteCache[toolCompatibilityId];
     if (!noCache && maybeCachedInfo) return maybeCachedInfo;
     // Fetch latest version of the Tool
-    const resp = await fetch(toolListUrl, { cache: 'no-cache' });
-    const toolList: DeveloperCollectiveToolList = await resp.json();
-    return toolList.tools.find((tool) => tool.id === toolId);
+    try {
+      const resp = await fetch(toolListUrl, { cache: 'no-cache' });
+      const toolList: DeveloperCollectiveToolList = await resp.json();
+      const toolInfo = toolList.tools.find((tool) => tool.id === toolId);
+      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      return toolInfo;
+    } catch (e) {
+      throw new Error(`Failed to fetch or parse Tool info: ${e}`);
+    }
   }
 
-  async toolIcon(toolId: ToolCompatibilityId): Promise<string | undefined> {
+  /**
+   *
+   * @param toolId
+   * @param toolName If provided and in devmode, the tool is picked from the dev config
+   * @returns
+   */
+  async toolIcon(toolId: ToolCompatibilityId, toolName?: string): Promise<string | undefined> {
     let toolIcon: string | undefined = this._toolIcons[toolId];
     if (toolIcon) return toolIcon;
-    toolIcon = await getToolIcon(toolId);
+    let resourceLocation: ResourceLocation | undefined;
+    if (toolName && this.appletDevConfig) {
+      const appletConfig = this.appletDevConfig.applets.find(
+        (appletConfig) => appletConfig.name === toolName,
+      );
+      console.log('Found appletConfig: ', appletConfig);
+      if (appletConfig) {
+        resourceLocation = appletConfig.icon;
+      }
+    }
+    toolIcon = await getToolIcon(toolId, resourceLocation);
     if (toolIcon) this._toolIcons[toolId] = toolIcon;
     return toolIcon;
   }
@@ -943,10 +978,8 @@ export class MossStore {
                 toolCompatibilityId,
             ),
           ),
-        (appletsForThisBundleHash) =>
-          mapAndJoin(appletsForThisBundleHash, (_, appletHash) =>
-            this.groupsForApplet.get(appletHash),
-          ),
+        (appletsForThisToolId) =>
+          mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
         async (groupsByApplets) => {
           const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
 

@@ -25,7 +25,7 @@ import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
-import { MossStore } from '../../moss-store.js';
+import { DevModeToolLibrary, MossStore } from '../../moss-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { SelectGroupDialog } from '../../elements/dialogs/select-group-dialog.js';
@@ -96,9 +96,7 @@ export class ToolLibraryWeb2 extends LitElement {
     // In applet dev mode, we use a fake list generated from the weave.dev.config
     if (!!this.mossStore.appletDevConfig) {
       toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
-      const { tools, devCollective } = devModeToolLibraryFromDevConfig(
-        this.mossStore.appletDevConfig,
-      );
+      const { tools, devCollective } = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
       tools.forEach((tool) => (allTools[tool.toolCompatibilityId] = tool));
       developerCollectives['###DEVMODE###'] = devCollective;
     } else {

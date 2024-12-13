@@ -990,18 +990,19 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
         toolUrl = `file://${toolConfig.source.happPath}`;
         break;
     }
+    const toolListUrl = `###DEVMODE###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
     return {
       toolCompatibilityId: deriveToolCompatibilityId({
-        toolListUrl: '###DEVMODE###',
+        toolListUrl: toolListUrl,
         toolId: toolConfig.name,
         versionBranch: '###DEVMODE###',
       }),
       developerCollectiveId: 'Moss dev mode test collective',
-      toolListUrl: '###DEVMODE###',
+      toolListUrl: toolListUrl,
       curationInfos: [
         {
           info: {
-            toolListUrl: '###DEVMODE###',
+            toolListUrl: toolListUrl,
             toolId: 'REPLACE',
             versionBranch: '###DEVMODE###',
             tags: [],

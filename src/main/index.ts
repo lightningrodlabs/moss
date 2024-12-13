@@ -32,10 +32,22 @@ import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
-import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
+import {
+  breakingVersion,
+  emitToWindow,
+  readIcon,
+  setLinkOpenHandlers,
+  signZomeCall,
+} from './utils';
 import { createSplashscreenWindow, createWalWindow } from './windows';
 import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
-import { AppAssetsInfo, AppHashes, DistributionInfo, WeDevConfig } from '@theweave/moss-types';
+import {
+  AppAssetsInfo,
+  AppHashes,
+  DistributionInfo,
+  ResourceLocation,
+  WeDevConfig,
+} from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -68,6 +80,7 @@ import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
   appletIdFromAppId,
+  deriveToolCompatibilityId,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
@@ -108,7 +121,7 @@ weCli
   )
   .option(
     '-n, --network-seed <string>',
-    'Installs AppStore with the provided network seed in case AppStore has not been installed yet.',
+    'Installs any default apps with the provided network seed in case there are any and have not yet been installed.',
   )
   .option(
     '-c, --dev-config <path>',
@@ -1112,9 +1125,19 @@ app.whenReady().then(async () => {
       weave_protocol_version: '0.13',
     };
   });
-  ipcMain.handle('get-tool-icon', (_e, toolId: string): string | undefined => {
-    return WE_FILE_SYSTEM.readToolIcon(toolId);
-  }),
+  ipcMain.handle(
+    'get-tool-icon',
+    async (
+      _e,
+      toolId: string,
+      resourceLocation?: ResourceLocation,
+    ): Promise<string | undefined> => {
+      if (resourceLocation) {
+        return readIcon(resourceLocation);
+      }
+      return WE_FILE_SYSTEM.readToolIcon(toolId);
+    },
+  ),
     ipcMain.handle('lair-setup-required', (): boolean => {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });

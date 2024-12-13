@@ -17,7 +17,7 @@ import {
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
-import { AppHashes, DistributionInfo } from '@theweave/moss-types';
+import { AppHashes, DistributionInfo, ResourceLocation } from '@theweave/moss-types';
 import { ProgressInfo } from '@matthme/electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
@@ -73,7 +73,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
-  getToolIcon: (toolId: string) => ipcRenderer.invoke('get-tool-icon', toolId),
+  getToolIcon: (toolId: string, resourceLocation?: ResourceLocation) =>
+    ipcRenderer.invoke('get-tool-icon', toolId, resourceLocation),
   mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),
   installMossUpdate: () => ipcRenderer.invoke('install-moss-update'),
   installAppletBundle: (

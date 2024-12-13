@@ -1,7 +1,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import mime from 'mime';
 
 import { HolochainManager } from '../holochainManager';
 import { createHash, randomUUID } from 'crypto';
@@ -31,13 +30,7 @@ import { net } from 'electron';
 import { nanoid } from 'nanoid';
 import * as childProcess from 'child_process';
 import split from 'split';
-import {
-  AgentProfile,
-  AppletConfig,
-  GroupConfig,
-  ResourceLocation,
-  WebHappLocation,
-} from '@theweave/moss-types';
+import { AgentProfile, AppletConfig, GroupConfig, WebHappLocation } from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import * as yaml from 'js-yaml';
 import { HC_BINARY } from '../binaries';
@@ -47,6 +40,7 @@ import {
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
+import { readIcon } from '../utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function readLocalServices(): Promise<[string, string]> {
@@ -490,29 +484,6 @@ async function joinGroup(
   return groupWebsocket;
 }
 
-async function readIcon(location: ResourceLocation) {
-  switch (location.type) {
-    case 'filesystem': {
-      const data = fs.readFileSync(location.path);
-      const mimeType = mime.getType(location.path);
-      return `data:${mimeType};base64,${data.toString('base64')}`;
-    }
-    case 'https': {
-      const response = await net.fetch(location.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const mimeType = mime.getType(location.url);
-      return `data:${mimeType};base64,${_arrayBufferToBase64(arrayBuffer)}`;
-    }
-
-    default:
-      throw new Error(
-        `Fetching icon from source type ${
-          (location as any).type
-        } is not implemented. Got icon source: ${location}.`,
-      );
-  }
-}
-
 async function installGroup(
   holochainManager: HolochainManager,
   networkSeed: string,
@@ -774,16 +745,6 @@ function storeAppAssetsInfo(
           };
 
   mossFileSystem.storeAppAssetsInfo(appId, appAssetsInfo);
-}
-
-function _arrayBufferToBase64(buffer) {
-  var binary = '';
-  var bytes = new Uint8Array(buffer);
-  var len = bytes.byteLength;
-  for (var i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
 }
 
 export interface DevHubResponse<T> {

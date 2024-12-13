@@ -17,7 +17,13 @@ import {
   WAL,
 } from '@theweave/api';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo, WeDevConfig } from '@theweave/moss-types';
+import {
+  AppAssetsInfo,
+  AppHashes,
+  DistributionInfo,
+  ResourceLocation,
+  WeDevConfig,
+} from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
@@ -67,7 +73,10 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
-      getToolIcon: (toolId: string) => Promise<string | undefined>;
+      getToolIcon: (
+        toolId: string,
+        resourceLocation?: ResourceLocation,
+      ) => Promise<string | undefined>;
       mossUpdateAvailable: () => Promise<MossUpdateInfo | undefined>;
       installMossUpdate: () => Promise<void>;
       installAppletBundle: (
@@ -180,8 +189,11 @@ export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
 }
 
-export async function getToolIcon(toolId: string): Promise<string | undefined> {
-  return window.electronAPI.getToolIcon(toolId);
+export async function getToolIcon(
+  toolId: string,
+  resourceLocation?: ResourceLocation,
+): Promise<string | undefined> {
+  return window.electronAPI.getToolIcon(toolId, resourceLocation);
 }
 
 export async function openApp(appId: string): Promise<void> {
