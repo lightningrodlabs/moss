@@ -85,12 +85,6 @@ export class WelcomeView extends LitElement {
 
   timeAgo = new TimeAgo('en-US');
 
-  // _notificationFeed = new StoreSubscriber(
-  //   this,
-  //   () => this._mossStore.notificationFeed(),
-  //   () => [this._mossStore],
-  // );
-
   async firstUpdated() {
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
     const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();

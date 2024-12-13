@@ -16,7 +16,6 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { devModeToolLibraryFromDevConfig } from '../../utils';
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import { mdiChevronLeft, mdiEmailOutline, mdiTools, mdiWeb } from '@mdi/js';
@@ -98,7 +97,7 @@ export class ToolLibraryWeb2 extends LitElement {
       toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
       const { tools, devCollective } = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
       tools.forEach((tool) => (allTools[tool.toolCompatibilityId] = tool));
-      developerCollectives['###DEVMODE###'] = devCollective;
+      developerCollectives['###DEVCONFIG###'] = devCollective;
     } else {
       toolCurationConfigs = PRODUCTION_TOOL_CURATION_CONFIGS;
       // TODO read curation URLs from localStorage here

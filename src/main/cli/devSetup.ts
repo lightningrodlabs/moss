@@ -311,20 +311,20 @@ export async function devSetup(
           } else {
             const uiPort =
               appletConfig.source.type === 'localhost' ? appletConfig.source.uiPort : undefined;
-            const toolListUrl = `###DEVMODE###${uiPort ? uiPort : ''}`;
+            const toolListUrl = `###DEVCONFIG###${uiPort ? uiPort : ''}`;
             distributionInfo = {
               type: 'web2-tool-list',
               info: {
                 toolListUrl: toolListUrl, // Add uiPort here
-                developerCollectiveId: '###DEVMODE###',
+                developerCollectiveId: '###DEVCONFIG###',
                 toolId: appletConfig.name,
                 toolName: appletConfig.name,
-                versionBranch: '###DEVMODE###',
-                toolVersion: '###DEVMODE###',
+                versionBranch: '###DEVCONFIG###',
+                toolVersion: '###DEVCONFIG###',
                 toolCompatibilityId: deriveToolCompatibilityId({
                   toolListUrl: toolListUrl,
                   toolId: appletConfig.name,
-                  versionBranch: '###DEVMODE###',
+                  versionBranch: '###DEVCONFIG###',
                 }),
               },
             };

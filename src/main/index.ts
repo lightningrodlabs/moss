@@ -1496,11 +1496,11 @@ app.whenReady().then(async () => {
       let tmpDir: string | undefined;
 
       const isDevModeAndTrustedToolFromDevConfig =
-        !!RUN_OPTIONS.devInfo && sha256Happ.startsWith('###DEVMODE###');
+        !!RUN_OPTIONS.devInfo && sha256Happ.startsWith('###DEVCONFIG###');
 
       // In devmode always fetch it because we don't want to fetch and pre-compute the sha256
       // hashes of all Tools listed in the devconfig which is why they are not known at this
-      // stage and have a ###DEVMODE### placeholder instead.
+      // stage and have a ###DEVCONFIG### placeholder instead.
       // We do need the actual hashes however as a means to address the associated resources
       // on the filesystem.
       if (!happAlreadyStored || !uiAlreadyStored || isDevModeAndTrustedToolFromDevConfig) {
@@ -1520,7 +1520,7 @@ app.whenReady().then(async () => {
         const { happSha256, webhappSha256, uiSha256 } =
           await rustUtils.validateHappOrWebhapp(assetBytes);
 
-        // Overwrite the ###DEVMODE### placeholders with the actual sha256 hashes
+        // Overwrite the ###DEVCONFIG### placeholders with the actual sha256 hashes
         // if it's a trusted Tool from the dev config
         if (isDevModeAndTrustedToolFromDevConfig) {
           sha256Happ = happSha256;
@@ -1532,7 +1532,7 @@ app.whenReady().then(async () => {
         const isTrustedToolFromDevConfig =
           RUN_OPTIONS.devInfo &&
           distributionInfo.type === 'web2-tool-list' &&
-          distributionInfo.info.toolListUrl.startsWith('###DEVMODE###');
+          distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
 
         if (!isTrustedToolFromDevConfig) {
           if (happSha256 !== sha256Happ)

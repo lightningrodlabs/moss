@@ -970,7 +970,7 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
   devCollective: DeveloperCollecive;
 } {
   const devModeDeveloperCollective: DeveloperCollecive = {
-    id: '###DEVMODE###',
+    id: '###DEVCONFIG###',
     name: 'This Tool is listed in the dev config file.',
     description: 'Moss dev mode test dev collective',
     contact: {},
@@ -990,12 +990,12 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
         toolUrl = `file://${toolConfig.source.happPath}`;
         break;
     }
-    const toolListUrl = `###DEVMODE###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
+    const toolListUrl = `###DEVCONFIG###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
     return {
       toolCompatibilityId: deriveToolCompatibilityId({
         toolListUrl: toolListUrl,
         toolId: toolConfig.name,
-        versionBranch: '###DEVMODE###',
+        versionBranch: '###DEVCONFIG###',
       }),
       developerCollectiveId: 'Moss dev mode test collective',
       toolListUrl: toolListUrl,
@@ -1004,7 +1004,7 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
           info: {
             toolListUrl: toolListUrl,
             toolId: 'REPLACE',
-            versionBranch: '###DEVMODE###',
+            versionBranch: '###DEVCONFIG###',
             tags: [],
           },
           curator: {
@@ -1021,7 +1021,7 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
         subtitle: toolConfig.subtitle,
         description: toolConfig.description,
         tags: [],
-        versionBranch: '###DEVMODE###',
+        versionBranch: '###DEVCONFIG###',
         icon:
           toolConfig.icon.type === 'filesystem'
             ? `file://${toolConfig.icon.path}`
@@ -1033,9 +1033,9 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
             changelog: 'Same same. Just an example changelog.',
             releasedAt: Date.now(),
             hashes: {
-              webhappSha256: '###DEVMODE###',
-              happSha256: '###DEVMODE###',
-              uiSha256: '###DEVMODE###',
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
             },
           },
         ],
@@ -1046,9 +1046,9 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
         changelog: 'Same same. Just an example changelog.',
         releasedAt: Date.now(),
         hashes: {
-          webhappSha256: '###DEVMODE###',
-          happSha256: '###DEVMODE###',
-          uiSha256: '###DEVMODE###',
+          webhappSha256: '###DEVCONFIG###',
+          happSha256: '###DEVCONFIG###',
+          uiSha256: '###DEVCONFIG###',
         },
       },
     };

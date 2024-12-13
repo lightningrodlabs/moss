@@ -827,7 +827,7 @@ export class GroupStore {
 
     // If it's a Tool from the dev config, we will need to fetch it differently in the main process
     const isToolFromDevConfig =
-      this.mossStore.isAppletDev && distributionInfo.info.toolListUrl.startsWith('###DEVMODE###');
+      this.mossStore.isAppletDev && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
 
     console.log('isToolFromDevConfig: ', isToolFromDevConfig);
 
