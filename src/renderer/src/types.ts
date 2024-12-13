@@ -2,6 +2,7 @@ import { AgentPubKeyB64, DnaHash, FullStateDump } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
 import {
   CuratedTool,
+  DistributionInfo,
   ToolCompatibilityId,
   ToolCurator,
   ToolInfoAndVersions,
@@ -62,4 +63,10 @@ export type ToolAndCurationInfo = {
   latestVersion: ToolVersionInfo;
   toolListUrl: string;
   developerCollectiveId: string;
+};
+
+export type ToolInfoAndLatestVersion = {
+  toolInfo: ToolInfoAndVersions;
+  latestVersion: ToolVersionInfo;
+  distributionInfo: DistributionInfo;
 };

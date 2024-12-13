@@ -22,7 +22,6 @@ import {
   slice,
 } from '@holochain-open-dev/utils';
 import {
-  ActionHashB64,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -62,6 +61,7 @@ import {
   devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
+  getLatestVersionFromToolInfo,
   initAppClient,
   isAppDisabled,
   isAppRunning,
@@ -90,15 +90,14 @@ import {
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
-import { AppletNotification, ToolAndCurationInfo } from './types.js';
+import { AppletNotification, ToolAndCurationInfo, ToolInfoAndLatestVersion } from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
-import { compareVersions, validate } from 'compare-versions';
+import { compareVersions } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -128,9 +127,8 @@ export class MossStore {
     if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
   }
 
-  private _availableToolUpdates: Writable<Record<ActionHashB64, UpdateableEntity<Tool>>> = writable(
-    {},
-  );
+  private _availableToolUpdates: Writable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> =
+    writable({});
 
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
   // here at the MossStore level
@@ -307,10 +305,77 @@ export class MossStore {
   }
 
   async checkForUiUpdates() {
-    throw new Error('Not implemented yet.');
+    console.log('Checking for UI updates...');
+    // 1. Get all AppAssetsInfos
+    const toolsWithAvailableUpdates: Record<ToolCompatibilityId, ToolInfoAndLatestVersion> = {};
+    const appAssetsInfos = await getAllAppAssetsInfos();
+    // 2. For each Tool class, fetch the latest info from the associated Tool list
+    await Promise.allSettled(
+      Object.values(appAssetsInfos).map(async ([appAssetInfo, _weaveConfig]) => {
+        if (
+          appAssetInfo.distributionInfo.type === 'web2-tool-list' &&
+          appAssetInfo.type === 'webhapp' &&
+          appAssetInfo.sha256
+        ) {
+          const toolCompatibilityId = appAssetInfo.distributionInfo.info.toolCompatibilityId;
+          const toolListUrl = appAssetInfo.distributionInfo.info.toolListUrl;
+          // Only fetch once for each Tool class
+          if (
+            !toolsWithAvailableUpdates[toolCompatibilityId] &&
+            !toolListUrl.startsWith('###DEVCONFIG###')
+          ) {
+            const toolInfo = await this.toolInfoFromRemote(
+              toolListUrl,
+              appAssetInfo.distributionInfo.info.toolId,
+              appAssetInfo.distributionInfo.info.versionBranch,
+              true,
+            );
+            if (toolInfo) {
+              // Get the latest version and make sure it's got the same happ sha256 as the currently installed
+              // version
+              const latestVersion = getLatestVersionFromToolInfo(toolInfo, appAssetInfo.sha256);
+              console.log('@checkForUiUpdates: latestVersion: ', latestVersion);
+              console.log(
+                '@checkForUiUpdates: compareVersions: ',
+                compareVersions(
+                  latestVersion.version,
+                  appAssetInfo.distributionInfo.info.toolVersion,
+                ),
+              );
+              if (
+                compareVersions(
+                  latestVersion.version,
+                  appAssetInfo.distributionInfo.info.toolVersion,
+                ) === 1
+              ) {
+                toolsWithAvailableUpdates[toolCompatibilityId] = {
+                  toolInfo,
+                  latestVersion,
+                  distributionInfo: {
+                    type: 'web2-tool-list',
+                    info: {
+                      toolListUrl: appAssetInfo.distributionInfo.info.toolListUrl,
+                      developerCollectiveId:
+                        appAssetInfo.distributionInfo.info.developerCollectiveId,
+                      toolId: appAssetInfo.distributionInfo.info.toolId,
+                      toolName: toolInfo.title,
+                      versionBranch: appAssetInfo.distributionInfo.info.versionBranch,
+                      toolVersion: latestVersion.version,
+                      toolCompatibilityId: appAssetInfo.distributionInfo.info.toolCompatibilityId,
+                    },
+                  },
+                };
+              }
+            }
+          }
+        }
+      }),
+    );
+
+    this._availableToolUpdates.set(toolsWithAvailableUpdates);
   }
 
-  availableToolUpdates(): Readable<Record<ActionHashB64, UpdateableEntity<Tool>>> {
+  availableToolUpdates(): Readable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> {
     return derived(this._availableToolUpdates, (store) => store);
   }
 
@@ -1089,12 +1154,7 @@ export class MossStore {
         const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId);
         if (!toolInfo) throw new Error('No tool info found in developer collective.');
         // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
-        const latestVersion = toolInfo.versions
-          .filter(
-            (version) =>
-              validate(version.version) && applet.sha256_happ === version.hashes.happSha256,
-          )
-          .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
+        const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
         if (!latestVersion)
           throw new Error(
             'No version found for the Tool with a valid semver version and the correct happ sha256.',

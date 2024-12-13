@@ -41,7 +41,6 @@ declare global {
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
-    __isWe__: boolean | undefined;
   }
 }
 
@@ -56,7 +55,7 @@ export const NULL_HASH = new Uint8Array(39);
  * @returns bool: Returns whether this function is being called in a Weave context.
  */
 export const isWeaveContext = () =>
-  window.location.protocol === 'applet:' || !!window.__WEAVE_API__ || window.__isWe__;
+  window.location.protocol === 'applet:' || !!window.__WEAVE_API__;
 
 /**
  *

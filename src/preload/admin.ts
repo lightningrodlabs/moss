@@ -17,7 +17,12 @@ import {
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
-import { AppHashes, DistributionInfo, ResourceLocation } from '@theweave/moss-types';
+import {
+  AppHashes,
+  DistributionInfo,
+  ResourceLocation,
+  ToolCompatibilityId,
+} from '@theweave/moss-types';
 import { ProgressInfo } from '@matthme/electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
@@ -118,8 +123,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   batchUpdateAppletUis: (
-    originalToolActionHash: ActionHashB64,
-    newToolVersionActionHash: ActionHashB64,
+    toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     sha256Happ: string,
@@ -128,8 +132,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) =>
     ipcRenderer.invoke(
       'batch-update-applet-uis',
-      originalToolActionHash,
-      newToolVersionActionHash,
+      toolCompatibilityId,
       happOrWebHappUrl,
       distributionInfo,
       sha256Happ,

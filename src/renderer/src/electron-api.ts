@@ -22,6 +22,7 @@ import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
+  ToolCompatibilityId,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
@@ -105,8 +106,7 @@ declare global {
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
       batchUpdateAppletUis: (
-        originalToolActionHash: ActionHashB64,
-        newToolVersionActionHash: ActionHashB64,
+        toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         sha256Happ: string,

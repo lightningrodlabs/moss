@@ -41,9 +41,10 @@ export class MossApp extends LitElement {
     window.addEventListener('message', async (message) => handleHappMessage(message));
 
     await this._mossStore.checkForUiUpdates();
+    // Check once every hour or on page refresh
     this._appletUiUpdateCheckInterval = window.setInterval(
       async () => await this._mossStore.checkForUiUpdates(),
-      20000,
+      3_600_000,
     );
   }
 

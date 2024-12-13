@@ -2984,6 +2984,16 @@
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
+"@theweave/api@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.3.0.tgz#f961fd8ebea75c0bdf2dcac7fd12a6af5ab7d26a"
+  integrity sha512-MJObLpV/wLdrayeyF5GpOtlPPUoc3U05REZZav5Q/wFrsMYpzZsHdMUzr0NYlxSm9rbZE6Any/u4A34YdYA9og==
+  dependencies:
+    "@holochain-open-dev/profiles" "0.400.0-rc.0"
+    "@holochain/client" "0.18.0-rc.1"
+    "@msgpack/msgpack" "^2.8.0"
+    js-base64 "^3.7.2"
+
 "@theweave/cli@0.13.0-delta.1":
   version "0.13.0-delta.1"
   resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.13.0-delta.1.tgz#cb39239967a4b8f8b59f2476bbdd618d5cd0cc0d"

@@ -46,6 +46,7 @@ import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
+  ToolCompatibilityId,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
@@ -57,7 +58,6 @@ import {
 } from './cli/cli';
 import { launch } from './launch';
 import {
-  ActionHashB64,
   AgentPubKeyB64,
   AppInfo,
   CallZomeRequest,
@@ -80,7 +80,6 @@ import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
   appletIdFromAppId,
-  deriveToolCompatibilityId,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
@@ -1291,8 +1290,7 @@ app.whenReady().then(async () => {
     'batch-update-applet-uis',
     async (
       _e,
-      originalToolActionHash: ActionHashB64,
-      newToolVersionActionHash: ActionHashB64,
+      toolCompatibilityId: ToolCompatibilityId,
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,
       sha256Happ: string,
@@ -1345,8 +1343,9 @@ app.whenReady().then(async () => {
           '@batch-update-applet-uis: UI already on the filesystem. Skipping download from remote source.',
         );
       }
+
       // That the happ hash is the same as with the previous installation needs to be checked in the frontend
-      const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
+      const appAssetsInfoNew: AppAssetsInfo = deriveAppAssetsInfo(
         distributionInfo,
         happOrWebHappUrl,
         sha256Happ,
@@ -1361,14 +1360,15 @@ app.whenReady().then(async () => {
         .map((appInfo) => appInfo.installed_app_id);
 
       allAppletAppIds.forEach((appId) => {
-        const appAssetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+        const appAssetInfoExisting = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
         if (
-          appAssetInfo.distributionInfo.type === 'tools-library' &&
-          appAssetInfo.distributionInfo.info.originalToolActionHash === originalToolActionHash &&
-          appAssetInfo.distributionInfo.info.toolVersionActionHash !== newToolVersionActionHash
+          appAssetInfoExisting.type === 'webhapp' &&
+          appAssetInfoExisting.happ.sha256 === sha256Happ &&
+          appAssetInfoExisting.distributionInfo.type === 'web2-tool-list' &&
+          appAssetInfoExisting.distributionInfo.info.toolCompatibilityId === toolCompatibilityId
         ) {
           WE_FILE_SYSTEM.backupAppAssetsInfo(appId);
-          WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+          WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfoNew);
         }
       });
 

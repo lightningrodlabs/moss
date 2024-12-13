@@ -390,12 +390,6 @@ export async function handleAppletIframeMessage(
     case 'toggle-pocket':
       return openViews.toggleClipboard();
     case 'notify-frame': {
-      console.log(
-        '### NOTIFY FRAME ### from applet ',
-        appletId,
-        'message: ',
-        message.notifications,
-      );
       if (!message.notifications) {
         throw new Error(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
