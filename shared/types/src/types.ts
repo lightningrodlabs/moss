@@ -102,7 +102,7 @@ export type DistributionInfo =
       };
     }
   | {
-      type: 'default-app'; // Shipped with the We executable by default
+      type: 'default-app'; // Shipped with the Moss executable by default
     };
 
 export const TDistributionInfo = Type.Union([
