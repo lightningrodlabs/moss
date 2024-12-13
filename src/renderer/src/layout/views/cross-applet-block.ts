@@ -1,11 +1,5 @@
-import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import {
-  ActionHash,
-  AppAuthenticationToken,
-  decodeHashFromBase64,
-  EntryHashB64,
-} from '@holochain/client';
+import { AppAuthenticationToken, decodeHashFromBase64, EntryHashB64 } from '@holochain/client';
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { ProfilesLocation, RenderView } from '@theweave/api';
@@ -19,12 +13,13 @@ import './view-frame.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 @localized()
 @customElement('cross-applet-block')
 export class CrossAppletBlock extends LitElement {
-  @property(hashProperty('app-bundle-hash'))
-  appletBundleHash!: ActionHash;
+  @property()
+  toolCompatibilityId!: ToolCompatibilityId;
 
   @property()
   block!: string;
@@ -37,8 +32,8 @@ export class CrossAppletBlock extends LitElement {
 
   appletsForBundle = new StoreSubscriber(
     this,
-    () => this.mossStore.appletsForBundleHash.get(this.appletBundleHash),
-    () => [this.appletBundleHash],
+    () => this.mossStore.appletsForToolId.get(this.toolCompatibilityId),
+    () => [this.toolCompatibilityId],
   );
 
   renderBlock(applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>) {

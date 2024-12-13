@@ -67,15 +67,16 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      getToolIcon: (toolId: string) => Promise<string | undefined>;
       mossUpdateAvailable: () => Promise<MossUpdateInfo | undefined>;
       installMossUpdate: () => Promise<void>;
       installAppletBundle: (
         appId: string,
         networkSeed: string,
-        agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
+        icon: string,
         uiPort?: number,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
@@ -136,7 +137,6 @@ export interface ProgressInfo {
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
-  tools_library_app_id: string;
   moss_version: string;
   weave_protocol_version: string;
 }
@@ -178,6 +178,10 @@ export async function getAppVersion(): Promise<string> {
 
 export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
+}
+
+export async function getToolIcon(toolId: string): Promise<string | undefined> {
+  return window.electronAPI.getToolIcon(toolId);
 }
 
 export async function openApp(appId: string): Promise<void> {

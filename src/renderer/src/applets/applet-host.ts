@@ -1,6 +1,5 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
-  type AppletInfo,
   type AssetInfo,
   type AssetLocationAndInfo,
   type WAL,
@@ -43,7 +42,7 @@ import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
   appIdFromAppletId,
-  toolBundleActionHashFromDistInfo,
+  toolCompatibilityIdFromDistInfoString,
   toOriginalCaseB64,
 } from '@theweave/utils';
 import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
@@ -230,14 +229,14 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       }
       if (!appletStore) return undefined;
       const groupsForApplet = await toPromise(mossStore.groupsForApplet.get(appletHash));
-      const icon = await toPromise(appletStore.logo);
+      const icon = await toPromise(mossStore.appletLogo.get(appletHash));
 
       return {
-        appletBundleId: toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
+        appletBundleId: toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
         appletName: appletStore.applet.custom_name,
-        appletIcon: icon,
+        appletIcon: icon!,
         groupsHashes: Array.from(groupsForApplet.keys()),
-      } as AppletInfo;
+      };
     },
     async notifyFrame(_notifications: Array<FrameNotification>) {
       throw new Error('notify is not implemented on headless WeaveServices.');
@@ -308,8 +307,8 @@ export async function handleAppletIframeMessage(
       const crossApplet = message.crossApplet;
       if (crossApplet) {
         const applets = await toPromise(
-          mossStore.appletsForBundleHash.get(
-            toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
+          mossStore.appletsForToolId.get(
+            toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {

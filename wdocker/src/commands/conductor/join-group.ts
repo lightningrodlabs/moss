@@ -5,11 +5,10 @@ import fs from 'fs';
 import os from 'os';
 
 import { nanoid } from 'nanoid';
-import { partialModifiersFromInviteLink } from '@theweave/utils';
+import { partialModifiersFromInviteLink, globalPubKeyFromListAppsResponse } from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
 import { input } from '@inquirer/prompts';
 
-import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import {
   downloadGroupHappIfNecessary,
   getAdminWsAndAppPort,
@@ -83,16 +82,15 @@ export async function installGroup(
   console.log('Listing apps');
 
   const apps = await adminWs.listApps({});
-  const toolLibraryAppInfo = apps.find(
-    (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
-  );
-  if (!toolLibraryAppInfo)
-    throw new Error('Tool library must be installed before installing the first group.');
+  let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+  if (!agentPubKey) {
+    agentPubKey = await adminWs.generateAgentPubKey();
+  }
 
   const hash = crypto.createHash('sha256');
   hash.update(partialModifiers.networkSeed);
   const hashedSeed = hash.digest('base64');
-  const appId = `group#${hashedSeed}#${partialModifiers.progenitor ? encodeHashToBase64(toolLibraryAppInfo.agent_pub_key) : null}`;
+  const appId = `group#${hashedSeed}#${partialModifiers.progenitor ? encodeHashToBase64(agentPubKey) : null}`;
 
   const dnaPropertiesMap = partialModifiers.progenitor
     ? {
@@ -120,7 +118,7 @@ export async function installGroup(
   const appInfo = await adminWs.installApp({
     path: modifiedHappPath,
     installed_app_id: appId,
-    agent_key: toolLibraryAppInfo.agent_pub_key,
+    agent_key: agentPubKey,
     network_seed: partialModifiers.networkSeed,
   });
   fs.rmSync(modifiedHappPath);

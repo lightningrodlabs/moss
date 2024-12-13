@@ -3,7 +3,6 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
 import {
-  CuratedTool,
   DeveloperCollecive,
   DeveloperCollectiveToolList,
   ToolCompatibilityId,
@@ -11,15 +10,13 @@ import {
   ToolCurationList,
   ToolCurations,
   ToolCurator,
-  ToolInfoAndVersions,
-  ToolVersionInfo,
 } from '@theweave/moss-types';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { deriveToolCompatibilityId, devModeToolLibraryFromDevConfig } from '../../utils';
+import { devModeToolLibraryFromDevConfig } from '../../utils';
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import { mdiChevronLeft, mdiEmailOutline, mdiTools, mdiWeb } from '@mdi/js';
@@ -36,6 +33,7 @@ import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
+import { deriveToolCompatibilityId } from '@theweave/utils';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {

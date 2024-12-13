@@ -3,7 +3,6 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { ActionHashB64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -22,6 +21,7 @@ import { AppletId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiHome, mdiStoreSearch, mdiUpload } from '@mdi/js';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -39,21 +39,21 @@ export class PersonalViewSidebar extends LitElement {
     () => [this, this._mossStore],
   );
 
-  renderTools(tools: Record<ActionHashB64, AppletId[]>) {
+  renderTools(tools: Record<ToolCompatibilityId, { appletIds: AppletId[]; toolName: string }>) {
     return html`${Object.keys(tools).map(
-      (actionHash) => html`
+      (toolCompatibilityId) => html`
         <!-- <sl-tooltip content=""> -->
         <tool-personal-bar-button
-          .originalToolActionHash=${actionHash}
+          .toolCompatibilityId=${toolCompatibilityId}
           .selected=${this.selectedView &&
           this.selectedView.type === 'tool' &&
-          this.selectedView.originalToolActionHash === actionHash}
+          this.selectedView.toolCompatibilityId === toolCompatibilityId}
           @click=${() => {
             this.dispatchEvent(
               new CustomEvent('personal-view-selected', {
                 detail: {
                   type: 'tool',
-                  originalToolActionHash: actionHash,
+                  toolCompatibilityId: toolCompatibilityId,
                 },
                 bubbles: false,
                 composed: true,

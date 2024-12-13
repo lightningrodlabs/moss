@@ -147,7 +147,7 @@ const OpenViewRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('cross-applet-main'),
-      appletBundleId: ActionHash,
+      appletBundleId: Type.String(),
     },
     { additionalProperties: false },
   ),
@@ -163,7 +163,7 @@ const OpenViewRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('cross-applet-block'),
-      appletBundleId: ActionHash,
+      appletBundleId: Type.String(),
       block: Type.String(),
       context: Type.Any(),
     },

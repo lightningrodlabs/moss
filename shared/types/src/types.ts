@@ -1,5 +1,5 @@
 import { ActionHashB64, AgentPubKeyB64, DnaHashB64, EntryHashB64 } from '@holochain/client';
-import { Type } from '@sinclair/typebox';
+import { Type, Static } from '@sinclair/typebox';
 
 export type PartialModifiers = {
   networkSeed: string;
@@ -18,21 +18,36 @@ export type WebHappSource = {
  */
 export type ToolCompatibilityId = string;
 
-export type AppHashes =
-  | {
-      type: 'webhapp';
-      sha256: string;
-      happ: {
-        sha256: string;
-      };
-      ui: {
-        sha256: string;
-      };
-    }
-  | {
-      type: 'happ';
-      sha256: string;
-    };
+export const TAppHashes = Type.Union([
+  Type.Object(
+    {
+      type: Type.Literal('webhapp'),
+      sha256: Type.String(),
+      happ: Type.Object(
+        {
+          sha256: Type.String(),
+        },
+        { additionalProperties: false },
+      ),
+      ui: Type.Object(
+        {
+          sha256: Type.String(),
+        },
+        { additionalProperties: false },
+      ),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('happ'),
+      sha256: Type.String(),
+    },
+    { additionalProperties: false },
+  ),
+]);
+
+export type AppHashes = Static<typeof TAppHashes>;
 
 export type DistributionInfo =
   | {
@@ -54,7 +69,7 @@ export type DistributionInfo =
       type: 'filesystem'; // Installed from filesystem
     }
   | {
-      type: 'web2-developer-collective-list';
+      type: 'web2-tool-list';
       info: {
         /**
          * Web2 URL to the developer collective's list of apps
@@ -69,6 +84,10 @@ export type DistributionInfo =
          */
         toolId: string;
         /**
+         * Name of the Tool
+         */
+        toolName: string;
+        /**
          * Version branch of the tool
          */
         versionBranch: string;
@@ -76,11 +95,56 @@ export type DistributionInfo =
          * Specific version of the Tool
          */
         toolVersion: string;
+        /**
+         * Id derived from toolListUrl + toolId + versionBranch
+         */
+        toolCompatibilityId: string;
       };
     }
   | {
       type: 'default-app'; // Shipped with the We executable by default
     };
+
+export const TDistributionInfo = Type.Union([
+  Type.Object(
+    {
+      type: Type.Literal('tools-library'),
+      info: Type.Object({
+        toolsLibraryDnaHash: Type.String(),
+        originalToolActionHash: Type.String(),
+        toolVersionActionHash: Type.String(),
+        toolVersionEntryHash: Type.String(),
+      }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('web2-tool-list'),
+      info: Type.Object({
+        toolListUrl: Type.String(),
+        developerCollectiveId: Type.String(),
+        toolId: Type.String(),
+        versionBranch: Type.String(),
+        toolVersion: Type.String(),
+        toolCompatibilityId: Type.String(),
+      }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('filesystem'),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('default-app'),
+    },
+    { additionalProperties: false },
+  ),
+]);
 
 export type AppAssetsInfo =
   | {
@@ -136,28 +200,6 @@ export function defineCurationLists(content: ToolCurations) {
 export function defineDevCollectiveToolList(content: DeveloperCollectiveToolList) {
   return content;
 }
-
-/**
- *
- */
-const ToolCuration = Type.Object(
-  {
-    name: Type.String(),
-    description: Type.String(),
-    contact: Type.Object(
-      {
-        website: Type.Optional(Type.String()),
-        email: Type.Optional(Type.String()),
-      },
-      { additionalProperties: true },
-    ),
-    /**
-     * Test blabla
-     */
-    icon: Type.String(),
-  },
-  { additionalProperties: false },
-);
 
 /**
  * A Tool curation is an opinionated list of developer collectives and Tools
@@ -244,7 +286,7 @@ export type DeveloperCollectiveToolList = {
 
 export type DeveloperCollecive = {
   /**
-   * ID of the developer collective.
+   * ID of the developer collective. No whitespaces.
    *
    * MUST NOT BE CHANGED ONCE PUBLISHED.
    */
@@ -266,7 +308,7 @@ export type DeveloperCollecive = {
 
 export type ToolInfoAndVersions = {
   /**
-   * Id of the Tool.
+   * Id of the Tool. No whitespaces.
    *
    * MUST NOT BE CHANGED ONCE PUBLISHED.
    */

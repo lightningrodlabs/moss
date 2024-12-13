@@ -34,7 +34,6 @@ import {
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
-
 import {
   AppletHash,
   AppletId,
@@ -45,18 +44,23 @@ import {
   deStringifyWal,
   stringifyWal,
 } from '@theweave/api';
+import { Value } from '@sinclair/typebox/value';
 
 import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
+  fetchResizeAndExportImg,
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
 } from '../utils.js';
-import { AppHashes, DistributionInfo } from '@theweave/moss-types';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
+import {
+  DeveloperCollectiveToolList,
+  DistributionInfo,
+  TDistributionInfo,
+} from '@theweave/moss-types';
 import {
   GroupRemoteSignal,
   PeerStatusClient,
@@ -64,7 +68,12 @@ import {
   SignalPayloadPeerStatus,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
-import { appIdFromAppletHash, toLowerCaseB64 } from '@theweave/utils';
+import {
+  appIdFromAppletHash,
+  deriveToolCompatibilityId,
+  toLowerCaseB64,
+  toolCompatibilityIdFromDistInfo,
+} from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,
@@ -810,7 +819,37 @@ export class GroupStore {
     console.log('@groupstore: @installApplet: Got applet: ', applet);
     if (!applet) throw new Error('Given applet instance hash was not found');
 
-    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    // TODO Check whether icon is already available and if not, fetch it
+    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+    Value.Assert(TDistributionInfo, distributionInfo);
+
+    if (distributionInfo.type !== 'web2-tool-list')
+      throw new Error("Tool source types other than 'web2-tool-list' are currently not supported.");
+
+    const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
+    let toolIcon = await this.mossStore.toolIcon(toolCompatibilityId);
+    if (!toolIcon) {
+      const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
+      const toolList: DeveloperCollectiveToolList = await resp.json();
+      // TODO ASSERT TYPE
+      const tool = toolList.tools.find(
+        (toolInfo) =>
+          toolInfo.id === distributionInfo.info.toolId &&
+          toolInfo.versionBranch === distributionInfo.info.versionBranch,
+      );
+      if (!tool)
+        throw new Error(
+          "Failed to fetch icon: Tool not found in the developer collective's Tool list.",
+        );
+      try {
+        toolIcon = await fetchResizeAndExportImg(tool.icon);
+      } catch (e) {
+        // TODO potentially add logic to use a placeholder icon in this case
+        throw new Error(`Failed to fetch Tool icon: ${e}`);
+      }
+    }
+
+    const appInfo = await this.mossStore.installApplet(appletHash, applet, toolIcon);
     const joinAppletInput = {
       applet,
       joining_pubkey: appInfo.agent_pub_key,
@@ -840,15 +879,7 @@ export class GroupStore {
    * Stewards.
    */
   async installAndAdvertiseApplet(
-    input:
-      | {
-          type: 'tool-library';
-          toolBundleEntity: UpdateableEntity<Tool>;
-        }
-      | {
-          type: 'web2-developer-collective-list';
-          tool: ToolAndCurationInfo;
-        },
+    tool: ToolAndCurationInfo,
     customName: string,
     networkSeed?: string,
     permissionHash?: ActionHash,
@@ -856,69 +887,54 @@ export class GroupStore {
     if (!networkSeed) {
       networkSeed = uuidv4();
     }
-
-    let applet: Applet;
-
-    if (input.type === 'tool-library') {
-      const appHashes: AppHashes = JSON.parse(input.toolBundleEntity.record.entry.hashes);
-      const toolsLibraryDnaHash = await this.mossStore.toolsLibraryStore.toolsLibraryDnaHash();
-
-      const distributionInfo: DistributionInfo = {
-        type: 'tools-library',
-        info: {
-          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-          originalToolActionHash: encodeHashToBase64(input.toolBundleEntity.originalActionHash),
-          toolVersionActionHash: encodeHashToBase64(input.toolBundleEntity.record.actionHash),
-          toolVersionEntryHash: encodeHashToBase64(input.toolBundleEntity.record.entryHash),
-        },
-      };
-
-      applet = {
-        permission_hash: permissionHash,
-        custom_name: customName,
-        description: input.toolBundleEntity.record.entry.description,
-        sha256_happ: appHashes.type === 'happ' ? appHashes.sha256 : appHashes.happ.sha256,
-        sha256_webhapp: appHashes.type === 'webhapp' ? appHashes.sha256 : undefined,
-        sha256_ui: appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined,
-        distribution_info: JSON.stringify(distributionInfo),
-        network_seed: networkSeed,
-        properties: {},
-      };
-    } else {
-      const latestVersion = input.tool.latestVersion;
-      if (!latestVersion.hashes.webhappSha256) throw new Error('webhappSha256 not defined.');
-      if (!latestVersion.hashes.happSha256) throw new Error('happSha256 not defined.');
-      if (!latestVersion.hashes.uiSha256) throw new Error('uiSha256 not defined.');
-
-      const distributionInfo: DistributionInfo = {
-        type: 'web2-developer-collective-list',
-        info: {
-          developerCollectiveId: input.tool.developerCollectiveId,
-          toolListUrl: input.tool.toolListUrl,
-          toolId: input.tool.toolInfoAndVersions.id,
-          versionBranch: input.tool.toolInfoAndVersions.versionBranch,
-          toolVersion: latestVersion.version,
-        },
-      };
-
-      console.log('INSTALLING WITH distributionInfo: ', distributionInfo);
-
-      applet = {
-        permission_hash: permissionHash,
-        custom_name: customName,
-        description: input.tool.toolInfoAndVersions.description,
-        sha256_happ: latestVersion.hashes.happSha256,
-        sha256_ui: latestVersion.hashes.uiSha256,
-        sha256_webhapp: latestVersion.hashes.webhappSha256,
-        distribution_info: JSON.stringify(distributionInfo),
-        network_seed: networkSeed,
-        properties: {},
-      };
+    // Fetch the icon and convert it to base64
+    let icon: string;
+    try {
+      icon = await fetchResizeAndExportImg(tool.toolInfoAndVersions.icon);
+    } catch (e) {
+      // TODO potentially add logic to use a placeholder icon in this case
+      throw new Error(`Failed to fetch Tool icon: ${e}`);
     }
+
+    const latestVersion = tool.latestVersion;
+    if (!latestVersion.hashes.webhappSha256) throw new Error('webhappSha256 not defined.');
+    if (!latestVersion.hashes.happSha256) throw new Error('happSha256 not defined.');
+    if (!latestVersion.hashes.uiSha256) throw new Error('uiSha256 not defined.');
+
+    const distributionInfo: DistributionInfo = {
+      type: 'web2-tool-list',
+      info: {
+        developerCollectiveId: tool.developerCollectiveId,
+        toolListUrl: tool.toolListUrl,
+        toolId: tool.toolInfoAndVersions.id,
+        toolName: tool.toolInfoAndVersions.title,
+        versionBranch: tool.toolInfoAndVersions.versionBranch,
+        toolVersion: latestVersion.version,
+        toolCompatibilityId: deriveToolCompatibilityId({
+          toolListUrl: tool.toolListUrl,
+          toolId: tool.toolInfoAndVersions.id,
+          versionBranch: tool.toolInfoAndVersions.versionBranch,
+        }),
+      },
+    };
+
+    console.log('INSTALLING WITH distributionInfo: ', distributionInfo);
+
+    const applet: Applet = {
+      permission_hash: permissionHash,
+      custom_name: customName,
+      description: tool.toolInfoAndVersions.description,
+      sha256_happ: latestVersion.hashes.happSha256,
+      sha256_ui: latestVersion.hashes.uiSha256,
+      sha256_webhapp: latestVersion.hashes.webhappSha256,
+      distribution_info: JSON.stringify(distributionInfo),
+      network_seed: networkSeed,
+      properties: {},
+    };
 
     const appletHash = await this.groupClient.hashApplet(applet);
 
-    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet, icon);
 
     const joinAppletInput: JoinAppletInput = {
       applet,

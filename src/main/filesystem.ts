@@ -150,6 +150,10 @@ export class MossFileSystem {
     return path.join(this.toolDir(toolId), 'preferences.json');
   }
 
+  toolIconPath(toolId: string) {
+    return path.join(this.toolDir(toolId), 'icon');
+  }
+
   toolUserPreferences(toolId: string): ToolUserPreferences | undefined {
     const filePath = this.toolUserPreferencesPath(toolId);
     let userPreferencesJson: string | undefined;
@@ -256,6 +260,24 @@ export class MossFileSystem {
     } catch (e) {
       throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
     }
+  }
+
+  storeToolIconIfNecessary(toolId: string, icon: string): void {
+    if (!fs.existsSync(this.toolDir(toolId))) {
+      createDirIfNotExists(this.toolDir(toolId));
+    }
+    const toolIconPath = this.toolIconPath(toolId);
+    if (!fs.existsSync(toolIconPath)) {
+      fs.writeFileSync(toolIconPath, icon, 'utf-8');
+    }
+  }
+
+  readToolIcon(toolId: string): string | undefined {
+    const toolIconPath = this.toolIconPath(toolId);
+    if (fs.existsSync(toolIconPath)) {
+      return fs.readFileSync(toolIconPath, 'utf-8');
+    }
+    return undefined;
   }
 
   grantCameraAccess(toolId: string) {

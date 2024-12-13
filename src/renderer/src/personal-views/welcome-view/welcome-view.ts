@@ -127,48 +127,49 @@ export class WelcomeView extends LitElement {
     }
   }
 
-  async updateTool(toolEntity: UpdateableEntity<Tool>) {
-    try {
-      this.updatingTool = true;
-      const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
-      if (assetsSource.type !== 'https')
-        throw new Error("Updating of applets is only implemented for sources of type 'http'");
-      const toolsLibraryDnaHash = await this._mossStore.toolsLibraryStore.toolsLibraryDnaHash();
-      const distributionInfo: DistributionInfo = {
-        type: 'tools-library',
-        info: {
-          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-          originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
-          toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
-          toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
-        },
-      };
-      const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-      if (appHashes.type !== 'webhapp')
-        throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+  async updateTool(_toolEntity: UpdateableEntity<Tool>) {
+    throw new Error('Updating a Tool is currently not implemented.');
+    //   try {
+    //     this.updatingTool = true;
+    //     const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
+    //     if (assetsSource.type !== 'https')
+    //       throw new Error("Updating of applets is only implemented for sources of type 'http'");
+    //     const toolsLibraryDnaHash = await this._mossStore.toolsLibraryStore.toolsLibraryDnaHash();
+    //     const distributionInfo: DistributionInfo = {
+    //       type: 'tools-library',
+    //       info: {
+    //         toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
+    //         originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
+    //         toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
+    //         toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
+    //       },
+    //     };
+    //     const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
+    //     if (appHashes.type !== 'webhapp')
+    //       throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
 
-      const appletIds = await window.electronAPI.batchUpdateAppletUis(
-        encodeHashToBase64(toolEntity.originalActionHash),
-        encodeHashToBase64(toolEntity.record.actionHash),
-        assetsSource.url,
-        distributionInfo,
-        appHashes.happ.sha256,
-        appHashes.ui.sha256,
-        appHashes.sha256,
-      );
-      console.log('UPDATED UI FOR APPLET IDS: ', appletIds);
-      await this._mossStore.checkForUiUpdates();
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-      notify(msg('Tool updated.'));
-      // Reload all the associated UIs
-      appletIds.forEach((id) => refreshAllAppletIframes(id));
-      this.updatingTool = false;
-    } catch (e) {
-      this.updatingTool = false;
-      console.error(`Failed to update Tool: ${e}`);
-      notifyError(msg('Failed to update Tool.'));
-      (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
-    }
+    //     const appletIds = await window.electronAPI.batchUpdateAppletUis(
+    //       encodeHashToBase64(toolEntity.originalActionHash),
+    //       encodeHashToBase64(toolEntity.record.actionHash),
+    //       assetsSource.url,
+    //       distributionInfo,
+    //       appHashes.happ.sha256,
+    //       appHashes.ui.sha256,
+    //       appHashes.sha256,
+    //     );
+    //     console.log('UPDATED UI FOR APPLET IDS: ', appletIds);
+    //     await this._mossStore.checkForUiUpdates();
+    //     (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    //     notify(msg('Tool updated.'));
+    //     // Reload all the associated UIs
+    //     appletIds.forEach((id) => refreshAllAppletIframes(id));
+    //     this.updatingTool = false;
+    //   } catch (e) {
+    //     this.updatingTool = false;
+    //     console.error(`Failed to update Tool: ${e}`);
+    //     notifyError(msg('Failed to update Tool.'));
+    //     (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    //   }
   }
 
   resetView() {

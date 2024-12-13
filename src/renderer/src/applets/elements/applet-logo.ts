@@ -1,4 +1,4 @@
-import { completed, pipe, StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
@@ -27,10 +27,7 @@ export class AppletLogo extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () =>
-      pipe(this.mossStore.appletStores.get(this.appletHash), (appletStore) =>
-        appletStore ? appletStore.logo : completed(undefined),
-      ),
+    () => this.mossStore.appletLogo.get(this.appletHash),
     () => [this.appletHash],
   );
 

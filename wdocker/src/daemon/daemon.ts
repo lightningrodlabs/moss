@@ -15,12 +15,11 @@ import fs from 'fs';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
-import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
 import {
   ALWAYS_ONLINE_TAG,
   GroupClient,
   PeerStatusClient,
-  SignalPayload,
+  SignalPayloadPeerStatus,
 } from '@theweave/group-client';
 import {
   AdminWebsocket,
@@ -31,7 +30,6 @@ import {
 } from '@holochain/client';
 import { AppletHash, AppletId } from '@theweave/api';
 import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
-import { ToolsLibraryClient } from '@theweave/tool-library-client';
 import { appIdFromAppletHash, toolBundleActionHashFromDistInfo } from '@theweave/utils';
 import rustUtils, { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { nanoid } from 'nanoid';
@@ -101,10 +99,6 @@ setTimeout(async () => {
   });
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
 
-  // Install default apps if necessary
-  const { adminWs, appPort } = await getAdminWsAndAppPort(CONDUCTOR_ID, password);
-  await installDefaultAppsIfNecessary(adminWs);
-
   const weRustHandler = await getWeRustHandler(WDOCKER_FILE_SYSTEM, password);
 
   // This line is used by the parent process to return when run in detached mode.
@@ -117,6 +111,8 @@ setTimeout(async () => {
   //   fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
   // }, 2000);
 
+  const { adminWs, appPort } = await getAdminWsAndAppPort(CONDUCTOR_ID, password);
+
   // Set up handler for remote signals and update agent profiles
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
@@ -126,7 +122,7 @@ setTimeout(async () => {
   for (const groupApp of groupApps) {
     const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
-    peerStatusClient.onSignal(async (signal: SignalPayload) => {
+    peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Ping') {
         // console.log('Received ping from ', encodeHashToBase64(signal.from_agent));
         await peerStatusClient.pong([signal.from_agent], 'online', tzOffset);
@@ -196,7 +192,6 @@ async function checkForNewGroupsAndApplets(
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
   const toolsLibraryAppWs = await getAppWs(adminWs, appPort, TOOLS_LIBRARY_APP_ID, weRustHandler);
-  const toolsLibraryClient = new ToolsLibraryClient(toolsLibraryAppWs, 'tools', 'library');
 
   // TODO wrap in try catch blocks
   for (const groupApp of groupApps) {

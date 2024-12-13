@@ -138,8 +138,8 @@ export interface OpenViews {
   openAppletMain(appletHash: EntryHash): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openWal(wal: WAL): void;
-  openCrossAppletMain(appletBundleId: ActionHash): void;
-  openCrossAppletBlock(appletBundleId: ActionHash, block: string, context: any): void;
+  openCrossAppletMain(appletBundleId: string): void;
+  openCrossAppletBlock(appletBundleId: string, block: string, context: any): void;
 }
 
 export type AssetLocationAndInfo = {
@@ -152,7 +152,7 @@ export type AssetLocationAndInfo = {
 };
 
 export type AppletInfo = {
-  appletBundleId: ActionHash;
+  appletBundleId: string;
   appletName: string;
   appletIcon: string;
   groupsHashes: Array<DnaHash>;
@@ -475,7 +475,7 @@ export type OpenViewRequest =
     }
   | {
       type: 'cross-applet-main';
-      appletBundleId: ActionHash;
+      appletBundleId: string;
     }
   | {
       type: 'applet-block';
@@ -485,7 +485,7 @@ export type OpenViewRequest =
     }
   | {
       type: 'cross-applet-block';
-      appletBundleId: ActionHash;
+      appletBundleId: string;
       block: string;
       context: any;
     }

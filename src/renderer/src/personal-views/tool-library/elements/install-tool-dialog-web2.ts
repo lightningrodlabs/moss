@@ -124,10 +124,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       }
       this._installationProgress = 'Downloading and installing Tool...';
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
-        {
-          type: 'web2-developer-collective-list',
-          tool: this._tool,
-        },
+        this._tool,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
         permissionType.type === 'Steward' ? permissionType.content.permission_hash : undefined,

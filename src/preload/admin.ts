@@ -73,6 +73,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  getToolIcon: (toolId: string) => ipcRenderer.invoke('get-tool-icon', toolId),
   mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),
   installMossUpdate: () => ipcRenderer.invoke('install-moss-update'),
   installAppletBundle: (
@@ -82,6 +83,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
+    icon: string,
     uiPort?: number,
   ) =>
     ipcRenderer.invoke(
@@ -92,6 +94,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       happOrWebHappUrl,
       distributionInfo,
       appHashes,
+      icon,
       uiPort,
     ),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),

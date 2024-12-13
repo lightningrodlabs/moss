@@ -35,7 +35,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart, ToolAndCurationInfo, ToolListUrl } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -49,8 +49,8 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
-import { appIdFromAppletId, toLowerCaseB64 } from '@theweave/utils';
-import { DeveloperCollecive, ToolCompatibilityId, WeDevConfig } from '@theweave/moss-types';
+import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
+import { DeveloperCollecive, WeDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -100,14 +100,6 @@ export function findAppForDnaHash(
     }
   }
   return undefined;
-}
-
-export function deriveToolCompatibilityId(input: {
-  toolListUrl: string;
-  toolId: string;
-  versionBranch: string;
-}): ToolCompatibilityId {
-  return `${input.toolListUrl}#${input.toolId}#${input.versionBranch}`;
 }
 
 export function getStatus(app: AppInfo): string {
@@ -476,8 +468,28 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
-// Crop the image and return a base64 bytes string of its content
-export function resizeAndExport(img: HTMLImageElement) {
+/**
+ * Fetches an image, crops it to 300x300px and returns the base64 encoded value of the
+ * resized image.
+ *
+ * @param src
+ * @returns
+ */
+export async function fetchResizeAndExportImg(src: string): Promise<string> {
+  const tmpImgEl = document.createElement('img');
+  return new Promise((resolve, reject) => {
+    tmpImgEl.onload = () => {
+      resolve(resizeAndExportImg(tmpImgEl));
+    };
+    tmpImgEl.onerror = () => reject('Failed to load image from source.');
+    tmpImgEl.src = src;
+  });
+}
+
+/**
+ * Crop the image and return a base64 bytes string of its content
+ */
+export function resizeAndExportImg(img: HTMLImageElement): string {
   const MAX_WIDTH = 300;
   const MAX_HEIGHT = 300;
 
@@ -502,7 +514,9 @@ export function resizeAndExport(img: HTMLImageElement) {
   ctx.drawImage(img, 0, 0, width, height);
 
   // return the .toDataURL of the temp canvas
-  return canvas.toDataURL();
+  const base64string = canvas.toDataURL();
+  canvas.remove();
+  return base64string;
 }
 
 export function urlFromAppletHash(appletHash: AppletHash): string {
@@ -1007,7 +1021,10 @@ export function devModeToolLibraryFromDevConfig(config: WeDevConfig): {
         description: toolConfig.description,
         tags: [],
         versionBranch: '###DEVMODE###',
-        icon: toolConfig.icon.type === 'filesystem' ? toolConfig.icon.path : toolConfig.icon.url,
+        icon:
+          toolConfig.icon.type === 'filesystem'
+            ? `file://${toolConfig.icon.path}`
+            : toolConfig.icon.url,
         versions: [
           {
             version: '0.1.0',

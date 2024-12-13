@@ -1,13 +1,20 @@
-import { PartialModifiers, DistributionInfo } from '@theweave/moss-types';
+import {
+  PartialModifiers,
+  DistributionInfo,
+  TDistributionInfo,
+  ToolCompatibilityId,
+} from '@theweave/moss-types';
 import {
   ActionHash,
+  AgentPubKey,
   decodeHashFromBase64,
   encodeHashToBase64,
   HoloHashB64,
+  ListAppsResponse,
 } from '@holochain/client';
 import { AppletId, AppletHash, WAL } from '@theweave/api';
-import { encode, decode } from '@msgpack/msgpack';
-import { fromUint8Array, toUint8Array } from 'js-base64';
+import { Value } from '@sinclair/typebox/value';
+import { Md5 } from 'ts-md5';
 
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
   const [networkSeed, progenitorString] = props.split('&progenitor=');
@@ -51,13 +58,6 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   }
 }
 
-export function toolBundleActionHashFromDistInfo(distributionInfoString: string): ActionHash {
-  const distributionInfo: DistributionInfo = JSON.parse(distributionInfoString);
-  if (distributionInfo.type !== 'tools-library')
-    throw new Error("Cannot get AppEntry action hash from type other than 'tools-library'.");
-  return decodeHashFromBase64(distributionInfo.info.originalToolActionHash);
-}
-
 export function appIdFromAppletHash(appletHash: AppletHash): string {
   return `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
 }
@@ -80,4 +80,40 @@ export function toLowerCaseB64(hashb64: HoloHashB64): string {
 
 export function toOriginalCaseB64(input: string): HoloHashB64 {
   return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
+}
+
+export function deriveToolCompatibilityId(input: {
+  toolListUrl: string;
+  toolId: string;
+  versionBranch: string;
+}): ToolCompatibilityId {
+  return Md5.hashStr(`${input.toolListUrl}#${input.toolId}#${input.versionBranch}`);
+}
+
+export function toolCompatibilityIdFromDistInfoString(distInfoString: string): string {
+  const distributionInfo: DistributionInfo = JSON.parse(distInfoString);
+  // Verify format
+  Value.Assert(TDistributionInfo, distributionInfo);
+  return toolCompatibilityIdFromDistInfo(distributionInfo);
+}
+
+export function toolCompatibilityIdFromDistInfo(distributionInfo: DistributionInfo): string {
+  if (distributionInfo.type === 'tools-library') {
+    return distributionInfo.info.originalToolActionHash;
+  } else if (distributionInfo.type === 'web2-tool-list') {
+    return deriveToolCompatibilityId({
+      toolListUrl: distributionInfo.info.toolListUrl,
+      toolId: distributionInfo.info.toolId,
+      versionBranch: distributionInfo.info.versionBranch,
+    });
+  } else {
+    throw new Error(
+      `Cannot derive Tool compatibility id from distribution info type '${distributionInfo.type}'`,
+    );
+  }
+}
+
+export function globalPubKeyFromListAppsResponse(apps: ListAppsResponse): AgentPubKey | undefined {
+  const anyGroupApp = apps.find((app) => app.installed_app_id.startsWith('group#'));
+  return anyGroupApp?.agent_pub_key;
 }

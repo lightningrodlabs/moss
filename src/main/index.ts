@@ -33,15 +33,9 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import { breakingVersion, emitToWindow, setLinkOpenHandlers, signZomeCall } from './utils';
-import { createHappWindow, createSplashscreenWindow, createWalWindow } from './windows';
+import { createSplashscreenWindow, createWalWindow } from './windows';
 import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
-import {
-  AppAssetsInfo,
-  AppHashes,
-  DistributionInfo,
-  TOOLS_LIBRARY_APP_ID,
-  WeDevConfig,
-} from '@theweave/moss-types';
+import { AppAssetsInfo, AppHashes, DistributionInfo, WeDevConfig } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
@@ -72,7 +66,11 @@ import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { appletIdFromAppId } from '@theweave/utils';
+import {
+  appletIdFromAppId,
+  globalPubKeyFromListAppsResponse,
+  toolCompatibilityIdFromDistInfo,
+} from '@theweave/utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -106,7 +104,7 @@ weCli
   .version(appVersion)
   .option(
     '-p, --profile <string>',
-    'Runs We with a custom profile with its own dedicated data store.',
+    'Runs Moss with a custom profile with its own dedicated data store.',
   )
   .option(
     '-n, --network-seed <string>',
@@ -114,7 +112,7 @@ weCli
   )
   .option(
     '-c, --dev-config <path>',
-    'Runs We in applet developer mode based on the configuration file at the specified path.',
+    'Runs Moss in Tool developer mode based on the configuration file at the specified path.',
   )
   .option(
     '--dev-data-dir <path>',
@@ -122,7 +120,7 @@ weCli
   )
   .option(
     '--holochain-path <path>',
-    'Runs the Holochain Launcher with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
+    'Runs Moss with the holochain binary at the provided path. Use with caution since this may potentially corrupt your databases if the binary you use is not compatible with existing databases.',
   )
   .option('--holochain-rust-log <string>', 'RUST_LOG value to pass to the holochain binary')
   .option('--holochain-wasm-log <string>', 'WASM_LOG value to pass to the holochain binary')
@@ -1021,11 +1019,6 @@ app.whenReady().then(async () => {
     }
   });
   ipcMain.handle(
-    'open-app',
-    async (_e, appId: string): Promise<void> =>
-      createHappWindow(appId, WE_FILE_SYSTEM, HOLOCHAIN_MANAGER!.appPort),
-  );
-  ipcMain.handle(
     'install-app',
     async (_e, filePath: string, appId: string, networkSeed: string): Promise<void> => {
       if (filePath === '#####REQUESTED_KANDO_INSTALLATION#####') {
@@ -1115,35 +1108,36 @@ app.whenReady().then(async () => {
     return {
       app_port: HOLOCHAIN_MANAGER!.appPort,
       admin_port: HOLOCHAIN_MANAGER!.adminPort,
-      tools_library_app_id: TOOLS_LIBRARY_APP_ID,
       moss_version: app.getVersion(),
       weave_protocol_version: '0.13',
     };
   });
-  ipcMain.handle('lair-setup-required', (): boolean => {
-    return !WE_FILE_SYSTEM.keystoreInitialized();
-  });
+  ipcMain.handle('get-tool-icon', (_e, toolId: string): string | undefined => {
+    return WE_FILE_SYSTEM.readToolIcon(toolId);
+  }),
+    ipcMain.handle('lair-setup-required', (): boolean => {
+      return !WE_FILE_SYSTEM.keystoreInitialized();
+    });
   ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
     const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-    const toolsLibraryAppInfo = apps.find(
-      (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
-    );
-    if (!toolsLibraryAppInfo)
-      throw new Error('Tools Library must be installed before installing the first group.');
+    let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+    if (!agentPubKey) {
+      agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+    }
 
     // generate random network seed
     const networkSeed = uuidv4();
     const hash = createHash('sha256');
     hash.update(networkSeed);
     const hashedSeed = hash.digest('base64');
-    const appId = `group#${hashedSeed}#${withProgenitor ? encodeHashToBase64(toolsLibraryAppInfo.agent_pub_key) : null}`;
+    const appId = `group#${hashedSeed}#${withProgenitor ? encodeHashToBase64(agentPubKey) : null}`;
     console.log('Determined appId for group: ', appId);
 
     const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
     const dnaPropertiesMap = withProgenitor
       ? {
-          group: yaml.dump({ progenitor: encodeHashToBase64(toolsLibraryAppInfo.agent_pub_key) }),
+          group: yaml.dump({ progenitor: encodeHashToBase64(agentPubKey) }),
         }
       : {
           group: yaml.dump({
@@ -1164,7 +1158,7 @@ app.whenReady().then(async () => {
     const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
       path: modifiedHappPath,
       installed_app_id: appId,
-      agent_key: toolsLibraryAppInfo.agent_pub_key,
+      agent_key: agentPubKey,
       network_seed: networkSeed,
     });
     fs.rmSync(modifiedHappPath);
@@ -1175,6 +1169,10 @@ app.whenReady().then(async () => {
     'join-group',
     async (_e, networkSeed: string, progenitor: AgentPubKeyB64 | null): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+      if (!agentPubKey) {
+        agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+      }
       const hash = createHash('sha256');
       hash.update(networkSeed);
       const hashedSeed = hash.digest('base64');
@@ -1186,11 +1184,6 @@ app.whenReady().then(async () => {
         if (!appInfo) throw new Error('AppInfo undefined.');
         return appInfo;
       }
-      const toolsLibraryAppInfo = apps.find(
-        (appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID,
-      );
-      if (!toolsLibraryAppInfo)
-        throw new Error('Tools Library must be installed before installing the first group.');
 
       console.log('got progenitor: ', progenitor);
       console.log('got networkSeed: ', networkSeed);
@@ -1211,7 +1204,7 @@ app.whenReady().then(async () => {
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
         path: modifiedHappPath,
         installed_app_id: appId,
-        agent_key: toolsLibraryAppInfo.agent_pub_key,
+        agent_key: agentPubKey,
         network_seed: networkSeed,
       });
       fs.rmSync(modifiedHappPath);
@@ -1449,17 +1442,22 @@ app.whenReady().then(async () => {
       _e,
       appId: string,
       networkSeed: string,
-      agentPubKey,
       happOrWebHappUrl: string,
       distributionInfo: DistributionInfo,
       appHashes: AppHashes,
+      icon: string,
       uiPort?: number,
     ): Promise<AppInfo> => {
-      const sha256Ui = appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined;
-      const sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
-      const sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
+      let sha256Ui = appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined;
+      let sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
+      let sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
       console.log('INSTALLING APPLET BUNDLE. uiPort: ', uiPort);
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+      if (!agentPubKey) {
+        agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+      }
+
       const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
       if (alreadyInstalled) {
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
@@ -1474,7 +1472,15 @@ app.whenReady().then(async () => {
       let happToBeInstalledPath: string | undefined;
       let tmpDir: string | undefined;
 
-      if (!happAlreadyStored || !uiAlreadyStored) {
+      const isDevModeAndTrustedToolFromDevConfig =
+        !!RUN_OPTIONS.devInfo && sha256Happ.startsWith('###DEVMODE###');
+
+      // In devmode always fetch it because we don't want to fetch and pre-compute the sha256
+      // hashes of all Tools listed in the devconfig which is why they are not known at this
+      // stage and have a ###DEVMODE### placeholder instead.
+      // We do need the actual hashes however as a means to address the associated resources
+      // on the filesystem.
+      if (!happAlreadyStored || !uiAlreadyStored || isDevModeAndTrustedToolFromDevConfig) {
         // fetch webhapp from URL
         const fixedHappOrWebHappUrl = happOrWebHappUrl.startsWith('file://./')
           ? `file://${process.cwd()}${happOrWebHappUrl.slice(8)}`
@@ -1491,10 +1497,18 @@ app.whenReady().then(async () => {
         const { happSha256, webhappSha256, uiSha256 } =
           await rustUtils.validateHappOrWebhapp(assetBytes);
 
+        // Overwrite the ###DEVMODE### placeholders with the actual sha256 hashes
+        // if it's a trusted Tool from the dev config
+        if (isDevModeAndTrustedToolFromDevConfig) {
+          sha256Happ = happSha256;
+          sha256Ui = uiSha256;
+          sha256Webhapp = webhappSha256;
+        }
+
         // Check the hashes unless we're in dev mode and it's a Tool from the dev config
         const isTrustedToolFromDevConfig =
           RUN_OPTIONS.devInfo &&
-          distributionInfo.type === 'web2-developer-collective-list' &&
+          distributionInfo.type === 'web2-tool-list' &&
           distributionInfo.info.toolListUrl.startsWith('###DEVMODE###');
 
         if (!isTrustedToolFromDevConfig) {
@@ -1542,6 +1556,9 @@ app.whenReady().then(async () => {
         uiPort,
       );
       WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+
+      const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
+      WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, icon);
 
       let appInfo: AppInfo;
       try {

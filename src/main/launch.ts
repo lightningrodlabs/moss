@@ -4,7 +4,7 @@ import path from 'path';
 import { BrowserWindow } from 'electron';
 import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
-import { DistributionInfo, TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
+import { DistributionInfo } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
 import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
 import { HolochainManager } from './holochainManager';
@@ -89,23 +89,23 @@ export async function launch(
 
   const weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
 
-  // Install default appstore if necessary:
-  if (
-    !holochainManager.installedApps
-      .map((appInfo) => appInfo.installed_app_id)
-      .includes(TOOLS_LIBRARY_APP_ID)
-  ) {
-    console.log('Installing Tools Library...');
-    if (splashscreenWindow)
-      splashscreenWindow.webContents.send('loading-progress-update', 'Installing Tools Library...');
-    await holochainManager.installApp(
-      path.join(DEFAULT_APPS_DIRECTORY, 'tools-library.happ'),
-      TOOLS_LIBRARY_APP_ID,
-      runOptions.appstoreNetworkSeed,
-    );
+  // // Install default appstore if necessary:
+  // if (
+  //   !holochainManager.installedApps
+  //     .map((appInfo) => appInfo.installed_app_id)
+  //     .includes(TOOLS_LIBRARY_APP_ID)
+  // ) {
+  //   console.log('Installing Tools Library...');
+  //   if (splashscreenWindow)
+  //     splashscreenWindow.webContents.send('loading-progress-update', 'Installing Tools Library...');
+  //   await holochainManager.installApp(
+  //     path.join(DEFAULT_APPS_DIRECTORY, 'tools-library.happ'),
+  //     TOOLS_LIBRARY_APP_ID,
+  //     runOptions.appstoreNetworkSeed,
+  //   );
 
-    console.log('Tools Library installed.');
-  }
+  //   console.log('Tools Library installed.');
+  // }
   // Install other default apps if necessary (not in applet-dev mode)
   if (!runOptions.devInfo) {
     await Promise.all(
@@ -202,7 +202,7 @@ export async function launch(
       }),
     );
   } else {
-    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, true);
+    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

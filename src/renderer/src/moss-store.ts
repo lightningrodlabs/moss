@@ -47,8 +47,6 @@ import {
   deStringifyWal,
   ParentToAppletMessage,
 } from '@theweave/api';
-
-import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import {
@@ -56,6 +54,7 @@ import {
   createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
+  getToolIcon,
   joinGroup,
 } from './electron-api.js';
 import {
@@ -73,7 +72,9 @@ import {
   AppHashes,
   DeveloperCollectiveToolList,
   DistributionInfo,
-  WebHappSource,
+  TDistributionInfo,
+  ToolCompatibilityId,
+  ToolInfoAndVersions,
   WeDevConfig,
 } from '@theweave/moss-types';
 import {
@@ -81,8 +82,11 @@ import {
   appIdFromAppletId,
   appletHashFromAppId,
   appletIdFromAppId,
-  toolBundleActionHashFromDistInfo,
+  deriveToolCompatibilityId,
+  toolCompatibilityIdFromDistInfo,
+  toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
+import { Value } from '@sinclair/typebox/value';
 import { AppletNotification } from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
@@ -106,11 +110,9 @@ export class MossStore {
   constructor(
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
-    public toolsLibraryStore: ToolsLibraryStore,
+    // public toolsLibraryStore: ToolsLibraryStore,
     public appletDevConfig: WeDevConfig | undefined,
-    authenticationTokens: Record<InstalledAppId, AppAuthenticationToken>,
   ) {
-    this._authenticationTokens = authenticationTokens;
     this.myLatestActivity = Date.now();
     this._version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
@@ -179,9 +181,42 @@ export class MossStore {
    */
   _appletDevPorts: Record<AppletId, number> = {};
 
+  _toolIcons: Record<ToolCompatibilityId, string> = {};
+
+  _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
+
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
+
+  async toolInfoFromRemote(
+    toolListUrl: string,
+    toolId: string,
+    versionBranch: string,
+    noCache = false,
+  ): Promise<ToolInfoAndVersions | undefined> {
+    const maybeCachedInfo =
+      this._toolInfoRemoteCache[
+        deriveToolCompatibilityId({
+          toolListUrl,
+          toolId,
+          versionBranch,
+        })
+      ];
+    if (!noCache && maybeCachedInfo) return maybeCachedInfo;
+    // Fetch latest version of the Tool
+    const resp = await fetch(toolListUrl, { cache: 'no-cache' });
+    const toolList: DeveloperCollectiveToolList = await resp.json();
+    return toolList.tools.find((tool) => tool.id === toolId);
+  }
+
+  async toolIcon(toolId: ToolCompatibilityId): Promise<string | undefined> {
+    let toolIcon: string | undefined = this._toolIcons[toolId];
+    if (toolIcon) return toolIcon;
+    toolIcon = await getToolIcon(toolId);
+    if (toolIcon) this._toolIcons[toolId] = toolIcon;
+    return toolIcon;
+  }
 
   dragWal(wal: WAL) {
     this._dragWal.set(wal);
@@ -237,41 +272,7 @@ export class MossStore {
   }
 
   async checkForUiUpdates() {
-    // 1. Get all AppAssetsInfos
-    const toolsWithAvailableUpdates: Record<AgentPubKeyB64, UpdateableEntity<Tool>> = {};
-    const appAssetsInfos = await getAllAppAssetsInfos();
-
-    // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
-    const allLatestToolEntities =
-      await this.toolsLibraryStore.toolsLibraryClient.getAllToolEntites();
-
-    Object.values(appAssetsInfos).forEach(([appAssetInfo, _weaveConfig]) => {
-      if (
-        appAssetInfo.distributionInfo.type === 'tools-library' &&
-        appAssetInfo.type === 'webhapp' &&
-        appAssetInfo.sha256
-      ) {
-        const orignalToolActionHash = appAssetInfo.distributionInfo.info.originalToolActionHash;
-        const maybeRelevantToolEntity = allLatestToolEntities.find(
-          (toolEntity) =>
-            encodeHashToBase64(toolEntity.originalActionHash) === orignalToolActionHash,
-        );
-        if (maybeRelevantToolEntity) {
-          const appHashes: AppHashes = JSON.parse(maybeRelevantToolEntity.record.entry.hashes);
-          // Check that happ hash is the same but webhapp hash is different
-          if (appHashes.type === 'webhapp') {
-            if (
-              appHashes.happ.sha256 === appAssetInfo.happ.sha256 &&
-              appHashes.sha256 !== appAssetInfo.sha256
-            ) {
-              toolsWithAvailableUpdates[orignalToolActionHash] = maybeRelevantToolEntity;
-            }
-          }
-        }
-      }
-    });
-
-    this._availableToolUpdates.set(toolsWithAvailableUpdates);
+    throw new Error('Not implemented yet.');
   }
 
   availableToolUpdates(): Readable<Record<ActionHashB64, UpdateableEntity<Tool>>> {
@@ -683,21 +684,30 @@ export class MossStore {
   runningAppletClasses = pipe(this.runningApplets, (applets) =>
     asyncDerived(this.allAppAssetInfos, (assetInfos) => {
       const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
-      const appletClasses: Record<ActionHashB64, AppletId[]> = {};
+      const appletClasses: Record<
+        ToolCompatibilityId,
+        { appletIds: AppletId[]; toolName: string }
+      > = {};
       Object.entries(assetInfos).forEach(([appId, [info, weaveConfig]]) => {
         if (
           appId.startsWith('applet#') &&
-          info.distributionInfo.type === 'tools-library' &&
+          info.distributionInfo.type === 'web2-tool-list' &&
           weaveConfig?.crossGroupView
         ) {
           const appletId = appletIdFromAppId(appId);
           if (runningAppletIds.includes(appletId)) {
-            const classId = info.distributionInfo.info.originalToolActionHash;
-            const otherAppletsOfSameClass = appletClasses[classId];
+            const classId = info.distributionInfo.info.toolCompatibilityId;
+            const otherAppletsOfSameClass = appletClasses[classId]?.appletIds;
             if (otherAppletsOfSameClass) {
-              appletClasses[classId] = [...otherAppletsOfSameClass, appletId];
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [...otherAppletsOfSameClass, appletId],
+              };
             } else {
-              appletClasses[classId] = [appletId];
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [appletId],
+              };
             }
           }
         }
@@ -705,6 +715,19 @@ export class MossStore {
       return appletClasses;
     }),
   );
+
+  appletClassInfo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return pipe(this.runningAppletClasses, (appletClasses) => {
+      const found = Object.entries(appletClasses).find(([id, _]) => id === toolCompatibilityId);
+      if (found) {
+        return {
+          toolCompatibilityId: found[0],
+          toolName: found[1].toolName,
+        };
+      }
+      return undefined;
+    });
+  });
 
   runningGroupsApps = asyncDerived(this.runningApps, (apps) =>
     apps.filter((app) => app.installed_app_id.startsWith('group#')),
@@ -741,16 +764,7 @@ export class MossStore {
 
       const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
 
-      set(
-        new AppletStore(
-          appletHash,
-          applet,
-          this.conductorInfo,
-          token,
-          this.toolsLibraryStore,
-          this.isAppletDev,
-        ),
-      );
+      set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
     }),
   );
 
@@ -914,9 +928,9 @@ export class MossStore {
     );
   });
 
-  appletsForBundleHash = new LazyHoloHashMap(
+  appletsForToolId = new LazyMap(
     (
-      toolBundleHash: ActionHash, // action hash of the Tool entry in the tools library
+      toolCompatibilityId: ToolCompatibilityId, // action hash of the Tool entry in the tools library
     ) =>
       pipe(
         this.allRunningApplets,
@@ -925,9 +939,8 @@ export class MossStore {
             pickBy(
               runningApplets,
               (appletStore) =>
-                toolBundleActionHashFromDistInfo(
-                  appletStore.applet.distribution_info,
-                ).toString() === toolBundleHash.toString(),
+                toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info) ===
+                toolCompatibilityId,
             ),
           ),
         (appletsForThisBundleHash) =>
@@ -960,7 +973,27 @@ export class MossStore {
     mapAndJoin(applets, (appletStore) => appletStore.host),
   );
 
-  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
+  toolLogo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return asyncReadable<string | undefined>(async (set) => {
+      const toolIcon = await this.toolIcon(toolCompatibilityId);
+      set(toolIcon);
+    });
+  });
+
+  appletLogo = new LazyHoloHashMap((appletHash: AppletHash) =>
+    pipe(this.allAppAssetInfos, (assetInfos) => {
+      const assetInfoAndAppId = Object.entries(assetInfos).find(
+        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
+      );
+      if (!assetInfoAndAppId) return undefined;
+      const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
+        assetInfoAndAppId[1][0].distributionInfo,
+      );
+      return this.toolLogo.get(toolCompatibilityId);
+    }),
+  );
+
+  async installApplet(appletHash: EntryHash, applet: Applet, icon: string): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
     const appId = appIdFromAppletHash(appletHash);
     if (!applet.network_seed) {
@@ -972,12 +1005,13 @@ export class MossStore {
     console.log('@moss-store: INSTALLING WITH distributionInfo: ', applet.distribution_info);
 
     const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
-    let metaData: any;
+    Value.Assert(TDistributionInfo, distributionInfo);
+
     let appHashes: AppHashes;
     let happOrWebhappUrl: string;
     let uiPort: number | undefined;
 
-    case1: if (distributionInfo.type === 'web2-developer-collective-list') {
+    case1: if (distributionInfo.type === 'web2-tool-list') {
       // In case it's applet dev mode *and* it's a tool from the dev config
       // then derive the relevant info right here
       if (this.appletDevConfig) {
@@ -1057,40 +1091,9 @@ export class MossStore {
 
       happOrWebhappUrl = latestVersion.url;
     } else {
-      const toolEntity = await this.toolsLibraryStore.getLatestToolEntry(
-        toolBundleActionHashFromDistInfo(applet.distribution_info),
+      throw new Error(
+        "Distribution info types other than 'web2-tool-list' are currently not supported.",
       );
-
-      if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
-
-      metaData = toolEntity.record.entry.meta_data;
-
-      const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-      if (source.type !== 'https')
-        throw new Error(`Unsupported applet source type '${source.type}'`);
-      if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
-        throw new Error(`Invalid applet source URL '${source.url}'`);
-
-      appHashes = JSON.parse(toolEntity.record.entry.hashes);
-
-      happOrWebhappUrl = source.url;
-
-      // Read ui port in dev mode
-      if (metaData) {
-        try {
-          const metadataObject = JSON.parse(metaData);
-          if (metadataObject.uiPort) {
-            uiPort = metadataObject.uiPort;
-          }
-        } catch (e) {}
-      }
-
-      if (
-        distributionInfo.type === 'tools-library' &&
-        distributionInfo.info.originalToolActionHash !==
-          encodeHashToBase64(toolEntity.originalActionHash)
-      )
-        throw new Error('Original ToolEntry action hash does not match the one in the AppletEntry');
     }
 
     // Only in dev mode AppHashes of type 'happ' are currently allowed
@@ -1100,10 +1103,10 @@ export class MossStore {
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
-      encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
       happOrWebhappUrl,
       distributionInfo,
       appHashes,
+      icon,
       uiPort,
     );
 

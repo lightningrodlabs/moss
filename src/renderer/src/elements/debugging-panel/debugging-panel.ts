@@ -35,7 +35,6 @@ import { AppletId } from '@theweave/api';
 import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
-import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { appIdFromAppletHash } from '@theweave/utils';
 
 @localized()
@@ -66,34 +65,14 @@ export class DebuggingPanel extends LitElement {
   _groupsWithDetails: DnaHashB64[] = [];
 
   @state()
-  _toolsLibraryCellIds: CellId[] = [];
-
-  @state()
   _groupAppIds: Record<DnaHashB64, InstalledAppId> = {};
-
-  @state()
-  _showToolsLibraryDetails = false;
 
   @state()
   _appsWithDebug: InstalledAppId[] = [];
 
-  @state()
-  _toolLibraryTotalAgents: number | undefined;
-
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
-    try {
-      const toolsLibraryAppClient = await this._mossStore.getAppClient(TOOLS_LIBRARY_APP_ID);
-      const cellIds = await this.getCellIds(toolsLibraryAppClient);
-      this._toolsLibraryCellIds = cellIds;
-    } catch (e) {
-      console.warn('Failed to get ToolsLibrary cellIds: ', e);
-    }
-
-    const toolLibraryAgents =
-      await this._mossStore.toolsLibraryStore.toolsLibraryClient.getAllAgents();
-    this._toolLibraryTotalAgents = toolLibraryAgents.length;
   }
 
   disconnectedCallback(): void {
@@ -189,68 +168,6 @@ export class DebuggingPanel extends LitElement {
         </div>
       `,
     );
-  }
-
-  renderDefaultApps() {
-    const toolsLibraryZomeCallCount =
-      this._toolsLibraryCellIds.length > 0
-        ? window[`__mossZomeCallCount_${encodeHashToBase64(this._toolsLibraryCellIds[0][0])}`]
-        : undefined;
-
-    const showToolsLibraryDebug = this._appsWithDebug.includes(TOOLS_LIBRARY_APP_ID);
-
-    return html`
-      <div class="column" style="align-items: flex-start;">
-        <div class="row" style="align-items: center;">
-          <div style="align-items: center; width: 300px;"></div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
-        </div>
-        <div class="column">
-          <div class="row" style="align-items: center; flex: 1; margin-top: 10px;">
-            <div class="row" style="align-items: center; width: 300px; font-weight: bold;">
-              Tools Library (${this._toolLibraryTotalAgents} total peers)
-            </div>
-            <div style="display: flex; flex: 1;"></div>
-            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-              ${toolsLibraryZomeCallCount ? toolsLibraryZomeCallCount.totalCounts : ''}
-            </div>
-            <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
-              ${toolsLibraryZomeCallCount
-                ? Math.round(
-                    toolsLibraryZomeCallCount.totalCounts /
-                      ((Date.now() - toolsLibraryZomeCallCount.firstCall) / (1000 * 60)),
-                  )
-                : ''}
-            </div>
-            <span
-              style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-              @click=${() => {
-                this._showToolsLibraryDetails = !this._showToolsLibraryDetails;
-              }}
-              >${this._showToolsLibraryDetails ? 'Hide' : 'Details'}</span
-            >
-
-            <sl-icon-button
-              @click=${async () => {
-                this.toggleDebug(TOOLS_LIBRARY_APP_ID);
-              }}
-              .src=${wrapPathInSvg(mdiBug)}
-            >
-            </sl-icon-button>
-          </div>
-          ${this._showToolsLibraryDetails
-            ? this.renderZomeCallDetails(toolsLibraryZomeCallCount)
-            : html``}
-        </div>
-        ${showToolsLibraryDebug
-          ? html`<app-debugging-details .appId=${TOOLS_LIBRARY_APP_ID}></app-debugging-details>`
-          : html``}
-      </div>
-    `;
   }
 
   renderGroups(groups: DnaHash[]) {
@@ -464,9 +381,6 @@ export class DebuggingPanel extends LitElement {
         >
           Dump Network Stats
         </sl-button>
-        <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
-          ${this.renderDefaultApps()}
-        </div>
         <h2 style="text-align: center;">Groups DNAs</h2>
         <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
           ${this.renderGroupsLoading()}

@@ -3,7 +3,6 @@ import path from 'path';
 import url from 'url';
 import { MossFileSystem } from './filesystem';
 import { setLinkOpenHandlers } from './utils';
-import { TOOLS_LIBRARY_APP_ID } from '@theweave/moss-types';
 import { is } from '@electron-toolkit/utils';
 import { ICONS_DIRECTORY } from './paths';
 
@@ -89,9 +88,7 @@ export const createHappWindow = (
   appPort: number,
 ) => {
   // TODO create mapping between installed-app-id's and window ids
-  const uiAssetsDir = [TOOLS_LIBRARY_APP_ID].includes(appId)
-    ? path.join(mossFileSystem.uisDir, appId, 'assets')
-    : mossFileSystem.appUiAssetsDir(appId);
+  const uiAssetsDir = mossFileSystem.appUiAssetsDir(appId);
   if (!uiAssetsDir) {
     throw new Error(`No directory found for UI assets. Is it a headless app?`);
   }

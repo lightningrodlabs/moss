@@ -3,9 +3,11 @@ import semver from 'semver';
 import os from 'os';
 import { breakingAppVersion } from './filesystem';
 import {
+  AgentPubKey,
   CallZomeRequest,
   CallZomeRequestSigned,
   getNonceExpiration,
+  ListAppsResponse,
   randomNonce,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';

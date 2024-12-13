@@ -231,7 +231,7 @@ const weaveApi: WeaveServices = {
       },
     }),
 
-  openCrossAppletMain: (appletBundleId: ActionHash): Promise<void> =>
+  openCrossAppletMain: (appletBundleId: string): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
@@ -240,7 +240,7 @@ const weaveApi: WeaveServices = {
       },
     }),
 
-  openCrossAppletBlock: (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
+  openCrossAppletBlock: (appletBundleId: string, block: string, context: any): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {

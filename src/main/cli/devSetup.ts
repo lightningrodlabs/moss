@@ -41,7 +41,12 @@ import {
 import { EntryRecord } from '@holochain-open-dev/utils';
 import * as yaml from 'js-yaml';
 import { HC_BINARY } from '../binaries';
-import { appIdFromAppletHash } from '@theweave/utils';
+import {
+  appIdFromAppletHash,
+  deriveToolCompatibilityId,
+  globalPubKeyFromListAppsResponse,
+  toolCompatibilityIdFromDistInfo,
+} from '@theweave/utils';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function readLocalServices(): Promise<[string, string]> {
@@ -312,14 +317,21 @@ export async function devSetup(
           } else {
             const uiPort =
               appletConfig.source.type === 'localhost' ? appletConfig.source.uiPort : undefined;
+            const toolListUrl = `###DEVMODE###${uiPort ? uiPort : ''}`;
             distributionInfo = {
-              type: 'web2-developer-collective-list',
+              type: 'web2-tool-list',
               info: {
-                toolListUrl: `###DEVMODE###${uiPort ? uiPort : ''}`, // Add uiPort here
+                toolListUrl: toolListUrl, // Add uiPort here
                 developerCollectiveId: '###DEVMODE###',
                 toolId: appletConfig.name,
+                toolName: appletConfig.name,
                 versionBranch: '###DEVMODE###',
                 toolVersion: '###DEVMODE###',
+                toolCompatibilityId: deriveToolCompatibilityId({
+                  toolListUrl: toolListUrl,
+                  toolId: appletConfig.name,
+                  versionBranch: '###DEVMODE###',
+                }),
               },
             };
           }
@@ -347,6 +359,13 @@ export async function devSetup(
           const appletPubKey = groupWebsocket.myPubKey;
           logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
           await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
+          if (distributionInfo.type === 'web2-tool-list') {
+            const appletIcon = await readIcon(appletConfig.icon);
+            mossFileSystem.storeToolIconIfNecessary(
+              toolCompatibilityIdFromDistInfo(distributionInfo),
+              appletIcon,
+            );
+          }
           storeAppAssetsInfo(
             appletConfig,
             appId,
@@ -392,11 +411,19 @@ export async function devSetup(
               appletPubKey,
               happPath,
             );
+            const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+            if (distributionInfo.type === 'web2-tool-list') {
+              const appletIcon = await readIcon(appletConfig.icon);
+              mossFileSystem.storeToolIconIfNecessary(
+                toolCompatibilityIdFromDistInfo(distributionInfo),
+                appletIcon,
+              );
+            }
             storeAppAssetsInfo(
               appletConfig,
               appId,
               mossFileSystem,
-              JSON.parse(applet.distribution_info),
+              distributionInfo,
               happPath,
               happHash,
               maybeWebHappPath,
@@ -492,14 +519,15 @@ async function installGroup(
   progenitor?: AgentPubKey,
 ): Promise<AppInfo> {
   const apps = await holochainManager.adminWebsocket.listApps({});
-  const appStoreAppInfo = apps.find((appInfo) => appInfo.installed_app_id === TOOLS_LIBRARY_APP_ID);
-  if (!appStoreAppInfo)
-    throw new Error('Appstore must be installed before installing the first group.');
+  let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+  if (!agentPubKey) {
+    agentPubKey = await holochainManager.adminWebsocket.generateAgentPubKey();
+  }
 
   const hash = createHash('sha256');
   hash.update(networkSeed);
   const hashedSeed = hash.digest('base64');
-  const appId = `group#${hashedSeed}#${progenitor ? encodeHashToBase64(appStoreAppInfo?.agent_pub_key) : null}`;
+  const appId = `group#${hashedSeed}#${progenitor ? encodeHashToBase64(agentPubKey) : null}`;
 
   const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
   const dnaPropertiesMap = progenitor
@@ -525,7 +553,7 @@ async function installGroup(
   const appInfo = await holochainManager.adminWebsocket.installApp({
     path: modifiedHappPath,
     installed_app_id: appId,
-    agent_key: appStoreAppInfo.agent_pub_key,
+    agent_key: agentPubKey,
     network_seed: networkSeed,
   });
   fs.rmSync(modifiedHappPath);

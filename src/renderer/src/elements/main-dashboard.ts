@@ -2,13 +2,7 @@ import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import {
-  encodeHashToBase64,
-  DnaHash,
-  decodeHashFromBase64,
-  DnaHashB64,
-  ActionHashB64,
-} from '@holochain/client';
+import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -84,6 +78,7 @@ import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -116,7 +111,7 @@ export type PersonalViewState =
     }
   | {
       type: 'tool';
-      originalToolActionHash: ActionHashB64;
+      toolCompatibilityId: ToolCompatibilityId;
     };
 
 export type DashboardState =
@@ -699,11 +694,11 @@ export class MainDashboard extends LitElement {
     );
   }
 
-  displayCrossGroupTool(originalToolActionHash: ActionHashB64) {
+  displayCrossGroupTool(toolCompatibilityId: ToolCompatibilityId) {
     return (
       this._dashboardState.value.viewType === 'personal' &&
       this._dashboardState.value.viewState.type === 'tool' &&
-      this._dashboardState.value.viewState.originalToolActionHash === originalToolActionHash
+      this._dashboardState.value.viewState.toolCompatibilityId === toolCompatibilityId
     );
   }
 
@@ -817,12 +812,12 @@ export class MainDashboard extends LitElement {
       case 'complete':
         return repeat(
           Object.keys(this._runningAppletClasses.value.value),
-          (originalToolActionHash) => originalToolActionHash,
-          (originalToolActionHash) => html`
+          (toolCompatibilityId) => toolCompatibilityId,
+          (toolCompatibilityId) => html`
             <cross-applet-main
-              .toolBundleHash=${decodeHashFromBase64(originalToolActionHash)}
+              .toolCompatibilityId=${toolCompatibilityId}
               hostColor="#224b21"
-              style="flex: 1; ${this.displayCrossGroupTool(originalToolActionHash)
+              style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
                 ? ''
                 : 'display: none;'}
                 ${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}
