@@ -14,6 +14,7 @@ export default defineConfig({
           '@theweave/moss-types',
           '@theweave/utils',
           '@lightningrodlabs/we-rust-utils',
+          '@sinclair/typebox',
         ],
       }),
     ],

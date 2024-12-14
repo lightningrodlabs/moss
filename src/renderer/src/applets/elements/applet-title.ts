@@ -12,6 +12,7 @@ import { msg } from '@lit/localize';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 
 import { GroupProfile } from '@theweave/api';
 import { DnaHash, EntryHash } from '@holochain/client';
@@ -46,6 +47,12 @@ export class AppletTitle extends LitElement {
     () => [this.appletHash],
   );
 
+  _logo = new StoreSubscriber(
+    this,
+    () => this._mossStore.appletLogo.get(this.appletHash),
+    () => [this.appletHash],
+  );
+
   renderTitle([appletStore, _groupsProfiles]: [
     AppletStore | undefined,
     ReadonlyMap<DnaHash, GroupProfile>,
@@ -54,11 +61,18 @@ export class AppletTitle extends LitElement {
 
     return html`
       <div class="row" style="align-items: center;" title=${appletStore.applet.custom_name}>
-        <img
-          .src=${this.icon}
-          alt="${appletStore.applet.custom_name}"
-          style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex; margin-right: 4px;"
-        />
+        ${this._logo.value.status === 'complete'
+          ? html`
+              <img
+                .src=${this.icon}
+                alt="${appletStore.applet.custom_name}"
+                style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex; margin-right: 4px;"
+              />
+            `
+          : html`<sl-skeleton
+              style="height: 25px; width: 25px; --border-radius: var(--border-radius, 20%); margin-right: 4px;"
+              effect="pulse"
+            ></sl-skeleton>`}
         <span>${appletStore.applet.custom_name}</span>
       </div>
     `;
@@ -69,14 +83,6 @@ export class AppletTitle extends LitElement {
       case 'pending':
         return html``;
       case 'complete':
-        const appletStore = this._applet.value.value[0];
-        if (appletStore) {
-          appletStore.logo.subscribe((v) => {
-            if (v.status === 'complete') {
-              this.icon = v.value;
-            }
-          });
-        }
         return this.renderTitle(this._applet.value.value);
       case 'error':
         return html`<display-error

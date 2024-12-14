@@ -173,3 +173,7 @@ function _arrayBufferToBase64(buffer) {
   }
   return btoa(binary);
 }
+
+export function logIf(condition: boolean, msg: string, ...args: any[]) {
+  if (condition) console.log(msg, ...args);
+}
