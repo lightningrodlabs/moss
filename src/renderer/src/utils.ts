@@ -50,13 +50,7 @@ import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
 import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
-import {
-  DeveloperCollecive,
-  ToolInfoAndVersions,
-  ToolVersionInfo,
-  WeaveDevConfig,
-} from '@theweave/moss-types';
-import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -1064,15 +1058,4 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     tools,
     devCollective: devModeDeveloperCollective,
   };
-}
-
-export function getLatestVersionFromToolInfo(
-  toolInfo: ToolInfoAndVersions,
-  happSha256: string,
-): ToolVersionInfo {
-  return toolInfo.versions
-    .filter(
-      (version) => validateSemver(version.version) && happSha256 === version.hashes.happSha256,
-    )
-    .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
 }

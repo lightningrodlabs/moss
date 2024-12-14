@@ -3,6 +3,8 @@ import {
   DistributionInfo,
   TDistributionInfo,
   ToolCompatibilityId,
+  ToolInfoAndVersions,
+  ToolVersionInfo,
 } from '@theweave/moss-types';
 import {
   ActionHash,
@@ -15,6 +17,7 @@ import {
 import { AppletId, AppletHash, WAL } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
 import { Md5 } from 'ts-md5';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
 
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
   const [networkSeed, progenitorString] = props.split('&progenitor=');
@@ -116,4 +119,15 @@ export function toolCompatibilityIdFromDistInfo(distributionInfo: DistributionIn
 export function globalPubKeyFromListAppsResponse(apps: ListAppsResponse): AgentPubKey | undefined {
   const anyGroupApp = apps.find((app) => app.installed_app_id.startsWith('group#'));
   return anyGroupApp?.agent_pub_key;
+}
+
+export function getLatestVersionFromToolInfo(
+  toolInfo: ToolInfoAndVersions,
+  happSha256: string,
+): ToolVersionInfo {
+  return toolInfo.versions
+    .filter(
+      (version) => validateSemver(version.version) && happSha256 === version.hashes.happSha256,
+    )
+    .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
 }

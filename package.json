@@ -100,7 +100,7 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron/notarize": "^2.1.0",
     "@holochain-playground/cli": "^0.1.1",
-    "@thewave/cli": "0.13.0-epsilon.0",
+    "@theweave/cli": "0.13.0-epsilon.0",
     "@microsoft/api-extractor": "7.47.7",
     "@microsoft/api-documenter": "7.25.12",
     "@types/adm-zip": "0.5.5",

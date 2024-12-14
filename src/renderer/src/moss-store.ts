@@ -61,7 +61,6 @@ import {
   devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
-  getLatestVersionFromToolInfo,
   initAppClient,
   isAppDisabled,
   isAppRunning,
@@ -86,6 +85,7 @@ import {
   appletHashFromAppId,
   appletIdFromAppId,
   deriveToolCompatibilityId,
+  getLatestVersionFromToolInfo,
   toolCompatibilityIdFromDistInfo,
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';

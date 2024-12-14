@@ -1846,25 +1846,55 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@lightningrodlabs/we-rust-utils-darwin-arm64@0.400.0-rc.0":
+  version "0.400.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.400.0-rc.0.tgz#8a159c4d9893dab9e9c7dd7605e2252c46d1e52f"
+  integrity sha512-ZXCIqllu1poOA4LDgjV3q4aNsC+QkrzrkNWXeaPQlXLyG7w6LnBRTTcyDpIa4+jOA0r3AYigahGY3Itm+JLdKA==
+
 "@lightningrodlabs/we-rust-utils-darwin-arm64@0.400.0-rc.1":
   version "0.400.0-rc.1"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.400.0-rc.1.tgz#b43ee7dd47dfe7696cab9fd5bda7adf07948c297"
   integrity sha512-ZrvfCdorPV+F1X+hdEO/ZdU1dPrHkS3LMbZc31lqMSNvas6+ndmnrWJ62L67RcI+Yh/DNKhYV6i7Ou4Si5p6HA==
+
+"@lightningrodlabs/we-rust-utils-darwin-x64@0.400.0-rc.0":
+  version "0.400.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.400.0-rc.0.tgz#15492a985ae0615c23c7a49087e64feb725f8511"
+  integrity sha512-FQWoHKKi9mmzyO9bB4rh7q6yhnPvxS5H2Gf3tdlVG4a0YKMmZ8a/t32dYvminh7DzokwcsmEbxE0x13K7SL4iA==
 
 "@lightningrodlabs/we-rust-utils-darwin-x64@0.400.0-rc.1":
   version "0.400.0-rc.1"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.400.0-rc.1.tgz#5ed96082fac2d04be8211c3c8b14d31276b3a5b9"
   integrity sha512-lzyBjEeFxrYy8eviVlOg2e1m6nHJCNwnwFtJgg880b/BbMKDPP2hDLm10yIu0SOCdxaLXJRt4nKE16oiQm5hwA==
 
+"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.400.0-rc.0":
+  version "0.400.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.400.0-rc.0.tgz#f7736a8c522590db3395f8e504f541f068e41c44"
+  integrity sha512-BJ0iBqxIM6lmbz1MMQ5gqBXXkarMpIrjxEeMy5IDS+tvAEdP7h+6olVsvumiRBhmB6CLwiBzwu4D0EthgbNxaQ==
+
 "@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.400.0-rc.1":
   version "0.400.0-rc.1"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.400.0-rc.1.tgz#84388e6a74658dc99766ff1f5478e7a4873e8256"
   integrity sha512-AsWFWK75e8k40g1aE5UZdsk62la8KVBzL+SQsfiIg4ss5NimwtHNJfzIs1jwUjTg1Blee3e1nt5igVMuOiscyg==
 
+"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.400.0-rc.0":
+  version "0.400.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.400.0-rc.0.tgz#4bd15789425305061a8449de6eefea07bb47a192"
+  integrity sha512-Wc5Jo1C9YG/6EP1TEFDuFHoDkxvQG6X5RtLA120zj35W9Ll0Hwhkxd6wBknCYZQNjKhsuqKwTgKM5bpC97tc7w==
+
 "@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.400.0-rc.1":
   version "0.400.0-rc.1"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.400.0-rc.1.tgz#a4f5abe189ed1228810cc15197637238b434c9e6"
   integrity sha512-UvBhvLVLiDwojgh8knJ8GOoRAJTz0D6aWfmoAQ0tC9cU90WMcN+8ZMC/nLqwuqqpxQEJ55Z34+Hfm6r7LKh0nQ==
+
+"@lightningrodlabs/we-rust-utils@0.400.0-rc.0":
+  version "0.400.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.400.0-rc.0.tgz#37d848f3de128755893721e4a36c1df481b4258c"
+  integrity sha512-16ygk4KQqevHCsg9U2UFY6Qq+xY6fslNTJLNyUNevw8gYJhf5S2M/6SdkbCuYsj+I9a6uDnWv6vwV1EoVVVqIw==
+  optionalDependencies:
+    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.400.0-rc.0"
+    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.400.0-rc.0"
+    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.400.0-rc.0"
+    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.400.0-rc.0"
 
 "@lightningrodlabs/we-rust-utils@0.400.0-rc.1":
   version "0.400.0-rc.1"
@@ -2771,6 +2801,62 @@
     "@holochain/client" "0.18.0-rc.1"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
+
+"@theweave/cli@0.13.0-epsilon.0":
+  version "0.13.0-epsilon.0"
+  resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.13.0-epsilon.0.tgz#7a3811d85df7b4e13b6b67791916cd4def56f9cb"
+  integrity sha512-Y//bVf5xuE5jxlTYAdINlBiomwFBmgVAPDr73lQHIWnoy6TkOV4esm08TxULODRLS8pu2k5KXHtpQRncPgnR3w==
+  dependencies:
+    "@electron-toolkit/preload" "^2.0.0"
+    "@electron-toolkit/utils" "^2.0.0"
+    "@holochain-open-dev/elements" "0.400.0-rc.0"
+    "@holochain-open-dev/profiles" "0.400.0-rc.0"
+    "@holochain-open-dev/stores" "0.400.0-rc.0"
+    "@holochain-open-dev/utils" "0.400.0-rc.0"
+    "@holochain/client" "0.18.0-rc.1"
+    "@lightningrodlabs/we-rust-utils" "0.400.0-rc.0"
+    "@matthme/electron-updater" "6.3.0-alpha.1"
+    "@msgpack/msgpack" "^2.8.0"
+    "@sinclair/typebox" "0.33.12"
+    "@theweave/api" "0.4.0-alpha.0"
+    "@theweave/moss-types" "0.3.0-alpha.0"
+    "@theweave/utils" "0.3.0-alpha.0"
+    adm-zip "0.5.14"
+    bufferutil "4.0.8"
+    commander "11.1.0"
+    electron "^29.3.1"
+    electron-context-menu "3.6.1"
+    mime "4.0.0"
+    nanoid "5.0.4"
+    semver "^7.6.2"
+    split "1.0.1"
+    ts-node "10.9.2"
+    utf-8-validate "^6.0.3"
+    uuid "9.0.1"
+    winston "3.11.0"
+
+"@theweave/utils@0.3.0-alpha.0":
+  version "0.3.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@theweave/utils/-/utils-0.3.0-alpha.0.tgz#18a6db9882d510eaf94fdced79011ba2758af0be"
+  integrity sha512-YuOarDb6hSgqc/WVDO+P8v8IK+XK7DVtJ8NANOAlpLoXXZk4MS+BWEqkgMhxgOdbiMJbGA9M43GAzhN9Ne2vJg==
+  dependencies:
+    "@holochain/client" "0.18.0-rc.1"
+    "@msgpack/msgpack" "^2.7.2"
+    "@theweave/api" "0.4.0-alpha.0"
+    "@theweave/moss-types" "0.3.0-alpha.0"
+    js-base64 "^3.7.2"
+    ts-md5 "1.3.1"
+
+"@theweave/utils@file:shared/utils":
+  version "0.3.0-alpha.1"
+  dependencies:
+    "@holochain/client" "0.18.0-rc.1"
+    "@msgpack/msgpack" "^2.7.2"
+    "@theweave/api" "0.4.0-alpha.0"
+    "@theweave/moss-types" "0.3.0-alpha.0"
+    compare-versions "6.1.1"
+    js-base64 "^3.7.2"
+    ts-md5 "1.3.1"
 
 "@tootallnate/once@2":
   version "2.0.0"

@@ -29,10 +29,17 @@ import {
   InstalledAppId,
 } from '@holochain/client';
 import { AppletHash, AppletId } from '@theweave/api';
-import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
-import { appIdFromAppletHash, toolBundleActionHashFromDistInfo } from '@theweave/utils';
+import {
+  AppHashes,
+  DeveloperCollectiveToolList,
+  DistributionInfo,
+  TDistributionInfo,
+  WebHappSource,
+} from '@theweave/moss-types';
+import { appIdFromAppletHash, getLatestVersionFromToolInfo } from '@theweave/utils';
 import rustUtils, { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { nanoid } from 'nanoid';
+import { Value } from '@sinclair/typebox/value';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -191,8 +198,6 @@ async function checkForNewGroupsAndApplets(
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
-  const toolsLibraryAppWs = await getAppWs(adminWs, appPort, TOOLS_LIBRARY_APP_ID, weRustHandler);
-
   // TODO wrap in try catch blocks
   for (const groupApp of groupApps) {
     const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
@@ -208,12 +213,7 @@ async function checkForNewGroupsAndApplets(
     for (const unjoinedApplet of unjoinedDefaultApplets) {
       console.log('Joining Tool', unjoinedApplet);
       try {
-        await tryJoinApplet(
-          decodeHashFromBase64(unjoinedApplet),
-          adminWs,
-          groupClient,
-          toolsLibraryClient,
-        );
+        await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
       } catch (e) {
         console.error('Failed to join Tool: ', e);
       }
@@ -248,7 +248,6 @@ async function tryJoinApplet(
   appletHash: AppletHash,
   adminWs: AdminWebsocket,
   groupClient: GroupClient,
-  toolsLibraryClient: ToolsLibraryClient,
 ): Promise<void> {
   // 1. Get Applet entry from group DHT
   const applet = await groupClient.getApplet(appletHash);
@@ -258,24 +257,47 @@ async function tryJoinApplet(
       'Network Seed not defined. Undefined network seed is currently not supported. Joining Tool aborted.',
     );
 
-  // 2. Get Tool entry from tool library DHT
-  const toolEntity = await toolsLibraryClient.getLatestTool(
-    toolBundleActionHashFromDistInfo(applet.distribution_info),
+  // 2. Fetch from the web2 Tool list
+  const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+  Value.Assert(TDistributionInfo, distributionInfo);
+
+  if (distributionInfo.type !== 'web2-tool-list')
+    throw new Error(
+      `Only distribution info 'web2-tool-list' is supported but got ${distributionInfo.type}`,
+    );
+
+  const resp = await fetch(distributionInfo.info.toolListUrl);
+  const toolList = (await resp.json()) as DeveloperCollectiveToolList;
+  const toolInfo = toolList.tools.find(
+    (tool) =>
+      tool.id === distributionInfo.info.toolId &&
+      tool.versionBranch === distributionInfo.info.versionBranch,
   );
 
-  if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
+  if (!toolInfo) throw new Error('No Tool info found in Tool list.');
 
-  const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-  if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-  if (!source.url.startsWith('https://'))
-    throw new Error(`Unsupported applet source URL '${source.url}'`);
+  const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
 
-  const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-  if (appHashes.type !== 'webhapp')
-    throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+  const appHashes: AppHashes = {
+    type: 'webhapp',
+    sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
+    happ: {
+      sha256: applet.sha256_happ,
+    },
+    ui: {
+      sha256: latestVersion.hashes.uiSha256,
+    },
+  };
 
   // 3. Fetch the happ bytes if necessary
-  await fetchAndStoreHappIfNecessary(source, appHashes, WDOCKER_FILE_SYSTEM.happsDir);
+  await fetchAndStoreHappIfNecessary(
+    {
+      type: 'https',
+      url: latestVersion.url,
+    },
+    appHashes,
+    WDOCKER_FILE_SYSTEM.happsDir,
+  );
 
   // 4. Install the happ in the conductor and join the Applet in the group DHT
   const appId = appIdFromAppletHash(appletHash);
@@ -291,7 +313,7 @@ async function tryJoinApplet(
   const appInfo = await adminWs.installApp({
     path: WDOCKER_FILE_SYSTEM.happFilePath(appHashes.happ.sha256),
     installed_app_id: appId,
-    agent_key: toolsLibraryClient.client.myPubKey,
+    agent_key: groupClient.appClient.myPubKey,
     network_seed: applet.network_seed,
   });
 
