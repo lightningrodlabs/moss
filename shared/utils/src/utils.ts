@@ -7,7 +7,6 @@ import {
   ToolVersionInfo,
 } from '@theweave/moss-types';
 import {
-  ActionHash,
   AgentPubKey,
   decodeHashFromBase64,
   encodeHashToBase64,
@@ -124,10 +123,10 @@ export function globalPubKeyFromListAppsResponse(apps: ListAppsResponse): AgentP
 export function getLatestVersionFromToolInfo(
   toolInfo: ToolInfoAndVersions,
   happSha256: string,
-): ToolVersionInfo {
+): ToolVersionInfo | undefined {
   return toolInfo.versions
     .filter(
       (version) => validateSemver(version.version) && happSha256 === version.hashes.happSha256,
     )
-    .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
+    .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
 }

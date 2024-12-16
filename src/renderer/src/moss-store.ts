@@ -97,7 +97,7 @@ import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
-import { compareVersions } from 'compare-versions';
+import { compareVersions, validate } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -326,48 +326,48 @@ export class MossStore {
             !toolsWithAvailableUpdates[toolCompatibilityId] &&
             !toolListUrl.startsWith('###DEVCONFIG###')
           ) {
-            const toolInfo = await this.toolInfoFromRemote(
-              toolListUrl,
-              appAssetInfo.distributionInfo.info.toolId,
-              appAssetInfo.distributionInfo.info.versionBranch,
-              true,
-            );
-            if (toolInfo) {
-              // Get the latest version and make sure it's got the same happ sha256 as the currently installed
-              // version
-              const latestVersion = getLatestVersionFromToolInfo(toolInfo, appAssetInfo.sha256);
-              console.log('@checkForUiUpdates: latestVersion: ', latestVersion);
-              console.log(
-                '@checkForUiUpdates: compareVersions: ',
-                compareVersions(
-                  latestVersion.version,
-                  appAssetInfo.distributionInfo.info.toolVersion,
-                ),
+            try {
+              const toolInfo = await this.toolInfoFromRemote(
+                toolListUrl,
+                appAssetInfo.distributionInfo.info.toolId,
+                appAssetInfo.distributionInfo.info.versionBranch,
+                true,
               );
-              if (
-                compareVersions(
-                  latestVersion.version,
-                  appAssetInfo.distributionInfo.info.toolVersion,
-                ) === 1
-              ) {
-                toolsWithAvailableUpdates[toolCompatibilityId] = {
+              if (toolInfo) {
+                const latestVersion = getLatestVersionFromToolInfo(
                   toolInfo,
-                  latestVersion,
-                  distributionInfo: {
-                    type: 'web2-tool-list',
-                    info: {
-                      toolListUrl: appAssetInfo.distributionInfo.info.toolListUrl,
-                      developerCollectiveId:
-                        appAssetInfo.distributionInfo.info.developerCollectiveId,
-                      toolId: appAssetInfo.distributionInfo.info.toolId,
-                      toolName: toolInfo.title,
-                      versionBranch: appAssetInfo.distributionInfo.info.versionBranch,
-                      toolVersion: latestVersion.version,
-                      toolCompatibilityId: appAssetInfo.distributionInfo.info.toolCompatibilityId,
-                    },
-                  },
-                };
+                  appAssetInfo.happ.sha256,
+                );
+                if (latestVersion) {
+                  if (
+                    compareVersions(
+                      latestVersion.version,
+                      appAssetInfo.distributionInfo.info.toolVersion,
+                    ) === 1
+                  ) {
+                    toolsWithAvailableUpdates[toolCompatibilityId] = {
+                      toolInfo,
+                      latestVersion,
+                      distributionInfo: {
+                        type: 'web2-tool-list',
+                        info: {
+                          toolListUrl: appAssetInfo.distributionInfo.info.toolListUrl,
+                          developerCollectiveId:
+                            appAssetInfo.distributionInfo.info.developerCollectiveId,
+                          toolId: appAssetInfo.distributionInfo.info.toolId,
+                          toolName: toolInfo.title,
+                          versionBranch: appAssetInfo.distributionInfo.info.versionBranch,
+                          toolVersion: latestVersion.version,
+                          toolCompatibilityId:
+                            appAssetInfo.distributionInfo.info.toolCompatibilityId,
+                        },
+                      },
+                    };
+                  }
+                }
               }
+            } catch (e) {
+              console.warn('Failed to check for UI update: ', e);
             }
           }
         }
