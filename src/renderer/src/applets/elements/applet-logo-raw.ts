@@ -1,10 +1,8 @@
-import { completed, pipe, StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
-import { hashProperty } from '@holochain-open-dev/elements';
-import { ActionHashB64, decodeHashFromBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -14,6 +12,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletHash } from '@theweave/api';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 type ToolIdentifier =
   | {
@@ -22,7 +21,7 @@ type ToolIdentifier =
     }
   | {
       type: 'class';
-      originalToolActionHash: ActionHashB64;
+      toolCompatibilityId: ToolCompatibilityId;
     };
 
 @customElement('applet-logo-raw')
@@ -30,7 +29,7 @@ export class AppletLogo extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
-  @property(hashProperty('applet-hash'))
+  @property()
   toolIdentifier!: ToolIdentifier;
 
   @property()
@@ -45,13 +44,9 @@ export class AppletLogo extends LitElement {
   appletLogoReadable(toolIdentifier: ToolIdentifier) {
     switch (toolIdentifier.type) {
       case 'instance':
-        return pipe(this.mossStore.appletStores.get(toolIdentifier.appletHash), (appletStore) =>
-          appletStore ? appletStore.logo : completed(undefined),
-        );
+        return this.mossStore.appletLogo.get(toolIdentifier.appletHash);
       case 'class':
-        return this.mossStore.toolsLibraryStore.toolLogo.get(
-          decodeHashFromBase64(toolIdentifier.originalToolActionHash),
-        );
+        return this.mossStore.toolLogo.get(toolIdentifier.toolCompatibilityId);
     }
   }
 

@@ -10,8 +10,8 @@ import { consume } from '@lit/context';
 import { EntryHash } from '@holochain/client';
 
 @localized()
-@customElement('cross-applet-main')
-export class CrossAppletMain extends LitElement {
+@customElement('cross-group-main')
+export class CrossGroupMain extends LitElement {
   @property()
   applets!: ReadonlyMap<EntryHash, AppletClients>;
 
@@ -31,7 +31,7 @@ export class CrossAppletMain extends LitElement {
   );
 
   render() {
-    return html`Hello from cross-applet-main`;
+    return html`Hello from cross-group-main`;
   }
 
   static styles = [

@@ -231,20 +231,20 @@ const weaveApi: WeaveServices = {
       },
     }),
 
-  openCrossAppletMain: (appletBundleId: ActionHash): Promise<void> =>
+  openCrossGroupMain: (appletBundleId: string): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
-        type: 'cross-applet-main',
+        type: 'cross-group-main',
         appletBundleId,
       },
     }),
 
-  openCrossAppletBlock: (appletBundleId: ActionHash, block: string, context: any): Promise<void> =>
+  openCrossGroupBlock: (appletBundleId: string, block: string, context: any): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
-        type: 'cross-applet-block',
+        type: 'cross-group-block',
         appletBundleId,
         block,
         context,
@@ -362,11 +362,11 @@ const weaveApi: WeaveServices = {
     throw new Error('RenderView undefined.');
   }
 
-  const crossApplet = view ? view.type === 'cross-group-view' : false;
+  const crossGroup = view ? view.type === 'cross-group-view' : false;
 
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
-    crossApplet,
+    crossGroup,
   });
 
   if (iframeConfig.type === 'not-installed') {

@@ -1,14 +1,14 @@
 {
   "dev": {
-    "version": "0.13.0-gamma.4",
+    "version": "0.13.0-epsilon.1",
     "name": "Moss",
     "description": "This is the dev release that's currently actively being developed on. It is recommended to use this one for developing new Tools for the Weave.",
-    "holochainVersion": "0.4.0-rc.0",
-    "lairVersion": "0.4.4",
+    "holochainVersion": "0.4.0-rc.2",
+    "lairVersion": "0.5.3",
     "packages": {
-      "@theweave/cli": "0.13.0-gamma.6",
-      "@theweave/api": "0.2.1",
-      "@theweave/elements": "0.2.0"
+      "@theweave/cli": "0.13.0-epsilon.1",
+      "@theweave/api": "0.4.0-alpha.0",
+      "@theweave/elements": "0.3.0-alpha.0"
     }
   },
   "stable": {

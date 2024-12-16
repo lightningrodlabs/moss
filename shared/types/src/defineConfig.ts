@@ -1,5 +1,13 @@
 // Note: This file is also being used by the dev cli
 
+export interface WeAppletDevInfo {
+  config: WeaveDevConfig;
+  tempDir: string;
+  tempDirRoot: string;
+  agentIdx: number;
+  syncTime: number;
+}
+
 /**
  * Define a configuration file to run We in development modes with groups
  * and applets pre-installed.
@@ -7,11 +15,11 @@
  * @param config
  * @returns
  */
-export function defineConfig(config: WeDevConfig) {
+export function defineConfig(config: WeaveDevConfig) {
   return config;
 }
 
-export interface WeDevConfig {
+export interface WeaveDevConfig {
   /**
    * Configuration for groups to create on startup
    */
@@ -20,7 +28,23 @@ export interface WeDevConfig {
    * Configuration of available applets to install into groups
    */
   applets: AppletConfig[];
+  /**
+   * A list of URLs to Tool curations to use to populate the tool library additionally
+   * to the Tools specified in the applets field. Can also be left empty.
+   */
+  toolCurations: ToolCurationConfig[];
 }
+
+export type ToolCurationConfig = {
+  /**
+   * URL to the curator's list of Tool curations
+   */
+  url: string;
+  /**
+   * Which curation lists to use from the curator at the given url
+   */
+  useLists: string[];
+};
 
 export interface AppletConfig {
   /**

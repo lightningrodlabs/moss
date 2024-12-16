@@ -1,8 +1,9 @@
-import { BrowserWindow, app, shell } from 'electron';
+import { BrowserWindow, app, net, shell } from 'electron';
+import fs from 'fs';
+import mime from 'mime';
 import semver from 'semver';
 import os from 'os';
 import { breakingAppVersion } from './filesystem';
-import { WeDevConfig } from './cli/defineConfig';
 import {
   CallZomeRequest,
   CallZomeRequestSigned,
@@ -11,6 +12,7 @@ import {
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -99,7 +101,7 @@ export function breakingVersion(version: string): string {
   }
 }
 
-export function defaultAppNetworkSeed(devConfig?: WeDevConfig): string {
+export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
   return devConfig || !app.isPackaged
     ? `moss-applet-dev-${os.hostname()}`
     : `moss-${breakingAppVersion(app)}`;
@@ -137,4 +139,41 @@ export async function signZomeCall(
   };
 
   return zomeCallSigned;
+}
+
+export async function readIcon(location: ResourceLocation) {
+  switch (location.type) {
+    case 'filesystem': {
+      const data = fs.readFileSync(location.path);
+      const mimeType = mime.getType(location.path);
+      return `data:${mimeType};base64,${data.toString('base64')}`;
+    }
+    case 'https': {
+      const response = await net.fetch(location.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const mimeType = mime.getType(location.url);
+      return `data:${mimeType};base64,${_arrayBufferToBase64(arrayBuffer)}`;
+    }
+
+    default:
+      throw new Error(
+        `Fetching icon from source type ${
+          (location as any).type
+        } is not implemented. Got icon source: ${location}.`,
+      );
+  }
+}
+
+function _arrayBufferToBase64(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export function logIf(condition: boolean, msg: string, ...args: any[]) {
+  if (condition) console.log(msg, ...args);
 }

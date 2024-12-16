@@ -25,7 +25,4 @@ const HC_BINARY = path.join(
   `hc-v${MOSS_CONFIG.hc.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
-console.log('MOSS_CONFIG: ', MOSS_CONFIG);
-console.log('Holochain binaries: ', HOLOCHAIN_BINARIES);
-
 export { HOLOCHAIN_BINARIES, LAIR_BINARY, HC_BINARY };

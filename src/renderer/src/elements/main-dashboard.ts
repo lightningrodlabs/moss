@@ -2,13 +2,7 @@ import { consume, provide } from '@lit/context';
 import { classMap } from 'lit/directives/class-map.js';
 import { state, customElement, query, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import {
-  encodeHashToBase64,
-  DnaHash,
-  decodeHashFromBase64,
-  DnaHashB64,
-  ActionHashB64,
-} from '@holochain/client';
+import { encodeHashToBase64, DnaHash, decodeHashFromBase64, DnaHashB64 } from '@holochain/client';
 import { LitElement, html, css, TemplateResult } from 'lit';
 import {
   StoreSubscriber,
@@ -51,8 +45,8 @@ import './navigation/group-applets-sidebar.js';
 import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
 import '../layout/views/applet-main.js';
-import '../layout/views/cross-applet-main.js';
-import '../personal-views/tool-library/tool-library.js';
+import '../layout/views/cross-group-main.js';
+import '../personal-views/tool-library/tool-library-web2.js';
 import '../personal-views/tool-publishing/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
@@ -84,6 +78,7 @@ import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -116,7 +111,7 @@ export type PersonalViewState =
     }
   | {
       type: 'tool';
-      originalToolActionHash: ActionHashB64;
+      toolCompatibilityId: ToolCompatibilityId;
     };
 
 export type DashboardState =
@@ -280,10 +275,10 @@ export class MainDashboard extends LitElement {
     openAppletBlock: (_appletHash, _block, _context) => {
       throw new Error('Opening applet blocks is currently not implemented.');
     },
-    openCrossAppletMain: (_appletBundleHash) => {
+    openCrossGroupMain: (_appletBundleHash) => {
       throw new Error('Opening cross-applet main views is currently not implemented.');
     },
-    openCrossAppletBlock: (_appletBundleHash, _block, _context) => {
+    openCrossGroupBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
     },
     openAsset: async (wal: WAL, mode?: OpenAssetMode) => {
@@ -699,11 +694,11 @@ export class MainDashboard extends LitElement {
     );
   }
 
-  displayCrossGroupTool(originalToolActionHash: ActionHashB64) {
+  displayCrossGroupTool(toolCompatibilityId: ToolCompatibilityId) {
     return (
       this._dashboardState.value.viewType === 'personal' &&
       this._dashboardState.value.viewState.type === 'tool' &&
-      this._dashboardState.value.viewState.originalToolActionHash === originalToolActionHash
+      this._dashboardState.value.viewState.toolCompatibilityId === toolCompatibilityId
     );
   }
 
@@ -817,17 +812,17 @@ export class MainDashboard extends LitElement {
       case 'complete':
         return repeat(
           Object.keys(this._runningAppletClasses.value.value),
-          (originalToolActionHash) => originalToolActionHash,
-          (originalToolActionHash) => html`
-            <cross-applet-main
-              .toolBundleHash=${decodeHashFromBase64(originalToolActionHash)}
+          (toolCompatibilityId) => toolCompatibilityId,
+          (toolCompatibilityId) => html`
+            <cross-group-main
+              .toolCompatibilityId=${toolCompatibilityId}
               hostColor="#224b21"
-              style="flex: 1; ${this.displayCrossGroupTool(originalToolActionHash)
+              style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
                 ? ''
                 : 'display: none;'}
                 ${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}
                 overflow-x: auto;"
-            ></cross-applet-main>
+            ></cross-group-main>
           `,
         );
       default:
@@ -867,7 +862,7 @@ export class MainDashboard extends LitElement {
           : ''} overflow-x: hidden; overflow-y: auto;"
       ></activity-view>
 
-      <tool-library
+      <tool-library-web2
         style="${this.displayMossView('tool-library')
           ? 'display: flex; flex: 1;'
           : 'display: none;'}${this._drawerResizing
@@ -892,7 +887,7 @@ export class MainDashboard extends LitElement {
             appletHash: e.detail.appletEntryHash,
           });
         }}
-      ></tool-library>
+      ></tool-library-web2>
 
       <publishing-view
         style="${this.displayMossView('publisher-panel')

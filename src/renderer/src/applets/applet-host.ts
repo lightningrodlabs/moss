@@ -1,6 +1,5 @@
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
-  type AppletInfo,
   type AssetInfo,
   type AssetLocationAndInfo,
   type WAL,
@@ -43,7 +42,7 @@ import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
   appIdFromAppletId,
-  toolBundleActionHashFromDistInfo,
+  toolCompatibilityIdFromDistInfoString,
   toOriginalCaseB64,
 } from '@theweave/utils';
 import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
@@ -230,22 +229,22 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       }
       if (!appletStore) return undefined;
       const groupsForApplet = await toPromise(mossStore.groupsForApplet.get(appletHash));
-      const icon = await toPromise(appletStore.logo);
+      const icon = await toPromise(mossStore.appletLogo.get(appletHash));
 
       return {
-        appletBundleId: toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
+        appletBundleId: toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
         appletName: appletStore.applet.custom_name,
-        appletIcon: icon,
+        appletIcon: icon!,
         groupsHashes: Array.from(groupsForApplet.keys()),
-      } as AppletInfo;
+      };
     },
     async notifyFrame(_notifications: Array<FrameNotification>) {
       throw new Error('notify is not implemented on headless WeaveServices.');
     },
     openAppletMain: async () => {},
-    openCrossAppletMain: async () => {},
+    openCrossGroupMain: async () => {},
     openAsset: async () => {},
-    openCrossAppletBlock: async () => {},
+    openCrossGroupBlock: async () => {},
     openAppletBlock: async () => {},
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeaveServices.');
@@ -305,11 +304,11 @@ export async function handleAppletIframeMessage(
         return iframeConfig;
       }
 
-      const crossApplet = message.crossApplet;
-      if (crossApplet) {
+      const crossGroup = message.crossGroup;
+      if (crossGroup) {
         const applets = await toPromise(
-          mossStore.appletsForBundleHash.get(
-            toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
+          mossStore.appletsForToolId.get(
+            toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
           ),
         );
         const config: IframeConfig = {
@@ -371,10 +370,10 @@ export async function handleAppletIframeMessage(
             message.request.block,
             message.request.context,
           );
-        case 'cross-applet-main':
-          return openViews.openCrossAppletMain(message.request.appletBundleId);
-        case 'cross-applet-block':
-          return openViews.openCrossAppletBlock(
+        case 'cross-group-main':
+          return openViews.openCrossGroupMain(message.request.appletBundleId);
+        case 'cross-group-block':
+          return openViews.openCrossGroupBlock(
             message.request.appletBundleId,
             message.request.block,
             message.request.context,
@@ -391,12 +390,6 @@ export async function handleAppletIframeMessage(
     case 'toggle-pocket':
       return openViews.toggleClipboard();
     case 'notify-frame': {
-      console.log(
-        '### NOTIFY FRAME ### from applet ',
-        appletId,
-        'message: ',
-        message.notifications,
-      );
       if (!message.notifications) {
         throw new Error(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,

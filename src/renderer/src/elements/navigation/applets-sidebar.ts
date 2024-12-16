@@ -3,8 +3,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { ActionHash, EntryHash } from '@holochain/client';
-import { HoloHashMap } from '@holochain-open-dev/utils';
+import { EntryHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -19,7 +18,8 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
-import { toolBundleActionHashFromDistInfo } from '@theweave/utils';
+import { ToolCompatibilityId } from '@theweave/moss-types';
+import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 
 @localized()
 @customElement('applets-sidebar')
@@ -34,27 +34,21 @@ export class AppletsSidebar extends LitElement {
   );
 
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
-    const appletsByBundleHash: HoloHashMap<ActionHash, AppletStore> = new HoloHashMap();
+    const appletsByToolId: Record<ToolCompatibilityId, AppletStore> = {};
 
     for (const [_appletHash, appletStore] of Array.from(applets.entries())) {
-      if (
-        !appletsByBundleHash.has(
-          toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
-        )
-      ) {
-        appletsByBundleHash.set(
-          toolBundleActionHashFromDistInfo(appletStore.applet.distribution_info),
-          appletStore,
-        );
+      const toolId = toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info);
+      if (!appletsByToolId[toolId]) {
+        appletsByToolId[toolId] = appletStore;
       }
     }
 
     return html`
       <div class="row" style="align-items:center">
-        ${Array.from(appletsByBundleHash.entries())
+        ${Object.entries(appletsByToolId)
           .sort((a1, a2) => a1[1].applet.custom_name.localeCompare(a2[1].applet.custom_name))
           .map(
-            ([_appletBundleHash, appletStore]) => html`
+            ([toolId, appletStore]) => html`
               <sl-tooltip hoist placement="bottom" .content=${appletStore.applet.custom_name}>
                 <applet-logo
                   .appletHash=${appletStore.appletHash}
@@ -62,9 +56,7 @@ export class AppletsSidebar extends LitElement {
                     this.dispatchEvent(
                       new CustomEvent('applet-selected', {
                         detail: {
-                          appletBundleHash: toolBundleActionHashFromDistInfo(
-                            appletStore.applet.distribution_info,
-                          ),
+                          toolCompatibilityId: toolId,
                         },
                         bubbles: true,
                         composed: true,

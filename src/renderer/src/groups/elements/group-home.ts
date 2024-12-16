@@ -8,7 +8,6 @@ import {
   DnaModifiers,
   EntryHash,
   HoloHash,
-  decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
 import {
@@ -31,6 +30,7 @@ import {
 } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
+import { Value } from '@sinclair/typebox/value';
 
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -66,7 +66,7 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
-import { DistributionInfo } from '@theweave/moss-types';
+import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import {
   UTCOffsetStringFromOffsetMinutes,
@@ -76,7 +76,6 @@ import {
   relativeTzOffsetString,
 } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
@@ -155,39 +154,31 @@ export class GroupHome extends LitElement {
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
-              let toolsLibraryToolEntity: UpdateableEntity<Tool> | undefined;
+              let toolInfoAndVersions: ToolInfoAndVersions | undefined;
               if (appletEntry) {
                 const distributionInfo: DistributionInfo = JSON.parse(
                   appletEntry.distribution_info,
                 );
-                if (distributionInfo.type !== 'tools-library')
-                  throw new Error(
-                    "Cannot get unjoined applets from distribution types other than tools-library'",
+                Value.Assert(TDistributionInfo, distributionInfo);
+                if (distributionInfo.type === 'web2-tool-list') {
+                  toolInfoAndVersions = await this.mossStore.toolInfoFromRemote(
+                    distributionInfo.info.toolListUrl,
+                    distributionInfo.info.toolId,
+                    distributionInfo.info.versionBranch,
                   );
-                const toolBundleActionHash = decodeHashFromBase64(
-                  distributionInfo.info.originalToolActionHash,
-                );
-                try {
-                  toolsLibraryToolEntity = await toPromise(
-                    this.mossStore.toolsLibraryStore.installableTools.get(toolBundleActionHash),
-                  );
-                } catch (e) {
-                  console.warn('@group-home @unjoined-applets: Failed to get ToolEntity: ', e);
                 }
               }
               return [
                 appletHash,
                 appletEntry,
-                toolsLibraryToolEntity?.record.entry
-                  ? toolsLibraryToolEntity.record.entry
-                  : undefined,
+                toolInfoAndVersions,
                 agentKey,
                 timestamp,
                 joinedMembers,
               ] as [
                 AppletHash,
                 Applet | undefined,
-                Tool | undefined,
+                ToolInfoAndVersions | undefined,
                 AgentPubKey,
                 number,
                 AppletAgent[],
@@ -328,16 +319,14 @@ export class GroupHome extends LitElement {
       );
       const filteredApplets = this._unjoinedApplets.value.value
         .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
-        .map(([appletHash, appletEntry, toolBundle, agentKey, timestamp, joinedMembers]) => ({
+        .map(([appletHash, appletEntry, agentKey, timestamp, joinedMembers]) => ({
           appletHash,
           appletEntry,
-          toolBundle,
           agentKey,
           timestamp,
           joinedMembers,
           isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
         }))
-        .filter((info) => !!info.toolBundle) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
         .filter((info) => (info.isIgnored ? false : true));
 
       return filteredApplets.length;
@@ -367,16 +356,25 @@ export class GroupHome extends LitElement {
           .filter(
             ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
           )
-          .map(([appletHash, appletEntry, toolBundle, agentKey, timestamp, joinedMembers]) => ({
-            appletHash,
-            appletEntry,
-            toolBundle,
-            agentKey,
-            timestamp,
-            joinedMembers,
-            isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
-          }))
-          .filter((info) => !!info.toolBundle) // applets who's AppEntry could has not yet been gossiped cannot be installed and should therefore not be shown
+          .map(
+            ([
+              appletHash,
+              appletEntry,
+              toolInfoAndVersions,
+              agentKey,
+              timestamp,
+              joinedMembers,
+            ]) => ({
+              appletHash,
+              appletEntry,
+              toolInfoAndVersions,
+              agentKey,
+              timestamp,
+              joinedMembers,
+              isIgnored:
+                !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
+            }),
+          )
           .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
@@ -413,10 +411,13 @@ export class GroupHome extends LitElement {
                               ></agent-avatar>
                               <span>${msg('added an instance of ')}</span>
                               <span
-                                style="margin-left: 5px; font-weight: bold; ${info.toolBundle?.title
+                                style="margin-left: 5px; font-weight: bold; ${info
+                                  .toolInfoAndVersions?.title
                                   ? ''
                                   : 'opacity: 0.6;'}"
-                                >${info.toolBundle ? info.toolBundle.title : 'unknown'}&nbsp;
+                                >${info.toolInfoAndVersions
+                                  ? info.toolInfoAndVersions.title
+                                  : 'unknown'}&nbsp;
                               </span>
                             </div>
                             <div
@@ -427,12 +428,12 @@ export class GroupHome extends LitElement {
                           </div>
                           <div class="card-content" style="align-items: center;">
                             <sl-tooltip
-                              style="${info.toolBundle ? '' : 'display: none;'}"
-                              content="${info.toolBundle?.subtitle}"
+                              style="${info.toolInfoAndVersions ? '' : 'display: none;'}"
+                              content="${info.toolInfoAndVersions?.subtitle}"
                             >
-                              ${info.toolBundle?.icon
+                              ${info.toolInfoAndVersions?.icon
                                 ? html`<img
-                                    src=${info.toolBundle.icon}
+                                    src=${info.toolInfoAndVersions.icon}
                                     alt="Applet logo"
                                     style="height: 80px; margin-right: 10px;"
                                   />`

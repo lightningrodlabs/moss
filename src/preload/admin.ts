@@ -10,7 +10,6 @@ import {
   ZomeName,
 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
-import { DistributionInfo } from '../main/filesystem';
 import {
   AppletId,
   AppletToParentMessage,
@@ -18,7 +17,12 @@ import {
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
-import { AppHashes } from '@theweave/moss-types';
+import {
+  AppHashes,
+  DistributionInfo,
+  ResourceLocation,
+  ToolCompatibilityId,
+} from '@theweave/moss-types';
 import { ProgressInfo } from '@matthme/electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
@@ -37,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
+  appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
     ipcRenderer.on('moss-update-progress', callback),
   onAppletToParentMessage: (
@@ -73,6 +78,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  getToolIcon: (toolId: string, resourceLocation?: ResourceLocation) =>
+    ipcRenderer.invoke('get-tool-icon', toolId, resourceLocation),
   mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),
   installMossUpdate: () => ipcRenderer.invoke('install-moss-update'),
   installAppletBundle: (
@@ -82,7 +89,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
-    metadata?: string,
+    icon: string,
+    uiPort?: number,
   ) =>
     ipcRenderer.invoke(
       'install-applet-bundle',
@@ -92,7 +100,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       happOrWebHappUrl,
       distributionInfo,
       appHashes,
-      metadata,
+      icon,
+      uiPort,
     ),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
@@ -114,8 +123,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   batchUpdateAppletUis: (
-    originalToolActionHash: ActionHashB64,
-    newToolVersionActionHash: ActionHashB64,
+    toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     sha256Happ: string,
@@ -124,8 +132,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) =>
     ipcRenderer.invoke(
       'batch-update-applet-uis',
-      originalToolActionHash,
-      newToolVersionActionHash,
+      toolCompatibilityId,
       happOrWebHappUrl,
       distributionInfo,
       sha256Happ,

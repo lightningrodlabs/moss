@@ -10,10 +10,7 @@ import './elements/main-dashboard.js';
 import { weStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
-import { getCellNetworkSeed, getProvisionedCells, initAppClient } from './utils.js';
-import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
-import { getConductorInfo, isAppletDev } from './electron-api.js';
-import { ToolsLibraryClient } from '@theweave/tool-library-client';
+import { appletDevConfig, getConductorInfo } from './electron-api.js';
 
 type State = { state: 'loading' } | { state: 'running' };
 
@@ -44,9 +41,10 @@ export class MossApp extends LitElement {
     window.addEventListener('message', async (message) => handleHappMessage(message));
 
     await this._mossStore.checkForUiUpdates();
+    // Check once every hour or on page refresh
     this._appletUiUpdateCheckInterval = window.setInterval(
       async () => await this._mossStore.checkForUiUpdates(),
-      20000,
+      3_600_000,
     );
   }
 
@@ -72,31 +70,16 @@ export class MossApp extends LitElement {
       url: new URL(`ws://127.0.0.1:${info.admin_port}`),
     });
 
-    const toolsLibraryAppId = info.tools_library_app_id;
-
-    const toolsLibraryToken = (
-      await adminWebsocket.issueAppAuthenticationToken({
-        installed_app_id: toolsLibraryAppId,
-        single_use: false,
-        expiry_seconds: 0,
-      })
-    ).token;
-
-    const toolsLibraryAppClient = await initAppClient(toolsLibraryToken);
-
-    const isAppletDevMode = await isAppletDev();
+    const devConfig = await appletDevConfig();
 
     this._mossStore = new MossStore(
       adminWebsocket,
       info,
-      new ToolsLibraryStore(
-        new ToolsLibraryClient(toolsLibraryAppClient, 'tools', 'library'),
-        info,
-      ),
-      isAppletDevMode,
-      {
-        toolsLibraryAppId: toolsLibraryToken,
-      },
+      // new ToolsLibraryStore(
+      //   new ToolsLibraryClient(toolsLibraryAppClient, 'tools', 'library'),
+      //   info,
+      // ),
+      devConfig,
     );
 
     // Listen for general activity to set the latest activity timestamp
@@ -112,15 +95,6 @@ export class MossApp extends LitElement {
     document.addEventListener('touchmove', () => {
       this._mossStore.myLatestActivity = Date.now();
     });
-
-    const toolsLibraryAppInfo = await toolsLibraryAppClient.appInfo();
-
-    if (!toolsLibraryAppInfo) throw new Error('Tools Library AppInfo null.');
-    // console.log("MY DEVHUB PUBLIC KEY: ", encodeHashToBase64(devhubAppInfo.agent_pub_key));
-
-    getProvisionedCells(toolsLibraryAppInfo).map(([_roleName, cellInfo]) =>
-      console.log(`Tools Library network seed: ${getCellNetworkSeed(cellInfo)}`),
-    );
 
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);

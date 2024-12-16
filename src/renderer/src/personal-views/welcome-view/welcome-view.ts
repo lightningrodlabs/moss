@@ -20,15 +20,12 @@ import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { encodeHashToBase64 } from '@holochain/client';
-import { AppHashes, AssetSource, DistributionInfo } from '@theweave/moss-types';
 import TimeAgo from 'javascript-time-ago';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
-import { UpdateFeedMessage } from '../../types.js';
+import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 
 type UpdateFeedMessageGeneric =
@@ -45,7 +42,7 @@ type UpdateFeedMessageGeneric =
       type: 'Tool';
       timestamp: number;
       content: {
-        tool: UpdateableEntity<Tool>;
+        tool: ToolInfoAndLatestVersion;
       };
     };
 
@@ -85,12 +82,6 @@ export class WelcomeView extends LitElement {
 
   timeAgo = new TimeAgo('en-US');
 
-  // _notificationFeed = new StoreSubscriber(
-  //   this,
-  //   () => this._mossStore.notificationFeed(),
-  //   () => [this._mossStore],
-  // );
-
   async firstUpdated() {
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
     const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();
@@ -127,34 +118,19 @@ export class WelcomeView extends LitElement {
     }
   }
 
-  async updateTool(toolEntity: UpdateableEntity<Tool>) {
+  async updateTool(toolInfo: ToolInfoAndLatestVersion) {
     try {
       this.updatingTool = true;
-      const assetsSource: AssetSource = JSON.parse(toolEntity.record.entry.source);
-      if (assetsSource.type !== 'https')
-        throw new Error("Updating of applets is only implemented for sources of type 'http'");
-      const toolsLibraryDnaHash = await this._mossStore.toolsLibraryStore.toolsLibraryDnaHash();
-      const distributionInfo: DistributionInfo = {
-        type: 'tools-library',
-        info: {
-          toolsLibraryDnaHash: encodeHashToBase64(toolsLibraryDnaHash),
-          originalToolActionHash: encodeHashToBase64(toolEntity.originalActionHash),
-          toolVersionActionHash: encodeHashToBase64(toolEntity.record.actionHash),
-          toolVersionEntryHash: encodeHashToBase64(toolEntity.record.entryHash),
-        },
-      };
-      const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-      if (appHashes.type !== 'webhapp')
-        throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+      if (toolInfo.distributionInfo.type !== 'web2-tool-list')
+        throw new Error("Cannot update Tool from distribution type other than 'web2-tool-list'");
 
       const appletIds = await window.electronAPI.batchUpdateAppletUis(
-        encodeHashToBase64(toolEntity.originalActionHash),
-        encodeHashToBase64(toolEntity.record.actionHash),
-        assetsSource.url,
-        distributionInfo,
-        appHashes.happ.sha256,
-        appHashes.ui.sha256,
-        appHashes.sha256,
+        toolInfo.distributionInfo.info.toolCompatibilityId,
+        toolInfo.latestVersion.url,
+        toolInfo.distributionInfo,
+        toolInfo.latestVersion.hashes.happSha256,
+        toolInfo.latestVersion.hashes.uiSha256,
+        toolInfo.latestVersion.hashes.webhappSha256,
       );
       console.log('UPDATED UI FOR APPLET IDS: ', appletIds);
       await this._mossStore.checkForUiUpdates();
@@ -208,24 +184,30 @@ export class WelcomeView extends LitElement {
     </sl-dialog>`;
   }
 
-  renderToolUpdate(toolEntity: UpdateableEntity<Tool>) {
-    const tool = toolEntity.record.entry;
+  renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
     return html`
       <div class="column">
         <div class="row" style="align-items: center;">
-          <img src=${tool.icon} style="width: 70px; height: 70px; border-radius: 14px;" />
-          <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">${tool.title}</div>
-          <div style="margin-left: 10px; font-size: 28px; opacity: 0.6;">${tool.version}</div>
+          <img
+            src=${toolInfo.toolInfo.icon}
+            style="width: 70px; height: 70px; border-radius: 14px;"
+          />
+          <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
+            ${toolInfo.toolInfo.title}
+          </div>
+          <div style="margin-left: 10px; font-size: 28px; opacity: 0.6;">
+            ${toolInfo.latestVersion.version}
+          </div>
           <span style="display: flex; flex: 1;"></span>
           <sl-button
             ?disabled=${this.updatingTool}
             ?loading=${this.updatingTool}
-            @click=${() => this.updateTool(toolEntity)}
+            @click=${() => this.updateTool(toolInfo)}
             >${msg('Install Update')}</sl-button
           >
         </div>
-        ${tool.changelog
-          ? html`<div>${unsafeHTML(markdownParseSafe(tool.changelog))}</div>`
+        ${toolInfo.latestVersion.changelog
+          ? html`<div>${unsafeHTML(markdownParseSafe(toolInfo.latestVersion.changelog))}</div>`
           : html``}
       </div>
     `;
@@ -295,11 +277,11 @@ export class WelcomeView extends LitElement {
 
     const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(
       this.availableToolUpdates.value,
-    ).map((entity) => ({
+    ).map((toolInfo) => ({
       type: 'Tool',
-      timestamp: entity.record.record.signed_action.hashed.content.timestamp / 1000,
+      timestamp: toolInfo.latestVersion.releasedAt,
       content: {
-        tool: entity,
+        tool: toolInfo,
       },
     }));
 

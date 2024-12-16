@@ -1,5 +1,5 @@
 {
-  "include": ["src/main/cli/defineConfig.ts"],
+  "include": ["shared/types/src/defineConfig.ts"],
   "compilerOptions": {
     "outDir": "./cli",
     "declaration": true,

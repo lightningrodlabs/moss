@@ -1,6 +1,6 @@
 {
   "name": "@theweave/utils",
-  "version": "0.2.0",
+  "version": "0.3.0-alpha.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -18,10 +18,12 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "0.18.0-rc.1",
-    "@theweave/api": "*",
-    "@theweave/moss-types": "*",
+    "@theweave/api": "0.4.0-alpha.0",
+    "@theweave/moss-types": "0.3.0-alpha.0",
     "@msgpack/msgpack": "^2.7.2",
-    "js-base64": "^3.7.2"
+    "compare-versions": "6.1.1",
+    "js-base64": "^3.7.2",
+    "ts-md5": "1.3.1"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

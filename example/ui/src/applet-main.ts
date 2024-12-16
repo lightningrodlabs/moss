@@ -286,9 +286,6 @@ export class AppletMain extends LitElement {
     const clonedCells = this.cells
       .filter((cell) => CellType.Cloned in cell)
       .map((cell) => cell[CellType.Cloned] as ClonedCell);
-
-    console.log('Provisioned Cells: ', provisionedCells);
-    console.log('ALL CELLS: ', this.cells);
     return html`
       ${provisionedCells.map(
         (cell) => html`<div class="cell-card">${cell.name} (provisioned)</div>`

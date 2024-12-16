@@ -15,12 +15,11 @@ import fs from 'fs';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
-import { installDefaultAppsIfNecessary } from './installDefaultApps.js';
 import {
   ALWAYS_ONLINE_TAG,
   GroupClient,
   PeerStatusClient,
-  SignalPayload,
+  SignalPayloadPeerStatus,
 } from '@theweave/group-client';
 import {
   AdminWebsocket,
@@ -30,11 +29,17 @@ import {
   InstalledAppId,
 } from '@holochain/client';
 import { AppletHash, AppletId } from '@theweave/api';
-import { AppHashes, TOOLS_LIBRARY_APP_ID, WebHappSource } from '@theweave/moss-types';
-import { ToolsLibraryClient } from '@theweave/tool-library-client';
-import { appIdFromAppletHash, toolBundleActionHashFromDistInfo } from '@theweave/utils';
+import {
+  AppHashes,
+  DeveloperCollectiveToolList,
+  DistributionInfo,
+  TDistributionInfo,
+  WebHappSource,
+} from '@theweave/moss-types';
+import { appIdFromAppletHash, getLatestVersionFromToolInfo } from '@theweave/utils';
 import rustUtils, { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { nanoid } from 'nanoid';
+import { Value } from '@sinclair/typebox/value';
 
 // let CONDUCTOR_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
 
@@ -101,10 +106,6 @@ setTimeout(async () => {
   });
   WDOCKER_FILE_SYSTEM.storeRunningSecretFile(runningConductorAndInfo.runningSecretInfo, password);
 
-  // Install default apps if necessary
-  const { adminWs, appPort } = await getAdminWsAndAppPort(CONDUCTOR_ID, password);
-  await installDefaultAppsIfNecessary(adminWs);
-
   const weRustHandler = await getWeRustHandler(WDOCKER_FILE_SYSTEM, password);
 
   // This line is used by the parent process to return when run in detached mode.
@@ -117,6 +118,8 @@ setTimeout(async () => {
   //   fs.writeFileSync(path.join(WDOCKER_FILE_SYSTEM.conductorDataDir, '._alive'), `${Date.now()}`);
   // }, 2000);
 
+  const { adminWs, appPort } = await getAdminWsAndAppPort(CONDUCTOR_ID, password);
+
   // Set up handler for remote signals and update agent profiles
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
@@ -126,7 +129,7 @@ setTimeout(async () => {
   for (const groupApp of groupApps) {
     const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
-    peerStatusClient.onSignal(async (signal: SignalPayload) => {
+    peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Ping') {
         // console.log('Received ping from ', encodeHashToBase64(signal.from_agent));
         await peerStatusClient.pong([signal.from_agent], 'online', tzOffset);
@@ -195,34 +198,68 @@ async function checkForNewGroupsAndApplets(
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
-  const toolsLibraryAppWs = await getAppWs(adminWs, appPort, TOOLS_LIBRARY_APP_ID, weRustHandler);
-  const toolsLibraryClient = new ToolsLibraryClient(toolsLibraryAppWs, 'tools', 'library');
-
-  // TODO wrap in try catch blocks
+  // Check for unjoined applets and try to install them
   for (const groupApp of groupApps) {
-    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
-    const groupClient = new GroupClient(groupAppWs, [], 'group');
+    try {
+      const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+      const groupClient = new GroupClient(groupAppWs, [], 'group');
 
-    console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
-    const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
-    if (unjoinedDefaultApplets.length === 0) {
-      console.log('No new tools found.');
-      break;
-    }
-
-    for (const unjoinedApplet of unjoinedDefaultApplets) {
-      console.log('Joining Tool', unjoinedApplet);
-      try {
-        await tryJoinApplet(
-          decodeHashFromBase64(unjoinedApplet),
-          adminWs,
-          groupClient,
-          toolsLibraryClient,
-        );
-      } catch (e) {
-        console.error('Failed to join Tool: ', e);
+      console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
+      const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
+      if (unjoinedDefaultApplets.length === 0) {
+        console.log('No new tools found.');
+        break;
       }
-      console.log('Tool Joined.');
+
+      for (const unjoinedApplet of unjoinedDefaultApplets) {
+        console.log('Joining Tool', unjoinedApplet);
+        try {
+          await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
+        } catch (e) {
+          console.error('Failed to join Tool: ', e);
+        }
+        console.log('Tool Joined.');
+      }
+
+      // Check for unjoined cloned cells
+      try {
+        const allAppletHashes = await groupClient.getGroupApplets();
+        for (const appletHash of allAppletHashes) {
+          const unjoinedClonedCellEntryhashes =
+            await groupClient.getUnjoinedClonedCellsForApplet(appletHash);
+          for (const unjoinedCloneHash of unjoinedClonedCellEntryhashes) {
+            try {
+              const appletClone = await groupClient.getAppletClonedCell(unjoinedCloneHash);
+              if (appletClone) {
+                const appletAppId = appIdFromAppletHash(appletHash);
+                const appletAppWs = await getAppWs(adminWs, appPort, appletAppId, weRustHandler);
+                await appletAppWs.createCloneCell({
+                  role_name: appletClone.role_name,
+                  modifiers: {
+                    network_seed: appletClone.network_seed,
+                    properties: appletClone.properties,
+                    origin_time: appletClone.origin_time,
+                  },
+                });
+              } else {
+                console.warn(
+                  `No AppletClonedCell entry found for the given hash (${encodeHashToBase64(unjoinedCloneHash)}).`,
+                );
+              }
+            } catch (e) {
+              console.error(
+                `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}`,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.error(
+          `Failed to check for unjoined cloned cells in group with app id ${groupApp.installed_app_id}`,
+        );
+      }
+    } catch (e) {
+      console.error('Failed to check for Tools in group ', groupApp.installed_app_id);
     }
   }
 }
@@ -253,7 +290,6 @@ async function tryJoinApplet(
   appletHash: AppletHash,
   adminWs: AdminWebsocket,
   groupClient: GroupClient,
-  toolsLibraryClient: ToolsLibraryClient,
 ): Promise<void> {
   // 1. Get Applet entry from group DHT
   const applet = await groupClient.getApplet(appletHash);
@@ -263,24 +299,56 @@ async function tryJoinApplet(
       'Network Seed not defined. Undefined network seed is currently not supported. Joining Tool aborted.',
     );
 
-  // 2. Get Tool entry from tool library DHT
-  const toolEntity = await toolsLibraryClient.getLatestTool(
-    toolBundleActionHashFromDistInfo(applet.distribution_info),
+  // 2. Fetch from the web2 Tool list
+  const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+  Value.Assert(TDistributionInfo, distributionInfo);
+
+  if (distributionInfo.type !== 'web2-tool-list')
+    throw new Error(
+      `Only distribution info 'web2-tool-list' is supported but got ${distributionInfo.type}`,
+    );
+
+  const resp = await fetch(distributionInfo.info.toolListUrl);
+  const toolList = (await resp.json()) as DeveloperCollectiveToolList;
+  const toolInfo = toolList.tools.find(
+    (tool) =>
+      tool.id === distributionInfo.info.toolId &&
+      tool.versionBranch === distributionInfo.info.versionBranch,
   );
 
-  if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
+  if (!toolInfo) throw new Error('No Tool info found in Tool list.');
 
-  const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-  if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-  if (!source.url.startsWith('https://'))
-    throw new Error(`Unsupported applet source URL '${source.url}'`);
+  const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
+  if (!latestVersion) {
+    console.warn(
+      'No latest version found for Tool with id ',
+      toolInfo.id,
+      'at URL ',
+      distributionInfo.info.toolListUrl,
+    );
+    return;
+  }
 
-  const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
-  if (appHashes.type !== 'webhapp')
-    throw new Error(`Got invalid AppHashes type: ${appHashes.type}`);
+  const appHashes: AppHashes = {
+    type: 'webhapp',
+    sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
+    happ: {
+      sha256: applet.sha256_happ,
+    },
+    ui: {
+      sha256: latestVersion.hashes.uiSha256,
+    },
+  };
 
   // 3. Fetch the happ bytes if necessary
-  await fetchAndStoreHappIfNecessary(source, appHashes, WDOCKER_FILE_SYSTEM.happsDir);
+  await fetchAndStoreHappIfNecessary(
+    {
+      type: 'https',
+      url: latestVersion.url,
+    },
+    appHashes,
+    WDOCKER_FILE_SYSTEM.happsDir,
+  );
 
   // 4. Install the happ in the conductor and join the Applet in the group DHT
   const appId = appIdFromAppletHash(appletHash);
@@ -296,9 +364,18 @@ async function tryJoinApplet(
   const appInfo = await adminWs.installApp({
     path: WDOCKER_FILE_SYSTEM.happFilePath(appHashes.happ.sha256),
     installed_app_id: appId,
-    agent_key: toolsLibraryClient.client.myPubKey,
+    agent_key: groupClient.appClient.myPubKey,
     network_seed: applet.network_seed,
   });
+
+  try {
+    await adminWs.enableApp({ installed_app_id: appId });
+  } catch (e) {
+    console.warn(
+      `Failed to enable app ${appId} (might have deferred_memproof_provisioning set to true in which case this is expected):`,
+      e,
+    );
+  }
 
   try {
     const joinAppletInput = {

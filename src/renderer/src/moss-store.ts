@@ -22,7 +22,6 @@ import {
   slice,
 } from '@holochain-open-dev/utils';
 import {
-  ActionHashB64,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -47,8 +46,6 @@ import {
   deStringifyWal,
   ParentToAppletMessage,
 } from '@theweave/api';
-
-import { ToolsLibraryStore } from './personal-views/tool-library/tool-library-store.js';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import {
@@ -56,10 +53,12 @@ import {
   createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
+  getToolIcon,
   joinGroup,
 } from './electron-api.js';
 import {
   destringifyAndDecode,
+  devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
   initAppClient,
@@ -69,22 +68,36 @@ import {
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
-import { AppHashes, DistributionInfo, WebHappSource } from '@theweave/moss-types';
+import {
+  AppHashes,
+  DeveloperCollecive,
+  DeveloperCollectiveToolList,
+  DistributionInfo,
+  ResourceLocation,
+  TDistributionInfo,
+  ToolCompatibilityId,
+  ToolInfoAndVersions,
+  WeaveDevConfig,
+} from '@theweave/moss-types';
 import {
   appIdFromAppletHash,
   appIdFromAppletId,
   appletHashFromAppId,
   appletIdFromAppId,
-  toolBundleActionHashFromDistInfo,
+  deriveToolCompatibilityId,
+  getLatestVersionFromToolInfo,
+  toolCompatibilityIdFromDistInfo,
+  toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
-import { AppletNotification } from './types.js';
+import { Value } from '@sinclair/typebox/value';
+import { AppletNotification, ToolAndCurationInfo, ToolInfoAndLatestVersion } from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
-import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
+import { compareVersions, validate } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -93,22 +106,29 @@ export type WalInPocket = {
   wal: string;
 };
 
+export type DevModeToolLibrary = {
+  tools: ToolAndCurationInfo[];
+  devCollective: DeveloperCollecive;
+};
+
 export class MossStore {
+  public isAppletDev: boolean;
+  public devModeToolLibrary: DevModeToolLibrary | undefined;
+
   constructor(
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
-    public toolsLibraryStore: ToolsLibraryStore,
-    public isAppletDev: boolean,
-    authenticationTokens: Record<InstalledAppId, AppAuthenticationToken>,
+    // public toolsLibraryStore: ToolsLibraryStore,
+    public appletDevConfig: WeaveDevConfig | undefined,
   ) {
-    this._authenticationTokens = authenticationTokens;
     this.myLatestActivity = Date.now();
     this._version = conductorInfo.moss_version;
+    this.isAppletDev = !!appletDevConfig;
+    if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
   }
 
-  private _availableToolUpdates: Writable<Record<ActionHashB64, UpdateableEntity<Tool>>> = writable(
-    {},
-  );
+  private _availableToolUpdates: Writable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> =
+    writable({});
 
   // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
   // here at the MossStore level
@@ -169,9 +189,69 @@ export class MossStore {
    */
   _appletDevPorts: Record<AppletId, number> = {};
 
+  _toolIcons: Record<ToolCompatibilityId, string> = {};
+
+  _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
+
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
+
+  async toolInfoFromRemote(
+    toolListUrl: string,
+    toolId: string,
+    versionBranch: string,
+    noCache = false,
+  ): Promise<ToolInfoAndVersions | undefined> {
+    const toolCompatibilityId = deriveToolCompatibilityId({
+      toolListUrl,
+      toolId,
+      versionBranch,
+    });
+    // If it's a Tool from the dev config, take it from the dev mode tool library
+    if (this.devModeToolLibrary && toolListUrl.startsWith('###DEVCONFIG###')) {
+      return this.devModeToolLibrary.tools.find(
+        (tool) => tool.toolCompatibilityId === toolCompatibilityId,
+      )?.toolInfoAndVersions;
+    }
+    const maybeCachedInfo = this._toolInfoRemoteCache[toolCompatibilityId];
+    if (!noCache && maybeCachedInfo) return maybeCachedInfo;
+    // Fetch latest version of the Tool
+    try {
+      const resp = await fetch(toolListUrl, { cache: 'no-cache' });
+      const toolList: DeveloperCollectiveToolList = await resp.json();
+      const toolInfo = toolList.tools.find(
+        (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
+      );
+      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      return toolInfo;
+    } catch (e) {
+      throw new Error(`Failed to fetch or parse Tool info: ${e}`);
+    }
+  }
+
+  /**
+   *
+   * @param toolId
+   * @param toolName If provided and in devmode, the tool is picked from the dev config
+   * @returns
+   */
+  async toolIcon(toolId: ToolCompatibilityId, toolName?: string): Promise<string | undefined> {
+    let toolIcon: string | undefined = this._toolIcons[toolId];
+    if (toolIcon) return toolIcon;
+    let resourceLocation: ResourceLocation | undefined;
+    if (toolName && this.appletDevConfig) {
+      const appletConfig = this.appletDevConfig.applets.find(
+        (appletConfig) => appletConfig.name === toolName,
+      );
+      if (appletConfig) {
+        resourceLocation = appletConfig.icon;
+      }
+    }
+    toolIcon = await getToolIcon(toolId, resourceLocation);
+    if (toolIcon) this._toolIcons[toolId] = toolIcon;
+    return toolIcon;
+  }
 
   dragWal(wal: WAL) {
     this._dragWal.set(wal);
@@ -227,45 +307,77 @@ export class MossStore {
   }
 
   async checkForUiUpdates() {
+    console.log('Checking for UI updates...');
     // 1. Get all AppAssetsInfos
-    const toolsWithAvailableUpdates: Record<AgentPubKeyB64, UpdateableEntity<Tool>> = {};
+    const toolsWithAvailableUpdates: Record<ToolCompatibilityId, ToolInfoAndLatestVersion> = {};
     const appAssetsInfos = await getAllAppAssetsInfos();
-
-    // console.log('@checkForUiUpdates:  appAssetsInfos: ', appAssetsInfos);
-    const allLatestToolEntities =
-      await this.toolsLibraryStore.toolsLibraryClient.getAllToolEntites();
-    console.log('@checkForUiUpdates:  allLatestToolEntities: ', allLatestToolEntities);
-
-    Object.values(appAssetsInfos).forEach(([appAssetInfo, _weaveConfig]) => {
-      if (
-        appAssetInfo.distributionInfo.type === 'tools-library' &&
-        appAssetInfo.type === 'webhapp' &&
-        appAssetInfo.sha256
-      ) {
-        const orignalToolActionHash = appAssetInfo.distributionInfo.info.originalToolActionHash;
-        const maybeRelevantToolEntity = allLatestToolEntities.find(
-          (toolEntity) =>
-            encodeHashToBase64(toolEntity.originalActionHash) === orignalToolActionHash,
-        );
-        if (maybeRelevantToolEntity) {
-          const appHashes: AppHashes = JSON.parse(maybeRelevantToolEntity.record.entry.hashes);
-          // Check that happ hash is the same but webhapp hash is different
-          if (appHashes.type === 'webhapp') {
-            if (
-              appHashes.happ.sha256 === appAssetInfo.happ.sha256 &&
-              appHashes.sha256 !== appAssetInfo.sha256
-            ) {
-              toolsWithAvailableUpdates[orignalToolActionHash] = maybeRelevantToolEntity;
+    // 2. For each Tool class, fetch the latest info from the associated Tool list
+    await Promise.allSettled(
+      Object.values(appAssetsInfos).map(async ([appAssetInfo, _weaveConfig]) => {
+        if (
+          appAssetInfo.distributionInfo.type === 'web2-tool-list' &&
+          appAssetInfo.type === 'webhapp' &&
+          appAssetInfo.sha256
+        ) {
+          const toolCompatibilityId = appAssetInfo.distributionInfo.info.toolCompatibilityId;
+          const toolListUrl = appAssetInfo.distributionInfo.info.toolListUrl;
+          // Only fetch once for each Tool class
+          if (
+            !toolsWithAvailableUpdates[toolCompatibilityId] &&
+            !toolListUrl.startsWith('###DEVCONFIG###')
+          ) {
+            try {
+              const toolInfo = await this.toolInfoFromRemote(
+                toolListUrl,
+                appAssetInfo.distributionInfo.info.toolId,
+                appAssetInfo.distributionInfo.info.versionBranch,
+                true,
+              );
+              if (toolInfo) {
+                const latestVersion = getLatestVersionFromToolInfo(
+                  toolInfo,
+                  appAssetInfo.happ.sha256,
+                );
+                if (latestVersion) {
+                  if (
+                    compareVersions(
+                      latestVersion.version,
+                      appAssetInfo.distributionInfo.info.toolVersion,
+                    ) === 1
+                  ) {
+                    toolsWithAvailableUpdates[toolCompatibilityId] = {
+                      toolInfo,
+                      latestVersion,
+                      distributionInfo: {
+                        type: 'web2-tool-list',
+                        info: {
+                          toolListUrl: appAssetInfo.distributionInfo.info.toolListUrl,
+                          developerCollectiveId:
+                            appAssetInfo.distributionInfo.info.developerCollectiveId,
+                          toolId: appAssetInfo.distributionInfo.info.toolId,
+                          toolName: toolInfo.title,
+                          versionBranch: appAssetInfo.distributionInfo.info.versionBranch,
+                          toolVersion: latestVersion.version,
+                          toolCompatibilityId:
+                            appAssetInfo.distributionInfo.info.toolCompatibilityId,
+                        },
+                      },
+                    };
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to check for UI update: ', e);
             }
           }
         }
-      }
-    });
+      }),
+    );
 
     this._availableToolUpdates.set(toolsWithAvailableUpdates);
   }
 
-  availableToolUpdates(): Readable<Record<ActionHashB64, UpdateableEntity<Tool>>> {
+  availableToolUpdates(): Readable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> {
     return derived(this._availableToolUpdates, (store) => store);
   }
 
@@ -674,21 +786,30 @@ export class MossStore {
   runningAppletClasses = pipe(this.runningApplets, (applets) =>
     asyncDerived(this.allAppAssetInfos, (assetInfos) => {
       const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
-      const appletClasses: Record<ActionHashB64, AppletId[]> = {};
+      const appletClasses: Record<
+        ToolCompatibilityId,
+        { appletIds: AppletId[]; toolName: string }
+      > = {};
       Object.entries(assetInfos).forEach(([appId, [info, weaveConfig]]) => {
         if (
           appId.startsWith('applet#') &&
-          info.distributionInfo.type === 'tools-library' &&
+          info.distributionInfo.type === 'web2-tool-list' &&
           weaveConfig?.crossGroupView
         ) {
           const appletId = appletIdFromAppId(appId);
           if (runningAppletIds.includes(appletId)) {
-            const classId = info.distributionInfo.info.originalToolActionHash;
-            const otherAppletsOfSameClass = appletClasses[classId];
+            const classId = info.distributionInfo.info.toolCompatibilityId;
+            const otherAppletsOfSameClass = appletClasses[classId]?.appletIds;
             if (otherAppletsOfSameClass) {
-              appletClasses[classId] = [...otherAppletsOfSameClass, appletId];
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [...otherAppletsOfSameClass, appletId],
+              };
             } else {
-              appletClasses[classId] = [appletId];
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [appletId],
+              };
             }
           }
         }
@@ -696,6 +817,19 @@ export class MossStore {
       return appletClasses;
     }),
   );
+
+  appletClassInfo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return pipe(this.runningAppletClasses, (appletClasses) => {
+      const found = Object.entries(appletClasses).find(([id, _]) => id === toolCompatibilityId);
+      if (found) {
+        return {
+          toolCompatibilityId: found[0],
+          toolName: found[1].toolName,
+        };
+      }
+      return undefined;
+    });
+  });
 
   runningGroupsApps = asyncDerived(this.runningApps, (apps) =>
     apps.filter((app) => app.installed_app_id.startsWith('group#')),
@@ -732,16 +866,7 @@ export class MossStore {
 
       const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
 
-      set(
-        new AppletStore(
-          appletHash,
-          applet,
-          this.conductorInfo,
-          token,
-          this.toolsLibraryStore,
-          this.isAppletDev,
-        ),
-      );
+      set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
     }),
   );
 
@@ -905,53 +1030,66 @@ export class MossStore {
     );
   });
 
-  appletsForBundleHash = new LazyHoloHashMap(
-    (
-      toolBundleHash: ActionHash, // action hash of the Tool entry in the tools library
-    ) =>
-      pipe(
-        this.allRunningApplets,
-        (runningApplets) =>
-          completed(
-            pickBy(
-              runningApplets,
-              (appletStore) =>
-                toolBundleActionHashFromDistInfo(
-                  appletStore.applet.distribution_info,
-                ).toString() === toolBundleHash.toString(),
-            ),
+  appletsForToolId = new LazyMap((toolCompatibilityId: ToolCompatibilityId) =>
+    pipe(
+      this.allRunningApplets,
+      (runningApplets) =>
+        completed(
+          pickBy(
+            runningApplets,
+            (appletStore) =>
+              toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info) ===
+              toolCompatibilityId,
           ),
-        (appletsForThisBundleHash) =>
-          mapAndJoin(appletsForThisBundleHash, (_, appletHash) =>
-            this.groupsForApplet.get(appletHash),
-          ),
-        async (groupsByApplets) => {
-          const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
+        ),
+      (appletsForThisToolId) =>
+        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
+      async (groupsByApplets) => {
+        const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
 
-          for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
-            const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
-            if (groups.size > 0) {
-              const firstGroupToken = Array.from(groups.values())[0].groupClient
-                .authenticationToken;
-              appletsB64[encodeHashToBase64(appletHash)] = [
-                appletToken,
-                {
-                  authenticationToken: firstGroupToken,
-                  profilesRoleName: 'group',
-                },
-              ];
-            }
+        for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
+          const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+          if (groups.size > 0) {
+            const firstGroupToken = Array.from(groups.values())[0].groupClient.authenticationToken;
+            appletsB64[encodeHashToBase64(appletHash)] = [
+              appletToken,
+              {
+                authenticationToken: firstGroupToken,
+                profilesRoleName: 'group',
+              },
+            ];
           }
-          return appletsB64;
-        },
-      ),
+        }
+        return appletsB64;
+      },
+    ),
   );
 
   allAppletsHosts = pipe(this.allRunningApplets, (applets) =>
     mapAndJoin(applets, (appletStore) => appletStore.host),
   );
 
-  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
+  toolLogo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return asyncReadable<string | undefined>(async (set) => {
+      const toolIcon = await this.toolIcon(toolCompatibilityId);
+      set(toolIcon);
+    });
+  });
+
+  appletLogo = new LazyHoloHashMap((appletHash: AppletHash) =>
+    pipe(this.allAppAssetInfos, (assetInfos) => {
+      const assetInfoAndAppId = Object.entries(assetInfos).find(
+        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
+      );
+      if (!assetInfoAndAppId) return undefined;
+      const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
+        assetInfoAndAppId[1][0].distributionInfo,
+      );
+      return this.toolLogo.get(toolCompatibilityId);
+    }),
+  );
+
+  async installApplet(appletHash: EntryHash, applet: Applet, icon: string): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
     const appId = appIdFromAppletHash(appletHash);
     if (!applet.network_seed) {
@@ -960,44 +1098,101 @@ export class MossStore {
       );
     }
 
-    const toolEntity = await this.toolsLibraryStore.getLatestToolEntry(
-      toolBundleActionHashFromDistInfo(applet.distribution_info),
-    );
+    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+    Value.Assert(TDistributionInfo, distributionInfo);
 
-    console.log('@installApplet: got ToolEntry: ', toolEntity.record.entry);
-    console.log('@installApplet: got Applet: ', applet);
+    let appHashes: AppHashes;
+    let happOrWebhappUrl: string;
+    let uiPort: number | undefined;
 
-    if (!toolEntity) throw new Error('ToolEntry not found in Tools Library');
+    if (distributionInfo.type === 'web2-tool-list') {
+      // In case it's applet dev mode *and* it's a tool from the dev config
+      // then derive the relevant info right here
+      if (this.appletDevConfig && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###')) {
+        const toolConfig = this.appletDevConfig.applets.find(
+          (config) => config.name === distributionInfo.info.toolId,
+        );
+        if (!toolConfig) throw new Error('No matching Tool found in the dev config.');
 
-    const source: WebHappSource = JSON.parse(toolEntity.record.entry.source);
-    if (source.type !== 'https') throw new Error(`Unsupported applet source type '${source.type}'`);
-    if (!(source.url.startsWith('https://') || source.url.startsWith('file://')))
-      throw new Error(`Invalid applet source URL '${source.url}'`);
+        switch (toolConfig.source.type) {
+          case 'filesystem':
+            happOrWebhappUrl = `file://${toolConfig.source.path}`;
+            break;
+          case 'https':
+            happOrWebhappUrl = toolConfig.source.url;
+            break;
+          case 'localhost':
+            happOrWebhappUrl = `file://${toolConfig.source.happPath}`;
+            break;
+        }
 
-    const appHashes: AppHashes = JSON.parse(toolEntity.record.entry.hashes);
+        appHashes =
+          toolConfig.source.type === 'localhost'
+            ? {
+                type: 'happ',
+                sha256: '###DEVCONFIG###',
+              }
+            : {
+                type: 'webhapp',
+                sha256: '###DEVCONFIG###',
+                happ: {
+                  sha256: '###DEVCONFIG###',
+                },
+                ui: {
+                  sha256: '###DEVCONFIG###',
+                },
+              };
+
+        const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
+        if (uiPortString) {
+          uiPort = parseInt(uiPortString);
+        }
+      } else {
+        // Fetch latest version of the Tool
+        const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
+        const toolList: DeveloperCollectiveToolList = await resp.json();
+
+        // take all apps and add them to the list of all apps
+        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId);
+        if (!toolInfo) throw new Error('No tool info found in developer collective.');
+        // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
+        const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
+        if (!latestVersion)
+          throw new Error(
+            'No version found for the Tool with a valid semver version and the correct happ sha256.',
+          );
+
+        appHashes = {
+          type: 'webhapp',
+          sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
+          happ: {
+            sha256: applet.sha256_happ,
+          },
+          ui: {
+            sha256: latestVersion.hashes.uiSha256,
+          },
+        };
+
+        happOrWebhappUrl = latestVersion.url;
+      }
+    } else {
+      throw new Error(
+        "Distribution info types other than 'web2-tool-list' are currently not supported.",
+      );
+    }
+
     // Only in dev mode AppHashes of type 'happ' are currently allowed
     if (appHashes.type !== 'webhapp' && !this.isAppletDev)
-      throw new Error(
-        `Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${toolEntity.record.entry.hashes}`,
-      );
-
-    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
-
-    if (
-      distributionInfo.type === 'tools-library' &&
-      distributionInfo.info.originalToolActionHash !==
-        encodeHashToBase64(toolEntity.originalActionHash)
-    )
-      throw new Error('Original ToolEntry action hash does not match the one in the AppletEntry');
+      throw new Error(`Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${appHashes}`);
 
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
-      encodeHashToBase64(this.toolsLibraryStore.toolsLibraryClient.client.myPubKey),
-      source.url,
+      happOrWebhappUrl,
       distributionInfo,
       appHashes,
-      toolEntity.record.entry.meta_data,
+      icon,
+      uiPort,
     );
 
     return appInfo;

@@ -1,6 +1,12 @@
-import { defineConfig } from '@theweave/cli';
+import { defineConfig } from './cli/defineConfig';
 
 export default defineConfig({
+  toolCurations: [
+    {
+      url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.13/0.13/lists/curations-0.13.json',
+      useLists: ['default'],
+    },
+  ],
   groups: [
     {
       name: 'Tennis Club',

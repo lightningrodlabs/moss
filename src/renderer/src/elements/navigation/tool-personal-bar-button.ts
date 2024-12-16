@@ -3,7 +3,6 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import { ActionHashB64, decodeHashFromBase64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -13,10 +12,12 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '../../groups/elements/group-context.js';
 import './topbar-button.js';
 import '../dialogs/create-group-dialog.js';
+import '../../applets/elements/applet-logo-raw.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -26,18 +27,15 @@ export class PersonalViewSidebar extends LitElement {
   _mossStore!: MossStore;
 
   @property()
-  originalToolActionHash!: ActionHashB64;
+  toolCompatibilityId!: ToolCompatibilityId;
 
   @property()
   selected = false;
 
   toolBundle = new StoreSubscriber(
     this,
-    () =>
-      this._mossStore.toolsLibraryStore.installableTools.get(
-        decodeHashFromBase64(this.originalToolActionHash),
-      ),
-    () => [this.originalToolActionHash],
+    () => this._mossStore.appletClassInfo.get(this.toolCompatibilityId),
+    () => [this.toolCompatibilityId],
   );
 
   render() {
@@ -47,7 +45,7 @@ export class PersonalViewSidebar extends LitElement {
         style="margin-left: -4px; position: relative;"
         .selected=${this.selected}
         .tooltipText=${this.toolBundle.value.status === 'complete'
-          ? this.toolBundle.value.value?.record.entry.title
+          ? this.toolBundle.value.value?.toolName
           : undefined}
         placement="bottom"
       >
@@ -55,7 +53,7 @@ export class PersonalViewSidebar extends LitElement {
           class="applet-icon"
           .toolIdentifier=${{
             type: 'class',
-            originalToolActionHash: this.originalToolActionHash,
+            toolCompatibilityId: this.toolCompatibilityId,
           }}
           placement="bottom"
           style="margin: 4px; --size: 58px;"

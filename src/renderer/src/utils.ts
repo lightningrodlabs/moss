@@ -1,5 +1,4 @@
 import {
-  EntryHash,
   CellId,
   CellInfo,
   DisabledAppReason,
@@ -36,7 +35,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -50,7 +49,8 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
-import { appIdFromAppletId, toLowerCaseB64 } from '@theweave/utils';
+import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
+import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
   token: AppAuthenticationToken,
@@ -100,10 +100,6 @@ export function findAppForDnaHash(
     }
   }
   return undefined;
-}
-
-export function fakeMd5SeededEntryHash(md5Hash: Uint8Array): EntryHash {
-  return new Uint8Array([0x84, 0x21, 0x24, ...md5Hash, ...new Uint8Array(20)]);
 }
 
 export function getStatus(app: AppInfo): string {
@@ -472,8 +468,28 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
-// Crop the image and return a base64 bytes string of its content
-export function resizeAndExport(img: HTMLImageElement) {
+/**
+ * Fetches an image, crops it to 300x300px and returns the base64 encoded value of the
+ * resized image.
+ *
+ * @param src
+ * @returns
+ */
+export async function fetchResizeAndExportImg(src: string): Promise<string> {
+  const tmpImgEl = document.createElement('img');
+  return new Promise((resolve, reject) => {
+    tmpImgEl.onload = () => {
+      resolve(resizeAndExportImg(tmpImgEl));
+    };
+    tmpImgEl.onerror = () => reject('Failed to load image from source.');
+    tmpImgEl.src = src;
+  });
+}
+
+/**
+ * Crop the image and return a base64 bytes string of its content
+ */
+export function resizeAndExportImg(img: HTMLImageElement): string {
   const MAX_WIDTH = 300;
   const MAX_HEIGHT = 300;
 
@@ -498,7 +514,9 @@ export function resizeAndExport(img: HTMLImageElement) {
   ctx.drawImage(img, 0, 0, width, height);
 
   // return the .toDataURL of the temp canvas
-  return canvas.toDataURL();
+  const base64string = canvas.toDataURL();
+  canvas.remove();
+  return base64string;
 }
 
 export function urlFromAppletHash(appletHash: AppletHash): string {
@@ -940,4 +958,104 @@ export async function postMessageToIframe<T>(
       };
     }
   });
+}
+
+/**
+ * Creates tool library content based on the Tools specified in the dev config.
+ *
+ * @param config
+ */
+export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
+  tools: ToolAndCurationInfo[];
+  devCollective: DeveloperCollecive;
+} {
+  const devModeDeveloperCollective: DeveloperCollecive = {
+    id: '###DEVCONFIG###',
+    name: 'This Tool is listed in the dev config file.',
+    description: 'Moss dev mode test dev collective',
+    contact: {},
+    icon: 'garbl',
+  };
+
+  const tools: ToolAndCurationInfo[] = config.applets.map((toolConfig) => {
+    let toolUrl: string;
+    switch (toolConfig.source.type) {
+      case 'filesystem':
+        toolUrl = `file://${toolConfig.source.path}`;
+        break;
+      case 'https':
+        toolUrl = toolConfig.source.url;
+        break;
+      case 'localhost':
+        toolUrl = `file://${toolConfig.source.happPath}`;
+        break;
+    }
+    const toolListUrl = `###DEVCONFIG###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
+    return {
+      toolCompatibilityId: deriveToolCompatibilityId({
+        toolListUrl: toolListUrl,
+        toolId: toolConfig.name,
+        versionBranch: '###DEVCONFIG###',
+      }),
+      developerCollectiveId: 'Moss dev mode test collective',
+      toolListUrl: toolListUrl,
+      curationInfos: [
+        {
+          info: {
+            toolListUrl: toolListUrl,
+            toolId: 'REPLACE',
+            versionBranch: '###DEVCONFIG###',
+            tags: [],
+          },
+          curator: {
+            name: 'Moss dev mode test curator',
+            icon: 'asdfas',
+            description: 'Moss dev mode test curator',
+            contact: {},
+          },
+        },
+      ],
+      toolInfoAndVersions: {
+        id: toolConfig.name,
+        title: toolConfig.name,
+        subtitle: toolConfig.subtitle,
+        description: toolConfig.description,
+        tags: [],
+        versionBranch: '###DEVCONFIG###',
+        icon:
+          toolConfig.icon.type === 'filesystem'
+            ? `file://${toolConfig.icon.path}`
+            : toolConfig.icon.url,
+        versions: [
+          {
+            version: '0.1.0',
+            url: toolUrl,
+            changelog: 'Same same. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
+        ],
+      },
+      latestVersion: {
+        version: '0.1.0',
+        url: toolUrl,
+        changelog: 'Same same. Just an example changelog.',
+        releasedAt: Date.now(),
+        hashes: {
+          webhappSha256: '###DEVCONFIG###',
+          happSha256: '###DEVCONFIG###',
+          uiSha256: '###DEVCONFIG###',
+        },
+      },
+    };
+  });
+
+  return {
+    tools,
+    devCollective: devModeDeveloperCollective,
+  };
 }

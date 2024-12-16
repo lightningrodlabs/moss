@@ -28,7 +28,7 @@ jobs:
         with:
           name: holochain-ci
 
-      - name: Install and test
+      - name: Install and build
         run: |
           nix-store --gc
           nix develop --command bash -c "holochain --version && yarn build:group-happ && yarn test"

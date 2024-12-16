@@ -17,7 +17,14 @@ import {
   WAL,
 } from '@theweave/api';
 
-import { AppAssetsInfo, AppHashes, DistributionInfo } from '@theweave/moss-types';
+import {
+  AppAssetsInfo,
+  AppHashes,
+  DistributionInfo,
+  ResourceLocation,
+  ToolCompatibilityId,
+  WeaveDevConfig,
+} from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
@@ -39,6 +46,7 @@ declare global {
       ) => Promise<Electron.MessageBoxReturnValue>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
+      appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
@@ -66,16 +74,20 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      getToolIcon: (
+        toolId: string,
+        resourceLocation?: ResourceLocation,
+      ) => Promise<string | undefined>;
       mossUpdateAvailable: () => Promise<MossUpdateInfo | undefined>;
       installMossUpdate: () => Promise<void>;
       installAppletBundle: (
         appId: string,
         networkSeed: string,
-        agentPubKey: AgentPubKeyB64,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
-        metadata?: string,
+        icon: string,
+        uiPort?: number,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
@@ -94,8 +106,7 @@ declare global {
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
       batchUpdateAppletUis: (
-        originalToolActionHash: ActionHashB64,
-        newToolVersionActionHash: ActionHashB64,
+        toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         sha256Happ: string,
@@ -135,7 +146,6 @@ export interface ProgressInfo {
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
-  tools_library_app_id: string;
   moss_version: string;
   weave_protocol_version: string;
 }
@@ -179,6 +189,13 @@ export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
 }
 
+export async function getToolIcon(
+  toolId: string,
+  resourceLocation?: ResourceLocation,
+): Promise<string | undefined> {
+  return window.electronAPI.getToolIcon(toolId, resourceLocation);
+}
+
 export async function openApp(appId: string): Promise<void> {
   return window.electronAPI.openApp(appId);
 }
@@ -189,6 +206,10 @@ export async function isDevModeEnabled(): Promise<boolean> {
 
 export async function isAppletDev(): Promise<boolean> {
   return window.electronAPI.isAppletDev();
+}
+
+export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
+  return window.electronAPI.appletDevConfig();
 }
 
 export async function enableDevMode(): Promise<void> {

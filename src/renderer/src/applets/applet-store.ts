@@ -17,9 +17,7 @@ import {
   loadAppletNotificationStatus,
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
-import { ToolsLibraryStore } from '../personal-views/tool-library/tool-library-store.js';
 import { Applet } from '@theweave/group-client';
-import { toolBundleActionHashFromDistInfo } from '@theweave/utils';
 
 export class AppletStore {
   isAppletDev: boolean;
@@ -29,7 +27,6 @@ export class AppletStore {
     public applet: Applet,
     public conductorInfo: ConductorInfo,
     public authenticationToken: AppAuthenticationToken,
-    public toolsLibraryStore: ToolsLibraryStore,
     isAppletDev: boolean,
   ) {
     this._unreadNotifications.set(loadAppletNotificationStatus(encodeHashToBase64(appletHash)));
@@ -62,11 +59,6 @@ export class AppletStore {
 
   blocks: AsyncReadable<Record<string, BlockType>> = pipe(this.host, (host) =>
     lazyLoadAndPoll(() => (host ? host.getBlocks() : Promise.resolve({})), 10000),
-  );
-
-  // TODO take this from filesystem instead if available
-  logo = this.toolsLibraryStore.toolLogo.get(
-    toolBundleActionHashFromDistInfo(this.applet.distribution_info),
   );
 
   _unreadNotifications: Writable<[string | undefined, number | undefined]> = writable([
