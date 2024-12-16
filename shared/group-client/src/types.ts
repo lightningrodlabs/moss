@@ -205,8 +205,8 @@ export type RelateAssetsInput = {
 export type AppletClonedCell = {
   applet_hash: EntryHash;
   dna_hash: DnaHash;
-  role_name: String;
-  network_seed?: String;
+  role_name: string;
+  network_seed?: string;
   /**
    * Any yaml serializable properties
    */

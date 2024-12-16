@@ -198,26 +198,68 @@ async function checkForNewGroupsAndApplets(
   const allApps = await adminWs.listApps({});
   const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
 
-  // TODO wrap in try catch blocks
+  // Check for unjoined applets and try to install them
   for (const groupApp of groupApps) {
-    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
-    const groupClient = new GroupClient(groupAppWs, [], 'group');
+    try {
+      const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+      const groupClient = new GroupClient(groupAppWs, [], 'group');
 
-    console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
-    const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
-    if (unjoinedDefaultApplets.length === 0) {
-      console.log('No new tools found.');
-      break;
-    }
-
-    for (const unjoinedApplet of unjoinedDefaultApplets) {
-      console.log('Joining Tool', unjoinedApplet);
-      try {
-        await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
-      } catch (e) {
-        console.error('Failed to join Tool: ', e);
+      console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
+      const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
+      if (unjoinedDefaultApplets.length === 0) {
+        console.log('No new tools found.');
+        break;
       }
-      console.log('Tool Joined.');
+
+      for (const unjoinedApplet of unjoinedDefaultApplets) {
+        console.log('Joining Tool', unjoinedApplet);
+        try {
+          await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
+        } catch (e) {
+          console.error('Failed to join Tool: ', e);
+        }
+        console.log('Tool Joined.');
+      }
+
+      // Check for unjoined cloned cells
+      try {
+        const allAppletHashes = await groupClient.getGroupApplets();
+        for (const appletHash of allAppletHashes) {
+          const unjoinedClonedCellEntryhashes =
+            await groupClient.getUnjoinedClonedCellsForApplet(appletHash);
+          for (const unjoinedCloneHash of unjoinedClonedCellEntryhashes) {
+            try {
+              const appletClone = await groupClient.getAppletClonedCell(unjoinedCloneHash);
+              if (appletClone) {
+                const appletAppId = appIdFromAppletHash(appletHash);
+                const appletAppWs = await getAppWs(adminWs, appPort, appletAppId, weRustHandler);
+                await appletAppWs.createCloneCell({
+                  role_name: appletClone.role_name,
+                  modifiers: {
+                    network_seed: appletClone.network_seed,
+                    properties: appletClone.properties,
+                    origin_time: appletClone.origin_time,
+                  },
+                });
+              } else {
+                console.warn(
+                  `No AppletClonedCell entry found for the given hash (${encodeHashToBase64(unjoinedCloneHash)}).`,
+                );
+              }
+            } catch (e) {
+              console.error(
+                `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}`,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.error(
+          `Failed to check for unjoined cloned cells in group with app id ${groupApp.installed_app_id}`,
+        );
+      }
+    } catch (e) {
+      console.error('Failed to check for Tools in group ', groupApp.installed_app_id);
     }
   }
 }
@@ -277,6 +319,15 @@ async function tryJoinApplet(
   if (!toolInfo) throw new Error('No Tool info found in Tool list.');
 
   const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
+  if (!latestVersion) {
+    console.warn(
+      'No latest version found for Tool with id ',
+      toolInfo.id,
+      'at URL ',
+      distributionInfo.info.toolListUrl,
+    );
+    return;
+  }
 
   const appHashes: AppHashes = {
     type: 'webhapp',
@@ -316,6 +367,15 @@ async function tryJoinApplet(
     agent_key: groupClient.appClient.myPubKey,
     network_seed: applet.network_seed,
   });
+
+  try {
+    await adminWs.enableApp({ installed_app_id: appId });
+  } catch (e) {
+    console.warn(
+      `Failed to enable app ${appId} (might have deferred_memproof_provisioning set to true in which case this is expected):`,
+      e,
+    );
+  }
 
   try {
     const joinAppletInput = {
