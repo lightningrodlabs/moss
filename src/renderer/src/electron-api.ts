@@ -86,7 +86,6 @@ declare global {
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
-        icon: string,
         uiPort?: number,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;

@@ -50,17 +50,12 @@ import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
-  fetchResizeAndExportImg,
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
 } from '../utils.js';
-import {
-  DeveloperCollectiveToolList,
-  DistributionInfo,
-  TDistributionInfo,
-} from '@theweave/moss-types';
+import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
   GroupRemoteSignal,
   PeerStatusClient,
@@ -68,12 +63,7 @@ import {
   SignalPayloadPeerStatus,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
-import {
-  appIdFromAppletHash,
-  deriveToolCompatibilityId,
-  toLowerCaseB64,
-  toolCompatibilityIdFromDistInfo,
-} from '@theweave/utils';
+import { appIdFromAppletHash, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,
@@ -825,40 +815,7 @@ export class GroupStore {
     if (distributionInfo.type !== 'web2-tool-list')
       throw new Error("Tool source types other than 'web2-tool-list' are currently not supported.");
 
-    // If it's a Tool from the dev config, we will need to fetch it differently in the main process
-    const isToolFromDevConfig =
-      this.mossStore.isAppletDev && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
-
-    console.log('isToolFromDevConfig: ', isToolFromDevConfig);
-
-    const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
-    let toolIcon = await this.mossStore.toolIcon(
-      toolCompatibilityId,
-      isToolFromDevConfig ? distributionInfo.info.toolName : undefined,
-    );
-    console.log('Got toolIcon: ', toolIcon);
-    if (!toolIcon) {
-      const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
-      const toolList: DeveloperCollectiveToolList = await resp.json();
-      // TODO ASSERT TYPE
-      const tool = toolList.tools.find(
-        (toolInfo) =>
-          toolInfo.id === distributionInfo.info.toolId &&
-          toolInfo.versionBranch === distributionInfo.info.versionBranch,
-      );
-      if (!tool)
-        throw new Error(
-          "Failed to fetch icon: Tool not found in the developer collective's Tool list.",
-        );
-      try {
-        toolIcon = await fetchResizeAndExportImg(tool.icon);
-      } catch (e) {
-        // TODO potentially add logic to use a placeholder icon in this case
-        throw new Error(`Failed to fetch Tool icon: ${e}`);
-      }
-    }
-
-    const appInfo = await this.mossStore.installApplet(appletHash, applet, toolIcon);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
     const joinAppletInput = {
       applet,
       joining_pubkey: appInfo.agent_pub_key,
@@ -895,14 +852,6 @@ export class GroupStore {
   ): Promise<EntryHash> {
     if (!networkSeed) {
       networkSeed = uuidv4();
-    }
-    // Fetch the icon and convert it to base64
-    let icon: string;
-    try {
-      icon = await fetchResizeAndExportImg(tool.toolInfoAndVersions.icon);
-    } catch (e) {
-      // TODO potentially add logic to use a placeholder icon in this case
-      throw new Error(`Failed to fetch Tool icon: ${e}`);
     }
 
     const latestVersion = tool.latestVersion;
@@ -943,7 +892,7 @@ export class GroupStore {
 
     const appletHash = await this.groupClient.hashApplet(applet);
 
-    const appInfo = await this.mossStore.installApplet(appletHash, applet, icon);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet);
 
     const joinAppletInput: JoinAppletInput = {
       applet,

@@ -162,7 +162,7 @@ export class ToolLibraryWeb2 extends LitElement {
         if (!relevantTool) return;
         const latestVersion = relevantTool.versions
           .filter((version) => validateSemver(version.version))
-          .sort((version_a, version_b) => compareVersions(version_a.version, version_b.version))[0];
+          .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
         if (!latestVersion) return;
         const toolCompatibilityId = deriveToolCompatibilityId({
           toolListUrl: curatedTool.toolListUrl,

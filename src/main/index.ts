@@ -45,9 +45,12 @@ import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
+  DeveloperCollectiveToolList,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolCurationList,
+  ToolInfoAndVersions,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
@@ -84,6 +87,7 @@ import {
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
+import sharp from 'sharp';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -1486,9 +1490,49 @@ if (!RUNNING_WITH_COMMAND) {
         happOrWebHappUrl: string,
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
-        icon: string,
         uiPort?: number,
       ): Promise<AppInfo> => {
+        if (distributionInfo.type !== 'web2-tool-list')
+          throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
+
+        // Fetch the icon and store it
+        const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
+        if (!WE_FILE_SYSTEM.readToolIcon(toolCompatibilityId)) {
+          if (
+            !!RUN_OPTIONS.devInfo &&
+            distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###')
+          ) {
+            const appletConfig = RUN_OPTIONS.devInfo.config.applets.find(
+              (appletConfig) => appletConfig.name === distributionInfo.info.toolName,
+            );
+            if (!appletConfig) throw new Error('Dev mode applet not found in dev config');
+            const base64Icon = await readIcon(appletConfig.icon);
+            WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Icon);
+          } else {
+            try {
+              const resp = await net.fetch(distributionInfo.info.toolListUrl);
+              const toolList: DeveloperCollectiveToolList = await resp.json();
+              const toolInfo: ToolInfoAndVersions | undefined = toolList.tools.find(
+                (tool) =>
+                  tool.id === distributionInfo.info.toolId &&
+                  tool.versionBranch === distributionInfo.info.versionBranch,
+              );
+              if (!toolInfo) throw new Error('Tool not found in fetched Tool list.');
+              const iconUrl = new URL(toolInfo.icon); // Validate that it's a proper URL
+              const iconResponse = await net.fetch(iconUrl.toString());
+              const pngBuffer = await sharp(await iconResponse.arrayBuffer())
+                .resize(300, 300)
+                .toFormat('png')
+                .toBuffer();
+
+              const base64Png = `data:image/png;base64,${pngBuffer.toString('base64')}`;
+              WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Png);
+            } catch (e) {
+              throw new Error(`Failed to fetch Tool icon: ${e}`);
+            }
+          }
+        }
+
         let sha256Ui = appHashes.type === 'webhapp' ? appHashes.ui.sha256 : undefined;
         let sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
         let sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
@@ -1499,11 +1543,6 @@ if (!RUNNING_WITH_COMMAND) {
           agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
         }
 
-        const alreadyInstalled = apps.find((appInfo) => appInfo.installed_app_id === appId);
-        if (alreadyInstalled) {
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-          return alreadyInstalled;
-        }
         // Check if .happ and ui assets are already stored on the filesystem and don't need to get fetched from the source
         let happAlreadyStoredPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
         const happAlreadyStored = fs.existsSync(happAlreadyStoredPath);
@@ -1548,9 +1587,7 @@ if (!RUNNING_WITH_COMMAND) {
 
           // Check the hashes unless we're in dev mode and it's a Tool from the dev config
           const isTrustedToolFromDevConfig =
-            RUN_OPTIONS.devInfo &&
-            distributionInfo.type === 'web2-tool-list' &&
-            distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
+            RUN_OPTIONS.devInfo && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
 
           if (!isTrustedToolFromDevConfig) {
             if (happSha256 !== sha256Happ)
@@ -1597,9 +1634,6 @@ if (!RUNNING_WITH_COMMAND) {
           uiPort,
         );
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
-
-        const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
-        WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, icon);
 
         let appInfo: AppInfo;
         try {

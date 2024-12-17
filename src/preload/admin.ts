@@ -89,7 +89,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
-    icon: string,
     uiPort?: number,
   ) =>
     ipcRenderer.invoke(
@@ -100,7 +99,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       happOrWebHappUrl,
       distributionInfo,
       appHashes,
-      icon,
       uiPort,
     ),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),

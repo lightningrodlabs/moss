@@ -1089,7 +1089,7 @@ export class MossStore {
     }),
   );
 
-  async installApplet(appletHash: EntryHash, applet: Applet, icon: string): Promise<AppInfo> {
+  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
     const appId = appIdFromAppletHash(appletHash);
     if (!applet.network_seed) {
@@ -1191,7 +1191,6 @@ export class MossStore {
       happOrWebhappUrl,
       distributionInfo,
       appHashes,
-      icon,
       uiPort,
     );
 
