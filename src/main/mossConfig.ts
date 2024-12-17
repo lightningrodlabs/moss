@@ -7,7 +7,6 @@ export type MossConfig = {
   lair: VersionAndSha256;
   hc: VersionAndSha256;
   groupHapp: VersionAndSha256;
-  toolsLibrary: VersionAndSha256;
   kando: VersionAndSha256;
   binariesAppendix: string;
 };

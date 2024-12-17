@@ -49,7 +49,6 @@ import {
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
-  ToolCurationList,
   ToolInfoAndVersions,
   WeaveDevConfig,
 } from '@theweave/moss-types';
