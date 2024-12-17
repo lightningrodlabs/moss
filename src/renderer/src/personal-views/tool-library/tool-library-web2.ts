@@ -36,7 +36,7 @@ import { deriveToolCompatibilityId } from '@theweave/utils';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'ERROR_404',
+    url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.13/0.13/lists/curations-0.13.json',
     useLists: ['default'],
   },
 ];

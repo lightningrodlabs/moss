@@ -97,7 +97,7 @@ import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { WeCache } from './cache.js';
-import { compareVersions, validate } from 'compare-versions';
+import { compareVersions } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
 

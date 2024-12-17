@@ -477,9 +477,14 @@ export function decodeContext(contextStringified: string): any {
  */
 export async function fetchResizeAndExportImg(src: string): Promise<string> {
   const tmpImgEl = document.createElement('img');
+  tmpImgEl.crossOrigin = 'Anonymous';
   return new Promise((resolve, reject) => {
     tmpImgEl.onload = () => {
-      resolve(resizeAndExportImg(tmpImgEl));
+      try {
+        resolve(resizeAndExportImg(tmpImgEl));
+      } catch (e) {
+        reject(e);
+      }
     };
     tmpImgEl.onerror = () => reject('Failed to load image from source.');
     tmpImgEl.src = src;

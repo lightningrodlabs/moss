@@ -1,6 +1,6 @@
 {
   "name": "@theweave/wdocker",
-  "version": "0.13.0-gamma.3",
+  "version": "0.13.0-epsilon.0",
   "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
@@ -22,10 +22,9 @@
     "@lightningrodlabs/we-rust-utils": "0.400.0-rc.1",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
-    "@theweave/api": "*",
-    "@theweave/utils": "file:../shared/utils",
-    "@theweave/group-client": "*",
-    "@theweave/tool-library-client": "*",
+    "@theweave/api": "0.4.0-alpha.0",
+    "@theweave/utils": "0.3.0-alpha.1",
+    "@theweave/group-client": "0.2.0-alpha.0",
     "bufferutil": "4.0.8",
     "cli-table": "0.3.11",
     "commander": "11.1.0",
