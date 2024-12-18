@@ -599,7 +599,6 @@ export class MainDashboard extends LitElement {
 
     // Fetch Moss update feed
     try {
-      // TODO change URL to point to main branch before merging
       const response = await fetch(
         'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
       );
@@ -610,7 +609,6 @@ export class MainDashboard extends LitElement {
     } catch (e) {
       // Fetch Moss update feed
       try {
-        // TODO change URL to point to main branch before merging
         const response = await fetch(
           'https://raw.githubusercontent.com/lightningrodlabs/we/main/news.json',
         );
