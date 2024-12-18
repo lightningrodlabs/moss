@@ -1180,33 +1180,24 @@ if (!RUNNING_WITH_COMMAND) {
 
       const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
-      const dnaPropertiesMap = withProgenitor
-        ? {
-            group: yaml.dump({ progenitor: encodeHashToBase64(agentPubKey) }),
-          }
-        : {
-            group: yaml.dump({
-              progenitor: null,
-            }),
-          };
-
-      console.log('Dna properties map: ', dnaPropertiesMap);
-      const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
-        groupHappPath,
-        dnaPropertiesMap,
-      );
-
-      const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
-
-      fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+      const properties = withProgenitor
+        ? { progenitor: encodeHashToBase64(agentPubKey) }
+        : { progenitor: null };
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: modifiedHappPath,
+        path: groupHappPath,
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
+        roles_settings: {
+          group: {
+            type: 'Provisioned',
+            modifiers: {
+              properties,
+            },
+          },
+        },
       });
-      fs.rmSync(modifiedHappPath);
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       return appInfo;
     });

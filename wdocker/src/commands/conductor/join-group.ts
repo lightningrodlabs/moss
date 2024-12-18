@@ -92,38 +92,26 @@ export async function installGroup(
   const hashedSeed = hash.digest('base64');
   const appId = `group#${hashedSeed}#${partialModifiers.progenitor ? encodeHashToBase64(agentPubKey) : null}`;
 
-  const dnaPropertiesMap = partialModifiers.progenitor
-    ? {
-        group: yaml.dump({ progenitor: partialModifiers.progenitor }),
-      }
-    : {
-        group: yaml.dump({
-          progenitor: null,
-        }),
-      };
-
-  console.log('Modifying happ bytes');
-
-  const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
-    wDockerFs.groupHappPath,
-    dnaPropertiesMap,
-  );
-
-  console.log('Writing modified happ to disk.');
-
-  const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
-
-  fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+  const properties = partialModifiers.progenitor
+    ? { progenitor: partialModifiers.progenitor }
+    : { progenitor: null };
 
   console.log('Installing app');
 
   const appInfo = await adminWs.installApp({
-    path: modifiedHappPath,
+    path: wDockerFs.groupHappPath,
     installed_app_id: appId,
     agent_key: agentPubKey,
     network_seed: partialModifiers.networkSeed,
+    roles_settings: {
+      group: {
+        type: 'Provisioned',
+        modifiers: {
+          properties,
+        },
+      },
+    },
   });
-  fs.rmSync(modifiedHappPath);
 
   console.log('Enabling app');
 
