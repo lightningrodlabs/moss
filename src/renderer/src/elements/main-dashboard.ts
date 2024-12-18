@@ -607,18 +607,7 @@ export class MainDashboard extends LitElement {
         this._updateFeed = updateFeed['0.13.x'];
       }
     } catch (e) {
-      // Fetch Moss update feed
-      try {
-        const response = await fetch(
-          'https://raw.githubusercontent.com/lightningrodlabs/we/main/news.json',
-        );
-        const updateFeed = await response.json();
-        if (updateFeed['0.13.x']) {
-          this._updateFeed = updateFeed['0.13.x'];
-        }
-      } catch (e) {
-        console.warn('Failed to fetch update feed: ', e);
-      }
+      console.warn('Failed to fetch update feed: ', e);
     }
 
     // Load all notifications for the last week
