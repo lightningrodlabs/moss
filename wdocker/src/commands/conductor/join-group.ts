@@ -109,6 +109,8 @@ export async function installGroup(
     dnaPropertiesMap,
   );
 
+  console.log('Writing modified happ to disk.');
+
   const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
 
   fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));

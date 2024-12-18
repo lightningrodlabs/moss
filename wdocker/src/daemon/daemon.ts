@@ -208,7 +208,7 @@ async function checkForNewGroupsAndApplets(
       const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
       if (unjoinedDefaultApplets.length === 0) {
         console.log('No new tools found.');
-        break;
+        continue;
       }
 
       for (const unjoinedApplet of unjoinedDefaultApplets) {
@@ -228,6 +228,10 @@ async function checkForNewGroupsAndApplets(
           const unjoinedClonedCellEntryhashes =
             await groupClient.getUnjoinedClonedCellsForApplet(appletHash);
           for (const unjoinedCloneHash of unjoinedClonedCellEntryhashes) {
+            console.log(
+              'Joining cloned cell with entry hash',
+              encodeHashToBase64(unjoinedCloneHash),
+            );
             try {
               const appletClone = await groupClient.getAppletClonedCell(unjoinedCloneHash);
               if (appletClone) {

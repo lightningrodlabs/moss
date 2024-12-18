@@ -19,6 +19,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
+import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
 import { program, Command, Option } from 'commander';
@@ -86,7 +87,8 @@ import {
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
+
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
@@ -1519,13 +1521,13 @@ if (!RUNNING_WITH_COMMAND) {
               if (!toolInfo) throw new Error('Tool not found in fetched Tool list.');
               const iconUrl = new URL(toolInfo.icon); // Validate that it's a proper URL
               const iconResponse = await net.fetch(iconUrl.toString());
-              const pngBuffer = await sharp(await iconResponse.arrayBuffer())
-                .resize(300, 300)
-                .toFormat('png')
-                .toBuffer();
-
-              const base64Png = `data:image/png;base64,${pngBuffer.toString('base64')}`;
-              WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Png);
+              const image = await Jimp.fromBuffer(await iconResponse.arrayBuffer());
+              image.resize({ w: 300, h: 300 });
+              const mimeType = mime.getType(toolInfo.icon) || 'image/png';
+              if (!['image/jpeg', 'image/png'].includes(mimeType))
+                throw new Error('Only jpg and png icons are supported.');
+              const base64Icon = await image.getBase64(mimeType as 'image/jpeg' | 'image/png');
+              WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Icon);
             } catch (e) {
               throw new Error(`Failed to fetch Tool icon: ${e}`);
             }
