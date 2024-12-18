@@ -10,4 +10,4 @@ name = "profiles_integrity"
 [dependencies]
 serde = "1"
 derive_more = "0"
-hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", rev = "b79351b56c9825ea2e886aca8c3208e6a9919434" }
+hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", rev = "075ac741dea13f54d1883fab01638c3f5e914f9a" }

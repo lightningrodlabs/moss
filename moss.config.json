@@ -9,7 +9,7 @@
     }
   },
   "hc": {
-    "version": "0.4.0-rc.2",
+    "version": "0.4.0",
     "sha256": {
       "x86_64-unknown-linux-gnu": "ec1b3153e7ac3878a6b431c2f539b33988c27c9eec512d2eb56e2e4fa27035a7",
       "x86_64-pc-windows-msvc.exe": "4437369e509a1f8e671ec894a39ca11771f6e58e3ac174ce8cdccf9d53976516",

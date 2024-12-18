@@ -1640,6 +1640,21 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
+"@holochain/client@0.18.0":
+  version "0.18.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.18.0.tgz#cf9f3d20711c3bd8e31b847a8c42292959186380"
+  integrity sha512-I+YIJ2ZeDS8HeUdRvV1Ti9O8m3YPHti8mpUoqg9GZ0A77y+3NIihsB1X8vQBRBFKwNUyZ14U/ZgWQ8/2Y0/T5w==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@holochain/serialization" "^0.1.0-beta-rc.3"
+    "@msgpack/msgpack" "^2.8.0"
+    emittery "^1.0.1"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.5"
+    libsodium-wrappers "^0.7.13"
+    lodash-es "^4.17.21"
+    ws "^8.14.2"
+
 "@holochain/client@0.18.0-dev.13":
   version "0.18.0-dev.13"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.18.0-dev.13.tgz#83fb64201613e0c9e9c0f33c5103f2139d4ba86d"
@@ -3204,7 +3219,7 @@
 "@theweave/utils@file:./shared/utils", "@theweave/utils@file:shared/utils":
   version "0.3.0-alpha.1"
   dependencies:
-    "@holochain/client" "0.18.0-rc.1"
+    "@holochain/client" "0.18.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "0.4.0-alpha.0"
     "@theweave/moss-types" "0.3.0-alpha.0"
