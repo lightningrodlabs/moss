@@ -13,7 +13,7 @@ import {
   HoloHashB64,
   ListAppsResponse,
 } from '@holochain/client';
-import { AppletId, AppletHash, WAL } from '@theweave/api';
+import { AppletId, AppletHash } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
 import { Md5 } from 'ts-md5';
 import { compareVersions, validate as validateSemver } from 'compare-versions';

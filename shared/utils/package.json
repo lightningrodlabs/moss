@@ -19,7 +19,7 @@
   "dependencies": {
     "@holochain/client": "0.18.0",
     "@theweave/api": "0.4.0-alpha.0",
-    "@theweave/moss-types": "0.3.0-alpha.0",
+    "@theweave/moss-types": "0.3.0-alpha.1",
     "@msgpack/msgpack": "^2.7.2",
     "compare-versions": "6.1.1",
     "js-base64": "^3.7.2",
