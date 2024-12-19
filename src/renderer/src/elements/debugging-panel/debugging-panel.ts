@@ -373,11 +373,13 @@ export class DebuggingPanel extends LitElement {
     return html`
       <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
         <h2 style="text-align: center;">Global Apps</h2>
+        <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
           @click=${async () => {
             await window.electronAPI.dumpNetworkStats();
             notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
           }}
+          style="margin-top: 20px;"
         >
           Dump Network Stats
         </sl-button>
