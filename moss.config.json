@@ -5,7 +5,7 @@
       "x86_64-unknown-linux-gnu": "f2e5d5c5c90a0c5eb85641bd8ab207396ddbbc304aaa51982dfde24037a0d0a9",
       "x86_64-pc-windows-msvc.exe": "9b893527d1f4c1e69fa3c9fbd605987065087ca15ebc72bbe598edef9ab5b27a",
       "x86_64-apple-darwin": "9d8e4996dd86441ec859faf9fa90c31bdfaddd49d5079bf67492d9c93d17c503",
-      "aarch64-apple-darwin": "e00134ddccbd5eb0dfc325586c60b7b4cc7446f2bebaa40b470e2c4b0a89f0ce"
+      "aarch64-apple-darwin": "1d206d09ddf90c85b781457514df3c87d8c7e38a6dab4e53f01a8f089acfa3d1"
     }
   },
   "hc": {
