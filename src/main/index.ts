@@ -52,6 +52,7 @@ import {
   ToolCompatibilityId,
   ToolInfoAndVersions,
   WeaveDevConfig,
+  PasswordType,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
@@ -257,7 +258,6 @@ if (!RUNNING_WITH_COMMAND) {
   logIf(!RUNNING_WITH_COMMAND, 'APP PATH: ', app.getAppPath());
   logIf(!RUNNING_WITH_COMMAND, 'RUNNING ON PLATFORM: ', process.platform);
 
-  const LAIR_PASSWORD = 'moss is growing, our relationships are flowing';
   let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
   if (app.isPackaged) {
@@ -1159,10 +1159,10 @@ if (!RUNNING_WITH_COMMAND) {
         }
         return WE_FILE_SYSTEM.readToolIcon(toolId);
       },
-    ),
-      ipcMain.handle('lair-setup-required', (): boolean => {
-        return !WE_FILE_SYSTEM.keystoreInitialized();
-      });
+    );
+    ipcMain.handle('lair-setup-required', (): [boolean, boolean] => {
+      return [!WE_FILE_SYSTEM.keystoreInitialized(), WE_FILE_SYSTEM.randomPasswordExists()];
+    });
     ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let agentPubKey = globalPubKeyFromListAppsResponse(apps);
@@ -1659,9 +1659,13 @@ if (!RUNNING_WITH_COMMAND) {
       WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
     });
     // Not currently in use
-    ipcMain.handle('launch', async (_e, password) => {
-      // const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-      // await delay(5000);
+    ipcMain.handle('launch', async (_e, passwordInput: PasswordType) => {
+      let password: string;
+      if (passwordInput.type === 'random') {
+        password = WE_FILE_SYSTEM.readOrCreateRandomPassword();
+      } else {
+        password = passwordInput.password;
+      }
       [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
         WE_FILE_SYSTEM,
         WE_EMITTER,
@@ -1738,26 +1742,6 @@ if (!RUNNING_WITH_COMMAND) {
             releaseNotes: updateCheckResult.updateInfo.releaseNotes as string | undefined,
           };
         }
-      }
-
-      // launch
-      [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
-        WE_FILE_SYSTEM,
-        WE_EMITTER,
-        SPLASH_SCREEN_WINDOW,
-        LAIR_PASSWORD,
-        RUN_OPTIONS,
-      );
-
-      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-      MAIN_WINDOW = createOrShowMainWindow();
-      // Send cached deep link to main window after a timeout to make sure the event listener is ready
-      if (CACHED_DEEP_LINK) {
-        setTimeout(() => {
-          if (MAIN_WINDOW) {
-            emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
-          }
-        }, 8000);
       }
     }
   });

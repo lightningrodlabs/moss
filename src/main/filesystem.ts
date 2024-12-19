@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import semver from 'semver';
+import { v4 as uuidv4 } from 'uuid';
 import { InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
 import { session } from 'electron';
@@ -192,6 +193,20 @@ export class MossFileSystem {
   keystoreInitialized = () => {
     return fs.existsSync(path.join(this.keystoreDir, 'lair-keystore-config.yaml'));
   };
+
+  readOrCreateRandomPassword(): string {
+    const pwPath = path.join(this.profileDataDir, '.pw');
+    if (!fs.existsSync(pwPath)) {
+      const pw = uuidv4();
+      fs.writeFileSync(pwPath, pw, 'utf-8');
+    }
+    return fs.readFileSync(pwPath, 'utf-8');
+  }
+
+  randomPasswordExists(): boolean {
+    const pwPath = path.join(this.profileDataDir, '.pw');
+    return fs.existsSync(pwPath);
+  }
 
   /**
    * Stores information about happ and (optionally) UI of an installed app
