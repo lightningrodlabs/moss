@@ -8,7 +8,7 @@
     "packages": {
       "@theweave/cli": "0.13.0-epsilon.1",
       "@theweave/api": "0.4.0-alpha.0",
-      "@theweave/elements": "0.3.0-alpha.0"
+      "@theweave/elements": "0.4.0-alpha.0"
     }
   },
   "stable": {
