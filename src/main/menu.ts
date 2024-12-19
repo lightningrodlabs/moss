@@ -1,14 +1,26 @@
-import { Menu, app, dialog, shell } from 'electron';
+import { Menu, app, dialog, shell, BrowserWindow } from 'electron';
 import { MossFileSystem } from './filesystem';
-import { isMac } from './utils';
+import { emitToWindow, isMac } from './utils';
 import AdmZip from 'adm-zip';
 
 // extending from electron's default menu: https://github.com/electron/electron/blob/398dde9dfbdfcfd7757ead9a30785c01de9f0808/lib/browser/default-menu.ts#L12
-export const mossMenu = (mossFileSystem: MossFileSystem) => {
+export const mossMenu = (
+  mossFileSystem: MossFileSystem,
+  getMainWindow: () => BrowserWindow | null | undefined,
+) => {
   const macAppMenu: Electron.MenuItemConstructorOptions = { role: 'appMenu' };
   const helpMenu: Electron.MenuItemConstructorOptions = {
     role: 'help',
     submenu: [
+      {
+        label: 'Settings',
+        async click() {
+          const maybeMainWindow = getMainWindow();
+          if (maybeMainWindow) {
+            emitToWindow(maybeMainWindow, 'request-factory-reset', null);
+          }
+        },
+      },
       {
         label: 'Open Logs',
         async click() {

@@ -47,12 +47,14 @@ declare global {
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
+      factoryReset: () => Promise<void>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => void;
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
+      onRequestFactoryReset: (callback: (e: any) => any) => void;
       onZomeCallSigned: (
         callback: (
           e: any,

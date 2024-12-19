@@ -141,6 +141,9 @@ export class MainDashboard extends LitElement {
   @query('#add-group-dialog')
   addGroupDialog!: SlDialog;
 
+  @query('#settings-dialog')
+  settingsDialog!: SlDialog;
+
   @query('#pocket')
   _pocket!: MossPocket;
 
@@ -571,6 +574,10 @@ export class MainDashboard extends LitElement {
         console.error(e);
         notifyError(msg('Error opening the link.'));
       }
+    });
+
+    window.electronAPI.onRequestFactoryReset(() => {
+      this.settingsDialog.show();
     });
 
     // add eventlistener for pocket
@@ -1196,6 +1203,27 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
+      <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
+        <div class="column">
+          <div><b>Factory Reset</b></div>
+          <div
+            class="row items-center"
+            style="background: #ffaaaa; padding: 10px 5px; border-radius: 5px;"
+          >
+            <span style="margin-right: 20px;"
+              >Fully reset Moss and <b>delete all associated data</b></span
+            >
+            <sl-button
+              variant="danger"
+              @click=${async () => await window.electronAPI.factoryReset()}
+              >Factory Reset</sl-button
+            >
+          </div>
+        </div>
+        <sl-button slot="footer" variant="primary" @click=${() => this.settingsDialog.hide()}
+          >Close</sl-button
+        >
+      </sl-dialog>
       <moss-pocket
         id="pocket"
         @click=${(e) => e.stopPropagation()}

@@ -574,7 +574,7 @@ if (!RUNNING_WITH_COMMAND) {
     });
   };
 
-  Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
+  Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM, () => MAIN_WINDOW));
 
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
@@ -829,12 +829,12 @@ if (!RUNNING_WITH_COMMAND) {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',
         type: 'warning',
-        buttons: ['Confirm', 'Cancel'],
-        defaultId: 1,
-        cancelId: 1,
+        buttons: ['Cancel', 'Confirm'],
+        defaultId: 0,
+        cancelId: 0,
         message: `Are you sure you want to fully reset Moss? This will delete all your Moss related data.`,
       });
-      if (userDecision.response === 0) {
+      if (userDecision.response === 1) {
         // Close all windows
         if (MAIN_WINDOW) MAIN_WINDOW.close();
         if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();

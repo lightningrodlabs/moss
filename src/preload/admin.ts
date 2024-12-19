@@ -42,8 +42,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
+  factoryReset: () => ipcRenderer.invoke('factory-reset'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
     ipcRenderer.on('moss-update-progress', callback),
+  onRequestFactoryReset: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('request-factory-reset', callback),
   onAppletToParentMessage: (
     callback: (
       e: Electron.IpcRendererEvent,
