@@ -382,3 +382,12 @@ export type ToolVersionInfo = {
    */
   releasedAt: number;
 };
+
+export type PasswordType =
+  | {
+      type: 'user-provided';
+      password: string;
+    }
+  | {
+      type: 'random';
+    };

@@ -1,10 +1,4 @@
 import crypto from 'crypto';
-import yaml from 'js-yaml';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
-
-import { nanoid } from 'nanoid';
 import { partialModifiersFromInviteLink, globalPubKeyFromListAppsResponse } from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
 import { input } from '@inquirer/prompts';
@@ -17,7 +11,6 @@ import {
   getWeRustHandler,
 } from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
-import rustUtils from '@lightningrodlabs/we-rust-utils';
 
 export async function joinGroup(conductorId: string, inviteLink: string): Promise<AppInfo | null> {
   const wDockerFs = new WDockerFilesystem();

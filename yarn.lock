@@ -3204,6 +3204,22 @@
     "@holochain/client" "0.18.0-dev.13"
     "@theweave/api" "^0.2.1"
 
+"@theweave/moss-types@0.3.0-alpha.0":
+  version "0.3.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@theweave/moss-types/-/moss-types-0.3.0-alpha.0.tgz#b720625ff61efbe47feb1ad60f030586a19236ef"
+  integrity sha512-e9RFq125XnxZRtZStfHukNHNFHt7yW7j6aIu6rnQeGVjxLxjL4kd6CRX6MDabdTGquprhvG5lOGR71I3Ll3veg==
+  dependencies:
+    "@holochain/client" "0.18.0-rc.1"
+    "@sinclair/typebox" "0.33.12"
+    "@theweave/api" "0.4.0-alpha.0"
+
+"@theweave/moss-types@file:./shared/types":
+  version "0.3.0-alpha.1"
+  dependencies:
+    "@holochain/client" "0.18.0"
+    "@sinclair/typebox" "0.33.12"
+    "@theweave/api" "0.4.0-alpha.0"
+
 "@theweave/utils@0.3.0-alpha.0":
   version "0.3.0-alpha.0"
   resolved "https://registry.yarnpkg.com/@theweave/utils/-/utils-0.3.0-alpha.0.tgz#18a6db9882d510eaf94fdced79011ba2758af0be"

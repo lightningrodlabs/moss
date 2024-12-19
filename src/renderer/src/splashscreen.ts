@@ -2,19 +2,21 @@ import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { weStyles } from './shared-styles';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiClose, mdiCog } from '@mdi/js';
+import { mdiClose, mdiCog, mdiLockOpenOutline, mdiLockOpenVariantOutline } from '@mdi/js';
 import { SlDialog } from '@shoelace-style/shoelace';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { msg } from '@lit/localize';
+import { PasswordType } from '@theweave/moss-types';
 // import { ipcRenderer } from 'electron';
 
 enum SplashScreenMode {
   Loading,
-  SetupLair,
-  SetupLairConfirm,
+  Setup,
+  SetupPassword,
+  SetupPasswordConfirm,
   EnterPassword,
   Launching,
 }
@@ -32,6 +34,9 @@ export class SplashScreen extends LitElement {
 
   @state()
   password: string | undefined;
+
+  @state()
+  passwordConfirmed: string | undefined;
 
   @state()
   launchError: string | undefined;
@@ -56,16 +61,41 @@ export class SplashScreen extends LitElement {
       console.log('RECEIVED PROGRESS UPDATE: ', e, payload);
       this.progressState = payload;
     });
-    // const lairSetupRequired = await (window as any).electronAPI.lairSetupRequired();
-    // console.log('lairSetupRequired: ', lairSetupRequired);
-    // if (lairSetupRequired) {
-    //   this.view = SplashScreenMode.SetupLair;
-    // } else {
-    //   this.view = SplashScreenMode.EnterPassword;
-    // }
-    this.view = SplashScreenMode.Launching;
+    await this.chooseView();
+  }
+
+  async chooseView() {
+    const [lairSetupRequired, randomPwExists] = await (
+      window as any
+    ).electronAPI.lairSetupRequired();
     this.profile = await (window as any).electronAPI.getProfile();
     this.version = await (window as any).electronAPI.getVersion();
+    if (lairSetupRequired) {
+      this.view = SplashScreenMode.Setup;
+    } else if (!lairSetupRequired && !randomPwExists) {
+      this.view = SplashScreenMode.EnterPassword;
+    } else if (!lairSetupRequired && randomPwExists) {
+      this.view = SplashScreenMode.Launching;
+      await this.launch({ type: 'random' });
+    } else {
+      throw new Error('Invalid lair setup state.');
+    }
+  }
+
+  handleGoBack() {
+    switch (this.view) {
+      case SplashScreenMode.SetupPassword: {
+        this.view = SplashScreenMode.Setup;
+        this.password = undefined;
+        break;
+      }
+      case SplashScreenMode.SetupPasswordConfirm: {
+        this.view = SplashScreenMode.SetupPassword;
+        break;
+      }
+      default:
+        return;
+    }
   }
 
   async setupAndLaunch() {
@@ -76,18 +106,29 @@ export class SplashScreen extends LitElement {
     }
     this.view = SplashScreenMode.Launching;
     try {
-      await (window as any).electronAPI.launch(this.password);
+      await (window as any).electronAPI.launch({ type: 'user-provided', password: this.password });
     } catch (e) {
       console.error('Failed to launch: ', e);
       this.progressState = '';
-      this.view = SplashScreenMode.SetupLair;
+      this.view = SplashScreenMode.Setup;
     }
   }
 
-  async launch() {
+  async setupWithoutPassword() {
     this.view = SplashScreenMode.Launching;
     try {
-      await (window as any).electronAPI.launch(this.password);
+      await (window as any).electronAPI.launch({ type: 'random' });
+    } catch (e) {
+      console.error('Failed to launch: ', e);
+      this.progressState = '';
+      this.view = SplashScreenMode.Setup;
+    }
+  }
+
+  async launch(passwordType: PasswordType) {
+    this.view = SplashScreenMode.Launching;
+    try {
+      await (window as any).electronAPI.launch(passwordType);
     } catch (e: any) {
       console.error('Failed to launch: ', e);
       this.progressState = '';
@@ -106,7 +147,7 @@ export class SplashScreen extends LitElement {
           this.launchError = undefined;
         }, 6000);
       }
-      this.view = SplashScreenMode.EnterPassword;
+      await this.chooseView();
     }
   }
 
@@ -123,27 +164,91 @@ export class SplashScreen extends LitElement {
     return !this.password || this.password === '' || this.passwordsDontMatch;
   }
 
-  renderSetupLair() {
+  renderSetup() {
+    return html`
+      <div class="column items-center" style="font-size: 16px;">
+        <h1>Moss Setup</h1>
+        <div style="max-width: 700px; text-align: center; line-height: 1.5;">
+          ${msg('Choose whether you want to set up Moss with or without a password.')}
+        </div>
+        <div style="max-width: 500px; text-align: center; line-height: 1.5;">
+          ${msg('The password will be used to encrypt your data locally on your device.')}
+        </div>
+        <div
+          style="max-width: 500px; text-align: center; line-height: 1.5; font-weight: bold; margin-bottom: 20px;"
+        >
+          ${msg('A password cannot be added or removed later.')}
+        </div>
+        <button
+          @click=${() => {
+            this.view = SplashScreenMode.SetupPassword;
+          }}
+          tabindex="0"
+          style="margin-top: 10px; margin-bottom: 6px;"
+        >
+          <div class="row items-center" style="font-size: 20px;">
+            <sl-icon src="${wrapPathInSvg(mdiLockOpenOutline)}m" style="font-size: 24px;"></sl-icon>
+            <div style="margin-left: 3px;">${msg('Setup With Password')}</div>
+          </div>
+        </button>
+        <button
+          @click=${() => this.setupWithoutPassword()}
+          tabindex="0"
+          style="margin-top: 10px; margin-bottom: 30px;"
+        >
+          <div class="row items-center" style="font-size: 20px;">
+            <sl-icon
+              src="${wrapPathInSvg(mdiLockOpenVariantOutline)}m"
+              style="font-size: 24px;"
+            ></sl-icon>
+            <div style="margin-left: 3px;">${msg('Setup Without Password')}</div>
+          </div>
+        </button>
+      </div>
+    `;
+  }
+
+  renderSetupPassword() {
     return html`
       <div class="column center-content">
         <div class="row" style="align-items: center;">
-          <h1>Setup</h1>
+          <h1>Choose Password</h1>
         </div>
-        <div style="font-size: 17px; max-width: 500px; text-align: center;">
-          Choose a password to encrypt your data and private keys. You will always need this
-          password to start Moss.
+        <div class="warning" style="font-size: 17px; max-width: 500px; text-align: center;">
+          This password cannot be reset. Write it down or store it somewhere safe.
         </div>
-        <h3>Select Password:</h3>
+        <h3>Password:</h3>
         <input
           autofocus
           @input=${(_e: InputEvent) => {
-            this.checkPasswords();
             this.password = this.passwordInput!.value;
           }}
           id="password-input"
           type="password"
         />
-        <h3>Confirm Password:</h3>
+        <div class="row">
+          <button
+            @click=${() => {
+              this.view = SplashScreenMode.SetupPasswordConfirm;
+            }}
+            tabindex="0"
+            style="margin-top: 10px; margin-bottom: 30px;"
+            .disabled=${!this.passwordInput || this.passwordInput!.value.length === 0}
+          >
+            ${'Next'}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderSetupPasswordConfirm() {
+    return html`
+      <div class="column center-content">
+        <div class="row" style="align-items: center;">
+          <h1>Confirm Password</h1>
+        </div>
+        <h3>Password:</h3>
         <input
           @input=${(_e: InputEvent) => this.checkPasswords()}
           id="confirm-password-input"
@@ -182,14 +287,18 @@ export class SplashScreen extends LitElement {
           }}
           @keypress=${(e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-              this.launch();
+              if (this.password) this.launch({ type: 'user-provided', password: this.password });
             }
           }}
           id="password-input"
           type="password"
         />
         <button
-          @click=${() => this.launch()}
+          @click=${() => {
+            if (this.password) {
+              this.launch({ type: 'user-provided', password: this.password });
+            }
+          }}
           tabindex="0"
           style="margin-top: 30px; margin-bottom: 30px;"
           .disabled=${!this.password || this.password === ''}
@@ -204,8 +313,12 @@ export class SplashScreen extends LitElement {
     switch (this.view) {
       case SplashScreenMode.Loading:
         return html`loading`;
-      case SplashScreenMode.SetupLair:
-        return this.renderSetupLair();
+      case SplashScreenMode.Setup:
+        return this.renderSetup();
+      case SplashScreenMode.SetupPassword:
+        return this.renderSetupPassword();
+      case SplashScreenMode.SetupPasswordConfirm:
+        return this.renderSetupPasswordConfirm();
       case SplashScreenMode.EnterPassword:
         return this.renderEnterPassword();
       case SplashScreenMode.Launching:
@@ -266,13 +379,20 @@ export class SplashScreen extends LitElement {
         <span class="bottom-left"
           >v${this.version}${this.profile ? ` (profile: "${this.profile}")` : ''}</span
         >
-        <img
-          class="top-left"
-          src="icon.png"
-          style="height: 60px; margin-right: 15px;"
-          alt="Moss icon"
-          title="Moss"
-        />
+        ${this.view === SplashScreenMode.Setup ||
+        this.view === SplashScreenMode.Launching ||
+        this.view === SplashScreenMode.EnterPassword
+          ? html`<img
+              class="top-left"
+              src="icon.png"
+              style="height: 60px; margin-right: 15px;"
+              alt="Moss icon"
+              title="Moss"
+            />`
+          : html`<button class="top-left" @click=${() => this.handleGoBack()}>
+              < ${msg('Back')}
+            </button>`}
+
         <sl-icon-button
           .src=${wrapPathInSvg(mdiCog)}
           ?disabled=${this.view === SplashScreenMode.Launching}
@@ -410,6 +530,14 @@ export class SplashScreen extends LitElement {
           justify-content: center;
           align-items: center;
           height: 100vh;
+        }
+
+        .warning {
+          padding: 20px;
+          border-radius: 10px;
+          background: #ffcc00;
+          color: darkred;
+          font-weight: bold;
         }
       `,
     ];
