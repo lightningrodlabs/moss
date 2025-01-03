@@ -881,37 +881,37 @@ export class GroupHome extends LitElement {
           style="display: flex; flex: 1;"
         ></group-applets-settings>`,
       ],
-      [
-        'Custom Views',
-        html`
-          <div class="column center-content" style="flex: 1;">
-            <span class="placeholder" style="margin-top: 200px;"
-              >${msg(
-                'You can add custom views to this group, combining the relevant blocks from each applet.',
-              )}</span
-            >
-            <all-custom-views
-              style="margin-top: 8px; flex: 1;"
-              @edit-custom-view=${(e) => {
-                this.view = {
-                  view: 'edit-custom-view',
-                  customViewHash: e.detail.customViewHash,
-                };
-              }}
-            ></all-custom-views>
-            <div class="row" style="flex: 1">
-              <span style="flex: 1"></span>
-              <sl-button
-                variant="primary"
-                @click=${() => {
-                  this.view = { view: 'create-custom-view' };
-                }}
-                >${msg('Create Custom View')}</sl-button
-              >
-            </div>
-          </div>
-        `,
-      ],
+      // [
+      //   'Custom Views',
+      //   html`
+      //     <div class="column center-content" style="flex: 1;">
+      //       <span class="placeholder" style="margin-top: 200px;"
+      //         >${msg(
+      //           'You can add custom views to this group, combining the relevant blocks from each applet.',
+      //         )}</span
+      //       >
+      //       <all-custom-views
+      //         style="margin-top: 8px; flex: 1;"
+      //         @edit-custom-view=${(e) => {
+      //           this.view = {
+      //             view: 'edit-custom-view',
+      //             customViewHash: e.detail.customViewHash,
+      //           };
+      //         }}
+      //       ></all-custom-views>
+      //       <div class="row" style="flex: 1">
+      //         <span style="flex: 1"></span>
+      //         <sl-button
+      //           variant="primary"
+      //           @click=${() => {
+      //             this.view = { view: 'create-custom-view' };
+      //           }}
+      //           >${msg('Create Custom View')}</sl-button
+      //         >
+      //       </div>
+      //     </div>
+      //   `,
+      // ],
       [
         'Your Settings',
         html`
