@@ -1569,6 +1569,10 @@ if (!RUNNING_WITH_COMMAND) {
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
 
+          // Except in dev mode with a provided UI port, only .webhapp files are allowed, no pure .happ files
+          if (!uiPort && !RUN_OPTIONS.devInfo && (!webhappSha256 || !uiSha256))
+            throw new Error('Fetched resource is not a .webhapp file.');
+
           // Overwrite the ###DEVCONFIG### placeholders with the actual sha256 hashes
           // if it's a trusted Tool from the dev config
           if (isDevModeAndTrustedToolFromDevConfig) {

@@ -100,8 +100,10 @@ export class ToolLibraryWeb2 extends LitElement {
     if (!!this.mossStore.appletDevConfig) {
       toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
       const { tools, devCollective } = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
-      tools.forEach((tool) => (allTools[tool.toolCompatibilityId] = tool));
-      developerCollectives['###DEVCONFIG###'] = devCollective;
+      tools.forEach((tool) => {
+        allTools[tool.toolCompatibilityId] = tool;
+        developerCollectives[tool.toolListUrl] = devCollective;
+      });
     } else {
       toolCurationConfigs = PRODUCTION_TOOL_CURATION_CONFIGS;
       // TODO read curation URLs from localStorage here
