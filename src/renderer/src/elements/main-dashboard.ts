@@ -493,23 +493,43 @@ export class MainDashboard extends LitElement {
   }
 
   beforeUnloadListener = async (e) => {
+    console.log('GOT BEFOREUNLOAD EVENT: ', e);
+    // Wait first to check whether it's triggered by a will-navigate or will-frame-navigate
+    // event to an external location (https, mailto, ...) and this listener should therefore
+    // not be executed (https://github.com/electron/electron/issues/29921)
+    let shouldProceed = true;
+    await new Promise((resolve) => {
+      window.electronAPI.onWillNavigateExternal(() => {
+        shouldProceed = false;
+        window.electronAPI.removeWillNavigateListeners();
+        resolve(null);
+      });
+      setTimeout(() => {
+        resolve(null);
+      }, 500);
+    });
+
     e.preventDefault();
-    this.reloading = true;
-    console.log('onbeforeunload event');
-    // If it takes longer than 5 seconds to unload, offer to hard reload
-    this.slowReloadTimeout = window.setTimeout(() => {
-      this.slowLoading = true;
-    }, 4500);
-    await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
-    console.log('on-before-unload callbacks finished.');
-    window.removeEventListener('beforeunload', this.beforeUnloadListener);
-    // The logic to set this variable lives in index.html
-    window.location.reload();
-    if ((window as any).__WINDOW_CLOSING__) {
-      console.log('__WINDOW_CLOSING__ is true.');
-      window.electronAPI.closeMainWindow();
-    } else {
+
+    if (shouldProceed) {
+      e.preventDefault();
+      this.reloading = true;
+      console.log('onbeforeunload event');
+      // If it takes longer than 5 seconds to unload, offer to hard reload
+      this.slowReloadTimeout = window.setTimeout(() => {
+        this.slowLoading = true;
+      }, 4500);
+      await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+      console.log('on-before-unload callbacks finished.');
+      window.removeEventListener('beforeunload', this.beforeUnloadListener);
+      // The logic to set this variable lives in index.html
       window.location.reload();
+      if ((window as any).__WINDOW_CLOSING__) {
+        console.log('__WINDOW_CLOSING__ is true');
+        window.electronAPI.closeMainWindow();
+      } else {
+        window.location.reload();
+      }
     }
   };
 

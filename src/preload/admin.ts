@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('switch-to-applet', callback),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
+  onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('will-navigate-external', callback),
+  removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
   onZomeCallSigned: (
     callback: (
       e: Electron.IpcRendererEvent,
