@@ -32,7 +32,6 @@ import * as childProcess from 'child_process';
 import split from 'split';
 import { AgentProfile, AppletConfig, GroupConfig, WebHappLocation } from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import * as yaml from 'js-yaml';
 import { HC_BINARY } from '../binaries';
 import {
   appIdFromAppletHash,
@@ -501,33 +500,25 @@ async function installGroup(
   const appId = `group#${hashedSeed}#${progenitor ? encodeHashToBase64(agentPubKey) : null}`;
 
   const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
-  const dnaPropertiesMap = progenitor
-    ? {
-        group: yaml.dump({ progenitor: encodeHashToBase64(progenitor) }),
-      }
-    : {
-        group: yaml.dump({
-          progenitor: null,
-        }),
-      };
 
-  console.log('Dna properties map: ', dnaPropertiesMap);
-  const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
-    groupHappPath,
-    dnaPropertiesMap,
-  );
-
-  const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
-
-  fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
+  const properties = progenitor
+    ? { progenitor: encodeHashToBase64(progenitor) }
+    : { progenitor: null };
 
   const appInfo = await holochainManager.adminWebsocket.installApp({
-    path: modifiedHappPath,
+    path: groupHappPath,
     installed_app_id: appId,
     agent_key: agentPubKey,
     network_seed: networkSeed,
+    roles_settings: {
+      group: {
+        type: 'Provisioned',
+        modifiers: {
+          properties,
+        },
+      },
+    },
   });
-  fs.rmSync(modifiedHappPath);
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
   return appInfo;
 }

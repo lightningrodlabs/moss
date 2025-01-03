@@ -80,7 +80,6 @@ import {
 } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
-import * as yaml from 'js-yaml';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
@@ -1224,26 +1223,21 @@ if (!RUNNING_WITH_COMMAND) {
         console.log('got progenitor: ', progenitor);
         console.log('got networkSeed: ', networkSeed);
         const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
-        const dnaPropertiesMap = {
-          group: yaml.dump({ progenitor }),
-        };
 
-        console.log('Dna properties map: ', dnaPropertiesMap);
-        const modifiedHappBytes = await rustUtils.happBytesWithCustomProperties(
-          groupHappPath,
-          dnaPropertiesMap,
-        );
-
-        const modifiedHappPath = path.join(os.tmpdir(), `group-happ-${nanoid(8)}.happ`);
-
-        fs.writeFileSync(modifiedHappPath, new Uint8Array(modifiedHappBytes));
         const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          path: modifiedHappPath,
+          path: groupHappPath,
           installed_app_id: appId,
           agent_key: agentPubKey,
           network_seed: networkSeed,
+          roles_settings: {
+            group: {
+              type: 'Provisioned',
+              modifiers: {
+                properties: { progenitor },
+              },
+            },
+          },
         });
-        fs.rmSync(modifiedHappPath);
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
         return appInfo;
       },
