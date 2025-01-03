@@ -412,10 +412,8 @@ export class WelcomeView extends LitElement {
 
       .feedback {
         color: #002a00;
-        /* border: 2px solid #fff78e; */
         padding: 20px;
         border-radius: 20px;
-        /* background: #fff78e1f; */
         line-height: 1.2;
       }
 

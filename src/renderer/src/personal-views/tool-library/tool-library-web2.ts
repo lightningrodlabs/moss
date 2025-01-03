@@ -18,7 +18,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
-import { mdiChevronLeft, mdiEmailOutline, mdiTools, mdiWeb } from '@mdi/js';
+import { mdiChevronLeft, mdiEmailOutline, mdiPublish, mdiTools, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
@@ -33,6 +33,7 @@ import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
+import { SlDialog } from '@shoelace-style/shoelace';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -72,6 +73,9 @@ export class ToolLibraryWeb2 extends LitElement {
 
   @query('#select-group-dialog')
   _selectGroupDialog!: SelectGroupDialog;
+
+  @query('#publish-dialog')
+  _publishDialog!: SlDialog;
 
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
@@ -329,6 +333,32 @@ export class ToolLibraryWeb2 extends LitElement {
     }
   }
 
+  renderPublishDialog() {
+    return html` <sl-dialog id="publish-dialog" style="--width: 900px;" no-header>
+      <div class="publish-dialog">
+        <div
+          class="row"
+          style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
+        >
+          <span style="margin-left: 5px;">Publish Tool</span>
+        </div>
+        <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
+          To publish a Moss Tool it needs to be added to a Tool list hosted at a web2 URL. There is
+          currently no detailed documentation about this process. You can check out the Tool list
+          repository of Lightningrod Labs
+          <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>. <br /><br />
+          If you would like to publish a Tool, please contact us at
+          <a href="mailto:moss.0.13.feedback@theweave.social">moss.0.13.feedback@theweave.social</a>
+          or
+          <a href="https://github.com/lightningrodlabs/moss/issues/new"
+            >create an issue on Github</a
+          >
+          so that we can assist you in setting up your own tool list.<br /><br />
+        </div>
+      </div>
+    </sl-dialog>`;
+  }
+
   renderContent() {
     switch (this.view) {
       case ToolLibraryView.Main:
@@ -348,6 +378,7 @@ export class ToolLibraryWeb2 extends LitElement {
           setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
         }}
       ></select-group-dialog>
+      ${this.renderPublishDialog()}
       ${this._selectedGroupDnaHash
         ? html`
             <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
@@ -399,6 +430,15 @@ export class ToolLibraryWeb2 extends LitElement {
             <sl-icon .src=${wrapPathInSvg(mdiTools)}></sl-icon>
             <span style="flex: 1; margin-left: 10px;">${msg('Tool Library')}</span>
           </div>
+          <sl-button
+            style="position: absolute; right: 20px;"
+            @click=${() => this._publishDialog.show()}
+          >
+            <div class="row items-center">
+              <sl-icon .src=${wrapPathInSvg(mdiPublish)} style="font-size: 20px;"></sl-icon>
+              <span style="margin-left: 5px;">${msg('Publish')}</span>
+            </div>
+          </sl-button>
         </div>
         <div class="column flex-scrollable-parent">
           <div class="flex-scrollable-container">
@@ -495,6 +535,12 @@ export class ToolLibraryWeb2 extends LitElement {
 
       .btn:active {
         background: var(--sl-color-primary-600);
+      }
+
+      .publish-dialog {
+        padding: 20px;
+        border-radius: 20px;
+        line-height: 1.2;
       }
     `,
     weStyles,

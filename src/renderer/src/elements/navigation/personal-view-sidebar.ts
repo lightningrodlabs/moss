@@ -20,7 +20,7 @@ import { weStyles } from '../../shared-styles.js';
 import { AppletId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiHome, mdiStoreSearch, mdiUpload } from '@mdi/js';
+import { mdiHome, mdiStoreSearch } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
@@ -174,32 +174,6 @@ export class PersonalViewSidebar extends LitElement {
             .src=${wrapPathInSvg(mdiStoreSearch)}
             style="font-size: 40px; margin-left: 3px; margin-top: 3px;"
           ></sl-icon>
-        </div>
-      </topbar-button>
-
-      <topbar-button
-        .invertColors=${true}
-        style="margin-left: -4px; position: relative;"
-        .selected=${this.selectedView &&
-        this.selectedView.type === 'moss' &&
-        this.selectedView.name === 'publisher-panel'}
-        .tooltipText=${'Publish Tool'}
-        placement="bottom"
-        @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('personal-view-selected', {
-              detail: {
-                type: 'moss',
-                name: 'publisher-panel',
-              },
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
-      >
-        <div class="moss-item-button">
-          <sl-icon .src=${wrapPathInSvg(mdiUpload)} style="font-size: 40px;"></sl-icon>
         </div>
       </topbar-button>
     `;

@@ -177,7 +177,7 @@ export class SplashScreen extends LitElement {
         <div
           style="max-width: 500px; text-align: center; line-height: 1.5; font-weight: bold; margin-bottom: 20px;"
         >
-          ${msg('A password cannot be added or removed later.')}
+          ${msg('A password cannot be added, changed or removed later.')}
         </div>
         <button
           @click=${() => {

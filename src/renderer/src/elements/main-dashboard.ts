@@ -47,7 +47,6 @@ import './dialogs/join-group-dialog.js';
 import '../layout/views/applet-main.js';
 import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
-import '../personal-views/tool-publishing/publishing-view.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
@@ -882,14 +881,6 @@ export class MainDashboard extends LitElement {
           });
         }}
       ></tool-library-web2>
-
-      <publishing-view
-        style="${this.displayMossView('publisher-panel')
-          ? 'display: flex; flex: 1;'
-          : 'display: none;'}${this._drawerResizing
-          ? 'pointer-events: none; user-select: none;'
-          : ''} overflow-x: auto;"
-      ></publishing-view>
     `;
   }
 
