@@ -1089,6 +1089,19 @@ export class MossStore {
     }),
   );
 
+  appletToolVersion = new LazyHoloHashMap((appletHash: AppletHash) =>
+    pipe(this.allAppAssetInfos, (assetInfos) => {
+      const assetInfoAndAppId = Object.entries(assetInfos).find(
+        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
+      );
+      if (!assetInfoAndAppId) return undefined;
+      const distributionInfo = assetInfoAndAppId[1][0].distributionInfo;
+      return distributionInfo.type === 'web2-tool-list'
+        ? distributionInfo.info.toolVersion
+        : undefined;
+    }),
+  );
+
   async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
     const appId = appIdFromAppletHash(appletHash);

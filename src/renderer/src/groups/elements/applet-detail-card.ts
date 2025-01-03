@@ -77,6 +77,12 @@ export class AppletDetailCard extends LitElement {
     () => [this.groupStore],
   );
 
+  _toolVersion = new StoreSubscriber(
+    this,
+    () => this.mossStore.appletToolVersion.get(this.appletHash),
+    () => [this.mossStore, this.appletHash],
+  );
+
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
 
@@ -210,6 +216,21 @@ export class AppletDetailCard extends LitElement {
     await this.groupStore.groupClient.setGroupAppletsMetaData(permissionHash, groupAppletsMetaData);
     notify(message);
     await this.groupStore.groupAppletsMetaData.reload();
+  }
+
+  toolVersion() {
+    switch (this._toolVersion.value.status) {
+      case 'error':
+        console.error(
+          'Failed to get members that joined the applet: ',
+          this._toolVersion.value.error,
+        );
+        return 'unknown';
+      case 'pending':
+        return 'unknown';
+      case 'complete':
+        return this._toolVersion.value.value;
+    }
   }
 
   renderJoinedMembers() {
@@ -365,9 +386,11 @@ export class AppletDetailCard extends LitElement {
         <div class="column" style="flex: 1;">
           <div class="row" style="flex: 1; align-items: center">
             <applet-logo .appletHash=${this.appletHash} style="margin-right: 16px"></applet-logo>
-            <span style="flex: 1; font-size: 23px; font-weight: 600;"
-              >${this.applet.custom_name}</span
+            <span style="font-size: 23px; font-weight: 600;">${this.applet.custom_name}</span>
+            <span style="font-size: 20px; opacity: 0.7; margin-left: 10px; margin-bottom: -2px;"
+              >${this.toolVersion()}</span
             >
+            <span style="flex: 1;"></span>
             <span style="margin-right: 5px; font-weight;">
               ${this.appInfo && isAppRunning(this.appInfo) ? msg('enabled') : msg('disabled')}
             </span>

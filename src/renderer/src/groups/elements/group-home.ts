@@ -244,7 +244,7 @@ export class GroupHome extends LitElement {
   async uninstallApplet(e: CustomEvent) {
     const confirmation = await dialogMessagebox({
       message:
-        'WARNING: Uninstalling a Tool instance is permanent. You will not be able to re-join the same Applet instance at a later point and all your local data associated to that Applet instance will be deleted. Other group members can keep using the Applet instance normally.',
+        'WARNING: Uninstalling a Tool instance is permanent. You will not be able to re-join the same Tool instance at a later point and all your local data associated to that Tool instance will be deleted. Other group members can keep using the Tool instance normally.',
       type: 'warning',
       buttons: ['Cancel', 'Continue'],
     });
