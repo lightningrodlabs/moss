@@ -346,7 +346,7 @@ const weaveApi: WeaveServices = {
   window.addEventListener('message', async (m: MessageEvent<any>) => {
     try {
       const result = await handleEventMessage(m.data);
-      // Only send result succcess if truthy, indicating that the message was
+      // Only send result success if truthy, indicating that the message was
       // actually handled, otherwise the `handleMessage` message handler further
       // below will be ignored
       if (result) m.ports[0].postMessage({ type: 'success', result });

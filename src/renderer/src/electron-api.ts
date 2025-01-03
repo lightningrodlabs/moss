@@ -55,6 +55,8 @@ declare global {
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => void;
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
+      onWillNavigateExternal: (callback: (e: any) => any) => void;
+      removeWillNavigateListeners: () => void;
       onZomeCallSigned: (
         callback: (
           e: any,

@@ -46,8 +46,9 @@ export class ExampleApplet extends LitElement {
 
   firstUpdated() {
     this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
-      console.log('Unloading in 10 seconds');
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      // Uncomment below to test that unloading after force reload timeout works
+      // console.log('Unloading in 10 seconds');
+      // await new Promise((resolve) => setTimeout(resolve, 10000));
       console.log('Unloading now.');
     });
     // To test whether applet iframe properly gets removed after disabling applet.

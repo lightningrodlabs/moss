@@ -21,6 +21,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       forApplets: AppletId[],
     ) => any,
   ) => ipcRenderer.on('parent-to-applet-message', callback),
+  onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('will-navigate-external', callback),
+  removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   setMyIcon: (icon: string) => ipcRenderer.invoke('set-my-icon', icon),
   setMyTitle: (title: string) => ipcRenderer.invoke('set-my-title', title),

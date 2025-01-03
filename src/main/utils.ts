@@ -37,6 +37,9 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
+      // This event is emitted to allow the window to prevent the
+      // beforeunload event to execute
+      emitToWindow(browserWindow, 'will-navigate-external', null);
       shell.openExternal(e.url);
     }
   });
@@ -58,6 +61,9 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
+      // This event is emitted to allow the window to prevent the
+      // beforeunload event to execute
+      emitToWindow(browserWindow, 'will-navigate-external', null);
       shell.openExternal(e.url);
     }
   });
