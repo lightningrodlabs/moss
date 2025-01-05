@@ -69,25 +69,6 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[bindAsset](./api.appletservices.bindasset.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(appletClient: AppClient, srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->, dstRecordInfo?: [RecordInfo](./api.recordinfo.md)<!-- -->) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-Bind an asset (srcWal) to an asset in your applet (dstWal).
-
-
-</td></tr>
-<tr><td>
-
 [blockTypes](./api.appletservices.blocktypes.md)
 
 

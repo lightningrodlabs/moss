@@ -61,7 +61,7 @@ Description
 
 </td><td>
 
-() =&gt; Promise&lt;Uint8Array\[\]&gt;
+() =&gt; Promise&lt;import("@holochain/client").HoloHash\[\]&gt;
 
 
 </td><td>
@@ -70,7 +70,7 @@ Description
 </td></tr>
 <tr><td>
 
-[assetInfo](./api.weaveclient.assetinfo.md)
+[assets](./api.weaveclient.assets.md)
 
 
 </td><td>
@@ -78,7 +78,7 @@ Description
 
 </td><td>
 
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;[AssetLocationAndInfo](./api.assetlocationandinfo.md) \| undefined&gt;
+{ dragAsset: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;; assetInfo: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;[AssetLocationAndInfo](./api.assetlocationandinfo.md) \| undefined&gt;; assetToPocket: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;; userSelectAsset: () =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;; addTagsToAsset: (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;; removeTagsFromAsset: (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;; addAssetRelation: (srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->, tags?: string\[\]) =&gt; Promise&lt;void&gt;; removeAssetRelation: (relationHash: EntryHash) =&gt; Promise&lt;void&gt;; addTagsToAssetRelation: (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;; removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;; assetStore: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; [AssetStore](./api.assetstore.md)<!-- -->; }
 
 
 </td><td>
@@ -87,7 +87,7 @@ Description
 </td></tr>
 <tr><td>
 
-[dragWal](./api.weaveclient.dragwal.md)
+[createCloneCell](./api.weaveclient.createclonecell.md)
 
 
 </td><td>
@@ -95,7 +95,41 @@ Description
 
 </td><td>
 
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
+(req: CreateCloneCellRequest, publicToGroupMembers: boolean) =&gt; Promise&lt;import("@holochain/client").ClonedCell&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[disableCloneCell](./api.weaveclient.disableclonecell.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(req: DisableCloneCellRequest) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[enableCloneCell](./api.weaveclient.enableclonecell.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(req: EnableCloneCellRequest) =&gt; Promise&lt;import("@holochain/client").ClonedCell&gt;
 
 
 </td><td>
@@ -206,6 +240,23 @@ Description
 </td></tr>
 <tr><td>
 
+[onRemoteSignal](./api.weaveclient.onremotesignal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (payload: Uint8Array) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [openAppletBlock](./api.weaveclient.openappletblock.md)
 
 
@@ -240,7 +291,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openCrossAppletBlock](./api.weaveclient.opencrossappletblock.md)
+[openAsset](./api.weaveclient.openasset.md)
 
 
 </td><td>
@@ -248,24 +299,7 @@ Description
 
 </td><td>
 
-(appletBundleId: ActionHash, block: string, context: any) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[openCrossAppletMain](./api.weaveclient.opencrossappletmain.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(appletBundleId: ActionHash) =&gt; Promise&lt;void&gt;
+(wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenAssetMode](./api.openassetmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
@@ -274,7 +308,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openWal](./api.weaveclient.openwal.md)
+[openCrossGroupBlock](./api.weaveclient.opencrossgroupblock.md)
 
 
 </td><td>
@@ -282,7 +316,24 @@ Description
 
 </td><td>
 
-(wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenWalMode](./api.openwalmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
+(appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[openCrossGroupMain](./api.weaveclient.opencrossgroupmain.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(appletBundleId: string) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
@@ -310,23 +361,6 @@ Description
 </td></tr>
 <tr><td>
 
-[requestBind](./api.weaveclient.requestbind.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
 [requestClose](./api.weaveclient.requestclose.md)
 
 
@@ -344,6 +378,23 @@ Description
 </td></tr>
 <tr><td>
 
+[sendRemoteSignal](./api.weaveclient.sendremotesignal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(payload: Uint8Array) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [userSelectScreen](./api.weaveclient.userselectscreen.md)
 
 
@@ -353,40 +404,6 @@ Description
 </td><td>
 
 () =&gt; Promise&lt;string&gt;
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[userSelectWal](./api.weaveclient.userselectwal.md)
-
-
-</td><td>
-
-
-</td><td>
-
-() =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[walToPocket](./api.weaveclient.waltopocket.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
 
 </td><td>

@@ -43,7 +43,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openCrossAppletBlock(appletBundleId, block, context)](./api.openviews.opencrossappletblock.md)
+[openCrossGroupBlock(appletBundleId, block, context)](./api.openviews.opencrossgroupblock.md)
 
 
 </td><td>
@@ -52,7 +52,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openCrossAppletMain(appletBundleId)](./api.openviews.opencrossappletmain.md)
+[openCrossGroupMain(appletBundleId)](./api.openviews.opencrossgroupmain.md)
 
 
 </td><td>

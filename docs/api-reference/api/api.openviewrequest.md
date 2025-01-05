@@ -11,23 +11,23 @@ export type OpenViewRequest = {
     type: 'applet-main';
     appletHash: EntryHash;
 } | {
-    type: 'cross-applet-main';
-    appletBundleId: ActionHash;
+    type: 'cross-group-main';
+    appletBundleId: string;
 } | {
     type: 'applet-block';
     appletHash: EntryHash;
     block: string;
     context: any;
 } | {
-    type: 'cross-applet-block';
-    appletBundleId: ActionHash;
+    type: 'cross-group-block';
+    appletBundleId: string;
     block: string;
     context: any;
 } | {
-    type: 'wal';
+    type: 'asset';
     wal: WAL;
-    mode?: OpenWalMode;
+    mode?: OpenAssetMode;
 };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [OpenWalMode](./api.openwalmode.md)
+**References:** [WAL](./api.wal.md)<!-- -->, [OpenAssetMode](./api.openassetmode.md)
 

@@ -8,7 +8,7 @@
 
 ```typescript
 export type AppletInfo = {
-    appletBundleId: ActionHash;
+    appletBundleId: string;
     appletName: string;
     appletIcon: string;
     groupsHashes: Array<DnaHash>;

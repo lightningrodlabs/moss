@@ -21,7 +21,7 @@ export type AppletView = {
     type: 'creatable';
     name: CreatableName;
     resolve: (wal: WAL) => Promise<void>;
-    reject: (reason: any) => Promise<void>;
+    reject: (error: any) => Promise<void>;
     cancel: () => Promise<void>;
 };
 ```

@@ -14,7 +14,7 @@ export type CreatableResult = {
     type: 'cancel';
 } | {
     type: 'error';
-    reason: any;
+    error: any;
 };
 ```
 **References:** [WAL](./api.wal.md)

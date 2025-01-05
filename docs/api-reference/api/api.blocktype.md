@@ -10,6 +10,6 @@
 export type BlockType = {
     label: string;
     icon_src: string;
-    view: 'applet-view' | 'cross-applet-view';
+    view: 'applet-view' | 'cross-group-view';
 };
 ```

@@ -14,11 +14,6 @@ export type ParentToAppletMessage = {
 } | {
     type: 'get-block-types';
 } | {
-    type: 'bind-asset';
-    srcWal: WAL;
-    dstWal: WAL;
-    dstRecordInfo?: RecordInfo;
-} | {
     type: 'search';
     filter: string;
 } | {
@@ -26,7 +21,14 @@ export type ParentToAppletMessage = {
     payload: PeerStatusUpdate;
 } | {
     type: 'on-before-unload';
+} | {
+    type: 'asset-store-update';
+    walStringified: string;
+    value: AsyncStatus<AssetStoreContent>;
+} | {
+    type: 'remote-signal-received';
+    payload: Uint8Array;
 };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)
+**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->, [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)
 

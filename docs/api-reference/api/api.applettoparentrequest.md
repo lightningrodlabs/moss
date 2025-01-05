@@ -11,10 +11,15 @@ export type AppletToParentRequest = {
     type: 'ready';
 } | {
     type: 'get-iframe-config';
-    crossApplet: boolean;
+    crossGroup: boolean;
 } | {
     type: 'get-record-info';
     hrl: Hrl;
+} | {
+    type: 'link-mouseover';
+    href: string;
+} | {
+    type: 'link-mouseout';
 } | {
     type: 'sign-zome-call';
     request: CallZomeRequest;
@@ -34,24 +39,9 @@ export type AppletToParentRequest = {
     type: 'get-group-profile';
     groupHash: DnaHash;
 } | {
-    type: 'get-global-asset-info';
-    wal: WAL;
-} | {
-    type: 'wal-to-pocket';
-    wal: WAL;
-} | {
-    type: 'drag-wal';
-    wal: WAL;
-} | {
-    type: 'request-bind';
-    srcWal: WAL;
-    dstWal: WAL;
-} | {
     type: 'my-group-permission-type';
 } | {
     type: 'applet-participants';
-} | {
-    type: 'user-select-wal';
 } | {
     type: 'user-select-screen';
 } | {
@@ -78,7 +68,65 @@ export type AppletToParentRequest = {
     type: 'get-applet-iframe-script';
 } | {
     type: 'request-close';
+} | {
+    type: 'send-remote-signal';
+    payload: Uint8Array;
+} | {
+    type: 'create-clone-cell';
+    req: CreateCloneCellRequest;
+    publicToGroupMembers: boolean;
+} | {
+    type: 'disable-clone-cell';
+    req: DisableCloneCellRequest;
+} | {
+    type: 'enable-clone-cell';
+    req: EnableCloneCellRequest;
+}
+/**
+ * Asset related requests
+ */
+ | {
+    type: 'asset-to-pocket';
+    wal: WAL;
+} | {
+    type: 'user-select-asset';
+} | {
+    type: 'get-global-asset-info';
+    wal: WAL;
+} | {
+    type: 'drag-asset';
+    wal: WAL;
+} | {
+    type: 'add-tags-to-asset';
+    wal: WAL;
+    tags: string[];
+} | {
+    type: 'remove-tags-from-asset';
+    wal: WAL;
+    tags: string[];
+} | {
+    type: 'add-asset-relation';
+    srcWal: WAL;
+    dstWal: WAL;
+    tags?: string[];
+} | {
+    type: 'remove-asset-relation';
+    relationHash: EntryHash;
+} | {
+    type: 'add-tags-to-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+} | {
+    type: 'remove-tags-from-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+} | {
+    type: 'subscribe-to-asset-store';
+    wal: WAL;
+} | {
+    type: 'unsubscribe-from-asset-store';
+    wal: WAL;
 };
 ```
-**References:** [Hrl](./api.hrl.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [WAL](./api.wal.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)
+**References:** [Hrl](./api.hrl.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)
 

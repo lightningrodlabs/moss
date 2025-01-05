@@ -11,9 +11,9 @@ export type RenderView = {
     type: 'applet-view';
     view: AppletView;
 } | {
-    type: 'cross-applet-view';
-    view: CrossAppletView;
+    type: 'cross-group-view';
+    view: CrossGroupView;
 };
 ```
-**References:** [AppletView](./api.appletview.md)<!-- -->, [CrossAppletView](./api.crossappletview.md)
+**References:** [AppletView](./api.appletview.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)
 

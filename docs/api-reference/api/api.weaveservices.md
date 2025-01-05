@@ -73,7 +73,7 @@ Gets all the agents that joined the Tool instance of the Tool calling this funct
 </td></tr>
 <tr><td>
 
-[assetInfo](./api.weaveservices.assetinfo.md)
+[assets](./api.weaveservices.assets.md)
 
 
 </td><td>
@@ -81,18 +81,16 @@ Gets all the agents that joined the Tool instance of the Tool calling this funct
 
 </td><td>
 
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;[AssetLocationAndInfo](./api.assetlocationandinfo.md) \| undefined&gt;
+[AssetServices](./api.assetservices.md)
 
 
 </td><td>
-
-Gets information about an entry in any other Applet in We
 
 
 </td></tr>
 <tr><td>
 
-[dragWal](./api.weaveservices.dragwal.md)
+[createCloneCell](./api.weaveservices.createclonecell.md)
 
 
 </td><td>
@@ -100,12 +98,46 @@ Gets information about an entry in any other Applet in We
 
 </td><td>
 
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
+(req: CreateCloneCellRequest, publicToGroupMembers: boolean) =&gt; Promise&lt;CreateCloneCellResponse&gt;
 
 
 </td><td>
 
-Request to drop a WAL into the pocket
+Create a cloned cell and optionally have it be registered in the group DNA for other group members or always-online nodes to be able to automatically join it too.
+
+
+</td></tr>
+<tr><td>
+
+[disableCloneCell](./api.weaveservices.disableclonecell.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(req: DisableCloneCellRequest) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[enableCloneCell](./api.weaveservices.enableclonecell.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(req: EnableCloneCellRequest) =&gt; Promise&lt;CreateCloneCellResponse&gt;
+
+
+</td><td>
 
 
 </td></tr>
@@ -225,6 +257,25 @@ Event handler for peer status updates.
 </td></tr>
 <tr><td>
 
+[onRemoteSignal](./api.weaveservices.onremotesignal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (payload: Uint8Array) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+Event listener allowing to register a callback that will get executed if a remote signal that had been sent with `WeaveClient.sendRemoteSignal()` arrives.
+
+
+</td></tr>
+<tr><td>
+
 [openAppletBlock](./api.weaveservices.openappletblock.md)
 
 
@@ -263,7 +314,7 @@ Open the main view of the specified Applet
 </td></tr>
 <tr><td>
 
-[openCrossAppletBlock](./api.weaveservices.opencrossappletblock.md)
+[openAsset](./api.weaveservices.openasset.md)
 
 
 </td><td>
@@ -271,7 +322,26 @@ Open the main view of the specified Applet
 
 </td><td>
 
-(appletBundleId: ActionHash, block: string, context: any) =&gt; Promise&lt;void&gt;
+(wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenAssetMode](./api.openassetmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+Open the asset associated to the specified WAL
+
+
+</td></tr>
+<tr><td>
+
+[openCrossGroupBlock](./api.weaveservices.opencrossgroupblock.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
@@ -282,7 +352,7 @@ Open the specified block view of the specified Applet Type
 </td></tr>
 <tr><td>
 
-[openCrossAppletMain](./api.weaveservices.opencrossappletmain.md)
+[openCrossGroupMain](./api.weaveservices.opencrossgroupmain.md)
 
 
 </td><td>
@@ -290,50 +360,12 @@ Open the specified block view of the specified Applet Type
 
 </td><td>
 
-(appletBundleId: ActionHash) =&gt; Promise&lt;void&gt;
+(appletBundleId: string) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
 
 Open the cross-applet main view of the specified Applet Type.
-
-
-</td></tr>
-<tr><td>
-
-[openWal](./api.weaveservices.openwal.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenWalMode](./api.openwalmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-Open the specified WAL
-
-
-</td></tr>
-<tr><td>
-
-[requestBind](./api.weaveservices.requestbind.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-Request the applet holding the destination WAL (dstWal) to bind the source WAL (srcWal) to it. The source WAL must belong to the requesting applet.
 
 
 </td></tr>
@@ -358,6 +390,25 @@ Requests to close the containing window. Will only work if the applet is being r
 </td></tr>
 <tr><td>
 
+[sendRemoteSignal](./api.weaveservices.sendremotesignal.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(payload: Uint8Array) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+Allows to send small sized "fire-and-forget" signals to all group participants that are currently online.
+
+
+</td></tr>
+<tr><td>
+
 [userSelectScreen](./api.weaveservices.userselectscreen.md)
 
 
@@ -372,44 +423,6 @@ Requests to close the containing window. Will only work if the applet is being r
 </td><td>
 
 Let's the user select a Screen or Window and returns the selected id. Useful for screen sharing applications.
-
-
-</td></tr>
-<tr><td>
-
-[userSelectWal](./api.weaveservices.userselectwal.md)
-
-
-</td><td>
-
-
-</td><td>
-
-() =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
-
-
-</td><td>
-
-Prompts the user with the search bar and We clipboard to select a WAL. Returns a WAL as soon as the user has selected a WAL or undefined if the user cancels the selection process.
-
-
-</td></tr>
-<tr><td>
-
-[walToPocket](./api.weaveservices.waltopocket.md)
-
-
-</td><td>
-
-
-</td><td>
-
-(wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
-
-
-</td><td>
-
-Adds the specified HRL to the We-internal clipboard
 
 
 </td></tr>

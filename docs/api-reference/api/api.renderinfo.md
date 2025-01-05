@@ -16,10 +16,10 @@ export type RenderInfo = {
     appletHash: AppletHash;
     groupProfiles: GroupProfile[];
 } | {
-    type: 'cross-applet-view';
-    view: CrossAppletView;
+    type: 'cross-group-view';
+    view: CrossGroupView;
     applets: ReadonlyMap<EntryHash, AppletClients>;
 };
 ```
-**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [CrossAppletView](./api.crossappletview.md)<!-- -->, [AppletClients](./api.appletclients.md)
+**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)<!-- -->, [AppletClients](./api.appletclients.md)
 
