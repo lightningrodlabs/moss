@@ -11,10 +11,18 @@ import {
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
-import { type Writable, writable, get, type Readable, readable } from '@holochain-open-dev/stores';
+import {
+  type Writable,
+  writable,
+  get,
+  type Readable,
+  readable,
+  toPromise,
+} from '@holochain-open-dev/stores';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
+import { FrameNotification } from '@theweave/api';
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {
@@ -133,19 +141,23 @@ export class FoyerStore {
 
     stream.addMessage(message);
     if (message.payload.type == 'Msg') {
-      //   if (isWeaveContext()) {
-      //     this.weaveClient.notifyFrame([
-      //       {
-      //         title: `message from ${encodeHashToBase64(message.from)}`,
-      //         body: message.payload.text,
-      //         notification_type: 'message',
-      //         icon_src: undefined,
-      //         urgency: 'high',
-      //         timestamp: message.payload.created,
-      //       },
-      //     ]);
-      //   }
-      if (encodeHashToBase64(message.from) != this.myPubKeyB64) {
+      const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+      let b64From = encodeHashToBase64(message.from);
+      if (!mainWindowFocused) {
+        const profile = await toPromise(this.profilesStore.profiles.get(message.from));
+        const notification: FrameNotification = {
+          title: `from ${profile ? profile.entry.nickname : b64From}`,
+          body: message.payload.text,
+          notification_type: 'message',
+          icon_src: undefined,
+          urgency: 'high',
+          fromAgent: message.from,
+          timestamp: message.payload.created,
+        };
+        await window.electronAPI.notification(notification, true, true, undefined, 'foyer message');
+      }
+
+      if (b64From != this.myPubKeyB64) {
         await this.client.sendMessage(streamId, { type: 'Ack', created: message.payload.created }, [
           message.from,
         ]);
