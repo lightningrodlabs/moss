@@ -74,7 +74,7 @@
     "@holochain-open-dev/stores": "0.400.0",
     "@holochain-open-dev/utils": "0.400.0",
     "@holochain/client": "^0.18.0",
-    "@theweave/api": "0.4.0-alpha.1",
+    "@theweave/api": "0.4.0-alpha.2",
     "@theweave/moss-types": "0.3.0-alpha.2",
     "@theweave/utils": "0.3.0-alpha.2",
     "@lightningrodlabs/we-rust-utils": "0.400.0-rc.1",

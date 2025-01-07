@@ -126,7 +126,7 @@ export class PostDetail extends LitElement {
     return html`ae
       <div class="column">
         ${repeat(
-          this.assetStoreContent.value.linkedTo,
+          this.assetStoreContent.value.linkedFrom,
           (walAndTags) => stringifyWal(walAndTags.wal),
           (walAndTags) =>
             html`<asset-element

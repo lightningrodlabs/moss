@@ -172,6 +172,7 @@ export class WalWindow extends LitElement {
                 request: message.data.request,
                 appletHash: this.appletHash,
               };
+              // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
               return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
           }
         }
