@@ -143,21 +143,28 @@ export class FoyerStore {
     if (message.payload.type == 'Msg') {
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
       let b64From = encodeHashToBase64(message.from);
-      if (!mainWindowFocused) {
-        const profile = await toPromise(this.profilesStore.profiles.get(message.from));
-        const notification: FrameNotification = {
-          title: `from ${profile ? profile.entry.nickname : b64From}`,
-          body: message.payload.text,
-          notification_type: 'message',
-          icon_src: undefined,
-          urgency: 'high',
-          fromAgent: message.from,
-          timestamp: message.payload.created,
-        };
-        await window.electronAPI.notification(notification, true, true, undefined, 'foyer message');
-      }
 
       if (b64From != this.myPubKeyB64) {
+        if (!mainWindowFocused) {
+          const profile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const notification: FrameNotification = {
+            title: `from ${profile ? profile.entry.nickname : b64From}`,
+            body: message.payload.text,
+            notification_type: 'message',
+            icon_src: undefined,
+            urgency: 'high',
+            fromAgent: message.from,
+            timestamp: message.payload.created,
+          };
+          await window.electronAPI.notification(
+            notification,
+            true,
+            true,
+            undefined,
+            'foyer message',
+          );
+        }
+
         await this.client.sendMessage(streamId, { type: 'Ack', created: message.payload.created }, [
           message.from,
         ]);
