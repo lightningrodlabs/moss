@@ -602,8 +602,8 @@ pub struct RelationsForWal {
 #[hdk_extern]
 pub fn get_all_relations_for_wal(wal: WAL) -> ExternResult<RelationsForWal> {
     let tags = get_tags_for_asset(wal.clone())?;
-    let linked_to = get_outgoing_asset_relations_with_tags(wal.clone())?;
-    let linked_from = get_incoming_asset_relations_with_tags(wal.clone())?;
+    let linked_from = get_outgoing_asset_relations_with_tags(wal.clone())?;
+    let linked_to = get_incoming_asset_relations_with_tags(wal.clone())?;
     Ok(RelationsForWal {
         wal,
         tags,
