@@ -301,24 +301,24 @@ export class GroupStore {
         if (srcStoreAndSubscribers) {
           srcStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
-            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
               ({ wal }) => stringifyWal(wal) === dstWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
               const newTags = Array.from(
                 new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedTo[existingWalAndTagsIdx] = {
+              store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
                 createdAt: existingWalAndTags.createdAt,
               };
             } else {
-              store.value.linkedTo = [
-                ...store.value.linkedTo,
+              store.value.linkedFrom = [
+                ...store.value.linkedFrom,
                 {
                   wal: decodedSignal.relation.dst_wal,
                   relationHash: decodedSignal.relation.relation_hash,
@@ -336,24 +336,24 @@ export class GroupStore {
           dstStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
             // TODO deduplicate
-            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
               ({ wal }) => stringifyWal(wal) === srcWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
               const newTags = Array.from(
                 new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedFrom[existingWalAndTagsIdx] = {
+              store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
                 createdAt: existingWalAndTags.createdAt,
               };
             } else {
-              store.value.linkedFrom = [
-                ...store.value.linkedFrom,
+              store.value.linkedTo = [
+                ...store.value.linkedTo,
                 {
                   wal: decodedSignal.relation.src_wal,
                   relationHash: decodedSignal.relation.relation_hash,
@@ -377,7 +377,6 @@ export class GroupStore {
             created_at: signal.relation.created_at,
           },
         };
-        console.log('AssetRelationRemoved: signal: ', signal);
         const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
         const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
@@ -385,7 +384,7 @@ export class GroupStore {
         if (srcStoreAndSubscribers) {
           srcStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
-            store.value.linkedTo = store.value.linkedTo.filter(
+            store.value.linkedFrom = store.value.linkedFrom.filter(
               ({ wal }) => stringifyWal(wal) !== dstWalStringified,
             );
             return store;
@@ -394,7 +393,7 @@ export class GroupStore {
         if (dstStoreAndSubscribers) {
           dstStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
-            store.value.linkedFrom = store.value.linkedFrom.filter(
+            store.value.linkedTo = store.value.linkedTo.filter(
               ({ wal }) => stringifyWal(wal) !== srcWalStringified,
             );
             return store;
@@ -419,16 +418,16 @@ export class GroupStore {
         if (srcStoreAndSubscribers) {
           srcStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
-            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
               ({ wal }) => stringifyWal(wal) === dstWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
               const newTags = Array.from(
                 new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedTo[existingWalAndTagsIdx] = {
+              store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
@@ -444,16 +443,16 @@ export class GroupStore {
           dstStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
             // TODO deduplicate
-            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
               ({ wal }) => stringifyWal(wal) === srcWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
               const newTags = Array.from(
                 new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedFrom[existingWalAndTagsIdx] = {
+              store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
@@ -483,16 +482,16 @@ export class GroupStore {
         if (srcStoreAndSubscribers) {
           srcStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
-            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
               ({ wal }) => stringifyWal(wal) === dstWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
               const newTags = existingWalAndTags.tags.filter(
                 (tag) => !decodedSignal.tags.includes(tag),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedTo[existingWalAndTagsIdx] = {
+              store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
@@ -508,16 +507,16 @@ export class GroupStore {
           dstStoreAndSubscribers.store.update((store) => {
             if (store.status !== 'complete') return store;
             // TODO deduplicate
-            const existingWalAndTagsIdx = store.value.linkedFrom.findIndex(
+            const existingWalAndTagsIdx = store.value.linkedTo.findIndex(
               ({ wal }) => stringifyWal(wal) === srcWalStringified,
             );
             if (existingWalAndTagsIdx !== -1) {
-              const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
+              const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
               const newTags = existingWalAndTags.tags.filter(
                 (tag) => !decodedSignal.tags.includes(tag),
               );
               // overwrite existing item with the one containing merged tags
-              store.value.linkedFrom[existingWalAndTagsIdx] = {
+              store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
