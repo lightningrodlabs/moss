@@ -7,7 +7,7 @@ import {
   EntryHash,
   Timestamp,
 } from '@holochain/client';
-import { AppletHash, AppletId, WAL } from '@theweave/api';
+import { AppletId, WAL } from '@theweave/api';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;
@@ -187,6 +187,7 @@ export type AssetRelationAndHash = {
   src_wal: WAL;
   dst_wal: WAL;
   relation_hash: EntryHash;
+  created_at: number;
 };
 
 export type AssetRelationWithTags = {
@@ -194,6 +195,7 @@ export type AssetRelationWithTags = {
   dst_wal: WAL;
   tags: string[];
   relation_hash: EntryHash;
+  created_at: number;
 };
 
 export type RelateAssetsInput = {

@@ -1,5 +1,5 @@
 import { ZomeClient } from '@holochain-open-dev/utils';
-import { EntryHash, AppClient, RoleName } from '@holochain/client';
+import { EntryHash, AppClient } from '@holochain/client';
 import { WAL, WalAndTags } from '@theweave/api';
 
 import {
@@ -11,6 +11,7 @@ import {
   TagsToAssetInput,
 } from './types.js';
 import { AsyncStatus, Unsubscriber, writable, Writable } from '@holochain-open-dev/stores';
+import { decode, encode } from '@msgpack/msgpack';
 
 export type WalStoreContent = {
   linkedTo: WalAndTags[];
@@ -76,6 +77,7 @@ export class WalStore {
       wal: v.dst_wal,
       tags: v.tags,
       relationHash: v.relation_hash,
+      createdAt: v.created_at,
     }));
     this.walStore.set({
       status: 'complete',
@@ -99,14 +101,15 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
     tags?: string[],
   ): Promise<AssetRelationWithTags> {
     let input: RelateAssetsInput = {
-      src_wal: srcWal,
-      dst_wal: dstWal,
+      src_wal: walEncodeContext(srcWal),
+      dst_wal: walEncodeContext(dstWal),
       tags: tags ? tags : [],
     };
-    return this.callZome('add_asset_relation', input);
+    const assetRelationWithTags = await this.callZome('add_asset_relation', input);
+    return decodeAssetRelationWALs(assetRelationWithTags);
   }
 
-  async removeAssetRelation(relationHash: EntryHash): Promise<AssetRelationWithTags> {
+  async removeAssetRelation(relationHash: EntryHash): Promise<void> {
     return this.callZome('remove_asset_relation', relationHash);
   }
 
@@ -125,24 +128,40 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
   }
 
   async getOutgoingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    return this.callZome('get_outgoing_asset_relations', srcWal);
+    const assetRelations = await this.callZome(
+      'get_outgoing_asset_relations',
+      walEncodeContext(srcWal),
+    );
+    return decodeAssetRelationsWALs(assetRelations);
   }
 
   async getOutgoingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    return this.callZome('get_outgoing_asset_relations_with_tags', srcWal);
+    const assetRelations = await this.callZome(
+      'get_outgoing_asset_relations_with_tags',
+      walEncodeContext(srcWal),
+    );
+    return decodeAssetRelationsWALs(assetRelations);
   }
 
   async getIncomingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    return this.callZome('get_outgoing_asset_relations', srcWal);
+    const assetRelations = await this.callZome(
+      'get_incoming_asset_relations',
+      walEncodeContext(srcWal),
+    );
+    return decodeAssetRelationsWALs(assetRelations);
   }
 
   async getIncomingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    return this.callZome('get_incoming_asset_relations_with_tags', srcWal);
+    const assetRelations = await this.callZome(
+      'get_incoming_asset_relations_with_tags',
+      walEncodeContext(srcWal),
+    );
+    return decodeAssetRelationsWALs(assetRelations);
   }
 
   async addTagsToAsset(wal: WAL, tags: string[]): Promise<void> {
     const input: TagsToAssetInput = {
-      wal,
+      wal: walEncodeContext(wal),
       tags,
     };
     return this.callZome('add_tags_to_asset', input);
@@ -150,20 +169,66 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
 
   async removeTagsFromAsset(wal: WAL, tags: string[]): Promise<void> {
     return this.callZome('remove_tags_from_asset', {
-      wal,
+      wal: walEncodeContext(wal),
       tags,
     });
   }
 
   async getTagsForAsset(wal: WAL): Promise<string[]> {
-    return this.callZome('get_tags_for_asset', wal);
+    return this.callZome('get_tags_for_asset', walEncodeContext(wal));
   }
 
   async getAllRelationsForWal(wal: WAL): Promise<RelationsForWal> {
-    return this.callZome('get_all_relations_for_wal', wal);
+    return this.callZome('get_all_relations_for_wal', walEncodeContext(wal));
   }
 
   async batchGetAllRelationsForWal(wals: WAL[]): Promise<RelationsForWal[]> {
-    return this.callZome('batch_get_all_relations_for_wal', wals);
+    return this.callZome('batch_get_all_relations_for_wal', walsEncodeContext(wals));
   }
+}
+
+/**
+ * Converts a WAL to a WAL with the same context but msgpack encoded
+ *
+ * @param wal
+ * @returns
+ */
+function walEncodeContext(wal: WAL): WAL {
+  return {
+    hrl: wal.hrl,
+    context: wal.context ? encode(wal.context) : undefined,
+  };
+}
+
+/**
+ * Converts a WAL to a WAL with the same context but msgpack decoded
+ *
+ * @param wal
+ * @returns
+ */
+function walDecodeContext(wal: WAL): WAL {
+  return {
+    hrl: wal.hrl,
+    context: wal.context ? decode(wal.context) : undefined,
+  };
+}
+
+function walsEncodeContext(wals: WAL[]): WAL[] {
+  return wals.map((wal) => walEncodeContext(wal));
+}
+
+function decodeAssetRelationsWALs(
+  relationsWithTags: AssetRelationWithTags[],
+): AssetRelationWithTags[] {
+  return relationsWithTags.map((relationWithTags) => decodeAssetRelationWALs(relationWithTags));
+}
+
+function decodeAssetRelationWALs(relationWithTags: AssetRelationWithTags): AssetRelationWithTags {
+  return {
+    src_wal: walDecodeContext(relationWithTags.src_wal),
+    dst_wal: walDecodeContext(relationWithTags.dst_wal),
+    tags: relationWithTags.tags,
+    relation_hash: relationWithTags.relation_hash,
+    created_at: relationWithTags.created_at,
+  };
 }

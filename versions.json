@@ -7,7 +7,7 @@
     "lairVersion": "0.5.3",
     "packages": {
       "@theweave/cli": "0.13.0-rc.0",
-      "@theweave/api": "0.4.0-alpha.2",
+      "@theweave/api": "0.4.0-alpha.3",
       "@theweave/elements": "0.4.0-alpha.1"
     }
   },

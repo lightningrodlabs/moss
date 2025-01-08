@@ -700,6 +700,7 @@ export async function handleAppletIframeMessage(
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
+      console.log('### removing asset relation');
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
           groupStore.assetsClient.removeAssetRelation(message.relationHash),

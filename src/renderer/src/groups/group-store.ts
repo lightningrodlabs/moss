@@ -356,6 +356,7 @@ export class GroupStore {
         break;
       }
       case 'AssetRelationRemoved': {
+        console.log('AssetRelationRemoved: signal: ', signal);
         const srcWalStringified = stringifyWal(signal.relation.src_wal);
         const dstWalStringified = stringifyWal(signal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
@@ -449,6 +450,7 @@ export class GroupStore {
         break;
       }
       case 'RelationTagsRemoved': {
+        console.log('RelationTagsRemoved: signal: ', signal);
         const srcWalStringified = stringifyWal(signal.src_wal);
         const dstWalStringified = stringifyWal(signal.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
