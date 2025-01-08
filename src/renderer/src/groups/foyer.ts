@@ -8,6 +8,7 @@ import {
   InstalledAppId,
   AppCallZomeRequest,
   SignalType,
+  DnaHash,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
@@ -22,7 +23,8 @@ import {
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
-import { FrameNotification } from '@theweave/api';
+import { FrameNotification, GroupProfile } from '@theweave/api';
+import { MossStore } from '../moss-store';
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {
@@ -161,7 +163,7 @@ export class FoyerStore {
             true,
             true,
             undefined,
-            'foyer message',
+            `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
           );
         }
 
@@ -172,7 +174,32 @@ export class FoyerStore {
     }
   }
 
+  static async create(
+    groupDnaHash: DnaHash,
+    mossStore: MossStore,
+    profilesStore: ProfilesStore,
+    clientIn: AppClient,
+    authenticationToken: AppAuthenticationToken,
+    roleName: RoleName,
+    zomeName: string = ZOME_NAME,
+  ) {
+    let groupProfile: undefined | GroupProfile = undefined;
+    const groupStore = await mossStore.groupStore(groupDnaHash);
+    if (groupStore) {
+      groupProfile = await toPromise(groupStore.groupProfile);
+    }
+    return new FoyerStore(
+      groupProfile,
+      profilesStore,
+      clientIn,
+      authenticationToken,
+      roleName,
+      zomeName,
+    );
+  }
+
   constructor(
+    protected groupProfile: GroupProfile | undefined,
     public profilesStore: ProfilesStore,
     protected clientIn: AppClient,
     public authenticationToken: AppAuthenticationToken,
