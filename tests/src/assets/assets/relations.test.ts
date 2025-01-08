@@ -70,6 +70,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
       src_wal: assetRelation1.src_wal,
       dst_wal: assetRelation1.dst_wal,
       relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
     });
 
     const allAssetRelationHashes: EntryHash[] = await assetsCellBob.callZome({
@@ -201,6 +202,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation1.src_wal,
       dst_wal: assetRelation1.dst_wal,
       relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
     });
 
     const wal2RelationReadByAlice = outgoingRelationsWal1ReadByAlice.find(
@@ -212,6 +214,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation2.src_wal,
       dst_wal: assetRelation2.dst_wal,
       relation_hash: assetRelation2.relation_hash,
+      created_at: assetRelation2.created_at,
     });
 
     // Read incoming asset relations for wal2 and wal3
@@ -228,6 +231,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation1.src_wal,
       dst_wal: assetRelation1.dst_wal,
       relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
     });
 
     const incomingRelationsWal3ReadByAlice: AssetRelationAndHash[] = await assetsCellAlice.callZome(
@@ -243,6 +247,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation2.src_wal,
       dst_wal: assetRelation2.dst_wal,
       relation_hash: assetRelation2.relation_hash,
+      created_at: assetRelation2.created_at,
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
@@ -262,6 +267,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation1.src_wal,
       dst_wal: assetRelation1.dst_wal,
       relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
     });
 
     const wal2RelationReadByBob = outgoingRelationsReadByBob.find(
@@ -273,6 +279,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation2.src_wal,
       dst_wal: assetRelation2.dst_wal,
       relation_hash: assetRelation2.relation_hash,
+      created_at: assetRelation2.created_at,
     });
 
     // Read incoming asset relations for wal2 and wal3
@@ -287,6 +294,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation1.src_wal,
       dst_wal: assetRelation1.dst_wal,
       relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
     });
 
     const incomingRelationsWal3ReadByBob: AssetRelationAndHash[] = await assetsCellBob.callZome({
@@ -300,6 +308,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       src_wal: assetRelation2.src_wal,
       dst_wal: assetRelation2.dst_wal,
       relation_hash: assetRelation2.relation_hash,
+      created_at: assetRelation2.created_at,
     });
   });
 });
