@@ -8,10 +8,10 @@
 
 ```typescript
 export type AssetStoreContent = {
-    linkedTo: WalAndTags[];
-    linkedFrom: WalAndTags[];
+    linkedTo: WalRelationAndTags[];
+    linkedFrom: WalRelationAndTags[];
     tags: string[];
 };
 ```
-**References:** [WalAndTags](./api.walandtags.md)
+**References:** [WalRelationAndTags](./api.walrelationandtags.md)
 

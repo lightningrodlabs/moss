@@ -4,7 +4,7 @@
 
 ## NULL\_HASH variable
 
-The null hash is used in case a WAL is to address a DNA only, not specific DHT content
+The null hash is used in case a WAL is to address a DNA only, not specific DHT content. It starts with the prefix of an EntryHash, followed by zeroes
 
 **Signature:**
 
