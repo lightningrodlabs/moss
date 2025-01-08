@@ -28,7 +28,7 @@
   },
   "groupHapp": {
     "version": "0.13.0-rc.1",
-    "sha256": "28b8be7d5cb15fcfcb68ae0b64479db744fde9ac2b888ec0d7232e42e2a51b49"
+    "sha256": "bbe91f4f25547aaa0911eee4cd3f9cc2f85f7f94932a432d02d2bddc00b39323"
   },
   "binariesAppendix": "moss-0.13"
 }
