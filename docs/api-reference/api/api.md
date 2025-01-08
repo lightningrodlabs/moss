@@ -213,7 +213,7 @@ Description
 
 </td><td>
 
-The null hash is used in case a WAL is to address a DNA only, not specific DHT content
+The null hash is used in case a WAL is to address a DNA only, not specific DHT content. It starts with the prefix of an EntryHash, followed by zeroes
 
 
 </td></tr>
@@ -591,7 +591,7 @@ Events
 </td></tr>
 <tr><td>
 
-[WalAndTags](./api.walandtags.md)
+[WalRelationAndTags](./api.walrelationandtags.md)
 
 
 </td><td>

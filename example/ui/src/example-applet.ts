@@ -99,7 +99,9 @@ export class ExampleApplet extends LitElement {
                         if (!appInfo) throw new Error('AppInfo is null.');
                         const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
                           .cell_id[0];
-                        this.weaveClient!.assets.dragAsset({ hrl: [dnaHash, e.detail] });
+                        this.weaveClient!.assets.dragAsset({
+                          hrl: [dnaHash, e.detail],
+                        });
                       }}
                     ></applet-main>
                   </profiles-context>

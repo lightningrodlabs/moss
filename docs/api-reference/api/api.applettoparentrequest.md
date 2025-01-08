@@ -16,11 +16,6 @@ export type AppletToParentRequest = {
     type: 'get-record-info';
     hrl: Hrl;
 } | {
-    type: 'link-mouseover';
-    href: string;
-} | {
-    type: 'link-mouseout';
-} | {
     type: 'sign-zome-call';
     request: CallZomeRequest;
 } | {

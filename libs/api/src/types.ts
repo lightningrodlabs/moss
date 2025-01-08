@@ -568,15 +568,19 @@ export type GroupPermissionType =
       type: 'Ambiguous';
     };
 
-export type WalAndTags = {
-  wal: WAL;
+export type WalRelationAndTags = {
   relationHash: EntryHash;
+  /**
+   * Timestamp of when the asset relation to this WAL has been created
+   */
+  createdAt: number;
+  wal: WAL;
   tags: string[];
 };
 
 export type AssetStoreContent = {
-  linkedTo: WalAndTags[];
-  linkedFrom: WalAndTags[];
+  linkedTo: WalRelationAndTags[];
+  linkedFrom: WalRelationAndTags[];
   tags: string[];
 };
 

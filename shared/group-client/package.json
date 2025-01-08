@@ -1,6 +1,6 @@
 {
   "name": "@theweave/group-client",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0-alpha.4",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "@holochain/client": "^0.18.0",
     "@holochain-open-dev/utils": "0.400.0",
     "@msgpack/msgpack": "^2.7.2",
-    "@theweave/api": "0.4.0-alpha.1"
+    "@theweave/api": "0.4.0-alpha.3"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

@@ -46,9 +46,9 @@ declare global {
 
 /**
  * The null hash is used in case a WAL is to address a DNA only, not specific
- * DHT content
+ * DHT content. It starts with the prefix of an EntryHash, followed by zeroes
  */
-export const NULL_HASH = new Uint8Array(39);
+export const NULL_HASH = new Uint8Array([132, 33, 36, 219, 175, ...new Uint8Array(34)]);
 
 /**
  *

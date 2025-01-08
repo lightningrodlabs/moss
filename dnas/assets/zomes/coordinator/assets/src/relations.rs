@@ -11,6 +11,7 @@ pub struct AssetRelationAndHash {
     pub src_wal: WAL,
     pub dst_wal: WAL,
     pub relation_hash: EntryHash,
+    pub created_at: Timestamp,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -19,6 +20,7 @@ pub struct AssetRelationWithTags {
     pub dst_wal: WAL,
     pub tags: Vec<String>,
     pub relation_hash: EntryHash,
+    pub created_at: Timestamp,
 }
 
 #[derive(Serialize, Deserialize, SerializedBytes, Debug)]
@@ -28,6 +30,9 @@ pub struct RelateAssetsInput {
     pub tags: Vec<String>,
 }
 
+/// Note that the WAL's context is an Option<Vec<u8>> and therefore needs to have been
+/// encoded into that format client-side because a WAL in general can be any arbitrary
+/// javascript object
 #[hdk_extern]
 pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelationWithTags> {
     let asset_relation = AssetRelation {
@@ -37,10 +42,10 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
 
     // 1. Create entry and add it to the ALL_ASSET_RELATIONS_ANCHOR if no entry exists yet
     let relation_hash = hash_entry(asset_relation.clone())?;
-    match get(relation_hash.clone(), GetOptions::default()) {
-        Ok(Some(_r)) => (),
+    let record = match get(relation_hash.clone(), GetOptions::default()) {
+        Ok(Some(r)) => r,
         _ => {
-            create_entry(&EntryTypes::AssetRelation(asset_relation.clone()))?;
+            let action_hash = create_entry(&EntryTypes::AssetRelation(asset_relation.clone()))?;
             let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
             create_link(
                 path.path_entry_hash()?,
@@ -48,8 +53,11 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
                 LinkTypes::AllAssetRelations,
                 (),
             )?;
+            get(action_hash, GetOptions::default())?.ok_or(wasm_error!(WasmErrorInner::Guest(
+                format!("Failed to get the record that was just created.")
+            )))?
         }
-    }
+    };
 
     // 2. Add tags to the asset relation entry hash
     add_tags_to_asset_relation(AddTagsToAssetRelationInput {
@@ -78,6 +86,7 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
         dst_wal: input.dst_wal,
         tags: input.tags,
         relation_hash,
+        created_at: record.action().timestamp(),
     };
 
     emit_signal(Signal::AssetRelationCreated {
@@ -225,6 +234,7 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
             src_wal: asset_relation.src_wal,
             dst_wal: asset_relation.dst_wal,
             relation_hash,
+            created_at: asset_relation_record.action().timestamp(),
         },
     })?;
 
@@ -353,7 +363,7 @@ pub fn get_all_asset_relations() -> ExternResult<Vec<AssetRelationAndHash>> {
         .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
 
-    let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
+    let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
 
     Ok(records
         .into_iter()
@@ -368,6 +378,7 @@ pub fn get_all_asset_relations() -> ExternResult<Vec<AssetRelationAndHash>> {
                             src_wal: a.src_wal,
                             dst_wal: a.dst_wal,
                             relation_hash: eh.clone(),
+                            created_at: r.action().timestamp(),
                         }),
                         None => None,
                     }
@@ -407,6 +418,7 @@ pub fn get_outgoing_asset_relations_with_tags(
             dst_wal: asset_relation.dst_wal,
             tags,
             relation_hash: asset_relation.relation_hash,
+            created_at: asset_relation.created_at,
         });
     }
     Ok(asset_relations_with_tags)
@@ -425,7 +437,7 @@ pub fn get_outgoing_asset_relations(src_wal: WAL) -> ExternResult<Vec<AssetRelat
         .unique() // We filter out duplicate links here
         .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
-    let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
+    let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
     for maybe_record in records {
         if let Some(record) = maybe_record {
@@ -449,6 +461,7 @@ pub fn get_outgoing_asset_relations(src_wal: WAL) -> ExternResult<Vec<AssetRelat
                             "AssetRelation record has no entry hash".into()
                         )))?
                         .to_owned(),
+                    created_at: record.action().timestamp(),
                 };
                 asset_relations.push(asset_relation_and_hash)
             }
@@ -486,6 +499,7 @@ pub fn get_incoming_asset_relations_with_tags(
             dst_wal: asset_relation.dst_wal,
             tags,
             relation_hash: asset_relation.relation_hash,
+            created_at: asset_relation.created_at,
         });
     }
     Ok(asset_relations_with_tags)
@@ -504,7 +518,7 @@ pub fn get_incoming_asset_relations(dst_wal: WAL) -> ExternResult<Vec<AssetRelat
         .unique() // We filter out duplicate links here
         .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
-    let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
+    let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
     for maybe_record in records {
         if let Some(record) = maybe_record {
@@ -528,6 +542,7 @@ pub fn get_incoming_asset_relations(dst_wal: WAL) -> ExternResult<Vec<AssetRelat
                             "AssetRelation record has no entry hash".into()
                         )))?
                         .to_owned(),
+                    created_at: record.action().timestamp(),
                 };
                 asset_relations.push(asset_relation_and_hash)
             }
@@ -559,7 +574,7 @@ pub fn get_asset_relations_for_relationship_tag(
             ))
         })
         .collect::<ExternResult<Vec<GetInput>>>()?;
-    let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
+    let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
     for maybe_record in records {
         if let Some(record) = maybe_record {
@@ -583,6 +598,7 @@ pub fn get_asset_relations_for_relationship_tag(
                             "AssetRelation record has no entry hash".into()
                         )))?
                         .to_owned(),
+                    created_at: record.action().timestamp(),
                 };
                 asset_relations.push(asset_relation_and_hash)
             }
@@ -602,8 +618,8 @@ pub struct RelationsForWal {
 #[hdk_extern]
 pub fn get_all_relations_for_wal(wal: WAL) -> ExternResult<RelationsForWal> {
     let tags = get_tags_for_asset(wal.clone())?;
-    let linked_to = get_outgoing_asset_relations_with_tags(wal.clone())?;
-    let linked_from = get_incoming_asset_relations_with_tags(wal.clone())?;
+    let linked_from = get_outgoing_asset_relations_with_tags(wal.clone())?;
+    let linked_to = get_incoming_asset_relations_with_tags(wal.clone())?;
     Ok(RelationsForWal {
         wal,
         tags,
