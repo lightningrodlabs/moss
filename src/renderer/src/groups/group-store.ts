@@ -57,10 +57,12 @@ import {
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
+  decodeAssetRelationWALs,
   GroupRemoteSignal,
   PeerStatusClient,
   SignalPayloadAssets,
   SignalPayloadPeerStatus,
+  walDecodeContext,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { appIdFromAppletHash, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
@@ -215,11 +217,13 @@ export class GroupStore {
           wal: v.dst_wal,
           tags: v.tags,
           relationHash: v.relation_hash,
+          createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
           tags: v.tags,
           relationHash: v.relation_hash,
+          createdAt: v.created_at,
         }));
         const newValue = {
           status: 'complete',
@@ -261,7 +265,7 @@ export class GroupStore {
     // Update asset store(s)
     switch (signal.type) {
       case 'AssetTagsAdded': {
-        const walStringified = stringifyWal(signal.wal);
+        const walStringified = stringifyWal(walDecodeContext(signal.wal));
         const storeAndSubscribers = this._assetStores[walStringified];
         // If there are no subscribers, we can just drop it here
         if (!storeAndSubscribers) return;
@@ -273,7 +277,7 @@ export class GroupStore {
         break;
       }
       case 'AssetTagsRemoved': {
-        const walStringified = stringifyWal(signal.wal);
+        const walStringified = stringifyWal(walDecodeContext(signal.wal));
         const storeAndSubscribers = this._assetStores[walStringified];
         // If there are no subscribers, we can just drop it here
         if (!storeAndSubscribers) return;
@@ -285,9 +289,13 @@ export class GroupStore {
         break;
       }
       case 'AssetRelationCreated': {
+        const decodedSignal: SignalPayloadAssets = {
+          type: 'AssetRelationCreated',
+          relation: decodeAssetRelationWALs(signal.relation),
+        };
         // Add it to the asset store of the srcWal
-        const srcWalStringified = stringifyWal(signal.relation.src_wal);
-        const dstWalStringified = stringifyWal(signal.relation.dst_wal);
+        const srcWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.src_wal));
+        const dstWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.dst_wal));
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
         if (srcStoreAndSubscribers) {
@@ -299,21 +307,23 @@ export class GroupStore {
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
               const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...signal.relation.tags]),
+                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
               );
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
             } else {
               store.value.linkedTo = [
                 ...store.value.linkedTo,
                 {
-                  wal: signal.relation.dst_wal,
-                  relationHash: signal.relation.relation_hash,
-                  tags: signal.relation.tags,
+                  wal: decodedSignal.relation.dst_wal,
+                  relationHash: decodedSignal.relation.relation_hash,
+                  tags: decodedSignal.relation.tags,
+                  createdAt: decodedSignal.relation.created_at,
                 },
               ];
             }
@@ -332,21 +342,23 @@ export class GroupStore {
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
               const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...signal.relation.tags]),
+                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
               );
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
             } else {
               store.value.linkedFrom = [
                 ...store.value.linkedFrom,
                 {
-                  wal: signal.relation.src_wal,
-                  relationHash: signal.relation.relation_hash,
-                  tags: signal.relation.tags,
+                  wal: decodedSignal.relation.src_wal,
+                  relationHash: decodedSignal.relation.relation_hash,
+                  tags: decodedSignal.relation.tags,
+                  createdAt: decodedSignal.relation.created_at,
                 },
               ];
             }
@@ -356,9 +368,18 @@ export class GroupStore {
         break;
       }
       case 'AssetRelationRemoved': {
+        const decodedSignal: SignalPayloadAssets = {
+          type: 'AssetRelationRemoved',
+          relation: {
+            src_wal: walDecodeContext(signal.relation.src_wal),
+            dst_wal: walDecodeContext(signal.relation.dst_wal),
+            relation_hash: signal.relation.relation_hash,
+            created_at: signal.relation.created_at,
+          },
+        };
         console.log('AssetRelationRemoved: signal: ', signal);
-        const srcWalStringified = stringifyWal(signal.relation.src_wal);
-        const dstWalStringified = stringifyWal(signal.relation.dst_wal);
+        const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
+        const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
         if (srcStoreAndSubscribers) {
@@ -382,8 +403,15 @@ export class GroupStore {
         break;
       }
       case 'RelationTagsAdded': {
-        const srcWalStringified = stringifyWal(signal.src_wal);
-        const dstWalStringified = stringifyWal(signal.dst_wal);
+        const decodedSignal: SignalPayloadAssets = {
+          type: 'RelationTagsAdded',
+          relation_hash: signal.relation_hash,
+          src_wal: walDecodeContext(signal.src_wal),
+          dst_wal: walDecodeContext(signal.dst_wal),
+          tags: signal.tags,
+        };
+        const srcWalStringified = stringifyWal(decodedSignal.src_wal);
+        const dstWalStringified = stringifyWal(decodedSignal.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
 
@@ -396,22 +424,16 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = Array.from(new Set([...existingWalAndTags.tags, ...signal.tags]));
+              const newTags = Array.from(
+                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
+              );
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
-            } else {
-              store.value.linkedTo = [
-                ...store.value.linkedTo,
-                {
-                  wal: signal.dst_wal,
-                  relationHash: signal.relation_hash,
-                  tags: signal.tags,
-                },
-              ];
             }
             return store;
           });
@@ -427,22 +449,16 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = Array.from(new Set([...existingWalAndTags.tags, ...signal.tags]));
+              const newTags = Array.from(
+                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
+              );
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
-            } else {
-              store.value.linkedFrom = [
-                ...store.value.linkedFrom,
-                {
-                  wal: signal.src_wal,
-                  relationHash: signal.relation_hash,
-                  tags: signal.tags,
-                },
-              ];
             }
             return store;
           });
@@ -450,9 +466,16 @@ export class GroupStore {
         break;
       }
       case 'RelationTagsRemoved': {
+        const decodedSignal: SignalPayloadAssets = {
+          type: 'RelationTagsRemoved',
+          relation_hash: signal.relation_hash,
+          src_wal: walDecodeContext(signal.src_wal),
+          dst_wal: walDecodeContext(signal.dst_wal),
+          tags: signal.tags,
+        };
         console.log('RelationTagsRemoved: signal: ', signal);
-        const srcWalStringified = stringifyWal(signal.src_wal);
-        const dstWalStringified = stringifyWal(signal.dst_wal);
+        const srcWalStringified = stringifyWal(decodedSignal.src_wal);
+        const dstWalStringified = stringifyWal(decodedSignal.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
 
@@ -465,12 +488,15 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = existingWalAndTags.tags.filter((tag) => !signal.tags.includes(tag));
+              const newTags = existingWalAndTags.tags.filter(
+                (tag) => !decodedSignal.tags.includes(tag),
+              );
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
             }
             return store;
@@ -487,12 +513,15 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = existingWalAndTags.tags.filter((tag) => !signal.tags.includes(tag));
+              const newTags = existingWalAndTags.tags.filter(
+                (tag) => !decodedSignal.tags.includes(tag),
+              );
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
                 relationHash: existingWalAndTags.relationHash,
                 tags: newTags,
+                createdAt: existingWalAndTags.createdAt,
               };
             }
             return store;
@@ -570,11 +599,13 @@ export class GroupStore {
           wal: v.dst_wal,
           tags: v.tags,
           relationHash: v.relation_hash,
+          createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
           tags: v.tags,
           relationHash: v.relation_hash,
+          createdAt: v.created_at,
         }));
         console.log('@subscribe: setting assetstore', {
           tags: relationsForWal.tags,

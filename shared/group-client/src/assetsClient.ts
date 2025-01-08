@@ -1,6 +1,6 @@
 import { ZomeClient } from '@holochain-open-dev/utils';
 import { EntryHash, AppClient } from '@holochain/client';
-import { WAL, WalAndTags } from '@theweave/api';
+import { WAL, WalRelationAndTags } from '@theweave/api';
 
 import {
   AssetRelationAndHash,
@@ -14,8 +14,8 @@ import { AsyncStatus, Unsubscriber, writable, Writable } from '@holochain-open-d
 import { decode, encode } from '@msgpack/msgpack';
 
 export type WalStoreContent = {
-  linkedTo: WalAndTags[];
-  linkedFrom: WalAndTags[];
+  linkedTo: WalRelationAndTags[];
+  linkedFrom: WalRelationAndTags[];
   tags: string[];
 };
 
@@ -72,6 +72,7 @@ export class WalStore {
       wal: v.dst_wal,
       tags: v.tags,
       relationHash: v.relation_hash,
+      createdAt: v.created_at,
     }));
     const linkedFrom = relationsForWal.linked_from.map((v) => ({
       wal: v.dst_wal,
@@ -206,24 +207,26 @@ function walEncodeContext(wal: WAL): WAL {
  * @param wal
  * @returns
  */
-function walDecodeContext(wal: WAL): WAL {
+export function walDecodeContext(wal: WAL): WAL {
   return {
     hrl: wal.hrl,
     context: wal.context ? decode(wal.context) : undefined,
   };
 }
 
-function walsEncodeContext(wals: WAL[]): WAL[] {
+export function walsEncodeContext(wals: WAL[]): WAL[] {
   return wals.map((wal) => walEncodeContext(wal));
 }
 
-function decodeAssetRelationsWALs(
+export function decodeAssetRelationsWALs(
   relationsWithTags: AssetRelationWithTags[],
 ): AssetRelationWithTags[] {
   return relationsWithTags.map((relationWithTags) => decodeAssetRelationWALs(relationWithTags));
 }
 
-function decodeAssetRelationWALs(relationWithTags: AssetRelationWithTags): AssetRelationWithTags {
+export function decodeAssetRelationWALs(
+  relationWithTags: AssetRelationWithTags,
+): AssetRelationWithTags {
   return {
     src_wal: walDecodeContext(relationWithTags.src_wal),
     dst_wal: walDecodeContext(relationWithTags.dst_wal),

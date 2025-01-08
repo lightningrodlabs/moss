@@ -15,7 +15,7 @@
     "@theweave/api": "0.4.0-alpha.3",
     "@theweave/elements": "0.4.0-alpha.1",
     "@theweave/utils": "0.3.0-alpha.2",
-    "@theweave/group-client": "0.2.0-alpha.2",
+    "@theweave/group-client": "0.2.0-alpha.4",
     "@lit/context": "^1.0.1",
     "@lit-labs/task": "^1.1.2",
     "@lit/localize": "^0.12.0",
