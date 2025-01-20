@@ -48,6 +48,8 @@ declare global {
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       factoryReset: () => Promise<void>;
+      openLogs: () => Promise<void>;
+      exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;

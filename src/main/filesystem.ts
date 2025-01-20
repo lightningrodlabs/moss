@@ -4,9 +4,10 @@ import semver from 'semver';
 import { v4 as uuidv4 } from 'uuid';
 import { InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
-import { session } from 'electron';
+import { app, dialog, session, shell } from 'electron';
 import { platform } from '@electron-toolkit/utils';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
+import AdmZip from 'adm-zip';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -350,6 +351,32 @@ export class MossFileSystem {
         fullMediaAccessGranted: true,
       };
       fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  async openLogs() {
+    try {
+      await shell.openPath(this.profileLogsDir);
+    } catch (e) {
+      dialog.showErrorBox('Failed to open logs folder', (e as any).toString());
+    }
+  }
+
+  async exportLogs() {
+    try {
+      const zip = new AdmZip();
+      zip.addLocalFolder(this.profileLogsDir);
+      const exportToPathResponse = await dialog.showSaveDialog({
+        title: 'Export Logs',
+        buttonLabel: 'Export',
+        defaultPath: `Moss_${app.getVersion()}_logs_${Date.now()}.zip`,
+      });
+      if (exportToPathResponse.filePath) {
+        zip.writeZip(exportToPathResponse.filePath);
+        shell.showItemInFolder(exportToPathResponse.filePath);
+      }
+    } catch (e) {
+      dialog.showErrorBox('Failed to export logs', (e as any).toString());
     }
   }
 

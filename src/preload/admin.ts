@@ -9,7 +9,7 @@ import {
   FunctionName,
   ZomeName,
 } from '@holochain/client';
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, IpcRenderer, ipcRenderer } from 'electron';
 import {
   AppletId,
   AppletToParentMessage,
@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
+  openLogs: () => ipcRenderer.invoke('open-logs'),
+  exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
     ipcRenderer.on('moss-update-progress', callback),
   onRequestFactoryReset: (callback: (e: Electron.IpcRendererEvent) => any) =>
