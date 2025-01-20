@@ -65,9 +65,9 @@ export class WalElement extends LitElement {
         return html`<div class="row element" style="height: 30px;"><span>loading...</span></div>`;
       case 'error':
         const error = this.assetInfo.value.error;
-        let buttonMsg = 'Error';
+        let appletDisabled = false;
         if (error.toString().includes('CellDisabled')) {
-          buttonMsg = msg('[Unknown]');
+          appletDisabled = true;
         } else {
           console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);
         }
@@ -77,13 +77,13 @@ export class WalElement extends LitElement {
             this.wal.hrl[1],
           )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
         >
-          <sl-tooltip .content=${msg('Cannot be selected - the associated Tool is disabled')}>
+          <sl-tooltip .content=${appletDisabled ? msg('Cannot be selected - the associated Tool is disabled') : this.selectTitle ? this.selectTitle : msg('Select')}>
             <div
               class="row disabled"
               style="align-items: center; padding: 0; margin: 0; cursor: default; opacity: 0.5;"
               tabindex="0"
             >
-              <div class="row title-container">${buttonMsg}</div>
+              <div class="row title-container">${appletDisabled ? msg('Unknown') : msg('Error')}</div>
             </div>
           </sl-tooltip>
 
