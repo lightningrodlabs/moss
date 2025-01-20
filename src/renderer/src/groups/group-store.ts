@@ -1144,7 +1144,7 @@ export class GroupStore {
   //     )
   // );
 
-  activeAppletStores = pipe(this.allMyApplets, (allApplets) =>
+  activeAppletStores = pipe(this.allMyRunningApplets, (allApplets) =>
     sliceAndJoin(this.mossStore.appletStores, allApplets),
   );
 
