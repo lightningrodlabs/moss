@@ -792,7 +792,6 @@ if (!RUNNING_WITH_COMMAND) {
       },
     ]);
 
-    SYSTRAY.setToolTip('Moss');
     SYSTRAY.setContextMenu(contextMenu);
 
     if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
