@@ -64,8 +64,69 @@ export class WalElement extends LitElement {
       case 'pending':
         return html`<div class="row element" style="height: 30px;"><span>loading...</span></div>`;
       case 'error':
-        console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);
-        return html`<div>Error</div>`;
+        const error = this.assetInfo.value.error;
+        let buttonMsg = 'Error';
+        if (error.toString().includes('CellDisabled')) {
+          buttonMsg = msg('[Unknown]');
+        } else {
+          console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);
+        }
+        return html` <div
+          class="row element"
+          title=${`weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+            this.wal.hrl[1],
+          )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
+        >
+          <sl-tooltip .content=${msg('Cannot be selected - the associated Tool is disabled')}>
+            <div
+              class="row disabled"
+              style="align-items: center; padding: 0; margin: 0; cursor: default; opacity: 0.5;"
+              tabindex="0"
+            >
+              <div class="row title-container">${buttonMsg}</div>
+            </div>
+          </sl-tooltip>
+
+          <sl-tooltip .content=${msg('Copy URL')}>
+            <div
+              class="row share"
+              tabindex="0"
+              @click=${async () => {
+                const weaveUrl = weaveUrlFromWal(this.wal, false);
+                await navigator.clipboard.writeText(weaveUrl);
+                notify(msg('URL copied.'));
+              }}
+              @keypress=${async (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  const weaveUrl = weaveUrlFromWal(this.wal, false);
+                  await navigator.clipboard.writeText(weaveUrl);
+                  notify(msg('URL copied.'));
+                }
+              }}
+            >
+                <sl-icon .src=${wrapPathInSvg(mdiShareVariantOutline)}><sl-icon>
+            </div>
+          </sl-tooltip>
+
+          <sl-tooltip .content=${msg('Remove from Pocket')}>
+            <div
+              class="row clear"
+              tabindex="0"
+              @click=${() => {
+                this._mossStore.removeWalFromPocket(this.wal);
+                this.dispatchEvent(new CustomEvent('wal-removed', {}));
+              }}
+              @keypress=${async (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  this._mossStore.removeWalFromPocket(this.wal);
+                  this.dispatchEvent(new CustomEvent('wal-removed', {}));
+                }
+              }}
+            >
+              X
+            </div>
+          </sl-tooltip>
+        </div>`;
       case 'complete':
         if (this.assetInfo.value.value) {
           return html`
@@ -170,6 +231,10 @@ export class WalElement extends LitElement {
         height: 40px;
         flex: 1;
         font-size: 18px;
+      }
+
+      .disabled {
+        border-radius: 8px 0 0 8px;
       }
 
       .open {
