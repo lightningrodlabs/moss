@@ -24,31 +24,13 @@ export const mossMenu = (
       {
         label: 'Open Logs',
         async click() {
-          try {
-            await shell.openPath(mossFileSystem.profileLogsDir);
-          } catch (e) {
-            dialog.showErrorBox('Failed to open logs folder', (e as any).toString());
-          }
+          await mossFileSystem.openLogs();
         },
       },
       {
         label: 'Export Logs',
         async click() {
-          try {
-            const zip = new AdmZip();
-            zip.addLocalFolder(mossFileSystem.profileLogsDir);
-            const exportToPathResponse = await dialog.showSaveDialog({
-              title: 'Export Logs',
-              buttonLabel: 'Export',
-              defaultPath: `Moss_${app.getVersion()}_logs_${Date.now()}.zip`,
-            });
-            if (exportToPathResponse.filePath) {
-              zip.writeZip(exportToPathResponse.filePath);
-              shell.showItemInFolder(exportToPathResponse.filePath);
-            }
-          } catch (e) {
-            dialog.showErrorBox('Failed to export logs', (e as any).toString());
-          }
+          await mossFileSystem.exportLogs();
         },
       },
     ],

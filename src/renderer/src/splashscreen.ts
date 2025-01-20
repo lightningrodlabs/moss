@@ -19,6 +19,7 @@ enum SplashScreenMode {
   SetupPasswordConfirm,
   EnterPassword,
   Launching,
+  Error,
 }
 
 @customElement('splash-screen')
@@ -141,13 +142,14 @@ export class SplashScreen extends LitElement {
         setTimeout(() => {
           this.launchError = undefined;
         }, 3000);
+        await this.chooseView();
       } else {
         this.launchError = e;
         setTimeout(() => {
           this.launchError = undefined;
         }, 6000);
+        this.view = SplashScreenMode.Error;
       }
-      await this.chooseView();
     }
   }
 
@@ -309,6 +311,30 @@ export class SplashScreen extends LitElement {
     `;
   }
 
+  renderError() {
+    return html`
+      <div class="column items-center">
+        <h1 style="color: #bf0000;">${msg('Holochain failed to start up :(')}</h1>
+        <div class="row items-center">
+          <button style="margin-right: 5px;" @click=${() => window.electronAPI.openLogs()}>
+            ${msg('Open Logs')}
+          </button>
+          <button style="margin-right: 5px;" @click=${() => window.electronAPI.exportLogs()}>
+            ${msg('Export Logs')}
+          </button>
+          <button
+            style="margin-right: 5px;"
+            @click=${() => {
+              this.chooseView();
+            }}
+          >
+            ${msg('Retry')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   renderContent() {
     switch (this.view) {
       case SplashScreenMode.Loading:
@@ -323,6 +349,8 @@ export class SplashScreen extends LitElement {
         return this.renderEnterPassword();
       case SplashScreenMode.Launching:
         return this.renderLaunching();
+      case SplashScreenMode.Error:
+        return this.renderError();
       default:
         return html``;
     }
@@ -381,7 +409,8 @@ export class SplashScreen extends LitElement {
         >
         ${this.view === SplashScreenMode.Setup ||
         this.view === SplashScreenMode.Launching ||
-        this.view === SplashScreenMode.EnterPassword
+        this.view === SplashScreenMode.EnterPassword ||
+        this.view === SplashScreenMode.Error
           ? html`<img
               class="top-left"
               src="icon.png"

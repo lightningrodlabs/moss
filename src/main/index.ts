@@ -823,6 +823,8 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('exit', () => {
       app.exit(0);
     });
+    ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
+    ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
     ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',
