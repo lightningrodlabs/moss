@@ -139,15 +139,19 @@ export class ToolLibraryWeb2 extends LitElement {
 
     // 2. Identify all distinct tool lists and fetch them
     const toolLists: Record<ToolListUrl, DeveloperCollectiveToolList> = {};
-
     const distinctToolListUrls = Array.from(
       new Set(curationLists.map((list) => list.list.tools.map((tool) => tool.toolListUrl)).flat()),
     );
+    console.log('curationLists: ', curationLists);
+
+    console.log('distinctToolListUrls: ', distinctToolListUrls);
+
     await Promise.allSettled(
       distinctToolListUrls.map(async (url) => {
         try {
           const resp = await fetch(url, { cache: 'no-cache' });
           const toolList: DeveloperCollectiveToolList = await resp.json();
+          console.log('Fetched tool list: ', toolList);
           toolLists[url] = toolList;
           developerCollectives[url] = toolList.developerCollective;
         } catch (e) {

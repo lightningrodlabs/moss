@@ -1479,6 +1479,21 @@ if (!RUNNING_WITH_COMMAND) {
         appHashes: AppHashes,
         uiPort?: number,
       ): Promise<AppInfo> => {
+        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+        const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
+        if (alreadyInstalledAppInfo) {
+          // This case should only occur in rare edge cases where Moss got interrupted after
+          // installing an app into the conductor but before joining it in the group dna.
+          // In that case, check that the asset info is stored as well and return the AppInfo,
+          // otherwise throw an error
+          try {
+            WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+          } catch (e) {
+            throw new Error('App already installed in conductor but no app asset info stored. ');
+          }
+          return alreadyInstalledAppInfo;
+        }
+
         if (distributionInfo.type !== 'web2-tool-list')
           throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
 
@@ -1524,7 +1539,7 @@ if (!RUNNING_WITH_COMMAND) {
         let sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
         let sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
         console.log('INSTALLING APPLET BUNDLE. uiPort: ', uiPort);
-        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+
         let agentPubKey = globalPubKeyFromListAppsResponse(apps);
         if (!agentPubKey) {
           agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
@@ -1634,9 +1649,12 @@ if (!RUNNING_WITH_COMMAND) {
             agent_key: agentPubKey,
             network_seed: networkSeed,
           });
-        } catch (e) {
-          // Remove AppMetaData directory again
-          WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+        } catch (e: any) {
+          // Remove app meta data directory again if the error unless it's a CellAlreadyExists error
+          // in which case we don't want to remove the meta data of an existing app
+          if (e.toString && !e.toString().includes('CellAlreadyExists')) {
+            WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+          }
           throw new Error(`Failed to install app: ${e}`);
         }
 
