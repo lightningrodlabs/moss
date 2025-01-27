@@ -621,8 +621,8 @@ if (!RUNNING_WITH_COMMAND) {
             try {
               const assetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appletAppId);
               console.log('assetInfo: ', assetInfo);
-              if (assetInfo.distributionInfo.type === 'tools-library') {
-                toolId = assetInfo.distributionInfo.info.originalToolActionHash;
+              if (assetInfo.distributionInfo.type === 'web2-tool-list') {
+                toolId = assetInfo.distributionInfo.info.toolCompatibilityId;
               }
             } catch (e) {
               console.warn('Failed to read assetInfo during permission request.');
