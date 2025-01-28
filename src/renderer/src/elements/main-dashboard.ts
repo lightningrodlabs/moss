@@ -817,11 +817,16 @@ export class MainDashboard extends LitElement {
   }
 
   renderToolCrossGroupViews() {
+    const personalToolView =
+      this._dashboardState.value.viewType === 'personal' &&
+      this._dashboardState.value.viewState.type === 'tool';
     switch (this._runningAppletClasses.value.status) {
       case 'pending':
-        return html`Loading running tool classes...`;
+        return personalToolView ? html`Loading running tool classes...` : html``;
       case 'error':
-        return html`Failed to get running tool classes: ${this._runningAppletClasses.value.error}`;
+        return personalToolView
+          ? html`Failed to get running tool classes: ${this._runningAppletClasses.value.error}`
+          : html``;
       case 'complete':
         return repeat(
           Object.keys(this._runningAppletClasses.value.value),
