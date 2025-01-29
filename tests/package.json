@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "test": "vitest run",
-    "test:group": "vitest --dir ./src/group/group run"
+    "test:group": "vitest --dir ./src/group/group run",
+    "test:assets": "vitest --dir ./src/assets/assets run"
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",

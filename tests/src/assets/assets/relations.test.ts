@@ -1,5 +1,4 @@
 import { assert, test } from 'vitest';
-import { encode } from '@msgpack/msgpack';
 import { runScenario, dhtSync } from '@holochain/tryorama';
 import { encodeHashToBase64, EntryHash, fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
@@ -533,5 +532,102 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
       payload: wal2,
     });
     assert(incomingRelationsWal2ReadByBob2.length === 0);
+  });
+});
+
+test('Add two asset relations with tags and read them with get_all_asset_relations_with_tags', async () => {
+  await runScenario(async (scenario) => {
+    // Construct proper paths for your app.
+    // This assumes app bundle created by the `hc app pack` command.
+    const testAppPath = GROUP_HAPP_PATH;
+
+    // Set up the app to be installed
+    const appSource = { appBundleSource: { path: testAppPath } };
+
+    // Add 2 players with the test app to the Scenario. The returned players
+    // can be destructured.
+    const [alice, bob] = await scenario.addPlayersWithApps([appSource, appSource]);
+
+    // Shortcut peer discovery through gossip and register all agents in every
+    // conductor of the scenario.
+    await scenario.shareAllAgents();
+
+    const assetsCellAlice = getCellByRoleName(alice, 'assets');
+    const assetsCellBob = getCellByRoleName(bob, 'assets');
+
+    // 1. Alice adds two asset relations between two WALs, then both Alice and Bob try to read it
+    const wal1: WAL = {
+      hrl: [assetsCellAlice.cell_id[0], await fakeActionHash()],
+      context: new Uint8Array(4),
+    };
+
+    const wal2: WAL = {
+      hrl: [assetsCellAlice.cell_id[0], await fakeActionHash()],
+      context: new Uint8Array(5),
+    };
+
+    const wal3: WAL = {
+      hrl: [assetsCellAlice.cell_id[0], await fakeActionHash()],
+      context: new Uint8Array(6),
+    };
+
+    const input1: RelateAssetsInput = {
+      src_wal: wal1,
+      dst_wal: wal2,
+      tags: ['depends_on', 'loves', 'cares_about'],
+    };
+
+    const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
+      zome_name: 'assets',
+      fn_name: 'add_asset_relation',
+      payload: input1,
+    });
+
+    const input2: RelateAssetsInput = {
+      src_wal: wal1,
+      dst_wal: wal3,
+      tags: ['refers_to'],
+    };
+
+    const assetRelation2: AssetRelationWithTags = await assetsCellAlice.callZome({
+      zome_name: 'assets',
+      fn_name: 'add_asset_relation',
+      payload: input2,
+    });
+
+    // Bob tries to read them
+    await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
+
+    // Read outgoing asset relations from wal 1
+    const allAssetRelationsWithTags: AssetRelationWithTags[] = await assetsCellBob.callZome({
+      zome_name: 'assets',
+      fn_name: 'get_all_asset_relations_with_tags',
+      payload: null,
+    });
+
+    const wal1RelationReadByAlice = allAssetRelationsWithTags.find(
+      (rel) =>
+        encodeHashToBase64(rel.relation_hash) === encodeHashToBase64(assetRelation1.relation_hash),
+    );
+    assert.deepEqual(wal1RelationReadByAlice, {
+      src_wal: assetRelation1.src_wal,
+      dst_wal: assetRelation1.dst_wal,
+      tags: ['depends_on', 'loves', 'cares_about'],
+      relation_hash: assetRelation1.relation_hash,
+      created_at: assetRelation1.created_at,
+    });
+
+    const wal2RelationReadByAlice = allAssetRelationsWithTags.find(
+      (rel) =>
+        encodeHashToBase64(rel.relation_hash) === encodeHashToBase64(assetRelation2.relation_hash),
+    );
+
+    assert.deepEqual(wal2RelationReadByAlice, {
+      src_wal: assetRelation2.src_wal,
+      dst_wal: assetRelation2.dst_wal,
+      tags: ['refers_to'],
+      relation_hash: assetRelation2.relation_hash,
+      created_at: assetRelation2.created_at,
+    });
   });
 });

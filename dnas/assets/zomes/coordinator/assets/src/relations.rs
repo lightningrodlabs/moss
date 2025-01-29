@@ -390,6 +390,39 @@ pub fn get_all_asset_relations() -> ExternResult<Vec<AssetRelationAndHash>> {
 }
 
 #[hdk_extern]
+pub fn get_all_asset_relations_with_tags() -> ExternResult<Vec<AssetRelationWithTags>> {
+    let asset_relations = get_all_asset_relations(())?;
+    let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
+    for asset_relation in asset_relations {
+        let links = get_links(
+            GetLinksInputBuilder::try_new(
+                asset_relation.relation_hash.clone(),
+                LinkTypes::AssetRelationToRelationshipTags,
+            )?
+            .build(),
+        )?;
+        let tags = links
+            .iter()
+            .map(|l| {
+                ExternIO::from(l.clone().tag.0)
+                    .decode::<LinkTagContent>()
+                    .ok()
+            })
+            .filter_map(|c| c)
+            .map(|c| c.tag)
+            .collect::<Vec<String>>();
+        asset_relations_with_tags.push(AssetRelationWithTags {
+            src_wal: asset_relation.src_wal,
+            dst_wal: asset_relation.dst_wal,
+            tags,
+            relation_hash: asset_relation.relation_hash,
+            created_at: asset_relation.created_at,
+        });
+    }
+    Ok(asset_relations_with_tags)
+}
+
+#[hdk_extern]
 pub fn get_outgoing_asset_relations_with_tags(
     src_wal: WAL,
 ) -> ExternResult<Vec<AssetRelationWithTags>> {
