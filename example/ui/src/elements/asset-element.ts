@@ -52,62 +52,60 @@ export class AssetElement extends LitElement {
     if (!this.assetInfo)
       return html`<div class="row element" style="height: 30px;"><span>loading...</span></div>`;
     console.log('this.assetInfo: ', this.assetInfo.assetInfo);
-    return html`
-            <div
-              class="row element"
-              title=${`weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-                this.wal.hrl[1]
-              )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
-            >
+    return html`<div
+        class="row element"
+        title=${`weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+          this.wal.hrl[1]
+        )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
+      >
+        <div
+          class="row open"
+          style="align-items: center; padding: 0; margin: 0;"
+          tabindex="0"
+          @click=${() => this.handleClick()}
+          @keypress.enter=${() => this.handleClick()}
+        >
+          <div class="row icon-container">
+            <sl-icon
+              style="height: 30px; width: 30px; border-radius: 5px 0 0 5px;"
+              .src=${this.assetInfo.assetInfo.icon_src}
+              alt="${this.assetInfo.assetInfo.name} entry type icon"
+            ></sl-icon>
+          </div>
+          <div class="row title-container">${this.assetInfo.assetInfo.name}</div>
+        </div>
+        <!-- <div class="row open">Open</div> -->
 
-              <div
-                class="row open"
-                style="align-items: center; padding: 0; margin: 0;"
-                tabindex="0"
-                @click=${() => this.handleClick()}
-                @keypress.enter=${() => this.handleClick()}
-              >
-                <div class="row icon-container">
-                  <sl-icon
-                    style="height: 30px; width: 30px; border-radius: 5px 0 0 5px;"
-                    .src=${this.assetInfo.assetInfo.icon_src}
-                    alt="${this.assetInfo.assetInfo.name} entry type icon"
-                  ></sl-icon>
-                </div>
-                <div class="row title-container">${this.assetInfo.assetInfo.name}</div>
-              </div>
-              <!-- <div class="row open">Open</div> -->
-
-              <sl-tooltip .content=${msg('Copy URL')}>
-                <div
-                  class="row share"
-                  tabindex="0"
-                  @click=${async () => {
-                    const weaveUrl = weaveUrlFromWal(this.wal, false);
-                    await navigator.clipboard.writeText(weaveUrl);
-                    notify(msg('URL copied.'));
-                  }}
-                  @keypress=${async (e: KeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      const weaveUrl = weaveUrlFromWal(this.wal, false);
-                      await navigator.clipboard.writeText(weaveUrl);
-                      notify(msg('URL copied.'));
-                    }
-                  }}
-                >
-                    <sl-icon .src=${wrapPathInSvg(mdiShareVariantOutline)}><sl-icon>
-                </div>
-              </sl-tooltip>
-              <button @click=${() => {
-                this.dispatchEvent(
-                  new CustomEvent('remove-wal', {
-                    bubbles: true,
-                    composed: true,
-                  })
-                );
-              }}>Remove</button>
-            </div>
-          `;
+        <sl-tooltip .content=${msg('Copy URL')}>
+          <div
+            class="row share"
+            tabindex="0"
+            @click=${async () => {
+              const weaveUrl = weaveUrlFromWal(this.wal, false);
+              await navigator.clipboard.writeText(weaveUrl);
+              notify(msg('URL copied.'));
+            }}
+            @keypress=${async (e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                const weaveUrl = weaveUrlFromWal(this.wal, false);
+                await navigator.clipboard.writeText(weaveUrl);
+                notify(msg('URL copied.'));
+              }
+            }}
+          >
+              <sl-icon .src=${wrapPathInSvg(mdiShareVariantOutline)}><sl-icon>
+          </div>
+        </sl-tooltip>
+        <button @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('remove-wal', {
+              bubbles: true,
+              composed: true,
+            })
+          );
+        }}>Remove</button>
+      </div>
+    `;
   }
 
   static styles = [

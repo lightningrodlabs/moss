@@ -180,11 +180,30 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
   }
 
   async getAllRelationsForWal(wal: WAL): Promise<RelationsForWal> {
-    return this.callZome('get_all_relations_for_wal', walEncodeContext(wal));
+    const relationsForWal: RelationsForWal = await this.callZome(
+      'get_all_relations_for_wal',
+      walEncodeContext(wal),
+    );
+
+    return {
+      wal: relationsForWal.wal,
+      tags: relationsForWal.tags,
+      linked_from: decodeAssetRelationsWALs(relationsForWal.linked_from) as AssetRelationWithTags[],
+      linked_to: decodeAssetRelationsWALs(relationsForWal.linked_to) as AssetRelationWithTags[],
+    };
   }
 
   async batchGetAllRelationsForWal(wals: WAL[]): Promise<RelationsForWal[]> {
-    return this.callZome('batch_get_all_relations_for_wal', walsEncodeContext(wals));
+    const relationsForWals: RelationsForWal[] = await this.callZome(
+      'batch_get_all_relations_for_wal',
+      walsEncodeContext(wals),
+    );
+    return relationsForWals.map((relationsForWal) => ({
+      wal: relationsForWal.wal,
+      tags: relationsForWal.tags,
+      linked_from: decodeAssetRelationsWALs(relationsForWal.linked_from) as AssetRelationWithTags[],
+      linked_to: decodeAssetRelationsWALs(relationsForWal.linked_to) as AssetRelationWithTags[],
+    }));
   }
 
   async getAllAssetRelations(): Promise<AssetRelationAndHash[]> {
