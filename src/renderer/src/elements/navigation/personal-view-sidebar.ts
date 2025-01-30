@@ -20,7 +20,7 @@ import { weStyles } from '../../shared-styles.js';
 import { AppletId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiHome, mdiStoreSearch } from '@mdi/js';
+import { mdiGraph, mdiHome, mdiStoreSearch } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
@@ -145,6 +145,35 @@ export class PersonalViewSidebar extends LitElement {
       >
         <div class="moss-item-button">
           <img src="mountain_stream.svg" class="black-svg" style="height: 40px;" />
+        </div>
+      </topbar-button>
+
+      <topbar-button
+        .invertColors=${true}
+        style="margin-left: -4px; position: relative;"
+        .selected=${this.selectedView &&
+        this.selectedView.type === 'moss' &&
+        this.selectedView.name === 'assets-graph'}
+        .tooltipText=${'Assets Graph'}
+        placement="bottom"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('personal-view-selected', {
+              detail: {
+                type: 'moss',
+                name: 'assets-graph',
+              },
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="moss-item-button">
+          <sl-icon
+            .src=${wrapPathInSvg(mdiGraph)}
+            style="font-size: 40px; margin-top: -3px"
+          ></sl-icon>
         </div>
       </topbar-button>
 

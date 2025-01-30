@@ -57,6 +57,7 @@ import {
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
+  AssetRelationWithTags,
   decodeAssetRelationWALs,
   GroupRemoteSignal,
   PeerStatusClient,
@@ -291,7 +292,7 @@ export class GroupStore {
       case 'AssetRelationCreated': {
         const decodedSignal: SignalPayloadAssets = {
           type: 'AssetRelationCreated',
-          relation: decodeAssetRelationWALs(signal.relation),
+          relation: decodeAssetRelationWALs(signal.relation) as AssetRelationWithTags,
         };
         // Add it to the asset store of the srcWal
         const srcWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.src_wal));

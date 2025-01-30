@@ -12,6 +12,7 @@ import {
   derived,
   manualReloadStore,
   asyncReadable,
+  Unsubscriber,
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
@@ -90,7 +91,14 @@ import {
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
-import { AppletNotification, ToolAndCurationInfo, ToolInfoAndLatestVersion } from './types.js';
+import {
+  AppletNotification,
+  CallbackWithId,
+  MossEvent,
+  MossEventMap,
+  ToolAndCurationInfo,
+  ToolInfoAndLatestVersion,
+} from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
@@ -189,6 +197,8 @@ export class MossStore {
    */
   _appletDevPorts: Record<AppletId, number> = {};
 
+  _eventCallbacks: Record<MossEvent, CallbackWithId[]> = { 'open-asset': [] };
+
   _toolIcons: Record<ToolCompatibilityId, string> = {};
 
   _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
@@ -196,6 +206,42 @@ export class MossStore {
   _tzUtcOffset: number | undefined;
 
   myLatestActivity: number;
+
+  emit(event: MossEvent, detail: MossEventMap[MossEvent]): void {
+    const callbacksWithId = this._eventCallbacks[event];
+    console.log('Got callbacks: ', callbacksWithId);
+    if (callbacksWithId) {
+      callbacksWithId.forEach((cb) => cb.callback(detail));
+    }
+  }
+
+  on<MossEvent extends keyof MossEventMap>(
+    event: MossEvent,
+    callback: (e: MossEventMap[MossEvent]) => any,
+  ): Unsubscriber {
+    const existingCallbacks = this._eventCallbacks[event] || [];
+    let newCallbackId = 0;
+    const existingCallbackIds = existingCallbacks.map((callbackWithId) => callbackWithId.id);
+    if (existingCallbackIds && existingCallbackIds.length > 0) {
+      // every new callback gets a new id in increasing manner
+      const highestId = existingCallbackIds.sort((a, b) => b - a)[0];
+      newCallbackId = highestId + 1;
+    }
+
+    existingCallbacks.push({ id: newCallbackId, callback });
+
+    this._eventCallbacks[event] = existingCallbacks;
+
+    const unlisten = () => {
+      const allCallbacks = this._eventCallbacks[event] || [];
+      this._eventCallbacks[event] = allCallbacks.filter(
+        (callbackWithId) => callbackWithId.id !== newCallbackId,
+      );
+    };
+
+    // We return an unlistener function which removes the callback from the list of callbacks
+    return unlisten;
+  }
 
   async toolInfoFromRemote(
     toolListUrl: string,
