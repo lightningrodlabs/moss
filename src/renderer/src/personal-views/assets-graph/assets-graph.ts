@@ -7,8 +7,8 @@ import * as vis from 'vis-network/standalone';
 import { mossStoreContext } from '../../context';
 import { MossStore } from '../../moss-store';
 import { toPromise } from '@holochain-open-dev/stores';
-import { DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { AppletId, deStringifyWal, stringifyWal } from '@theweave/api';
+import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
+import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { getCellId } from '../../utils';
 
@@ -60,6 +60,7 @@ export class AssetsGraph extends LitElement {
           shape: groupProfile?.icon_src ? 'image' : undefined,
           size: 50,
           mass: 12,
+          shadow: true,
         });
         // Add applet nodes and
         const appletStores = await toPromise(groupStore.activeAppletStores);
@@ -69,7 +70,14 @@ export class AssetsGraph extends LitElement {
             // Get dna hash to applet mapping in order to be able to link WALs to their associated applets
             const appletId = encodeHashToBase64(appletHash);
             const appletClient = await this.mossStore.getAppClient(appIdFromAppletHash(appletHash));
-            const appInfo = await appletClient.appInfo();
+            let appInfo: AppInfo | undefined | null;
+            try {
+              appInfo = await appletClient.appInfo();
+            } catch (e: any) {
+              if (e.toString && !e.toString().includes('CellDisabled')) {
+                console.warn('Failed to get AppInfo for applet', appletId, ':', e);
+              }
+            }
             if (appInfo) {
               Object.values(appInfo.cell_info)
                 .flat()
@@ -93,6 +101,7 @@ export class AssetsGraph extends LitElement {
               },
               size: 35,
               mass: 8,
+              shadow: true,
             });
             // Create a connection between the group node and the applet node
             edges.push({
@@ -117,8 +126,15 @@ export class AssetsGraph extends LitElement {
             const srcWalStringified = stringifyWal(assetRelationWithTags.src_wal);
             const dstWalStringified = stringifyWal(assetRelationWithTags.dst_wal);
             // TODO make fail-safe here
-            const assetInfoSrc = await toPromise(this.mossStore.assetInfo.get(srcWalStringified));
-            const assetInfoDst = await toPromise(this.mossStore.assetInfo.get(dstWalStringified));
+            let assetInfoSrc: AssetInfo | undefined;
+            let assetInfoDst: AssetInfo | undefined;
+
+            try {
+              assetInfoSrc = await toPromise(this.mossStore.assetInfo.get(srcWalStringified));
+            } catch (e) {}
+            try {
+              assetInfoDst = await toPromise(this.mossStore.assetInfo.get(dstWalStringified));
+            } catch (e) {}
 
             // Add the src's asset node if it doesn't exist yet
             if (!nodes.find((node) => node.id === srcWalStringified)) {
@@ -126,7 +142,9 @@ export class AssetsGraph extends LitElement {
                 id: srcWalStringified,
                 label: assetInfoSrc ? assetInfoSrc.name : 'Unknown Asset',
                 image: assetInfoSrc ? assetInfoSrc.icon_src : undefined,
-                shape: 'image',
+                shape: assetInfoSrc ? 'image' : 'triangleDown',
+                shadow: true,
+                size: 20,
               });
             }
             // Add the dst's asset node if it doesn't exist yet
@@ -135,7 +153,9 @@ export class AssetsGraph extends LitElement {
                 id: dstWalStringified,
                 label: assetInfoDst ? assetInfoDst.name : 'Unknown Asset',
                 image: assetInfoDst ? assetInfoDst.icon_src : undefined,
-                shape: 'image',
+                shape: assetInfoDst ? 'image' : 'triangleDown',
+                shadow: true,
+                size: 20,
               });
             }
 
