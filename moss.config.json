@@ -1,20 +1,20 @@
 {
   "holochain": {
-    "version": "0.4.0",
+    "version": "0.4.1",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "f2e5d5c5c90a0c5eb85641bd8ab207396ddbbc304aaa51982dfde24037a0d0a9",
-      "x86_64-pc-windows-msvc.exe": "9b893527d1f4c1e69fa3c9fbd605987065087ca15ebc72bbe598edef9ab5b27a",
-      "x86_64-apple-darwin": "9d8e4996dd86441ec859faf9fa90c31bdfaddd49d5079bf67492d9c93d17c503",
-      "aarch64-apple-darwin": "1d206d09ddf90c85b781457514df3c87d8c7e38a6dab4e53f01a8f089acfa3d1"
+      "x86_64-unknown-linux-gnu": "ee713408a31d2e17826b18e2eaea0b3e200b42aa0cc8e3562c899b0b5ebcaa0c",
+      "x86_64-pc-windows-msvc.exe": "9aa248f6e500915085ebf3fd093541cbbdad59a994e7f904260cb4ad788bd1e3",
+      "x86_64-apple-darwin": "0ce19dfde7db6521cd96e2fef924c62d319d204e7f79bc0379674a7a6122c74f",
+      "aarch64-apple-darwin": "74dc8d8529a50d24e8338ddd2e9913d6fb34414f6588d11243e6ccb29feda029"
     }
   },
   "hc": {
-    "version": "0.4.0",
+    "version": "0.4.1",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "ec1b3153e7ac3878a6b431c2f539b33988c27c9eec512d2eb56e2e4fa27035a7",
-      "x86_64-pc-windows-msvc.exe": "4437369e509a1f8e671ec894a39ca11771f6e58e3ac174ce8cdccf9d53976516",
-      "x86_64-apple-darwin": "6f3d58c59dd3c86a3609186ed01cce9700dcfd7a4e3263add2093f4f2e95de65",
-      "aarch64-apple-darwin": "2262fc8fed00e876c77c52dc1972ed2f0e8f7bab7bddee09f2701059c95aa8b3"
+      "x86_64-unknown-linux-gnu": "b139eecc6a70a4c8e4095016f79cc70e97bf47816c8df37f53aa6e066096b0fa",
+      "x86_64-pc-windows-msvc.exe": "bab5f9825ce8ddf1c5fc63ee29248fe1c121e03ee1ac7e6a6b348b9786daff08",
+      "x86_64-apple-darwin": "b44099c1cd0f749c5152bc6596b89de406a07f19c56960e705c99acb1715bdb5",
+      "aarch64-apple-darwin": "ab1644436b1fa67d56f4859ebb94e5960d15d792274ad7d7d19babb890e6e183"
     }
   },
   "lair": {
@@ -27,7 +27,7 @@
     }
   },
   "groupHapp": {
-    "version": "0.13.0-rc.1",
+    "version": "0.13.0",
     "sha256": "bbe91f4f25547aaa0911eee4cd3f9cc2f85f7f94932a432d02d2bddc00b39323"
   },
   "binariesAppendix": "moss-0.13"
