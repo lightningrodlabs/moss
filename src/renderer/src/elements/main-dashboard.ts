@@ -39,6 +39,7 @@ import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
 import '../personal-views/activity-view/activity-view.js';
+import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './navigation/group-applets-sidebar.js';
@@ -78,6 +79,7 @@ import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
+import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -616,6 +618,10 @@ export class MainDashboard extends LitElement {
       }
     });
 
+    this._mossStore.on('open-asset', (wal) => {
+      this.handleOpenWal(wal);
+    });
+
     // setInterval(() => {
     //   const allIframes = getAllIframes();
     //   console.log('CURRENT IFRAME COUNT: ', allIframes.length);
@@ -864,6 +870,15 @@ export class MainDashboard extends LitElement {
           this.openViews.openAppletMain(e.detail.appletHash);
         }}
       ></welcome-view>
+
+      <assets-graph
+        id="assets-graph"
+        style="${this.displayMossView('assets-graph')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: hidden;"
+      ></assets-graph>
 
       <activity-view
         @open-wal=${async (e) => {
@@ -1630,12 +1645,21 @@ export class MainDashboard extends LitElement {
             .selectedView=${this._dashboardState.value.viewType === 'personal'
               ? this._dashboardState.value.viewState
               : undefined}
-            @personal-view-selected=${(e) => {
-              console.log('@tool-selected: ', e);
+            @personal-view-selected=${async (e) => {
+              console.log('@personal-view-selected: ', e);
               this._mossStore.setDashboardState({
                 viewType: 'personal',
                 viewState: e.detail,
               });
+              if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
+                const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
+                  | AssetsGraph
+                  | null
+                  | undefined;
+                if (assetsGraphEl) {
+                  await assetsGraphEl.load();
+                }
+              }
             }}
           ></personal-view-sidebar>
         </div>

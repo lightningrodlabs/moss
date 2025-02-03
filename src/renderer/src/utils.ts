@@ -524,6 +524,22 @@ export function resizeAndExportImg(img: HTMLImageElement): string {
   return base64string;
 }
 
+/**
+ *
+ * @param iconSrc Takes an src attribute and if it's an SVG data url, encodes the svg part URI safe
+ */
+export function iconSrcURIEncodeSVG(iconSrc: string): string {
+  if (iconSrc.startsWith('data:image/svg+xml;utf8,')) {
+    return (
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(iconSrc.replace('data:image/svg+xml;utf8,', ''))
+    );
+  } else if (iconSrc.startsWith('data:image/svg+xml;')) {
+    return 'data:image/svg+xml;' + encodeURIComponent(iconSrc.replace('data:image/svg+xml;', ''));
+  }
+  return iconSrc;
+}
+
 export function urlFromAppletHash(appletHash: AppletHash): string {
   const appletHashB64 = encodeHashToBase64(appletHash);
   const lowerCaseAppletId = toLowerCaseB64(appletHashB64);

@@ -57,6 +57,7 @@ import {
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
+  AssetRelationWithTags,
   decodeAssetRelationWALs,
   GroupRemoteSignal,
   PeerStatusClient,
@@ -291,11 +292,11 @@ export class GroupStore {
       case 'AssetRelationCreated': {
         const decodedSignal: SignalPayloadAssets = {
           type: 'AssetRelationCreated',
-          relation: decodeAssetRelationWALs(signal.relation),
+          relation: decodeAssetRelationWALs(signal.relation) as AssetRelationWithTags,
         };
         // Add it to the asset store of the srcWal
-        const srcWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.src_wal));
-        const dstWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.dst_wal));
+        const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
+        const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
         if (srcStoreAndSubscribers) {
@@ -377,6 +378,7 @@ export class GroupStore {
             created_at: signal.relation.created_at,
           },
         };
+        console.log('ASSET RELATION REMOVED!', decodedSignal);
         const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
         const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];

@@ -5,7 +5,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@holochain-open-dev/profiles": "0.400.0",
+    "@holochain-open-dev/profiles": "0.400.1",
     "@holochain-open-dev/utils": "0.400.0",
     "@holochain-open-dev/stores": "0.400.0",
     "@holochain/client": "^0.18.0",

@@ -1,5 +1,5 @@
 import { AgentPubKeyB64, DnaHash, FullStateDump } from '@holochain/client';
-import { AppletId, FrameNotification } from '@theweave/api';
+import { AppletId, FrameNotification, WAL } from '@theweave/api';
 import {
   CuratedTool,
   DistributionInfo,
@@ -69,4 +69,15 @@ export type ToolInfoAndLatestVersion = {
   toolInfo: ToolInfoAndVersions;
   latestVersion: ToolVersionInfo;
   distributionInfo: DistributionInfo;
+};
+
+export type MossEvent = 'open-asset';
+
+export type MossEventMap = {
+  'open-asset': WAL;
+};
+
+export type CallbackWithId = {
+  id: number;
+  callback: (e: MossEventMap[MossEvent]) => any;
 };
