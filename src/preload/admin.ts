@@ -9,7 +9,7 @@ import {
   FunctionName,
   ZomeName,
 } from '@holochain/client';
-import { contextBridge, IpcRenderer, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
   AppletToParentMessage,
