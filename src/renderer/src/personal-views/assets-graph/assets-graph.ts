@@ -252,6 +252,14 @@ export class AssetsGraph extends LitElement {
       },
       physics: {
         enabled: true,
+        // repulsion: {
+        //   springConstant: 1000,
+        //   damping: 0.9,
+        // },
+      },
+      // https://visjs.github.io/vis-network/docs/network/layout.html
+      layout: {
+        randomSeed: 1,
       },
     };
 
