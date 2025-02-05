@@ -499,6 +499,10 @@ export type IframeConfig =
   | {
       type: 'applet';
       appPort: number;
+      /**
+       * The origin of the main Moss UI. Used to validate iframe message origins.
+       */
+      mainUiOrigin: string;
       appletHash: EntryHash;
       authenticationToken: AppAuthenticationToken;
       weaveProtocolVersion: string;
@@ -509,6 +513,10 @@ export type IframeConfig =
   | {
       type: 'cross-applet';
       appPort: number;
+      /**
+       * The origin of the main Moss UI. Used to validate iframe message origins.
+       */
+      mainUiOrigin: string;
       weaveProtocolVersion: string;
       mossVersion: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;

@@ -314,6 +314,7 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'cross-applet',
           appPort: mossStore.conductorInfo.app_port,
+          mainUiOrigin: window.location.origin,
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
           mossVersion: mossStore.conductorInfo.moss_version,
           applets,
@@ -335,6 +336,7 @@ export async function handleAppletIframeMessage(
         const config: IframeConfig = {
           type: 'applet',
           appletHash,
+          mainUiOrigin: window.location.origin,
           authenticationToken: appletStore.authenticationToken,
           appPort: mossStore.conductorInfo.app_port,
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,

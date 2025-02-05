@@ -3101,18 +3101,18 @@
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "^2.19.0"
     "@theweave/api" "0.4.0"
-    "@theweave/elements" "0.4.0-alpha.1"
+    "@theweave/elements" "0.4.0"
     lit "^3.0.2"
 
-"@theweave/cli@0.13.0-rc.1":
-  version "0.13.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.13.0-rc.1.tgz#99d3963a04132a9beab0c09042570c02e29fb44b"
-  integrity sha512-YCgVE0RbjhELDl5AtLYCMSy3BUcoNRHsK9x9t54ecnNtX5C/kmKu/fSm4oqAQHs+MGVHgK0Dwnhg8cI/ayS2yg==
+"@theweave/cli@0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.13.0.tgz#9a6111c3411105518c219da2aaa2a9310b1d1ea4"
+  integrity sha512-s1kadTX/RbkntRw/xXUkBlb0G3cG8smIY2QFdnY+mzawenjFg8QEDJhZRDb4lHwQLdraIJU/iFhySAMsflXLqg==
   dependencies:
     "@electron-toolkit/preload" "^2.0.0"
     "@electron-toolkit/utils" "^2.0.0"
-    "@holochain-open-dev/elements" "0.400.0"
-    "@holochain-open-dev/profiles" "0.400.0"
+    "@holochain-open-dev/elements" "0.400.1"
+    "@holochain-open-dev/profiles" "0.400.1"
     "@holochain-open-dev/stores" "0.400.0"
     "@holochain-open-dev/utils" "0.400.0"
     "@holochain/client" "^0.18.0"
@@ -3137,24 +3137,6 @@
     utf-8-validate "^6.0.3"
     uuid "9.0.1"
     winston "3.11.0"
-
-"@theweave/elements@0.4.0-alpha.1":
-  version "0.4.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@theweave/elements/-/elements-0.4.0-alpha.1.tgz#b815b54486d4b7e1d52992035a018eec14a055ab"
-  integrity sha512-a+cJIO30i0tt1rH/frajzCPVxM5nIFXm2/gf0tn1bH91qOZi5jeoPzC46kWCpkRQhzOn7zmhR52+KdiqnezFOg==
-  dependencies:
-    "@holochain-open-dev/elements" "0.400.0"
-    "@holochain-open-dev/profiles" "0.400.0"
-    "@holochain-open-dev/stores" "0.400.0"
-    "@holochain-open-dev/utils" "0.400.0"
-    "@holochain/client" "^0.18.0"
-    "@lit/context" "^1.0.1"
-    "@lit/localize" "^0.12.0"
-    "@mdi/js" "^7.2.0"
-    "@shoelace-style/shoelace" "^2.19.0"
-    "@theweave/api" "0.4.0-alpha.1"
-    js-base64 "^3.7.5"
-    lit "^3.0.2"
 
 "@theweave/elements@file:libs/elements":
   version "0.4.0"

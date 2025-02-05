@@ -1,7 +1,6 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
-  ActionHash,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -337,25 +336,6 @@ const weaveApi: WeaveServices = {
   window.__WEAVE_API__ = weaveApi;
   window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
-  // message handler for ParentToApplet messages
-  // This one is registered early here for any type of iframe
-  // to be able to respond also in case of page refreshes in short time
-  // intervals. Otherwise the message handler may not be registered in time
-  // when the on-before-unload message is sent to the iframe and Moss
-  // is waiting for a response and will never get one.
-  window.addEventListener('message', async (m: MessageEvent<any>) => {
-    try {
-      const result = await handleEventMessage(m.data);
-      // Only send result success if truthy, indicating that the message was
-      // actually handled, otherwise the `handleMessage` message handler further
-      // below will be ignored
-      if (result) m.ports[0].postMessage({ type: 'success', result });
-    } catch (e) {
-      console.error('Failed to handle postMessage\nError:', e, '\nMessage: ', m);
-      m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
-    }
-  });
-
   const [_, view] = await Promise.all([fetchLocalStorage(), getRenderView()]);
 
   if (!view) {
@@ -373,6 +353,30 @@ const weaveApi: WeaveServices = {
     renderNotInstalled(iframeConfig.appletName);
     return;
   }
+
+  // message handler for ParentToApplet messages
+  // This one is registered early here for any type of iframe
+  // to be able to respond also in case of page refreshes in short time
+  // intervals. Otherwise the message handler may not be registered in time
+  // when the on-before-unload message is sent to the iframe and Moss
+  // is waiting for a response and will never get one.
+  window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
+    if (m.origin !== iframeConfig.mainUiOrigin) {
+      console.warn('Got message from invalid origin: ', m.origin);
+      return;
+    }
+    console.log('@handleEventMessage: got message: ', m);
+    try {
+      const result = await handleEventMessage(m.data);
+      // Only send result success if truthy, indicating that the message was
+      // actually handled, otherwise the `handleMessage` message handler further
+      // below will be ignored
+      if (result) m.ports[0].postMessage({ type: 'success', result });
+    } catch (e) {
+      console.error('Failed to handle postMessage\nError:', e, '\nMessage: ', m);
+      m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
+    }
+  });
 
   window.__WEAVE_PROTOCOL_VERSION__ = iframeConfig.weaveProtocolVersion;
   window.__MOSS_VERSION__ = iframeConfig.mossVersion;
@@ -400,7 +404,11 @@ const weaveApi: WeaveServices = {
     const appletHash = window.__WEAVE_APPLET_HASH__;
 
     // message handler for ParentToApplet messages
-    window.addEventListener('message', async (m: MessageEvent<any>) => {
+    window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
+      if (m.origin !== iframeConfig.mainUiOrigin) {
+        console.warn('Got message from invalid origin: ', m.origin);
+        return;
+      }
       try {
         const result = await handleMessage(appletClient, appletHash, m.data);
         m.ports[0].postMessage({ type: 'success', result });
