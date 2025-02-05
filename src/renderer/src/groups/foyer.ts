@@ -8,13 +8,23 @@ import {
   InstalledAppId,
   AppCallZomeRequest,
   SignalType,
+  DnaHash,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
-import { type Writable, writable, get, type Readable, readable } from '@holochain-open-dev/stores';
+import {
+  type Writable,
+  writable,
+  get,
+  type Readable,
+  readable,
+  toPromise,
+} from '@holochain-open-dev/stores';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
+import { FrameNotification, GroupProfile } from '@theweave/api';
+import { MossStore } from '../moss-store';
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {
@@ -133,19 +143,30 @@ export class FoyerStore {
 
     stream.addMessage(message);
     if (message.payload.type == 'Msg') {
-      //   if (isWeaveContext()) {
-      //     this.weaveClient.notifyFrame([
-      //       {
-      //         title: `message from ${encodeHashToBase64(message.from)}`,
-      //         body: message.payload.text,
-      //         notification_type: 'message',
-      //         icon_src: undefined,
-      //         urgency: 'high',
-      //         timestamp: message.payload.created,
-      //       },
-      //     ]);
-      //   }
-      if (encodeHashToBase64(message.from) != this.myPubKeyB64) {
+      const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+      let b64From = encodeHashToBase64(message.from);
+
+      if (b64From != this.myPubKeyB64) {
+        if (!mainWindowFocused) {
+          const profile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const notification: FrameNotification = {
+            title: `from ${profile ? profile.entry.nickname : b64From}`,
+            body: message.payload.text,
+            notification_type: 'message',
+            icon_src: undefined,
+            urgency: 'high',
+            fromAgent: message.from,
+            timestamp: message.payload.created,
+          };
+          await window.electronAPI.notification(
+            notification,
+            true,
+            true,
+            undefined,
+            `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
+          );
+        }
+
         await this.client.sendMessage(streamId, { type: 'Ack', created: message.payload.created }, [
           message.from,
         ]);
@@ -153,7 +174,32 @@ export class FoyerStore {
     }
   }
 
+  static async create(
+    groupDnaHash: DnaHash,
+    mossStore: MossStore,
+    profilesStore: ProfilesStore,
+    clientIn: AppClient,
+    authenticationToken: AppAuthenticationToken,
+    roleName: RoleName,
+    zomeName: string = ZOME_NAME,
+  ) {
+    let groupProfile: undefined | GroupProfile = undefined;
+    const groupStore = await mossStore.groupStore(groupDnaHash);
+    if (groupStore) {
+      groupProfile = await toPromise(groupStore.groupProfile);
+    }
+    return new FoyerStore(
+      groupProfile,
+      profilesStore,
+      clientIn,
+      authenticationToken,
+      roleName,
+      zomeName,
+    );
+  }
+
   constructor(
+    protected groupProfile: GroupProfile | undefined,
     public profilesStore: ProfilesStore,
     protected clientIn: AppClient,
     public authenticationToken: AppAuthenticationToken,
