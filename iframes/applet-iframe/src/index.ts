@@ -129,6 +129,11 @@ const weaveApi: WeaveServices = {
         relationHash,
         tags,
       }),
+    getAllAssetRelationTags: (crossGroup) =>
+      postMessage({
+        type: 'get-all-asset-relation-tags',
+        crossGroup,
+      }),
     assetStore: (wal) => {
       const readableStore = readable<AsyncStatus<AssetStoreContent>>(
         { status: 'pending' },

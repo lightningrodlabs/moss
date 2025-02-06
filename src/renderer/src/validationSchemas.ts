@@ -475,6 +475,13 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('get-all-asset-relation-tags'),
+      crossGroup: Type.Optional(Type.Boolean()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('subscribe-to-asset-store'),
       wal: WAL,
     },

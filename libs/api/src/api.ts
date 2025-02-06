@@ -283,6 +283,14 @@ export interface AssetServices {
    */
   removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) => Promise<void>;
   /**
+   * Get all asset relation tags that have been used so far in the group. Useful for
+   * example to display in a tag selection UI element.
+   *
+   * @param crossGroup Whether to get all tags across all groups. By default false.
+   * @returns
+   */
+  getAllAssetRelationTags: (crossGroup?: boolean) => Promise<string[]>;
+  /**
    * Returns a Svelte readable store that can be subscribed to in order to get updated
    * about the latest information about this asset (tags and other related assets)
    *
@@ -498,6 +506,8 @@ export class WeaveClient implements WeaveServices {
       window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
     removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) =>
       window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
+    getAllAssetRelationTags: (crossGroup?: boolean) =>
+      window.__WEAVE_API__.assets.getAllAssetRelationTags(crossGroup),
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
   };
 

@@ -196,6 +196,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       removeTagsFromAssetRelation: (_relationHash: EntryHash, _tags: string[]) => {
         throw new Error('removeTagsFromAssetRelation is not supported in headless WeaveServices.');
       },
+      getAllAssetRelationTags: (_) => {
+        throw new Error('getAllAssetRelationTags is not supported in headless WeaveServices.');
+      },
       assetStore: (_wal: WAL) => {
         throw new Error('assetStore is not supported in headless WeaveServices.');
       },
@@ -734,6 +737,30 @@ export async function handleAppletIframeMessage(
           groupStore.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags),
         ),
       );
+    }
+    case 'get-all-asset-relation-tags': {
+      // Get all tags across all groups
+      let groupStores: GroupStore[];
+      if (message.crossGroup) {
+        const groupStoresMap = await toPromise(mossStore.groupStores);
+        groupStores = Array.from(groupStoresMap.values());
+      } else {
+        const groupStoresMap = await toPromise(
+          mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
+        );
+        groupStores = Array.from(groupStoresMap.values());
+        if (groupStores.length === 0) {
+          throw new Error('No associated group found for the provided WAL.');
+        }
+      }
+      const tags: string[] = [];
+      await Promise.all(
+        Array.from(groupStores.values()).map(async (store) => {
+          const relationTags = await toPromise(store.allAssetRelationTags);
+          tags.push(...relationTags);
+        }),
+      );
+      return Array.from(new Set(tags.sort((a, b) => a.localeCompare(b))));
     }
     case 'subscribe-to-asset-store': {
       const hrl = message.wal.hrl;

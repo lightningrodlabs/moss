@@ -460,6 +460,10 @@ export type AppletToParentRequest =
       tags: string[];
     }
   | {
+      type: 'get-all-asset-relation-tags';
+      crossGroup?: boolean;
+    }
+  | {
       type: 'subscribe-to-asset-store';
       wal: WAL;
     }
