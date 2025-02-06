@@ -553,6 +553,8 @@ export class GroupStore {
         );
       }
     }
+
+    await this.allAssetRelations.reload();
   }
 
   /**
@@ -663,6 +665,18 @@ export class GroupStore {
       }
     }
   }
+
+  /**
+   * Contains all asset relations for that group. Gets reloaded whenever a
+   * a asset signal arrives or when the asset graph view is selected
+   */
+  allAssetRelations = lazyReloadableStore(async () =>
+    this.assetsClient.getAllAssetRelationsWithTags(),
+  );
+
+  allAssetRelationTags = pipe(this.allAssetRelations, (assetRelations) => {
+    return Array.from(new Set(assetRelations.map((assetRelation) => assetRelation.tags).flat()));
+  });
 
   async groupDnaModifiers(): Promise<DnaModifiers> {
     const appInfo = await this.appWebsocket.appInfo();

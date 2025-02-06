@@ -11,6 +11,7 @@ import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { getCellId } from '../../utils';
+import { weStyles } from '../../shared-styles';
 
 @customElement('assets-graph')
 export class AssetsGraph extends LitElement {
@@ -120,7 +121,7 @@ export class AssetsGraph extends LitElement {
     await Promise.all(
       Array.from(groupStores.values()).map(async (groupStore) => {
         // Get all WALs from the group and link them appropriately
-        const allGroupAssets = await groupStore.assetsClient.getAllAssetRelationsWithTags();
+        const allGroupAssets = await toPromise(groupStore.allAssetRelations);
         await Promise.all(
           allGroupAssets.map(async (assetRelationWithTags) => {
             const srcWalStringified = stringifyWal(assetRelationWithTags.src_wal);
@@ -293,7 +294,8 @@ export class AssetsGraph extends LitElement {
     return html`
       ${this.loading
         ? html`<div class="column center-content flex-1">
-            <sl-spinner></sl-spinner>
+            <sl-spinner style="font-size: 50px; --track-width: 10px;"></sl-spinner>
+            <span style="margin-top: 10px;">Loading...</span>
           </div>`
         : html``}
       <div
@@ -303,19 +305,28 @@ export class AssetsGraph extends LitElement {
           console.log('Got click event: ', e);
         }}
       ></div>
+      <sl-button
+        variant="success"
+        style="position: absolute; top: 5px; right: 5px;"
+        @click=${() => this.loadGraphContent()}
+        >Reload</sl-button
+      >
     `;
   }
 
-  static styles = css`
-    :host {
-      display: block;
-      width: calc(100vw - 74px);
-      height: calc(100vh - 74px);
-    }
-    #graph-container {
-      width: 100%;
-      height: 100%;
-      background: white;
-    }
-  `;
+  static styles = [
+    weStyles,
+    css`
+      :host {
+        display: block;
+        width: calc(100vw - 74px);
+        height: calc(100vh - 74px);
+        background: white;
+      }
+      #graph-container {
+        width: 100%;
+        height: 100%;
+      }
+    `,
+  ];
 }
