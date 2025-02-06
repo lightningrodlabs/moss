@@ -159,13 +159,16 @@ export class AssetsGraph extends LitElement {
               });
             }
 
-            // One edge between the WALs and one for each tag and one from each WAL's parent applet to the WAL
-            edges.push({
-              from: srcWalStringified,
-              to: dstWalStringified,
-              arrows: { to: true },
-              color: 'black',
-            });
+            // One edge between the WALs (unless it's a self-referential link) and one for each tag
+            // and one from each WAL's parent applet to the WAL
+            if (srcWalStringified !== dstWalStringified) {
+              edges.push({
+                from: srcWalStringified,
+                to: dstWalStringified,
+                arrows: { to: true },
+                color: 'black',
+              });
+            }
             assetRelationWithTags.tags.forEach((tag) => {
               edges.push({
                 from: srcWalStringified,
