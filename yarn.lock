@@ -3067,6 +3067,16 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
+"@theweave/api@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.4.0.tgz#c312737b467059f73145a17d1c10b39911bf4bba"
+  integrity sha512-ETHbJH7B9+Pln7Rf+eJrrt5UXDb46uc/Mb2+IRE4Pxy42bGproBLydK0z/h1FJqvmQep/WFY5k8aETJ5VzZSdQ==
+  dependencies:
+    "@holochain-open-dev/profiles" "0.400.1"
+    "@holochain/client" "^0.18.0"
+    "@msgpack/msgpack" "^2.8.0"
+    js-base64 "^3.7.2"
+
 "@theweave/api@0.4.0-alpha.1":
   version "0.4.0-alpha.1"
   resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.4.0-alpha.1.tgz#307e5c328cd48c54a61fa2426d825be59e2d3dce"
@@ -3154,15 +3164,13 @@
     js-base64 "^3.7.5"
     lit "^3.0.2"
 
-"@theweave/group-client@0.2.0-alpha.6":
-  version "0.2.0-alpha.6"
-  resolved "https://registry.yarnpkg.com/@theweave/group-client/-/group-client-0.2.0-alpha.6.tgz#49fd1ec4bc6b2c0237f51084d615310d909f1b29"
-  integrity sha512-tNlTIwk/O/6ZUfXAds7KmGwYjzcv3BSuQtlPE9MnA+6Jn6wIPWRiy5G/RVf1JWXR0psO8hPv1nJja6t0HHRYQA==
+"@theweave/group-client@file:shared/group-client":
+  version "0.2.1"
   dependencies:
     "@holochain-open-dev/utils" "0.400.0"
     "@holochain/client" "^0.18.0"
     "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "0.4.0-alpha.3"
+    "@theweave/api" "0.4.0"
 
 "@theweave/moss-types@0.3.0-alpha.2":
   version "0.3.0-alpha.2"

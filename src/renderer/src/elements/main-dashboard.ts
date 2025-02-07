@@ -58,6 +58,7 @@ import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
+import './asset-tags/tag-selection-dialog.js';
 import './pocket/pocket.js';
 import './pocket/pocket-drop.js';
 import './creatables/creatable-panel.js';
@@ -80,6 +81,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
+import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -144,6 +146,9 @@ export class MainDashboard extends LitElement {
 
   @query('#settings-dialog')
   settingsDialog!: SlDialog;
+
+  @query('#tag-selection-dialog')
+  _tagSelectionDialog!: TagSelectionDialog;
 
   @query('#pocket')
   _pocket!: MossPocket;
@@ -329,6 +334,26 @@ export class MainDashboard extends LitElement {
         };
         this.addEventListener('wal-selected', listener);
         this.addEventListener('cancel-select-wal', listener);
+      });
+    },
+    userSelectAssetRelationTag: async () => {
+      this._tagSelectionDialog.show();
+
+      return new Promise((resolve) => {
+        const listener = (e) => {
+          switch (e.type) {
+            case 'cancel-select-asset-relation-tag':
+              this.removeEventListener('cancel-select-asset-relation-tag', listener);
+              return resolve(undefined);
+            case 'asset-relation-tag-selected':
+              const tag: string = e.detail;
+              this.removeEventListener('asset-relation-tag-selected', listener);
+              this._tagSelectionDialog.hide();
+              return resolve(tag);
+          }
+        };
+        this.addEventListener('asset-relation-tag-selected', listener);
+        this.addEventListener('cancel-select-asset-relation-tag', listener);
       });
     },
     toggleClipboard: () => this.toggleClipboard(),
@@ -1255,6 +1280,27 @@ export class MainDashboard extends LitElement {
           >Close</sl-button
         >
       </sl-dialog>
+      <tag-selection-dialog
+        id="tag-selection-dialog"
+        @asset-relation-tag-selected=${(e) => {
+          this.dispatchEvent(
+            new CustomEvent('asset-relation-tag-selected', {
+              detail: e.detail,
+              bubbles: false,
+              composed: false,
+            }),
+          );
+        }}
+        @sl-hide=${(_e) => {
+          this.dispatchEvent(
+            new CustomEvent('cancel-select-asset-relation-tag', {
+              bubbles: false,
+              composed: false,
+            }),
+          );
+          this.showClipboard = false;
+        }}
+      ></tag-selection-dialog>
       <moss-pocket
         id="pocket"
         @click=${(e) => e.stopPropagation()}

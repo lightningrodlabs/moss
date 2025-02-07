@@ -93,6 +93,10 @@ const weaveApi: WeaveServices = {
       postMessage({
         type: 'user-select-asset',
       }),
+    userSelectAssetRelationTag: () =>
+      postMessage({
+        type: 'user-select-asset-relation-tag',
+      }),
     addTagsToAsset: (wal, tags) =>
       postMessage({
         type: 'add-tags-to-asset',
@@ -370,7 +374,6 @@ const weaveApi: WeaveServices = {
       console.warn('Got message from invalid origin: ', m.origin);
       return;
     }
-    console.log('@handleEventMessage: got message: ', m);
     try {
       const result = await handleEventMessage(m.data);
       // Only send result success if truthy, indicating that the message was

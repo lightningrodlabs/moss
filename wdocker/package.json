@@ -24,7 +24,7 @@
     "@sinclair/typebox": "0.33.12",
     "@theweave/api": "0.4.0",
     "@theweave/utils": "0.3.0-alpha.2",
-    "@theweave/group-client": "0.2.0-alpha.6",
+    "@theweave/group-client": "0.2.1",
     "bufferutil": "4.0.8",
     "cli-table": "0.3.11",
     "commander": "11.1.0",

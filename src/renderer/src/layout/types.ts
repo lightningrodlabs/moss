@@ -9,5 +9,6 @@ export interface AppOpenViews {
   openCrossGroupBlock(toolCompatibilityId: ToolCompatibilityId, block: string, context: any): void;
   openAsset(wal: WAL, mode?: OpenAssetMode): void;
   userSelectWal(): Promise<WAL | undefined>;
+  userSelectAssetRelationTag(): Promise<string | undefined>;
   toggleClipboard(): void;
 }

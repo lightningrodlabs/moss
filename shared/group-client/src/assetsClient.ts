@@ -122,7 +122,7 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
   }
 
   async removeTagsFromAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset_relation', {
+    return this.callZome('remove_tags_from_asset_relation', {
       relation_hash: relationHash,
       tags,
     });

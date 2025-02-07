@@ -422,6 +422,9 @@ export type AppletToParentRequest =
       type: 'user-select-asset';
     }
   | {
+      type: 'user-select-asset-relation-tag';
+    }
+  | {
       type: 'get-global-asset-info';
       wal: WAL;
     }

@@ -231,6 +231,15 @@ export interface AssetServices {
    */
   userSelectAsset: () => Promise<WAL | undefined>;
   /**
+   * Prompts the user with a dialog to select an asset relation tag.
+   * Returns the associated tag as a string as soon as the user has
+   * selected a tag or undefined it the user cancels the selection
+   * process.
+   *
+   * @returns
+   */
+  userSelectAssetRelationTag: () => Promise<string | undefined>;
+  /**
    * Adds new tags to an asset
    *
    * @param wal
@@ -494,6 +503,7 @@ export class WeaveClient implements WeaveServices {
     assetInfo: (wal: WAL) => window.__WEAVE_API__.assets.assetInfo(wal),
     assetToPocket: (wal: WAL) => window.__WEAVE_API__.assets.assetToPocket(wal),
     userSelectAsset: () => window.__WEAVE_API__.assets.userSelectAsset(),
+    userSelectAssetRelationTag: () => window.__WEAVE_API__.assets.userSelectAssetRelationTag(),
     addTagsToAsset: (wal: WAL, tags: string[]) =>
       window.__WEAVE_API__.assets.addTagsToAsset(wal, tags),
     removeTagsFromAsset: (wal: WAL, tags: string[]) =>
@@ -505,7 +515,7 @@ export class WeaveClient implements WeaveServices {
     addTagsToAssetRelation: (relationHash: EntryHash, tags: string[]) =>
       window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
     removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) =>
-      window.__WEAVE_API__.assets.addTagsToAssetRelation(relationHash, tags),
+      window.__WEAVE_API__.assets.removeTagsFromAssetRelation(relationHash, tags),
     getAllAssetRelationTags: (crossGroup?: boolean) =>
       window.__WEAVE_API__.assets.getAllAssetRelationTags(crossGroup),
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),

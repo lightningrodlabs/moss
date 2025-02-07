@@ -50,6 +50,7 @@ import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
+  dedupStringArray,
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
@@ -216,24 +217,24 @@ export class GroupStore {
         const storeAndSubscribers = this._assetStores[walStringified];
         const linkedTo = relationsForWal.linked_to.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const newValue = {
           status: 'complete',
-          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
         };
         if (!isEqual(newValue, get(storeAndSubscribers.store))) {
           storeAndSubscribers.store.set({
             status: 'complete',
-            value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+            value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
           });
         }
       });
@@ -307,9 +308,10 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
-              );
+              const newTags = dedupStringArray([
+                ...existingWalAndTags.tags,
+                ...decodedSignal.relation.tags,
+              ]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -323,7 +325,7 @@ export class GroupStore {
                 {
                   wal: decodedSignal.relation.dst_wal,
                   relationHash: decodedSignal.relation.relation_hash,
-                  tags: decodedSignal.relation.tags,
+                  tags: dedupStringArray(decodedSignal.relation.tags),
                   createdAt: decodedSignal.relation.created_at,
                 },
               ];
@@ -342,9 +344,10 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
-              );
+              const newTags = dedupStringArray([
+                ...existingWalAndTags.tags,
+                ...decodedSignal.relation.tags,
+              ]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -358,7 +361,7 @@ export class GroupStore {
                 {
                   wal: decodedSignal.relation.src_wal,
                   relationHash: decodedSignal.relation.relation_hash,
-                  tags: decodedSignal.relation.tags,
+                  tags: dedupStringArray(decodedSignal.relation.tags),
                   createdAt: decodedSignal.relation.created_at,
                 },
               ];
@@ -425,9 +428,7 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
-              );
+              const newTags = dedupStringArray([...existingWalAndTags.tags, ...decodedSignal.tags]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -450,9 +451,7 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
-              );
+              const newTags = dedupStringArray([...existingWalAndTags.tags, ...decodedSignal.tags]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -600,24 +599,19 @@ export class GroupStore {
         const relationsForWal = await this.assetsClient.getAllRelationsForWal(wal);
         const linkedTo = relationsForWal.linked_to.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
-        console.log('@subscribe: setting assetstore', {
-          tags: relationsForWal.tags,
-          linkedFrom,
-          linkedTo,
-        });
         storeAndSubscribers.store.set({
           status: 'complete',
-          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
         });
       });
     } else {
@@ -675,7 +669,7 @@ export class GroupStore {
   );
 
   allAssetRelationTags = pipe(this.allAssetRelations, (assetRelations) => {
-    return Array.from(new Set(assetRelations.map((assetRelation) => assetRelation.tags).flat()));
+    return dedupStringArray(assetRelations.map((assetRelation) => assetRelation.tags).flat());
   });
 
   async groupDnaModifiers(): Promise<DnaModifiers> {

@@ -172,6 +172,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       userSelectAsset: () => {
         throw new Error('userSelectWal is not supported in headless WeaveServices.');
       },
+      userSelectAssetRelationTag: () => {
+        throw new Error('userSelectAssetRelationTag is not supported in headless WeaveServices.');
+      },
       assetToPocket: async (wal: WAL) => {
         mossStore.walToPocket(wal);
       },
@@ -634,6 +637,8 @@ export async function handleAppletIframeMessage(
       break;
     case 'user-select-asset':
       return openViews.userSelectWal();
+    case 'user-select-asset-relation-tag':
+      return openViews.userSelectAssetRelationTag();
     case 'add-tags-to-asset': {
       // We want to make sure that
       const hrl = message.wal.hrl;
@@ -713,6 +718,8 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'add-tags-to-asset-relation': {
+      console.log('@appletHost: GOT add-tags-to-asset-relation message. ');
+
       const groupStores = await toPromise(
         mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
       );
@@ -726,6 +733,7 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'remove-tags-from-asset-relation': {
+      console.log('@appletHost: GOT remove-tags-from-asset-relation message. ');
       const groupStores = await toPromise(
         mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
       );
@@ -733,9 +741,10 @@ export async function handleAppletIframeMessage(
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
-        Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags),
-        ),
+        Array.from(groupStores.values()).map((groupStore) => {
+          console.log('@appletHost: REMOVING TAGS FROM ASSET RELATION: ', message.tags);
+          groupStore.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags);
+        }),
       );
     }
     case 'get-all-asset-relation-tags': {

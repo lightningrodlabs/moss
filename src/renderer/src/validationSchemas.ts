@@ -413,6 +413,12 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('user-select-asset-relation-tag'),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('get-global-asset-info'),
       wal: WAL,
     },

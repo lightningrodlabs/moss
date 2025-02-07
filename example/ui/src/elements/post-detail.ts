@@ -123,20 +123,21 @@ export class PostDetail extends LitElement {
       return html`ERROR`;
     }
     console.log('Rendering assets: ', this.assetStoreContent);
-    return html`ae
-      <div class="column">
-        ${repeat(
-          this.assetStoreContent.value.linkedFrom,
-          (walAndTags) => stringifyWal(walAndTags.wal),
-          (walAndTags) =>
-            html`<asset-element
-              .wal=${walAndTags.wal}
-              @remove-wal=${() => {
-                this.weaveClient.assets.removeAssetRelation(walAndTags.relationHash);
-              }}
-            ></asset-element>`
-        )}
-      </div>`;
+    return html` <div class="column">
+      ${repeat(
+        this.assetStoreContent.value.linkedFrom,
+        (walAndTags) => stringifyWal(walAndTags.wal),
+        (walAndTags) =>
+          html`<asset-element
+            @wal-selected=${(e: CustomEvent) => this.weaveClient.openAsset(e.detail.wal)}
+            style="margin: 2px;"
+            .walRelationAndTags=${walAndTags}
+            @remove-wal=${() => {
+              this.weaveClient.assets.removeAssetRelation(walAndTags.relationHash);
+            }}
+          ></asset-element>`
+      )}
+    </div>`;
   }
 
   renderDetail(entryRecord: EntryRecord<Post>) {

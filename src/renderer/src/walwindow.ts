@@ -166,6 +166,23 @@ export class WalWindow extends LitElement {
               if (error) return Promise.reject(`Failed to select WAL: ${error}`);
               return response;
             }
+            case 'user-select-asset-relation-tag': {
+              await (window.electronAPI as any).focusMainWindow();
+              let error;
+              let response;
+              const appletToParentMessage: AppletToParentMessage = {
+                request: message.data.request,
+                appletHash: this.appletHash,
+              };
+              try {
+                response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+              } catch (e) {
+                error = e;
+              }
+              await walWindow.electronAPI.focusMyWindow();
+              if (error) return Promise.reject(`Failed to select asset relation tag: ${error}`);
+              return response;
+            }
 
             default:
               const appletToParentMessage: AppletToParentMessage = {

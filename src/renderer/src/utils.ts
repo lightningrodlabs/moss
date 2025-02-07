@@ -422,6 +422,16 @@ export function destringifyAndDecode<T>(input: string): T {
   return decode(toUint8Array(input)) as T;
 }
 
+/**
+ * Deduplicates an array of strings
+ *
+ * @param arr
+ * @returns
+ */
+export function dedupStringArray(arr: string[]): string[] {
+  return Array.from(new Set(arr));
+}
+
 export function renderViewToQueryString(
   renderView:
     | RenderView
