@@ -1481,17 +1481,32 @@ if (!RUNNING_WITH_COMMAND) {
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
+
+        // We need to distinguish 3 possible cases:
+        //
+        // 1. happ is not installed in the conductor yet (normal case)
+        //
+        // 2. happ is already installed in the conductor and app asset info is stored as well.
+        //    This case can occur in edge cases where Moss got interrupted after installing
+        //    an app into the conductor but before joining it in the group dna.
+        //
+        //    We handle this case by returning AppInfo directly and skipping any of the
+        //    installation steps.
+        //
+        // 3. happ is already installed in the conductor but app asset info is not stored yet.
+        //    This case should not happen at all but we cover it anyway to be sure.
+        //
+        //    We handle this case by skipping the installation of the happ in the conductor.
+
         if (alreadyInstalledAppInfo) {
-          // This case should only occur in rare edge cases where Moss got interrupted after
-          // installing an app into the conductor but before joining it in the group dna.
-          // In that case, check that the asset info is stored as well and return the AppInfo,
-          // otherwise throw an error
           try {
             WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+            // If reading app asset info succeds we're in case 2 and we return AppInfo
+            return alreadyInstalledAppInfo;
           } catch (e) {
-            throw new Error('App already installed in conductor but no app asset info stored. ');
+            // We're in case 3 and will ignore installing the happ in the conductor later
+            // but can ignore this error
           }
-          return alreadyInstalledAppInfo;
         }
 
         if (distributionInfo.type !== 'web2-tool-list')
@@ -1642,26 +1657,40 @@ if (!RUNNING_WITH_COMMAND) {
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
 
         let appInfo: AppInfo;
-        try {
-          appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-            path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
-            installed_app_id: appId,
-            agent_key: agentPubKey,
-            network_seed: networkSeed,
-          });
-        } catch (e: any) {
-          // Remove app meta data directory again if the error unless it's a CellAlreadyExists error
-          // in which case we don't want to remove the meta data of an existing app
-          if (e.toString && !e.toString().includes('CellAlreadyExists')) {
-            WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+
+        if (!alreadyInstalledAppInfo) {
+          // We're in the normal Case 1.
+          try {
+            appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+              path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              installed_app_id: appId,
+              agent_key: agentPubKey,
+              network_seed: networkSeed,
+            });
+            console.log('@install-applet-bundle: app installed.');
+          } catch (e: any) {
+            // Remove app meta data directory again if the error unless it's a CellAlreadyExists error
+            // in which case we don't want to remove the meta data of an existing app
+            if (e.toString && !e.toString().includes('CellAlreadyExists')) {
+              WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+            }
+            throw new Error(`Failed to install app: ${e}`);
           }
-          throw new Error(`Failed to install app: ${e}`);
+        } else {
+          // We're in Case 3
+          appInfo = alreadyInstalledAppInfo;
         }
 
-        console.log('@install-applet-bundle: app installed.');
-
         // Enable the app after storing metadata in case enabling fails
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        try {
+          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        } catch (e) {
+          // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
+          // but continue. The app would then need to get enabled in the UI.
+          if (appInfo.status !== 'awaiting_memproofs') {
+            WE_EMITTER.emitMossError(`ERROR: Failed to enable app: ${e}`);
+          }
+        }
 
         // remove temp dir again
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
