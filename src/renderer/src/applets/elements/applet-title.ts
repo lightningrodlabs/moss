@@ -64,7 +64,7 @@ export class AppletTitle extends LitElement {
         ${this._logo.value.status === 'complete'
           ? html`
               <img
-                .src=${this.icon}
+                .src=${this._logo.value.value}
                 alt="${appletStore.applet.custom_name}"
                 style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex; margin-right: 4px;"
               />
