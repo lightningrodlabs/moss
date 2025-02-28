@@ -1,4 +1,4 @@
-import { customElement, state, query, property } from 'lit/decorators.js';
+import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@theweave/elements/dist/elements/weave-client-context.js';
 
-import { decodeHashFromBase64 } from '@holochain/client';
+import { decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import {
   AppletHash,
@@ -26,6 +26,7 @@ import '../pocket/wal-element.js';
 import '../pocket/pocket-search.js';
 import './creatable-view.js';
 import '../navigation/group-applets-row.js';
+import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
@@ -46,9 +47,6 @@ export class CreatablePalette extends LitElement {
   @state()
   _mossStore!: MossStore;
 
-  @property()
-  groupDnaHash: DnaHash | undefined;
-
   @query('#creatable-dialog')
   _dialog!: SlDialog;
 
@@ -65,6 +63,9 @@ export class CreatablePalette extends LitElement {
   );
 
   @state()
+  groupDnaHash: DnaHash | undefined;
+
+  @state()
   _showCreatableView: CreatableInfo | undefined;
 
   @state()
@@ -73,7 +74,8 @@ export class CreatablePalette extends LitElement {
   @state()
   _activeDialogId: string | undefined;
 
-  show() {
+  show(groupDnaHash: DnaHash | undefined) {
+    this.groupDnaHash = groupDnaHash;
     this._dialog.show();
   }
 
@@ -141,16 +143,8 @@ export class CreatablePalette extends LitElement {
     }
   }
 
-  async handleCreatableSelected(
-    appletHash: AppletHash,
-    creatableName: CreatableName,
-    creatable: CreatableType,
-  ) {
-    this._showCreatableView = {
-      appletHash,
-      creatableName,
-      creatable,
-    };
+  async handleCreatableSelected(creatableInfo: CreatableInfo) {
+    this._showCreatableView = creatableInfo;
     this._activeDialogId = uuidv4();
     if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
     setTimeout(() => this._creatableViewDialog!.show());
@@ -169,7 +163,11 @@ export class CreatablePalette extends LitElement {
         .debug=${true}
         style="display: flex; flex: 1;"
       >
-        <group-applets-creatables></group-applets-creatables>
+        <group-applets-creatables
+          @creatable-selected=${(e: { detail: CreatableInfo }) => {
+            this.handleCreatableSelected(e.detail);
+          }}
+        ></group-applets-creatables>
       </group-context>
     `;
   }
@@ -181,10 +179,23 @@ export class CreatablePalette extends LitElement {
         style="--width: 800px;"
         no-header
       >
-          <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center; flex: 1; justify-content: center; margin-bottom: 30px;">
-            ${msg('Create New Asset')}
+          <div class="row center-content" style="font-size: 25px; margin-top: 30px;">
+            <img
+              class="magic-wand"
+              src="magic-wand.svg"
+              style="width: 30px; height: 30px; margin-top: -3px; margin-right: 6px; filter: invert(100%);"
+              />
+            <span>${msg('Create New Asset')}</span>
           </div>
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
+          <div class="row flex-1 items-center" style="width: 650px;">
+            <span style="display: flex; flex: 1;"></span>
+            <group-selector .groupDnaHashB64=${this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash) : undefined}
+              @group-selected=${(e) => {
+                this.groupDnaHash = decodeHashFromBase64(e.detail);
+              }}
+            ></group-selector>
+          </div>
           ${this.renderCreatables()}
           ${
             this._showCreatableView

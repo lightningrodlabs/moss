@@ -62,7 +62,7 @@ export class OverlayPocket extends LitElement {
 
   requestCreate() {
     this.dispatchEvent(
-      new CustomEvent('open-creatable-panel', {
+      new CustomEvent('open-creatable-palette', {
         bubbles: true,
         composed: true,
       }),

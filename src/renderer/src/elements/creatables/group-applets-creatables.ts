@@ -65,29 +65,66 @@ export class GroupAppletsCreatables extends LitElement {
       }
     });
 
+    if (creatables.length === 0)
+      return html`<div style="margin-top: 30px;">
+        ${msg('No Creatables available for the selected Group.')}
+      </div>`;
+
     return html`
-      <div class="column creatable-container" style="margin-top: 10px; flex: 1;">
+      <div class="row creatable-container justify-center" style="flex: 1;">
         ${creatables.map(
           ([creatableType, appletStore]) =>
             html` <div
-              class="row creatable-item"
-              style="align-items: center; cursor: pointer;"
+              class="column creatable-item"
+              style="cursor: pointer;"
               tabindex="0"
-              @click=${() => {}}
+              @click=${() => {
+                this.dispatchEvent(
+                  new CustomEvent('creatable-selected', {
+                    detail: {
+                      appletHash: appletStore.appletHash,
+                      creatableName: creatableType.label,
+                      creatable: creatableType,
+                    },
+                    bubbles: true,
+                    composed: true,
+                  }),
+                );
+              }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
+                  this.dispatchEvent(
+                    new CustomEvent('creatable-selected', {
+                      detail: {
+                        appletHash: appletStore.appletHash,
+                        creatableName: creatableType.label,
+                        creatable: creatableType,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
                 }
               }}
             >
-              <sl-icon
-                style="height: 35px; width: 35px;"
-                .src=${creatableType.icon_src}
-                alt="${creatableType.label} creatable type icon"
-              ></sl-icon>
-              <div style="margin-left: 5px;">${creatableType.label}</div>
-              <span style="display: flex; flex: 1;"></span>
-              <span style="margin-right: 4px;">${msg('from')}</span>
-              <applet-title .appletHash=${appletStore.appletHash}></applet-title>
+              <div class="row items-center">
+                <sl-icon
+                  style="height: 35px; width: 35px;"
+                  .src=${creatableType.icon_src}
+                  alt="${creatableType.label} creatable type icon"
+                ></sl-icon>
+                <div style="margin-left: 5px;">${creatableType.label}</div>
+                <span style="display: flex; flex: 1;"></span>
+              </div>
+              <div style="display: flex; flex: 1;"></div>
+              <div class="row items-center">
+                <span style="display: flex; flex: 1;"></span>
+                <applet-title
+                  .appletHash=${appletStore.appletHash}
+                  invert
+                  style="--font-size: 12px; --size: 20px;"
+                ></applet-title>
+              </div>
             </div>`,
         )}
       </div>
@@ -143,19 +180,25 @@ export class GroupAppletsCreatables extends LitElement {
       }
 
       .creatable-container {
-        width: 500px;
+        max-width: 680px;
         max-height: 450px;
         overflow-y: auto;
+        flex-wrap: wrap;
       }
 
       .creatable-item {
-        flex: 1;
-        border-radius: 5px;
+        position: relative;
+        border-radius: 10px;
         padding: 5px;
+        padding-top: 8px;
+        background: var(--sl-color-tertiary-200);
+        margin: 4px;
+        width: 200px;
+        min-height: 60px;
       }
 
       .creatable-item:hover {
-        background: var(--sl-color-primary-200);
+        background: var(--sl-color-tertiary-500);
       }
     `,
   ];

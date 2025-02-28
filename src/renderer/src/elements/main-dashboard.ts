@@ -671,6 +671,12 @@ export class MainDashboard extends LitElement {
     await this._mossStore.loadNotificationFeed(7);
   }
 
+  selectedGroupDnaHash() {
+    return this._dashboardState.value.viewType === 'group'
+      ? this._dashboardState.value.groupHash
+      : undefined;
+  }
+
   openClipboard() {
     this.showClipboard = true;
     this._pocket.show('open');
@@ -679,7 +685,7 @@ export class MainDashboard extends LitElement {
 
   openCreatablePanel() {
     this.showCreatablePanel = true;
-    this._creatablePalette.show();
+    this._creatablePalette.show(this.selectedGroupDnaHash());
     this._creatablePalette.focus();
   }
 
@@ -1306,7 +1312,7 @@ export class MainDashboard extends LitElement {
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
-        @open-creatable-palette=${() => this._creatablePalette.show()}
+        @open-creatable-palette=${() => this._creatablePalette.show(this.selectedGroupDnaHash())}
         @wal-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('wal-selected', {
@@ -1328,9 +1334,6 @@ export class MainDashboard extends LitElement {
       ></moss-pocket>
       <creatable-palette
         id="creatable-palette"
-        .groupDnaHash=${this._dashboardState.value.viewType === 'group'
-          ? this._dashboardState.value.groupHash
-          : undefined}
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @wal-selected=${(e) => {
