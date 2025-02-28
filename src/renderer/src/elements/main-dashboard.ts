@@ -61,9 +61,9 @@ import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 import './asset-tags/tag-selection-dialog.js';
 import './pocket/pocket.js';
 import './pocket/pocket-drop.js';
-import './creatables/creatable-panel.js';
+import './creatables/creatable-palette.js';
 import { MossPocket } from './pocket/pocket.js';
-import { CreatablePanel } from './creatables/creatable-panel.js';
+import { CreatablePalette } from './creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -153,8 +153,8 @@ export class MainDashboard extends LitElement {
   @query('#pocket')
   _pocket!: MossPocket;
 
-  @query('#creatable-panel')
-  _creatablePanel!: CreatablePanel;
+  @query('#creatable-palette')
+  _creatablePalette!: CreatablePalette;
 
   @state()
   appVersion: string | undefined;
@@ -679,8 +679,8 @@ export class MainDashboard extends LitElement {
 
   openCreatablePanel() {
     this.showCreatablePanel = true;
-    this._creatablePanel.show();
-    this._creatablePanel.focus();
+    this._creatablePalette.show();
+    this._creatablePalette.focus();
   }
 
   closeClipboard() {
@@ -1306,7 +1306,7 @@ export class MainDashboard extends LitElement {
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
-        @open-creatable-panel=${() => this._creatablePanel.show()}
+        @open-creatable-palette=${() => this._creatablePalette.show()}
         @wal-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('wal-selected', {
@@ -1326,8 +1326,11 @@ export class MainDashboard extends LitElement {
           this.showClipboard = false;
         }}
       ></moss-pocket>
-      <creatable-panel
-        id="creatable-panel"
+      <creatable-palette
+        id="creatable-palette"
+        .groupDnaHash=${this._dashboardState.value.viewType === 'group'
+          ? this._dashboardState.value.groupHash
+          : undefined}
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @wal-selected=${(e) => {
@@ -1339,7 +1342,7 @@ export class MainDashboard extends LitElement {
             }),
           );
         }}
-      ></creatable-panel>
+      ></creatable-palette>
 
       ${this.renderAddGroupDialog()}
 
