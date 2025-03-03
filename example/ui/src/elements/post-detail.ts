@@ -24,6 +24,7 @@ import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 
 import '@theweave/attachments/dist/elements/attachments-card.js';
 import '@theweave/attachments/dist/elements/attachments-bar.js';
+import '@theweave/elements/dist/elements/select-asset-menu.js';
 
 import './edit-post.js';
 import './asset-element.js';
@@ -146,6 +147,20 @@ export class PostDetail extends LitElement {
   renderDetail(entryRecord: EntryRecord<Post>) {
     return html`
       <div class="column" style="flex: 1;">
+        <div class="row">
+          <micro-menu
+            .weaveClient=${this.weaveClient}
+            @wal-selected=${(e: any) => {
+              console.log('WAL selected: ', e.detail);
+            }}
+            title="attach asset long title long"
+            distance="10"
+            skidding="5"
+            flip
+          >
+            <sl-icon style="font-size: 25px;" .src=${wrapPathInSvg(mdiPlus)}></sl-icon>
+          </micro-menu>
+        </div>
         <sl-card style="flex: 1;">
           <div slot="header" style="display: flex; flex-direction: row;">
             <span style="font-size: 18px; flex: 1;">${msg('Post')}</span>
@@ -178,7 +193,7 @@ export class PostDetail extends LitElement {
         </sl-card>
         <div class="column">
           <div class="row">
-            <micro-menu
+            <select-asset-menu
               .weaveClient=${this.weaveClient}
               @wal-selected=${(e: any) => {
                 console.log('WAL selected: ', e.detail);
@@ -188,7 +203,7 @@ export class PostDetail extends LitElement {
               skidding="5"
             >
               <sl-icon style="font-size: 25px;" .src=${wrapPathInSvg(mdiPlus)}></sl-icon>
-            </micro-menu>
+            </select-asset-menu>
           </div>
           <button
             @click=${async () => {

@@ -316,8 +316,12 @@ export class MainDashboard extends LitElement {
         });
       }
     },
-    userSelectWal: async () => {
-      this._pocket.show('select');
+    userSelectWal: async (from, groupDnaHash) => {
+      if (from === 'create') {
+        this._creatablePalette.show(groupDnaHash);
+      } else {
+        this._pocket.show('select');
+      }
 
       return new Promise((resolve) => {
         const listener = (e) => {

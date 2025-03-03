@@ -408,6 +408,9 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('user-select-asset'),
+      from: Type.Optional(
+        Type.Union([Type.Literal('search'), Type.Literal('pocket'), Type.Literal('create')]),
+      ),
     },
     { additionalProperties: false },
   ),

@@ -14,8 +14,8 @@ import { mdiMagnify, mdiPocket } from '@mdi/js';
  * @fires post-deleted: detail will contain { postHash }
  */
 @localized()
-@customElement('micro-menu')
-export class MicroMenu extends LitElement {
+@customElement('select-asset-menu')
+export class SelectAssetMenu extends LitElement {
   @property({ attribute: 'weave-client' })
   weaveClient!: WeaveClient;
 
@@ -96,7 +96,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >
@@ -115,7 +119,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >
@@ -134,7 +142,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >

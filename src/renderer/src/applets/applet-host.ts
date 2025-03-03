@@ -636,7 +636,15 @@ export async function handleAppletIframeMessage(
       mossStore.dragWal(message.wal);
       break;
     case 'user-select-asset':
-      return openViews.userSelectWal();
+      let groupDnaHash: DnaHash | undefined;
+      if (message.from === 'create') {
+        const appletHash = decodeHashFromBase64(appletId);
+        const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+        console.log('groupstores: ', groupStores);
+        groupDnaHash = Array.from(groupStores.keys())[0];
+        console.log('groupDnaHash: ', groupDnaHash);
+      }
+      return openViews.userSelectWal(message.from, groupDnaHash);
     case 'user-select-asset-relation-tag':
       return openViews.userSelectAssetRelationTag();
     case 'add-tags-to-asset': {

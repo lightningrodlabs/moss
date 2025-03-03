@@ -224,12 +224,17 @@ export interface AssetServices {
    */
   assetToPocket: (wal: WAL) => Promise<void>;
   /**
-   * Prompts the user with the search bar and Moss pocket to select an Asset.
-   * Returns the associated WAL as soon as the user has selected an asset
-   * or undefined if the user cancels the selection process.
+   * Prompts the user to select an Asset and returns the associated WAL as soon
+   * as the user has selected an asset or returns undefined if the user cancels
+   * the selection process.
+   * By default it will let the user select the Asset from the pocket but other
+   * means of selecting the asset can be specified optionally with the "from"
+   * argument.
+   *
+   * @param from (optional) source of the WAL
    * @returns
    */
-  userSelectAsset: () => Promise<WAL | undefined>;
+  userSelectAsset: (from?: 'search' | 'pocket' | 'create') => Promise<WAL | undefined>;
   /**
    * Prompts the user with a dialog to select an asset relation tag.
    * Returns the associated tag as a string as soon as the user has
@@ -498,11 +503,12 @@ export class WeaveClient implements WeaveServices {
   openAsset = (wal: WAL, mode?: OpenAssetMode): Promise<void> =>
     window.__WEAVE_API__.openAsset(wal, mode);
 
-  assets = {
+  assets: AssetServices = {
     dragAsset: (wal: WAL): Promise<void> => window.__WEAVE_API__.assets.dragAsset(wal),
     assetInfo: (wal: WAL) => window.__WEAVE_API__.assets.assetInfo(wal),
     assetToPocket: (wal: WAL) => window.__WEAVE_API__.assets.assetToPocket(wal),
-    userSelectAsset: () => window.__WEAVE_API__.assets.userSelectAsset(),
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
+      window.__WEAVE_API__.assets.userSelectAsset(from),
     userSelectAssetRelationTag: () => window.__WEAVE_API__.assets.userSelectAssetRelationTag(),
     addTagsToAsset: (wal: WAL, tags: string[]) =>
       window.__WEAVE_API__.assets.addTagsToAsset(wal, tags),
