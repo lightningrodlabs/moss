@@ -3068,6 +3068,16 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
+"@theweave/api@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.4.0.tgz#c312737b467059f73145a17d1c10b39911bf4bba"
+  integrity sha512-ETHbJH7B9+Pln7Rf+eJrrt5UXDb46uc/Mb2+IRE4Pxy42bGproBLydK0z/h1FJqvmQep/WFY5k8aETJ5VzZSdQ==
+  dependencies:
+    "@holochain-open-dev/profiles" "0.400.1"
+    "@holochain/client" "^0.18.0"
+    "@msgpack/msgpack" "^2.8.0"
+    js-base64 "^3.7.2"
+
 "@theweave/api@0.4.0-alpha.1":
   version "0.4.0-alpha.1"
   resolved "https://registry.npmjs.org/@theweave/api/-/api-0.4.0-alpha.1.tgz"
@@ -3109,7 +3119,7 @@
     "@material/web" "=1.0.0-pre.9"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "^2.19.0"
-    "@theweave/api" "^0.4.1"
+    "@theweave/api" "0.4.3"
     "@theweave/elements" "0.4.0"
     lit "^3.0.2"
 
@@ -3147,8 +3157,26 @@
     uuid "9.0.1"
     winston "3.11.0"
 
-"@theweave/elements@file:libs/elements":
+"@theweave/elements@0.4.0":
   version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@theweave/elements/-/elements-0.4.0.tgz#365e8187d3d9be0f9520bd94e0cc074170f61598"
+  integrity sha512-D02OmFfl+/MewhqxbXLmE4+VQHTHQ9AGBxUqUL/TtCOkvI2rK4iFlcWajSwoQThDlx7bzKkEXpvcT3yLtjaR7Q==
+  dependencies:
+    "@holochain-open-dev/elements" "0.400.1"
+    "@holochain-open-dev/profiles" "0.400.1"
+    "@holochain-open-dev/stores" "0.400.0"
+    "@holochain-open-dev/utils" "0.400.0"
+    "@holochain/client" "^0.18.0"
+    "@lit/context" "^1.0.1"
+    "@lit/localize" "^0.12.0"
+    "@mdi/js" "^7.2.0"
+    "@shoelace-style/shoelace" "^2.19.0"
+    "@theweave/api" "0.4.0"
+    js-base64 "^3.7.5"
+    lit "^3.0.2"
+
+"@theweave/elements@file:libs/elements":
+  version "0.4.1"
   dependencies:
     "@holochain-open-dev/elements" "0.400.1"
     "@holochain-open-dev/profiles" "0.400.1"

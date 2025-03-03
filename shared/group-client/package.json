@@ -20,7 +20,7 @@
     "@holochain/client": "^0.18.0",
     "@holochain-open-dev/utils": "0.400.0",
     "@msgpack/msgpack": "^2.7.2",
-    "@theweave/api": "^0.4.1"
+    "@theweave/api": "0.4.3"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

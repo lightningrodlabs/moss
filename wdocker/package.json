@@ -22,7 +22,7 @@
     "@lightningrodlabs/we-rust-utils": "0.400.1",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
-    "@theweave/api": "^0.4.1",
+    "@theweave/api": "0.4.3",
     "@theweave/utils": "0.3.0-alpha.2",
     "@theweave/group-client": "0.2.1",
     "bufferutil": "4.0.8",
