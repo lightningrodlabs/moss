@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { state, property, customElement } from 'lit/decorators.js';
 import { ActionHash } from '@holochain/client';
 import { EntryRecord } from '@holochain-open-dev/utils';
@@ -11,20 +11,24 @@ import {
 } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { mdiPencil, mdiDelete } from '@mdi/js';
+import { mdiPencil, mdiDelete, mdiPlus } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+import '@shoelace-style/shoelace/dist/components/popup/popup.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 
 import '@theweave/attachments/dist/elements/attachments-card.js';
 import '@theweave/attachments/dist/elements/attachments-bar.js';
+import '@theweave/elements/dist/elements/select-asset-menu.js';
 
 import './edit-post.js';
 import './asset-element.js';
+import './micro-menu.js';
 
 import { PostsStore } from '../posts-store.js';
 import { postsStoreContext } from '../context.js';
@@ -143,6 +147,20 @@ export class PostDetail extends LitElement {
   renderDetail(entryRecord: EntryRecord<Post>) {
     return html`
       <div class="column" style="flex: 1;">
+        <div class="row">
+          <micro-menu
+            .weaveClient=${this.weaveClient}
+            @wal-selected=${(e: any) => {
+              console.log('WAL selected: ', e.detail);
+            }}
+            title="attach asset long title long"
+            distance="10"
+            skidding="5"
+            flip
+          >
+            <sl-icon style="font-size: 25px;" .src=${wrapPathInSvg(mdiPlus)}></sl-icon>
+          </micro-menu>
+        </div>
         <sl-card style="flex: 1;">
           <div slot="header" style="display: flex; flex-direction: row;">
             <span style="font-size: 18px; flex: 1;">${msg('Post')}</span>
@@ -174,6 +192,19 @@ export class PostDetail extends LitElement {
           </div>
         </sl-card>
         <div class="column">
+          <div class="row">
+            <select-asset-menu
+              .weaveClient=${this.weaveClient}
+              @wal-selected=${(e: any) => {
+                console.log('WAL selected: ', e.detail);
+              }}
+              title="attach asset"
+              distance="10"
+              skidding="5"
+            >
+              <sl-icon style="font-size: 25px;" .src=${wrapPathInSvg(mdiPlus)}></sl-icon>
+            </select-asset-menu>
+          </div>
           <button
             @click=${async () => {
               const wal = await this.weaveClient.assets.userSelectAsset();
@@ -235,5 +266,11 @@ export class PostDetail extends LitElement {
     }
   }
 
-  static styles = [sharedStyles];
+  static styles = [
+    sharedStyles,
+    css`
+      sl-popup::part(popup) {
+      }
+    `,
+  ];
 }

@@ -15,17 +15,18 @@ import {
   AppletId,
   CreatableResult,
   CreatableName,
-  GroupProfile,
   WAL,
   CreatableType,
 } from '@theweave/api';
 import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
+import './group-applets-creatables.js';
 import '../pocket/wal-element.js';
 import '../pocket/pocket-search.js';
 import './creatable-view.js';
 import '../navigation/group-applets-row.js';
+import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
@@ -40,8 +41,8 @@ export type CreatableInfo = {
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
  */
 @localized()
-@customElement('creatable-panel')
-export class CreatablePanel extends LitElement {
+@customElement('creatable-palette')
+export class CreatablePalette extends LitElement {
   @consume({ context: mossStoreContext })
   @state()
   _mossStore!: MossStore;
@@ -55,20 +56,14 @@ export class CreatablePanel extends LitElement {
   @query('#creatable-selection-dialog')
   _creatableSelectionDialog!: SlDialog | null;
 
-  @state()
-  clipboardContent: Array<string> = [];
-
   _groupsProfiles = new StoreSubscriber(
     this,
     () => this._mossStore.allGroupsProfiles,
     () => [this._mossStore],
   );
 
-  _allCreatableTypes = new StoreSubscriber(
-    this,
-    () => this._mossStore.allCreatableTypes(),
-    () => [this._mossStore],
-  );
+  @state()
+  groupDnaHash: DnaHash | undefined;
 
   @state()
   _showCreatableView: CreatableInfo | undefined;
@@ -79,7 +74,8 @@ export class CreatablePanel extends LitElement {
   @state()
   _activeDialogId: string | undefined;
 
-  show() {
+  show(groupDnaHash: DnaHash | undefined) {
+    this.groupDnaHash = groupDnaHash;
     this._dialog.show();
   }
 
@@ -147,16 +143,8 @@ export class CreatablePanel extends LitElement {
     }
   }
 
-  async handleCreatableSelected(
-    appletHash: AppletHash,
-    creatableName: CreatableName,
-    creatable: CreatableType,
-  ) {
-    this._showCreatableView = {
-      appletHash,
-      creatableName,
-      creatable,
-    };
+  async handleCreatableSelected(creatableInfo: CreatableInfo) {
+    this._showCreatableView = creatableInfo;
     this._activeDialogId = uuidv4();
     if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
     setTimeout(() => this._creatableViewDialog!.show());
@@ -167,81 +155,21 @@ export class CreatablePanel extends LitElement {
     this._mossStore.walToPocket(wal);
   }
 
-  renderAppletMatrix() {
-    switch (this._groupsProfiles.value.status) {
-      case 'error':
-        console.error('Failed to load group profiles: ', this._groupsProfiles.value.error);
-        return html`Failed to load group profiles. See console for details.`;
-      case 'pending':
-        return html`Loading...`;
-      case 'complete':
-        const knownGroups = Array.from(this._groupsProfiles.value.value.entries()).filter(
-          ([_, groupProfile]) => !!groupProfile,
-        ) as Array<[DnaHash, GroupProfile]>;
-
-        let customGroupOrder = this._mossStore.persistedStore.groupOrder.value();
-        if (!customGroupOrder) {
-          customGroupOrder = knownGroups
-            .sort(([_, a], [__, b]) => a.name.localeCompare(b.name))
-            .map(([hash, _profile]) => encodeHashToBase64(hash));
-          this._mossStore.persistedStore.groupOrder.set(customGroupOrder);
-        }
-        knownGroups.forEach(([hash, _]) => {
-          if (!customGroupOrder!.includes(encodeHashToBase64(hash))) {
-            customGroupOrder!.splice(0, 0, encodeHashToBase64(hash));
-          }
-          this._mossStore.persistedStore.groupOrder.set(customGroupOrder!);
-          this.requestUpdate();
-        });
-
-        const appletsWithCreatables = Object.entries(this._allCreatableTypes.value)
-          .filter(([_appletId, creatables]) => Object.keys(creatables).length > 0)
-          .map(([appletId, _]) => appletId);
-
-        return html`
-          <div class="column" style="align-items: flex-start; flex: 1;">
-            ${knownGroups
-              .sort(
-                ([a_hash, _a], [b_hash, _b]) =>
-                  customGroupOrder!.indexOf(encodeHashToBase64(a_hash)) -
-                  customGroupOrder!.indexOf(encodeHashToBase64(b_hash)),
-              )
-              .map(
-                ([groupDnaHash, groupProfile], idx) => html`
-                  <group-context
-                    .groupDnaHash=${groupDnaHash}
-                    .debug=${true}
-                    style="display: flex; flex: 1;"
-                  >
-                    <div
-                      class="row"
-                      style="align-items: center; flex: 1; padding: 5px; border-radius: 5px; ${idx %
-                        2 !==
-                      0
-                        ? 'background: var(--sl-color-primary-300);'
-                        : ''}"
-                    >
-                      <sl-tooltip content="${groupProfile.name}" placement="left" hoist>
-                        <img
-                          src="${groupProfile.icon_src}"
-                          style="height: 50px; width: 50px; border-radius: 50%; margin-right: 5px;"
-                        />
-                      </sl-tooltip>
-                      <group-applets-row
-                        style="display: flex; flex: 1;"
-                        .activeApplets=${appletsWithCreatables}
-                        @applet-chosen=${(e) => {
-                          this._showCreatablesSelection = encodeHashToBase64(e.detail.appletHash);
-                          setTimeout(() => this._creatableSelectionDialog!.show());
-                        }}
-                      ></group-applets-row>
-                    </div>
-                  </group-context>
-                `,
-              )}
-          </div>
-        `;
-    }
+  renderCreatables() {
+    if (!this.groupDnaHash) return html`${msg('No group selected.')}`;
+    return html`
+      <group-context
+        .groupDnaHash=${this.groupDnaHash}
+        .debug=${true}
+        style="display: flex; flex: 1;"
+      >
+        <group-applets-creatables
+          @creatable-selected=${(e: { detail: CreatableInfo }) => {
+            this.handleCreatableSelected(e.detail);
+          }}
+        ></group-applets-creatables>
+      </group-context>
+    `;
   }
 
   render() {
@@ -251,11 +179,24 @@ export class CreatablePanel extends LitElement {
         style="--width: 800px;"
         no-header
       >
-          <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center; flex: 1; justify-content: center; margin-bottom: 30px;">
-            ${msg('From which Tool do you want to create something?')}
+          <div class="row center-content" style="font-size: 25px; margin-top: 30px;">
+            <img
+              class="magic-wand"
+              src="magic-wand.svg"
+              style="width: 30px; height: 30px; margin-top: -3px; margin-right: 6px; filter: invert(100%);"
+              />
+            <span>${msg('Create New Asset')}</span>
           </div>
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
-          ${this.renderAppletMatrix()}
+          <div class="row flex-1 items-center" style="width: 650px;">
+            <span style="display: flex; flex: 1;"></span>
+            <group-selector .groupDnaHashB64=${this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash) : undefined}
+              @group-selected=${(e) => {
+                this.groupDnaHash = decodeHashFromBase64(e.detail);
+              }}
+            ></group-selector>
+          </div>
+          ${this.renderCreatables()}
           ${
             this._showCreatableView
               ? html`
@@ -291,40 +232,6 @@ export class CreatablePanel extends LitElement {
                       <applet-title
                         .appletHash=${decodeHashFromBase64(this._showCreatablesSelection)}
                       ></applet-title>
-                    </div>
-                    <div class="column" style="margin-top: 10px;">
-                      ${Object.entries(
-                        this._allCreatableTypes.value[this._showCreatablesSelection],
-                      ).map(
-                        ([creatableName, creatable]) =>
-                          html` <div
-                            class="row creatable-item"
-                            style="align-items: center; cursor: pointer;"
-                            tabindex="0"
-                            @click=${() =>
-                              this.handleCreatableSelected(
-                                decodeHashFromBase64(this._showCreatablesSelection!),
-                                creatableName,
-                                creatable,
-                              )}
-                            @keypress=${(e: KeyboardEvent) => {
-                              if (e.key === 'Enter') {
-                                this.handleCreatableSelected(
-                                  decodeHashFromBase64(this._showCreatablesSelection!),
-                                  creatableName,
-                                  creatable,
-                                );
-                              }
-                            }}
-                          >
-                            <sl-icon
-                              style="height: 35px; width: 35px;"
-                              .src=${creatable.icon_src}
-                              alt="${creatable.label} creatable type icon"
-                            ></sl-icon>
-                            <div style="margin-left: 5px;">${creatable.label}</div>
-                          </div>`,
-                      )}
                     </div>
                   </sl-dialog>
                 `

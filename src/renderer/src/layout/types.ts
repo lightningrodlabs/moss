@@ -1,4 +1,4 @@
-import { EntryHash } from '@holochain/client';
+import { DnaHash, EntryHash } from '@holochain/client';
 import { WAL, OpenAssetMode } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
@@ -8,7 +8,10 @@ export interface AppOpenViews {
   openCrossGroupMain(toolCompatibilityId: ToolCompatibilityId): void;
   openCrossGroupBlock(toolCompatibilityId: ToolCompatibilityId, block: string, context: any): void;
   openAsset(wal: WAL, mode?: OpenAssetMode): void;
-  userSelectWal(): Promise<WAL | undefined>;
+  userSelectWal(
+    from?: 'search' | 'pocket' | 'create',
+    groupDnaHash?: DnaHash | undefined,
+  ): Promise<WAL | undefined>;
   userSelectAssetRelationTag(): Promise<string | undefined>;
   toggleClipboard(): void;
 }

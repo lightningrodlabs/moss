@@ -89,9 +89,10 @@ const weaveApi: WeaveServices = {
         type: 'drag-asset',
         wal,
       }),
-    userSelectAsset: () =>
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
       postMessage({
         type: 'user-select-asset',
+        from,
       }),
     userSelectAssetRelationTag: () =>
       postMessage({

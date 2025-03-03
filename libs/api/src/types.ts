@@ -420,6 +420,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'user-select-asset';
+      from?: 'search' | 'pocket' | 'create';
     }
   | {
       type: 'user-select-asset-relation-tag';
