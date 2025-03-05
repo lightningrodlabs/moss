@@ -66,6 +66,7 @@ import {
   AgentPubKeyB64,
   AppInfo,
   CallZomeRequest,
+  DnaHashB64,
   InstalledAppId,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -75,6 +76,7 @@ import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -1158,6 +1160,18 @@ if (!RUNNING_WITH_COMMAND) {
           return readIcon(resourceLocation);
         }
         return WE_FILE_SYSTEM.readToolIcon(toolId);
+      },
+    );
+    ipcMain.handle(
+      'get-group-profile',
+      (_e, groupDnaHashB64: DnaHashB64): GroupProfile | undefined => {
+        return WE_FILE_SYSTEM.readGroupProfile(groupDnaHashB64);
+      },
+    );
+    ipcMain.handle(
+      'store-group-profile',
+      (_e, groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile): void => {
+        return WE_FILE_SYSTEM.storeGroupProfile(groupDnaHashB64, groupProfile);
       },
     );
     ipcMain.handle('lair-setup-required', (): [boolean, boolean] => {

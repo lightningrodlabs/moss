@@ -2,12 +2,13 @@ import path from 'path';
 import fs from 'fs';
 import semver from 'semver';
 import { v4 as uuidv4 } from 'uuid';
-import { InstalledAppId } from '@holochain/client';
+import { DnaHashB64, InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
 import { app, dialog, session, shell } from 'electron';
 import { platform } from '@electron-toolkit/utils';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
 import AdmZip from 'adm-zip';
+import { GroupProfile } from '@theweave/api';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -32,6 +33,7 @@ export class MossFileSystem {
   public conductorDir: string;
   public keystoreDir: string;
   public appsDir: string;
+  public groupsDir: string;
   /**
    * This is the directory where information about Tools (i.e. not instances
    * but Tool as the class) is stored
@@ -49,6 +51,7 @@ export class MossFileSystem {
     this.conductorDir = path.join(profileDataDir, 'conductor');
     this.keystoreDir = path.join(profileDataDir, 'keystore');
     this.appsDir = path.join(profileDataDir, 'apps');
+    this.groupsDir = path.join(profileDataDir, 'groups');
     this.toolsDir = path.join(profileDataDir, 'tools');
     this.happsDir = path.join(profileDataDir, 'happs');
     this.uisDir = path.join(profileDataDir, 'uis');
@@ -57,6 +60,7 @@ export class MossFileSystem {
     createDirIfNotExists(this.conductorDir);
     createDirIfNotExists(this.keystoreDir);
     createDirIfNotExists(this.appsDir);
+    createDirIfNotExists(this.groupsDir);
     createDirIfNotExists(this.toolsDir);
     createDirIfNotExists(this.happsDir);
     createDirIfNotExists(this.uisDir);
@@ -105,8 +109,21 @@ export class MossFileSystem {
     return mossFileSystem;
   }
 
-  get conductorConfigPath() {
-    return path.join(this.conductorDir, 'conductor-config.yaml');
+  /**
+   * --------------------------------------------------------------------------------
+   * Apps (e.g. Tool instances)
+   * --------------------------------------------------------------------------------
+   */
+
+  /**
+   * Directory of an app (e.g. a Tool instance) where meta data about it is stored,
+   * e.g. user preferences
+   *
+   * @param appId
+   * @returns
+   */
+  appMetaDataDir(appId: string): string {
+    return path.join(this.appsDir, appId);
   }
 
   appUiDir(appId: string): string | undefined {
@@ -127,16 +144,137 @@ export class MossFileSystem {
     return undefined;
   }
 
+  appAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json');
+  }
+
+  appPreviousAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
+  }
+
   /**
-   * Directory of an app (e.g. a Tool instance) where meta data about it is stored,
-   * e.g. user preferences
+   * Stores information about happ and (optionally) UI of an installed app
    *
-   * @param appId
+   * @param installedAppId
+   * @param info
+   */
+  storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
+    const appMetaDataDir = this.appMetaDataDir(installedAppId);
+    createDirIfNotExists(appMetaDataDir);
+    const filePath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to write app assets info to json file: ${e}`);
+    }
+  }
+
+  readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
+    const filePath = this.appAssetInfoPath(installedAppId);
+    let appAssetsInfoJson: string | undefined;
+    try {
+      appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to read app assets info json file at path '${filePath}': ${e}`);
+    }
+    try {
+      const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
+      return appAssetsInfo;
+    } catch (e) {
+      throw new Error(`Failed to parse app assets info: ${e}`);
+    }
+  }
+
+  /**
+   * @param installedAppId
+   */
+  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
+    const filePath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.rmSync(filePath);
+    } catch (e) {
+      throw new Error(`Failed to delete app assets info json file: ${e}`);
+    }
+  }
+
+  backupAppAssetsInfo(installedAppId: InstalledAppId) {
+    const fileToBackup = this.appAssetInfoPath(installedAppId);
+    const backupPath = this.appPreviousAssetInfoPath(installedAppId);
+    try {
+      fs.copyFileSync(fileToBackup, backupPath);
+    } catch (e) {
+      throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * Deletes information about happ and (optionally) UI of an installed app
+   *
+   * @param installedAppId
+   */
+  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
+    try {
+      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
+    } catch (e) {
+      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * Groups
+   * --------------------------------------------------------------------------------
+   */
+
+  /**
+   * Directory of a group where meta data about it is stored, e.g. the group profile
+   * (image and group name)
+   *
+   * @param groupDnaHashB64
    * @returns
    */
-  appMetaDataDir(appId: string) {
-    return path.join(this.appsDir, appId);
+  groupMetaDataDir(groupDnaHashB64: DnaHashB64): string {
+    return path.join(this.groupsDir, groupDnaHashB64);
   }
+
+  groupProfilePath(groupDnaHashB64: DnaHashB64): string {
+    return path.join(this.groupMetaDataDir(groupDnaHashB64), 'profile.json');
+  }
+
+  storeGroupProfile(groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile): void {
+    const groupMetaDataDir = this.groupMetaDataDir(groupDnaHashB64);
+    createDirIfNotExists(groupMetaDataDir);
+    const filePath = this.groupProfilePath(groupDnaHashB64);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(groupProfile, undefined, 4), 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to write group profile to json file: ${e}`);
+    }
+  }
+
+  readGroupProfile(groupDnaHashB64: DnaHashB64): GroupProfile | undefined {
+    const filePath = this.groupProfilePath(groupDnaHashB64);
+    if (!fs.existsSync(filePath)) return undefined;
+
+    let groupProfileJson: string | undefined;
+    try {
+      groupProfileJson = fs.readFileSync(filePath, 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to read group profile json file at path '${filePath}': ${e}`);
+    }
+    try {
+      const groupProfile: GroupProfile = JSON.parse(groupProfileJson);
+      return groupProfile;
+    } catch (e) {
+      throw new Error(`Failed to parse group profile: ${e}`);
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * Tools (class, not instance)
+   * --------------------------------------------------------------------------------
+   */
 
   /**
    * Directory for data related to a Tool (not the instance but the class)
@@ -181,103 +319,6 @@ export class MossFileSystem {
       }
     }
     return undefined;
-  }
-
-  appAssetInfoPath(installedAppId: InstalledAppId): string {
-    return path.join(this.appMetaDataDir(installedAppId), 'info.json');
-  }
-
-  appPreviousAssetInfoPath(installedAppId: InstalledAppId): string {
-    return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
-  }
-
-  keystoreInitialized = () => {
-    return fs.existsSync(path.join(this.keystoreDir, 'lair-keystore-config.yaml'));
-  };
-
-  readOrCreateRandomPassword(): string {
-    const pwPath = path.join(this.profileDataDir, '.pw');
-    if (!fs.existsSync(pwPath)) {
-      const pw = uuidv4();
-      fs.writeFileSync(pwPath, pw, 'utf-8');
-    }
-    return fs.readFileSync(pwPath, 'utf-8');
-  }
-
-  randomPasswordExists(): boolean {
-    const pwPath = path.join(this.profileDataDir, '.pw');
-    return fs.existsSync(pwPath);
-  }
-
-  /**
-   * Stores information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   * @param info
-   */
-  storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
-    const appMetaDataDir = this.appMetaDataDir(installedAppId);
-    createDirIfNotExists(appMetaDataDir);
-    const filePath = this.appAssetInfoPath(installedAppId);
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
-    } catch (e) {
-      throw new Error(`Failed to write app assets info to json file: ${e}`);
-    }
-  }
-
-  /**
-   * Stores information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   * @param info
-   */
-  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
-    const filePath = this.appAssetInfoPath(installedAppId);
-    try {
-      fs.rmSync(filePath);
-    } catch (e) {
-      throw new Error(`Failed to delete app assets info json file: ${e}`);
-    }
-  }
-
-  backupAppAssetsInfo(installedAppId: InstalledAppId) {
-    const fileToBackup = this.appAssetInfoPath(installedAppId);
-    const backupPath = this.appPreviousAssetInfoPath(installedAppId);
-    try {
-      fs.copyFileSync(fileToBackup, backupPath);
-    } catch (e) {
-      throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
-    }
-  }
-
-  readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
-    const filePath = this.appAssetInfoPath(installedAppId);
-    let appAssetsInfoJson: string | undefined;
-    try {
-      appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
-    } catch (e) {
-      throw new Error(`Failed to read app assets info json file at path '${filePath}': ${e}`);
-    }
-    try {
-      const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
-      return appAssetsInfo;
-    } catch (e) {
-      throw new Error(`Failed to parse app assets info: ${e}`);
-    }
-  }
-
-  /**
-   * Deletes information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   */
-  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
-    try {
-      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
-    } catch (e) {
-      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
-    }
   }
 
   storeToolIconIfNecessary(toolId: string, icon: string): void {
@@ -352,6 +393,34 @@ export class MossFileSystem {
       };
       fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
     }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * General Utilities
+   * --------------------------------------------------------------------------------
+   */
+
+  get conductorConfigPath() {
+    return path.join(this.conductorDir, 'conductor-config.yaml');
+  }
+
+  keystoreInitialized = () => {
+    return fs.existsSync(path.join(this.keystoreDir, 'lair-keystore-config.yaml'));
+  };
+
+  readOrCreateRandomPassword(): string {
+    const pwPath = path.join(this.profileDataDir, '.pw');
+    if (!fs.existsSync(pwPath)) {
+      const pw = uuidv4();
+      fs.writeFileSync(pwPath, pw, 'utf-8');
+    }
+    return fs.readFileSync(pwPath, 'utf-8');
+  }
+
+  randomPasswordExists(): boolean {
+    const pwPath = path.join(this.profileDataDir, '.pw');
+    return fs.existsSync(pwPath);
   }
 
   async openLogs() {

@@ -28,6 +28,7 @@ import {
   AppClient,
   AppInfo,
   AppWebsocket,
+  DnaHashB64,
   InstalledAppId,
   ProvisionedCell,
 } from '@holochain/client';
@@ -46,6 +47,7 @@ import {
   stringifyWal,
   deStringifyWal,
   ParentToAppletMessage,
+  GroupProfile as GroupProfilePartial,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -54,8 +56,10 @@ import {
   createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
+  getGroupProfile,
   getToolIcon,
   joinGroup,
+  storeGroupProfile,
 } from './electron-api.js';
 import {
   destringifyAndDecode,
@@ -201,6 +205,12 @@ export class MossStore {
 
   _toolIcons: Record<ToolCompatibilityId, string> = {};
 
+  /**
+   * Group profiles as persisted on disk and used to display for disabled groups
+   * (otherwise the group profile is fetched from the DHT)
+   */
+  _groupProfiles: Record<DnaHashB64, GroupProfilePartial> = {};
+
   _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
 
   _tzUtcOffset: number | undefined;
@@ -297,6 +307,14 @@ export class MossStore {
     toolIcon = await getToolIcon(toolId, resourceLocation);
     if (toolIcon) this._toolIcons[toolId] = toolIcon;
     return toolIcon;
+  }
+
+  async groupProfile(groupDnaHashB64: DnaHashB64): Promise<GroupProfilePartial | undefined> {
+    let groupProfile: GroupProfilePartial | undefined = this._groupProfiles[groupDnaHashB64];
+    if (groupProfile) return groupProfile;
+    groupProfile = await getGroupProfile(groupDnaHashB64);
+    if (groupProfile) this._groupProfiles[groupDnaHashB64] = groupProfile;
+    return groupProfile;
   }
 
   dragWal(wal: WAL) {
@@ -698,6 +716,21 @@ export class MossStore {
   public async disableGroup(groupDnaHash: DnaHash): Promise<AppletHash[]> {
     const groupStore = await this.groupStore(groupDnaHash);
     if (!groupStore) throw new Error('No group store found for group.');
+
+    // 0. Store latest group profile to disk
+    try {
+      const groupProfile = await toPromise(groupStore.groupProfile);
+      const groupProfilePartial: GroupProfilePartial | undefined = groupProfile
+        ? {
+            name: groupProfile?.name,
+            icon_src: groupProfile?.icon_src,
+          }
+        : undefined;
+      if (groupProfilePartial)
+        storeGroupProfile(encodeHashToBase64(groupDnaHash), groupProfilePartial);
+    } catch (e) {
+      console.warn('Failed to store group profile while disabling group: ', e);
+    }
 
     // 1. disable all applets of that group
     try {
@@ -1114,6 +1147,13 @@ export class MossStore {
   allAppletsHosts = pipe(this.allRunningApplets, (applets) =>
     mapAndJoin(applets, (appletStore) => appletStore.host),
   );
+
+  groupProfilePersisted = new LazyMap((groupDnaHashB64: DnaHashB64) => {
+    return asyncReadable<GroupProfilePartial | undefined>(async (set) => {
+      const groupProfile = await this.groupProfile(groupDnaHashB64);
+      set(groupProfile);
+    });
+  });
 
   toolLogo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
     return asyncReadable<string | undefined>(async (set) => {

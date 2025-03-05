@@ -225,7 +225,7 @@ export class ToolLibraryWeb2 extends LitElement {
     const availableTools = this.showLowVisbility
       ? Object.values(this.availableTools)
       : Object.values(this.availableTools).filter(
-          (info) => info.curationInfos[0].info.visiblity === 'high',
+          (info) => info.curationInfos[0].info.visiblity !== 'low',
         );
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">

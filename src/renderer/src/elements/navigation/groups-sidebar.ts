@@ -1,5 +1,5 @@
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { pipe, StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -37,7 +37,17 @@ export class GroupsSidebar extends LitElement {
 
   _disabledGroups = new StoreSubscriber(
     this,
-    () => this._mossStore.disabledGroups,
+    () =>
+      pipe(this._mossStore.disabledGroups, async (disabledGroups) => {
+        const hashesAndProfiles: [DnaHash, GroupProfile | undefined][] = [];
+        await Promise.all(
+          disabledGroups.map(async (dnaHash) => {
+            const groupProfile = await this._mossStore.groupProfile(encodeHashToBase64(dnaHash));
+            hashesAndProfiles.push([dnaHash, groupProfile]);
+          }),
+        );
+        return hashesAndProfiles;
+      }),
     () => [this._mossStore],
   );
 
@@ -52,7 +62,10 @@ export class GroupsSidebar extends LitElement {
 
   firstUpdated() {}
 
-  renderGroups(groups: ReadonlyMap<DnaHash, GroupProfile | undefined>, disabledGroups: DnaHash[]) {
+  renderGroups(
+    groups: ReadonlyMap<DnaHash, GroupProfile | undefined>,
+    disabledGroups: [DnaHash, GroupProfile | undefined][],
+  ) {
     const knownGroups = Array.from(groups.entries()).filter(
       ([_, groupProfile]) => !!groupProfile,
     ) as Array<[DnaHash, GroupProfile]>;
@@ -199,15 +212,19 @@ export class GroupsSidebar extends LitElement {
         `,
       )}
       ${disabledGroups.map(
-        (groupDnaHash) => html`
+        ([groupDnaHash, groupProfile]) => html`
           <sidebar-button
-            style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
+            style="margin-bottom: -4px; border-radius: 50%; --size: 58px; opacity: 0.7;"
             .selected=${this.selectedGroupDnaHash &&
             groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
-            .logoSrc=${wrapPathInSvg(mdiPowerPlugOffOutline)}
-            .slIcon=${true}
-            .tooltipText=${msg('Disabled Group')}
+            .logoSrc=${groupProfile?.icon_src
+              ? groupProfile.icon_src
+              : wrapPathInSvg(mdiPowerPlugOffOutline)}
+            .slIcon=${groupProfile?.icon_src ? false : true}
+            .tooltipText=${groupProfile?.name
+              ? `${groupProfile.name} (${msg('disabled')})`
+              : msg('Disabled Group')}
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('group-selected', {

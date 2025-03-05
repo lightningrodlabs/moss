@@ -14,6 +14,7 @@ import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -86,6 +87,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  storeGroupProfile: (groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile) =>
+    ipcRenderer.invoke('store-group-profile', groupDnaHashB64, groupProfile),
+  getGroupProfile: (groupDnaHashB64: DnaHashB64) =>
+    ipcRenderer.invoke('get-group-profile', groupDnaHashB64),
   getToolIcon: (toolId: string, resourceLocation?: ResourceLocation) =>
     ipcRenderer.invoke('get-tool-icon', toolId, resourceLocation),
   mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),

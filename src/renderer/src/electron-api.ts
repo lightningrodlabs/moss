@@ -13,6 +13,7 @@ import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile as GroupProfilePartial,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -80,6 +81,11 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      storeGroupProfile: (
+        groupDnaHashB64: DnaHashB64,
+        groupProfile: GroupProfilePartial,
+      ) => Promise<void>;
+      getGroupProfile: (groupDnaHashB64: DnaHashB64) => Promise<GroupProfilePartial | undefined>;
       getToolIcon: (
         toolId: string,
         resourceLocation?: ResourceLocation,
@@ -192,6 +198,19 @@ export async function getAppVersion(): Promise<string> {
 
 export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
+}
+
+export async function storeGroupProfile(
+  groupDnaHashB64: DnaHashB64,
+  groupProfile: GroupProfilePartial,
+): Promise<void> {
+  return window.electronAPI.storeGroupProfile(groupDnaHashB64, groupProfile);
+}
+
+export async function getGroupProfile(
+  groupDnaHashB64: DnaHashB64,
+): Promise<GroupProfilePartial | undefined> {
+  return window.electronAPI.getGroupProfile(groupDnaHashB64);
 }
 
 export async function getToolIcon(
