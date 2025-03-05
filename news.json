@@ -8,7 +8,7 @@
     {
       "type": "Release",
       "timestamp": 1738660111000,
-      "message": "## Moss 0.13.0 released\n\nHolochain 0.4.1"
+      "message": "## Moss 0.13.0 released\n\nUses Holochain 0.4.1"
     }
   ],
   "0.12.x": [
