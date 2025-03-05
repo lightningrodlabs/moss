@@ -140,7 +140,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     },
     assets: {
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
-        const maybeCachedInfo = mossStore.weCache.assetInfo.value(wal);
+        const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
         if (maybeCachedInfo) return maybeCachedInfo;
 
         const dnaHash = wal.hrl[0];
@@ -157,7 +157,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
             assetInfo,
           };
 
-          mossStore.weCache.assetInfo.set(assetAndAppletInfo, wal);
+          mossStore.mossCache.assetInfo.set(assetAndAppletInfo, wal);
 
           return assetAndAppletInfo;
         } catch (e) {
@@ -219,7 +219,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     },
     async appletInfo(appletHash: AppletHash) {
       // TODO not caching is more efficient here
-      // const maybeCachedInfo = mossStore.weCache.appletInfo.value(appletHash);
+      // const maybeCachedInfo = mossStore.mossCache.appletInfo.value(appletHash);
       // if (maybeCachedInfo) return maybeCachedInfo;
 
       let appletStore: AppletStore | undefined;

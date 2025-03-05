@@ -8,7 +8,7 @@ import { stringifyWal } from '@theweave/api';
 /**
  * Cache for We
  */
-export class WeCache {
+export class MossCache {
   private store: KeyValueStore;
 
   constructor(store?: KeyValueStore) {
