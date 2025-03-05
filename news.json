@@ -2,18 +2,13 @@
   "0.13.x": [
     {
       "type": "Release",
-      "timestamp": 1729023365412,
-      "message": "## Moss 0.13.0-gamma.1 released\n\nChangelog:\n- updates to holochain 0.4.0-rc.0\n- better debugging\n- and more...\n\nNote: this version is not compatible with previous 0.13.x versions, and must be installed manually from [the releases page](https://github.com/lightningrodlabs/moss/releases/tag/v0.13.0-gamma.1) "
+      "timestamp": 1741094371000,
+      "message": "## Moss 0.13.1 released\n\nChangelog:\n- new creatable palette UI\n- add support for selecting assets from a specific source\n- bug fixes"
     },
     {
       "type": "Release",
-      "timestamp": 1722197574129,
-      "message": "## Moss 0.13.0-alpha.9 released\n\nChangelog:\n- add persistent Tool settings/preferences (e.g. camera permission)\n- improved personal view bar UI"
-    },
-    {
-      "type": "Release",
-      "timestamp": 1722105495254,
-      "message": "## Moss 0.13.0-alpha.8 released\n\nChangelog:\n- displays cross-group views of tools if a tool has a `weave.config.json` at the root level of its UI with `\"crossGroupView\": true`\n- converts the top bar to a personal view bar when the Moss icon is selected\n- adds window frame to the splashscreen\n- adds horizontal scrolling to top bar"
+      "timestamp": 1738660111000,
+      "message": "## Moss 0.13.0 released"
     }
   ],
   "0.12.x": [
