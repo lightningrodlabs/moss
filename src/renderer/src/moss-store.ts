@@ -134,7 +134,7 @@ export class MossStore {
     public appletDevConfig: WeaveDevConfig | undefined,
   ) {
     this.myLatestActivity = Date.now();
-    this._version = conductorInfo.moss_version;
+    this.version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
     if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
   }
@@ -161,11 +161,7 @@ export class MossStore {
 
   weCache: WeCache = new WeCache();
 
-  _version: string;
-
-  get version() {
-    return this._version;
-  }
+  version: string;
 
   _notificationFeed: Writable<AppletNotification[]> = writable([]);
 
