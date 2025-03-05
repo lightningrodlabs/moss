@@ -1008,6 +1008,10 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     icon: 'garbl',
   };
 
+  // For testing purposes assign random visibility
+  // const visibilities = ['high', 'low'];
+  // let counter = 0;
+
   const tools: ToolAndCurationInfo[] = config.applets.map((toolConfig) => {
     let toolUrl: string;
     switch (toolConfig.source.type) {
@@ -1022,7 +1026,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         break;
     }
     const toolListUrl = `###DEVCONFIG###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
-    return {
+    const toolAndCurationInfo: ToolAndCurationInfo = {
       toolCompatibilityId: deriveToolCompatibilityId({
         toolListUrl: toolListUrl,
         toolId: toolConfig.name,
@@ -1036,7 +1040,8 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             toolListUrl: toolListUrl,
             toolId: 'REPLACE',
             versionBranch: '###DEVCONFIG###',
-            tags: [],
+            tags: ['some tag', 'another tag', 'cool', 'stuff'],
+            // visiblity: visibilities[counter % 2] as 'high' | 'low',
           },
           curator: {
             name: 'Moss dev mode test curator',
@@ -1083,6 +1088,8 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         },
       },
     };
+    // counter += 1;
+    return toolAndCurationInfo;
   });
 
   return {
