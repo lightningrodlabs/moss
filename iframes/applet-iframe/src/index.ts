@@ -815,45 +815,39 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
 
 function overrideLocalStorage(): void {
   const _setItem = Storage.prototype.setItem;
-  Storage.prototype.setItem = async function (key, value) {
+  Storage.prototype.setItem = function (key, value): void {
     if (this === window.localStorage) {
-      setTimeout(
-        async () =>
-          postMessage({
-            type: 'localStorage.setItem',
-            key,
-            value,
-          }),
-        100,
+      setTimeout(async () =>
+        postMessage({
+          type: 'localStorage.setItem',
+          key,
+          value,
+        }),
       );
     }
     _setItem.apply(this, [key, value]);
   };
 
   const _removeItem = Storage.prototype.removeItem;
-  Storage.prototype.removeItem = async function (key): Promise<void> {
+  Storage.prototype.removeItem = function (key): void {
     if (this === window.localStorage) {
-      setTimeout(
-        async () =>
-          postMessage({
-            type: 'localStorage.removeItem',
-            key,
-          }),
-        100,
+      setTimeout(async () =>
+        postMessage({
+          type: 'localStorage.removeItem',
+          key,
+        }),
       );
     }
     _removeItem.apply(this, [key]);
   };
 
   const _clear = Storage.prototype.clear;
-  Storage.prototype.clear = async function (): Promise<void> {
+  Storage.prototype.clear = function (): void {
     if (this === window.localStorage) {
-      setTimeout(
-        async () =>
-          postMessage({
-            type: 'localStorage.clear',
-          }),
-        100,
+      setTimeout(async () =>
+        postMessage({
+          type: 'localStorage.clear',
+        }),
       );
     }
     _clear.apply(this, []);
