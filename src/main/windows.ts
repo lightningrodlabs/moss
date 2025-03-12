@@ -27,7 +27,13 @@ export const createWalWindow = (): BrowserWindow => {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     walWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/walwindow.html`);
   } else {
-    walWindow.loadFile(path.join(__dirname, '../renderer/walwindow.html'));
+    // Note: It's important that it shares the origin with the main window so that
+    // localStorage is shared between iframes of the same applet instance in the
+    // main window and WAL windows because chromium partitions localStorage by
+    // the iframe's parent origin as well
+    // - https://github.com/electron/electron/issues/43106#issuecomment-2270965371
+    // - https://chromium-review.googlesource.com/c/chromium/src/+/4899223
+    walWindow.loadURL('moss://admin.renderer/walwindow.html');
   }
 
   // walWindow.on('close', () => {
