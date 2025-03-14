@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --port $UI_PORT --clearScreen false",
-    "build": "vite build",
+    "build": "rimraf dist.zip && vite build",
     "lint": "eslint --ext .ts,.html . && prettier \"**/*.ts\" --check",
     "format": "eslint --ext .ts,.html . --fix && prettier \"**/*.ts\" --write",
     "package:ui": "yarn build && cd dist && bestzip ../dist.zip *",

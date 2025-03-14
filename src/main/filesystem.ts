@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import semver from 'semver';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaHashB64, InstalledAppId } from '@holochain/client';
@@ -9,6 +10,7 @@ import { platform } from '@electron-toolkit/utils';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
 import AdmZip from 'adm-zip';
 import { GroupProfile } from '@theweave/api';
+import { toolCompatibilityIdFromDistInfo } from '@theweave/utils';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -284,15 +286,81 @@ export class MossFileSystem {
    * @param toolId Identifier of a Tool (not the instance but the class)
    * @returns
    */
-  toolDir(toolId: string) {
+  toolDir(toolId: string): string {
     return path.join(this.toolsDir, toolId);
   }
 
-  toolUserPreferencesPath(toolId: string) {
+  /**
+   * Assets directories of Tool UIs are cached here for efficiency because they're
+   * being used frequently as part of the `cross-group://` custom protocol handler.
+   */
+  _toolUiAssetsDirCache: Record<string, string> = {};
+
+  /**
+   * Clear the cache of Tool UI assets directory paths. This is required after
+   * UI updates to make sure that the new UI assets get served through the
+   * `cross-group://` custom protocol handler.
+   */
+  clearToolUiAssetsCache() {
+    this._toolUiAssetsDirCache = {};
+  }
+
+  /**
+   * Directory where the UI assets are to be used for the cross-group view of that
+   * Tool.
+   *
+   * @param toolId
+   */
+  async toolUiAssetsDir(toolId: string, useCache = true): Promise<string | undefined> {
+    const maybeCached = this._toolUiAssetsDirCache[toolId];
+    if (maybeCached && useCache) return maybeCached;
+    // Iteratively read all applet app asset infos until one is found with
+    // the right toolId and if yes, infer the UI asset location from the
+    // asset info, add it to the cache and return it.
+    // If no matching asset info is found for the given tool id, return undefined.
+    const filesAndDirs = await fsPromises.readdir(this.appsDir, { withFileTypes: true });
+    for (const fileOrDir of filesAndDirs) {
+      if (fileOrDir.isDirectory() && fileOrDir.name.startsWith('applet#')) {
+        const assetInfoJsonPath = path.join(this.appsDir, fileOrDir.name, 'info.json');
+        if (fs.existsSync(assetInfoJsonPath)) {
+          let appAssetsInfoJson: string | undefined;
+          try {
+            appAssetsInfoJson = await fsPromises.readFile(assetInfoJsonPath, 'utf-8');
+          } catch (e) {
+            throw new Error(
+              `@toolUiAssetsDir: Failed to read app assets info json file at path '${assetInfoJsonPath}': ${e}`,
+            );
+          }
+          try {
+            const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
+            const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
+              appAssetsInfo.distributionInfo,
+            );
+            if (toolCompatibilityId === toolId && appAssetsInfo.type === 'webhapp') {
+              if (appAssetsInfo.ui.location.type === 'filesystem') {
+                const uiAssetsDir = path.join(
+                  this.uisDir,
+                  appAssetsInfo.ui.location.sha256,
+                  'assets',
+                );
+                this._toolUiAssetsDirCache[toolId] = uiAssetsDir;
+                return uiAssetsDir;
+              }
+            }
+          } catch (e) {
+            throw new Error(`Failed to parse app assets info: ${e}`);
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  toolUserPreferencesPath(toolId: string): string {
     return path.join(this.toolDir(toolId), 'preferences.json');
   }
 
-  toolIconPath(toolId: string) {
+  toolIconPath(toolId: string): string {
     return path.join(this.toolDir(toolId), 'icon');
   }
 
@@ -339,7 +407,7 @@ export class MossFileSystem {
     return undefined;
   }
 
-  grantCameraAccess(toolId: string) {
+  grantCameraAccess(toolId: string): void {
     const userPreferences = this.toolUserPreferences(toolId);
     if (userPreferences) {
       userPreferences.cameraAccessGranted = true;
@@ -357,7 +425,7 @@ export class MossFileSystem {
     }
   }
 
-  grantMicrophoneAccess(toolId: string) {
+  grantMicrophoneAccess(toolId: string): void {
     const userPreferences = this.toolUserPreferences(toolId);
     if (userPreferences) {
       userPreferences.microphoneAccessGranted = true;
@@ -375,7 +443,7 @@ export class MossFileSystem {
     }
   }
 
-  grantFullMediaAccess(toolId: string) {
+  grantFullMediaAccess(toolId: string): void {
     const userPreferences = this.toolUserPreferences(toolId);
     if (userPreferences) {
       userPreferences.fullMediaAccessGranted = true;

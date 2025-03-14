@@ -17,8 +17,6 @@ const HAPP_IFRAME_SCRIPT = fs.readFileSync(
 
 export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
   protocol.handle('applet', async (request) => {
-    // console.log('### Got applet request: ', request);
-    // console.log('### Got request with url: ', request.url);
     const uriWithoutProtocol = request.url.split('://')[1];
     const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
     const uriComponents = uriWithoutQueryString.split('/');
@@ -34,43 +32,33 @@ export async function handleAppletProtocol(mossFileSystem: MossFileSystem) {
       );
     }
 
-    const absolutePath = path.join(uiAssetsDir, ...uriComponents.slice(1));
+    const absoluteFilePath = path.join(uiAssetsDir, ...uriComponents.slice(1));
 
-    // TODO possible performance optimization to not do the fs.existSync here but just
-    // fall back if net.fetch fails for the absoultePath in the else clause
-    if (
-      uriComponents.length === 1 ||
-      (uriComponents.length === 2 &&
-        (uriComponents[1] === '' || uriComponents[1] === 'index.html')) ||
-      !fs.existsSync(absolutePath)
-    ) {
-      let indexHtmlResponse: Response;
-      try {
-        indexHtmlResponse = await net.fetch(
-          url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
-        );
-      } catch (e) {
-        return new Response(
-          'No index.html found. If you are the developer of this Tool, make sure that the index.html is located at the root level of your UI assets.',
-        );
-      }
+    return serveAssets(uiAssetsDir, absoluteFilePath, uriComponents);
+  });
+}
 
-      const content = await indexHtmlResponse.text();
+export async function handleCrossGroupProtocol(mossFileSystem: MossFileSystem) {
+  protocol.handle('cross-group', async (request) => {
+    const uriWithoutProtocol = request.url.split('://')[1];
+    const uriWithoutQueryString = uriWithoutProtocol.split('?')[0];
+    const uriComponents = uriWithoutQueryString.split('/');
+    // If the toolCompatibilityId format changes, this might start failing and require
+    // conversion from url format similar to how it's done in the 'applet'
+    // protocol handler
+    const toolCompatibilityId = uriComponents[0];
 
-      // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
-      // needs to happen a bit cumbersomely
-      const htmlComponents = content.split('<head>');
-      htmlComponents.splice(1, 0, '<head>');
-      htmlComponents.splice(2, 0, `<script type="module">${APPLET_IFRAME_SCRIPT}</script>`);
-      let modifiedContent = htmlComponents.join('');
+    const uiAssetsDir = await mossFileSystem.toolUiAssetsDir(toolCompatibilityId);
 
-      // remove title attribute to be able to set title to app id later
-      modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      const response = new Response(modifiedContent, indexHtmlResponse);
-      return response;
-    } else {
-      return net.fetch(url.pathToFileURL(absolutePath).toString());
+    if (!uiAssetsDir) {
+      throw new Error(
+        `Failed to find UI assets directory for requested toolCompatibilityId '${toolCompatibilityId}'.`,
+      );
     }
+
+    const absoluteFilePath = path.join(uiAssetsDir, ...uriComponents.slice(1));
+
+    return serveAssets(uiAssetsDir, absoluteFilePath, uriComponents);
   });
 }
 
@@ -127,4 +115,42 @@ export async function handleDefaultAppsProtocol(
       );
     }
   });
+}
+
+async function serveAssets(uiAssetsDir: string, absoluteFilePath: string, uriComponents: string[]) {
+  // TODO possible performance optimization to not do the fs.existSync here but just
+  // fall back if net.fetch fails for the absoultePath in the else clause
+  if (
+    uriComponents.length === 1 ||
+    (uriComponents.length === 2 &&
+      (uriComponents[1] === '' || uriComponents[1] === 'index.html')) ||
+    !fs.existsSync(absoluteFilePath) // We fall back to index.html if the requested file doesn't exist (required for router based UI frameworks)
+  ) {
+    let indexHtmlResponse: Response;
+    try {
+      indexHtmlResponse = await net.fetch(
+        url.pathToFileURL(path.join(uiAssetsDir, 'index.html')).toString(),
+      );
+    } catch (e) {
+      return new Response(
+        'No index.html found. If you are the developer of this Tool, make sure that the index.html is located at the root level of your UI assets.',
+      );
+    }
+
+    const content = await indexHtmlResponse.text();
+
+    // lit uses the $` combination (https://github.com/lit/lit/issues/4433) so string replacement
+    // needs to happen a bit cumbersomely
+    const htmlComponents = content.split('<head>');
+    htmlComponents.splice(1, 0, '<head>');
+    htmlComponents.splice(2, 0, `<script type="module">${APPLET_IFRAME_SCRIPT}</script>`);
+    let modifiedContent = htmlComponents.join('');
+
+    // remove title attribute to be able to set title to app id later
+    modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
+    const response = new Response(modifiedContent, indexHtmlResponse);
+    return response;
+  } else {
+    return net.fetch(url.pathToFileURL(absoluteFilePath).toString());
+  }
 }

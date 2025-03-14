@@ -48,6 +48,7 @@ import {
   deStringifyWal,
   ParentToAppletMessage,
   GroupProfile as GroupProfilePartial,
+  IframeKind,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -160,7 +161,20 @@ export class MossStore {
    */
   _appletDevPorts: Record<AppletId, number> = {};
 
-  async getAppletDevPort(appletId: AppletId) {
+  async getAppletDevPort(iframeKind: IframeKind) {
+    let appletId: AppletId;
+    if (iframeKind.type === 'applet') {
+      appletId = encodeHashToBase64(iframeKind.appletHash);
+    } else {
+      const applets = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
+      const appletIds = Object.keys(applets);
+      if (appletIds.length === 0)
+        throw new Error(
+          'Failed to get applet dev port: No applet found for the given ToolCompatibilityId',
+        );
+      appletId = appletIds[0];
+    }
+
     const maybePort = this._appletDevPorts[appletId];
     if (maybePort) return maybePort;
     const port = await getAppletDevPort(appIdFromAppletId(appletId));

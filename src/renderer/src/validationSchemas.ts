@@ -228,7 +228,9 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('get-iframe-config'),
-      crossGroup: Type.Boolean(),
+      // TODO remove the crossGroup field altogether once it's removed in @theweave/api
+      // since it's not required anymore
+      crossGroup: Type.Optional(Type.Boolean()),
     },
     { additionalProperties: false },
   ),
@@ -317,33 +319,6 @@ export const AppletToParentRequest = Type.Union([
       type: Type.Literal('creatable-result'),
       result: CreatableResult,
       dialogId: Type.String(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('localStorage.setItem'),
-      key: Type.String(),
-      value: Type.String(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('localStorage.removeItem'),
-      key: Type.String(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('localStorage.clear'),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('get-localStorage'),
     },
     { additionalProperties: false },
   ),

@@ -318,6 +318,22 @@ export class AppletMain extends LitElement {
               Send High Urgency Notification with 5 seconds delay
             </button>
 
+            <h2>Local Storage</h2>
+
+            <button @click=${() => {
+              console.log('localstorage: ', window.localStorage);
+            }}>Log localstorage</button>
+
+            <h2>Media Access</h2>
+            <button @click=${async () => {
+              await navigator.mediaDevices.getUserMedia({
+                audio: {
+                  noiseSuppression: true,
+                  echoCancellation: true,
+                },
+              });
+            }}>Request Audio Access</button>
+
             <h2>on-before-unload behavior</h2>
 
             <div class="row">

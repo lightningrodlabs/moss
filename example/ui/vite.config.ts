@@ -46,6 +46,10 @@ export default defineConfig({
           src: '../../node_modules/@shoelace-style/shoelace/dist/assets',
           dest: path.resolve(__dirname, 'dist/shoelace'),
         },
+        {
+          src: './weave.config.json',
+          dest: '.',
+        },
       ],
     }),
   ],

@@ -28,6 +28,7 @@ import {
   AppletHash,
   AppletId,
   ParentToAppletMessage,
+  IframeKind,
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -49,7 +50,12 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
-import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
+import {
+  appIdFromAppletId,
+  appletIdFromAppId,
+  deriveToolCompatibilityId,
+  toLowerCaseB64,
+} from '@theweave/utils';
 import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
 
 export async function initAppClient(
@@ -65,8 +71,13 @@ export async function initAppClient(
   return client;
 }
 
-export function appletOrigin(appletHash: AppletHash): string {
-  return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
+export function iframeOrigin(iframeKind: IframeKind): string {
+  switch (iframeKind.type) {
+    case 'applet':
+      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
+    case 'cross-group':
+      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
+  }
 }
 
 export function appletOriginFromAppletId(appletId: AppletId): string {
@@ -846,7 +857,7 @@ export function lazyLoadAndPollUntil<T>(
   });
 }
 
-export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: MossStore) {
+export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   // determine iframeSrc, then open wal in window
   const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]));
   if (!location) throw new Error('Asset not found.');
@@ -864,18 +875,23 @@ export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: M
         : undefined,
     },
   };
+  const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
     if (appletDevPort) {
+      const iframeKind: IframeKind = {
+        type: 'applet',
+        appletHash,
+      };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
-      )}#${urlFromAppletHash(appletHash)}`;
+      )}#${fromUint8Array(encode(iframeKind))}`;
       return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
     }
   }
-  const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash })}?${renderViewToQueryString(renderView)}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
 }
 
