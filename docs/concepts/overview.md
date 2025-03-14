@@ -79,7 +79,7 @@ Furthermore we must hold to the truth that information makes sense only in conte
 
 The consequences of these mandates to the WIP are:
 
-- Capacities may define a **Search function**  which implements search across the Assets created by the Tool.  This function is triggered by end-users and is called either with a plain-text search string or with a Sematic Tree Regular Expression, and should return any matching Assets.  Thus, the Frame can always return the context of the found items to the user because it knows which abilities are associated with which groups.
+- Capacities may define a **Search function**  which implements search across the Assets created by the Tool.  This function is triggered by end-users and is called either with a plain-text search string or with a Semantic Tree Regular Expression, and should return any matching Assets.  Thus, the Frame can always return the context of the found items to the user because it knows which abilities are associated with which groups.
 - *Libraries* are available to search for and discover across the range of classes of entities that might exist, i.e. specific information (Assets), functional capacities and their instances (Capacities/Tools), starting points (templates within for addition to specific Tools).
 - Capacities may also provide information to the Frame about Asset data that should be indexed for fast searching and propagation. 
 
