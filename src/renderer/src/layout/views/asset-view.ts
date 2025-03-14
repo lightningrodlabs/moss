@@ -56,13 +56,7 @@ export class AssetView extends LitElement {
   }
 
   async openInWindow() {
-    if (this.location.value.status !== 'complete' || this.location.value.value === undefined) {
-      console.error('Asset location not defined (yet).');
-      notifyError('Failed to open Asset in window (see console for details).');
-    } else {
-      const appletHash = this.location.value.value.dnaLocation.appletHash;
-      return openWalInWindow(this.wal, encodeHashToBase64(appletHash), this._mossStore);
-    }
+    return openWalInWindow(this.wal, this._mossStore);
   }
 
   async copyWal() {

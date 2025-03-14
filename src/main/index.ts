@@ -71,7 +71,7 @@ import {
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
-import { handleAppletProtocol } from './customSchemes';
+import { handleAppletProtocol, handleCrossGroupProtocol } from './customSchemes';
 import {
   AppletId,
   AppletToParentMessage,
@@ -88,6 +88,7 @@ import {
   appletIdFromAppId,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
+  toOriginalCaseB64,
 } from '@theweave/utils';
 import { Jimp } from 'jimp';
 
@@ -348,6 +349,10 @@ if (!RUNNING_WITH_COMMAND) {
   protocol.registerSchemesAsPrivileged([
     {
       scheme: 'applet',
+      privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+    },
+    {
+      scheme: 'cross-group',
       privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
     },
     {
@@ -629,6 +634,9 @@ if (!RUNNING_WITH_COMMAND) {
             } catch (e) {
               console.warn('Failed to read assetInfo during permission request.');
             }
+          } else if (details.requestingUrl.startsWith('cross-group://')) {
+            toolId = toOriginalCaseB64(details.requestingUrl.slice(14).split('/')[0]);
+            console.log('@permissionRequestHandler: GOT TOOLID for cross-group iframe: ', toolId);
           }
 
           // On macOS, OS level permission for camera/microhone access needs to be given
@@ -755,6 +763,7 @@ if (!RUNNING_WITH_COMMAND) {
     const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
     handleAppletProtocol(WE_FILE_SYSTEM);
+    handleCrossGroupProtocol(WE_FILE_SYSTEM);
 
     const contextMenu = Menu.buildFromTemplate([
       {
@@ -996,7 +1005,7 @@ if (!RUNNING_WITH_COMMAND) {
         wal,
       };
     });
-    // To be called by WAL windows to find out which src the iframev is supposed to use
+    // To be called by WAL windows to find out which src the iframe is supposed to use
     ipcMain.handle(
       'get-my-src',
       (e): { iframeSrc: string; appletId: AppletId; wal: WAL } | undefined => {
@@ -1394,6 +1403,10 @@ if (!RUNNING_WITH_COMMAND) {
 
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
 
+        // Clear the cache of Tool Class UI asset directories to make sure
+        // cross-group views get the new UI served as well going forward
+        WE_FILE_SYSTEM.clearToolUiAssetsCache();
+
         return allAppletAppIds.map((id) => appletIdFromAppId(id));
       },
     );
@@ -1464,6 +1477,9 @@ if (!RUNNING_WITH_COMMAND) {
         );
         WE_FILE_SYSTEM.backupAppAssetsInfo(appId);
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+        // Clear the cache of Tool Class UI asset directories to make sure
+        // cross-group views get the new UI served as well going forward
+        WE_FILE_SYSTEM.clearToolUiAssetsCache();
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
       },
     );
@@ -1605,8 +1621,10 @@ if (!RUNNING_WITH_COMMAND) {
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
           const assetBytes = Array.from(new Uint8Array(buffer));
+          console.log('validating webhapp...');
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
+          console.log('webhapp validated.');
 
           // Except in dev mode with a provided UI port, only .webhapp files are allowed, no pure .happ files
           if (!uiPort && !RUN_OPTIONS.devInfo && (!webhappSha256 || !uiSha256))
@@ -1646,7 +1664,9 @@ if (!RUNNING_WITH_COMMAND) {
           const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
           fs.writeFileSync(webHappPath, new Uint8Array(buffer));
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
+          console.log('Saving webhapp...');
           const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          console.log('webhapp saved.');
 
           happToBeInstalledPath = happPath;
           try {

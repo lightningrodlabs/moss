@@ -1,7 +1,7 @@
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { EntryHash, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
-import { AppletHash, AppletInfo, GroupProfile } from '@theweave/api';
+import { AppletHash, AppletInfo, GroupProfile, IframeKind } from '@theweave/api';
 import { WeaveClient } from '@theweave/api';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
@@ -76,6 +76,15 @@ export function decodeContext(contextStringified: string): any {
 
 export function appletOrigin(appletHash: AppletHash): string {
   return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
+}
+
+export function iframeOrigin(iframeKind: IframeKind): string {
+  switch (iframeKind.type) {
+    case 'applet':
+      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
+    case 'cross-group':
+      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
+  }
 }
 
 export function toLowerCaseB64(hashb64: HoloHashB64): string {

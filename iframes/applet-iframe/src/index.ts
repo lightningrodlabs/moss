@@ -40,6 +40,7 @@ import {
   AppletId,
   AssetStoreContent,
   stringifyWal,
+  IframeKind,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { toOriginalCaseB64 } from '@theweave/utils';
@@ -54,8 +55,7 @@ declare global {
     __WEAVE_API__: WeaveServices;
     __WEAVE_APPLET_SERVICES__: AppletServices;
     __WEAVE_RENDER_INFO__: RenderInfo;
-    __WEAVE_APPLET_HASH__: AppletHash;
-    __WEAVE_APPLET_ID__: AppletId;
+    __WEAVE_IFRAME_KIND__: IframeKind;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
     __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
@@ -341,12 +341,11 @@ const weaveApi: WeaveServices = {
 };
 
 (async () => {
-  window.__WEAVE_APPLET_HASH__ = readAppletHash();
-  window.__WEAVE_APPLET_ID__ = readAppletId();
+  window.__WEAVE_IFRAME_KIND__ = readIframeKind();
   window.__WEAVE_API__ = weaveApi;
   window.__WEAVE_APPLET_SERVICES__ = new AppletServices();
 
-  const [_, view] = await Promise.all([fetchLocalStorage(), getRenderView()]);
+  const view = await getRenderView();
 
   if (!view) {
     throw new Error('RenderView undefined.');
@@ -356,7 +355,6 @@ const weaveApi: WeaveServices = {
 
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
-    crossGroup,
   });
 
   if (iframeConfig.type === 'not-installed') {
@@ -371,6 +369,7 @@ const weaveApi: WeaveServices = {
   // when the on-before-unload message is sent to the iframe and Moss
   // is waiting for a response and will never get one.
   window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
+    // Validate the origin of the message to make sure it comes from the Moss main UI
     if (m.origin !== iframeConfig.mainUiOrigin) {
       console.warn('Got message from invalid origin: ', m.origin);
       return;
@@ -410,10 +409,16 @@ const weaveApi: WeaveServices = {
       setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
     ]);
 
-    const appletHash = window.__WEAVE_APPLET_HASH__;
+    if (window.__WEAVE_IFRAME_KIND__.type !== 'applet')
+      throw new Error(
+        'Failed to initialize iframe: Iframe origin does not match iframe kind from query string.',
+      );
+
+    const appletHash = window.__WEAVE_IFRAME_KIND__.appletHash;
 
     // message handler for ParentToApplet messages
     window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
+      // Validate the origin of the message to make sure it comes from the Moss main UI
       if (m.origin !== iframeConfig.mainUiOrigin) {
         console.warn('Got message from invalid origin: ', m.origin);
         return;
@@ -452,13 +457,31 @@ const weaveApi: WeaveServices = {
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
     };
+
+    window.addEventListener('weave-client-connected', async () => {
+      // Once the WeaveClient of the applet has connected, we can update stuff from the AppletServices
+      let creatables: Record<CreatableName, CreatableType> = {};
+      creatables = window.__WEAVE_APPLET_SERVICES__.creatables;
+      // validate that it
+      if (!creatables) {
+        console.warn(
+          `Creatables undefined. The AppletServices passed to the WeaveClient may contain an invalid 'creatables' property.`,
+        );
+        creatables = {};
+      }
+
+      await postMessage({
+        type: 'update-creatable-types',
+        value: creatables,
+      });
+    });
   } else if (view.type === 'cross-group-view') {
     const applets: EntryHashMap<{
       appletClient: AppClient;
       profilesClient: ProfilesClient;
     }> = new HoloHashMap();
 
-    if (iframeConfig.type !== 'cross-applet') throw new Error('Bad iframe config');
+    if (iframeConfig.type !== 'cross-group') throw new Error('Bad iframe config');
 
     await Promise.all(
       Object.entries(iframeConfig.applets).map(
@@ -483,36 +506,19 @@ const weaveApi: WeaveServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
-  window.addEventListener('weave-client-connected', async () => {
-    // Once the WeaveClient of the applet has connected, we can update stuff from the AppletServices
-    let creatables: Record<CreatableName, CreatableType> = {};
-    creatables = window.__WEAVE_APPLET_SERVICES__.creatables;
-    // validate that it
-    if (!creatables) {
-      console.warn(
-        `Creatables undefined. The AppletServices passed to the WeaveClient may contain an invalid 'creatables' property.`,
-      );
-      creatables = {};
-    }
-
-    await postMessage({
-      type: 'update-creatable-types',
-      value: creatables,
-    });
-  });
   window.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 })();
 
-async function fetchLocalStorage() {
-  // override localStorage methods and fetch localStorage for this applet from main window
-  overrideLocalStorage();
-  const appletLocalStorage: Record<string, string> = await postMessage({
-    type: 'get-localStorage',
-  });
-  Object.keys(appletLocalStorage).forEach((key) =>
-    window.localStorage.setItem(key, appletLocalStorage[key]),
-  );
-}
+// async function fetchLocalStorage() {
+//   // override localStorage methods and fetch localStorage for this applet from main window
+//   overrideLocalStorage();
+//   const appletLocalStorage: Record<string, string> = await postMessage({
+//     type: 'get-localStorage',
+//   });
+//   Object.keys(appletLocalStorage).forEach((key) =>
+//     window.localStorage.setItem(key, appletLocalStorage[key]),
+//   );
+// }
 
 const handleEventMessage = async (message: ParentToAppletMessage) => {
   switch (message.type) {
@@ -588,7 +594,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     const message: AppletToParentMessage = {
       request,
-      appletHash: window.__WEAVE_APPLET_HASH__,
+      source: window.__WEAVE_IFRAME_KIND__,
     };
 
     // eslint-disable-next-line no-restricted-globals
@@ -660,17 +666,30 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
   return postMessage({ type: 'sign-zome-call', request });
 }
 
-function readAppletHash(): EntryHash {
+function readIframeKind(): IframeKind {
   if (window.origin.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-    return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+    return {
+      type: 'applet',
+      appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
+    };
+  } else if (window.origin.startsWith('cross-group://')) {
+    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+    return {
+      type: 'cross-group',
+      toolCompatibilityId: toOriginalCaseB64(lowercaseB64Id),
+    };
+  } else if (window.origin.startsWith('http://localhost')) {
+    // In dev mode, the iframe kind will be appended at the end
+    const encodedIframeKind = window.location.href.split('#')[1];
+    const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
+    return iframeKind;
   }
-  // In dev mode, the applet hash will be appended at the end
-  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+  throw new Error(`Failed to read iframe kind. Invalid origin: ${window.origin}`);
 }
 
 function readAppletId(): AppletId {
@@ -813,46 +832,46 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
   }
 }
 
-function overrideLocalStorage(): void {
-  const _setItem = Storage.prototype.setItem;
-  Storage.prototype.setItem = function (key, value): void {
-    if (this === window.localStorage) {
-      setTimeout(async () =>
-        postMessage({
-          type: 'localStorage.setItem',
-          key,
-          value,
-        }),
-      );
-    }
-    _setItem.apply(this, [key, value]);
-  };
+// function overrideLocalStorage(): void {
+//   const _setItem = Storage.prototype.setItem;
+//   Storage.prototype.setItem = function (key, value): void {
+//     if (this === window.localStorage) {
+//       setTimeout(async () =>
+//         postMessage({
+//           type: 'localStorage.setItem',
+//           key,
+//           value,
+//         }),
+//       );
+//     }
+//     _setItem.apply(this, [key, value]);
+//   };
 
-  const _removeItem = Storage.prototype.removeItem;
-  Storage.prototype.removeItem = function (key): void {
-    if (this === window.localStorage) {
-      setTimeout(async () =>
-        postMessage({
-          type: 'localStorage.removeItem',
-          key,
-        }),
-      );
-    }
-    _removeItem.apply(this, [key]);
-  };
+//   const _removeItem = Storage.prototype.removeItem;
+//   Storage.prototype.removeItem = function (key): void {
+//     if (this === window.localStorage) {
+//       setTimeout(async () =>
+//         postMessage({
+//           type: 'localStorage.removeItem',
+//           key,
+//         }),
+//       );
+//     }
+//     _removeItem.apply(this, [key]);
+//   };
 
-  const _clear = Storage.prototype.clear;
-  Storage.prototype.clear = function (): void {
-    if (this === window.localStorage) {
-      setTimeout(async () =>
-        postMessage({
-          type: 'localStorage.clear',
-        }),
-      );
-    }
-    _clear.apply(this, []);
-  };
-}
+//   const _clear = Storage.prototype.clear;
+//   Storage.prototype.clear = function (): void {
+//     if (this === window.localStorage) {
+//       setTimeout(async () =>
+//         postMessage({
+//           type: 'localStorage.clear',
+//         }),
+//       );
+//     }
+//     _clear.apply(this, []);
+//   };
+// }
 
 function renderNotInstalled(appletName: string) {
   document.body.innerHTML = `<div

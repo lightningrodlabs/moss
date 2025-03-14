@@ -285,7 +285,7 @@ export class MainDashboard extends LitElement {
       throw new Error('Opening applet blocks is currently not implemented.');
     },
     openCrossGroupMain: (_appletBundleHash) => {
-      throw new Error('Opening cross-applet main views is currently not implemented.');
+      throw new Error('Opening cross-group main views is currently not implemented.');
     },
     openCrossGroupBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
@@ -575,12 +575,11 @@ export class MainDashboard extends LitElement {
     window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       console.log('Got cross window applet to parent message: ', payload);
-      if (!payload.message.appletHash)
-        throw new Error('appletHash not defined in AppletToParentMessage');
+      if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
         this._mossStore,
         this.openViews,
-        encodeHashToBase64(payload.message.appletHash),
+        payload.message.source,
         payload.message.request,
       );
       await window.electronAPI.appletMessageToParentResponse(response, payload.id);

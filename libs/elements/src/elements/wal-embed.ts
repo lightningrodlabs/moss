@@ -11,14 +11,17 @@ import {
   WeaveUrl,
   weaveUrlToLocation,
   WeaveClient,
+  IframeKind,
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-import { appletOrigin, urlFromAppletHash } from '../utils';
+import { iframeOrigin } from '../utils';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash } from '@holochain/client';
 import { mdiArrowCollapse, mdiArrowExpand, mdiClose, mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
+import { fromUint8Array } from 'js-base64';
+import { encode } from '@msgpack/msgpack';
 
 type AssetStatus =
   | {
@@ -251,11 +254,15 @@ export class WalEmbed extends LitElement {
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
           this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
+        const iframeKind: IframeKind = {
+          type: 'applet',
+          appletHash: this.assetStatus.assetInfo.appletHash,
+        };
         const iframeSrc = this.assetStatus.assetInfo.appletDevPort
           ? `http://localhost:${
               this.assetStatus.assetInfo.appletDevPort
-            }?${queryString}#${urlFromAppletHash(this.assetStatus.assetInfo.appletHash)}`
-          : `${appletOrigin(this.assetStatus.assetInfo.appletHash)}?${queryString}`;
+            }?${queryString}#${fromUint8Array(encode(iframeKind))}`
+          : `${iframeOrigin(iframeKind)}?${queryString}`;
 
         return html`<iframe
           id="${this.iframeId}"

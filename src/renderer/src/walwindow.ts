@@ -150,12 +150,15 @@ export class WalWindow extends LitElement {
             case 'request-close':
               return walWindow.electronAPI.closeWindow();
             case 'user-select-asset': {
-              await (window.electronAPI as any).focusMainWindow();
+              await walWindow.electronAPI.focusMainWindow();
               let error;
               let response;
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                appletHash: this.appletHash,
+                source: {
+                  type: 'applet',
+                  appletHash: this.appletHash!,
+                },
               };
               try {
                 response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
@@ -167,12 +170,15 @@ export class WalWindow extends LitElement {
               return response;
             }
             case 'user-select-asset-relation-tag': {
-              await (window.electronAPI as any).focusMainWindow();
+              await walWindow.electronAPI.focusMainWindow();
               let error;
               let response;
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                appletHash: this.appletHash,
+                source: {
+                  type: 'applet',
+                  appletHash: this.appletHash!,
+                },
               };
               try {
                 response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
@@ -187,7 +193,10 @@ export class WalWindow extends LitElement {
             default:
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                appletHash: this.appletHash,
+                source: {
+                  type: 'applet',
+                  appletHash: this.appletHash!,
+                },
               };
               // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
               return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
@@ -213,22 +222,28 @@ export class WalWindow extends LitElement {
     this.iframeSrc = appletSrcInfo.iframeSrc;
     this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
     try {
-      const appletInfo: AppletInfo = await (window.electronAPI as any).appletMessageToParent({
+      const appletInfo: AppletInfo = await walWindow.electronAPI.appletMessageToParent({
         request: {
           type: 'get-applet-info',
           appletHash: this.appletHash,
         },
-        appletHash: this.appletHash,
+        source: {
+          type: 'applet',
+          appletHash: this.appletHash!,
+        },
       });
       let assetLocationAndInfo: AssetLocationAndInfo | undefined;
       console.log('Getting global asset info for WAL: ', appletSrcInfo.wal);
       try {
-        assetLocationAndInfo = await (window.electronAPI as any).appletMessageToParent({
+        assetLocationAndInfo = await walWindow.electronAPI.appletMessageToParent({
           request: {
             type: 'get-global-asset-info',
             wal: appletSrcInfo.wal,
           },
-          appletHash: this.appletHash,
+          source: {
+            type: 'applet',
+            appletHash: this.appletHash!,
+          },
         });
       } catch (e) {
         console.warn('Failed to get asset info: ', e);
@@ -238,12 +253,15 @@ export class WalWindow extends LitElement {
       if (appletInfo.groupsHashes.length > 0) {
         const groupDnaHash = appletInfo.groupsHashes[0];
         try {
-          groupProfile = await (window.electronAPI as any).appletMessageToParent({
+          groupProfile = await walWindow.electronAPI.appletMessageToParent({
             request: {
               type: 'get-group-profile',
               groupHash: groupDnaHash,
             },
-            appletHash: this.appletHash,
+            source: {
+              type: 'applet',
+              appletHash: this.appletHash!,
+            },
           });
         } catch (e) {
           console.warn('Failed to get group profile: ', e);
@@ -252,8 +270,8 @@ export class WalWindow extends LitElement {
 
       const title = `${appletInfo.appletName}${groupProfile ? ` (${groupProfile.name})` : ''} - ${assetLocationAndInfo ? `${assetLocationAndInfo.assetInfo.name}` : 'unknown'}`;
 
-      await (window.electronAPI as any).setMyTitle(title);
-      await (window.electronAPI as any).setMyIcon(appletInfo.appletIcon);
+      await walWindow.electronAPI.setMyTitle(title);
+      await walWindow.electronAPI.setMyIcon(appletInfo.appletIcon);
     } catch (e) {
       console.warn('Failed to set window title or icon: ', e);
     }
@@ -264,7 +282,7 @@ export class WalWindow extends LitElement {
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     // The logic to set this variable lives in walwindow.html
     if (window.__WINDOW_CLOSING__) {
-      (window as any).electronAPI.closeWindow();
+      walWindow.electronAPI.closeWindow();
     } else {
       window.location.reload();
     }

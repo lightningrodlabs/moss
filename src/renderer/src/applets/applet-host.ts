@@ -12,6 +12,8 @@ import {
   type FrameNotification,
   type RecordInfo,
   type PeerStatusUpdate,
+  IframeKind,
+  AppletToParentMessage,
 } from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -41,14 +43,20 @@ import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import {
   appIdFromAppletHash,
-  appIdFromAppletId,
   toolCompatibilityIdFromDistInfoString,
   toOriginalCaseB64,
 } from '@theweave/utils';
 import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 function getAppletIdFromOrigin(origin: string): AppletId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
+}
+
+function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
   const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
   return toOriginalCaseB64(lowercaseB64Id);
@@ -57,68 +65,55 @@ function getAppletIdFromOrigin(origin: string): AppletId {
 export function appletMessageHandler(
   mossStore: MossStore,
   openViews: AppOpenViews,
-): (message: any) => Promise<void> {
+): (message: MessageEvent<AppletToParentMessage>) => Promise<void> {
   return async (message) => {
     try {
-      // console.log('and source: ', message.source);
-      let receivedAppletId: AppletId;
-      // if origin.startswith(applet://) then get it from the origin
-      // if ((origin.startswith("http:127.0.0.1") || origin.startwith("http://localhost")) && this.mossStore.isAppletDev) {
+      let receivedFromSource: IframeKind;
 
-      // }
       if (message.origin.startsWith('applet://')) {
         const appletId = getAppletIdFromOrigin(message.origin);
-        // const appletHash = installedApplets.find(
-        //   (a) => toLowerCaseB64(encodeHashToBase64(a)) === lowerCaseAppletId,
-        // );
-        receivedAppletId = appletId;
+        receivedFromSource = {
+          type: 'applet',
+          appletHash: decodeHashFromBase64(appletId),
+        };
+      } else if (message.origin.startsWith('cross-group://')) {
+        const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
+        receivedFromSource = {
+          type: 'cross-group',
+          toolCompatibilityId,
+        };
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
           message.origin.startsWith('http://localhost')) &&
         mossStore.isAppletDev
       ) {
         // in dev mode trust the applet about what it claims
-        receivedAppletId = encodeHashToBase64(message.data.appletHash);
+        receivedFromSource = message.data.source;
       } else if (message.origin.startsWith('default-app://')) {
-        // There is another message handler for those messages in we-app.ts.
+        // There is another message handler for those messages in moss-app.ts.
         return;
       } else {
         throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
       }
 
-      const installedApplets = await toPromise(mossStore.installedApplets);
-
-      const installedAppletHash = installedApplets.find(
-        (hash) => encodeHashToBase64(hash) === receivedAppletId,
-      );
-
-      if (!installedAppletHash) {
-        console.log(
-          'appletHash not found. installedApplets: ',
-          installedApplets.map((hash) => encodeHashToBase64(hash)),
-          // 'lowercaseAppletId: ',
-          // lowerCaseAppletId,
-        );
-        const iframeConfig: IframeConfig = {
-          type: 'not-installed',
-          appletName: receivedAppletId,
-        };
-        message.ports[0].postMessage({ type: 'success', result: iframeConfig });
-        // throw new Error(`Requested applet is not installed`);
-        console.warn("Got a message from an applet that's not installed.");
-        return;
-      }
-
       const result = await handleAppletIframeMessage(
         mossStore,
         openViews,
-        receivedAppletId,
+        receivedFromSource,
         message.data.request,
       );
       message.ports[0].postMessage({ type: 'success', result });
     } catch (e) {
       console.error('Error while handling applet iframe message. Error: ', e, 'Message: ', message);
-      console.log('appletId: ', encodeHashToBase64(message.data.appletHash));
+      console.log(
+        'Source: ',
+        message.data.source.type === 'applet'
+          ? {
+              type: 'applet',
+              appletId: encodeHashToBase64(message.data.source.appletHash),
+            }
+          : message.data.source,
+      );
       message.ports[0].postMessage({ type: 'error', error: (e as any).message });
     }
   };
@@ -279,7 +274,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
   openViews: AppOpenViews,
-  appletId: AppletId,
+  source: IframeKind,
   message: AppletToParentRequest,
 ) {
   // Validate the format of the iframe message
@@ -299,26 +294,10 @@ export async function handleAppletIframeMessage(
 
   switch (message.type) {
     case 'get-iframe-config':
-      const appletHash = decodeHashFromBase64(appletId);
-      const isInstalled = await toPromise(mossStore.isInstalled.get(appletHash));
-      const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
-      if (!isInstalled) {
-        const iframeConfig: IframeConfig = {
-          type: 'not-installed',
-          appletName: appletStore.applet.custom_name,
-        };
-        return iframeConfig;
-      }
-
-      const crossGroup = message.crossGroup;
-      if (crossGroup) {
-        const applets = await toPromise(
-          mossStore.appletsForToolId.get(
-            toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
-          ),
-        );
+      if (source.type === 'cross-group') {
+        const applets = await toPromise(mossStore.appletsForToolId.get(source.toolCompatibilityId));
         const config: IframeConfig = {
-          type: 'cross-applet',
+          type: 'cross-group',
           appPort: mossStore.conductorInfo.app_port,
           mainUiOrigin: window.location.origin,
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
@@ -327,6 +306,17 @@ export async function handleAppletIframeMessage(
         };
         return config;
       } else {
+        const appletHash = source.appletHash;
+        const isInstalled = await toPromise(mossStore.isInstalled.get(appletHash));
+        const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
+        if (!isInstalled) {
+          const iframeConfig: IframeConfig = {
+            type: 'not-installed',
+            appletName: appletStore.applet.custom_name,
+          };
+          return iframeConfig;
+        }
+
         const groupsStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
 
         const groupProfiles = await Promise.all(
@@ -388,7 +378,7 @@ export async function handleAppletIframeMessage(
           );
         case 'asset':
           if (message.request.mode === 'window') {
-            return openWalInWindow(message.request.wal, appletId, mossStore);
+            return openWalInWindow(message.request.wal, mossStore);
           }
 
           return openViews.openAsset(message.request.wal, message.request.mode);
@@ -403,7 +393,19 @@ export async function handleAppletIframeMessage(
           `Got notification message without notifications attribute: ${JSON.stringify(message)}`,
         );
       }
-      const appletHash = decodeHashFromBase64(appletId);
+      // We are currently storing notifications by appletId. In case of notifications received
+      // from a cross-group view the appletId is not defined. Supporting notifications from
+      // cross-group view would add an additional layer of complexity of distinguishing between
+      // notifications at Tool class level or notifications for a specific applet instance
+      // that would also need to be represented in the Weave API with correspondingly
+      // different WeaveAPI endpoints for applet instance view vs. cross-group views
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Received notification from cross-group view. This is currently not supported.',
+        );
+      }
+      const appletHash = source.appletHash;
+      const appletId = encodeHashToBase64(appletHash);
       const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
@@ -480,7 +482,10 @@ export async function handleAppletIframeMessage(
       }
       return assetInfo;
     case 'my-group-permission-type': {
-      const appletHash = decodeHashFromBase64(appletId);
+      if (source.type === 'cross-group') {
+        throw new Error('Group permission type is not defined for cross-group views.');
+      }
+      const appletHash = source.appletHash;
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       if (groupStores.size === 0) throw new Error('No group store found for applet.');
       const groupPermissions: PermissionType[] = [];
@@ -515,7 +520,10 @@ export async function handleAppletIframeMessage(
       }
     }
     case 'applet-participants': {
-      const appletHash = decodeHashFromBase64(appletId);
+      if (source.type === 'cross-group') {
+        throw new Error('Applet participants are not defined for cross-group view.');
+      }
+      const appletHash = source.appletHash;
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       if (groupStores.size === 0) throw new Error('No group store found for applet.');
 
@@ -526,7 +534,10 @@ export async function handleAppletIframeMessage(
       return appletAgents.map((appletAgent) => appletAgent.applet_pubkey);
     }
     case 'sign-zome-call':
-      logAppletZomeCall(message.request, appletId);
+      // TODO support cross-group view logging as well
+      if (source.type !== 'cross-group') {
+        logAppletZomeCall(message.request, encodeHashToBase64(source.appletHash));
+      }
       return signZomeCallApplet(message.request);
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
@@ -534,43 +545,28 @@ export async function handleAppletIframeMessage(
       mossStore.setCreatableDialogResult(message.dialogId, message.result);
       break;
     case 'update-creatable-types':
+      if (source.type === 'cross-group') {
+        throw new Error('update-creatable-types may not be called from cross-group iframes.');
+      }
       // TODO validate message content
-      mossStore.updateCreatableTypes(appletId, message.value);
+      mossStore.updateCreatableTypes(encodeHashToBase64(source.appletHash), message.value);
       break;
-    case 'localStorage.setItem': {
-      const appletLocalStorage = mossStore.persistedStore.appletLocalStorage.value(appletId);
-      appletLocalStorage[message.key] = message.value;
-      mossStore.persistedStore.appletLocalStorage.set(appletLocalStorage, appletId);
-      break;
-    }
-    case 'localStorage.removeItem': {
-      const appletLocalStorage = mossStore.persistedStore.appletLocalStorage.value(appletId);
-      const filteredStorage = {};
-      Object.keys(appletLocalStorage).forEach((key) => {
-        if (key !== message.key) {
-          filteredStorage[key] = appletLocalStorage[key];
-        }
-      });
-      mossStore.persistedStore.appletLocalStorage.set(filteredStorage, appletId);
-      break;
-    }
-    case 'localStorage.clear': {
-      mossStore.persistedStore.appletLocalStorage.set({}, appletId);
-      break;
-    }
-    case 'get-localStorage':
-      return mossStore.persistedStore.appletLocalStorage.value(appletId);
     case 'get-applet-iframe-script':
       return getAppletIframeScript();
     case 'request-close':
       // Only supported in external windows
       return;
     case 'send-remote-signal': {
-      const appletHash = decodeHashFromBase64(appletId);
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Sending remote signals via WeaveClient from cross-group view is currently not supported.',
+        );
+      }
+      const appletHash = source.appletHash;
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       const remoteSignalPayload: GroupRemoteSignal = {
         type: 'applet-signal',
-        appletId,
+        appletId: encodeHashToBase64(appletHash),
         payload: message.payload,
       };
       // For every group store, get the currently online peers and send a remote signal to them;
@@ -593,11 +589,16 @@ export async function handleAppletIframeMessage(
       break;
     }
     case 'create-clone-cell': {
-      const appletHash = decodeHashFromBase64(appletId);
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Creating a clone cell from within cross-group view is currently not supported.',
+        );
+      }
+      const appletHash = source.appletHash;
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       if (groupStores.size === 0) throw new Error('No group store found.');
       // Install the clone in the group
-      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
       const clonedCell = await appletClient.createCloneCell(message.req);
       // Register the clone in the group dna(s) if it's supposed to be public
       if (message.publicToGroupMembers) {
@@ -618,12 +619,22 @@ export async function handleAppletIframeMessage(
       return clonedCell;
     }
     case 'enable-clone-cell': {
-      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Enabling a clone cell from within cross-group view is currently not supported.',
+        );
+      }
+      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(source.appletHash));
       const clonedCell = await appletClient.enableCloneCell(message.req);
       return clonedCell;
     }
     case 'disable-clone-cell': {
-      const appletClient = await mossStore.getAppClient(appIdFromAppletId(appletId));
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Disabling a clone cell from within cross-group view is currently not supported.',
+        );
+      }
+      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(source.appletHash));
       return appletClient.disableCloneCell(message.req);
     }
     /**
@@ -637,9 +648,8 @@ export async function handleAppletIframeMessage(
       break;
     case 'user-select-asset':
       let groupDnaHash: DnaHash | undefined;
-      if (message.from === 'create') {
-        const appletHash = decodeHashFromBase64(appletId);
-        const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      if (message.from === 'create' && source.type === 'applet') {
+        const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
         console.log('groupstores: ', groupStores);
         groupDnaHash = Array.from(groupStores.keys())[0];
         console.log('groupDnaHash: ', groupDnaHash);
@@ -648,12 +658,20 @@ export async function handleAppletIframeMessage(
     case 'user-select-asset-relation-tag':
       return openViews.userSelectAssetRelationTag();
     case 'add-tags-to-asset': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Adding tags to an asset from within cross-group view is currently not supported.',
+        );
+      }
       // We want to make sure that
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow adding to assets from the same applet
-      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+      if (
+        encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !==
+        encodeHashToBase64(source.appletHash)
+      )
         throw new Error('Cannot add tags to an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
@@ -669,11 +687,19 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'remove-tags-from-asset': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Removing tags to an asset from within cross-group view is currently not supported.',
+        );
+      }
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow removing to assets from the same applet
-      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+      if (
+        encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !==
+        encodeHashToBase64(source.appletHash)
+      )
         throw new Error('Cannot remove tags from an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
@@ -689,11 +715,19 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'add-asset-relation': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Adding an asset relation from within cross-group view is currently not supported.',
+        );
+      }
       const hrl = message.srcWal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow removing to assets from the same applet
-      if (encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !== appletId)
+      if (
+        encodeHashToBase64(hrlLocation.dnaLocation.appletHash) !==
+        encodeHashToBase64(source.appletHash)
+      )
         throw new Error('Cannot relation to an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
@@ -709,12 +743,15 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'remove-asset-relation': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Removing an asset relation from within cross-group view is currently not supported.',
+        );
+      }
       // Note: We assume here that the asset relation that gets removed lives inside the
       // Tool that requests the removal. If that's not the case it fails. And it probably
       // shouldn't be allowed to remove an asset relation belonging to another Tool anyway
-      const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
-      );
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
@@ -726,11 +763,14 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'add-tags-to-asset-relation': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Adding tags to an asset relation from within cross-group view is currently not supported.',
+        );
+      }
       console.log('@appletHost: GOT add-tags-to-asset-relation message. ');
 
-      const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
-      );
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
@@ -741,10 +781,13 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'remove-tags-from-asset-relation': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Removing tags from an asset relation from within cross-group view is currently not supported.',
+        );
+      }
       console.log('@appletHost: GOT remove-tags-from-asset-relation message. ');
-      const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
-      );
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
@@ -756,15 +799,18 @@ export async function handleAppletIframeMessage(
       );
     }
     case 'get-all-asset-relation-tags': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Getting asset relation tags from within cross-group view is currently not supported.',
+        );
+      }
       // Get all tags across all groups
       let groupStores: GroupStore[];
       if (message.crossGroup) {
         const groupStoresMap = await toPromise(mossStore.groupStores);
         groupStores = Array.from(groupStoresMap.values());
       } else {
-        const groupStoresMap = await toPromise(
-          mossStore.groupsForApplet.get(decodeHashFromBase64(appletId)),
-        );
+        const groupStoresMap = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
         groupStores = Array.from(groupStoresMap.values());
         if (groupStores.length === 0) {
           throw new Error('No associated group found for the provided WAL.');
@@ -780,6 +826,11 @@ export async function handleAppletIframeMessage(
       return Array.from(new Set(tags.sort((a, b) => a.localeCompare(b))));
     }
     case 'subscribe-to-asset-store': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Subscribing to an asset store from within cross-group view is currently not supported.',
+        );
+      }
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
@@ -789,10 +840,15 @@ export async function handleAppletIframeMessage(
           'Failed to unsubscribe from Asset store: No associated group store found for the provided WAL.',
         );
       }
-      groupStore.subscribeToAssetStore(message.wal, [appletId]);
+      groupStore.subscribeToAssetStore(message.wal, [encodeHashToBase64(source.appletHash)]);
       return;
     }
     case 'unsubscribe-from-asset-store': {
+      if (source.type === 'cross-group') {
+        throw new Error(
+          'Unsubscribing from an asset store from within cross-group view is currently not supported.',
+        );
+      }
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
@@ -802,7 +858,7 @@ export async function handleAppletIframeMessage(
           'Failed to unsubscribe from Asset store: No associated group store found for the provided WAL.',
         );
       }
-      groupStore.unsubscribeFromAssetStore(message.wal, appletId);
+      groupStore.unsubscribeFromAssetStore(message.wal, encodeHashToBase64(source.appletHash));
       return;
     }
     default:

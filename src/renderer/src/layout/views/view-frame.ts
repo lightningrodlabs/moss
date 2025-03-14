@@ -1,17 +1,18 @@
 import { css, html, LitElement, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { hashProperty } from '@holochain-open-dev/elements';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import { encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
-import { RenderView } from '@theweave/api';
+import { IframeKind, RenderView } from '@theweave/api';
 
 import { weStyles } from '../../shared-styles.js';
-import { appletOrigin, renderViewToQueryString, urlFromAppletHash } from '../../utils.js';
+import { iframeOrigin, renderViewToQueryString } from '../../utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import { encode } from '@msgpack/msgpack';
+import { fromUint8Array } from 'js-base64';
 
 @localized()
 @customElement('view-frame')
@@ -20,11 +21,11 @@ export class ViewFrame extends LitElement {
   @state()
   mossStore!: MossStore;
 
-  @property(hashProperty('applet-hash'))
-  appletHash!: EntryHash;
-
   @property()
   renderView!: RenderView;
+
+  @property()
+  iframeKind!: IframeKind;
 
   @property()
   reloading = false;
@@ -43,9 +44,7 @@ export class ViewFrame extends LitElement {
 
   async firstUpdated() {
     if (this.mossStore.isAppletDev) {
-      this.appletDevPort = await this.mossStore.getAppletDevPort(
-        encodeHashToBase64(this.appletHash),
-      );
+      this.appletDevPort = await this.mossStore.getAppletDevPort(this.iframeKind);
     }
   }
 
@@ -109,10 +108,12 @@ export class ViewFrame extends LitElement {
     return html`<iframe
         frameborder="0"
         title="TODO"
-        id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-          ? encodeHashToBase64(this.appletHash)
+        id=${this.renderView.type === 'applet-view' &&
+        this.renderView.view.type === 'main' &&
+        this.iframeKind.type === 'applet'
+          ? encodeHashToBase64(this.iframeKind.appletHash)
           : undefined}
-        src="${appletOrigin(this.appletHash)}?${renderViewToQueryString(this.renderView)}"
+        src="${iframeOrigin(this.iframeKind)}?${renderViewToQueryString(this.renderView)}"
         style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
         allow="camera *; microphone *; clipboard-write *;"
         @load=${() => {
@@ -132,12 +133,14 @@ export class ViewFrame extends LitElement {
         }
         const iframeSrc = `http://localhost:${this.appletDevPort}?${renderViewToQueryString(
           this.renderView,
-        )}#${urlFromAppletHash(this.appletHash)}`;
+        )}#${fromUint8Array(encode(this.iframeKind))}`;
         return html`<iframe
             frameborder="0"
             title="TODO"
-            id=${this.renderView.type === 'applet-view' && this.renderView.view.type === 'main'
-              ? encodeHashToBase64(this.appletHash)
+            id=${this.renderView.type === 'applet-view' &&
+            this.renderView.view.type === 'main' &&
+            this.iframeKind.type === 'applet'
+              ? encodeHashToBase64(this.iframeKind.appletHash)
               : undefined}
             src="${iframeSrc}"
             style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"

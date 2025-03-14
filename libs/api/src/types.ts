@@ -308,9 +308,19 @@ export type ParentToAppletMessage =
       payload: Uint8Array;
     };
 
+export type IframeKind =
+  | {
+      type: 'applet';
+      appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+    }
+  | {
+      type: 'cross-group';
+      toolCompatibilityId: string; // Only required in dev mode when iframe origin is localhost
+    };
+
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
-  appletHash?: AppletHash; // Only required in dev mode when iframe origin is localhost
+  source: IframeKind;
 };
 
 export type AppletToParentRequest =
@@ -318,8 +328,9 @@ export type AppletToParentRequest =
       type: 'ready';
     }
   | {
+      // This one is used by initializeHotReload() and is the only one that
+      // affects the API exposed to tool devs
       type: 'get-iframe-config';
-      crossGroup: boolean;
     }
   | {
       type: 'get-record-info';
@@ -372,21 +383,6 @@ export type AppletToParentRequest =
        * The id of the dialog this result is coming from
        */
       dialogId: string;
-    }
-  | {
-      type: 'localStorage.setItem';
-      key: string;
-      value: string;
-    }
-  | {
-      type: 'localStorage.removeItem';
-      key: string;
-    }
-  | {
-      type: 'localStorage.clear';
-    }
-  | {
-      type: 'get-localStorage';
     }
   | {
       type: 'get-applet-iframe-script';
@@ -519,7 +515,7 @@ export type IframeConfig =
       groupProfiles: GroupProfile[];
     }
   | {
-      type: 'cross-applet';
+      type: 'cross-group';
       appPort: number;
       /**
        * The origin of the main Moss UI. Used to validate iframe message origins.
