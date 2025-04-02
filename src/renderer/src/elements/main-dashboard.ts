@@ -52,6 +52,8 @@ import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
+import './_new_design/moss-dialog.js';
+
 import { weStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
@@ -82,6 +84,7 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
+import { MossDialog } from './_new_design/moss-dialog.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -565,6 +568,10 @@ export class MainDashboard extends LitElement {
   };
 
   async firstUpdated() {
+    setTimeout(() => {
+      const mossDialog = this.shadowRoot!.getElementById('moss-dialog') as MossDialog;
+      mossDialog.open();
+    });
     // add the beforeunload listener only 10 seconds later as there won't be anything
     // meaningful to save by applets before and it will ensure that the iframes
     // are ready to respond to the on-before-reload event
@@ -1268,6 +1275,7 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
+      <moss-dialog id="moss-dialog"></moss-dialog>
       <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
         <div class="column">
           <div><b>Factory Reset</b></div>

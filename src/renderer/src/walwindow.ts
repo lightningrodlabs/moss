@@ -348,7 +348,7 @@ export class WalWindow extends LitElement {
           margin: 0;
           padding: 0;
           background-color: #588121;
-          font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+          font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         }
       `,
     ];
