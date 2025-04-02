@@ -100,7 +100,7 @@ export function findAppForDnaHash(
       for (const cell of cells) {
         if (CellType.Cloned in cell) {
           if (cell[CellType.Cloned].cell_id[0].toString() === dnaHash.toString()) {
-            return { appInfo: app, roleName };
+            return { appInfo: app, roleName: cell[CellType.Cloned].clone_id };
           }
         } else if (CellType.Provisioned in cell) {
           if (cell[CellType.Provisioned].cell_id[0].toString() === dnaHash.toString()) {
