@@ -14,6 +14,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { weStyles } from '../../shared-styles.js';
 
 import './moss-input.js';
+import './moss-select-avatar.js';
 import { arrowLeftShortIcon } from './icons.js';
 
 /**
@@ -61,7 +62,9 @@ export class MossDialog extends LitElement {
           >
           </sl-input>
 
-          <sl-input
+          <moss-select-avatar label=""></moss-select-avatar>
+
+          <!-- <sl-input
             class="moss-input"
             type="password"
             placeholder=${msg('your password')}
@@ -69,7 +72,7 @@ export class MossDialog extends LitElement {
             size="medium"
             style="margin-bottom: 20px;"
             password-toggle
-          ></sl-input>
+          ></sl-input> -->
 
           <button class="moss-button" disabled style="width: 350px; margin-bottom: 56px;">
             Next

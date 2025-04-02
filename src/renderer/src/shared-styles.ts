@@ -26,6 +26,8 @@ export const weStyles = [
       /* Colors */
       --moss-main-green: #e0eed5;
 
+      --moss-light-green: #f4fed6;
+
       --moss-grey-light: #e8e8e8;
       --moss-grey-dark: #757575;
 
@@ -59,14 +61,6 @@ export const weStyles = [
     /* moss-button */
 
     .moss-button {
-      --sl-color-neutral-0: black;
-      --sl-color-primary-50: #455b36;
-    }
-    .moss-button::part(base) .button--disabled {
-      color: red;
-      cursor: default;
-    }
-    .moss-button {
       all: unset;
       background: black;
       border-radius: 16px;
@@ -77,6 +71,8 @@ export const weStyles = [
       color: white;
       cursor: pointer;
       text-align: center;
+      --sl-color-neutral-0: black;
+      --sl-color-primary-50: #455b36;
     }
     .moss-button:hover {
       background: #455b36;
@@ -175,6 +171,27 @@ export const weStyles = [
       width: 8px;
       border-radius: 50%;
       background-color: #d9d9d9;
+    }
+
+    /* image picker button */
+
+    .image-picker-button {
+      all: unset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      height: 80px;
+      width: 80px;
+      cursor: pointer;
+      border: 1px solid #778355;
+      background-color: var(--moss-light-green);
+    }
+
+    .image-picker-img {
+      border-radius: 12px;
+      height: 80px;
+      width: 80px;
     }
 
     /* color classes */

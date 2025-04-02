@@ -1534,7 +1534,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <button
               tabindex="0"
-              class="moss-button"
+              class="moss-sidebar-button"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1544,7 +1544,7 @@ export class MainDashboard extends LitElement {
             >
               <img
                 tabindex="0"
-                class="moss-button-icon"
+                class="moss-sidebar-button-icon"
                 src="magic-wand.svg"
                 style="width: 24px; height: 24px;"
               />
@@ -1554,7 +1554,7 @@ export class MainDashboard extends LitElement {
         <div class="row center-content" style="margin-bottom: 5px; position: relative">
           <sl-tooltip content="Search" placement="right" hoist>
             <button
-              class="moss-button"
+              class="moss-sidebar-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1564,7 +1564,7 @@ export class MainDashboard extends LitElement {
             >
               <sl-icon
                 tabindex="0"
-                class="moss-button-icon"
+                class="moss-sidebar-button-icon"
                 .src=${wrapPathInSvg(mdiMagnify)}
                 style="color: #fff; height: 24px; width: 24px"
               ></sl-icon>
@@ -2158,21 +2158,21 @@ export class MainDashboard extends LitElement {
           border-radius: 0 0 10px 10px;
         }
 
-        .moss-button-icon {
+        .moss-sidebar-button-icon {
           font-size: 66px;
           color: #fff;
           cursor: pointer;
         }
 
-        .moss-button-icon:hover {
+        .moss-sidebar-button-icon:hover {
           color: var(--sl-color-primary-50);
         }
 
-        .moss-button-icon:focus {
+        .moss-sidebar-button-icon:focus {
           color: var(--sl-color-primary-50);
         }
 
-        .moss-button {
+        .moss-sidebar-button {
           width: 40px;
           height: 40px;
           outline: none;
@@ -2183,7 +2183,7 @@ export class MainDashboard extends LitElement {
           border-radius: 5px;
         }
 
-        .moss-button:hover {
+        .moss-sidebar-button:hover {
           background: linear-gradient(0deg, #203923 0%, #63912a 100%);
           cursor: pointer;
         }
