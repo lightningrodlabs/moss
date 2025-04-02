@@ -16,6 +16,7 @@ import { weStyles } from '../../shared-styles.js';
 import './moss-input.js';
 import './moss-select-avatar.js';
 import { arrowLeftShortIcon } from './icons.js';
+import { defaultIcons } from './defaultIcons.js';
 
 /**
  * @element create-group-dialog
@@ -37,7 +38,7 @@ export class MossDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog id="dialog" no-header class="moss-dialog">
+      <sl-dialog id="dialog" no-header class="moss-dialog" style="--width: 670px;">
         <button class="moss-hover-icon-button" style="margin-left: -8px; margin-top: -8px;">
           <div class="row items-center">
             <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
@@ -48,7 +49,7 @@ export class MossDialog extends LitElement {
         </button>
         <div class="column items-center">
           <span
-            style="font-size: 28px; font-weight: 500; margin-bottom: 48px; letter-spacing: -0.56px;"
+            style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
             >My group is called</span
           >
 
@@ -57,12 +58,15 @@ export class MossDialog extends LitElement {
             placeholder=${msg('group name')}
             label=${msg('group name')}
             size="medium"
-            style="margin-bottom: 20px;"
-            help-text="enter something"
+            style="margin-bottom: 20px; width: 350px;"
           >
           </sl-input>
 
-          <moss-select-avatar label=""></moss-select-avatar>
+          <moss-select-avatar
+            label=""
+            .defaultImgs=${defaultIcons}
+            style="margin-bottom: 56px;"
+          ></moss-select-avatar>
 
           <!-- <sl-input
             class="moss-input"
@@ -74,7 +78,7 @@ export class MossDialog extends LitElement {
             password-toggle
           ></sl-input> -->
 
-          <button class="moss-button" disabled style="width: 350px; margin-bottom: 56px;">
+          <button class="moss-button" disabled style="width: 310px; margin-bottom: 56px;">
             Next
           </button>
 

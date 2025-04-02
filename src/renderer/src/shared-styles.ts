@@ -173,27 +173,6 @@ export const weStyles = [
       background-color: #d9d9d9;
     }
 
-    /* image picker button */
-
-    .image-picker-button {
-      all: unset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      height: 80px;
-      width: 80px;
-      cursor: pointer;
-      border: 1px solid #778355;
-      background-color: var(--moss-light-green);
-    }
-
-    .image-picker-img {
-      border-radius: 12px;
-      height: 80px;
-      width: 80px;
-    }
-
     /* color classes */
 
     .bg-black {

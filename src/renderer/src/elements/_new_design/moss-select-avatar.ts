@@ -3,12 +3,11 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/avatar/avatar.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import { mdiPlus } from '@mdi/js';
 
 import { resizeAndExportImg } from '../../utils.js';
-import { FormField, FormFieldController, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { FormField, FormFieldController } from '@holochain-open-dev/elements';
 import { weStyles } from '../../shared-styles.js';
-import { plusIcon } from './icons.js';
+import { editIcon, plusIcon, rebootIcon, trashIcon } from './icons.js';
 
 @customElement('moss-select-avatar')
 export class MossSelectAvatar extends LitElement implements FormField {
@@ -22,13 +21,10 @@ export class MossSelectAvatar extends LitElement implements FormField {
   shape: 'circle' | 'square' | 'rounded' = 'circle';
 
   @property()
-  value: string | undefined;
-
-  @property()
   disabled: boolean = false;
 
   @property()
-  defaultValue: string | undefined;
+  defaultImgs: string[] | undefined;
 
   @property()
   label: string = msg('Avatar');
@@ -38,6 +34,12 @@ export class MossSelectAvatar extends LitElement implements FormField {
 
   @query('#error-input')
   private _errorInput!: HTMLInputElement;
+
+  @state()
+  value: string | undefined;
+
+  @state()
+  private _hoverImage = false;
 
   _controller = new FormFieldController(this);
 
@@ -51,8 +53,19 @@ export class MossSelectAvatar extends LitElement implements FormField {
     return !invalid;
   }
 
+  firstUpdated() {
+    // If default images are passed, choose a random one to start with
+    if (this.defaultImgs) this.reset();
+  }
+
   reset() {
-    this.value = this.defaultValue;
+    if (this.defaultImgs) {
+      // Randomly select one of the default images
+      const randomIndex = Math.floor(Math.random() * this.defaultImgs.length);
+      this.value = this.defaultImgs[randomIndex];
+    } else {
+      this.value = undefined;
+    }
   }
 
   onAvatarUploaded() {
@@ -87,11 +100,21 @@ export class MossSelectAvatar extends LitElement implements FormField {
         <img
           class="image-picker-img"
           alt=${this.label ? this.label : 'image picker'}
-          @click=${() => {
-            this.value = undefined;
-          }}
           src=${this.value}
+          @mouseenter=${() => {
+            this._hoverImage = true;
+          }}
         />
+        <div
+          class="overlay column center-content"
+          style="${this._hoverImage ? '' : 'display: none;'}"
+          @mouseleave=${() => {
+            this._hoverImage = false;
+          }}
+          @click=${() => this._avatarFilePicker.click()}
+        >
+          ${editIcon()}
+        </div>
       `;
     else
       return html` <div class="column" style="align-items: center;">
@@ -124,9 +147,68 @@ export class MossSelectAvatar extends LitElement implements FormField {
               >
             `
           : html``}
-        ${this.renderAvatar()}
+        <sl-tooltip placement="bottom" content=${msg('Change Group Icon')}>
+          ${this.renderAvatar()}
+        </sl-tooltip>
+        <div class="column center-content" style="position: absolute; right: -28px; bottom: 1px;">
+          <!-- <sl-tooltip content=${msg('Clear')}>
+            <button class="icon-btn grey" style="margin-bottom: 4px;">${trashIcon()}</button>
+          </sl-tooltip> -->
+          <sl-tooltip content=${msg('random image')} placement="right">
+            <button class="icon-btn" @click=${() => this.reset()}>${rebootIcon()}</button>
+          </sl-tooltip>
+        </div>
       </div>`;
   }
 
-  static styles = weStyles;
+  static styles = [
+    weStyles,
+    css`
+      .image-picker-button {
+        all: unset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        height: 80px;
+        width: 80px;
+        cursor: pointer;
+        border: 1px solid #778355;
+        background-color: var(--moss-light-green);
+      }
+
+      .image-picker-img {
+        border-radius: 12px;
+        height: 80px;
+        width: 80px;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+
+      .overlay {
+        position: absolute;
+        border-radius: 12px;
+        height: 80px;
+        width: 80px;
+        background: #000000a9;
+        cursor: pointer;
+      }
+
+      .icon-btn {
+        all: unset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        background: #e0eed5;
+      }
+
+      .grey {
+        background: var(--moss-grey-light);
+      }
+    `,
+  ];
 }
