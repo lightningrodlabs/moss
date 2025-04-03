@@ -94,16 +94,13 @@ export const weStyles = [
     .moss-input {
       position: relative;
       /* For the label color to only show up on :focus-within the default color is transparent */
-      color: transparent;
-      /* color: var(--moss-grey-dark); */
+      /* color: transparent; */
+      color: var(--moss-grey-dark);
     }
     .moss-input::part(base) {
       border-radius: 12px;
       border: 1px solid --moss-grey-light;
       font-size: 16px;
-    }
-    .moss-input::part(input) {
-      color: black;
     }
     .moss-input {
       --sl-input-focus-ring-color: var(--moss-main-green);
@@ -116,25 +113,30 @@ export const weStyles = [
       position: absolute;
       z-index: 1;
       font-size: 12px;
-      margin-left: 16px;
+      margin-left: 17px;
       margin-top: 3px;
     }
     .moss-input:focus-within {
-      /* make the form control label visible */
-      color: var(--moss-grey-dark);
+      /* hide the placeholder */
       --sl-input-placeholder-color: transparent;
     }
-    .moss-input:focus-within {
-      /* make the form control label visible */
+    .moss-input::part(input) {
+      color: black;
+    }
+    .moss-input::part(input):placeholder-shown {
       color: var(--moss-grey-dark);
-      --sl-input-placeholder-color: transparent;
+      z-index: 1;
     }
     .moss-input::part(input):focus {
+      /* let the label shine through */
+      background: transparent;
       margin-top: 3px;
     }
-    /* .moss-input::part(form-control-input):placeholder-shown {
-      background: blue;
-    } */
+    .moss-input::part(input):not(:placeholder-shown) {
+      /* let the label shine through */
+      background: transparent;
+      margin-top: 3px;
+    }
     .moss-input::part(form-control-help-text) {
       margin-left: 14px;
       color: var(--moss-purple);
