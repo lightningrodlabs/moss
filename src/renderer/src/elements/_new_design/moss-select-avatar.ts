@@ -113,7 +113,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
           }}
           @click=${() => this._avatarFilePicker.click()}
         >
-          ${editIcon()}
+          ${editIcon(20)}
         </div>
       `;
     else
