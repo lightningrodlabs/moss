@@ -38,9 +38,6 @@ export class MossSelectAvatar extends LitElement implements FormField {
   @state()
   value: string | undefined;
 
-  @state()
-  private _hoverImage = false;
-
   _controller = new FormFieldController(this);
 
   reportValidity() {
@@ -101,18 +98,8 @@ export class MossSelectAvatar extends LitElement implements FormField {
           class="image-picker-img"
           alt=${this.label ? this.label : 'image picker'}
           src=${this.value}
-          @mouseenter=${() => {
-            this._hoverImage = true;
-          }}
         />
-        <div
-          class="overlay column center-content"
-          style="${this._hoverImage ? '' : 'display: none;'}"
-          @mouseleave=${() => {
-            this._hoverImage = false;
-          }}
-          @click=${() => this._avatarFilePicker.click()}
-        >
+        <div class="overlay column center-content" @click=${() => this._avatarFilePicker.click()}>
           ${editIcon(20)}
         </div>
       `;
@@ -188,10 +175,16 @@ export class MossSelectAvatar extends LitElement implements FormField {
       .overlay {
         position: absolute;
         border-radius: 12px;
-        height: 80px;
-        width: 80px;
-        background: #000000a9;
+        height: 82px;
+        width: 82px;
         cursor: pointer;
+        background: transparent;
+        color: transparent;
+      }
+
+      .overlay:hover {
+        background: #000000a9;
+        color: white;
       }
 
       .icon-btn {
