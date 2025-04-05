@@ -408,7 +408,7 @@ export class MossApp extends LitElement {
               <button
                 id="join-group-btn"
                 class="moss-button"
-                ?disabled=${this.inviteLink === ''}
+                ?disabled=${this.inviteLink === '' || this.creatingGroup}
                 @click=${() => this.joinGroupAndHeadToMain()}
                 style="width: 40px;"
               >
