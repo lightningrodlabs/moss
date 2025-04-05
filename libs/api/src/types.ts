@@ -526,6 +526,7 @@ export type IframeConfig =
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
+      zomeCallLogging: boolean;
     }
   | {
       type: 'cross-group';
@@ -537,6 +538,7 @@ export type IframeConfig =
       weaveProtocolVersion: string;
       mossVersion: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
+      zomeCallLogging: boolean;
     }
   | {
       type: 'not-installed';

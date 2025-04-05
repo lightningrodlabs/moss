@@ -60,6 +60,7 @@ declare global {
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
     __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
+    __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
 
   interface WindowEventMap {
@@ -361,6 +362,8 @@ const weaveApi: WeaveServices = {
     return;
   }
 
+  window.__ZOME_CALL_LOGGING_ENABLED__ = iframeConfig.zomeCallLogging;
+
   // message handler for ParentToApplet messages
   // This one is registered early here for any type of iframe
   // to be able to respond also in case of page refreshes in short time
@@ -643,27 +646,29 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     throw new Error('Please use the createCloneCell method on the WeaveClient instead.');
   };
 
-  // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
-  const callZomePure = AppWebsocket.prototype.callZome;
+  if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+    // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
+    const callZomePure = AppWebsocket.prototype.callZome;
 
-  // Overwrite the callZome function to measure the duration of the zome call and log it
-  appletClient.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
-    const start = Date.now();
-    const response = await callZomePure.apply(appletClient, [request, timeout]);
-    const end = Date.now();
-    // We don't want to await this so we just schedule it
-    setTimeout(async () => {
-      postMessage({
-        type: 'log-zome-call',
-        info: {
-          installedAppId,
-          fnName: request.fn_name,
-          durationMs: end - start,
-        },
+    // Overwrite the callZome function to measure the duration of the zome call and log it
+    appletClient.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+      const start = Date.now();
+      const response = await callZomePure.apply(appletClient, [request, timeout]);
+      const end = Date.now();
+      // We don't want to await this so we just schedule it
+      setTimeout(async () => {
+        postMessage({
+          type: 'log-zome-call',
+          info: {
+            installedAppId,
+            fnName: request.fn_name,
+            durationMs: end - start,
+          },
+        });
       });
-    });
-    return response;
-  };
+      return response;
+    };
+  }
 
   return appletClient;
 }

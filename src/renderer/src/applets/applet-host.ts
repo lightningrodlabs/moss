@@ -304,6 +304,7 @@ export async function handleAppletIframeMessage(
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
           mossVersion: mossStore.conductorInfo.moss_version,
           applets,
+          zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
         return config;
       } else {
@@ -343,6 +344,7 @@ export async function handleAppletIframeMessage(
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
+          zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
         return config;
       }

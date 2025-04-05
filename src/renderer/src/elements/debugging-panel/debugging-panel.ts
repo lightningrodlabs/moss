@@ -17,6 +17,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import '../../groups/elements/group-context.js';
 import '../../applets/elements/applet-logo.js';
@@ -259,11 +260,13 @@ export class DebuggingPanel extends LitElement {
                   <div
                     style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
                   ></div>
-                  <span
-                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                    @click=${() => this.toggleGroupDetails(groupId)}
-                    >${showDetails ? 'Hide' : 'Details'}</span
-                  >
+                  ${window.__ZOME_CALL_LOGGING_ENABLED__
+                    ? html`<span
+                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                        @click=${() => this.toggleGroupDetails(groupId)}
+                        >${showDetails ? 'Hide' : 'Details'}</span
+                      >`
+                    : html``}
 
                   <sl-icon-button
                     @click=${async () => {
@@ -350,11 +353,13 @@ export class DebuggingPanel extends LitElement {
                   <div
                     style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
                   ></div>
-                  <span
-                    style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                    @click=${() => this.toggleAppletDetails(appletId)}
-                    >${showDetails ? 'Hide' : 'Details'}</span
-                  >
+                  ${window.__ZOME_CALL_LOGGING_ENABLED__
+                    ? html` <span
+                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                        @click=${() => this.toggleAppletDetails(appletId)}
+                        >${showDetails ? 'Hide' : 'Details'}</span
+                      >`
+                    : html``}
                   <sl-icon-button
                     @click=${async () => {
                       this.toggleDebug(appId);
@@ -411,6 +416,27 @@ export class DebuggingPanel extends LitElement {
   render() {
     return html`
       <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
+        <div class=" warning column center-content">
+          <div class="row items-center">
+            <div>
+              ${window.__ZOME_CALL_LOGGING_ENABLED__
+                ? 'Enable zome call logging (will reload Moss)'
+                : 'Disable zome call logging (will reload Moss)'}
+            </div>
+            <sl-switch
+              style="margin-bottom: 5px; margin-left: 12px;"
+              .checked=${window.__ZOME_CALL_LOGGING_ENABLED__}
+              @sl-change=${() => {
+                if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+                  window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
+                } else {
+                  window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
+                }
+                window.location.reload();
+              }}
+            ></sl-switch>
+          </div>
+        </div>
         <h2 style="text-align: center;">Global Apps</h2>
         <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
@@ -439,6 +465,14 @@ export class DebuggingPanel extends LitElement {
     css`
       :host {
         display: flex;
+      }
+
+      .warning {
+        background: #9fb0ff;
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid #03004c;
+        font-weight: bold;
       }
     `,
   ];
