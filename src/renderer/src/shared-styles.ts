@@ -192,6 +192,45 @@ export const weStyles = [
       background-color: #d9d9d9;
     }
 
+    /* Loading dots for buttons */
+    /* https://codepen.io/nzbin/pen/GGrXbp */
+
+    .dot-carousel {
+      position: relative;
+      left: -9999px;
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: #ffffff;
+      color: #ffffff;
+      box-shadow:
+        9984px 0 0 0 #ffffff,
+        9999px 0 0 0 #ffffff,
+        10014px 0 0 0 #ffffff;
+      animation: dot-carousel 1.5s infinite linear;
+    }
+
+    @keyframes dot-carousel {
+      0% {
+        box-shadow:
+          9984px 0 0 -1px #ffffff,
+          9999px 0 0 1px #ffffff,
+          10014px 0 0 -1px #ffffff;
+      }
+      50% {
+        box-shadow:
+          10014px 0 0 -1px #ffffff,
+          9984px 0 0 -1px #ffffff,
+          9999px 0 0 1px #ffffff;
+      }
+      100% {
+        box-shadow:
+          9999px 0 0 1px #ffffff,
+          10014px 0 0 -1px #ffffff,
+          9984px 0 0 -1px #ffffff;
+      }
+    }
+
     /* color classes */
 
     .bg-black {

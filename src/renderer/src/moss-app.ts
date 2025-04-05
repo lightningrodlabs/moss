@@ -1,6 +1,6 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
-import { AdminWebsocket } from '@holochain/client';
+import { AdminWebsocket, CellType, DnaHash } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -17,7 +17,7 @@ import { arrowLeftShortIcon, mossIcon, plusCircleIcon } from './elements/_new_de
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
 import { defaultIcons } from './elements/_new_design/defaultIcons.js';
-import { GroupProfile } from '@theweave/api';
+// import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 
 enum MossAppState {
@@ -44,6 +44,16 @@ export class MossApp extends LitElement {
   @state()
   _mossStore!: MossStore;
 
+  /**
+   * The group to which the main-dashboard will switch to immediately
+   * in the beginning. Used in case of the initial setup.
+   */
+  @state()
+  initialGroup: DnaHash | undefined;
+
+  @state()
+  creatingGroup = false;
+
   @state()
   private inviteLink: string = '';
 
@@ -63,13 +73,19 @@ export class MossApp extends LitElement {
    * Used if group is created as part of initial setup
    */
   @state()
-  private nickname = '';
+  private useProgenitor = true;
 
-  /**
-   * Used if group is created as part of initial setup
-   */
-  @state()
-  private avatar = '';
+  // /**
+  //  * Used if group is created as part of initial setup
+  //  */
+  // @state()
+  // private nickname = '';
+
+  // /**
+  //  * Used if group is created as part of initial setup
+  //  */
+  // @state()
+  // private avatar = '';
 
   async firstUpdated() {
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.13';
@@ -169,6 +185,19 @@ export class MossApp extends LitElement {
     }
   }
 
+  async createGroupAndHeadToMain(): Promise<void> {
+    this.creatingGroup = true;
+    const appInfo = await this._mossStore.createGroup(
+      this.groupName,
+      this.groupIcon,
+      this.useProgenitor,
+    );
+    const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+    this.initialGroup = groupDnaHash;
+    this.state = MossAppState.Running;
+    this.creatingGroup = false;
+  }
+
   renderCreateGroupStep1() {
     return html`
       <div class="column center-content flex-1">
@@ -224,12 +253,14 @@ export class MossApp extends LitElement {
             <button
               class="moss-button"
               style="width: 310px; margin-bottom: 56px;"
-              ?disabled=${!this.groupIcon || !this.groupName}
-              @click=${() => {
-                this.state = MossAppState.CreateGroupStep2;
-              }}
+              ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
+              @click=${() => this.createGroupAndHeadToMain()}
             >
-              Next
+              ${this.creatingGroup
+                ? html`<div class="column center-content">
+                    <div class="dot-carousel" style="margin: 5px 0;"></div>
+                  </div>`
+                : html`${msg('Create new group')}`}
             </button>
 
             <div class="row">
@@ -242,69 +273,69 @@ export class MossApp extends LitElement {
     `;
   }
 
-  renderCreateGroupStep2() {
-    return html`
-      <div class="column center-content flex-1">
-        <div class="moss-card" style="width: 630px; height: 466px;">
-          <button
-            class="moss-hover-icon-button"
-            style="margin-left: -8px; margin-top: -8px;"
-            @click=${() => {
-              this.state = MossAppState.CreateGroupStep1;
-            }}
-          >
-            <div class="row items-center">
-              <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
-                ${arrowLeftShortIcon(24)}
-              </div>
-              <div class="moss-hover-icon-button-text">${msg('back')}</div>
-            </div>
-          </button>
-          <div class="column items-center">
-            <span
-              style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'My group will see me as'}</span
-            >
+  // renderCreateGroupStep2() {
+  //   return html`
+  //     <div class="column center-content flex-1">
+  //       <div class="moss-card" style="width: 630px; height: 466px;">
+  //         <button
+  //           class="moss-hover-icon-button"
+  //           style="margin-left: -8px; margin-top: -8px;"
+  //           @click=${() => {
+  //             this.state = MossAppState.CreateGroupStep1;
+  //           }}
+  //         >
+  //           <div class="row items-center">
+  //             <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
+  //               ${arrowLeftShortIcon(24)}
+  //             </div>
+  //             <div class="moss-hover-icon-button-text">${msg('back')}</div>
+  //           </div>
+  //         </button>
+  //         <div class="column items-center">
+  //           <span
+  //             style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
+  //             >${'My group will see me as'}</span
+  //           >
 
-            <sl-input
-              id="nickname-input"
-              class="moss-input"
-              placeholder=${msg('name or nickname')}
-              label=${msg('name or nickname')}
-              size="medium"
-              style="margin-bottom: 20px; width: 350px;"
-              @input=${() => {
-                const nickNameInput = this.shadowRoot?.getElementById('nickname-input') as SlInput;
-                this.nickname = nickNameInput.value;
-              }}
-            >
-            </sl-input>
+  //           <sl-input
+  //             id="nickname-input"
+  //             class="moss-input"
+  //             placeholder=${msg('name or nickname')}
+  //             label=${msg('name or nickname')}
+  //             size="medium"
+  //             style="margin-bottom: 20px; width: 350px;"
+  //             @input=${() => {
+  //               const nickNameInput = this.shadowRoot?.getElementById('nickname-input') as SlInput;
+  //               this.nickname = nickNameInput.value;
+  //             }}
+  //           >
+  //           </sl-input>
 
-            <moss-select-avatar
-              label=""
-              style="margin-bottom: 56px;"
-              @avatar-selected=${(e) => {
-                this.avatar = e.detail.avatar;
-              }}
-            ></moss-select-avatar>
+  //           <moss-select-avatar
+  //             label=""
+  //             style="margin-bottom: 56px;"
+  //             @avatar-selected=${(e) => {
+  //               this.avatar = e.detail.avatar;
+  //             }}
+  //           ></moss-select-avatar>
 
-            <button
-              class="moss-button"
-              style="width: 310px; margin-bottom: 56px;"
-              ?disabled=${!this.avatar || !this.nickname}
-            >
-              Next
-            </button>
+  //           <button
+  //             class="moss-button"
+  //             style="width: 310px; margin-bottom: 56px;"
+  //             ?disabled=${!this.avatar || !this.nickname}
+  //           >
+  //             Next
+  //           </button>
 
-            <div class="row">
-              <div class="dialog-dot" style="margin-right: 20px;"></div>
-              <div class="dialog-dot bg-black"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+  //           <div class="row">
+  //             <div class="dialog-dot" style="margin-right: 20px;"></div>
+  //             <div class="dialog-dot bg-black"></div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   `;
+  // }
 
   renderInitialSetup() {
     return html`
@@ -381,12 +412,16 @@ export class MossApp extends LitElement {
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:
         return this.renderCreateGroupStep1();
-      case MossAppState.CreateGroupStep2:
-        return this.renderCreateGroupStep2();
+      // case MossAppState.CreateGroupStep2:
+      //   return this.renderCreateGroupStep2();
       case MossAppState.Error:
         return html`Error!`;
       case MossAppState.Running:
-        return html` <main-dashboard id="main-dashboard"></main-dashboard> `;
+        return html`
+          <main-dashboard id="main-dashboard" .initialGroup=${this.initialGroup}></main-dashboard>
+        `;
+      default:
+        return html`Unknown state`;
     }
   }
 
