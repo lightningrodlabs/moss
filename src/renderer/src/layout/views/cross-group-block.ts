@@ -40,6 +40,7 @@ export class CrossGroupBlock extends LitElement {
     const iframeKind: IframeKind = {
       type: 'cross-group',
       toolCompatibilityId: this.toolCompatibilityId,
+      subType: 'block',
     };
     return html`<view-frame .renderView=${renderView} .iframeKind=${iframeKind}> </view-frame>`;
   }

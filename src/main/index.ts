@@ -412,15 +412,6 @@ if (!RUNNING_WITH_COMMAND) {
 
   const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
     if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-    if (MAIN_WINDOW)
-      emitToWindow(MAIN_WINDOW, 'zome-call-signed', {
-        cellIdB64: [
-          encodeHashToBase64(new Uint8Array(zomeCall.cell_id[0])),
-          encodeHashToBase64(new Uint8Array(zomeCall.cell_id[1])),
-        ],
-        fnName: zomeCall.fn_name,
-        zomeName: zomeCall.zome_name,
-      });
     return signZomeCall(zomeCall, WE_RUST_HANDLER);
   };
 

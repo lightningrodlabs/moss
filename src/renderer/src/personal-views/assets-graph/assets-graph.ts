@@ -70,7 +70,9 @@ export class AssetsGraph extends LitElement {
           Array.from(appletStores.entries()).map(async ([appletHash, appletStore]) => {
             // Get dna hash to applet mapping in order to be able to link WALs to their associated applets
             const appletId = encodeHashToBase64(appletHash);
-            const appletClient = await this.mossStore.getAppClient(appIdFromAppletHash(appletHash));
+            const [appletClient, _] = await this.mossStore.getAppClient(
+              appIdFromAppletHash(appletHash),
+            );
             let appInfo: AppInfo | undefined | null;
             try {
               appInfo = await appletClient.appInfo();

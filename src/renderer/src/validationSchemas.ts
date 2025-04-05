@@ -218,6 +218,15 @@ const CreatableResult = Type.Union([
   ),
 ]);
 
+const ZomeCallLogInfo = Type.Object(
+  {
+    fnName: Type.String(),
+    installedAppId: Type.String(),
+    durationMs: Type.Number(),
+  },
+  { additionalProperties: false },
+);
+
 export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
@@ -245,6 +254,13 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('sign-zome-call'),
       request: CallZomeRequest,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('log-zome-call'),
+      info: ZomeCallLogInfo,
     },
     { additionalProperties: false },
   ),

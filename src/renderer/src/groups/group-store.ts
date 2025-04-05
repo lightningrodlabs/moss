@@ -144,12 +144,7 @@ export class GroupStore {
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
 
-    this.foyerStore = new FoyerStore(
-      this.profilesStore,
-      appWebsocket,
-      authenticationToken,
-      'foyer',
-    );
+    this.foyerStore = new FoyerStore(this.profilesStore, appWebsocket, 'foyer');
 
     this._peerStatuses = writable(undefined);
 

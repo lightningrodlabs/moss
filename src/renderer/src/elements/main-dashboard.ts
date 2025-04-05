@@ -70,7 +70,6 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  logMossZomeCall,
   postMessageToAppletIframes,
   postMessageToIframe,
   progenitorFromProperties,
@@ -588,10 +587,6 @@ export class MainDashboard extends LitElement {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
       }
-    });
-
-    window.electronAPI.onZomeCallSigned((_, { cellIdB64, fnName, zomeName }) => {
-      logMossZomeCall(cellIdB64, fnName, zomeName);
     });
 
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
