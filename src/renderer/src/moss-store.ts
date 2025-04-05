@@ -1607,7 +1607,7 @@ export class MossStore {
       token,
     });
     if (window.__ZOME_CALL_LOGGING_ENABLED__) {
-      // ZOME_CALL_LOGGING (this is just for the purpose of code searchability)
+      // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
       const callZomePure = AppWebsocket.prototype.callZome;
 
       // Overwrite the callZome function to measure the duration of the zome call and log it

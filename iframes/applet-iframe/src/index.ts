@@ -643,7 +643,7 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     throw new Error('Please use the createCloneCell method on the WeaveClient instead.');
   };
 
-  // ZOME_CALL_LOGGING (this is just for the purpose of code searchability)
+  // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
   const callZomePure = AppWebsocket.prototype.callZome;
 
   // Overwrite the callZome function to measure the duration of the zome call and log it
@@ -692,7 +692,7 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 function readIframeKind(): IframeKind {
   const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
   const href = window.location.href;
-  if (href.startsWith('applet://')) {
+  if (window.origin.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
@@ -701,7 +701,7 @@ function readIframeKind(): IframeKind {
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
       subType: href.match(viewTypeRegex)![1],
     };
-  } else if (href.startsWith('cross-group://')) {
+  } else if (window.origin.startsWith('cross-group://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
@@ -710,7 +710,7 @@ function readIframeKind(): IframeKind {
       toolCompatibilityId: toOriginalCaseB64(lowercaseB64Id),
       subType: href.match(viewTypeRegex)![1],
     };
-  } else if (href.startsWith('http://localhost')) {
+  } else if (window.origin.startsWith('http://localhost')) {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
