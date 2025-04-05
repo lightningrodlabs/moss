@@ -159,6 +159,9 @@ export class MainDashboard extends LitElement {
   @query('#creatable-palette')
   _creatablePalette!: CreatablePalette;
 
+  @property()
+  initialGroup: DnaHash | undefined;
+
   @state()
   appVersion: string | undefined;
 
@@ -572,6 +575,7 @@ export class MainDashboard extends LitElement {
       const mossDialog = this.shadowRoot!.getElementById('moss-dialog') as MossDialog;
       mossDialog.open();
     });
+    if (this.initialGroup) this.openGroup(this.initialGroup);
     // add the beforeunload listener only 10 seconds later as there won't be anything
     // meaningful to save by applets before and it will ensure that the iframes
     // are ready to respond to the on-before-reload event

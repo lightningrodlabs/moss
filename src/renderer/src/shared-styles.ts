@@ -83,10 +83,27 @@ export const weStyles = [
       cursor: default;
     }
 
+    /* moss-card */
+
+    .moss-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+    }
+
     /* moss-dialog */
 
     .moss-dialog::part(panel) {
       border-radius: 20px;
+    }
+
+    /* dialog-title */
+
+    .dialog-title {
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.56px;
+      text-align: center;
     }
 
     /* moss-input */
@@ -173,6 +190,45 @@ export const weStyles = [
       width: 8px;
       border-radius: 50%;
       background-color: #d9d9d9;
+    }
+
+    /* Loading dots for buttons */
+    /* https://codepen.io/nzbin/pen/GGrXbp */
+
+    .dot-carousel {
+      position: relative;
+      left: -9999px;
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: #ffffff;
+      color: #ffffff;
+      box-shadow:
+        9984px 0 0 0 #ffffff,
+        9999px 0 0 0 #ffffff,
+        10014px 0 0 0 #ffffff;
+      animation: dot-carousel 1.5s infinite linear;
+    }
+
+    @keyframes dot-carousel {
+      0% {
+        box-shadow:
+          9984px 0 0 -1px #ffffff,
+          9999px 0 0 1px #ffffff,
+          10014px 0 0 -1px #ffffff;
+      }
+      50% {
+        box-shadow:
+          10014px 0 0 -1px #ffffff,
+          9984px 0 0 -1px #ffffff,
+          9999px 0 0 1px #ffffff;
+      }
+      100% {
+        box-shadow:
+          9999px 0 0 1px #ffffff,
+          10014px 0 0 -1px #ffffff,
+          9984px 0 0 -1px #ffffff;
+      }
     }
 
     /* color classes */
