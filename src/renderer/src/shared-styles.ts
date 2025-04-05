@@ -83,10 +83,27 @@ export const weStyles = [
       cursor: default;
     }
 
+    /* moss-card */
+
+    .moss-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+    }
+
     /* moss-dialog */
 
     .moss-dialog::part(panel) {
       border-radius: 20px;
+    }
+
+    /* dialog-title */
+
+    .dialog-title {
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.56px;
+      text-align: center;
     }
 
     /* moss-input */

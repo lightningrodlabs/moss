@@ -45,6 +45,8 @@ declare global {
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
+      lairSetupRequired: () => Promise<boolean>;
+      launch: () => Promise<boolean>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
@@ -196,7 +198,7 @@ export async function getAppVersion(): Promise<string> {
   return window.electronAPI.getAppVersion();
 }
 
-export async function getConductorInfo(): Promise<ConductorInfo> {
+export async function getConductorInfo(): Promise<ConductorInfo | undefined> {
   return window.electronAPI.getConductorInfo();
 }
 

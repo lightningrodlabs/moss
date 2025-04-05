@@ -41,7 +41,7 @@ import {
   setLinkOpenHandlers,
   signZomeCall,
 } from './utils';
-import { createSplashscreenWindow, createWalWindow } from './windows';
+import { createWalWindow } from './windows';
 import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
@@ -52,7 +52,6 @@ import {
   ToolCompatibilityId,
   ToolInfoAndVersions,
   WeaveDevConfig,
-  PasswordType,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
@@ -453,9 +452,10 @@ if (!RUNNING_WITH_COMMAND) {
         preload: path.resolve(__dirname, '../preload/admin.js'),
         // autoplayPolicy: 'user-gesture-required',
         // uncomment this line to get fetch requests working while testing publishing of tools:
-        webSecurity: app.isPackaged ? true : false,
+        // webSecurity: app.isPackaged ? true : false,
         safeDialogs: true,
       },
+      show: false,
     });
 
     console.log('Creating main window');
@@ -485,6 +485,7 @@ if (!RUNNING_WITH_COMMAND) {
 
     // Open the DevTools.
     if (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) {
+      console.log('OPENING DEV TOOLS');
       mainWindow.webContents.openDevTools();
     }
     mainWindow.on('close', (e) => {
@@ -829,8 +830,49 @@ if (!RUNNING_WITH_COMMAND) {
       }
     }
 
+    registerIPCHandlers(notificationIcon);
+
     console.log('RUN_OPTIONS on startup: ', RUN_OPTIONS);
 
+    MAIN_WINDOW = createOrShowMainWindow();
+
+    // Check for updates
+    if (app.isPackaged) {
+      autoUpdater.allowPrerelease = true;
+      autoUpdater.autoDownload = false;
+
+      let updateCheckResult: UpdateCheckResult | null | undefined;
+
+      try {
+        updateCheckResult = await autoUpdater.checkForUpdates();
+      } catch (e) {
+        console.warn('Failed to check for updates: ', e);
+      }
+
+      console.log('updateCheckResult: ', updateCheckResult);
+
+      // We only install semver compatible updates
+      if (
+        updateCheckResult &&
+        breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
+        semver.gt(updateCheckResult.updateInfo.version, appVersion)
+      ) {
+        UPDATE_AVAILABLE = {
+          version: updateCheckResult.updateInfo.version,
+          releaseDate: updateCheckResult.updateInfo.releaseDate,
+          releaseNotes: updateCheckResult.updateInfo.releaseNotes as string | undefined,
+        };
+      }
+    }
+  });
+
+  /**
+   * -------------------------------------------------------
+   * IPC HANDLERS
+   * -------------------------------------------------------
+   */
+
+  function registerIPCHandlers(notificationIcon: Electron.NativeImage) {
     ipcMain.handle('exit', () => {
       app.exit(0);
     });
@@ -1150,13 +1192,15 @@ if (!RUNNING_WITH_COMMAND) {
     });
     ipcMain.handle('get-profile', (): string | undefined => RUN_OPTIONS.profile);
     ipcMain.handle('get-version', (): string => app.getVersion());
-    ipcMain.handle('get-conductor-info', (): ConductorInfo => {
-      return {
-        app_port: HOLOCHAIN_MANAGER!.appPort,
-        admin_port: HOLOCHAIN_MANAGER!.adminPort,
-        moss_version: app.getVersion(),
-        weave_protocol_version: '0.13',
-      };
+    ipcMain.handle('get-conductor-info', (): ConductorInfo | undefined => {
+      return HOLOCHAIN_MANAGER
+        ? {
+            app_port: HOLOCHAIN_MANAGER.appPort,
+            admin_port: HOLOCHAIN_MANAGER.adminPort,
+            moss_version: app.getVersion(),
+            weave_protocol_version: '0.13',
+          }
+        : undefined;
     });
     ipcMain.handle(
       'get-tool-icon',
@@ -1183,8 +1227,8 @@ if (!RUNNING_WITH_COMMAND) {
         return WE_FILE_SYSTEM.storeGroupProfile(groupDnaHashB64, groupProfile);
       },
     );
-    ipcMain.handle('lair-setup-required', (): [boolean, boolean] => {
-      return [!WE_FILE_SYSTEM.keystoreInitialized(), WE_FILE_SYSTEM.randomPasswordExists()];
+    ipcMain.handle('lair-setup-required', (): boolean => {
+      return !WE_FILE_SYSTEM.keystoreInitialized();
     });
     ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
@@ -1738,14 +1782,9 @@ if (!RUNNING_WITH_COMMAND) {
       });
       WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
     });
-    // Not currently in use
-    ipcMain.handle('launch', async (_e, passwordInput: PasswordType) => {
-      let password: string;
-      if (passwordInput.type === 'random') {
-        password = WE_FILE_SYSTEM.readOrCreateRandomPassword();
-      } else {
-        password = passwordInput.password;
-      }
+    ipcMain.handle('launch', async (_e): Promise<boolean> => {
+      let isFirstLaunch = !WE_FILE_SYSTEM.keystoreInitialized();
+      const password = WE_FILE_SYSTEM.readOrCreateRandomPassword();
       [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
         WE_FILE_SYSTEM,
         WE_EMITTER,
@@ -1753,17 +1792,17 @@ if (!RUNNING_WITH_COMMAND) {
         password,
         RUN_OPTIONS,
       );
+      console.log(CACHED_DEEP_LINK);
+      return isFirstLaunch;
 
-      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-      MAIN_WINDOW = createOrShowMainWindow();
-      // Send cached deep link to main window after a timeout to make sure the event listener is ready
-      if (CACHED_DEEP_LINK) {
-        setTimeout(() => {
-          if (MAIN_WINDOW) {
-            emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
-          }
-        }, 8000);
-      }
+      // // Send cached deep link to main window after a timeout to make sure the event listener is ready
+      // if (CACHED_DEEP_LINK) {
+      //   setTimeout(() => {
+      //     if (MAIN_WINDOW) {
+      //       emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
+      //     }
+      //   }, 8000);
+      // }
     });
     ipcMain.handle('moss-update-available', () => UPDATE_AVAILABLE);
     ipcMain.handle('install-moss-update', async () => {
@@ -1777,54 +1816,13 @@ if (!RUNNING_WITH_COMMAND) {
       });
       await autoUpdater.downloadUpdate();
     });
+  }
 
-    if (RUN_OPTIONS.devInfo) {
-      [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
-        WE_FILE_SYSTEM,
-        WE_EMITTER,
-        undefined,
-        'pass',
-        RUN_OPTIONS,
-      );
-      MAIN_WINDOW = createOrShowMainWindow();
-    } else {
-      SPLASH_SCREEN_WINDOW = createSplashscreenWindow();
-      SPLASH_SCREEN_WINDOW.on('closed', () => {
-        SPLASH_SCREEN_WINDOW = undefined;
-      });
-
-      // Check for updates
-      if (app.isPackaged) {
-        SPLASH_SCREEN_WINDOW.webContents.send('loading-progress-update', 'Checking for updates...');
-
-        autoUpdater.allowPrerelease = true;
-        autoUpdater.autoDownload = false;
-
-        let updateCheckResult: UpdateCheckResult | null | undefined;
-
-        try {
-          updateCheckResult = await autoUpdater.checkForUpdates();
-        } catch (e) {
-          console.warn('Failed to check for updates: ', e);
-        }
-
-        console.log('updateCheckResult: ', updateCheckResult);
-
-        // We only install semver compatible updates
-        if (
-          updateCheckResult &&
-          breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
-          semver.gt(updateCheckResult.updateInfo.version, appVersion)
-        ) {
-          UPDATE_AVAILABLE = {
-            version: updateCheckResult.updateInfo.version,
-            releaseDate: updateCheckResult.updateInfo.releaseDate,
-            releaseNotes: updateCheckResult.updateInfo.releaseNotes as string | undefined,
-          };
-        }
-      }
-    }
-  });
+  /**
+   * -------------------------------------------------------
+   * App Events
+   * -------------------------------------------------------
+   */
 
   app.on('window-all-closed', () => {
     app.quit();
