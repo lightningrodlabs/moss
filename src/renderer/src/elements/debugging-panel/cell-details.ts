@@ -48,7 +48,7 @@ export class CellDetails extends LitElement {
   showIntegrationLimbo = false;
 
   async networkInfo() {
-    const appClient = await this._mossStore.getAppClient(this.appId);
+    const [appClient, _] = await this._mossStore.getAppClient(this.appId);
     const networkInfo = await appClient.networkInfo({
       dnas: [this.cellId[0]],
       last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds

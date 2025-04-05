@@ -3,6 +3,7 @@ import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
+  AppCallZomeRequest,
   AppClient,
   AppWebsocket,
   CallZomeRequest,
@@ -351,8 +352,6 @@ const weaveApi: WeaveServices = {
     throw new Error('RenderView undefined.');
   }
 
-  const crossGroup = view ? view.type === 'cross-group-view' : false;
-
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
   });
@@ -638,8 +637,32 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     },
   });
 
+  const installedAppId = (await appletClient.appInfo()).installed_app_id;
+
   appletClient.createCloneCell = (_) => {
     throw new Error('Please use the createCloneCell method on the WeaveClient instead.');
+  };
+
+  // ZOME_CALL_LOGGING (this is just for the purpose of code searchability)
+  const callZomePure = AppWebsocket.prototype.callZome;
+
+  // Overwrite the callZome function to measure the duration of the zome call and log it
+  appletClient.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+    const start = Date.now();
+    const response = await callZomePure.apply(appletClient, [request, timeout]);
+    const end = Date.now();
+    // We don't want to await this so we just schedule it
+    setTimeout(async () => {
+      postMessage({
+        type: 'log-zome-call',
+        info: {
+          installedAppId,
+          fnName: request.fn_name,
+          durationMs: end - start,
+        },
+      });
+    });
+    return response;
   };
 
   return appletClient;
@@ -667,23 +690,27 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 }
 
 function readIframeKind(): IframeKind {
-  if (window.origin.startsWith('applet://')) {
+  const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
+  const href = window.location.href;
+  if (href.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
+      subType: href.match(viewTypeRegex)![1],
     };
-  } else if (window.origin.startsWith('cross-group://')) {
+  } else if (href.startsWith('cross-group://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
     return {
       type: 'cross-group',
       toolCompatibilityId: toOriginalCaseB64(lowercaseB64Id),
+      subType: href.match(viewTypeRegex)![1],
     };
-  } else if (window.origin.startsWith('http://localhost')) {
+  } else if (href.startsWith('http://localhost')) {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;

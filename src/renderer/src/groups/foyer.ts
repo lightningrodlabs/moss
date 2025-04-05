@@ -4,7 +4,6 @@ import {
   type RoleName,
   encodeHashToBase64,
   type AgentPubKey,
-  AppAuthenticationToken,
   InstalledAppId,
   AppCallZomeRequest,
   SignalType,
@@ -31,7 +30,6 @@ const ZOME_NAME = 'foyer';
 export class FoyerClient {
   constructor(
     public client: AppClient,
-    public authenticationToken: AppAuthenticationToken,
     public roleName,
     public zomeName = ZOME_NAME,
   ) {}
@@ -156,11 +154,10 @@ export class FoyerStore {
   constructor(
     public profilesStore: ProfilesStore,
     protected clientIn: AppClient,
-    public authenticationToken: AppAuthenticationToken,
     protected roleName: RoleName,
     protected zomeName: string = ZOME_NAME,
   ) {
-    this.client = new FoyerClient(clientIn, this.authenticationToken, this.roleName, this.zomeName);
+    this.client = new FoyerClient(clientIn, this.roleName, this.zomeName);
 
     this.newStream('_all');
 

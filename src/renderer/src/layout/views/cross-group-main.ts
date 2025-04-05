@@ -48,6 +48,7 @@ export class CrossGroupMain extends LitElement {
     const iframeKind: IframeKind = {
       type: 'cross-group',
       toolCompatibilityId: this.toolCompatibilityId,
+      subType: 'main',
     };
     return html` ${this.hostStyle()}
       <view-frame .renderView=${renderView} .iframeKind=${iframeKind} style="flex: 1">

@@ -28,7 +28,7 @@ import './cell-details.js';
 import './app-debugging-details.js';
 
 import { mossStoreContext } from '../../context.js';
-import { MossStore } from '../../moss-store.js';
+import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { weStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
@@ -73,6 +73,17 @@ export class DebuggingPanel extends LitElement {
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => this.requestUpdate(), 2000);
+    // populate group app ids
+    const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
+    await Promise.all(
+      groupDnaHashes.map(async (groupDnaHash) => {
+        const groupAppId = await this.getGroupAppId(groupDnaHash);
+        const newGroupAppIds = this._groupAppIds;
+        newGroupAppIds[encodeHashToBase64(groupDnaHash)] = groupAppId;
+        this._groupAppIds = newGroupAppIds;
+      }),
+    );
+    console.log('groupAppIds: ', this._groupAppIds);
   }
 
   disconnectedCallback(): void {
@@ -147,7 +158,7 @@ export class DebuggingPanel extends LitElement {
     }
   }
 
-  renderZomeCallDetails(zomeCallCount: any) {
+  renderZomeCallDetails(zomeCallCount: ZomeCallCounts) {
     return Object.keys(zomeCallCount.functionCalls).map(
       (fn_name) => html`
         <div class="row" style="align-items: center; margin-top: 5px; margin-bottom: 10px;">
@@ -155,15 +166,29 @@ export class DebuggingPanel extends LitElement {
             <div>${fn_name}</div>
           </div>
           <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
-            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name] : ''}
+            ${zomeCallCount ? zomeCallCount.functionCalls[fn_name].length : ''}
           </div>
           <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
             ${zomeCallCount
               ? Math.round(
-                  zomeCallCount.functionCalls[fn_name] /
+                  zomeCallCount.functionCalls[fn_name].length /
                     ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
                 )
               : ''}
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${zomeCallCount.functionCalls[fn_name][zomeCallCount.functionCalls[fn_name].length - 1]
+              .durationMs}ms
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+            ${zomeCallCount.functionCalls[fn_name].length
+              ? Math.round(
+                  zomeCallCount.functionCalls[fn_name].reduce(
+                    (sum, item) => sum + item.durationMs,
+                    0,
+                  ) / zomeCallCount.functionCalls[fn_name].length,
+                )
+              : 'NaN'}ms
           </div>
         </div>
       `,
@@ -179,18 +204,20 @@ export class DebuggingPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 80px;">
             avg. zome calls per minute
           </div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            duration of last zome call (ms)
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            avg. zome call duration
+          </div>
           <div style="font-weight: bold; text-align: right; width: 90px;"></div>
         </div>
         ${groups
           .sort((hash_a, hash_b) => {
-            const id_a = encodeHashToBase64(hash_a);
-            const id_b = encodeHashToBase64(hash_b);
-            const zomeCallCount_a = window[`__mossZomeCallCount_${id_a}`]
-              ? window[`__mossZomeCallCount_${id_a}`].totalCounts
-              : undefined;
-            const zomeCallCount_b = window[`__mossZomeCallCount_${id_b}`]
-              ? window[`__mossZomeCallCount_${id_b}`].totalCounts
-              : undefined;
+            const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
+            const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
+            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a].totalCounts;
+            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b].totalCounts;
             if (zomeCallCount_a && !zomeCallCount_b) return -1;
             if (!zomeCallCount_a && zomeCallCount_b) return 1;
             if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
@@ -198,7 +225,8 @@ export class DebuggingPanel extends LitElement {
           })
           .map((groupDnaHash) => {
             const groupId = encodeHashToBase64(groupDnaHash);
-            const zomeCallCount = window[`__mossZomeCallCount_${groupId}`];
+            const appId = this._groupAppIds[groupId];
+            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
             const showDetails = this._groupsWithDetails.includes(groupId);
             const groupAppId = this._groupAppIds[groupId];
             const showDebug = this._appsWithDebug.includes(groupAppId);
@@ -225,6 +253,12 @@ export class DebuggingPanel extends LitElement {
                         )
                       : ''}
                   </div>
+                  <div
+                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                  ></div>
+                  <div
+                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                  ></div>
                   <span
                     style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
                     @click=${() => this.toggleGroupDetails(groupId)}
@@ -233,10 +267,7 @@ export class DebuggingPanel extends LitElement {
 
                   <sl-icon-button
                     @click=${async () => {
-                      const groupAppId = await this.getGroupAppId(groupDnaHash);
-                      const newGroupAppIds = this._groupAppIds;
-                      newGroupAppIds[groupId] = groupAppId;
-                      this._groupAppIds = newGroupAppIds;
+                      const groupAppId = this._groupAppIds[encodeHashToBase64(groupDnaHash)];
                       this.toggleDebug(groupAppId);
                     }}
                     .src=${wrapPathInSvg(mdiBug)}
@@ -263,19 +294,21 @@ export class DebuggingPanel extends LitElement {
           <div style="font-weight: bold; text-align: right; width: 80px;">
             avg. zome calls per minute
           </div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            duration of last zome call (ms)
+          </div>
+          <div style="font-weight: bold; text-align: right; width: 80px;">
+            avg. zome call duration
+          </div>
           <div style="font-weight: bold; text-align: right; width: 90px;"></div>
           <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
         </div>
         ${Array.from(applets.entries())
           .sort(([hash_a, _a], [hash_b, _b]) => {
-            const id_a = encodeHashToBase64(hash_a);
-            const id_b = encodeHashToBase64(hash_b);
-            const zomeCallCount_a = window[`__appletZomeCallCount_${id_a}`]
-              ? window[`__appletZomeCallCount_${id_a}`].totalCounts
-              : undefined;
-            const zomeCallCount_b = window[`__appletZomeCallCount_${id_b}`]
-              ? window[`__appletZomeCallCount_${id_b}`].totalCounts
-              : undefined;
+            const id_a = appIdFromAppletHash(hash_a);
+            const id_b = appIdFromAppletHash(hash_b);
+            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
             if (zomeCallCount_a && !zomeCallCount_b) return -1;
             if (!zomeCallCount_a && zomeCallCount_b) return 1;
             if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
@@ -284,7 +317,7 @@ export class DebuggingPanel extends LitElement {
           .map(([appletHash, appletStore]) => {
             const appletId = encodeHashToBase64(appletHash);
             const appId = appIdFromAppletHash(appletHash);
-            const zomeCallCount = window[`__appletZomeCallCount_${appletId}`];
+            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
             const showDetails = this._appletsWithDetails.includes(appletId);
             const showDebug = this._appsWithDebug.includes(appId);
             return html`
@@ -311,6 +344,12 @@ export class DebuggingPanel extends LitElement {
                         )
                       : ''}
                   </div>
+                  <div
+                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                  ></div>
+                  <div
+                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                  ></div>
                   <span
                     style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
                     @click=${() => this.toggleAppletDetails(appletId)}

@@ -25,7 +25,7 @@ import {
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppClient,
+  AppCallZomeRequest,
   AppInfo,
   AppWebsocket,
   DnaHashB64,
@@ -46,9 +46,10 @@ import {
   AppletId,
   stringifyWal,
   deStringifyWal,
-  ParentToAppletMessage,
   GroupProfile as GroupProfilePartial,
   IframeKind,
+  ZomeCallLogInfo,
+  ParentToAppletMessage,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -67,7 +68,6 @@ import {
   devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
-  initAppClient,
   isAppDisabled,
   isAppRunning,
   postMessageToAppletIframes,
@@ -113,6 +113,24 @@ import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
 
 export type SearchStatus = 'complete' | 'loading';
+
+type ZomeCallLogInfoExtended = {
+  info: ZomeCallLogInfo;
+  subType?: string;
+};
+
+export type ZomeCallCounts = {
+  firstCall: number;
+  totalCounts: number;
+  functionCalls: Record<
+    string,
+    {
+      timestamp: number;
+      durationMs: number;
+      iframeType?: string;
+    }[]
+  >;
+};
 
 export type WalInPocket = {
   addedAt: number;
@@ -1009,9 +1027,7 @@ export class MossStore {
     await Promise.all(
       runningGroupsApps.map(async (app) => {
         const groupDnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
-
-        const token = await this.getAuthenticationToken(app.installed_app_id);
-        const groupAppWebsocket = await initAppClient(token);
+        const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const assetsClient = new AssetsClient(groupAppWebsocket);
 
         groupStores.set(
@@ -1401,8 +1417,7 @@ export class MossStore {
     const groupsWithApplet: Array<DnaHash> = [];
     await Promise.all(
       groupApps.map(async (app) => {
-        const token = await this.getAuthenticationToken(app.installed_app_id);
-        const groupAppWebsocket = await initAppClient(token);
+        const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
         const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
         const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
@@ -1515,8 +1530,7 @@ export class MossStore {
               entryDefLocation: undefined,
             } as HrlLocation;
           }
-          const appToken = await this.getAuthenticationToken(dnaLocation.appInfo.installed_app_id);
-          const appClient = await initAppClient(appToken);
+          const [appClient, _] = await this.getAppClient(dnaLocation.appInfo.installed_app_id);
           const entryDefLocation = await locateHrl(this.adminWebsocket, appClient, dnaLocation, [
             dnaHash,
             hash,
@@ -1562,7 +1576,7 @@ export class MossStore {
 
   /**
    * --------------------------------------------------------------------------
-   * App Clients
+   * App Clients and Logging
    * --------------------------------------------------------------------------
    */
 
@@ -1583,15 +1597,63 @@ export class MossStore {
     return token;
   }
 
-  _appClients: Record<InstalledAppId, AppClient> = {};
+  _appClients: Record<InstalledAppId, [AppWebsocket, AppAuthenticationToken]> = {};
 
-  async getAppClient(appId: InstalledAppId): Promise<AppClient> {
+  async getAppClient(appId: InstalledAppId): Promise<[AppWebsocket, AppAuthenticationToken]> {
     let appClient = this._appClients[appId];
     if (appClient) return appClient;
     const token = await this.getAuthenticationToken(appId);
-    return AppWebsocket.connect({
+    const appWs = await AppWebsocket.connect({
       token,
     });
+    if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+      // ZOME_CALL_LOGGING (this is just for the purpose of code searchability)
+      const callZomePure = AppWebsocket.prototype.callZome;
+
+      // Overwrite the callZome function to measure the duration of the zome call and log it
+      appWs.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+        const start = Date.now();
+        const response = callZomePure.apply(appWs, [request, timeout]);
+        const end = Date.now();
+        // We don't want to await this so we just schedule it
+        setTimeout(() =>
+          this.logZomeCall({
+            info: {
+              durationMs: end - start,
+              fnName: request.fn_name,
+              installedAppId: appId,
+            },
+          }),
+        );
+        return response;
+      };
+    }
+    return [appWs, token];
+  }
+
+  zomeCallLogs: Record<InstalledAppId, ZomeCallCounts> = {};
+
+  logZomeCall(info: ZomeCallLogInfoExtended) {
+    let logs = this.zomeCallLogs[info.info.installedAppId];
+    if (!logs) {
+      logs = {
+        totalCounts: 0,
+        functionCalls: {},
+        firstCall: Date.now(),
+      };
+    }
+
+    logs.totalCounts += 1;
+    let functionCallsFn = logs.functionCalls[info.info.fnName];
+    if (!functionCallsFn) functionCallsFn = [];
+    functionCallsFn.push({
+      timestamp: Date.now(),
+      durationMs: info.info.durationMs,
+      iframeType: info.subType ? info.subType : undefined,
+    });
+
+    logs.functionCalls[info.info.fnName] = functionCallsFn;
+    this.zomeCallLogs[info.info.installedAppId] = logs;
   }
 
   /**

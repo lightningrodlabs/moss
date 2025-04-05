@@ -31,7 +31,6 @@ import {
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
-  logAppletZomeCall,
   openWalInWindow,
   storeAppletNotifications,
   validateNotifications,
@@ -75,12 +74,14 @@ export function appletMessageHandler(
         receivedFromSource = {
           type: 'applet',
           appletHash: decodeHashFromBase64(appletId),
+          subType: message.data.source.subType,
         };
       } else if (message.origin.startsWith('cross-group://')) {
         const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
         receivedFromSource = {
           type: 'cross-group',
           toolCompatibilityId,
+          subType: message.data.source.subType,
         };
       } else if (
         (message.origin.startsWith('http://127.0.0.1') ||
@@ -534,11 +535,17 @@ export async function handleAppletIframeMessage(
       return appletAgents.map((appletAgent) => appletAgent.applet_pubkey);
     }
     case 'sign-zome-call':
-      // TODO support cross-group view logging as well
-      if (source.type !== 'cross-group') {
-        logAppletZomeCall(message.request, encodeHashToBase64(source.appletHash));
-      }
       return signZomeCallApplet(message.request);
+    case 'log-zome-call':
+      mossStore.logZomeCall({
+        info: {
+          fnName: message.info.fnName,
+          durationMs: message.info.durationMs,
+          installedAppId: message.info.installedAppId,
+        },
+        subType: source.subType,
+      });
+      break;
     case 'creatable-result':
       if (!message.dialogId) throw new Error("Message is missing the 'dialogId' property.");
       if (!message.result) throw new Error("Message is missing the 'result' property.");
@@ -598,7 +605,7 @@ export async function handleAppletIframeMessage(
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       if (groupStores.size === 0) throw new Error('No group store found.');
       // Install the clone in the group
-      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
+      const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
       const clonedCell = await appletClient.createCloneCell(message.req);
       // Register the clone in the group dna(s) if it's supposed to be public
       if (message.publicToGroupMembers) {
@@ -624,7 +631,8 @@ export async function handleAppletIframeMessage(
           'Enabling a clone cell from within cross-group view is currently not supported.',
         );
       }
-      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(source.appletHash));
+      const appletHash = source.appletHash;
+      const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
       const clonedCell = await appletClient.enableCloneCell(message.req);
       return clonedCell;
     }
@@ -634,7 +642,8 @@ export async function handleAppletIframeMessage(
           'Disabling a clone cell from within cross-group view is currently not supported.',
         );
       }
-      const appletClient = await mossStore.getAppClient(appIdFromAppletHash(source.appletHash));
+      const appletHash = source.appletHash;
+      const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
       return appletClient.disableCloneCell(message.req);
     }
     /**

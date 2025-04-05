@@ -46,6 +46,7 @@ export class AppletViewEl extends LitElement {
     const iframeKind: IframeKind = {
       type: 'applet',
       appletHash: this.appletHash,
+      subType: this.view.type,
     };
     return html`
       ${this.hostStyle()}

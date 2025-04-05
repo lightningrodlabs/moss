@@ -3,7 +3,6 @@ import {
   CellInfo,
   DisabledAppReason,
   AppInfo,
-  AppWebsocket,
   ListAppsResponse,
   DnaHash,
   CellType,
@@ -11,12 +10,8 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
-  CallZomeRequest,
-  FunctionName,
-  ZomeName,
   AgentPubKeyB64,
   Timestamp,
-  AppAuthenticationToken,
   DnaModifiers,
   InstalledAppId,
 } from '@holochain/client';
@@ -57,19 +52,6 @@ import {
   toLowerCaseB64,
 } from '@theweave/utils';
 import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
-
-export async function initAppClient(
-  token: AppAuthenticationToken,
-  defaultTimeout?: number,
-): Promise<AppWebsocket> {
-  const client = await AppWebsocket.connect({
-    token,
-    defaultTimeout,
-  });
-  client.cachedAppInfo = undefined;
-  await client.appInfo();
-  return client;
-}
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -628,69 +610,6 @@ export function getAllIframes() {
   return result;
 }
 
-export function logAppletZomeCall(request: CallZomeRequest, appletId: AppletId) {
-  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    const zomeCallCounts = window[`__appletZomeCallCount_${appletId}`];
-    if (zomeCallCounts) {
-      zomeCallCounts.totalCounts += 1;
-      if (zomeCallCounts.functionCalls[request.fn_name]) {
-        zomeCallCounts.functionCalls[request.fn_name] += 1;
-      } else {
-        if (!zomeCallCounts.functionCalls) {
-          zomeCallCounts.functionCalls = {};
-        }
-        zomeCallCounts.functionCalls[request.fn_name] = 1;
-      }
-      window[`__appletZomeCallCount_${appletId}`] = zomeCallCounts;
-    } else {
-      window[`__appletZomeCallCount_${appletId}`] = {
-        firstCall: Date.now(),
-        totalCounts: 1,
-        functionCalls: {
-          [request.fn_name]: 1,
-        },
-      };
-    }
-  }
-}
-
-/**
- * Zome calls made by non-applet dnas
- *
- * @param request
- * @param appletId
- */
-export function logMossZomeCall(
-  cellId: [DnaHashB64, AgentPubKeyB64],
-  fnName: FunctionName,
-  _zomeName: ZomeName,
-) {
-  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    // We assume unique dna hashes for now
-    const zomeCallCounts = window[`__mossZomeCallCount_${cellId[0]}`];
-    if (zomeCallCounts) {
-      zomeCallCounts.totalCounts += 1;
-      if (zomeCallCounts.functionCalls[fnName]) {
-        zomeCallCounts.functionCalls[fnName] += 1;
-      } else {
-        if (!zomeCallCounts.functionCalls) {
-          zomeCallCounts.functionCalls = {};
-        }
-        zomeCallCounts.functionCalls[fnName] = 1;
-      }
-      window[`__mossZomeCallCount_${cellId[0]}`] = zomeCallCounts;
-    } else {
-      window[`__mossZomeCallCount_${cellId[0]}`] = {
-        firstCall: Date.now(),
-        totalCounts: 1,
-        functionCalls: {
-          [fnName]: 1,
-        },
-      };
-    }
-  }
-}
-
 export function dateStr(timestamp: Timestamp) {
   const date = new Date(timestamp / 1000);
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
@@ -884,6 +803,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       const iframeKind: IframeKind = {
         type: 'applet',
         appletHash,
+        subType: 'asset',
       };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
@@ -891,7 +811,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash })}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
 }
 
