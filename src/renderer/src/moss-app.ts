@@ -19,6 +19,8 @@ import './elements/_new_design/moss-select-avatar-fancy.js';
 import { defaultIcons } from './elements/_new_design/defaultIcons.js';
 // import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+import { partialModifiersFromInviteLink } from '@theweave/utils';
+import { notifyError } from '@holochain-open-dev/elements';
 
 enum MossAppState {
   Loading,
@@ -196,6 +198,38 @@ export class MossApp extends LitElement {
     this.initialGroup = groupDnaHash;
     this.state = MossAppState.Running;
     this.creatingGroup = false;
+    window.localStorage.removeItem('isFirstLaunch');
+  }
+
+  async joinGroupAndHeadToMain(): Promise<void> {
+    let modifiers;
+    try {
+      modifiers = partialModifiersFromInviteLink(this.inviteLink);
+    } catch (e) {
+      notifyError(`Invalid invite link: ${e}`);
+      console.error('Error: Failed to join group: Invite link is invalid: ', e);
+      return;
+    }
+
+    if (!modifiers) {
+      notifyError(msg('Modifiers undefined.'));
+      console.error('Error: Failed to join group: Modifiers undefined.');
+      return;
+    }
+
+    this.creatingGroup = true;
+
+    try {
+      const appInfo = await this._mossStore.joinGroup(modifiers.networkSeed, modifiers.progenitor);
+      const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+      this.initialGroup = groupDnaHash;
+      this.state = MossAppState.Running;
+    } catch (e) {
+      notifyError(msg('Failed to join the group.'));
+      console.error(e);
+    }
+    this.creatingGroup = false;
+    window.localStorage.removeItem('isFirstLaunch');
   }
 
   renderCreateGroupStep1() {
@@ -371,8 +405,18 @@ export class MossApp extends LitElement {
                   this.inviteLink = inviteLinkInput.value;
                 }}
               ></sl-input>
-              <button id="join-group-btn" class="moss-button" ?disabled=${this.inviteLink === ''}>
-                ${msg('Join')}
+              <button
+                id="join-group-btn"
+                class="moss-button"
+                ?disabled=${this.inviteLink === ''}
+                @click=${() => this.joinGroupAndHeadToMain()}
+                style="width: 40px;"
+              >
+                ${this.creatingGroup
+                  ? html`<div class="column center-content">
+                      <div class="dot-carousel" style="margin: 5px 0;"></div>
+                    </div>`
+                  : html`${msg('Join')}`}
               </button>
             </div>
           </div>
@@ -382,7 +426,11 @@ export class MossApp extends LitElement {
               ${msg('I want to start a space for my group')}
             </div>
             <span class="flex flex-1"></span>
-            <button class="moss-button" style="width: 310px; margin-bottom: 28px;">
+            <button
+              class="moss-button"
+              style="width: 310px; margin-bottom: 28px;"
+              ?disabled=${this.creatingGroup}
+            >
               <div class="row center-content">
                 ${plusCircleIcon(20)}
                 <div
