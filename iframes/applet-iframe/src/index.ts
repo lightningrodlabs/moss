@@ -356,7 +356,6 @@ const weaveApi: WeaveServices = {
   const iframeId = Math.random().toString(36).substring(2);
 
   window.addEventListener('beforeunload', () => {
-    // unregister iframe
     postMessage({ type: 'unregister-iframe', id: iframeId });
   });
 
