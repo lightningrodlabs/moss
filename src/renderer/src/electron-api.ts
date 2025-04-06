@@ -59,6 +59,30 @@ declare global {
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
       onWillNavigateExternal: (callback: (e: any) => any) => void;
+      onIframeStoreSync: (
+        callback: (
+          e: Electron.IpcRendererEvent,
+          payload: [
+            Record<
+              AppletId,
+              Array<{
+                id: string;
+                subType: string;
+                source: MessageEventSource | null | 'wal-window';
+              }>
+            >,
+            Record<
+              ToolCompatibilityId,
+              Array<{
+                id: string;
+                subType: string;
+                source: MessageEventSource | null | 'wal-window';
+              }>
+            >,
+          ],
+        ) => any,
+      ) => void;
+      requestIframeStoreSync: () => void;
       removeWillNavigateListeners: () => void;
       onZomeCallSigned: (
         callback: (
