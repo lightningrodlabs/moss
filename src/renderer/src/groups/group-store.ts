@@ -1209,6 +1209,16 @@ export class GroupStore {
       }),
     );
   }
+
+  async emitToGroupApplets(message: ParentToAppletMessage): Promise<void> {
+    const appletHashes = await toPromise(this.allMyRunningApplets);
+    // __PERFORMANCE__ TODO possibly store base64 versions of hashes already in group store
+    // instead of encoding each time
+    await this.mossStore.emitParentToAppletMessage(
+      message,
+      appletHashes.map((hash) => encodeHashToBase64(hash)),
+    );
+  }
 }
 
 async function retryUntilResolved<T>(

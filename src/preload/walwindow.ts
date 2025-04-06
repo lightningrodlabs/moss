@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   focusMainWindow: () => ipcRenderer.invoke('focus-main-window'),
   focusMyWindow: () => ipcRenderer.invoke('focus-my-window'),
   getMySrc: () => ipcRenderer.invoke('get-my-src'),
+  isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
   onParentToAppletMessage: (

@@ -98,6 +98,9 @@ export class PostDetail extends LitElement {
       this.assetStoreContent = val;
       this.requestUpdate();
     });
+    this.weaveClient.onPeerStatusUpdate((update) => {
+      console.log('@post-detail: Got peer-status-update: ', update);
+    });
   }
 
   async deletePost() {

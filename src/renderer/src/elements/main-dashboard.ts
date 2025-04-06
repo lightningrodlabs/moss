@@ -70,7 +70,6 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  postMessageToAppletIframes,
   postMessageToIframe,
   progenitorFromProperties,
 } from '../utils.js';
@@ -549,7 +548,10 @@ export class MainDashboard extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+      await this._mossStore.iframeStore.postMessageToAppletIframes(
+        { type: 'all' },
+        { type: 'on-before-unload' },
+      );
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in index.html
@@ -580,6 +582,7 @@ export class MainDashboard extends LitElement {
         this.openViews,
         payload.message.source,
         payload.message.request,
+        'wal-window',
       );
       await window.electronAPI.appletMessageToParentResponse(response, payload.id);
     });

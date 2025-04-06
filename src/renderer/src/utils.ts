@@ -50,8 +50,9 @@ import {
   appletIdFromAppId,
   deriveToolCompatibilityId,
   toLowerCaseB64,
+  toOriginalCaseB64,
 } from '@theweave/utils';
-import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollecive, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -64,6 +65,18 @@ export function iframeOrigin(iframeKind: IframeKind): string {
 
 export function appletOriginFromAppletId(appletId: AppletId): string {
   return `applet://${toLowerCaseB64(appletId)}`;
+}
+
+export function getAppletIdFromOrigin(origin: string): AppletId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
+}
+
+export function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
 }
 
 /**
@@ -578,18 +591,28 @@ export function refreshAllAppletIframes(appletId: AppletId): void {
   });
 }
 
-export function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
+function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
   const allIframes = getAllIframes();
   return allIframes.filter((iframe) => iframe.src.startsWith(appletOriginFromAppletId(appletId)));
 }
 
+/**
+ * Traverses the DOM to get all iframes. This actually only works for
+ * "first-level" iframes, i.e. not for nested iframes and I think
+ * that's because the DOM within an iframe cannot be accessed
+ * due to CORS
+ *
+ * @returns
+ */
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
 
   // Recursive function to traverse the DOM tree
   function traverse(node) {
+    // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
+      console.log('Found iframe: ', node);
       result.push(node);
     }
 
@@ -847,63 +870,6 @@ export function localTimeFromUtcOffset(offsetMinues: number): string {
 
   // Format the time in HH:MM format
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
-
-/**
- * Posts a message to all iframes of the specified AppletIds and returns the settled promises.
- * This includes iframes of assets associated to the AppletIds, not only the main view.
- *
- * TODO: Add option to only target main view or specific views
- *
- * @param appletIds
- * @param message
- * @returns
- */
-export async function postMessageToAppletIframes(
-  appletIds: { type: 'all' } | { type: 'some'; ids: AppletId[] },
-  message: ParentToAppletMessage,
-  extraOrigins?: Array<string>,
-) {
-  const allIframes = getAllIframes();
-  let allAppletIframes = allIframes.filter(
-    (iframe) => iframe.src.startsWith('applet://') || iframe.src.startsWith('http://localhost'),
-  );
-  console.log('postMessageToAppletIframes: allAppletIframes', allAppletIframes);
-  console.log('postMessageToAppletIframes: appletIds', appletIds);
-  console.log(
-    'postMessageToAppletIframes: iframeSrcs: ',
-    allAppletIframes.map((iframe) => iframe.src),
-  );
-  if (appletIds.type === 'some') {
-    const relevantSrcs = appletIds.ids.map((id) => appletOriginFromAppletId(id));
-    console.log('relevantSrcs', relevantSrcs);
-    allAppletIframes = allAppletIframes.filter((iframe) => {
-      let matches = false;
-      if (extraOrigins) {
-        extraOrigins.forEach((origin) => {
-          if (iframe.src.startsWith(origin)) {
-            matches = true;
-          }
-        });
-      }
-      relevantSrcs.forEach((origin) => {
-        if (iframe.src.startsWith(origin) || iframe.src.startsWith('http://localhost')) {
-          matches = true;
-        }
-      });
-      return matches;
-    });
-  }
-  console.log(
-    'Sending postMessate to the following iframes: ',
-    allAppletIframes.map((iframe) => iframe.src),
-  );
-
-  return Promise.allSettled(
-    allAppletIframes.map(async (iframe) => {
-      await postMessageToIframe(iframe, message);
-    }),
-  );
 }
 
 export async function postMessageToIframe<T>(

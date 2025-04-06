@@ -28,9 +28,11 @@ import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
+  getAppletIdFromOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
+  getToolCompatibilityIdFromOrigin,
   openWalInWindow,
   storeAppletNotifications,
   validateNotifications,
@@ -40,25 +42,44 @@ import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
-import {
-  appIdFromAppletHash,
-  toolCompatibilityIdFromDistInfoString,
-  toOriginalCaseB64,
-} from '@theweave/utils';
+import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
-import { ToolCompatibilityId } from '@theweave/moss-types';
 
-function getAppletIdFromOrigin(origin: string): AppletId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
+export function getIframeKind(
+  message: MessageEvent<AppletToParentMessage>,
+  isAppletDev: boolean,
+): IframeKind | undefined {
+  let receivedFromSource: IframeKind;
 
-function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
+  if (message.origin.startsWith('applet://')) {
+    const appletId = getAppletIdFromOrigin(message.origin);
+    receivedFromSource = {
+      type: 'applet',
+      appletHash: decodeHashFromBase64(appletId),
+      subType: message.data.source.subType,
+    };
+  } else if (message.origin.startsWith('cross-group://')) {
+    const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
+    receivedFromSource = {
+      type: 'cross-group',
+      toolCompatibilityId,
+      subType: message.data.source.subType,
+    };
+  } else if (
+    (message.origin.startsWith('http://127.0.0.1') ||
+      message.origin.startsWith('http://localhost')) &&
+    isAppletDev
+  ) {
+    // in dev mode trust the applet about what it claims
+    receivedFromSource = message.data.source;
+  } else if (message.origin.startsWith('default-app://')) {
+    // There is another message handler for those messages in moss-app.ts.
+    return undefined;
+  } else {
+    throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
+  }
+  return receivedFromSource;
 }
 
 export function appletMessageHandler(
@@ -67,41 +88,15 @@ export function appletMessageHandler(
 ): (message: MessageEvent<AppletToParentMessage>) => Promise<void> {
   return async (message) => {
     try {
-      let receivedFromSource: IframeKind;
-
-      if (message.origin.startsWith('applet://')) {
-        const appletId = getAppletIdFromOrigin(message.origin);
-        receivedFromSource = {
-          type: 'applet',
-          appletHash: decodeHashFromBase64(appletId),
-          subType: message.data.source.subType,
-        };
-      } else if (message.origin.startsWith('cross-group://')) {
-        const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
-        receivedFromSource = {
-          type: 'cross-group',
-          toolCompatibilityId,
-          subType: message.data.source.subType,
-        };
-      } else if (
-        (message.origin.startsWith('http://127.0.0.1') ||
-          message.origin.startsWith('http://localhost')) &&
-        mossStore.isAppletDev
-      ) {
-        // in dev mode trust the applet about what it claims
-        receivedFromSource = message.data.source;
-      } else if (message.origin.startsWith('default-app://')) {
-        // There is another message handler for those messages in moss-app.ts.
-        return;
-      } else {
-        throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
-      }
+      let receivedFromSource = getIframeKind(message, mossStore.isAppletDev);
+      if (!receivedFromSource) return; // This is the case for the 'default-app://' protocol which needs to be handled elsewhere
 
       const result = await handleAppletIframeMessage(
         mossStore,
         openViews,
         receivedFromSource,
         message.data.request,
+        message.source,
       );
       message.ports[0].postMessage({ type: 'success', result });
     } catch (e) {
@@ -277,6 +272,7 @@ export async function handleAppletIframeMessage(
   openViews: AppOpenViews,
   source: IframeKind,
   message: AppletToParentRequest,
+  eventSource: MessageEventSource | null | 'wal-window',
 ) {
   // Validate the format of the iframe message
   try {
@@ -306,6 +302,12 @@ export async function handleAppletIframeMessage(
           applets,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
+        mossStore.iframeStore.registerCrossGroupIframe(
+          source.toolCompatibilityId,
+          message.id,
+          message.subType,
+          eventSource,
+        );
         return config;
       } else {
         const appletHash = source.appletHash;
@@ -346,7 +348,26 @@ export async function handleAppletIframeMessage(
           groupProfiles: filteredGroupProfiles,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
+
+        mossStore.iframeStore.registerAppletIframe(
+          encodeHashToBase64(source.appletHash),
+          message.id,
+          message.subType,
+          eventSource,
+        );
+
         return config;
+      }
+    case 'unregister-iframe':
+      if (source.type === 'cross-group') {
+        mossStore.iframeStore.unregisterCrossGroupIframe(source.toolCompatibilityId, message.id);
+        break;
+      } else {
+        mossStore.iframeStore.unregisterAppletIframe(
+          encodeHashToBase64(source.appletHash),
+          message.id,
+        );
+        break;
       }
     case 'get-record-info': {
       const location = await toPromise(

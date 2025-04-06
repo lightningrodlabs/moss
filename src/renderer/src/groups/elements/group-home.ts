@@ -216,7 +216,7 @@ export class GroupHome extends LitElement {
 
   async firstUpdated() {
     this._peerStatusInterval = window.setInterval(async () => {
-      await this.groupStore.emitToAppletHosts({
+      await this.groupStore.emitToGroupApplets({
         type: 'peer-status-update',
         payload: this._peersStatus.value ? this._peersStatus.value : {},
       });
