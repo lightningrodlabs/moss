@@ -73,7 +73,7 @@ export class EditCustomGroupView extends LitElement {
           label: block.label,
           media: block.icon_src,
           category: applets.get(appletHash)?.custom_name,
-          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash })}?view=${
+          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, subType: 'block' })}?view=${
             block.view
           }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
         });

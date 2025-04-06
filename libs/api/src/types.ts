@@ -15,6 +15,7 @@ import {
   CreateCloneCellRequest,
   DisableCloneCellRequest,
   EnableCloneCellRequest,
+  InstalledAppId,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -312,15 +313,23 @@ export type IframeKind =
   | {
       type: 'applet';
       appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+      subType: string;
     }
   | {
       type: 'cross-group';
       toolCompatibilityId: string; // Only required in dev mode when iframe origin is localhost
+      subType: string;
     };
 
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
   source: IframeKind;
+};
+
+export type ZomeCallLogInfo = {
+  fnName: string;
+  installedAppId: InstalledAppId;
+  durationMs: number;
 };
 
 export type AppletToParentRequest =
@@ -339,6 +348,10 @@ export type AppletToParentRequest =
   | {
       type: 'sign-zome-call';
       request: CallZomeRequest;
+    }
+  | {
+      type: 'log-zome-call';
+      info: ZomeCallLogInfo;
     }
   | {
       type: 'open-view';
@@ -513,6 +526,7 @@ export type IframeConfig =
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
+      zomeCallLogging: boolean;
     }
   | {
       type: 'cross-group';
@@ -524,6 +538,7 @@ export type IframeConfig =
       weaveProtocolVersion: string;
       mossVersion: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
+      zomeCallLogging: boolean;
     }
   | {
       type: 'not-installed';

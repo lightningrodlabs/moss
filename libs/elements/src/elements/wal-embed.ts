@@ -257,6 +257,7 @@ export class WalEmbed extends LitElement {
         const iframeKind: IframeKind = {
           type: 'applet',
           appletHash: this.assetStatus.assetInfo.appletHash,
+          subType: 'asset',
         };
         const iframeSrc = this.assetStatus.assetInfo.appletDevPort
           ? `http://localhost:${

@@ -3,6 +3,7 @@ import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
+  AppCallZomeRequest,
   AppClient,
   AppWebsocket,
   CallZomeRequest,
@@ -59,6 +60,7 @@ declare global {
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
     __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
+    __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
 
   interface WindowEventMap {
@@ -351,8 +353,6 @@ const weaveApi: WeaveServices = {
     throw new Error('RenderView undefined.');
   }
 
-  const crossGroup = view ? view.type === 'cross-group-view' : false;
-
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
   });
@@ -361,6 +361,8 @@ const weaveApi: WeaveServices = {
     renderNotInstalled(iframeConfig.appletName);
     return;
   }
+
+  window.__ZOME_CALL_LOGGING_ENABLED__ = iframeConfig.zomeCallLogging;
 
   // message handler for ParentToApplet messages
   // This one is registered early here for any type of iframe
@@ -638,9 +640,35 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     },
   });
 
+  const installedAppId = (await appletClient.appInfo()).installed_app_id;
+
   appletClient.createCloneCell = (_) => {
     throw new Error('Please use the createCloneCell method on the WeaveClient instead.');
   };
+
+  if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+    // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
+    const callZomePure = AppWebsocket.prototype.callZome;
+
+    // Overwrite the callZome function to measure the duration of the zome call and log it
+    appletClient.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+      const start = Date.now();
+      const response = await callZomePure.apply(appletClient, [request, timeout]);
+      const end = Date.now();
+      // We don't want to await this so we just schedule it
+      setTimeout(async () => {
+        postMessage({
+          type: 'log-zome-call',
+          info: {
+            installedAppId,
+            fnName: request.fn_name,
+            durationMs: end - start,
+          },
+        });
+      });
+      return response;
+    };
+  }
 
   return appletClient;
 }
@@ -667,6 +695,8 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 }
 
 function readIframeKind(): IframeKind {
+  const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
+  const href = window.location.href;
   if (window.origin.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
@@ -674,6 +704,7 @@ function readIframeKind(): IframeKind {
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
+      subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('cross-group://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
@@ -682,6 +713,7 @@ function readIframeKind(): IframeKind {
     return {
       type: 'cross-group',
       toolCompatibilityId: toOriginalCaseB64(lowercaseB64Id),
+      subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('http://localhost')) {
     // In dev mode, the iframe kind will be appended at the end

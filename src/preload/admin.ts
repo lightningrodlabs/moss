@@ -1,14 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {
-  ActionHashB64,
-  AgentPubKeyB64,
-  CallZomeRequest,
-  DnaHashB64,
-  FunctionName,
-  ZomeName,
-} from '@holochain/client';
+import { ActionHashB64, AgentPubKeyB64, CallZomeRequest, DnaHashB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -67,16 +60,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('will-navigate-external', callback),
   removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
-  onZomeCallSigned: (
-    callback: (
-      e: Electron.IpcRendererEvent,
-      payload: {
-        cellIdB64: [DnaHashB64, AgentPubKeyB64];
-        fnName: FunctionName;
-        zomeName: ZomeName;
-      },
-    ) => any,
-  ) => ipcRenderer.on('zome-call-signed', callback),
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),

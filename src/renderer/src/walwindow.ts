@@ -7,7 +7,6 @@ import {
   AppletId,
   AppletInfo,
   AppletToParentMessage,
-  AppletToParentRequest,
   AssetLocationAndInfo,
   GroupProfile,
   ParentToAppletMessage,
@@ -138,13 +137,13 @@ export class WalWindow extends LitElement {
 
     // set up handler to handle iframe messages
     window.addEventListener('message', async (message) => {
-      const request = message.data.request as AppletToParentRequest;
+      const request = message.data as AppletToParentMessage;
 
-      const handleRequest = async (request: AppletToParentRequest) => {
+      const handleRequest = async (request: AppletToParentMessage) => {
         if (request) {
-          switch (request.type) {
+          switch (request.request.type) {
             case 'sign-zome-call':
-              return window.electronAPI.signZomeCallApplet(request.request);
+              return window.electronAPI.signZomeCallApplet(request.request.request);
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
@@ -158,6 +157,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  subType: request.source.subType,
                 },
               };
               try {
@@ -178,6 +178,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  subType: request.source.subType,
                 },
               };
               try {
@@ -196,6 +197,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  subType: request.source.subType,
                 },
               };
               // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
@@ -230,6 +232,7 @@ export class WalWindow extends LitElement {
         source: {
           type: 'applet',
           appletHash: this.appletHash!,
+          subType: 'wal-window',
         },
       });
       let assetLocationAndInfo: AssetLocationAndInfo | undefined;
@@ -243,6 +246,7 @@ export class WalWindow extends LitElement {
           source: {
             type: 'applet',
             appletHash: this.appletHash!,
+            subType: 'wal-window',
           },
         });
       } catch (e) {
@@ -261,6 +265,7 @@ export class WalWindow extends LitElement {
             source: {
               type: 'applet',
               appletHash: this.appletHash!,
+              subType: 'wal-window',
             },
           });
         } catch (e) {
