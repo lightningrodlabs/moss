@@ -70,7 +70,6 @@ import {
   findAppForDnaHash,
   isAppDisabled,
   isAppRunning,
-  postMessageToAppletIframes,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
@@ -111,6 +110,7 @@ import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { IframeStore } from './iframe-store.js';
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -201,6 +201,14 @@ export class MossStore {
     this._appletDevPorts = appletPorts;
     return port;
   }
+
+  /**
+   * --------------------------------------------------------------------------
+   * iframe references and logic to post messages to them
+   * --------------------------------------------------------------------------
+   */
+
+  iframeStore = new IframeStore();
 
   /**
    * --------------------------------------------------------------------------
@@ -1678,9 +1686,8 @@ export class MossStore {
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
     // Send to iframes of main window
-    postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
     // Send to iframes of WAL windows
-    console.log('@MossStore: emitParentToAppletMessage. Message: ', message);
     return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
 }

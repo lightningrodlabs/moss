@@ -237,9 +237,23 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('get-iframe-config'),
+      id: Type.String(),
+      subType: Type.Union([
+        Type.Literal('main'),
+        Type.Literal('asset'),
+        Type.Literal('creatable'),
+        Type.Literal('block'),
+      ]),
       // TODO remove the crossGroup field altogether once it's removed in @theweave/api
       // since it's not required anymore
       crossGroup: Type.Optional(Type.Boolean()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('unregister-iframe'),
+      id: Type.String(),
     },
     { additionalProperties: false },
   ),

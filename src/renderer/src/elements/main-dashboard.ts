@@ -70,7 +70,6 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  postMessageToAppletIframes,
   postMessageToIframe,
   progenitorFromProperties,
 } from '../utils.js';
@@ -549,7 +548,10 @@ export class MainDashboard extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+      await this._mossStore.iframeStore.postMessageToAppletIframes(
+        { type: 'all' },
+        { type: 'on-before-unload' },
+      );
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in index.html
@@ -573,16 +575,37 @@ export class MainDashboard extends LitElement {
 
     window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
-      console.log('Got cross window applet to parent message: ', payload);
       if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
         this._mossStore,
         this.openViews,
         payload.message.source,
         payload.message.request,
+        'wal-window',
       );
       await window.electronAPI.appletMessageToParentResponse(response, payload.id);
     });
+
+    // Received from WAL windows on request when the main window is reloaded
+    window.electronAPI.onIframeStoreSync((_e, payload) => {
+      const [appletIframes, crossGroupIframes] = payload;
+      Object.entries(appletIframes).forEach(([appletId, iframes]) => {
+        iframes.forEach(({ id, subType }) => {
+          this._mossStore.iframeStore.registerAppletIframe(appletId, id, subType, 'wal-window');
+        });
+      });
+      Object.entries(crossGroupIframes).forEach(([toolCompatibilityId, iframes]) => {
+        iframes.forEach(({ id, subType }) => {
+          this._mossStore.iframeStore.registerCrossGroupIframe(
+            toolCompatibilityId,
+            id,
+            subType,
+            'wal-window',
+          );
+        });
+      });
+    });
+
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
@@ -664,6 +687,8 @@ export class MainDashboard extends LitElement {
     } catch (e) {
       console.warn('Failed to fetch update feed: ', e);
     }
+
+    await window.electronAPI.requestIframeStoreSync();
 
     // Load all notifications for the last week
     await this._mossStore.loadNotificationFeed(7);
@@ -1389,7 +1414,6 @@ export class MainDashboard extends LitElement {
             class="drawer-separator"
             style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
             @mousedown=${(e) => {
-              console.log('Got mousedown event: ', e);
               this.resizeMouseDownHandler(e);
             }}
           ></div>

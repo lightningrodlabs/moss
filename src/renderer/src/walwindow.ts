@@ -12,11 +12,17 @@ import {
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
-import { CallZomeRequest, CallZomeRequestSigned, decodeHashFromBase64 } from '@holochain/client';
+import {
+  CallZomeRequest,
+  CallZomeRequestSigned,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+} from '@holochain/client';
 import { localized, msg } from '@lit/localize';
-import { postMessageToAppletIframes } from './utils';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import { IframeStore } from './iframe-store';
+import { getIframeKind } from './applets/applet-host';
 
 // import { ipcRenderer } from 'electron';
 
@@ -44,12 +50,15 @@ declare global {
           }
         | undefined
       >;
+      isAppletDev: () => Promise<boolean>;
       onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) => void;
       onWillNavigateExternal: (callback: (e: any) => any) => void;
       removeWillNavigateListeners: () => void;
       onParentToAppletMessage: (
         callback: (e: Electron.IpcRendererEvent, payload: ParentToAppletMessagePayload) => any,
       ) => void;
+      onRequestIframeStoreSync: (callback: (e: Electron.IpcRendererEvent) => any) => void;
+      iframeStoreSync: (storeContent) => void;
       selectScreenOrWindow: () => Promise<string>;
       setMyIcon: (icon: string) => Promise<void>;
       setMyTitle: (title: string) => Promise<void>;
@@ -63,6 +72,10 @@ const walWindow = window as unknown as WALWindow;
 @localized()
 @customElement('wal-window')
 export class WalWindow extends LitElement {
+  iframeStore = new IframeStore();
+
+  isAppletDev: boolean | undefined;
+
   @state()
   iframeSrc: string | undefined;
 
@@ -108,7 +121,10 @@ export class WalWindow extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+      await this.iframeStore.postMessageToAppletIframes(
+        { type: 'all' },
+        { type: 'on-before-unload' },
+      );
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in walwindow.html
@@ -130,16 +146,31 @@ export class WalWindow extends LitElement {
     }, 5000);
 
     walWindow.electronAPI.onParentToAppletMessage(async (_e, { message, forApplets }) => {
-      console.log('got parent to applet message: ', message);
-      console.log('got parent to applet forApplets: ', forApplets);
-      await postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+      await this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    });
+
+    walWindow.electronAPI.onRequestIframeStoreSync(async () => {
+      const storeContent = [this.iframeStore.appletIframes, this.iframeStore.crossGroupIframes];
+      await walWindow.electronAPI.iframeStoreSync(storeContent);
     });
 
     // set up handler to handle iframe messages
-    window.addEventListener('message', async (message) => {
-      const request = message.data as AppletToParentMessage;
+    window.addEventListener('message', async (message: MessageEvent<AppletToParentMessage>) => {
+      const request = message.data;
 
       const handleRequest = async (request: AppletToParentMessage) => {
+        const handleDefault = () => {
+          const appletToParentMessage: AppletToParentMessage = {
+            request: request.request,
+            source: {
+              type: 'applet',
+              appletHash: this.appletHash!,
+              subType: request.source.subType,
+            },
+          };
+          // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
+          return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+        };
         if (request) {
           switch (request.request.type) {
             case 'sign-zome-call':
@@ -190,18 +221,46 @@ export class WalWindow extends LitElement {
               if (error) return Promise.reject(`Failed to select asset relation tag: ${error}`);
               return response;
             }
+            case 'get-iframe-config': {
+              if (this.isAppletDev === undefined) return;
+              const iframeKind = getIframeKind(message, this.isAppletDev);
+              if (!iframeKind) return;
+              if (iframeKind.type === 'cross-group') {
+                this.iframeStore.registerCrossGroupIframe(
+                  iframeKind.toolCompatibilityId,
+                  request.request.id,
+                  request.request.subType,
+                  message.source,
+                );
+              } else {
+                const appletId = encodeHashToBase64(iframeKind.appletHash);
+                this.iframeStore.registerAppletIframe(
+                  appletId,
+                  request.request.id,
+                  request.request.subType,
+                  message.source,
+                );
+              }
+              return handleDefault();
+            }
+            case 'unregister-iframe': {
+              if (this.isAppletDev === undefined) return;
+              const iframeKind = getIframeKind(message, this.isAppletDev);
+              if (!iframeKind) return;
+              if (iframeKind.type === 'cross-group') {
+                this.iframeStore.unregisterCrossGroupIframe(
+                  iframeKind.toolCompatibilityId,
+                  request.request.id,
+                );
+              } else {
+                const appletId = encodeHashToBase64(iframeKind.appletHash);
+                this.iframeStore.unregisterAppletIframe(appletId, request.request.id);
+              }
+              return handleDefault();
+            }
 
             default:
-              const appletToParentMessage: AppletToParentMessage = {
-                request: message.data.request,
-                source: {
-                  type: 'applet',
-                  appletHash: this.appletHash!,
-                  subType: request.source.subType,
-                },
-              };
-              // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
-              return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+              return handleDefault();
           }
         }
       };
@@ -219,6 +278,7 @@ export class WalWindow extends LitElement {
       }
     });
 
+    this.isAppletDev = await walWindow.electronAPI.isAppletDev();
     const appletSrcInfo = await walWindow.electronAPI.getMySrc();
     if (!appletSrcInfo) throw new Error('No associated applet info found.');
     this.iframeSrc = appletSrcInfo.iframeSrc;
