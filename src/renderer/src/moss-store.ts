@@ -1688,7 +1688,6 @@ export class MossStore {
     // Send to iframes of main window
     this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
     // Send to iframes of WAL windows
-    console.log('@MossStore: emitParentToAppletMessage. Message: ', message);
     return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
 }

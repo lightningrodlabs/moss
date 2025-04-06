@@ -448,6 +448,16 @@ export class DebuggingPanel extends LitElement {
             ></sl-switch>
           </div>
         </div>
+        <div class="column" v style="margin-top: 10px;">
+          <div>
+            Total number of applet iframes:
+            <b>${this._mossStore.iframeStore.appletIframesTotalCount()}</b>
+          </div>
+          <div>
+            Total number of cross-group iframes:
+            <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
+          </div>
+        </div>
         <h2 style="text-align: center;">Global Apps</h2>
         <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
