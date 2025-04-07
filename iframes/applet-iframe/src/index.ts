@@ -353,8 +353,16 @@ const weaveApi: WeaveServices = {
     throw new Error('RenderView undefined.');
   }
 
+  const iframeId = Math.random().toString(36).substring(2);
+
+  window.addEventListener('beforeunload', () => {
+    postMessage({ type: 'unregister-iframe', id: iframeId });
+  });
+
   const iframeConfig: IframeConfig = await postMessage({
     type: 'get-iframe-config',
+    id: iframeId,
+    subType: view.view.type,
   });
 
   if (iframeConfig.type === 'not-installed') {
@@ -427,7 +435,9 @@ const weaveApi: WeaveServices = {
       }
       try {
         const result = await handleMessage(appletClient, appletHash, m.data);
-        m.ports[0].postMessage({ type: 'success', result });
+        // Messages sent from MossStore.postMessageToAppletIframes() won't have
+        // a port attached here, only the ones sent from AppletHost
+        m.ports[0]?.postMessage({ type: 'success', result });
       } catch (e) {
         console.error(
           'Failed to send postMessage to applet ',

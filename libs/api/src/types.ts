@@ -339,7 +339,16 @@ export type AppletToParentRequest =
   | {
       // This one is used by initializeHotReload() and is the only one that
       // affects the API exposed to tool devs
+      //
+      // It's also used as a means to register the iframe in order for Moss
+      // to be able to send messages to it
       type: 'get-iframe-config';
+      id: string;
+      subType: 'main' | 'asset' | 'block' | 'creatable';
+    }
+  | {
+      type: 'unregister-iframe';
+      id: string;
     }
   | {
       type: 'get-record-info';

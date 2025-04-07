@@ -266,7 +266,7 @@ export class DebuggingPanel extends LitElement {
                         @click=${() => this.toggleGroupDetails(groupId)}
                         >${showDetails ? 'Hide' : 'Details'}</span
                       >`
-                    : html``}
+                    : html`<span style="min-width: 60px;"></span>`}
 
                   <sl-icon-button
                     @click=${async () => {
@@ -323,6 +323,7 @@ export class DebuggingPanel extends LitElement {
             const zomeCallCount = this._mossStore.zomeCallLogs[appId];
             const showDetails = this._appletsWithDetails.includes(appletId);
             const showDebug = this._appsWithDebug.includes(appId);
+            const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
             return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
@@ -331,8 +332,18 @@ export class DebuggingPanel extends LitElement {
                       .appletHash=${appletHash}
                       style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"
                     ></applet-logo>
-                    <div style="font-weight: bold; font-size: 18px;">
-                      ${appletStore.applet.custom_name}
+                    <div class="column">
+                      <div style="font-weight: bold; font-size: 18px;">
+                        ${appletStore.applet.custom_name}
+                      </div>
+                      <div>
+                        <b>iframes:</b>
+                        ${iframeCounts
+                          ? Object.entries(iframeCounts).map(
+                              ([viewType, count]) => html`${viewType} (${count}) `,
+                            )
+                          : html``}
+                      </div>
                     </div>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
@@ -359,7 +370,7 @@ export class DebuggingPanel extends LitElement {
                         @click=${() => this.toggleAppletDetails(appletId)}
                         >${showDetails ? 'Hide' : 'Details'}</span
                       >`
-                    : html``}
+                    : html`<span style="min-width: 60px;"></span>`}
                   <sl-icon-button
                     @click=${async () => {
                       this.toggleDebug(appId);
@@ -416,12 +427,12 @@ export class DebuggingPanel extends LitElement {
   render() {
     return html`
       <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
-        <div class=" warning column center-content">
+        <div class="warning column center-content">
           <div class="row items-center">
             <div>
               ${window.__ZOME_CALL_LOGGING_ENABLED__
-                ? 'Enable zome call logging (will reload Moss)'
-                : 'Disable zome call logging (will reload Moss)'}
+                ? 'Disable zome call logging (will reload Moss)'
+                : 'Enable zome call logging (will reload Moss)'}
             </div>
             <sl-switch
               style="margin-bottom: 5px; margin-left: 12px;"
@@ -435,6 +446,16 @@ export class DebuggingPanel extends LitElement {
                 window.location.reload();
               }}
             ></sl-switch>
+          </div>
+        </div>
+        <div class="column" v style="margin-top: 10px;">
+          <div>
+            Total number of applet iframes:
+            <b>${this._mossStore.iframeStore.appletIframesTotalCount()}</b>
+          </div>
+          <div>
+            Total number of cross-group iframes:
+            <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
           </div>
         </div>
         <h2 style="text-align: center;">Global Apps</h2>

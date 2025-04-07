@@ -973,13 +973,22 @@ if (!RUNNING_WITH_COMMAND) {
       'parent-to-applet-message',
       (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
         // We send this to all wal windows as they may also contain embeddables
-        console.log('Sending parent-to-applet-message to windows. Message: ', message);
-        console.log('Sending parent-to-applet-message to windows. forApplets: ', forApplets);
         Object.values(WAL_WINDOWS).forEach(({ window }) =>
           emitToWindow(window, 'parent-to-applet-message', { message, forApplets }),
         );
       },
     );
+    // This is called by the main window if it's being reloaded, in order to re-sync the
+    // IframeStore
+    ipcMain.handle('request-iframe-store-sync', (): void => {
+      Object.values(WAL_WINDOWS).forEach(({ window }) =>
+        emitToWindow(window, 'request-iframe-store-sync', null),
+      );
+    });
+    // Called by WAL windows to send their IframeStore state to the main window
+    ipcMain.handle('iframe-store-sync', (_e, storeContent): void => {
+      if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'iframe-store-sync', storeContent);
+    });
     ipcMain.handle('get-app-version', (): string => app.getVersion());
     ipcMain.handle(
       'dialog-messagebox',

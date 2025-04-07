@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('window-closing', callback),
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('will-navigate-external', callback),
+  onIframeStoreSync: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('iframe-store-sync', callback),
+  requestIframeStoreSync: () => ipcRenderer.invoke('request-iframe-store-sync'),
   removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
