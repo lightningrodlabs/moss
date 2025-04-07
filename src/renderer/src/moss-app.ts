@@ -432,18 +432,13 @@ export class MossApp extends LitElement {
               class="moss-button"
               style="width: 310px; margin-bottom: 28px;"
               ?disabled=${this.creatingGroup}
+              @click=${() => {
+                this.state = MossAppState.CreateGroupStep1;
+              }}
             >
               <div class="row center-content">
                 ${plusCircleIcon(20)}
-                <div
-                  style="margin-left: 10px;"
-                  @click=${() => {
-                    console.log('Clicked.');
-                    this.state = MossAppState.CreateGroupStep1;
-                  }}
-                >
-                  ${msg('Create new group space')}
-                </div>
+                <div style="margin-left: 10px;">${msg('Create new group space')}</div>
               </div>
             </button>
           </div>
