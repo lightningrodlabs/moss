@@ -288,7 +288,7 @@ export class GroupsSidebar extends LitElement {
         ${this.renderGroupsLoading()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
-          <button class="moss-button"
+          <button class="moss-sidebar-button"
             size="large"
             circle
             @click=${() => {
@@ -366,7 +366,7 @@ export class GroupsSidebar extends LitElement {
         padding-bottom: 10px;
       }
 
-      .moss-button {
+      .moss-sidebar-button {
         width: 40px;
         height: 40px;
         outline: none;
@@ -378,7 +378,7 @@ export class GroupsSidebar extends LitElement {
         margin-top: 15px;
       }
 
-      .moss-button:hover {
+      .moss-sidebar-button:hover {
         background: linear-gradient(0deg, #203923 0%, #63912a 100%);
         cursor: pointer;
       }
