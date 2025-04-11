@@ -572,10 +572,6 @@ export class MainDashboard extends LitElement {
   };
 
   async firstUpdated() {
-    setTimeout(() => {
-      const mossDialog = this.shadowRoot!.getElementById('moss-dialog') as MossDialog;
-      mossDialog.open();
-    });
     if (this.initialGroup) this.openGroup(this.initialGroup);
     // add the beforeunload listener only 10 seconds later as there won't be anything
     // meaningful to save by applets before and it will ensure that the iframes
@@ -1299,7 +1295,6 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
-      <moss-dialog id="moss-dialog"></moss-dialog>
       <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
         <div class="column">
           <div><b>Factory Reset</b></div>

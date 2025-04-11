@@ -27,6 +27,7 @@ enum MossAppState {
   InitialSetup,
   CreateGroupStep1,
   CreateGroupStep2,
+  JoiningGroup,
   Error,
   Running,
 }
@@ -89,7 +90,11 @@ export class MossApp extends LitElement {
   // @state()
   // private avatar = '';
 
+  @state()
+  private loadingText = 'loading...';
+
   async firstUpdated() {
+    this.loadingText = 'loading...';
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.13';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
@@ -126,16 +131,14 @@ export class MossApp extends LitElement {
       // Moss will remain on the first screen
       window.localStorage.setItem('isFirstLaunch', 'true');
     }
-    isFirstLaunch = !!window.localStorage.getItem('isFirstLaunch');
-    if (isFirstLaunch) {
-      this.state = MossAppState.InitialSetup;
-    }
+
     let info = await getConductorInfo();
     // If the conductor is not running yet, start it
     // (it may for example already be running if the connect() function
     // is being run as part of a page reload)
     if (!info) {
       try {
+        this.loadingText = 'starting Holochain...';
         await window.electronAPI.launch();
         info = await getConductorInfo();
         if (!info) throw new Error('Failed to get conductor info after launch.');
@@ -166,6 +169,11 @@ export class MossApp extends LitElement {
       // ),
       devConfig,
     );
+
+    isFirstLaunch = !!window.localStorage.getItem('isFirstLaunch');
+    if (isFirstLaunch) {
+      this.state = MossAppState.InitialSetup;
+    }
 
     // Listen for general activity to set the latest activity timestamp
     document.addEventListener('mousemove', () => {
@@ -204,22 +212,25 @@ export class MossApp extends LitElement {
   }
 
   async joinGroupAndHeadToMain(): Promise<void> {
+    this.creatingGroup = true;
     let modifiers;
     try {
       modifiers = partialModifiersFromInviteLink(this.inviteLink);
     } catch (e) {
       notifyError(`Invalid invite link: ${e}`);
       console.error('Error: Failed to join group: Invite link is invalid: ', e);
+      this.creatingGroup = false;
       return;
     }
 
     if (!modifiers) {
       notifyError(msg('Modifiers undefined.'));
       console.error('Error: Failed to join group: Modifiers undefined.');
+      this.creatingGroup = false;
       return;
     }
 
-    this.creatingGroup = true;
+    this.state = MossAppState.JoiningGroup;
 
     try {
       const appInfo = await this._mossStore.joinGroup(modifiers.networkSeed, modifiers.progenitor);
@@ -229,6 +240,7 @@ export class MossApp extends LitElement {
     } catch (e) {
       notifyError(msg('Failed to join the group.'));
       console.error(e);
+      this.state = MossAppState.InitialSetup;
     }
     this.creatingGroup = false;
     window.localStorage.removeItem('isFirstLaunch');
@@ -296,13 +308,13 @@ export class MossApp extends LitElement {
                 ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create new group')}`}
+                : html`${msg('Create group space')}`}
             </button>
 
-            <div class="row">
+            <!-- <div class="row">
               <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
               <div class="dialog-dot"></div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -372,6 +384,33 @@ export class MossApp extends LitElement {
   //     </div>
   //   `;
   // }
+
+  renderInstallingGroup(joining: boolean) {
+    return html`
+      <div class="column center-content flex-1">
+        <div class="moss-card" style="width: 630px; height: 466px;">
+          <div class="column items-center">
+            <div class="card-title" style="margin-top: 30px;">
+              ${joining ? 'Joining group' : 'Creating a new space'}
+            </div>
+            <div class="card-title medium-green" style="margin-bottom: 38px;">
+              ${'in the beautiful p2p realm.'}
+            </div>
+
+            <img src="loading_animation.svg" />
+
+            <div style="font-size: 18px; color: var(--moss-inactive-green); margin-top: 10px;">
+              ${msg('may take up to 1-2 minutes')}
+            </div>
+            <!-- <div class="row">
+            <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
+            <div class="dialog-dot"></div>
+          </div> -->
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   renderInitialSetup() {
     return html`
@@ -451,14 +490,18 @@ export class MossApp extends LitElement {
     switch (this.state) {
       case MossAppState.Loading:
         return html`<div class="column center-content" style="flex: 1;">
-          <sl-spinner style="font-size: 2rem"></sl-spinner>
+          <img src="loading_animation.svg" />
+          <div>${this.loadingText}</div>
         </div>`;
       case MossAppState.InitialSetup:
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:
-        return this.renderCreateGroupStep1();
+        // return this.renderCreateGroupStep1();
+        return this.renderInstallingGroup(false);
       // case MossAppState.CreateGroupStep2:
       //   return this.renderCreateGroupStep2();
+      case MossAppState.JoiningGroup:
+        return this.renderInstallingGroup(true);
       case MossAppState.Error:
         return html`Error!`;
       case MossAppState.Running:
@@ -492,6 +535,16 @@ export class MossApp extends LitElement {
         .loading {
           opacity: 0.5;
           cursor: default;
+        }
+
+        .card-title {
+          font-size: 28px;
+          font-weight: 500;
+          letter-spacing: -0.56px;
+        }
+
+        .medium-green {
+          color: var(--moss-medium-green);
         }
 
         .close-btn {

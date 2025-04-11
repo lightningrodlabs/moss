@@ -820,7 +820,7 @@ export class MossStore {
       await groupStore.groupClient.setGroupProfile(groupProfile);
     } catch (e) {
       if ((e as any).toString().includes('source chain head has moved')) {
-        console.log('Source chan has moved error, retrying to create profile...');
+        console.log('Source chain head has moved error, retrying to create profile...');
         try {
           await groupStore!.groupClient.setGroupProfile(groupProfile);
         } catch (e) {

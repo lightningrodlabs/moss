@@ -57,18 +57,17 @@ export class MossSelectAvatar extends LitElement implements FormField {
         img.onload = () => {
           this.value = resizeAndExportImg(img);
           this._avatarFilePicker.value = '';
+          this.dispatchEvent(
+            new CustomEvent('avatar-selected', {
+              composed: true,
+              bubbles: true,
+              detail: {
+                avatar: this.value,
+              },
+            }),
+          );
         };
         img.src = e.target?.result as string;
-
-        this.dispatchEvent(
-          new CustomEvent('avatar-selected', {
-            composed: true,
-            bubbles: true,
-            detail: {
-              avatar: img.src,
-            },
-          }),
-        );
       };
       reader.readAsDataURL(this._avatarFilePicker.files[0]);
     }
@@ -146,7 +145,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
         height: 80px;
         width: 80px;
         cursor: pointer;
-        border: 1px solid transparent;
+        border: 1px solid #778355;
       }
 
       .icon-btn {

@@ -528,6 +528,9 @@ export function resizeAndExportImg(img: HTMLImageElement): string {
     height = MAX_HEIGHT;
   }
 
+  img.width = width;
+  img.height = height;
+
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
