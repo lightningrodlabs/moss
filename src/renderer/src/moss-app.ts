@@ -486,6 +486,47 @@ export class MossApp extends LitElement {
     `;
   }
 
+  renderErrorPage() {
+    return html`
+      <div class="column center-content" style="flex: 1;">
+        <div class="dialog-title" style="margin-bottom: 30px;">
+          ${msg('Holochain failed to start up and crashed :(')}
+        </div>
+        <div style="max-width: 600px; text-align: center; margin-bottom: 40px;">
+          <span
+            >${msg(
+              'If you want to support us in finding the problem, please export the logs and send them to ',
+            )}</span
+          >
+          <a href="mailto:moss.0.13.feedback@theweave.social">moss.0.13.feedback@theweave.social</a>
+        </div>
+        <div class="row items-center">
+          <button
+            class="moss-button"
+            style="margin: 0 4px;"
+            @click=${() => window.electronAPI.openLogs()}
+          >
+            ${msg('Open Logs')}
+          </button>
+          <button
+            class="moss-button"
+            style="margin: 0 4px;"
+            @click=${() => window.electronAPI.exportLogs()}
+          >
+            ${msg('Export Logs')}
+          </button>
+          <button
+            class="moss-button"
+            style="margin: 0 4px;"
+            @click=${() => window.location.reload()}
+          >
+            ${msg('Retry')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     switch (this.state) {
       case MossAppState.Loading:
@@ -503,7 +544,7 @@ export class MossApp extends LitElement {
       case MossAppState.JoiningGroup:
         return this.renderInstallingGroup(true);
       case MossAppState.Error:
-        return html`Error!`;
+        return this.renderErrorPage();
       case MossAppState.Running:
         return html`
           <main-dashboard id="main-dashboard" .initialGroup=${this.initialGroup}></main-dashboard>

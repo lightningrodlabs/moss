@@ -82,7 +82,6 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
-import { MossDialog } from './_new_design/moss-dialog.js';
 
 TimeAgo.addDefaultLocale(en);
 
