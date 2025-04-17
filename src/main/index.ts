@@ -184,7 +184,7 @@ program
   )
   .option(
     '--force-production-urls',
-    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use kitsune2-bootstrap-srv to spin up a local bootstrap and signaling server instead during development.',
   )
   .option(
     '--print-holochain-logs',
@@ -1208,15 +1208,20 @@ if (!RUNNING_WITH_COMMAND) {
         : { progenitor: null };
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: groupHappPath,
+        source: {
+          type: 'path',
+          value: groupHappPath,
+        },
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
         roles_settings: {
           group: {
-            type: 'Provisioned',
-            modifiers: {
-              properties,
+            type: 'provisioned',
+            value: {
+              modifiers: {
+                properties,
+              },
             },
           },
         },
@@ -1249,15 +1254,20 @@ if (!RUNNING_WITH_COMMAND) {
         const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
         const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          path: groupHappPath,
+          source: {
+            type: 'path',
+            value: groupHappPath,
+          },
           installed_app_id: appId,
           agent_key: agentPubKey,
           network_seed: networkSeed,
           roles_settings: {
             group: {
-              type: 'Provisioned',
-              modifiers: {
-                properties: { progenitor },
+              type: 'provisioned',
+              value: {
+                modifiers: {
+                  properties: { progenitor },
+                },
               },
             },
           },
@@ -1496,7 +1506,7 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
       const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
       const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
-      fs.writeFileSync(filePath, stats, 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(stats, undefined, 2), 'utf-8');
     });
     ipcMain.handle(
       'install-applet-bundle',
@@ -1696,7 +1706,10 @@ if (!RUNNING_WITH_COMMAND) {
           // We're in the normal Case 1.
           try {
             appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-              path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              source: {
+                type: 'path',
+                value: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              },
               installed_app_id: appId,
               agent_key: agentPubKey,
               network_seed: networkSeed,

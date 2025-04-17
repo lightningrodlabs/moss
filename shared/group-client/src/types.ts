@@ -213,8 +213,6 @@ export type AppletClonedCell = {
    * Any yaml serializable properties
    */
   properties?: unknown;
-  origin_time?: Timestamp;
-  quantum_time?: Duration;
 };
 
 export type TagsToAssetInput = {

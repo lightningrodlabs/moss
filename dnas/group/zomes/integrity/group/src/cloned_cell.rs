@@ -1,5 +1,4 @@
 use hdi::prelude::*;
-use std::time::Duration;
 
 /// Entry to register cloned cells associated to Applets
 #[hdk_entry_helper]
@@ -10,8 +9,6 @@ pub struct AppletClonedCell {
     pub role_name: String,
     pub network_seed: Option<String>,
     pub properties: Option<SerializedBytes>,
-    pub origin_time: Option<Timestamp>,
-    pub quantum_time: Option<Duration>,
     // NOTE: It might in some cases in the future be desirable to share a membrane proof here
     // too in case it is not bound to an agent.
 }

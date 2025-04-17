@@ -20,9 +20,9 @@ const LAIR_BINARY = path.join(
 /**
  * Only used to run agents in dev mode uding the dev CLI - should not be shipped in the actual distributables for Moss
  */
-const HC_BINARY = path.join(
+const KITSUNE2_BOOTSTRAP_SRV_BINARY = path.join(
   BINARIES_DIRECTORY,
-  `hc-v${MOSS_CONFIG.hc.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
+  `kitsune2-bootstrap-srv-v${MOSS_CONFIG.bootstrap.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
-export { HOLOCHAIN_BINARIES, LAIR_BINARY, HC_BINARY };
+export { HOLOCHAIN_BINARIES, LAIR_BINARY, KITSUNE2_BOOTSTRAP_SRV_BINARY };

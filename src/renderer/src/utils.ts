@@ -93,12 +93,12 @@ export function findAppForDnaHash(
   for (const app of apps) {
     for (const [roleName, cells] of Object.entries(app.cell_info)) {
       for (const cell of cells) {
-        if (CellType.Cloned in cell) {
-          if (cell[CellType.Cloned].cell_id[0].toString() === dnaHash.toString()) {
-            return { appInfo: app, roleName: cell[CellType.Cloned].clone_id };
+        if (cell.type === CellType.Cloned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
+            return { appInfo: app, roleName: cell.value.clone_id };
           }
-        } else if (CellType.Provisioned in cell) {
-          if (cell[CellType.Provisioned].cell_id[0].toString() === dnaHash.toString()) {
+        } else if (cell.type === CellType.Provisioned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
             return { appInfo: app, roleName };
           }
         }
@@ -163,34 +163,34 @@ export function getReason(app: AppInfo): string | undefined {
 }
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.cell_id;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.cell_id;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.cell_id;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.cell_id;
   }
   return undefined;
 }
 
 export function getCellName(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.name;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.name;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.name;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.name;
   }
-  if ('stem' in cellInfo) {
-    return cellInfo.stem.name;
+  if (cellInfo.type === CellType.Stem) {
+    return cellInfo.value.name;
   }
   return undefined;
 }
 
 export function getCellNetworkSeed(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
   return undefined;
 }
@@ -216,10 +216,8 @@ export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => (cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => (cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -227,10 +225,8 @@ export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getDisabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => !(cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => !(cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );

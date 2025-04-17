@@ -6,7 +6,6 @@ import {
   DumpFullStateRequest,
   encodeHashToBase64,
   InstalledAppId,
-  NetworkInfo,
 } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -33,9 +32,6 @@ export class CellDetails extends LitElement {
   cellId!: CellId;
 
   @state()
-  netInfo: NetworkInfo | undefined;
-
-  @state()
   dumpData: DumpData | undefined;
 
   @state()
@@ -46,17 +42,6 @@ export class CellDetails extends LitElement {
 
   @state()
   showIntegrationLimbo = false;
-
-  async networkInfo() {
-    const [appClient, _] = await this._mossStore.getAppClient(this.appId);
-    const networkInfo = await appClient.networkInfo({
-      dnas: [this.cellId[0]],
-      last_time_queried: (Date.now() - 60000) * 1000, // get bytes from last 60 seconds
-    });
-
-    this.netInfo = networkInfo[0];
-    console.log('networkInfo: ', networkInfo);
-  }
 
   async dumpState() {
     let currentDump = this.dumpData;
@@ -161,19 +146,6 @@ export class CellDetails extends LitElement {
           <div class="column" style="margin-bottom: 10px;">
             <div><b>Dna Hash:</b> ${encodeHashToBase64(this.cellId[0])}</div>
             <div><b>Public key:</b> ${encodeHashToBase64(this.cellId[1])}</div>
-            <div class="row" style="align-items: center; flex: 1;">
-              <span class="debug-title">Network Info</span>
-              <span style="display: flex; flex: 1;"></span>
-              <sl-button
-                size="small"
-                style="margin-left:5px;"
-                @click=${async () => {
-                  this.networkInfo();
-                }}
-                >Query</sl-button
-              >
-            </div>
-            ${this.netInfo ? html`<net-info .networkInfo=${this.netInfo}></net-info>` : html``}
           </div>
           <div class="column">
             <div style="display: flex; align-items: center; flex: 1;">

@@ -8,13 +8,13 @@
       "aarch64-apple-darwin": "8cce24ed85cf54d89f7cd0e0d5268dfa3795de0057566ddd9b7de35cf576df33"
     }
   },
-  "hc": {
-    "version": "0.5.0-rc.3",
+  "bootstrap": {
+    "version": "0.1.3",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "6265e37efde072a541dc3cc06a6d32b712a4f85a9fd3c333ac08e4a5f6a5bae8",
-      "x86_64-pc-windows-msvc.exe": "923848e934405b118112181eb412f7df68b85948f5e8a70258cbc2413e3b60f7",
-      "x86_64-apple-darwin": "72fe4a2cf54ffa3687a7d8af220317ad1b714b1c0dafa6738beb393590579339",
-      "aarch64-apple-darwin": "9076210076fd5b1568b478450432fa5c8504ffe1df0b652bf7214dad654236c8"
+      "x86_64-unknown-linux-gnu": "d43ed6ca8c3f072bd8ad4832131c88153638b67368c2215d0731b9733e469425",
+      "x86_64-pc-windows-msvc.exe": "308e88ba73fcbaa6d134a0c4416fc4c4a59e9fc7a9fbb588f17296c2361759de",
+      "x86_64-apple-darwin": "bccac8baffda5e468fb739137b19f3e605fb043b162110521aed0b7522a0969f",
+      "aarch64-apple-darwin": "45b2a19414d3d225b935963e9dbbb52f45ceb8ace940bfef48f16a2a0b65cd8f"
     }
   },
   "lair": {

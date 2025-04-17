@@ -14,6 +14,7 @@ testing-applets*
 *.webhapp
 .cargo/
 .hc*
+.kitsune2_bootstrap_srv
 *.tsbuildinfo
 we.dev.config*
 weave.dev.config*

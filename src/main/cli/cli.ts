@@ -107,7 +107,7 @@ export function validateArgs(args: CliOpts): RunOptions {
       !args.forceProductionUrls
     )
       throw new Error(
-        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
     if (
       args.signalingUrl &&
@@ -115,7 +115,7 @@ export function validateArgs(args: CliOpts): RunOptions {
       !args.forceProductionUrls
     )
       throw new Error(
-        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
   }
   if (args.holochainPath && typeof args.holochainPath !== 'string') {

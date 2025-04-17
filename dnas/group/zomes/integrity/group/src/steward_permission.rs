@@ -168,7 +168,7 @@ pub fn validate_create_link_all_steward_permissions(
         )))?;
 
     // Validate that the tag is for the agent that the permission is for
-    let agent_in_tag = AgentPubKey::from_raw_39(tag.0.clone()).map_err(|_| {
+    let agent_in_tag = AgentPubKey::try_from_raw_39(tag.0.clone()).map_err(|_| {
         wasm_error!(WasmErrorInner::Guest(
             "Link tag does not contain a valid agent public key".into()
         ))

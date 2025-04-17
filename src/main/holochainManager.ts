@@ -78,7 +78,7 @@ export class HolochainManager {
         bootstrapUrl,
         signalingUrl,
         allowedOrigins,
-        false,
+        true,
         iceUrls,
       );
     } else {
@@ -90,7 +90,7 @@ export class HolochainManager {
         bootstrapUrl,
         signalingUrl,
         allowedOrigins,
-        false,
+        true,
         iceUrls,
       );
     }
@@ -209,7 +209,10 @@ export class HolochainManager {
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
-      path: happPath,
+      source: {
+        type: 'path',
+        value: happPath,
+      },
       network_seed: networkSeed,
     });
 
@@ -251,7 +254,10 @@ export class HolochainManager {
     const appInfo = await this.adminWebsocket.installApp({
       agent_key: pubKey,
       installed_app_id: appId,
-      path: filePath,
+      source: {
+        type: 'path',
+        value: filePath,
+      },
       network_seed: networkSeed,
     });
     try {

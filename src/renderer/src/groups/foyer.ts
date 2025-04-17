@@ -5,8 +5,7 @@ import {
   encodeHashToBase64,
   type AgentPubKey,
   InstalledAppId,
-  AppCallZomeRequest,
-  SignalType,
+  RoleNameCallZomeRequest,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
@@ -50,7 +49,7 @@ export class FoyerClient {
     });
   }
   private callZome(fn_name: string, payload: any) {
-    const req: AppCallZomeRequest = {
+    const req: RoleNameCallZomeRequest = {
       role_name: this.roleName,
       zome_name: this.zomeName,
       fn_name,
@@ -162,8 +161,8 @@ export class FoyerStore {
     this.newStream('_all');
 
     this.client.client.on('signal', async (sig) => {
-      if (!(SignalType.App in sig)) return;
-      const signal = sig[SignalType.App].payload;
+      if (sig.type !== 'app') return;
+      const signal = sig.value.payload;
       // @ts-ignore
       if (signal.type == 'Message') {
         // @ts-ignore

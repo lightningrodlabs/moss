@@ -25,12 +25,13 @@ import {
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppCallZomeRequest,
   AppInfo,
   AppWebsocket,
+  CallZomeRequest,
   DnaHashB64,
   InstalledAppId,
   ProvisionedCell,
+  RoleNameCallZomeRequest,
 } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
@@ -1619,7 +1620,10 @@ export class MossStore {
       const callZomePure = AppWebsocket.prototype.callZome;
 
       // Overwrite the callZome function to measure the duration of the zome call and log it
-      appWs.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+      appWs.callZome = async <ReturnType>(
+        request: CallZomeRequest | RoleNameCallZomeRequest,
+        timeout?: number,
+      ): Promise<ReturnType> => {
         const start = Date.now();
         const response = callZomePure.apply(appWs, [request, timeout]);
         const end = Date.now();
@@ -1633,7 +1637,7 @@ export class MossStore {
             },
           }),
         );
-        return response;
+        return response as ReturnType;
       };
     }
     return [appWs, token];

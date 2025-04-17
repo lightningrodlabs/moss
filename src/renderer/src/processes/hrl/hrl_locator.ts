@@ -8,7 +8,8 @@ export async function hrlLocatorZome(): Promise<CoordinatorSource> {
   const arrayBuffer = await wasm.arrayBuffer();
 
   return {
-    bundle: {
+    type: 'bundle',
+    value: {
       manifest: {
         zomes: [
           {

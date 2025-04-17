@@ -12,8 +12,8 @@ import {
   type FrameNotification,
   type RecordInfo,
   type PeerStatusUpdate,
-  IframeKind,
-  AppletToParentMessage,
+  type IframeKind,
+  type AppletToParentMessage,
 } from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -640,8 +640,6 @@ export async function handleAppletIframeMessage(
               role_name: message.req.role_name,
               network_seed: message.req.modifiers.network_seed,
               properties: message.req.modifiers.properties,
-              origin_time: message.req.modifiers.origin_time,
-              quantum_time: message.req.modifiers.quantum_time,
             });
           }),
         );

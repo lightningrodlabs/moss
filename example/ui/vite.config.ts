@@ -33,7 +33,6 @@ export default defineConfig({
       '@holochain-open-dev/elements/dist/elements/display-error.js',
       '@theweave/api',
       '@theweave/elements',
-      '@theweave/attachments',
     ],
   },
   plugins: [
