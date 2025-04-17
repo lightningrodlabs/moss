@@ -23,7 +23,6 @@
       import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
       import { WeaveClient, isWeaveContext, initializeHotReload } from '@theweave/api';
       import '@theweave/elements/dist/elements/weave-client-context.js';
-      import { AttachmentsClient, AttachmentsStore } from '@theweave/attachments';
       import { CellType, encodeHashToBase64 } from '@holochain/client';
       import { wrapPathInSvg } from '@holochain-open-dev/elements';
       import { mdiPost } from '@mdi/js';
@@ -187,9 +186,6 @@
         const exampleApplet = document.getElementById('example-applet');
         exampleApplet.postsStore = new PostsStore(
           new PostsClient(weaveClient.renderInfo.appletClient, 'forum')
-        );
-        exampleApplet.attachmentsStore = new AttachmentsStore(
-          new AttachmentsClient(weaveClient.renderInfo.appletClient, 'forum')
         );
       })();
     </script>
