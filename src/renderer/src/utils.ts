@@ -612,7 +612,6 @@ export function getAllIframes() {
     // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
-      console.log('Found iframe: ', node);
       result.push(node);
     }
 
