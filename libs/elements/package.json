@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.8.3"
   },
   "publishConfig": {
     "access": "public"

@@ -124,7 +124,7 @@
     "prettier": "^3.0.2",
     "rimraf": "5.0.5",
     "run-singleton-cli": "^0.0.7",
-    "typescript": "^5.2.2",
+    "typescript": "^5.8.3",
     "vite": "^4.4.9",
     "vitepress": "1.3.4",
     "vite-plugin-static-copy": "^0.13.1"

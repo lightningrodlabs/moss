@@ -45,7 +45,7 @@
     "prettier": "^2.0.4",
     "rimraf": "^3.0.2",
     "tslib": "^2.0.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.8.3",
     "vite": "^4.0.4",
     "vite-plugin-checker": "^0.5.3",
     "vite-plugin-static-copy": "^0.13.1"
