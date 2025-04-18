@@ -35,7 +35,7 @@ import {
 } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
-import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
+import { ActionHash, AdminWebsocket, DnaHash, EntryHash } from '@holochain/client';
 import {
   CreatableResult,
   CreatableName,

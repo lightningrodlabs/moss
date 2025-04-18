@@ -7,7 +7,7 @@ import {
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
 import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash, DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { ActionHash, DnaHash, encodeHashToBase64, ProvisionedCell } from '@holochain/client';
 import { ConductorInfo } from '../../electron-api.js';
 import { Tool, UpdateableEntity, ToolsLibraryClient } from '@theweave/tool-library-client';
 
@@ -73,9 +73,9 @@ export class ToolsLibraryStore {
     const toolsLibraryAppInfo = await this.toolsLibraryClient.client.appInfo();
     if (!toolsLibraryAppInfo) throw new Error('Tools Library AppInfo is null.');
     let toolsLibraryDnaHash: DnaHash | undefined = undefined;
-    for (const [role_name, [cell]] of Object.entries(toolsLibraryAppInfo.cell_info)) {
+    for (const [role_name, cellInfos] of Object.entries(toolsLibraryAppInfo.cell_info)) {
       if (role_name === 'tools') {
-        toolsLibraryDnaHash = cell['provisioned'].cell_id[0];
+        toolsLibraryDnaHash = (cellInfos[0].value as ProvisionedCell).cell_id[0];
       }
     }
     if (!toolsLibraryDnaHash) throw new Error('Failed to get tool library DNA hash.');

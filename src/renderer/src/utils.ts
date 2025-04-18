@@ -1,7 +1,6 @@
 import {
   CellId,
   CellInfo,
-  DisabledAppReason,
   AppInfo,
   ListAppsResponse,
   DnaHash,
@@ -129,38 +128,6 @@ export function isAppDisabled(app: AppInfo): boolean {
 export function isAppPaused(app: AppInfo): boolean {
   return app.status.type === 'paused';
 }
-export function getReason(app: AppInfo): string | undefined {
-  if (isAppRunning(app)) return undefined;
-  if (isAppDisabled(app)) {
-    const reason = (
-      app.status as unknown as {
-        disabled: {
-          reason: DisabledAppReason;
-        };
-      }
-    ).disabled.reason;
-
-    if ((reason as any) === 'never_started') {
-      return 'App was never started';
-    } else if ((reason as any) === 'user') {
-      return 'App was disabled by the user';
-    } else {
-      return `There was an error with this app: ${
-        (
-          reason as {
-            error: string;
-          }
-        ).error
-      }`;
-    }
-  } else {
-    return (
-      app.status as unknown as {
-        paused: { reason: { error: string } };
-      }
-    ).paused.reason.error;
-  }
-}
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {
   if (cellInfo.type === CellType.Provisioned) {
@@ -207,7 +174,7 @@ export function flattenCells(cell_info: Record<string, CellInfo[]>): [string, Ce
 
 export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
   const provisionedCells = flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'provisioned' in cellInfo)
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Provisioned)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
