@@ -15,9 +15,9 @@ lto = true
 
 
 [workspace.dependencies]
-hdi = { version = "0.6.0-rc.1" }
-hdk = { version = "0.5.0-rc.1" }
-holochain = { version = "0.5.0-rc.3" }
+hdi = { version = "0.6.0-rc.2" }
+hdk = { version = "0.5.0-rc.2" }
+holochain = { version = "0.5.0-rc.4" }
 
 serde = "1"
 

@@ -121,13 +121,13 @@ export function getStatus(app: AppInfo): string {
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return app.status === 'running';
+  return app.status.type === 'running';
 }
 export function isAppDisabled(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('disabled');
+  return app.status.type === 'disabled';
 }
 export function isAppPaused(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('paused');
+  return app.status.type === 'paused';
 }
 export function getReason(app: AppInfo): string | undefined {
   if (isAppRunning(app)) return undefined;

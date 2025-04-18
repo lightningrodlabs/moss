@@ -78,7 +78,7 @@ export class HolochainManager {
         bootstrapUrl,
         signalingUrl,
         allowedOrigins,
-        true,
+        app.isPackaged ? false : true,
         iceUrls,
       );
     } else {
@@ -90,7 +90,7 @@ export class HolochainManager {
         bootstrapUrl,
         signalingUrl,
         allowedOrigins,
-        true,
+        app.isPackaged ? false : true,
         iceUrls,
       );
     }

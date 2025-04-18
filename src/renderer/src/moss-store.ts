@@ -803,9 +803,11 @@ export class MossStore {
     if (!logo) throw new Error('No logo provided.');
 
     const appInfo = await createGroup(useProgenitor);
+
     await this.reloadManualStores();
 
-    const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+    const groupDnaHash: DnaHash = (appInfo.cell_info['group'][0].value as ProvisionedCell)
+      .cell_id[0];
 
     const groupStore = await this.groupStore(groupDnaHash);
 
@@ -872,7 +874,7 @@ export class MossStore {
 
     const appToLeave = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -960,7 +962,7 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -997,7 +999,7 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -1035,7 +1037,7 @@ export class MossStore {
     console.log('RUNNING GROUP APPS: ', runningGroupsApps);
     await Promise.all(
       runningGroupsApps.map(async (app) => {
-        const groupDnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+        const groupDnaHash = (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0];
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const assetsClient = new AssetsClient(groupAppWebsocket);
 
@@ -1062,7 +1064,7 @@ export class MossStore {
     const groupApps = apps.filter((app) => app.installed_app_id.startsWith('group#'));
 
     const groupsDnaHashes = groupApps.map((app) => {
-      const cell = app.cell_info['group'][0][CellType.Provisioned] as ProvisionedCell;
+      const cell = app.cell_info['group'][0].value as ProvisionedCell;
       return cell.cell_id[0];
     });
     return groupsDnaHashes;
@@ -1073,7 +1075,7 @@ export class MossStore {
     return apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppDisabled(app))
-      .map((app) => app.cell_info['group'][0][CellType.Provisioned].cell_id[0] as DnaHash);
+      .map((app) => (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0] as DnaHash);
   });
 
   groupProfilePersisted = new LazyMap((groupDnaHashB64: DnaHashB64) => {
@@ -1427,7 +1429,8 @@ export class MossStore {
     await Promise.all(
       groupApps.map(async (app) => {
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
-        const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+        const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
+          .cell_id[0];
         const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
         const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
         if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {

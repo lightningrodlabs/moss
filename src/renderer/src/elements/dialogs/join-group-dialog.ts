@@ -3,7 +3,7 @@ import { state, query, customElement } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { CellType } from '@holochain/client';
+import { CellType, ProvisionedCell } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
@@ -91,7 +91,7 @@ export class JoinGroupDialog extends LitElement {
       this.dispatchEvent(
         new CustomEvent('group-joined', {
           detail: {
-            groupDnaHash: groupAppInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0],
+            groupDnaHash: (groupAppInfo.cell_info['group'][0].value as ProvisionedCell).cell_id[0],
           },
           bubbles: true,
           composed: true,

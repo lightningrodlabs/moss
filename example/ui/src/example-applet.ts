@@ -16,7 +16,7 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import './applet-main.js';
 import './cross-group-main.js';
-import { ActionHash, CellType, DnaHash } from '@holochain/client';
+import { ActionHash, CellType, DnaHash, ProvisionedCell } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
 import { PostsClient } from './posts-client.js';
@@ -83,7 +83,7 @@ export class ExampleApplet extends LitElement {
                     @post-selected=${async (e: CustomEvent) => {
                       const appInfo = await client.appInfo();
                       if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
                         .cell_id[0];
                       this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
                     }}
@@ -91,7 +91,7 @@ export class ExampleApplet extends LitElement {
                       console.log('GOT DRAG POST EVENT!');
                       const appInfo = await client.appInfo();
                       if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
                         .cell_id[0];
                       this.weaveClient!.assets.dragAsset({
                         hrl: [dnaHash, e.detail],
@@ -166,9 +166,8 @@ export class ExampleApplet extends LitElement {
                             const postRecord = await postsClient.createPost(post);
                             const appInfo = await appletClient.appInfo();
                             if (!appInfo) throw new Error('AppInfo is null.');
-                            const dnaHash = (appInfo.cell_info.forum[0] as any)[
-                              CellType.Provisioned
-                            ].cell_id[0];
+                            const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                              .cell_id[0];
                             const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
                             await resolve({
                               hrl,

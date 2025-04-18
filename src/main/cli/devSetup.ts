@@ -24,6 +24,7 @@ import {
   encodeHashToBase64,
   Record as HolochainRecord,
   CellType,
+  ProvisionedCell,
 } from '@holochain/client';
 import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
@@ -157,7 +158,7 @@ export async function devSetup(
         await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
           type: 'all',
         });
-      toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+      toolsLibraryDnaHash = encodeHashToBase64((cell.value as ProvisionedCell).cell_id[0]);
     }
 
     if (!toolsLibraryDnaHash) throw new Error('Failed to determine appstore DNA hash.');

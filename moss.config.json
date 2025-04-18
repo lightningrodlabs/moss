@@ -1,20 +1,20 @@
 {
   "holochain": {
-    "version": "0.5.0-rc.3",
+    "version": "0.5.0-rc.4",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "0526620ebcee757e259bde386553fd064c1584b37045883c387980768042f70f",
-      "x86_64-pc-windows-msvc.exe": "82311f0f3183c3eef0f50902e43b2412e18789e54cd4e64cf852752c727dc204",
-      "x86_64-apple-darwin": "22ec15728b903e53562850a438a0efc638457605e01f256f0985517f55182ccf",
-      "aarch64-apple-darwin": "8cce24ed85cf54d89f7cd0e0d5268dfa3795de0057566ddd9b7de35cf576df33"
+      "x86_64-unknown-linux-gnu": "dc2d4e877edf21b1e385ed0a982f7795a5517db2147544e580dead2ec4a7b105",
+      "x86_64-pc-windows-msvc.exe": "160f03b75be0c4a818245a88898c989a5f44bc2f80c57e945a2d26684de04547",
+      "x86_64-apple-darwin": "629a7f0f8a7ba3e059470e015f1c31b6d8cb9af3dfbb53d9ee803526916f00c5",
+      "aarch64-apple-darwin": "7d6495488dd62668f92385a0bded3fb556ae7aaba5d56377d22c73a4b01bfb01"
     }
   },
   "bootstrap": {
-    "version": "0.1.3",
+    "version": "0.1.5",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "d43ed6ca8c3f072bd8ad4832131c88153638b67368c2215d0731b9733e469425",
-      "x86_64-pc-windows-msvc.exe": "308e88ba73fcbaa6d134a0c4416fc4c4a59e9fc7a9fbb588f17296c2361759de",
-      "x86_64-apple-darwin": "bccac8baffda5e468fb739137b19f3e605fb043b162110521aed0b7522a0969f",
-      "aarch64-apple-darwin": "45b2a19414d3d225b935963e9dbbb52f45ceb8ace940bfef48f16a2a0b65cd8f"
+      "x86_64-unknown-linux-gnu": "3848ac44c99f0b487cbcce6c7c1f29a0f025becbb17b74da0bfc87f66dd6e4ea",
+      "x86_64-pc-windows-msvc.exe": "20706e6b3858520206b5a4edc1c98136dffc61368e9d2b65e8624baaccaa3843",
+      "x86_64-apple-darwin": "5f8b9d338aea9d97debdc15746a09cd8d5282cb3a367f67560a602e83ff80ab3",
+      "aarch64-apple-darwin": "acd94fbcd8f958023cb0d3c2a78052d79e439b96a5510d6faa5a6b7f20ad1fb1"
     }
   },
   "lair": {

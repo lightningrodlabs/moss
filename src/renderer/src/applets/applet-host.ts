@@ -267,6 +267,24 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
+// Needs to be in a separate function, otherwise typescript will be confused
+// in the switch statement
+function validateRequest(request: AppletToParentRequest): boolean {
+  // Validate the format of the iframe message
+  try {
+    Value.Assert(AppletToParentRequestSchema, request);
+    return true;
+  } catch (e) {
+    console.error(
+      'Got invalid AppletToParentRequest format. Got request ',
+      request,
+      '\n\nError: ',
+      e,
+    );
+  }
+  return false;
+}
+
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
   openViews: AppOpenViews,
@@ -274,18 +292,7 @@ export async function handleAppletIframeMessage(
   message: AppletToParentRequest,
   eventSource: MessageEventSource | null | 'wal-window',
 ) {
-  // Validate the format of the iframe message
-  try {
-    Value.Assert(AppletToParentRequestSchema, message);
-  } catch (e) {
-    console.error(
-      'Got invalid AppletToParentRequest format. Got request ',
-      message,
-      '\n\nError: ',
-      e,
-    );
-    return;
-  }
+  if (!validateRequest(message)) return;
 
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
