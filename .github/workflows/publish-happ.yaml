@@ -31,7 +31,7 @@ jobs:
       - name: Install and build
         run: |
           nix-store --gc
-          nix develop --command bash -c "holochain --version && yarn build:group-happ"
+          nix develop --command bash -c "holochain --version && yarn && yarn build:group-happ && yarn test"
 
       - name: Retrieve version
         run: |
