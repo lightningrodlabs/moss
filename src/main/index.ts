@@ -1734,7 +1734,7 @@ if (!RUNNING_WITH_COMMAND) {
         } catch (e) {
           // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
           // but continue. The app would then need to get enabled in the UI.
-          if (appInfo.status !== 'awaiting_memproofs') {
+          if (appInfo.status.type !== 'awaiting_memproofs') {
             WE_EMITTER.emitMossError(`ERROR: Failed to enable app: ${e}`);
           }
         }
