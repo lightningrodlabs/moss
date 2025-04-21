@@ -81,7 +81,7 @@ export class PocketSearch extends LitElement implements FormField {
    * @attr field-label
    */
   @property({ type: String, attribute: 'placeholder' })
-  placeholder: string = msg('Search or enter weave-0.13:// URL');
+  placeholder: string = msg('Search or enter weave-0.14:// URL');
 
   @property({ type: Number, attribute: 'min-chars' })
   minChars: number = 2;
@@ -154,7 +154,7 @@ export class PocketSearch extends LitElement implements FormField {
   onFilterChange() {
     const filter = this._textField.value;
     if (this.mode === 'open') {
-      if (filter.startsWith('weave-0.13://')) {
+      if (filter.startsWith('weave-0.14://')) {
         // No dropdown but enable opening of WAL
         this.wurl = filter;
         this.dropdown.hide();

@@ -30,5 +30,5 @@
     "version": "0.14.0-rc.0",
     "sha256": "b15154a85bf61bbe66c335cc6cbd8c110fb60ef152ba5418b0e8d080c75b0311"
   },
-  "binariesAppendix": "moss-0.13"
+  "binariesAppendix": "moss-0.14"
 }

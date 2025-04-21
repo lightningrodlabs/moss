@@ -98,13 +98,13 @@ let appVersion = app.getVersion();
 
 // console.log('process.argv: ', process.argv);
 
-// Set as default protocol client for weave-0.13 deep links
+// Set as default protocol client for weave-0.14 deep links
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('weave-0.13', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient('weave-0.14', process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('weave-0.13');
+  app.setAsDefaultProtocolClient('weave-0.14');
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
@@ -272,7 +272,7 @@ if (!RUNNING_WITH_COMMAND) {
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
-        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.13://'));
+        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.14://'));
       }
 
       // This event will always be triggered in the first instance, no matter with which profile
@@ -749,7 +749,7 @@ if (!RUNNING_WITH_COMMAND) {
     );
 
     SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
-    SYSTRAY.setToolTip('Moss (0.13)');
+    SYSTRAY.setToolTip('Moss (0.14)');
 
     const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
@@ -1155,7 +1155,7 @@ if (!RUNNING_WITH_COMMAND) {
         app_port: HOLOCHAIN_MANAGER!.appPort,
         admin_port: HOLOCHAIN_MANAGER!.adminPort,
         moss_version: app.getVersion(),
-        weave_protocol_version: '0.13',
+        weave_protocol_version: '0.14',
       };
     });
     ipcMain.handle(

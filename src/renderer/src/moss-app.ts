@@ -30,7 +30,7 @@ export class MossApp extends LitElement {
   _mossStore!: MossStore;
 
   async firstUpdated() {
-    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.13';
+    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.14';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
     );
