@@ -13,7 +13,7 @@
     "@holochain/tryorama": "0.18.0-rc.1",
     "@holochain-open-dev/utils": "0.500.0-rc.3",
     "@theweave/group-client": "0.3.0-rc.0",
-    "@theweave/api": "0.5.0-rc.0",
+    "@theweave/api": "0.5.0-rc.1",
     "typescript": "^5.8.3",
     "vitest": "^0.28.4"
   },
