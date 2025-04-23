@@ -2,7 +2,7 @@ name: 'publish'
 on:
   push:
     branches:
-      - release-0.14
+      - release
 
 jobs:
   publish:
