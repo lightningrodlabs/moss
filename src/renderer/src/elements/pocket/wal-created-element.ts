@@ -61,7 +61,7 @@ export class WalCreatedElement extends LitElement {
           return html`
             <div
               class="row element"
-              title=${`weave-0.13://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+              title=${`weave-0.14://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
                 this.wal.hrl[1],
               )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
             >

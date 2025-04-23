@@ -1,7 +1,7 @@
 import { assert, test } from 'vitest';
 
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { fakeActionHash } from '@holochain/client';
+import { AppBundleSource, fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
@@ -17,8 +17,15 @@ test('Add and remove tags from asset', async () => {
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
 
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.

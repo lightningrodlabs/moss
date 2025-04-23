@@ -3,7 +3,6 @@ import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppCallZomeRequest,
   AppClient,
   AppWebsocket,
   CallZomeRequest,
@@ -12,6 +11,7 @@ import {
   DisableCloneCellRequest,
   EnableCloneCellRequest,
   EntryHash,
+  RoleNameCallZomeRequest,
   decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
@@ -661,7 +661,10 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
     const callZomePure = AppWebsocket.prototype.callZome;
 
     // Overwrite the callZome function to measure the duration of the zome call and log it
-    appletClient.callZome = async (request: AppCallZomeRequest, timeout?: number) => {
+    appletClient.callZome = async <ReturnType>(
+      request: CallZomeRequest | RoleNameCallZomeRequest,
+      timeout?: number,
+    ): Promise<ReturnType> => {
       const start = Date.now();
       const response = await callZomePure.apply(appletClient, [request, timeout]);
       const end = Date.now();
@@ -676,7 +679,7 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
           },
         });
       });
-      return response;
+      return response as ReturnType;
     };
   }
 

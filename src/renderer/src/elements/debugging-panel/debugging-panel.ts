@@ -24,7 +24,6 @@ import '../../applets/elements/applet-logo.js';
 import '../dialogs/create-group-dialog.js';
 import '../reusable/groups-for-applet.js';
 import './state-dump.js';
-import './net-info.js';
 import './cell-details.js';
 import './app-debugging-details.js';
 

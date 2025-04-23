@@ -11,8 +11,9 @@ import {
   randomNonce,
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
-import { WeRustHandler, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
+import { sha512 } from 'js-sha512';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -26,7 +27,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.13://')) {
+    if (e.url.startsWith('weave-0.14://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
       e.preventDefault();
       return;
@@ -50,7 +51,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.13://')) {
+    if (e.url.startsWith('weave-0.14://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
       e.preventDefault();
       return;
@@ -72,7 +73,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     // console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('weave-0.13://')) {
+    if (details.url.startsWith('weave-0.14://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
@@ -117,34 +118,32 @@ export async function signZomeCall(
   request: CallZomeRequest,
   handler: WeRustHandler,
 ): Promise<CallZomeRequestSigned> {
-  const zomeCallUnsignedNapi: ZomeCallUnsignedNapi = {
-    provenance: Array.from(request.provenance),
-    cellId: [Array.from(request.cell_id[0]), Array.from(request.cell_id[1])],
-    zomeName: request.zome_name,
-    fnName: request.fn_name,
-    payload: Array.from(encode(request.payload)),
-    nonce: Array.from(await randomNonce()),
-    expiresAt: getNonceExpiration(),
+  if (!request.provenance)
+    return Promise.reject(
+      'Call zome request has provenance field not set. This should be set by the js-client.',
+    );
+
+  const zomeCallToSign: CallZomeRequest = {
+    cell_id: request.cell_id,
+    zome_name: request.zome_name,
+    fn_name: request.fn_name,
+    payload: encode(request.payload),
+    provenance: request.provenance,
+    nonce: await randomNonce(),
+    expires_at: getNonceExpiration(),
   };
 
-  const zomeCallSignedNapi = await handler.signZomeCall(zomeCallUnsignedNapi);
+  const zomeCallBytes = encode(zomeCallToSign);
+  const bytesHash = sha512.array(zomeCallBytes);
 
-  const zomeCallSigned: CallZomeRequestSigned = {
-    provenance: Uint8Array.from(zomeCallSignedNapi.provenance),
-    cap_secret: null,
-    cell_id: [
-      Uint8Array.from(zomeCallSignedNapi.cellId[0]),
-      Uint8Array.from(zomeCallSignedNapi.cellId[1]),
-    ],
-    zome_name: zomeCallSignedNapi.zomeName,
-    fn_name: zomeCallSignedNapi.fnName,
-    payload: Uint8Array.from(zomeCallSignedNapi.payload),
-    signature: Uint8Array.from(zomeCallSignedNapi.signature),
-    expires_at: zomeCallSignedNapi.expiresAt,
-    nonce: Uint8Array.from(zomeCallSignedNapi.nonce),
+  const signature: number[] = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
+
+  const signedZomeCall: CallZomeRequestSigned = {
+    bytes: zomeCallBytes,
+    signature: Uint8Array.from(signature),
   };
 
-  return zomeCallSigned;
+  return signedZomeCall;
 }
 
 export async function readIcon(location: ResourceLocation) {

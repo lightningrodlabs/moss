@@ -1,15 +1,15 @@
-import { ZomeCallNapi, ZomeCallUnsignedNapi } from '@lightningrodlabs/we-rust-utils';
+import { CallZomeRequest, CallZomeRequestSigned } from '@holochain/client';
 
 declare global {
   interface Window {
     __HC_ZOME_CALL_SIGNER__: {
-      signZomeCall: (zomeCall: ZomeCallUnsignedNapi) => Promise<ZomeCallNapi>;
+      signZomeCall: (zomeCall: CallZomeRequest) => Promise<CallZomeRequestSigned>;
     };
   }
 }
 
 window.__HC_ZOME_CALL_SIGNER__ = {
-  signZomeCall: async (zomeCall: ZomeCallUnsignedNapi) => {
+  signZomeCall: async (zomeCall: CallZomeRequest) => {
     return postMessage({
       type: 'sign-zome-call',
       payload: zomeCall,
@@ -19,7 +19,7 @@ window.__HC_ZOME_CALL_SIGNER__ = {
 
 type HappToParentRequest = {
   type: 'sign-zome-call';
-  payload: ZomeCallUnsignedNapi;
+  payload: CallZomeRequest;
 };
 
 async function postMessage(request: HappToParentRequest): Promise<any> {

@@ -15,6 +15,8 @@ export class PostsClient extends ZomeClient<PostsSignal> {
     if (!appInfo) throw new Error('AppInfo is null.');
     const cellId = getCellIdFromRoleName(this.roleName, appInfo);
 
+    console.log('Got cellId: ', cellId);
+
     return cellId[0];
   }
 

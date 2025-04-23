@@ -1,7 +1,6 @@
 import { EntryRecord, isSignalFromCellWithRole } from '@holochain-open-dev/utils';
 import {
   EntryHash,
-  AppCallZomeRequest,
   Record,
   AppWebsocket,
   AgentPubKey,
@@ -9,7 +8,7 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
   ActionHash,
-  SignalType,
+  RoleNameCallZomeRequest,
 } from '@holochain/client';
 import { AppletHash, UnsubscribeFunction } from '@theweave/api';
 import { encode } from '@msgpack/msgpack';
@@ -50,11 +49,11 @@ export class GroupClient {
   onSignal(listener: (eventData: SignalPayloadGroup) => void | Promise<void>): UnsubscribeFunction {
     return this.appClient.on('signal', async (signal) => {
       if (
-        SignalType.App in signal &&
-        (await isSignalFromCellWithRole(this.appClient, this.roleName, signal.App)) &&
-        this.zomeName === signal.App.zome_name
+        signal.type === 'app' &&
+        (await isSignalFromCellWithRole(this.appClient, this.roleName, signal.value)) &&
+        this.zomeName === signal.value.zome_name
       ) {
-        listener(signal.App.payload as SignalPayloadGroup);
+        listener(signal.value.payload as SignalPayloadGroup);
       }
     });
   }
@@ -62,7 +61,7 @@ export class GroupClient {
   /** GroupProfile */
 
   async getGroupProfile(): Promise<EntryRecord<GroupProfile> | undefined> {
-    const record = await this.callZome('get_group_profile', null);
+    const record = await this.callZome<Record | undefined>('get_group_profile', null);
     return record ? new EntryRecord(record) : undefined;
   }
 
@@ -124,7 +123,7 @@ export class GroupClient {
   }
 
   async getApplet(appletHash: EntryHash): Promise<Applet | undefined> {
-    const maybeApplet = await this.callZome('get_applet', appletHash);
+    const maybeApplet = await this.callZome<Applet | undefined>('get_applet', appletHash);
     if (!maybeApplet) {
       console.warn(
         `@group-client: @getApplet: No applet found for hash: ${encodeHashToBase64(appletHash)}`,
@@ -258,12 +257,12 @@ export class GroupClient {
   }
 
   async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {
-    const record = await this.callZome('get_group_meta_data', name);
+    const record = await this.callZome<Record | undefined>('get_group_meta_data', name);
     return record ? new EntryRecord(record) : undefined;
   }
 
   async setGroupMetaData(metaData: GroupMetaData): Promise<EntryRecord<GroupMetaData>> {
-    const record = await this.callZome('set_group_meta_data', metaData);
+    const record = await this.callZome<Record>('set_group_meta_data', metaData);
     return new EntryRecord(record);
   }
 
@@ -297,13 +296,13 @@ export class GroupClient {
     });
   }
 
-  private callZome(fn_name: string, payload: any) {
-    const req: AppCallZomeRequest = {
+  private callZome<T>(fn_name: string, payload: any) {
+    const req: RoleNameCallZomeRequest = {
       role_name: this.roleName,
       zome_name: this.zomeName,
       fn_name,
       payload,
     };
-    return this.appClient.callZome(req);
+    return this.appClient.callZome<T>(req);
   }
 }

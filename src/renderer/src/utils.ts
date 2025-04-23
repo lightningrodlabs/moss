@@ -1,7 +1,6 @@
 import {
   CellId,
   CellInfo,
-  DisabledAppReason,
   AppInfo,
   ListAppsResponse,
   DnaHash,
@@ -93,12 +92,12 @@ export function findAppForDnaHash(
   for (const app of apps) {
     for (const [roleName, cells] of Object.entries(app.cell_info)) {
       for (const cell of cells) {
-        if (CellType.Cloned in cell) {
-          if (cell[CellType.Cloned].cell_id[0].toString() === dnaHash.toString()) {
-            return { appInfo: app, roleName: cell[CellType.Cloned].clone_id };
+        if (cell.type === CellType.Cloned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
+            return { appInfo: app, roleName: cell.value.clone_id };
           }
-        } else if (CellType.Provisioned in cell) {
-          if (cell[CellType.Provisioned].cell_id[0].toString() === dnaHash.toString()) {
+        } else if (cell.type === CellType.Provisioned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
             return { appInfo: app, roleName };
           }
         }
@@ -121,76 +120,44 @@ export function getStatus(app: AppInfo): string {
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return app.status === 'running';
+  return app.status.type === 'running';
 }
 export function isAppDisabled(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('disabled');
+  return app.status.type === 'disabled';
 }
 export function isAppPaused(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('paused');
-}
-export function getReason(app: AppInfo): string | undefined {
-  if (isAppRunning(app)) return undefined;
-  if (isAppDisabled(app)) {
-    const reason = (
-      app.status as unknown as {
-        disabled: {
-          reason: DisabledAppReason;
-        };
-      }
-    ).disabled.reason;
-
-    if ((reason as any) === 'never_started') {
-      return 'App was never started';
-    } else if ((reason as any) === 'user') {
-      return 'App was disabled by the user';
-    } else {
-      return `There was an error with this app: ${
-        (
-          reason as {
-            error: string;
-          }
-        ).error
-      }`;
-    }
-  } else {
-    return (
-      app.status as unknown as {
-        paused: { reason: { error: string } };
-      }
-    ).paused.reason.error;
-  }
+  return app.status.type === 'paused';
 }
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.cell_id;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.cell_id;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.cell_id;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.cell_id;
   }
   return undefined;
 }
 
 export function getCellName(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.name;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.name;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.name;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.name;
   }
-  if ('stem' in cellInfo) {
-    return cellInfo.stem.name;
+  if (cellInfo.type === CellType.Stem) {
+    return cellInfo.value.name;
   }
   return undefined;
 }
 
 export function getCellNetworkSeed(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
   return undefined;
 }
@@ -207,7 +174,7 @@ export function flattenCells(cell_info: Record<string, CellInfo[]>): [string, Ce
 
 export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
   const provisionedCells = flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'provisioned' in cellInfo)
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Provisioned)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -216,10 +183,8 @@ export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => (cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => (cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -227,10 +192,8 @@ export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getDisabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => !(cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => !(cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -644,7 +607,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.14://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {

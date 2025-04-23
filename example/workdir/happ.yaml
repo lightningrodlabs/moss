@@ -12,8 +12,6 @@ roles:
       modifiers:
         network_seed: ~
         properties: ~
-        origin_time: ~
-        quantum_time: ~
       installed_hash: ~
       version: ~
       clone_limit: 10

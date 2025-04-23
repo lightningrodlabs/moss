@@ -38,7 +38,7 @@ import { SlDialog, SlSwitch } from '@shoelace-style/shoelace';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.13/curations-0.13.json',
+    url: 'https://lightningrodlabs.org/weave-tool-curation/0.14/curations-0.14.json',
     useLists: ['default'],
   },
 ];

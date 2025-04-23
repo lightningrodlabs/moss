@@ -23,7 +23,8 @@ import {
   Link,
   encodeHashToBase64,
   Record as HolochainRecord,
-  GrantedFunctionsType,
+  CellType,
+  ProvisionedCell,
 } from '@holochain/client';
 import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
@@ -32,7 +33,7 @@ import * as childProcess from 'child_process';
 import split from 'split';
 import { AgentProfile, AppletConfig, GroupConfig, WebHappLocation } from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { HC_BINARY } from '../binaries';
+import { KITSUNE2_BOOTSTRAP_SRV_BINARY } from '../binaries';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
@@ -40,20 +41,21 @@ import {
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
 import { readIcon } from '../utils';
+import { AppletHash } from '@theweave/api';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 export async function readLocalServices(): Promise<[string, string]> {
-  if (!fs.existsSync('.hc_local_services')) {
+  if (!fs.existsSync('.kitsune2_bootstrap_srv')) {
     throw new Error(
-      'No .hc_local_services file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
+      'No .kitsune2_bootstrap_srv file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
     );
   }
-  const localServicesString = fs.readFileSync('.hc_local_services', 'utf-8');
+  const localServicesString = fs.readFileSync('.kitsune2_bootstrap_srv', 'utf-8');
   try {
     const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
     return [bootstrapUrl, signalingUrl];
   } catch (e) {
-    throw new Error('Failed to parse content of .hc_local_services');
+    throw new Error('Failed to parse content of .kitsune2_bootstrap_srv');
   }
 }
 
@@ -63,40 +65,39 @@ export async function startLocalServices(): Promise<
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
-  const hcBinaryInResources = fs.existsSync(HC_BINARY);
-  if (!hcBinaryInResources)
+  const bootstrapSrvBinaryInResources = fs.existsSync(KITSUNE2_BOOTSTRAP_SRV_BINARY);
+  if (!bootstrapSrvBinaryInResources)
     console.warn(
-      '\n\n###################\n\nWARNING: No hc binary found in the resources folder. Using hc from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
+      '\n\n###################\n\nWARNING: No kitsune2-bootstrap-srv binary found in the resources folder. Using hc from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
     );
 
-  const hcBinary = hcBinaryInResources ? HC_BINARY : 'hc';
+  const bootstrapSrvBinary = bootstrapSrvBinaryInResources
+    ? KITSUNE2_BOOTSTRAP_SRV_BINARY
+    : 'kitsune2-bootstrap-srv';
 
-  const localServicesHandle = childProcess.spawn(hcBinary, ['run-local-services']);
+  const localServicesHandle = childProcess.spawn(bootstrapSrvBinary);
   return new Promise((resolve) => {
     let bootstrapUrl;
     let signalingUrl;
     let bootstrapRunning = false;
     let signalRunnig = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      console.log(`[weave-cli] | [hc run-local-services]: ${line}`);
-      if (line.includes('HC BOOTSTRAP - ADDR:')) {
-        bootstrapUrl = line.split('# HC BOOTSTRAP - ADDR:')[1].trim();
+      console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
+      if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
+        const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
+        bootstrapUrl = `http://${hostAndPort}`;
+        signalingUrl = `ws://${hostAndPort}`;
       }
-      if (line.includes('HC SIGNAL - ADDR:')) {
-        signalingUrl = line.split('# HC SIGNAL - ADDR:')[1].trim();
-      }
-      if (line.includes('HC BOOTSTRAP - RUNNING')) {
+      if (line.includes('#kitsune2_bootstrap_srv#running#')) {
         bootstrapRunning = true;
-      }
-      if (line.includes('HC SIGNAL - RUNNING')) {
         signalRunnig = true;
       }
-      fs.writeFileSync('.hc_local_services', JSON.stringify({ bootstrapUrl, signalingUrl }));
+      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl }));
       if (bootstrapRunning && signalRunnig)
         resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
-      console.log(`[weave-cli] | [hc run-local-services] ERROR: ${line}`);
+      console.log(`[weave-cli] | [kitsune2-bootstrap-srv] ERROR: ${line}`);
     });
   });
 }
@@ -153,11 +154,11 @@ export async function devSetup(
     });
     const toolsLibraryCells = await toolsLibraryClient.appInfo();
     for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
-      await holochainManager.adminWebsocket.authorizeSigningCredentials(
-        cell['provisioned'].cell_id,
-        GrantedFunctionsType.All,
-      );
-      toolsLibraryDnaHash = encodeHashToBase64(cell['provisioned'].cell_id[0]);
+      if (cell.type === CellType.Provisioned)
+        await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
+          type: 'all',
+        });
+      toolsLibraryDnaHash = encodeHashToBase64((cell.value as ProvisionedCell).cell_id[0]);
     }
 
     if (!toolsLibraryDnaHash) throw new Error('Failed to determine appstore DNA hash.');
@@ -341,7 +342,7 @@ export async function devSetup(
             network_seed: networkSeed,
             properties: {},
           };
-          const appletHash = await groupWebsocket.callZome({
+          const appletHash = await groupWebsocket.callZome<AppletHash>({
             role_name: 'group',
             zome_name: 'group',
             fn_name: 'hash_applet',
@@ -450,6 +451,7 @@ async function joinGroup(
   const appPort = holochainManager.appPort;
   // Install group cell
   const groupAppInfo = await installGroup(holochainManager, group.networkSeed, progenitor);
+  console.log('Group installed');
   const groupAuthenticationTokenResponse =
     await holochainManager.adminWebsocket.issueAppAuthenticationToken({
       installed_app_id: groupAppInfo.installed_app_id,
@@ -465,12 +467,14 @@ async function joinGroup(
   });
   const groupCells = await groupWebsocket.appInfo();
   for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-    await holochainManager.adminWebsocket.authorizeSigningCredentials(
-      cell['provisioned'].cell_id,
-      GrantedFunctionsType.All,
-    );
+    if (cell.type === CellType.Provisioned)
+      await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
+        type: 'all',
+      });
   }
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
+  console.log('Creating profile....');
+
   await groupWebsocket.callZome({
     role_name: 'group',
     zome_name: 'profiles',
@@ -480,6 +484,8 @@ async function joinGroup(
       fields: avatarSrc ? { avatar: avatarSrc } : undefined,
     },
   });
+  console.log('profile created.');
+
   return groupWebsocket;
 }
 
@@ -505,20 +511,27 @@ async function installGroup(
     ? { progenitor: encodeHashToBase64(progenitor) }
     : { progenitor: null };
 
+  console.log('installing app...');
   const appInfo = await holochainManager.adminWebsocket.installApp({
-    path: groupHappPath,
+    source: {
+      type: 'path',
+      value: groupHappPath,
+    },
     installed_app_id: appId,
     agent_key: agentPubKey,
     network_seed: networkSeed,
     roles_settings: {
       group: {
-        type: 'Provisioned',
-        modifiers: {
-          properties,
+        type: 'provisioned',
+        value: {
+          modifiers: {
+            properties,
+          },
         },
       },
     },
   });
+  console.log('enabling app...');
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
   return appInfo;
 }
@@ -588,7 +601,10 @@ async function installHapp(
   happPath: string,
 ): Promise<void> {
   await holochainManager.adminWebsocket.installApp({
-    path: happPath,
+    source: {
+      type: 'path',
+      value: happPath,
+    },
     installed_app_id: appId,
     agent_key: pubKey,
     network_seed: networkSeed,
@@ -663,7 +679,7 @@ async function publishApplet(
     deprecation: undefined,
   };
 
-  const toolRecord = await appstoreClient.callZome({
+  const toolRecord = await appstoreClient.callZome<HolochainRecord>({
     role_name: 'tools',
     zome_name: 'library',
     fn_name: 'create_tool',

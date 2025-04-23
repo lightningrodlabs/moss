@@ -41,8 +41,8 @@ export async function locateHrl(
   } catch (e) {
     //
     await adminWebsocket.updateCoordinators({
+      source: await hrlLocatorZome(),
       dna_hash: hrl[0],
-      ...(await hrlLocatorZome()),
     });
 
     location = await appClient.callZome({
