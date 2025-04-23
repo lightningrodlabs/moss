@@ -30,6 +30,11 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
+export const DEFAULT_ICE_URLS = [
+  'stun:stun-0.main.infra.holo.host:443',
+  'stun:stun-1.main.infra.holo.host:443',
+];
+
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
 export interface CliOpts {
@@ -177,7 +182,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
-    iceUrls: args.iceUrls ? args.iceUrls.split(',') : undefined,
+    iceUrls: args.iceUrls ? args.iceUrls.split(',') : DEFAULT_ICE_URLS,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
     holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,
