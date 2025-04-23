@@ -559,8 +559,6 @@ export class GroupStore {
    * @param appletIds
    */
   subscribeToAssetStore(wal: WAL, appletIds: AppletId[]) {
-    console.log('SUBSCRIBING: ', wal);
-    console.log('SUBSCRIBING: ', encodeHashToBase64(wal.hrl[0]), encodeHashToBase64(wal.hrl[1]));
     const walStringified = stringifyWal(wal);
     let storeAndSubscribers = this._assetStores[walStringified];
     if (!storeAndSubscribers) {
