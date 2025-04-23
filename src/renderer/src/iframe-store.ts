@@ -24,7 +24,7 @@ export class IframeStore {
     subType: string,
     source: MessageEventSource | null | 'wal-window',
   ): void {
-    console.log(`### Registering ${subType} iframe for applet ${appletId}`);
+    // console.log(`### Registering ${subType} iframe for applet ${appletId}`);
     let iframes = this.appletIframes[appletId];
     if (!iframes) iframes = [];
     iframes.push({ id, subType, source });

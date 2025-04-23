@@ -216,8 +216,8 @@ export class DebuggingPanel extends LitElement {
           .sort((hash_a, hash_b) => {
             const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
             const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
-            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a].totalCounts;
-            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b].totalCounts;
+            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
             if (zomeCallCount_a && !zomeCallCount_b) return -1;
             if (!zomeCallCount_a && zomeCallCount_b) return 1;
             if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
