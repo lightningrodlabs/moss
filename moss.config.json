@@ -1,11 +1,11 @@
 {
   "holochain": {
-    "version": "0.5.0-rc.4",
+    "version": "0.5.0",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "dc2d4e877edf21b1e385ed0a982f7795a5517db2147544e580dead2ec4a7b105",
-      "x86_64-pc-windows-msvc.exe": "160f03b75be0c4a818245a88898c989a5f44bc2f80c57e945a2d26684de04547",
-      "x86_64-apple-darwin": "629a7f0f8a7ba3e059470e015f1c31b6d8cb9af3dfbb53d9ee803526916f00c5",
-      "aarch64-apple-darwin": "7d6495488dd62668f92385a0bded3fb556ae7aaba5d56377d22c73a4b01bfb01"
+      "x86_64-unknown-linux-gnu": "bcce03d131e2cb1eb09b7766abeb36e11135aaa4ce5233a9593a1b3ff4d0a7e4",
+      "x86_64-pc-windows-msvc.exe": "43a5ac200ad4acb47deaae4ea6e978e06e195ec2cc80d65571c73495402069fc",
+      "x86_64-apple-darwin": "f844c8eea25ed3a803f7a45f558411a7fd4359664e50f6b762a7802375fe2772",
+      "aarch64-apple-darwin": "3ae05baae905f5d7a4dabfebdd6d65aea2d169b21455069a28ba445139cf505c"
     }
   },
   "bootstrap": {
