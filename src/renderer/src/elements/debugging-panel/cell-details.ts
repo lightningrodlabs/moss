@@ -1,17 +1,11 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import {
-  CellId,
-  DumpFullStateRequest,
-  encodeHashToBase64,
-  InstalledAppId,
-} from '@holochain/client';
+import { CellId, encodeHashToBase64, FullStateDump, InstalledAppId } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { weStyles } from '../../shared-styles.js';
-import { DumpData } from '../../types.js';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -32,7 +26,7 @@ export class CellDetails extends LitElement {
   cellId!: CellId;
 
   @state()
-  dumpData: DumpData | undefined;
+  dumpData: FullStateDump | undefined;
 
   @state()
   showFullDetail = false;
@@ -44,31 +38,7 @@ export class CellDetails extends LitElement {
   showIntegrationLimbo = false;
 
   async dumpState() {
-    let currentDump = this.dumpData;
-    const req: DumpFullStateRequest = {
-      cell_id: this.cellId,
-      dht_ops_cursor: currentDump ? currentDump.dump.integration_dump.dht_ops_cursor : 0,
-    };
-    const resp = await this._mossStore.adminWebsocket.dumpFullState(req);
-    let newOpsCount = 0;
-    if (!currentDump) {
-      newOpsCount = resp.integration_dump.dht_ops_cursor;
-      currentDump = {
-        dump: resp,
-        newOpsCount,
-      };
-    } else {
-      newOpsCount =
-        resp.integration_dump.dht_ops_cursor - currentDump.dump.integration_dump.dht_ops_cursor;
-      if (newOpsCount > 0) {
-        const currentIntegrated = currentDump.dump.integration_dump.integrated;
-        currentIntegrated.concat([...currentDump.dump.integration_dump.integrated]);
-      }
-      currentDump.dump.peer_dump = resp.peer_dump;
-      currentDump.dump.source_chain_dump = resp.source_chain_dump;
-      currentDump.newOpsCount = newOpsCount;
-    }
-    this.dumpData = currentDump;
+    this.dumpData = await this._mossStore.adminWebsocket.dumpFullState({ cell_id: this.cellId });
     console.log('dump data: ', this.dumpData);
   }
 
@@ -76,7 +46,7 @@ export class CellDetails extends LitElement {
     return html`
       <div class="column">
         <div>
-          Validation Limbo: ${this.dumpData?.dump.integration_dump.validation_limbo.length}
+          Validation Limbo: ${this.dumpData?.integration_dump.validation_limbo.length}
           <button
             @click=${() => {
               this.showValidationLimbo = !this.showValidationLimbo;
@@ -87,7 +57,7 @@ export class CellDetails extends LitElement {
         </div>
         ${this.showValidationLimbo && this.dumpData
           ? html` <div class="column">
-              ${this.dumpData.dump.integration_dump.validation_limbo.map(
+              ${this.dumpData.integration_dump.validation_limbo.map(
                 (dhtOp) =>
                   html`<dht-op-detail
                     @click=${() => {
@@ -101,7 +71,7 @@ export class CellDetails extends LitElement {
             </div>`
           : html``}
         <div>
-          Integration Limbo: ${this.dumpData?.dump.integration_dump.integration_limbo.length}
+          Integration Limbo: ${this.dumpData?.integration_dump.integration_limbo.length}
           <button
             @click=${() => {
               this.showIntegrationLimbo = !this.showIntegrationLimbo;
@@ -112,7 +82,7 @@ export class CellDetails extends LitElement {
         </div>
         ${this.showIntegrationLimbo && this.dumpData
           ? html` <div class="column">
-              ${this.dumpData.dump.integration_dump.integration_limbo.map(
+              ${this.dumpData.integration_dump.integration_limbo.map(
                 (dhtOp) =>
                   html`<dht-op-detail
                     @click=${() => {
@@ -125,7 +95,7 @@ export class CellDetails extends LitElement {
               )}
             </div>`
           : html``}
-        <div>Integrated: ${this.dumpData?.dump.integration_dump.integrated.length}</div>
+        <div>Integrated: ${this.dumpData?.integration_dump.integrated.length}</div>
         <button
           style="margin-top: 5px;"
           @click=${() => {
