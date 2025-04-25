@@ -1643,6 +1643,7 @@ export class MossStore {
         return response as ReturnType;
       };
     }
+    this._appClients[appId] = [appWs, token];
     return [appWs, token];
   }
 
