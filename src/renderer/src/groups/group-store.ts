@@ -559,8 +559,6 @@ export class GroupStore {
    * @param appletIds
    */
   subscribeToAssetStore(wal: WAL, appletIds: AppletId[]) {
-    console.log('SUBSCRIBING: ', wal);
-    console.log('SUBSCRIBING: ', encodeHashToBase64(wal.hrl[0]), encodeHashToBase64(wal.hrl[1]));
     const walStringified = stringifyWal(wal);
     let storeAndSubscribers = this._assetStores[walStringified];
     if (!storeAndSubscribers) {
@@ -670,12 +668,12 @@ export class GroupStore {
   async groupDnaModifiers(): Promise<DnaModifiers> {
     const appInfo = await this.appWebsocket.appInfo();
     const cellInfo = appInfo.cell_info['group'].find(
-      (cellInfo) => CellType.Provisioned in cellInfo,
+      (cellInfo) => cellInfo.type === CellType.Provisioned,
     );
 
     if (!cellInfo) throw new Error('Could not find cell for this group');
 
-    return cellInfo[CellType.Provisioned].dna_modifiers;
+    return cellInfo.value.dna_modifiers;
   }
 
   modifiers = lazyLoad(async () => {

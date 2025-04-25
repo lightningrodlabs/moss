@@ -12,8 +12,8 @@ import {
   type FrameNotification,
   type RecordInfo,
   type PeerStatusUpdate,
-  IframeKind,
-  AppletToParentMessage,
+  type IframeKind,
+  type AppletToParentMessage,
 } from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -267,6 +267,24 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
+// Needs to be in a separate function, otherwise typescript will be confused
+// in the switch statement
+function validateRequest(request: AppletToParentRequest): boolean {
+  // Validate the format of the iframe message
+  try {
+    Value.Assert(AppletToParentRequestSchema, request);
+    return true;
+  } catch (e) {
+    console.error(
+      'Got invalid AppletToParentRequest format. Got request ',
+      request,
+      '\n\nError: ',
+      e,
+    );
+  }
+  return false;
+}
+
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
   openViews: AppOpenViews,
@@ -274,18 +292,7 @@ export async function handleAppletIframeMessage(
   message: AppletToParentRequest,
   eventSource: MessageEventSource | null | 'wal-window',
 ) {
-  // Validate the format of the iframe message
-  try {
-    Value.Assert(AppletToParentRequestSchema, message);
-  } catch (e) {
-    console.error(
-      'Got invalid AppletToParentRequest format. Got request ',
-      message,
-      '\n\nError: ',
-      e,
-    );
-    return;
-  }
+  if (!validateRequest(message)) return;
 
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
@@ -640,8 +647,6 @@ export async function handleAppletIframeMessage(
               role_name: message.req.role_name,
               network_seed: message.req.modifiers.network_seed,
               properties: message.req.modifiers.properties,
-              origin_time: message.req.modifiers.origin_time,
-              quantum_time: message.req.modifiers.quantum_time,
             });
           }),
         );

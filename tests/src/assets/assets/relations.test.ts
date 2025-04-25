@@ -1,6 +1,6 @@
 import { assert, test } from 'vitest';
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { encodeHashToBase64, EntryHash, fakeActionHash } from '@holochain/client';
+import { AppBundleSource, encodeHashToBase64, EntryHash, fakeActionHash } from '@holochain/client';
 import { WAL } from '@theweave/api';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
@@ -14,12 +14,20 @@ import {
 
 test('Add an asset relation, remove it again and try to get it from the ALL_ASSET_RELATIONS_ANCHOR', async () => {
   await runScenario(async (scenario) => {
+    console.log('Hello!');
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
 
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
@@ -55,7 +63,11 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
       payload: input1,
     });
 
+    console.log('Hello4');
+
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
+
+    console.log('Hello5');
 
     // Bob tries to get it from the anchor
     const allAssetRelations: AssetRelationAndHash[] = await assetsCellBob.callZome({
@@ -128,8 +140,15 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
 
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
@@ -318,8 +337,15 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
 
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
@@ -541,8 +567,15 @@ test('Add two asset relations with tags and read them with get_all_asset_relatio
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
 
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.

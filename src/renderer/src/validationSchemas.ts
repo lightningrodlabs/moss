@@ -35,25 +35,15 @@ const CallZomeRequest = Type.Object(
 );
 
 const MembraneProof = Type.Uint8Array();
-const Timestamp = Type.Number();
 /**
  * Any Yaml serializable properties
  */
 const DnaProperties = Type.Unknown();
-const Duration = Type.Object(
-  {
-    secs: Type.Number(),
-    nanos: Type.Number(),
-  },
-  { additionalProperties: false },
-);
 
 const DnaModifiersOpt = Type.Object(
   {
     network_seed: Type.Optional(Type.String()),
     properties: Type.Optional(DnaProperties),
-    origin_time: Type.Optional(Timestamp),
-    quantum_time: Type.Optional(Duration),
   },
   { additionalProperties: false },
 );

@@ -1,4 +1,4 @@
-import { AgentPubKeyB64, DnaHash, FullStateDump } from '@holochain/client';
+import { AgentPubKeyB64, DnaHash } from '@holochain/client';
 import { AppletId, FrameNotification, WAL } from '@theweave/api';
 import {
   CuratedTool,
@@ -40,11 +40,6 @@ export type UpdateFeedMessage = {
   type: string;
   timestamp: number;
   message: string;
-};
-
-export type DumpData = {
-  dump: FullStateDump;
-  newOpsCount: number;
 };
 
 export type ToolWeaveConfig = {

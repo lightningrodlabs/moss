@@ -22,8 +22,6 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 
-import '@theweave/attachments/dist/elements/attachments-card.js';
-import '@theweave/attachments/dist/elements/attachments-bar.js';
 import '@theweave/elements/dist/elements/select-asset-menu.js';
 
 import './edit-post.js';
@@ -220,7 +218,6 @@ export class PostDetail extends LitElement {
           </button>
           <div class="column">${this.renderAssets()}</div>
         </div>
-        <attachments-card .wal=${weaveUrlFromWal(this.WAL!, false)}></attachments-card>
       </div>
       <sl-button
         style="margin-top: 20px;"

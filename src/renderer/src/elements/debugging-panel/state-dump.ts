@@ -9,6 +9,7 @@ import {
   DhtOp,
   encodeHashToBase64,
   Entry,
+  FullStateDump,
   HoloHash,
   SourceChainJsonRecord,
   WarrantOp,
@@ -26,7 +27,6 @@ import '../reusable/groups-for-applet.js';
 
 import { weStyles } from '../../shared-styles.js';
 import { dateStr } from '../../utils.js';
-import { DumpData } from '../../types.js';
 import { decode } from '@msgpack/msgpack';
 
 const PAGE_SIZE = 10;
@@ -35,7 +35,7 @@ const PAGE_SIZE = 10;
 @customElement('state-dump')
 export class StateDump extends LitElement {
   @property()
-  dump!: DumpData;
+  dump!: FullStateDump;
 
   renderCreateLink(createLink: CreateLink) {
     return html` Base: ${this.renderHash(createLink.base_address)}; Target:
@@ -46,11 +46,11 @@ export class StateDump extends LitElement {
   opsPage = 0;
 
   renderDhtOps() {
-    const start = this.dump.dump.integration_dump.integrated.length - 1 - PAGE_SIZE * this.opsPage;
+    const start = this.dump.integration_dump.integrated.length - 1 - PAGE_SIZE * this.opsPage;
     const end = start - PAGE_SIZE;
     const opsHtml = [];
     for (let i = start; i > end && i >= 0; i -= 1) {
-      const r = this.dump.dump.integration_dump.integrated[i];
+      const r = this.dump.integration_dump.integrated[i];
       // @ts-ignore
       opsHtml.push(html`<div class="list-item">${this.renderDhtOp(r)}</div>`);
     }
@@ -178,11 +178,11 @@ export class StateDump extends LitElement {
   recordPage = 0;
 
   renderRecords() {
-    const start = this.dump.dump.source_chain_dump.records.length - 1 - PAGE_SIZE * this.recordPage;
+    const start = this.dump.source_chain_dump.records.length - 1 - PAGE_SIZE * this.recordPage;
     const end = start - PAGE_SIZE;
     const recordsHtml = [];
     for (let i = start; i > end && i >= 0; i -= 1) {
-      const r = this.dump.dump.source_chain_dump.records[i];
+      const r = this.dump.source_chain_dump.records[i];
       // @ts-ignore
       recordsHtml.push(html` <div class="list-item">${this.renderRecord(r)}</div>`);
     }
@@ -192,20 +192,17 @@ export class StateDump extends LitElement {
     return html`
       <div class="column">
         <span>
-          Peers: (${Object.keys(this.dump.dump.peer_dump.peers).length})
+          Peers: (${Object.keys(this.dump.peer_dump.peers).length})
           <div class="long-list">
-            ${Object.entries(this.dump.dump.peer_dump.peers).map(
+            ${Object.entries(this.dump.peer_dump.peers).map(
               (p) =>
-                html` <div class="list-item">
-                  ${p[0]}: ${this.renderHash(p[1].kitsune_agent)}-- ${p[1].dump}
-                </div>`,
+                html` <div class="list-item">${p[0]}: ${p[1].kitsune_agent}-- ${p[1].dump}</div>`,
             )}
           </div>
         </span>
-        <span> integrated Ops since last Dump: ${this.dump.newOpsCount}</span>
         <div>
           <div style="display:flex; flex-direction:column;">
-            <span>Integrated Ops: ${this.dump.dump.integration_dump.dht_ops_cursor}</span>
+            <span>Integrated Ops: ${this.dump.integration_dump.dht_ops_cursor}</span>
             <div style="display:flex;">
               Page:
               <div
@@ -220,7 +217,7 @@ export class StateDump extends LitElement {
               <div
                 class="pager"
                 @click=${() => {
-                  if (this.opsPage < this.dump.dump.integration_dump.integrated.length / PAGE_SIZE)
+                  if (this.opsPage < this.dump.integration_dump.integrated.length / PAGE_SIZE)
                     this.opsPage += 1;
                 }}
               >
@@ -230,10 +227,10 @@ export class StateDump extends LitElement {
           </div>
           <div class="long-list">${this.renderDhtOps()}</div>
         </div>
-        <span> published ops count: ${this.dump.dump.source_chain_dump.published_ops_count}</span>
+        <span> published ops count: ${this.dump.source_chain_dump.published_ops_count}</span>
         <div>
           <div style="display:flex; flex-direction:column;">
-            <span>Source Chain: (${this.dump.dump.source_chain_dump.records.length} records) </span>
+            <span>Source Chain: (${this.dump.source_chain_dump.records.length} records) </span>
             <div style="display:flex;">
               Page:
               <div
@@ -248,7 +245,7 @@ export class StateDump extends LitElement {
               <div
                 class="pager"
                 @click=${() => {
-                  if (this.recordPage < this.dump.dump.source_chain_dump.records.length / PAGE_SIZE)
+                  if (this.recordPage < this.dump.source_chain_dump.records.length / PAGE_SIZE)
                     this.recordPage += 1;
                 }}
               >

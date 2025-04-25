@@ -97,13 +97,13 @@ let appVersion = app.getVersion();
 
 // console.log('process.argv: ', process.argv);
 
-// Set as default protocol client for weave-0.13 deep links
+// Set as default protocol client for weave-0.14 deep links
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('weave-0.13', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient('weave-0.14', process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('weave-0.13');
+  app.setAsDefaultProtocolClient('weave-0.14');
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
@@ -183,7 +183,7 @@ program
   )
   .option(
     '--force-production-urls',
-    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use kitsune2-bootstrap-srv to spin up a local bootstrap and signaling server instead during development.',
   )
   .option(
     '--print-holochain-logs',
@@ -271,7 +271,7 @@ if (!RUNNING_WITH_COMMAND) {
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
-        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.13://'));
+        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.14://'));
       }
 
       // This event will always be triggered in the first instance, no matter with which profile
@@ -750,7 +750,7 @@ if (!RUNNING_WITH_COMMAND) {
     );
 
     SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
-    SYSTRAY.setToolTip('Moss (0.13)');
+    SYSTRAY.setToolTip('Moss (0.14)');
 
     const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
@@ -1155,13 +1155,24 @@ if (!RUNNING_WITH_COMMAND) {
                 appAssetsInfo.type === 'webhapp' &&
                 appAssetsInfo.ui.location.type === 'localhost'
               ) {
+                // We want this to time out because it seems to never return sometimes
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 2000);
                 try {
                   // console.log('Trying to fetch weave.config.json from localhost');
                   const resp = await net.fetch(
                     `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
+                    { signal: controller.signal },
                   );
+                  clearTimeout(id);
                   toolWeaveConfig = await resp.json();
-                } catch (e) {
+                } catch (e: any) {
+                  clearTimeout(id);
+                  if (e.name && e.name === 'AbortError') {
+                    console.error(
+                      `Fetch request for AssetInfo from localhost on port ${appAssetsInfo.ui.location.port} timed out after 2000ms.`,
+                    );
+                  }
                   // invalid or inexistent weave config - ignore
                 }
               }
@@ -1198,7 +1209,7 @@ if (!RUNNING_WITH_COMMAND) {
             app_port: HOLOCHAIN_MANAGER.appPort,
             admin_port: HOLOCHAIN_MANAGER.adminPort,
             moss_version: app.getVersion(),
-            weave_protocol_version: '0.13',
+            weave_protocol_version: '0.14',
           }
         : undefined;
     });
@@ -1252,15 +1263,20 @@ if (!RUNNING_WITH_COMMAND) {
         : { progenitor: null };
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: groupHappPath,
+        source: {
+          type: 'path',
+          value: groupHappPath,
+        },
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
         roles_settings: {
           group: {
-            type: 'Provisioned',
-            modifiers: {
-              properties,
+            type: 'provisioned',
+            value: {
+              modifiers: {
+                properties,
+              },
             },
           },
         },
@@ -1293,15 +1309,20 @@ if (!RUNNING_WITH_COMMAND) {
         const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
         const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          path: groupHappPath,
+          source: {
+            type: 'path',
+            value: groupHappPath,
+          },
           installed_app_id: appId,
           agent_key: agentPubKey,
           network_seed: networkSeed,
           roles_settings: {
             group: {
-              type: 'Provisioned',
-              modifiers: {
-                properties: { progenitor },
+              type: 'provisioned',
+              value: {
+                modifiers: {
+                  properties: { progenitor },
+                },
               },
             },
           },
@@ -1540,7 +1561,7 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
       const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
       const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
-      fs.writeFileSync(filePath, stats, 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(stats, undefined, 2), 'utf-8');
     });
     ipcMain.handle(
       'install-applet-bundle',
@@ -1740,7 +1761,10 @@ if (!RUNNING_WITH_COMMAND) {
           // We're in the normal Case 1.
           try {
             appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-              path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              source: {
+                type: 'path',
+                value: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              },
               installed_app_id: appId,
               agent_key: agentPubKey,
               network_seed: networkSeed,
@@ -1765,7 +1789,7 @@ if (!RUNNING_WITH_COMMAND) {
         } catch (e) {
           // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
           // but continue. The app would then need to get enabled in the UI.
-          if (appInfo.status !== 'awaiting_memproofs') {
+          if (appInfo.status.type !== 'awaiting_memproofs') {
             WE_EMITTER.emitMossError(`ERROR: Failed to enable app: ${e}`);
           }
         }

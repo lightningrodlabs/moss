@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { state, query, customElement } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { CellType } from '@holochain/client';
+import { ProvisionedCell } from '@holochain/client';
 import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
@@ -67,7 +67,7 @@ export class CreateGroupDialog extends LitElement {
       this.dispatchEvent(
         new CustomEvent('group-created', {
           detail: {
-            groupDnaHash: groupAppInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0],
+            groupDnaHash: (groupAppInfo.cell_info['group'][0].value as ProvisionedCell).cell_id[0],
           },
           bubbles: true,
           composed: true,

@@ -1,7 +1,7 @@
 import { assert, test } from 'vitest';
 
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { fakeAgentPubKey, Record as HolochainRecord } from '@holochain/client';
+import { AppBundleSource, fakeAgentPubKey, Record as HolochainRecord } from '@holochain/client';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
@@ -15,19 +15,25 @@ test('Create, read and update group profile in group without progenitor', async 
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
-    const [alice, alicePubKey] = await installAppWithProgenitor(
+    const [alice, _alicePubKey] = await installAppWithProgenitor(
       scenario,
       appSource.appBundleSource,
       ['group'],
       false,
     );
 
-    const [bob, bobPubKey] = await installAppWithProgenitor(
+    const [bob, _bobPubKey] = await installAppWithProgenitor(
       scenario,
       appSource.appBundleSource,
       ['group'],
@@ -107,8 +113,14 @@ test('Cannot create group profile if not progenitor or without valid steward per
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
@@ -154,8 +166,14 @@ test('Can update group profile with valid steward permission', async () => {
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(scenario, appSource.appBundleSource, ['group']);
@@ -197,8 +215,14 @@ test('Can update group profile as long as steward permission has not expired', a
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     // Bob's permission shall expire in 90 seconds
     const expiry = (Date.now() + 90_000) * 1_000;

@@ -10,6 +10,7 @@ import {
   CallZomeTransform,
   CellId,
   CellInfo,
+  CellType,
   InstalledAppId,
 } from '@holochain/client';
 import { password as passwordInput } from '@inquirer/prompts';
@@ -180,11 +181,11 @@ export function cleanTable() {
 }
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.cell_id;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.cell_id;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.cell_id;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.cell_id;
   }
   return undefined;
 }
