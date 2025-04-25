@@ -2,7 +2,7 @@ import { TemplateResult, css, html, LitElement } from 'lit';
 import { property, customElement } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
-import { AsyncStatus, subscribe } from '@holochain-open-dev/stores';
+import { AsyncStatus, StoreSubscriber, subscribe } from '@holochain-open-dev/stores';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -29,6 +29,12 @@ export class MossProfilePrompt extends LitElement {
 
   /** Private properties */
 
+  myProfile = new StoreSubscriber(
+    this,
+    () => this.store.myProfile,
+    () => [this.store],
+  );
+
   renderPrompt(myProfile: EntryRecord<Profile> | undefined) {
     if (myProfile) return html`<slot></slot>`;
 
@@ -39,23 +45,48 @@ export class MossProfilePrompt extends LitElement {
       >
         <div class="column" style="align-items: center;">
           <slot name="hero"></slot>
-          <moss-create-profile></moss-create-profile>
+          <moss-create-profile
+            @profile-created=${(e) => {
+              console.log('Profile created!', e);
+              setTimeout(() => this.requestUpdate(), 1000);
+            }}
+          ></moss-create-profile>
         </div>
       </div>
     `;
   }
 
   render() {
-    return html`${subscribe(
-      this.store.myProfile,
-      withSpinnerAndDisplayError({
-        complete: (p) => this.renderPrompt(p),
-        error: {
-          label: msg('Error fetching your profile'),
-          tooltip: false,
-        },
-      }),
-    )}`;
+    console.log('Rerendering profile prompt: ', this.myProfile);
+    switch (this.myProfile.value.status) {
+      case 'complete':
+        return this.renderPrompt(this.myProfile.value.value);
+      case 'pending':
+        return html`
+          <div
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;"
+          >
+            <sl-spinner style="font-size: 2rem;"></sl-spinner>
+          </div>
+        `;
+      case 'error':
+        return html`
+          <display-error
+            .headline=${msg('Failed to read your profile')}
+            .error=${this.myProfile.value.error}
+          ></display-error>
+        `;
+    }
+    // return html`${subscribe(
+    //   this.store.myProfile,
+    //   withSpinnerAndDisplayError({
+    //     complete: (p) => this.renderPrompt(p),
+    //     error: {
+    //       label: msg('Error fetching your profile'),
+    //       tooltip: false,
+    //     },
+    //   }),
+    // )}`;
   }
 
   static get styles() {

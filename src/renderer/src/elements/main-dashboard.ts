@@ -1257,7 +1257,7 @@ export class MainDashboard extends LitElement {
         <div class="row center-content" style="margin-bottom: 30px;">
           <button
             class="moss-button"
-            style="margin: 0 5px; padding: 10px;"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${(_e) => {
               this.joinGroupDialog.open();
@@ -1274,7 +1274,7 @@ export class MainDashboard extends LitElement {
           </button>
           <button
             class="moss-button"
-            style="margin: 0 5px; padding: 10px;"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${() => {
               this.createGroupDialog.open();
