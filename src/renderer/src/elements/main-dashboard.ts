@@ -1253,10 +1253,11 @@ export class MainDashboard extends LitElement {
 
   renderAddGroupDialog() {
     return html`
-      <sl-dialog id="add-group-dialog" label="${msg('Add Group')}">
+      <sl-dialog id="add-group-dialog" class="moss-dialog" label="${msg('Add Group')}">
         <div class="row center-content" style="margin-bottom: 30px;">
-          <sl-button
-            style="margin: 0 5px;"
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 10px;"
             variant="primary"
             @click=${(_e) => {
               this.joinGroupDialog.open();
@@ -1270,9 +1271,10 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${'Join Group'}</span>
             </div>
-          </sl-button>
-          <sl-button
-            style="margin: 0 5px;"
+          </button>
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 10px;"
             variant="primary"
             @click=${() => {
               this.createGroupDialog.open();
@@ -1286,7 +1288,7 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${msg('Create Group')}</span>
             </div>
-          </sl-button>
+          </button>
         </div>
       </sl-dialog>
     `;

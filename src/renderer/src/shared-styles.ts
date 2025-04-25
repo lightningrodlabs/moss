@@ -99,6 +99,13 @@ export const weStyles = [
 
     .moss-dialog::part(panel) {
       border-radius: 20px;
+      background: white;
+    }
+
+    .moss-dialog::part(title) {
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: -0.56px;
     }
 
     /* dialog-title */

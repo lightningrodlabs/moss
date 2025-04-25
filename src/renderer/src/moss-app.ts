@@ -1,6 +1,6 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
-import { AdminWebsocket, CellType, DnaHash } from '@holochain/client';
+import { AdminWebsocket, CellType, DnaHash, ProvisionedCell } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -27,6 +27,7 @@ enum MossAppState {
   InitialSetup,
   CreateGroupStep1,
   CreateGroupStep2,
+  CreatingGroup,
   JoiningGroup,
   Error,
   Running,
@@ -198,13 +199,15 @@ export class MossApp extends LitElement {
   }
 
   async createGroupAndHeadToMain(): Promise<void> {
+    this.state = MossAppState.CreatingGroup;
     this.creatingGroup = true;
     const appInfo = await this._mossStore.createGroup(
       this.groupName,
       this.groupIcon,
       this.useProgenitor,
     );
-    const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+    const groupDnaHash: DnaHash = (appInfo.cell_info['group'][0].value as ProvisionedCell)
+      .cell_id[0];
     this.initialGroup = groupDnaHash;
     this.state = MossAppState.Running;
     this.creatingGroup = false;
@@ -537,10 +540,11 @@ export class MossApp extends LitElement {
       case MossAppState.InitialSetup:
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:
-        // return this.renderCreateGroupStep1();
-        return this.renderInstallingGroup(false);
+        return this.renderCreateGroupStep1();
       // case MossAppState.CreateGroupStep2:
       //   return this.renderCreateGroupStep2();
+      case MossAppState.CreatingGroup:
+        return this.renderInstallingGroup(false);
       case MossAppState.JoiningGroup:
         return this.renderInstallingGroup(true);
       case MossAppState.Error:

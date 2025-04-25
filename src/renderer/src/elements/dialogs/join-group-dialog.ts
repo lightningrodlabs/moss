@@ -113,6 +113,7 @@ export class JoinGroupDialog extends LitElement {
     return html`
       <sl-dialog
         id="dialog"
+        class="moss-dialog"
         .label=${msg('Join Group')}
         @sl-request-close=${(e) => {
           if (this.joining) {
@@ -120,29 +121,40 @@ export class JoinGroupDialog extends LitElement {
           }
         }}
       >
-        <div class="column" style="justify-content: center">
-          <form ${onSubmit((f) => this.joinGroup(f))}>
-            ${this._joinByPaste
+        <form ${onSubmit((f) => this.joinGroup(f))}>
+          <div class="column items-center">
+          ${
+            this._joinByPaste
               ? html`
                   <sl-input
                     name="link"
                     id="invite-link-field"
+                    class="moss-input"
                     .label=${msg('Invite Link')}
+                    placeholder=${msg('Invite Link')}
+                    style="width: 400px;"
                     required
                   ></sl-input>
                 `
-              : html`<span>${msg('You have been invited to join a group.')}</span>`}
+              : html`<span>${msg('You have been invited to join a group.')}</span>`
+          }
 
-            <sl-button
-              style="margin-top: 24px"
-              variant="primary"
-              type="submit"
-              .loading=${this.joining}
-            >
-              ${msg('Join Group')}
-            </sl-button>
-          </form>
-        </div>
+          <button
+            class="moss-button"
+            style="margin-top: 24px; width: 160px;"
+            type="submit"
+            .loading=${this.joining}
+          >
+            ${
+              this.joining
+                ? html`<div class="column center-content">
+                    <div class="dot-carousel" style="margin: 5px 0;"></div>
+                  </div>`
+                : html`${msg('Join Group')}`
+            }
+          </button>
+          <div>
+        </form>
       </sl-dialog>
     `;
   }
