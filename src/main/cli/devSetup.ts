@@ -68,7 +68,7 @@ export async function startLocalServices(): Promise<
   const bootstrapSrvBinaryInResources = fs.existsSync(KITSUNE2_BOOTSTRAP_SRV_BINARY);
   if (!bootstrapSrvBinaryInResources)
     console.warn(
-      '\n\n###################\n\nWARNING: No kitsune2-bootstrap-srv binary found in the resources folder. Using hc from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
+      '\n\n###################\n\nWARNING: No kitsune2-bootstrap-srv binary found in the resources folder. Using kitsune2-bootstrap-srv from the environment instead which may cause problems if its version is not compatible with the holochain version used by Moss.\n\n###################\n\n',
     );
 
   const bootstrapSrvBinary = bootstrapSrvBinaryInResources
