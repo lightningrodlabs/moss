@@ -1113,13 +1113,24 @@ if (!RUNNING_WITH_COMMAND) {
                 appAssetsInfo.type === 'webhapp' &&
                 appAssetsInfo.ui.location.type === 'localhost'
               ) {
+                // We want this to time out because it seems to never return sometimes
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 2000);
                 try {
                   // console.log('Trying to fetch weave.config.json from localhost');
                   const resp = await net.fetch(
                     `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
+                    { signal: controller.signal },
                   );
+                  clearTimeout(id);
                   toolWeaveConfig = await resp.json();
-                } catch (e) {
+                } catch (e: any) {
+                  clearTimeout(id);
+                  if (e.name && e.name === 'AbortError') {
+                    console.error(
+                      `Fetch request for AssetInfo from localhost on port ${appAssetsInfo.ui.location.port} timed out after 2000ms.`,
+                    );
+                  }
                   // invalid or inexistent weave config - ignore
                 }
               }
