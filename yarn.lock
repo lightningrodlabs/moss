@@ -1581,18 +1581,6 @@
     lit-svelte-stores "^0.3.0"
     svelte "^3.53.1"
 
-"@holochain-open-dev/utils@0.500.0-rc.2":
-  version "0.500.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.500.0-rc.2.tgz#e929753f00a24752962e9dcd6b9c7f7626dab9ee"
-  integrity sha512-CxdbOjtDgNEFNEu0/S5cKySKFN/H2ooeKkXJN7zvBX/jzLb7JTxjUEUXahsfPbGPSUMaqDWpJzLqgS36K9aByw==
-  dependencies:
-    "@holochain/client" "^0.19.0-rc.0"
-    "@msgpack/msgpack" "^2.8.0"
-    blakejs "^1.2.1"
-    emittery "^1.0.1"
-    lodash-es "^4.17.21"
-    sort-keys "^5.0.0"
-
 "@holochain-open-dev/utils@^0.500.0", "@holochain-open-dev/utils@^0.500.0-rc.1":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.500.0.tgz#b32ef89ac4b3ee0e44b2d3ef700cc0ad74245894"
@@ -3163,16 +3151,6 @@
     "@theweave/api" "^0.5.0"
     js-base64 "^3.7.5"
     lit "^3.0.2"
-
-"@theweave/group-client@0.3.0-rc.0":
-  version "0.3.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@theweave/group-client/-/group-client-0.3.0-rc.0.tgz#980c03dcd0fbeaee124e315ffb7e2143128b154d"
-  integrity sha512-2zxS577gJQk0rvsSddbdsu6UzkfdRnUrrvRwWgYsTeyqU8zO7ze4kwc9wf5lIZ8wC1hw9zGbB7qvYYrYx7POVg==
-  dependencies:
-    "@holochain-open-dev/utils" "0.500.0-rc.2"
-    "@holochain/client" "^0.19.0-rc.0"
-    "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "0.5.0-rc.0"
 
 "@theweave/moss-types@0.4.0-rc.0":
   version "0.4.0-rc.0"

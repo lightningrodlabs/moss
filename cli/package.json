@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.14.0-rc.3",
+  "version": "0.14.0-rc.4",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -27,8 +27,8 @@
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
     "@theweave/api": "^0.5.0",
-    "@theweave/moss-types": "0.4.0-rc.0",
-    "@theweave/utils": "0.4.0-rc.0",
+    "@theweave/moss-types": "0.4.0",
+    "@theweave/utils": "0.4.0",
     "adm-zip": "0.5.14",
     "bufferutil": "4.0.8",
     "commander": "11.1.0",
