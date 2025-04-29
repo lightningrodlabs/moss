@@ -14,6 +14,7 @@ import {
   desktopCapturer,
   Notification,
   systemPreferences,
+  MediaAccessPermissionRequest,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -590,11 +591,20 @@ if (!RUNNING_WITH_COMMAND) {
     session.defaultSession.setPermissionRequestHandler(
       async (webContents, permission, callback, details) => {
         if (permission === 'media') {
-          const unknownRequested = !details.mediaTypes || details.mediaTypes.length === 0;
-          const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
-          const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
+          const unknownRequested =
+            !(details as MediaAccessPermissionRequest).mediaTypes ||
+            (details as MediaAccessPermissionRequest).mediaTypes?.length === 0;
+          const videoRequested =
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video') ||
+            unknownRequested;
+          const audioRequested =
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ||
+            unknownRequested;
 
-          console.log('@permissionRequestHandler: details.mediaTypes: ', details.mediaTypes);
+          console.log(
+            '@permissionRequestHandler: details.mediaTypes: ',
+            (details as MediaAccessPermissionRequest).mediaTypes,
+          );
 
           let requestingWindow: BrowserWindow | undefined;
           if (MAIN_WINDOW && webContents.id === MAIN_WINDOW.webContents.id) {
@@ -709,8 +719,10 @@ if (!RUNNING_WITH_COMMAND) {
           }
 
           let messageContent = `A Tool wants to access the following:${
-            details.mediaTypes?.includes('video') ? '\n* camera' : ''
-          }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
+              ? '\n* camera'
+              : ''
+          }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
           if (unknownRequested) {
             messageContent =
               'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
