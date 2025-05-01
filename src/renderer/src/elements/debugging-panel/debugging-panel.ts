@@ -201,7 +201,9 @@ export class DebuggingPanel extends LitElement {
             <div class="stats-item">
               <div>webrtc: ${connection.is_webrtc}</div>
               <div>pub_key: ${connection.pub_key}</div>
-              <div>opened_at: ${connection.opened_at_s}</div>
+              <div>
+                opened_at: ${connection.opened_at_s} (${new Date(connection.opened_at_s * 1000)})
+              </div>
               <div>
                 send: message_count: ${connection.send_message_count}; bytes:
                 ${connection.send_bytes}
