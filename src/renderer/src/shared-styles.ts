@@ -194,6 +194,21 @@ export const weStyles = [
       background: var(--moss-main-green);
     }
 
+    /* moss dialog close button */
+
+    .moss-dialog-close-button {
+      all: unset;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 8px;
+      height: 24px;
+    }
+    .moss-dialog-close-button:hover {
+      background: var(--moss-main-green);
+    }
+
     /* moss dialog page indicator dots */
 
     .dialog-dot {

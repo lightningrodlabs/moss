@@ -82,6 +82,7 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
+import { closeIcon } from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -1253,8 +1254,23 @@ export class MainDashboard extends LitElement {
 
   renderAddGroupDialog() {
     return html`
-      <sl-dialog id="add-group-dialog" class="moss-dialog" label="${msg('Add Group')}">
-        <div class="row center-content" style="margin-bottom: 30px;">
+      <sl-dialog id="add-group-dialog" class="moss-dialog" no-header label="${msg('Add Group')}">
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Add Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -23px; right: -12px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
+        <div class="row center-content moss-title" style="margin-bottom: 30px;">
           <button
             class="moss-button"
             style="margin: 0 5px; padding: 5px 10px;"
