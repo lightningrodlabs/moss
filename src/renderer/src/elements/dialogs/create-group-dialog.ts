@@ -17,6 +17,7 @@ import { weStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { defaultIcons } from '../_new_design/defaultIcons.js';
+import { closeIcon } from '../_new_design/icons.js';
 
 /**
  * @element create-group-dialog
@@ -90,12 +91,28 @@ export class CreateGroupDialog extends LitElement {
         id="dialog"
         class="moss-dialog"
         .label=${msg('Create New Group')}
+        no-header
         @sl-request-close=${(e) => {
           if (this.committing) {
             e.preventDefault();
           }
         }}
       >
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Create New Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -23px; right: -12px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
         <form class="column" ${onSubmit((f) => this.createGroup(f))}>
           <div class="column items-center">
             <div class="column" style="justify-content: center">
@@ -131,7 +148,7 @@ export class CreateGroupDialog extends LitElement {
 
             <button
               class="moss-button"
-              style="margin-top: 24px; width: 200px;"
+              style="margin-top: 24px; margin-bottom: 20px; width: 200px;"
               variant="primary"
               type="submit"
             >

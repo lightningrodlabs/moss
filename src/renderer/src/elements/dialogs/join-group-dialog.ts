@@ -19,6 +19,7 @@ import { mossStoreContext } from '../../context.js';
 import { weStyles } from '../../shared-styles.js';
 import { PartialModifiers } from '@theweave/moss-types';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
+import { closeIcon } from '../_new_design/icons.js';
 
 /**
  * @element join-group-dialog
@@ -115,12 +116,28 @@ export class JoinGroupDialog extends LitElement {
         id="dialog"
         class="moss-dialog"
         .label=${msg('Join Group')}
+        no-header
         @sl-request-close=${(e) => {
           if (this.joining) {
             e.preventDefault();
           }
         }}
       >
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Join Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -23px; right: -12px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
         <form ${onSubmit((f) => this.joinGroup(f))}>
           <div class="column items-center">
           ${
@@ -141,7 +158,7 @@ export class JoinGroupDialog extends LitElement {
 
           <button
             class="moss-button"
-            style="margin-top: 24px; width: 160px;"
+            style="margin-top: 24px; margin-bottom: 20px; width: 160px;"
             type="submit"
             .loading=${this.joining}
           >
