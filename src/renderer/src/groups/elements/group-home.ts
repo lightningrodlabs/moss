@@ -79,6 +79,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
+import { closeIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -796,20 +797,66 @@ export class GroupHome extends LitElement {
             </div>
           </div>
 
-          <sl-dialog id="invite-member-dialog" .label=${msg('Invite New Member')}>
-            <div class="column">
-              <span>${msg('To invite other people to join this group, send them this link:')}</span>
+          <sl-dialog
+            id="invite-member-dialog"
+            class="moss-dialog"
+            .label=${msg('Invite People')}
+            no-header
+          >
+            <div
+              class="column center-content dialog-title"
+              style="margin: 10px 0 40px 0; position: relative;"
+            >
+              <span>${msg('Invite People')}</span>
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -22px; right: -11px;"
+                @click=${() => {
+                  (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+            </div>
 
-              <div class="row" style="margin-top: 16px">
-                <sl-input value=${invitationUrl} style="margin-right: 8px; flex: 1"> </sl-input>
-                <sl-button
-                  variant="primary"
-                  @click=${async () => {
-                    await navigator.clipboard.writeText(invitationUrl);
-                    notify(msg('Invite link copied to clipboard.'));
-                  }}
-                  >${msg('Copy')}</sl-button
+            <div class="column items-center">
+              <div class="column" style="max-width: 440px;">
+                <span style="opacity: 0.6; font-size: 16px;"
+                  >${msg('Copy and send the link below to invite people:')}</span
                 >
+                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+                  <sl-input
+                    disabled
+                    value=${invitationUrl}
+                    class="moss-input copy-link-input"
+                    style="margin-right: 8px; cursor: pointer; flex: 1;"
+                    @click=${async () => {
+                      console.log('CLIKED');
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                  </sl-input>
+                  <button
+                    variant="primary"
+                    class="moss-button"
+                    @click=${async () => {
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                    ${msg('Copy')}
+                  </button>
+                </div>
+
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                  ${msg('About invite links:')}
+                </div>
+                <div style="font-size: 12px; opacity: 0.6;">
+                  ${msg(
+                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+                  )}
+                </div>
               </div>
             </div>
           </sl-dialog>
@@ -1223,6 +1270,15 @@ export class GroupHome extends LitElement {
         border-radius: 5px;
         justify-content: center;
         margin: 2px 0;
+      }
+
+      .copy-link-input::part(input) {
+        cursor: default;
+      }
+
+      .moss-dialog::part(panel) {
+        width: 564px;
+        height: 380px;
       }
 
       sl-dialog {
