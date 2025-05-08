@@ -279,7 +279,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
   render() {
     return html`
       <div
-        class="column container flex-1"
+        class="column container flex-1 ${this.showDetails ? 'bg-gray' : ''}"
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
       >
         ${this.archiveState() === 'archived'
@@ -322,7 +322,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
               ${this.showDetails ? threeDotsVertical(28) : threeDots(28)}
             </button>
           </div>
-          <div class="column" style="${this.showDetails ? '' : 'display: none;'}">
+          <div class="column details-container" style="${this.showDetails ? '' : 'display: none;'}">
             <div class="row" style="margin-top: 15px; align-items: center;">
               <span style="flex: 1;"></span>
               <div class="row" style="align-items: center;">
@@ -360,7 +360,10 @@ export class AbandonedAppletSettingsCard extends LitElement {
         border-top: 1px solid var(--moss-grey-light);
         border-bottom: 1px solid var(--moss-grey-light);
         margin-bottom: -1px;
-        padding: 6px;
+      }
+
+      .bg-gray {
+        background: #f5f5f5;
       }
 
       .details-container {
@@ -373,7 +376,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
       }
 
       .title-bar:hover {
-        background: #ebebeb;
+        background: #f5f5f5;
       }
 
       .triple-dot-btn {

@@ -384,7 +384,7 @@ export class AppletSettingsCard extends LitElement {
     if (!this.appInfo) return html``;
     return html`
       <div
-        class="column container flex-1"
+        class="column container flex-1 ${this.showDetails ? 'bg-gray' : ''}"
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
       >
         ${this.archiveState() === 'archived'
@@ -566,6 +566,10 @@ export class AppletSettingsCard extends LitElement {
         margin-bottom: -1px;
       }
 
+      .bg-gray {
+        background: #f5f5f5;
+      }
+
       .cell-card {
         border-radius: 10px;
         padding: 8px 12px;
@@ -589,7 +593,7 @@ export class AppletSettingsCard extends LitElement {
       }
 
       .title-bar:hover {
-        background: #ebebeb;
+        background: #f5f5f5;
       }
 
       .triple-dot-btn {
