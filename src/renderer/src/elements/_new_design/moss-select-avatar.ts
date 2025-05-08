@@ -18,11 +18,17 @@ export class MossSelectAvatar extends LitElement implements FormField {
   @property()
   required: boolean = false;
 
+  @property({ attribute: 'reset-on-click' })
+  resetOnClick: boolean = false;
+
   @property()
   shape: 'circle' | 'square' | 'rounded' = 'circle';
 
   @property()
   disabled: boolean = false;
+
+  @property()
+  defaultValue: string | undefined;
 
   @property()
   label: string = msg('Choose Profile Picture');
@@ -35,6 +41,10 @@ export class MossSelectAvatar extends LitElement implements FormField {
 
   @state()
   value: string | undefined;
+
+  reset() {
+    this.value = this.defaultValue;
+  }
 
   _controller = new FormFieldController(this);
 
@@ -77,27 +87,31 @@ export class MossSelectAvatar extends LitElement implements FormField {
     if (this.value)
       return html`
         <img
-          class="image-picker-img"
+          class="image-picker-img ${this.shape === 'rounded' ? 'rounded' : ''}"
           alt=${this.label ? this.label : 'image picker'}
           src=${this.value}
           @click=${() => {
-            this.value = '';
-            this.dispatchEvent(
-              new CustomEvent('avatar-selected', {
-                composed: true,
-                bubbles: true,
-                detail: {
-                  avatar: '',
-                },
-              }),
-            );
+            if (this.resetOnClick) {
+              this.value = '';
+              this.dispatchEvent(
+                new CustomEvent('avatar-selected', {
+                  composed: true,
+                  bubbles: true,
+                  detail: {
+                    avatar: '',
+                  },
+                }),
+              );
+            } else {
+              this._avatarFilePicker.click();
+            }
           }}
         />
       `;
     else
       return html` <div class="column" style="align-items: center;">
         <button
-          class="image-picker-button"
+          class="image-picker-button ${this.shape === 'rounded' ? 'rounded' : ''}"
           .disabled=${this.disabled}
           @click=${() => this._avatarFilePicker.click()}
         >
@@ -118,7 +132,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
           id="error-input"
           style="position: absolute; z-index: -1; left: 50%; top: 30px; height: 0; width: 0"
         />
-        <sl-tooltip placement="bottom" content="${msg('Choose Profile Picture')}">
+        <sl-tooltip placement="bottom" content="${msg(this.label)}">
           ${this.renderAvatar()}
         </sl-tooltip>
       </div>`;
@@ -146,6 +160,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
         width: 80px;
         cursor: pointer;
         border: 1px solid #778355;
+        background-color: #4c6a3961;
       }
 
       .icon-btn {
@@ -162,6 +177,10 @@ export class MossSelectAvatar extends LitElement implements FormField {
 
       .grey {
         background: var(--moss-grey-light);
+      }
+
+      .rounded {
+        border-radius: 12px;
       }
     `,
   ];

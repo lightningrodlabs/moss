@@ -32,16 +32,29 @@ export const weStyles = [
 
       --moss-medium-green: #85b46e;
 
+      --moss-grey-green: #4c6a39;
+
       --moss-grey-light: #e8e8e8;
       --moss-grey-dark: #757575;
 
       --moss-dark-button: #151a11;
 
       --moss-purple: #7461eb;
+      --moss-purple-semi-transparent: #7461eb38;
+
+      --moss-field-grey: #f4f4f4;
     }
 
     .items-center {
       align-items: center;
+    }
+
+    .items-start {
+      align-items: flex-start;
+    }
+
+    .items-end {
+      align-items: flex-end;
     }
 
     .justify-center {
@@ -83,8 +96,33 @@ export const weStyles = [
     }
     .moss-button:disabled {
       opacity: 0.4;
-      background: #4c6a39;
+      background: var(--moss-grey-green);
       cursor: default;
+    }
+
+    /* moss-button-secondary */
+
+    .moss-button-secondary {
+      all: unset;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 20px;
+      color: black;
+      border: 2px solid #334128;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .moss-button-secondary:hover {
+      background: #f2ffd8;
+    }
+
+    .moss-button-secondary:disabled {
+      opacity: 0.4;
+      cursor: default;
+      background: transparent;
     }
 
     /* moss-card */
@@ -216,6 +254,16 @@ export const weStyles = [
       width: 8px;
       border-radius: 50%;
       background-color: #d9d9d9;
+    }
+
+    /* radio button styles */
+    sl-radio {
+      /* --sl-input-background-color: var(--moss-main-green); */
+      --sl-color-neutral-0: black;
+      --sl-color-primary-600: var(--moss-main-green);
+      --sl-input-background-color: var(--moss-main-green);
+      --sl-color-primary-500: var(--moss-main-green);
+      --sl-input-background-color-hover: var(--moss-light-green);
     }
 
     /* Loading dots for buttons */

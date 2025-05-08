@@ -60,6 +60,7 @@ import './foyer-stream.js';
 import './agent-permission.js';
 import '../../elements/reusable/profile-detail.js';
 import '../../elements/_new_design/profile/moss-profile-prompt.js';
+import '../../elements/_new_design/group-settings.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -678,6 +679,15 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
+      <sl-dialog
+        class="moss-dialog"
+        no-header
+        open
+        id="group-settings-dialog"
+        style="--width: 1024px;"
+      >
+        <group-settings @uninstall-applet=${async (e) => this.uninstallApplet(e)}></group-settings>
+      </sl-dialog>
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div
           class="column"
@@ -799,7 +809,7 @@ export class GroupHome extends LitElement {
 
           <sl-dialog
             id="invite-member-dialog"
-            class="moss-dialog"
+            class="moss-dialog invite-dialog"
             .label=${msg('Invite People')}
             no-header
           >
@@ -1276,9 +1286,15 @@ export class GroupHome extends LitElement {
         cursor: default;
       }
 
-      .moss-dialog::part(panel) {
+      .invite-dialog::part(panel) {
         width: 564px;
         height: 380px;
+      }
+
+      /* backdrop should only cover group section, not sidebar */
+      .moss-dialog::part(base) {
+        padding-left: 74px;
+        padding-top: 74px;
       }
 
       sl-dialog {

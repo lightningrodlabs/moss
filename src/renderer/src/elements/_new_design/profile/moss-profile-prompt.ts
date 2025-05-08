@@ -2,7 +2,7 @@ import { TemplateResult, css, html, LitElement } from 'lit';
 import { property, customElement } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
-import { AsyncStatus, StoreSubscriber, subscribe } from '@holochain-open-dev/stores';
+import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';

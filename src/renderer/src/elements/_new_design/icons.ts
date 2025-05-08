@@ -145,3 +145,33 @@ export const closeIcon = (size = 16) => html`
     />
   </svg>
 `;
+
+export const threeDots = (size = 16) => html`
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width=${size}
+    height=${size}
+    fill="currentColor"
+    class="bi bi-three-dots"
+    viewBox="0 0 16 16"
+  >
+    <path
+      d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"
+    />
+  </svg>
+`;
+
+export const threeDotsVertical = (size = 16) => html`
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width=${size}
+    height=${size}
+    fill="currentColor"
+    class="bi bi-three-dots-vertical"
+    viewBox="0 0 16 16"
+  >
+    <path
+      d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"
+    />
+  </svg>
+`;

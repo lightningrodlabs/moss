@@ -114,6 +114,7 @@ export class MossEditProfile extends LitElement {
           @avatar-selected=${(e) => {
             this.avatar = e.detail.avatar;
           }}
+          .resetOnClick=${true}
         ></moss-select-avatar>
 
         <div class="row" style="margin-top: 8px;">
