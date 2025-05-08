@@ -175,7 +175,10 @@ export class ToolsSettings extends LitElement {
 
   render() {
     return html`
-      <div class="column flex-1" style="overflow: auto; --sl-border-radius-medium: 20px;">
+      <div
+        class="column flex-1"
+        style="overflow: auto; --sl-border-radius-medium: 20px; max-height: 500px; padding: 2px;"
+      >
         <div class="row" style="position: relative">
           <div style="margin-top: 30px; margin-bottom: 10px; font-size: 20px;">
             ${msg('Joined Tools')}
