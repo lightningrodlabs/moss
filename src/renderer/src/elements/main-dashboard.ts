@@ -52,6 +52,8 @@ import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
+import './_new_design/moss-dialog.js';
+
 import { weStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
@@ -80,6 +82,7 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
+import { closeIcon } from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -153,6 +156,9 @@ export class MainDashboard extends LitElement {
 
   @query('#creatable-palette')
   _creatablePalette!: CreatablePalette;
+
+  @property()
+  initialGroup: DnaHash | undefined;
 
   @state()
   appVersion: string | undefined;
@@ -566,6 +572,7 @@ export class MainDashboard extends LitElement {
   };
 
   async firstUpdated() {
+    if (this.initialGroup) this.openGroup(this.initialGroup);
     // add the beforeunload listener only 10 seconds later as there won't be anything
     // meaningful to save by applets before and it will ensure that the iframes
     // are ready to respond to the on-before-reload event
@@ -1247,10 +1254,26 @@ export class MainDashboard extends LitElement {
 
   renderAddGroupDialog() {
     return html`
-      <sl-dialog id="add-group-dialog" label="${msg('Add Group')}">
-        <div class="row center-content" style="margin-bottom: 30px;">
-          <sl-button
-            style="margin: 0 5px;"
+      <sl-dialog id="add-group-dialog" class="moss-dialog" no-header label="${msg('Add Group')}">
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Add Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -23px; right: -12px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
+        <div class="row center-content moss-title" style="margin-bottom: 30px;">
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${(_e) => {
               this.joinGroupDialog.open();
@@ -1264,9 +1287,10 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${'Join Group'}</span>
             </div>
-          </sl-button>
-          <sl-button
-            style="margin: 0 5px;"
+          </button>
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${() => {
               this.createGroupDialog.open();
@@ -1280,7 +1304,7 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${msg('Create Group')}</span>
             </div>
-          </sl-button>
+          </button>
         </div>
       </sl-dialog>
     `;
@@ -1545,7 +1569,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <button
               tabindex="0"
-              class="moss-button"
+              class="moss-sidebar-button"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1555,7 +1579,7 @@ export class MainDashboard extends LitElement {
             >
               <img
                 tabindex="0"
-                class="moss-button-icon"
+                class="moss-sidebar-button-icon"
                 src="magic-wand.svg"
                 style="width: 24px; height: 24px;"
               />
@@ -1565,7 +1589,7 @@ export class MainDashboard extends LitElement {
         <div class="row center-content" style="margin-bottom: 5px; position: relative">
           <sl-tooltip content="Search" placement="right" hoist>
             <button
-              class="moss-button"
+              class="moss-sidebar-button"
               @click=${() => this.openClipboard()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1575,7 +1599,7 @@ export class MainDashboard extends LitElement {
             >
               <sl-icon
                 tabindex="0"
-                class="moss-button-icon"
+                class="moss-sidebar-button-icon"
                 .src=${wrapPathInSvg(mdiMagnify)}
                 style="color: #fff; height: 24px; width: 24px"
               ></sl-icon>
@@ -2169,21 +2193,21 @@ export class MainDashboard extends LitElement {
           border-radius: 0 0 10px 10px;
         }
 
-        .moss-button-icon {
+        .moss-sidebar-button-icon {
           font-size: 66px;
           color: #fff;
           cursor: pointer;
         }
 
-        .moss-button-icon:hover {
+        .moss-sidebar-button-icon:hover {
           color: var(--sl-color-primary-50);
         }
 
-        .moss-button-icon:focus {
+        .moss-sidebar-button-icon:focus {
           color: var(--sl-color-primary-50);
         }
 
-        .moss-button {
+        .moss-sidebar-button {
           width: 40px;
           height: 40px;
           outline: none;
@@ -2194,7 +2218,7 @@ export class MainDashboard extends LitElement {
           border-radius: 5px;
         }
 
-        .moss-button:hover {
+        .moss-sidebar-button:hover {
           background: linear-gradient(0deg, #203923 0%, #63912a 100%);
           cursor: pointer;
         }

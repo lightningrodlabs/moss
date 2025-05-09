@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@fontsource/aileron": "^5.0.5",
+    "@fontsource-variable/inter": "^5.2.5",
     "@holochain/client": "^0.19.0",
     "@holochain-open-dev/elements": "^0.500.0",
     "@holochain-open-dev/profiles": "^0.500.0",
@@ -22,6 +23,7 @@
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.96",
     "@msgpack/msgpack": "^2.7.2",
+    "@vaadin/date-time-picker": "^24.7.5",
     "compare-versions": "6.1.1",
     "dompurify": "3.1.5",
     "golden-layout": "^2.6.0",

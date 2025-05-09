@@ -32,7 +32,13 @@ export class AppletLogo extends LitElement {
   );
 
   renderLogo(logo: string | undefined) {
-    if (!logo) return html``;
+    if (!logo)
+      return html`<div
+        class="column center-content"
+        style="color: white; font-size: 16px; height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--override-border-radius, 20%); background: gray;"
+      >
+        ?
+      </div>`;
 
     return html`
       <img

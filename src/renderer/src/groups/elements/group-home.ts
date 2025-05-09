@@ -32,7 +32,6 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 import TimeAgo from 'javascript-time-ago';
 import { Value } from '@sinclair/typebox/value';
 
-import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -60,6 +59,8 @@ import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
 import '../../elements/reusable/profile-detail.js';
+import '../../elements/_new_design/profile/moss-profile-prompt.js';
+import '../../elements/_new_design/group-settings.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -79,6 +80,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
+import { closeIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -677,6 +679,15 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
+      <sl-dialog
+        class="moss-dialog"
+        no-header
+        open
+        id="group-settings-dialog"
+        style="--width: 1024px;"
+      >
+        <group-settings @uninstall-applet=${async (e) => this.uninstallApplet(e)}></group-settings>
+      </sl-dialog>
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div
           class="column"
@@ -796,20 +807,66 @@ export class GroupHome extends LitElement {
             </div>
           </div>
 
-          <sl-dialog id="invite-member-dialog" .label=${msg('Invite New Member')}>
-            <div class="column">
-              <span>${msg('To invite other people to join this group, send them this link:')}</span>
+          <sl-dialog
+            id="invite-member-dialog"
+            class="moss-dialog invite-dialog"
+            .label=${msg('Invite People')}
+            no-header
+          >
+            <div
+              class="column center-content dialog-title"
+              style="margin: 10px 0 40px 0; position: relative;"
+            >
+              <span>${msg('Invite People')}</span>
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -22px; right: -11px;"
+                @click=${() => {
+                  (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+            </div>
 
-              <div class="row" style="margin-top: 16px">
-                <sl-input value=${invitationUrl} style="margin-right: 8px; flex: 1"> </sl-input>
-                <sl-button
-                  variant="primary"
-                  @click=${async () => {
-                    await navigator.clipboard.writeText(invitationUrl);
-                    notify(msg('Invite link copied to clipboard.'));
-                  }}
-                  >${msg('Copy')}</sl-button
+            <div class="column items-center">
+              <div class="column" style="max-width: 440px;">
+                <span style="opacity: 0.6; font-size: 16px;"
+                  >${msg('Copy and send the link below to invite people:')}</span
                 >
+                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+                  <sl-input
+                    disabled
+                    value=${invitationUrl}
+                    class="moss-input copy-link-input"
+                    style="margin-right: 8px; cursor: pointer; flex: 1;"
+                    @click=${async () => {
+                      console.log('CLIKED');
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                  </sl-input>
+                  <button
+                    variant="primary"
+                    class="moss-button"
+                    @click=${async () => {
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                    ${msg('Copy')}
+                  </button>
+                </div>
+
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                  ${msg('About invite links:')}
+                </div>
+                <div style="font-size: 12px; opacity: 0.6;">
+                  ${msg(
+                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+                  )}
+                </div>
               </div>
             </div>
           </sl-dialog>
@@ -1028,14 +1085,9 @@ export class GroupHome extends LitElement {
           <sl-dialog no-header id="member-profile">
             ${this._selectedAgent ? this.renderMemberProfile() : ``}
           </sl-dialog>
-          <profile-prompt
-            ><span slot="hero" style="max-width: 500px; margin-bottom: 32px" class="placeholder"
-              >${msg(
-                'Create your personal profile for this group. Only members of this group will be able to see your profile.',
-              )}</span
-            >
+          <moss-profile-prompt>
             ${this.renderContent(groupProfile, modifiers)}
-          </profile-prompt>
+          </moss-profile-prompt>
         `;
       case 'error':
         return html`<display-error
@@ -1228,6 +1280,21 @@ export class GroupHome extends LitElement {
         border-radius: 5px;
         justify-content: center;
         margin: 2px 0;
+      }
+
+      .copy-link-input::part(input) {
+        cursor: default;
+      }
+
+      .invite-dialog::part(panel) {
+        width: 564px;
+        height: 380px;
+      }
+
+      /* backdrop should only cover group section, not sidebar */
+      .moss-dialog::part(base) {
+        padding-left: 74px;
+        padding-top: 74px;
       }
 
       sl-dialog {

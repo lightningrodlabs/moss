@@ -299,7 +299,7 @@ export class WalEmbed extends LitElement {
         border-bottom: 2px solid #8595bf;
         border-radius: 3px;
         resize: both;
-        font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         overflow: auto;
         display: flex;
         flex-direction: column;
