@@ -4,10 +4,10 @@
 
 ## AssetServices.userSelectAsset property
 
-Prompts the user with the search bar and Moss pocket to select an Asset. Returns the associated WAL as soon as the user has selected an asset or undefined if the user cancels the selection process.
+Prompts the user to select an Asset and returns the associated WAL as soon as the user has selected an asset or returns undefined if the user cancels the selection process. By default it will let the user select the Asset from the pocket but other means of selecting the asset can be specified optionally with the "from" argument.
 
 **Signature:**
 
 ```typescript
-userSelectAsset: () => Promise<WAL | undefined>;
+userSelectAsset: (from?: 'search' | 'pocket' | 'create') => Promise<WAL | undefined>;
 ```

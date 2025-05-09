@@ -78,7 +78,7 @@ Description
 
 </td><td>
 
-{ dragAsset: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;; assetInfo: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;[AssetLocationAndInfo](./api.assetlocationandinfo.md) \| undefined&gt;; assetToPocket: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;; userSelectAsset: () =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;; addTagsToAsset: (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;; removeTagsFromAsset: (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;; addAssetRelation: (srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->, tags?: string\[\]) =&gt; Promise&lt;void&gt;; removeAssetRelation: (relationHash: EntryHash) =&gt; Promise&lt;void&gt;; addTagsToAssetRelation: (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;; removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;; assetStore: (wal: [WAL](./api.wal.md)<!-- -->) =&gt; [AssetStore](./api.assetstore.md)<!-- -->; }
+[AssetServices](./api.assetservices.md)
 
 
 </td><td>

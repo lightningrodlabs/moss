@@ -7,17 +7,5 @@
 **Signature:**
 
 ```typescript
-assets: {
-        dragAsset: (wal: WAL) => Promise<void>;
-        assetInfo: (wal: WAL) => Promise<AssetLocationAndInfo | undefined>;
-        assetToPocket: (wal: WAL) => Promise<void>;
-        userSelectAsset: () => Promise<WAL | undefined>;
-        addTagsToAsset: (wal: WAL, tags: string[]) => Promise<void>;
-        removeTagsFromAsset: (wal: WAL, tags: string[]) => Promise<void>;
-        addAssetRelation: (srcWal: WAL, dstWal: WAL, tags?: string[]) => Promise<void>;
-        removeAssetRelation: (relationHash: EntryHash) => Promise<void>;
-        addTagsToAssetRelation: (relationHash: EntryHash, tags: string[]) => Promise<void>;
-        removeTagsFromAssetRelation: (relationHash: EntryHash, tags: string[]) => Promise<void>;
-        assetStore: (wal: WAL) => AssetStore;
-    };
+assets: AssetServices;
 ```
