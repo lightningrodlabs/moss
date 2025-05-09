@@ -163,9 +163,10 @@ export class GroupStore {
       }
     });
 
-    this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) =>
-      this.agentsProfiles(agents),
-    );
+    this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
+      console.log('Piping allProfiles');
+      return this.agentsProfiles(agents);
+    });
 
     setTimeout(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
@@ -723,6 +724,7 @@ export class GroupStore {
   membersProfiles = new LazyHoloHashMap((agent: AgentPubKey) =>
     asyncReadable<MaybeProfile | undefined>(async (set) => {
       try {
+        console.log('Getting agent profile.');
         const profile = await this.profilesStore.client.getAgentProfile(agent);
         profile ? set({ type: 'profile', profile }) : set({ type: 'unknown' });
       } catch (e) {

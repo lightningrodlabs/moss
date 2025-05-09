@@ -569,7 +569,7 @@ export class MossApp extends LitElement {
 
         .hint {
           font-size: 12px;
-          color: #324d47;
+          color: var(--moss-hint-green);
           border-radius: 12px;
           background-color: var(--moss-light-green);
           padding: 10px 20px;

@@ -32,6 +32,8 @@ export const weStyles = [
 
       --moss-medium-green: #85b46e;
 
+      --moss-hint-green: #324d47;
+
       --moss-grey-green: #4c6a39;
 
       --moss-grey-light: #e8e8e8;

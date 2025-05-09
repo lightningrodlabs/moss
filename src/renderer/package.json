@@ -23,6 +23,7 @@
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.96",
     "@msgpack/msgpack": "^2.7.2",
+    "@vaadin/date-time-picker": "^24.7.5",
     "compare-versions": "6.1.1",
     "dompurify": "3.1.5",
     "golden-layout": "^2.6.0",

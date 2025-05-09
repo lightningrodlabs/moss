@@ -10,6 +10,7 @@ import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 import { weStyles } from '../../shared-styles.js';
 import './group-settings/general-settings.js';
 import './group-settings/tools-settings.js';
+import './group-settings/group-member-list.js';
 
 enum TabsState {
   General,
@@ -36,7 +37,7 @@ export class GroupSettings extends LitElement {
   }
 
   renderMembers() {
-    return html`Members`;
+    return html`<group-member-list style="margin-top: 25px;"></group-member-list>`;
   }
 
   renderTools() {

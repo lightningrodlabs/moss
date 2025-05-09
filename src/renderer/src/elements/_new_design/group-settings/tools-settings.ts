@@ -80,7 +80,7 @@ export class ToolsSettings extends LitElement {
             <div class="row center-content" style="flex: 1">
               <span
                 class="placeholder"
-                style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
+                style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
                 >${msg(
                   "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
                 )}
@@ -146,7 +146,7 @@ export class ToolsSettings extends LitElement {
           <div class="row center-content" style="flex: 1">
             <span
               class="placeholder"
-              style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
+              style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
               >${msg('No abandoned Tools.')}
             </span>
           </div>

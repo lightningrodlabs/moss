@@ -14,8 +14,14 @@ export class CopyHash extends LitElement {
   @property()
   hash!: string;
 
+  @property()
+  tooltipText: string = msg('click to copy');
+
+  @property({ type: Boolean })
+  shortened: boolean = false;
+
   render() {
-    return html` <sl-tooltip content=${msg('click to copy')}>
+    return html` <sl-tooltip content=${this.tooltipText}>
       <div
         class="copy-hash"
         @click=${async () => {
@@ -23,7 +29,7 @@ export class CopyHash extends LitElement {
           notify(msg('Hash copied to clipboard.'));
         }}
       >
-        ${this.hash}
+        ${this.shortened ? `${this.hash.slice(0, 8)}...${this.hash.slice(-8)}` : this.hash}
       </div>
     </sl-tooltip>`;
   }
