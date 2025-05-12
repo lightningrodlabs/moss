@@ -93,7 +93,7 @@ export class HolochainManager {
     // network parameters
     conductorConfig.network.bootstrap_url = bootstrapUrl;
     conductorConfig.network.signal_url = signalUrl;
-    conductorConfig.network.webrtc_config = { iceServers: iceUrls };
+    conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
     console.log('Writing conductor-config.yaml...');
 
