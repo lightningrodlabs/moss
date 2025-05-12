@@ -91,7 +91,7 @@ export class AgentPermissionButton extends LitElement {
                 <sl-tooltip content="${msg('Extend Role')}">
                 <button
                   class="pencil-button"
-                  style="margin-left: 4px;"
+                  style="margin-left: 10px;"
                   @click=${() => {
                     this.dispatchEvent(
                       new CustomEvent('request-assign-steward', { composed: true }),

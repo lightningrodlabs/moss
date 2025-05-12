@@ -190,9 +190,6 @@ export class GroupMemberList extends LitElement {
                   : profile.profile.entry.nickname}"
                 value="1"
               >
-                <sl-radio style="margin-top: 10px; margin-bottom: 10px;" value="0"
-                  >${msg('forever (no expiration date)')}</sl-radio
-                >
                 <sl-radio style="margin-top: 20px;" value="1"
                   ><div class="column">
                     <span style="margin-right: 10px;">${msg('until:')}</span>
@@ -208,6 +205,10 @@ export class GroupMemberList extends LitElement {
                     ></vaadin-date-time-picker>
                   </div>
                 </sl-radio>
+
+                <sl-radio style="margin-top: 10px; margin-bottom: 10px;" value="0"
+                  >${msg('forever (no expiration date)')}</sl-radio
+                >
               </sl-radio-group>
 
               <div class="row items-start" style="margin-top: 10px;">
