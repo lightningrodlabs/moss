@@ -569,6 +569,17 @@ export class MossApp extends LitElement {
             </button>
           </div>
         </div>
+
+        <button
+          @click=${() => {
+            window.localStorage.removeItem('isFirstLaunch');
+            this.state = MossAppState.Running;
+          }}
+          class="skip-button"
+          style="position: absolute; bottom: 10px;"
+        >
+          ${'Skip Setup'}
+        </button>
       </div>
     `;
   }
@@ -684,6 +695,19 @@ export class MossApp extends LitElement {
 
         .close-btn:hover {
           color: black;
+        }
+
+        .skip-button {
+          all: unset;
+          font-size: 14px;
+          text-decoration: underline;
+          color: gray;
+          border-radius: 3px;
+          cursor: pointer;
+        }
+
+        .skip-button:focus-visible {
+          outline: 1px solid orange;
         }
       `,
     ];

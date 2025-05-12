@@ -1,4 +1,4 @@
-import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey } from '@holochain/client';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
@@ -41,7 +41,6 @@ export class AgentPermission extends LitElement {
   }
 
   render() {
-    console.log('Rendering permission for agent: ', encodeHashToBase64(this.agent));
     switch (this.permissionType.value.status) {
       case 'pending':
         return html`loading...`;
