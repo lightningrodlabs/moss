@@ -102,6 +102,10 @@ export const weStyles = [
       cursor: default;
     }
 
+    .moss-button:focus-visible {
+      outline: 2px solid orange;
+    }
+
     /* moss-button-secondary */
 
     .moss-button-secondary {

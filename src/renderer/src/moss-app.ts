@@ -6,6 +6,9 @@ import { LitElement, html, css } from 'lit';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
+import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
 import './elements/main-dashboard.js';
 import { weStyles } from './shared-styles.js';
@@ -21,6 +24,7 @@ import { defaultIcons } from './elements/_new_design/defaultIcons.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
+import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 
 enum MossAppState {
   Loading,
@@ -282,6 +286,7 @@ export class MossApp extends LitElement {
               style="margin-bottom: 20px; width: 350px;"
               value=${this.groupName}
               required
+              autofocus
               @input=${() => {
                 const groupNameInput = this.shadowRoot?.getElementById(
                   'group-name-input',
@@ -305,7 +310,9 @@ export class MossApp extends LitElement {
               class="moss-button"
               style="width: 310px; margin-bottom: 56px;"
               ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
-              @click=${() => this.createGroupAndHeadToMain()}
+              @click=${() => {
+                this.state = MossAppState.CreateGroupStep2;
+              }}
             >
               ${this.creatingGroup
                 ? html`<div class="column center-content">
@@ -314,17 +321,94 @@ export class MossApp extends LitElement {
                 : html`${msg('Create group space')}`}
             </button>
 
-            <!-- <div class="row">
+            <div class="row">
               <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
               <div class="dialog-dot"></div>
-            </div> -->
+            </div>
           </div>
         </div>
       </div>
     `;
   }
 
-  // renderCreateGroupStep2() {
+  /**
+   * Renders the dialog to select whether group is stewarded or not
+   */
+  renderCreateGroupStep2() {
+    return html`
+      <div class="column center-content flex-1">
+        <div class="moss-card" style="width: 630px; height: 466px;">
+          <button
+            class="moss-hover-icon-button"
+            style="margin-left: -8px; margin-top: -8px;"
+            @click=${() => {
+              this.state = MossAppState.CreateGroupStep1;
+            }}
+          >
+            <div class="row items-center">
+              <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
+                ${arrowLeftShortIcon(24)}
+              </div>
+              <div class="moss-hover-icon-button-text">${msg('back')}</div>
+            </div>
+          </button>
+          <div class="column items-center flex-1" style="height: calc(100% - 28px);">
+            <span
+              style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
+              >${'Choose Group Type'}</span
+            >
+
+            <sl-radio-group
+              id="group-type-radio"
+              style="margin-left: 50px; max-width: 500px;"
+              value="1"
+            >
+              <sl-radio style="margin-top: 5px;" value="1"
+                ><b>${msg('Stewarded')} (default)</b><br /><span
+                  style="opacity: 0.8; font-size: 0.9rem;"
+                  >The group creator (you) is the initial Steward. Only Stewards can edit the group
+                  profile, add and remove Tools and add additional Stewards.</span
+                ></sl-radio
+              >
+              <sl-radio style="margin-top: 5px;" value="0"
+                ><b>${msg('Unstewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
+                  >All members have full permissions.</span
+                ></sl-radio
+              >
+            </sl-radio-group>
+
+            <div class="flex flex-1"></div>
+
+            <button
+              class="moss-button"
+              style="width: 310px; margin-bottom: 56px;"
+              ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
+              @click=${() => {
+                const groupTypeRadio = this.shadowRoot?.getElementById(
+                  'group-type-radio',
+                ) as SlRadioGroup;
+                this.useProgenitor = groupTypeRadio.value === '1' ? true : false;
+                this.createGroupAndHeadToMain();
+              }}
+            >
+              ${this.creatingGroup
+                ? html`<div class="column center-content">
+                    <div class="dot-carousel" style="margin: 5px 0;"></div>
+                  </div>`
+                : html`${msg('Create group space')}`}
+            </button>
+
+            <div class="row">
+              <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
+              <div class="dialog-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // renderCreateGroupStep3() {
   //   return html`
   //     <div class="column center-content flex-1">
   //       <div class="moss-card" style="width: 630px; height: 466px;">
@@ -541,8 +625,8 @@ export class MossApp extends LitElement {
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:
         return this.renderCreateGroupStep1();
-      // case MossAppState.CreateGroupStep2:
-      //   return this.renderCreateGroupStep2();
+      case MossAppState.CreateGroupStep2:
+        return this.renderCreateGroupStep2();
       case MossAppState.CreatingGroup:
         return this.renderInstallingGroup(false);
       case MossAppState.JoiningGroup:
