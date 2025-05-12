@@ -1,10 +1,14 @@
 import path from 'path';
+import fs from 'fs';
+import yaml from 'js-yaml';
 import { app } from 'electron';
 import { MOSS_CONFIG } from './mossConfig';
 
-const BINARIES_DIRECTORY = app.isPackaged
-  ? path.join(app.getAppPath(), '../app.asar.unpacked/resources/bins')
-  : path.join(app.getAppPath(), './resources/bins');
+const RESOURCES_DIRECTORY = app.isPackaged
+  ? path.join(app.getAppPath(), '../app.asar.unpacked/resources')
+  : path.join(app.getAppPath(), './resources');
+
+const BINARIES_DIRECTORY = path.join(RESOURCES_DIRECTORY, 'bins');
 
 const HOLOCHAIN_BINARIES: Record<string, string> = {};
 HOLOCHAIN_BINARIES[MOSS_CONFIG.holochain.version] = path.join(
@@ -25,4 +29,15 @@ const KITSUNE2_BOOTSTRAP_SRV_BINARY = path.join(
   `kitsune2-bootstrap-srv-v${MOSS_CONFIG.bootstrap.version}-${MOSS_CONFIG.binariesAppendix}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
-export { HOLOCHAIN_BINARIES, LAIR_BINARY, KITSUNE2_BOOTSTRAP_SRV_BINARY };
+const conductorConfigTemplateString = fs.readFileSync(
+  path.join(RESOURCES_DIRECTORY, 'conductor-config.yaml'),
+  'utf-8',
+);
+const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
+
+export {
+  HOLOCHAIN_BINARIES,
+  LAIR_BINARY,
+  KITSUNE2_BOOTSTRAP_SRV_BINARY,
+  CONDUCTOR_CONFIG_TEMPLATE,
+};

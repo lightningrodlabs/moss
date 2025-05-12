@@ -365,7 +365,7 @@ Open the specified block view of the specified Applet Type
 
 </td><td>
 
-Open the cross-applet main view of the specified Applet Type.
+Open the cross-group main view of the specified Applet Type.
 
 
 </td></tr>

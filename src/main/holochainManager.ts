@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import getPort from 'get-port';
 import fs from 'fs';
+import yaml from 'js-yaml';
 import * as childProcess from 'child_process';
 import { HolochainVersion, WeEmitter } from './weEmitter';
 import split from 'split';
@@ -8,6 +9,7 @@ import { AdminWebsocket, AppAuthenticationToken, AppInfo, InstalledAppId } from 
 import { MossFileSystem } from './filesystem';
 import { app } from 'electron';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
+import { CONDUCTOR_CONFIG_TEMPLATE } from './const';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -55,8 +57,8 @@ export class HolochainManager {
     configPath: string,
     lairUrl: string,
     bootstrapUrl: string,
-    signalingUrl: string,
-    iceUrls?: Array<string>,
+    signalUrl: string,
+    iceUrls: Array<string>,
     rustLog?: string,
     wasmLog?: string,
   ): Promise<HolochainManager> {
@@ -64,40 +66,38 @@ export class HolochainManager {
       ? parseInt(process.env.ADMIN_PORT, 10)
       : await getPort();
 
-    let conductorConfig: string;
+    let conductorConfig;
 
     const allowedOrigins = app.isPackaged
       ? 'moss://admin.main,moss://admin.renderer'
       : 'moss://admin.main,moss://admin.renderer,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176';
 
-    if (fs.existsSync(configPath)) {
-      conductorConfig = rustUtils.overwriteConfig(
-        adminPort,
-        configPath,
-        lairUrl,
-        bootstrapUrl,
-        signalingUrl,
-        allowedOrigins,
-        app.isPackaged ? false : true,
-        iceUrls,
+    // Read
+    try {
+      conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+    } catch (e) {
+      console.warn(
+        'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
       );
-    } else {
-      // TODO Reuse existing config and only overwrite chosen values if necessary
-      conductorConfig = rustUtils.defaultConductorConfig(
-        adminPort,
-        rootDir,
-        lairUrl,
-        bootstrapUrl,
-        signalingUrl,
-        allowedOrigins,
-        app.isPackaged ? false : true,
-        iceUrls,
-      );
+      conductorConfig = CONDUCTOR_CONFIG_TEMPLATE;
     }
+
+    conductorConfig.data_root_path = rootDir;
+    conductorConfig.keystore.connection_url = lairUrl;
+    conductorConfig.admin_interfaces = [
+      {
+        driver: { type: 'websocket', port: adminPort, allowed_origins: allowedOrigins },
+      },
+    ];
+
+    // network parameters
+    conductorConfig.network.bootstrap_url = bootstrapUrl;
+    conductorConfig.network.signal_url = signalUrl;
+    conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
     console.log('Writing conductor-config.yaml...');
 
-    fs.writeFileSync(configPath, conductorConfig);
+    fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
       env: {

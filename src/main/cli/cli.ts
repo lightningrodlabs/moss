@@ -30,10 +30,7 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
-export const DEFAULT_ICE_URLS = [
-  'stun:stun-0.main.infra.holo.host:443',
-  'stun:stun-1.main.infra.holo.host:443',
-];
+export const DEFAULT_ICE_URLS = ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
 
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
@@ -62,7 +59,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
-  iceUrls: string[] | undefined;
+  iceUrls: string[];
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
   holochainWasmLog: string | undefined;

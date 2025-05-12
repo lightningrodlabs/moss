@@ -168,6 +168,25 @@ Communicate that an asset is being dragged
 </td></tr>
 <tr><td>
 
+[getAllAssetRelationTags](./api.assetservices.getallassetrelationtags.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(crossGroup?: boolean) =&gt; Promise&lt;string\[\]&gt;
+
+
+</td><td>
+
+Get all asset relation tags that have been used so far in the group. Useful for example to display in a tag selection UI element.
+
+
+</td></tr>
+<tr><td>
+
 [removeAssetRelation](./api.assetservices.removeassetrelation.md)
 
 
@@ -233,12 +252,31 @@ Removes the specified tags from an asset relation
 
 </td><td>
 
-() =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
+(from?: 'search' \| 'pocket' \| 'create') =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
 
 
 </td><td>
 
-Prompts the user with the search bar and Moss pocket to select an Asset. Returns the associated WAL as soon as the user has selected an asset or undefined if the user cancels the selection process.
+Prompts the user to select an Asset and returns the associated WAL as soon as the user has selected an asset or returns undefined if the user cancels the selection process. By default it will let the user select the Asset from the pocket but other means of selecting the asset can be specified optionally with the "from" argument.
+
+
+</td></tr>
+<tr><td>
+
+[userSelectAssetRelationTag](./api.assetservices.userselectassetrelationtag.md)
+
+
+</td><td>
+
+
+</td><td>
+
+() =&gt; Promise&lt;string \| undefined&gt;
+
+
+</td><td>
+
+Prompts the user with a dialog to select an asset relation tag. Returns the associated tag as a string as soon as the user has selected a tag or undefined it the user cancels the selection process.
 
 
 </td></tr>

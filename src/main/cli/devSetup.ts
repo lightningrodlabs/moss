@@ -33,7 +33,7 @@ import * as childProcess from 'child_process';
 import split from 'split';
 import { AgentProfile, AppletConfig, GroupConfig, WebHappLocation } from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { KITSUNE2_BOOTSTRAP_SRV_BINARY } from '../binaries';
+import { KITSUNE2_BOOTSTRAP_SRV_BINARY } from '../const';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
