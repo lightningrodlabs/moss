@@ -95,6 +95,17 @@ export class HolochainManager {
     conductorConfig.network.signal_url = signalUrl;
     conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
+    // In dev mode, we have to allow ws:// signal type urls
+    if (!app.isPackaged) {
+      const advancedSettings = conductorConfig.network.advanced
+        ? conductorConfig.network.advanced
+        : {};
+      advancedSettings['tx5Transport'] = {
+        signalAllowPlainText: true,
+      };
+      conductorConfig.network.advanced = advancedSettings;
+    }
+
     console.log('Writing conductor-config.yaml...');
 
     fs.writeFileSync(configPath, yaml.dump(conductorConfig));
