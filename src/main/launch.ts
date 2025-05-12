@@ -6,7 +6,7 @@ import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { DistributionInfo } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
-import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './binaries';
+import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './const';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './cli/devSetup';
 import { RunOptions } from './cli/cli';

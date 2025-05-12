@@ -59,7 +59,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
-  iceUrls: string[] | undefined;
+  iceUrls: string[];
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
   holochainWasmLog: string | undefined;
