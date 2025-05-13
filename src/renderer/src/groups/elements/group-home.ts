@@ -20,14 +20,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
-import {
-  mdiArrowLeft,
-  mdiCog,
-  mdiContentCopy,
-  mdiHomeOutline,
-  mdiLinkVariantPlus,
-  mdiPowerPlugOffOutline,
-} from '@mdi/js';
+import { mdiCog, mdiContentCopy, mdiHomeOutline, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import { Value } from '@sinclair/typebox/value';
@@ -86,7 +79,6 @@ type View =
   | {
       view: 'main';
     }
-  | { view: 'settings' }
   | { view: 'create-custom-view' }
   | {
       view: 'edit-custom-view';
@@ -116,6 +108,9 @@ export class GroupHome extends LitElement {
 
   @query('#member-profile')
   _memberProfileDialog!: SlDialog;
+
+  @query('#group-settings-dialog')
+  groupSettingsDialog: SlDialog | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -682,11 +677,24 @@ export class GroupHome extends LitElement {
       <sl-dialog
         class="moss-dialog"
         no-header
-        open
         id="group-settings-dialog"
+        no-header
         style="--width: 1024px;"
       >
-        <group-settings @uninstall-applet=${async (e) => this.uninstallApplet(e)}></group-settings>
+        <div class="column" style="position: relative">
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -12px; right: -12px;"
+            @click=${() => {
+              this.groupSettingsDialog?.hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+          <group-settings
+            @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+          ></group-settings>
+        </div>
       </sl-dialog>
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div
@@ -719,19 +727,20 @@ export class GroupHome extends LitElement {
             </div>
 
             <div
-              class="row settings-btn"
-              style="align-items: center;"
+              class="row settings-btn items-center"
               tabindex="0"
               @click=${() => {
-                this.view = { view: 'settings' };
+                this.groupSettingsDialog?.show();
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  this.view = { view: 'settings' };
+                  this.groupSettingsDialog?.show();
                 }
               }}
             >
-              <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">
+              <div
+                style="font-weight: bold; margin-right: 3px; font-size: 18px; margin-bottom: 5px;"
+              >
                 ${msg('Settings')}
               </div>
               <div style="position: relative;">
@@ -920,147 +929,145 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderNewSettings() {
-    const tabs = [
-      [
-        'Tools',
-        html`<group-applets-settings
-          @uninstall-applet=${async (e) => this.uninstallApplet(e)}
-          @applets-disabled=${(e) => {
-            this.dispatchEvent(
-              new CustomEvent('applets-disabled', {
-                detail: e.detail,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
-          style="display: flex; flex: 1;"
-        ></group-applets-settings>`,
-      ],
-      // [
-      //   'Custom Views',
-      //   html`
-      //     <div class="column center-content" style="flex: 1;">
-      //       <span class="placeholder" style="margin-top: 200px;"
-      //         >${msg(
-      //           'You can add custom views to this group, combining the relevant blocks from each applet.',
-      //         )}</span
-      //       >
-      //       <all-custom-views
-      //         style="margin-top: 8px; flex: 1;"
-      //         @edit-custom-view=${(e) => {
-      //           this.view = {
-      //             view: 'edit-custom-view',
-      //             customViewHash: e.detail.customViewHash,
-      //           };
-      //         }}
-      //       ></all-custom-views>
-      //       <div class="row" style="flex: 1">
-      //         <span style="flex: 1"></span>
-      //         <sl-button
-      //           variant="primary"
-      //           @click=${() => {
-      //             this.view = { view: 'create-custom-view' };
-      //           }}
-      //           >${msg('Create Custom View')}</sl-button
-      //         >
-      //       </div>
-      //     </div>
-      //   `,
-      // ],
-      [
-        'Your Settings',
-        html`
-          <div class="column center-content" style="flex: 1;">
-            <your-settings
-              @group-left=${(e) =>
-                this.dispatchEvent(
-                  new CustomEvent('group-left', {
-                    detail: {
-                      groupDnaHash: e.detail.groupDnaHash,
-                    },
-                    bubbles: true,
-                    composed: true,
-                  }),
-                )}
-            ></your-settings>
-          </div>
-        `,
-      ],
-    ];
+  // renderNewSettings() {
+  //   const tabs = [
+  //     [
+  //       'Tools',
+  //       html`<group-applets-settings
+  //         @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+  //         @applets-disabled=${(e) => {
+  //           this.dispatchEvent(
+  //             new CustomEvent('applets-disabled', {
+  //               detail: e.detail,
+  //               bubbles: true,
+  //               composed: true,
+  //             }),
+  //           );
+  //         }}
+  //         style="display: flex; flex: 1;"
+  //       ></group-applets-settings>`,
+  //     ],
+  //     // [
+  //     //   'Custom Views',
+  //     //   html`
+  //     //     <div class="column center-content" style="flex: 1;">
+  //     //       <span class="placeholder" style="margin-top: 200px;"
+  //     //         >${msg(
+  //     //           'You can add custom views to this group, combining the relevant blocks from each applet.',
+  //     //         )}</span
+  //     //       >
+  //     //       <all-custom-views
+  //     //         style="margin-top: 8px; flex: 1;"
+  //     //         @edit-custom-view=${(e) => {
+  //     //           this.view = {
+  //     //             view: 'edit-custom-view',
+  //     //             customViewHash: e.detail.customViewHash,
+  //     //           };
+  //     //         }}
+  //     //       ></all-custom-views>
+  //     //       <div class="row" style="flex: 1">
+  //     //         <span style="flex: 1"></span>
+  //     //         <sl-button
+  //     //           variant="primary"
+  //     //           @click=${() => {
+  //     //             this.view = { view: 'create-custom-view' };
+  //     //           }}
+  //     //           >${msg('Create Custom View')}</sl-button
+  //     //         >
+  //     //       </div>
+  //     //     </div>
+  //     //   `,
+  //     // ],
+  //     [
+  //       'Your Settings',
+  //       html`
+  //         <div class="column center-content" style="flex: 1;">
+  //           <your-settings
+  //             @group-left=${(e) =>
+  //               this.dispatchEvent(
+  //                 new CustomEvent('group-left', {
+  //                   detail: {
+  //                     groupDnaHash: e.detail.groupDnaHash,
+  //                   },
+  //                   bubbles: true,
+  //                   composed: true,
+  //                 }),
+  //               )}
+  //           ></your-settings>
+  //         </div>
+  //       `,
+  //     ],
+  //   ];
 
-    if (this.permissionType.value.status === 'complete') {
-      if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
-        tabs.splice(2, 0, [
-          'Group Stewards',
-          html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
-        ]);
-        tabs.push([
-          'Group Profile',
-          html`
-            <div class="column center-content" style="flex: 1;">
-              <edit-group-profile
-                style="background: white; padding: 20px; border-radius: 10px;"
-              ></edit-group-profile>
-            </div>
-          `,
-        ]);
-      }
-    }
+  //   if (this.permissionType.value.status === 'complete') {
+  //     if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
+  //       tabs.splice(2, 0, [
+  //         'Group Stewards',
+  //         html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
+  //       ]);
+  //       tabs.push([
+  //         'Group Profile',
+  //         html`
+  //           <div class="column center-content" style="flex: 1;">
+  //             <edit-group-profile
+  //               style="background: white; padding: 20px; border-radius: 10px;"
+  //             ></edit-group-profile>
+  //           </div>
+  //         `,
+  //       ]);
+  //     }
+  //   }
 
-    return html`
-      <div class="column" style="flex: 1; position: relative;">
-        <div
-          class="row"
-          style="height: 68px; align-items: center; background: var(--sl-color-primary-200)"
-        >
-          <sl-icon-button
-            .src=${wrapPathInSvg(mdiArrowLeft)}
-            @click=${() => {
-              this.view = { view: 'main' };
-            }}
-            style="margin-left: 20px; font-size: 30px;"
-          ></sl-icon-button>
-          <span style="display: flex; flex: 1;"></span>
-          <span class="title" style="margin-right: 20px; font-weight: bold;"
-            >${msg('Group Settings')}</span
-          >
-        </div>
+  //   return html`
+  //     <div class="column" style="flex: 1; position: relative;">
+  //       <div
+  //         class="row"
+  //         style="height: 68px; align-items: center; background: var(--sl-color-primary-200)"
+  //       >
+  //         <sl-icon-button
+  //           .src=${wrapPathInSvg(mdiArrowLeft)}
+  //           @click=${() => {
+  //             this.view = { view: 'main' };
+  //           }}
+  //           style="margin-left: 20px; font-size: 30px;"
+  //         ></sl-icon-button>
+  //         <span style="display: flex; flex: 1;"></span>
+  //         <span class="title" style="margin-right: 20px; font-weight: bold;"
+  //           >${msg('Group Settings')}</span
+  //         >
+  //       </div>
 
-        <tab-group .tabs=${tabs} style="display: flex; flex: 1;"> </tab-group>
+  //       <tab-group .tabs=${tabs} style="display: flex; flex: 1;"> </tab-group>
 
-        <sl-button
-          variant="warning"
-          style="position: absolute; bottom: 10px; right: 10px;"
-          @click=${async () => {
-            this.dispatchEvent(
-              new CustomEvent('disable-group', {
-                detail: this.groupStore.groupDnaHash,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
-        >
-          <div class="row" style="align-items: center;">
-            <sl-icon
-              style="margin-right: 5px; font-size: 1.3rem;"
-              .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
-            ></sl-icon>
-            <div>${msg('Disable group')}</div>
-          </div></sl-button
-        >
-      </div>
-    `;
-  }
+  //       <sl-button
+  //         variant="warning"
+  //         style="position: absolute; bottom: 10px; right: 10px;"
+  //         @click=${async () => {
+  //           this.dispatchEvent(
+  //             new CustomEvent('disable-group', {
+  //               detail: this.groupStore.groupDnaHash,
+  //               bubbles: true,
+  //               composed: true,
+  //             }),
+  //           );
+  //         }}
+  //       >
+  //         <div class="row" style="align-items: center;">
+  //           <sl-icon
+  //             style="margin-right: 5px; font-size: 1.3rem;"
+  //             .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
+  //           ></sl-icon>
+  //           <div>${msg('Disable group')}</div>
+  //         </div></sl-button
+  //       >
+  //     </div>
+  //   `;
+  // }
 
   renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
         return this.renderMain(groupProfile, modifiers);
-      case 'settings':
-        return this.renderNewSettings();
       case 'create-custom-view':
         return this.renderCreateCustomView();
       case 'edit-custom-view':
