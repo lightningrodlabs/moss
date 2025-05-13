@@ -52,6 +52,45 @@ export class MossEditProfile extends LitElement {
   @state()
   creatingProfile = false;
 
+  @state()
+  disabled = true;
+
+  /**
+   * This is to be called by a parent element if the profile had
+   * successfully been created. It will remove the loading indicator
+   * on the button and sync the avatar and nickname component
+   * states with the states of the actual profile.
+   */
+  clearLoading() {
+    this.creatingProfile = false;
+    if (this.profile) {
+      this.nickname = this.profile.nickname;
+      this.avatar = this.profile.fields.avatar;
+    }
+    this.checkDisabled();
+  }
+
+  firstUpdated() {
+    if (this.profile) {
+      this.nickname = this.profile.nickname;
+      this.avatar = this.profile.fields.avatar;
+    }
+  }
+
+  checkDisabled() {
+    // profile nickname the same or not and icon the same or not
+    console.log('Checking disabled');
+    const avatarEqual = this.profile?.fields['avatar'] === this.avatar;
+    console.log('avatarEqual: ', avatarEqual);
+    const nicknameEqual = this.profile?.nickname === this.nickname;
+    console.log('nicknameEqual: ', nicknameEqual);
+    if (!avatarEqual || !nicknameEqual) {
+      this.disabled = false;
+    } else {
+      this.disabled = true;
+    }
+  }
+
   emitSaveProfile() {
     const nickname = this.nickname;
     if (!nickname) throw new Error('nickname not defined.');
@@ -104,6 +143,7 @@ export class MossEditProfile extends LitElement {
           style="width: 350px; margin-bottom: 10px;"
           @input=${(e) => {
             this.nickname = e.target.value;
+            this.checkDisabled();
           }}
         ></sl-input>
 
@@ -113,6 +153,7 @@ export class MossEditProfile extends LitElement {
           .value=${this.profile?.fields['avatar'] || undefined}
           @avatar-selected=${(e) => {
             this.avatar = e.detail.avatar;
+            this.checkDisabled();
           }}
           .resetOnClick=${true}
         ></moss-select-avatar>
@@ -131,7 +172,7 @@ export class MossEditProfile extends LitElement {
             style="width: 310px; margin-bottom: 56px;"
             variant="primary"
             @click=${() => this.emitSaveProfile()}
-            ?disabled=${!this.nickname || this.nickname.length < 3 || this.creatingProfile}
+            ?disabled=${this.disabled}
           >
             ${this.creatingProfile
               ? html`<div class="column center-content">

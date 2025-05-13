@@ -11,6 +11,7 @@ import { weStyles } from '../../shared-styles.js';
 import './group-settings/general-settings.js';
 import './group-settings/tools-settings.js';
 import './group-settings/group-member-list.js';
+import './group-settings/my-profile-settings.js';
 
 enum TabsState {
   General,
@@ -45,7 +46,7 @@ export class GroupSettings extends LitElement {
   }
 
   renderMyProfile() {
-    return html`My Profile`;
+    return html` <my-profile-settings></my-profile-settings>`;
   }
 
   renderContent() {
