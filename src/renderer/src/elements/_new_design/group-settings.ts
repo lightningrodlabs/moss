@@ -12,12 +12,18 @@ import './group-settings/general-settings.js';
 import './group-settings/tools-settings.js';
 import './group-settings/group-member-list.js';
 import './group-settings/my-profile-settings.js';
+import './group-settings/danger-zone.js';
+
+import { GroupStore } from '../../groups/group-store.js';
+import { groupStoreContext } from '../../groups/context.js';
+import { consume } from '@lit/context';
 
 enum TabsState {
   General,
   Tools,
   Members,
   MyProfile,
+  DangerZone,
 }
 
 /**
@@ -26,6 +32,9 @@ enum TabsState {
 @localized()
 @customElement('group-settings')
 export class GroupSettings extends LitElement {
+  @consume({ context: groupStoreContext, subscribe: true })
+  groupStore!: GroupStore;
+
   @state()
   tabsState: TabsState = TabsState.General;
 
@@ -49,6 +58,10 @@ export class GroupSettings extends LitElement {
     return html` <my-profile-settings></my-profile-settings>`;
   }
 
+  renderDangerZone() {
+    return html`<danger-zone></danger-zone>`;
+  }
+
   renderContent() {
     switch (this.tabsState) {
       case TabsState.General:
@@ -59,6 +72,8 @@ export class GroupSettings extends LitElement {
         return this.renderTools();
       case TabsState.MyProfile:
         return this.renderMyProfile();
+      case TabsState.DangerZone:
+        return this.renderDangerZone();
     }
   }
 
@@ -100,6 +115,14 @@ export class GroupSettings extends LitElement {
             }}
           >
             ${msg('My Profile')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.DangerZone ? 'selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.DangerZone;
+            }}
+          >
+            ${msg('Danger Zone')}
           </button>
         </div>
         <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
