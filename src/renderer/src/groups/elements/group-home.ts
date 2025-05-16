@@ -20,7 +20,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
-import { mdiCog, mdiHomeOutline, mdiLinkVariantPlus } from '@mdi/js';
+import { mdiCog, mdiHomeOutline } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import { Value } from '@sinclair/typebox/value';
