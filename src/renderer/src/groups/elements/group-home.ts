@@ -20,7 +20,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
-import { mdiCog, mdiContentCopy, mdiHomeOutline, mdiLinkVariantPlus } from '@mdi/js';
+import { mdiCog, mdiHomeOutline, mdiLinkVariantPlus } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import { Value } from '@sinclair/typebox/value';
@@ -51,9 +51,10 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/reusable/profile-detail.js';
 import '../../elements/_new_design/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings.js';
+import '../../elements/_new_design/profile/moss-profile-detail.js';
+import '../../elements/_new_design/copy-hash.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -633,17 +634,25 @@ export class GroupHome extends LitElement {
 
   renderMemberProfile() {
     return html`
-      <div class="column">
-        <profile-detail-moss
+      <div class="column" style="margin-bottom: 40px;">
+        <moss-profile-detail
           no-additional-fields
           .agentPubKey=${this._selectedAgent?.agent}
-        ></profile-detail-moss>
+          style="margin-top: 40px;"
+        ></moss-profile-detail>
+        <div class="column items-center" style="margin-top: 9px;">
+          <copy-hash
+            .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
+            .tooltipText=${msg('click to copy public key')}
+            shortened
+          ></copy-hash>
+        </div>
         <div class="row" style="align-items: center; margin-top: 20px;">
-          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Role:</span>
+          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
           <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
         </div>
         <div class="row" style="align-items: center; margin-top: 15px;">
-          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Local Time:</span>
+          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
           ${this._selectedAgent?.tzUtcOffset
             ? html`<span
                 >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
@@ -654,18 +663,6 @@ export class GroupHome extends LitElement {
                 ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
               >`
             : html`<span>unknown</span>`}
-        </div>
-        <span style="font-size: 13px; font-weight: bold; margin-top: 40px;">Public key:</span>
-        <div
-          class="row pubkey-copy"
-          style="align-items: center;"
-          @click=${async () => {
-            await navigator.clipboard.writeText(encodeHashToBase64(this._selectedAgent!.agent));
-            notify(msg('Hash Copied to clipboard.'));
-          }}
-        >
-          <span style="margin-right: 5px;">${encodeHashToBase64(this._selectedAgent!.agent)}</span>
-          <sl-icon .src=${wrapPathInSvg(mdiContentCopy)}></sl-icon>
         </div>
       </div>
     `;
@@ -701,11 +698,6 @@ export class GroupHome extends LitElement {
           class="column"
           style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
         >
-          <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
-            ${this.renderHashForCopying('Group DNA Hash', this.groupStore.groupDnaHash)}
-            ${this.renderHashForCopying('Your Public Key', this.groupStore.groupClient.myPubKey)}
-          </div>
-
           <div
             style=" background-image: url(${groupProfile.icon_src}); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"
           ></div>
@@ -1089,7 +1081,7 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <sl-dialog no-header id="member-profile">
+          <sl-dialog class="moss-dialog profile-detail-popup" no-header id="member-profile">
             ${this._selectedAgent ? this.renderMemberProfile() : ``}
           </sl-dialog>
           <moss-profile-prompt>
@@ -1302,6 +1294,10 @@ export class GroupHome extends LitElement {
       .moss-dialog::part(base) {
         padding-left: 74px;
         padding-top: 74px;
+      }
+
+      .profile-detail-popup::part(panel) {
+        width: 360px;
       }
 
       sl-dialog {

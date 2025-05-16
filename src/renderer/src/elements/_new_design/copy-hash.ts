@@ -42,6 +42,7 @@ export class CopyHash extends LitElement {
         border-radius: 4px;
         padding: 5px 8px 3px 8px;
         cursor: pointer;
+        text-align: center;
       }
     `,
   ];
