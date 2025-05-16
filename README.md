@@ -8,7 +8,7 @@ _Moss_ used to be called _We_, and you can read about it's early instantiation i
 
 ## Installation
 
-You can download the latest public release [here](https://dev.theweave.social/build/overview.html).
+You can download the latest public release [here](https://theweave.social/moss/#download).
 
 If you want to install an unstable dev release, you can pick one on [the releases page](https://github.com/lightningrodlabs/moss/releases).
 
@@ -16,7 +16,7 @@ If you want to install an unstable dev release, you can pick one on [the release
 
 ### Creating a Moss Tool
 
-The details on how to create a _Tool_ can be found [here](docs/how-to-create-a-tool.md).
+The details on how to create a _Tool_ can be found [here](dhttps://dev.theweave.social/build/overview.html).
 
 ### Developering on Moss itself
 
