@@ -194,7 +194,7 @@ export class GroupGeneralSettings extends LitElement {
                       type="button"
                       class="moss-button-secondary"
                       ?disabled=${!this.saveable}
-                      style="margin-right: 8px;"
+                      style="margin-right: 8px; margin-left: 2px;"
                       @click=${() => this.discardChanges()}
                     >
                       ${msg('Discard Changes')}

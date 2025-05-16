@@ -74,7 +74,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
-import { closeIcon } from '../../elements/_new_design/icons.js';
+import { closeIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -879,12 +879,11 @@ export class GroupHome extends LitElement {
               (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).show();
             }}
           >
-            <div class="row center-content">
-              <sl-icon
-                .src=${wrapPathInSvg(mdiLinkVariantPlus)}
-                style="color: white; height: 25px; width: 25px; margin-right: 12px; "
-              ></sl-icon>
-              <div style="font-size: 16px; margin-top: 4px;">${msg('Invite Member')}</div>
+            <div class="row center-content items-center;">
+              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
+              <div style="font-size: 16px; margin-top: 4px; margin-left: 5px;">
+                ${msg('Invite Member')}
+              </div>
             </div>
           </sl-button>
         </div>

@@ -103,7 +103,7 @@ export const weStyles = [
     }
 
     .moss-button:focus-visible {
-      outline: 2px solid orange;
+      outline: 2px solid var(--moss-purple);
     }
 
     /* moss-button-secondary */
@@ -129,6 +129,10 @@ export const weStyles = [
       opacity: 0.4;
       cursor: default;
       background: transparent;
+    }
+
+    .moss-button-secondary:focus-visible {
+      outline: 2px solid var(--moss-purple);
     }
 
     /* moss-card */
