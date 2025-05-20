@@ -443,7 +443,7 @@ export class ActivityView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #224b21;
+        background-color: var(--moss-dark-green);
         border-radius: 5px 0 0 0;
       }
       .feed {

@@ -482,7 +482,7 @@ export class ToolLibraryWeb2 extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #224b21;
+        background-color: var(--moss-dark-green);
         overflow: auto;
         color: var(--sl-color-secondary-950);
         padding: 8px;

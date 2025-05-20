@@ -6,7 +6,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { GroupProfile } from '@theweave/api';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { mdiAccountMultiplePlus, mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';
+import { mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -289,7 +289,7 @@ export class GroupsSidebar extends LitElement {
         ${this.renderGroupsLoading()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
-          <button class="add-group-button"
+          <button class="moss-sidebar-button"
             style="margin-top: 10px;"
             size="large"
             circle
@@ -365,7 +365,7 @@ export class GroupsSidebar extends LitElement {
         padding-bottom: 10px;
       }
 
-      .add-group-button {
+      /* .add-group-button {
         all: unset;
         color: white;
         background: var(--moss-dark-button);
@@ -381,7 +381,7 @@ export class GroupsSidebar extends LitElement {
 
       .add-group-button:focus-visible {
         outline: 2px solid var(--moss-purple);
-      }
+      } */
     `,
   ];
 }

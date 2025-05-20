@@ -13,7 +13,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiMagnify } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -901,7 +901,7 @@ export class MainDashboard extends LitElement {
           (toolCompatibilityId) => html`
             <cross-group-main
               .toolCompatibilityId=${toolCompatibilityId}
-              hostColor="#224b21"
+              hostColor="var(--moss-dark-green);"
               style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
                 ? ''
                 : 'display: none;'}
@@ -1312,6 +1312,10 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
+      <img
+        src="turing-pattern-bottom-left.svg"
+        style="position: fixed; bottom: 0; left: 0; height: 250px;"
+      />
       <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
         <div class="column">
           <div><b>Factory Reset</b></div>
@@ -1513,7 +1517,6 @@ export class MainDashboard extends LitElement {
             .selected=${false}
             .tooltipText=${msg('Home')}
             placement="bottom"
-            tabindex="0"
             @click=${() => {
               this._mossStore.setDashboardState({
                 viewType: 'personal',
@@ -1579,7 +1582,6 @@ export class MainDashboard extends LitElement {
             >
               <div class="column center-content">
                 <img
-                  tabindex="0"
                   class="moss-sidebar-button-icon"
                   src="magic-wand.svg"
                   style="width: 30px; height: 30px;"
@@ -1933,6 +1935,10 @@ export class MainDashboard extends LitElement {
           cursor: pointer;
         }
 
+        .home-button:focus-visible {
+          outline: 2x solid var(--moss-purple);
+        }
+
         .top-left-corner:hover {
           border-radius: 20px 0 0 20px;
           /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
@@ -1999,7 +2005,8 @@ export class MainDashboard extends LitElement {
           bottom: 0;
           right: 0;
           padding-left: 8px;
-          background-color: #224b21;
+          /* background-color: #224b21; */
+          background-color: var(--moss-dark-green);
         }
 
         .personal-view {
@@ -2161,7 +2168,8 @@ export class MainDashboard extends LitElement {
 
         .top-bar {
           position: relative;
-          background: #224b21;
+          /* background: #224b21; */
+          background: var(--moss-dark-green);
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
@@ -2186,49 +2194,6 @@ export class MainDashboard extends LitElement {
           padding: 5px;
           border-radius: 0 0 10px 10px;
         }
-
-        .moss-sidebar-button {
-          all: unset;
-          cursor: pointer;
-          height: 58px;
-          width: 58px;
-          color: #fff;
-          border-radius: 12px;
-        }
-
-        .moss-sidebar-button:hover {
-          background: var(--moss-dark-button);
-        }
-
-        /* .moss-sidebar-button-icon {
-          font-size: 66px;
-          color: #fff;
-          cursor: pointer;
-        }
-
-        .moss-sidebar-button-icon:hover {
-          color: var(--sl-color-primary-50);
-        }
-
-        .moss-sidebar-button-icon:focus {
-          color: var(--sl-color-primary-50);
-        }
-
-        .moss-sidebar-button {
-          width: 40px;
-          height: 40px;
-          outline: none;
-          border: none;
-          color: #fff;
-          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
-          box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-          border-radius: 5px;
-        }
-
-        .moss-sidebar-button:hover {
-          background: linear-gradient(0deg, #203923 0%, #63912a 100%);
-          cursor: pointer;
-        } */
       `,
     ];
   }

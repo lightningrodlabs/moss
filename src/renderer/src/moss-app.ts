@@ -241,7 +241,8 @@ export class MossApp extends LitElement {
 
     try {
       const appInfo = await this._mossStore.joinGroup(modifiers.networkSeed, modifiers.progenitor);
-      const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+      const groupDnaHash: DnaHash = (appInfo.cell_info['group'][0].value as ProvisionedCell)
+        .cell_id[0];
       this.initialGroup = groupDnaHash;
       this.state = MossAppState.Running;
     } catch (e) {
@@ -399,8 +400,8 @@ export class MossApp extends LitElement {
             </button>
 
             <div class="row">
-              <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
-              <div class="dialog-dot"></div>
+              <div class="dialog-dot" style="margin-right: 20px;"></div>
+              <div class="dialog-dot bg-black"></div>
             </div>
           </div>
         </div>

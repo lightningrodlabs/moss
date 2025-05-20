@@ -37,6 +37,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
 import './group-applets.js';
@@ -1155,7 +1156,7 @@ export class GroupHome extends LitElement {
       .title {
         font-size: 25px;
         font-weight: bold;
-        color: #fff;
+        color: white;
       }
       .subtitle {
         font-size: 18px;

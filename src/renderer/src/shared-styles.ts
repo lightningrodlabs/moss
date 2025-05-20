@@ -32,6 +32,8 @@ export const weStyles = [
 
       --moss-medium-green: #85b46e;
 
+      --moss-dark-green: #1c251e;
+
       --moss-hint-green: #324d47;
 
       --moss-grey-green: #4c6a39;
@@ -277,6 +279,26 @@ export const weStyles = [
       --sl-input-background-color: var(--moss-main-green);
       --sl-color-primary-500: var(--moss-main-green);
       --sl-input-background-color-hover: var(--moss-light-green);
+    }
+
+    /* sidebar buttons */
+
+    .moss-sidebar-button {
+      all: unset;
+      cursor: pointer;
+      height: 58px;
+      width: 58px;
+      color: #fff;
+      border-radius: 12px;
+    }
+
+    .moss-sidebar-button:hover {
+      background: var(--moss-dark-button);
+    }
+
+    .moss-sidebar-button:focus-visible {
+      outline: 2px solid var(--moss-purple);
+      background: var(--moss-dark-button);
     }
 
     /* Loading dots for buttons */

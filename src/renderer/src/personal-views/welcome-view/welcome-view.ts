@@ -358,7 +358,8 @@ export class WelcomeView extends LitElement {
         display: flex;
         flex: 1;
         /* background-color: #588121; */
-        background-color: #224b21;
+        /* background-color: #224b21; */
+        background-color: var(--moss-dark-green);
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }
@@ -416,7 +417,7 @@ export class WelcomeView extends LitElement {
 
       .feedback-btn {
         all: unset;
-        background: #000000;
+        background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%);
         border-radius: 16px;
         padding: 16px 20px;
         font-size: 18px;
@@ -429,7 +430,7 @@ export class WelcomeView extends LitElement {
         --sl-color-primary-50: #455b36;
       }
       .feedback-btn:hover {
-        background: linear-gradient(#c34040, #d2485a);
+        background: linear-gradient(#912f2f, #983441);
       }
       .feedback-btn:disabled {
         opacity: 0.4;

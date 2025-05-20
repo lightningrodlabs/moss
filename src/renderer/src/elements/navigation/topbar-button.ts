@@ -98,9 +98,11 @@ export class TopBarButton extends LitElement {
 
         .inverted:hover {
           background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+          background: linear-gradient(180deg, #002800 0%, var(--moss-dark-green) 100%);
         }
         .selected {
-          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+          /* background: linear-gradient(180deg, #002800 0%, #224b21 100%); */
+          background: linear-gradient(180deg, #002800 0%, var(--moss-dark-green) 100%);
         }
       `,
     ];

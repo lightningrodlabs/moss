@@ -132,11 +132,21 @@ export class SidebarButton extends LitElement {
           transition: all 0.25s ease;
         }
         .icon-container:hover {
-          background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%);
+          /* background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%); */
+          background: linear-gradient(
+            90deg,
+            var(--moss-medium-green) 0%,
+            var(--moss-dark-green) 90.91%
+          );
           cursor: pointer;
         }
         .selected {
-          background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%);
+          /* background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%); */
+          background: linear-gradient(
+            90deg,
+            var(--moss-medium-green) 0%,
+            var(--moss-dark-green) 90.91%
+          );
         }
 
         .notification-dot {
