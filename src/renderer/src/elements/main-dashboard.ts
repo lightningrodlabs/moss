@@ -1909,10 +1909,6 @@ export class MainDashboard extends LitElement {
           box-shadow: 0 0 2px 2px #042007b4;
         }
 
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-primary-0);
-        }
-
         .hidden {
           display: none;
         }

@@ -45,6 +45,9 @@ export const weStyles = [
       --moss-purple-semi-transparent: #7461eb38;
 
       --moss-field-grey: #f4f4f4;
+
+      /* shoelace dialog overlay background */
+      --sl-overlay-background-color: #324d4781;
     }
 
     .items-center {

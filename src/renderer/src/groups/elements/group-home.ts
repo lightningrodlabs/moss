@@ -1290,9 +1290,9 @@ export class GroupHome extends LitElement {
       }
 
       /* backdrop should only cover group section, not sidebar */
-      .moss-dialog::part(base) {
-        padding-left: 74px;
-        padding-top: 74px;
+      .moss-dialog::part(overlay) {
+        top: 74px;
+        left: 74px;
       }
 
       .profile-detail-popup::part(panel) {
