@@ -255,7 +255,7 @@ export class MossApp extends LitElement {
 
   renderCreateGroupStep1() {
     return html`
-      <div class="column center-content flex-1">
+      <div class="column center-content flex-1 launch-bg">
         <div class="moss-card" style="width: 630px; height: 466px;">
           <button
             class="moss-hover-icon-button"
@@ -336,7 +336,7 @@ export class MossApp extends LitElement {
    */
   renderCreateGroupStep2() {
     return html`
-      <div class="column center-content flex-1">
+      <div class="column center-content flex-1 launch-bg">
         <div class="moss-card" style="width: 630px; height: 466px;">
           <button
             class="moss-hover-icon-button"
@@ -474,7 +474,7 @@ export class MossApp extends LitElement {
 
   renderInstallingGroup(joining: boolean) {
     return html`
-      <div class="column center-content flex-1">
+      <div class="column center-content flex-1 launch-bg">
         <div class="moss-card" style="width: 630px; height: 466px;">
           <div class="column items-center">
             <div class="card-title" style="margin-top: 30px;">
@@ -501,7 +501,7 @@ export class MossApp extends LitElement {
 
   renderInitialSetup() {
     return html`
-      <div class="column center-content flex-1">
+      <div class="column center-content flex-1 launch-bg">
         <div class="column items-center" style="margin-bottom: 52px;">
           <div style="margin-bottom: 28px;">${mossIcon(58)}</div>
           <div class="dialog-title">${msg('Welcome to Moss.')}</div>
@@ -586,7 +586,7 @@ export class MossApp extends LitElement {
 
   renderErrorPage() {
     return html`
-      <div class="column center-content" style="flex: 1;">
+      <div class="column center-content launch-bg" style="flex: 1;">
         <div class="dialog-title" style="margin-bottom: 30px;">
           ${msg('Holochain failed to start up and crashed :(')}
         </div>
@@ -628,7 +628,7 @@ export class MossApp extends LitElement {
   render() {
     switch (this.state) {
       case MossAppState.Loading:
-        return html`<div class="column center-content" style="flex: 1;">
+        return html`<div class="column center-content launch-bg" style="flex: 1;">
           <img src="loading_animation.svg" />
           <div>${this.loadingText}</div>
         </div>`;
@@ -646,7 +646,11 @@ export class MossApp extends LitElement {
         return this.renderErrorPage();
       case MossAppState.Running:
         return html`
-          <main-dashboard id="main-dashboard" .initialGroup=${this.initialGroup}></main-dashboard>
+          <main-dashboard
+            class="main-bg"
+            id="main-dashboard"
+            .initialGroup=${this.initialGroup}
+          ></main-dashboard>
         `;
       default:
         return html`Unknown state`;
@@ -670,6 +674,15 @@ export class MossApp extends LitElement {
           padding: 10px 20px;
           width: 310px;
           font-weight: 500;
+        }
+
+        .launch-bg {
+          background: url(Moss-launch-background.png);
+          background-size: cover;
+        }
+
+        .main-bg {
+          background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%);
         }
 
         .loading {

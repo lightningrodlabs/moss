@@ -1,6 +1,7 @@
 resources
 !resources/icons
 !resources/icon.png
+!resources/conductor-config.yaml
 node_modules
 dist
 out

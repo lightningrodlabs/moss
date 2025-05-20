@@ -82,7 +82,7 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
-import { closeIcon } from './_new_design/icons.js';
+import { closeIcon, magnifyingGlassIcon } from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -1537,7 +1537,7 @@ export class MainDashboard extends LitElement {
               }
             }}
           >
-            <img src="moss-icon.svg" />
+            <img src="moss-m.svg" style="width: 38px; height: 38px;" />
           </button>
         </div>
 
@@ -1577,16 +1577,18 @@ export class MainDashboard extends LitElement {
                 }
               }}
             >
-              <img
-                tabindex="0"
-                class="moss-sidebar-button-icon"
-                src="magic-wand.svg"
-                style="width: 24px; height: 24px;"
-              />
+              <div class="column center-content">
+                <img
+                  tabindex="0"
+                  class="moss-sidebar-button-icon"
+                  src="magic-wand.svg"
+                  style="width: 30px; height: 30px;"
+                />
+              </div>
             </button>
           </sl-tooltip>
         </div>
-        <div class="row center-content" style="margin-bottom: 5px; position: relative">
+        <div class="row center-content" style="margin-bottom: 10px; position: relative">
           <sl-tooltip content="Search" placement="right" hoist>
             <button
               class="moss-sidebar-button"
@@ -1597,12 +1599,7 @@ export class MainDashboard extends LitElement {
                 }
               }}
             >
-              <sl-icon
-                tabindex="0"
-                class="moss-sidebar-button-icon"
-                .src=${wrapPathInSvg(mdiMagnify)}
-                style="color: #fff; height: 24px; width: 24px"
-              ></sl-icon>
+              <div class="column center-content">${magnifyingGlassIcon(24)}</div>
             </button>
           </sl-tooltip>
           ${this._addedToPocket.value
@@ -1927,7 +1924,8 @@ export class MainDashboard extends LitElement {
         }
 
         .home-button {
-          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
+          /* background: linear-gradient(0deg, #203923 0%, #527a22 100%); */
+          background: var(--moss-dark-button);
           border-radius: 15px;
           border: none;
           width: 58px;
@@ -2148,7 +2146,7 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #142510 0%, #3a622d 100%);
+          /* background: linear-gradient(270deg, #142510 0%, #3a622d 100%); */
           width: 74px;
         }
 
@@ -2193,7 +2191,20 @@ export class MainDashboard extends LitElement {
           border-radius: 0 0 10px 10px;
         }
 
-        .moss-sidebar-button-icon {
+        .moss-sidebar-button {
+          all: unset;
+          cursor: pointer;
+          height: 58px;
+          width: 58px;
+          color: #fff;
+          border-radius: 12px;
+        }
+
+        .moss-sidebar-button:hover {
+          background: var(--moss-dark-button);
+        }
+
+        /* .moss-sidebar-button-icon {
           font-size: 66px;
           color: #fff;
           cursor: pointer;
@@ -2221,7 +2232,7 @@ export class MainDashboard extends LitElement {
         .moss-sidebar-button:hover {
           background: linear-gradient(0deg, #203923 0%, #63912a 100%);
           cursor: pointer;
-        }
+        } */
       `,
     ];
   }
