@@ -158,9 +158,11 @@ export async function installAppWithProgenitor(
   const rolesSettings: RoleSettingsMap = {};
   roleNames.forEach((roleName) => {
     rolesSettings[roleName] = {
-      type: 'Provisioned',
-      modifiers: {
-        properties,
+      type: 'provisioned',
+      value: {
+        modifiers: {
+          properties,
+        },
       },
     };
   });

@@ -15,6 +15,7 @@ import {
   CreateCloneCellRequest,
   DisableCloneCellRequest,
   EnableCloneCellRequest,
+  InstalledAppId,
 } from '@holochain/client';
 
 export type AppletHash = EntryHash;
@@ -31,7 +32,7 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 export type OpenAssetMode = 'front' | 'side' | 'window';
 
 /**
- * String of the format weave-0.13://
+ * String of the format weave-0.14://
  */
 export type WeaveUrl = string;
 
@@ -308,9 +309,27 @@ export type ParentToAppletMessage =
       payload: Uint8Array;
     };
 
+export type IframeKind =
+  | {
+      type: 'applet';
+      appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+      subType: string;
+    }
+  | {
+      type: 'cross-group';
+      toolCompatibilityId: string; // Only required in dev mode when iframe origin is localhost
+      subType: string;
+    };
+
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
-  appletHash?: AppletHash; // Only required in dev mode when iframe origin is localhost
+  source: IframeKind;
+};
+
+export type ZomeCallLogInfo = {
+  fnName: string;
+  installedAppId: InstalledAppId;
+  durationMs: number;
 };
 
 export type AppletToParentRequest =
@@ -318,8 +337,18 @@ export type AppletToParentRequest =
       type: 'ready';
     }
   | {
+      // This one is used by initializeHotReload() and is the only one that
+      // affects the API exposed to tool devs
+      //
+      // It's also used as a means to register the iframe in order for Moss
+      // to be able to send messages to it
       type: 'get-iframe-config';
-      crossGroup: boolean;
+      id: string;
+      subType: 'main' | 'asset' | 'block' | 'creatable';
+    }
+  | {
+      type: 'unregister-iframe';
+      id: string;
     }
   | {
       type: 'get-record-info';
@@ -328,6 +357,10 @@ export type AppletToParentRequest =
   | {
       type: 'sign-zome-call';
       request: CallZomeRequest;
+    }
+  | {
+      type: 'log-zome-call';
+      info: ZomeCallLogInfo;
     }
   | {
       type: 'open-view';
@@ -374,21 +407,6 @@ export type AppletToParentRequest =
       dialogId: string;
     }
   | {
-      type: 'localStorage.setItem';
-      key: string;
-      value: string;
-    }
-  | {
-      type: 'localStorage.removeItem';
-      key: string;
-    }
-  | {
-      type: 'localStorage.clear';
-    }
-  | {
-      type: 'get-localStorage';
-    }
-  | {
       type: 'get-applet-iframe-script';
     }
   | {
@@ -420,6 +438,10 @@ export type AppletToParentRequest =
     }
   | {
       type: 'user-select-asset';
+      from?: 'search' | 'pocket' | 'create';
+    }
+  | {
+      type: 'user-select-asset-relation-tag';
     }
   | {
       type: 'get-global-asset-info';
@@ -458,6 +480,10 @@ export type AppletToParentRequest =
       type: 'remove-tags-from-asset-relation';
       relationHash: EntryHash;
       tags: string[];
+    }
+  | {
+      type: 'get-all-asset-relation-tags';
+      crossGroup?: boolean;
     }
   | {
       type: 'subscribe-to-asset-store';
@@ -499,19 +525,29 @@ export type IframeConfig =
   | {
       type: 'applet';
       appPort: number;
+      /**
+       * The origin of the main Moss UI. Used to validate iframe message origins.
+       */
+      mainUiOrigin: string;
       appletHash: EntryHash;
       authenticationToken: AppAuthenticationToken;
       weaveProtocolVersion: string;
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
+      zomeCallLogging: boolean;
     }
   | {
-      type: 'cross-applet';
+      type: 'cross-group';
       appPort: number;
+      /**
+       * The origin of the main Moss UI. Used to validate iframe message origins.
+       */
+      mainUiOrigin: string;
       weaveProtocolVersion: string;
       mossVersion: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
+      zomeCallLogging: boolean;
     }
   | {
       type: 'not-installed';

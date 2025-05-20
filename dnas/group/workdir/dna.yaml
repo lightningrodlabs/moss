@@ -4,7 +4,6 @@ name: group
 integrity:
   network_seed: ~
   properties: ~
-  origin_time: 2024-06-03T13:55:49.200Z
   zomes:
     - name: group_integrity
       bundled: ../../../target/wasm32-unknown-unknown/release/group_integrity.wasm

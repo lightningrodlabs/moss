@@ -35,25 +35,15 @@ const CallZomeRequest = Type.Object(
 );
 
 const MembraneProof = Type.Uint8Array();
-const Timestamp = Type.Number();
 /**
  * Any Yaml serializable properties
  */
 const DnaProperties = Type.Unknown();
-const Duration = Type.Object(
-  {
-    secs: Type.Number(),
-    nanos: Type.Number(),
-  },
-  { additionalProperties: false },
-);
 
 const DnaModifiersOpt = Type.Object(
   {
     network_seed: Type.Optional(Type.String()),
     properties: Type.Optional(DnaProperties),
-    origin_time: Type.Optional(Timestamp),
-    quantum_time: Type.Optional(Duration),
   },
   { additionalProperties: false },
 );
@@ -218,6 +208,15 @@ const CreatableResult = Type.Union([
   ),
 ]);
 
+const ZomeCallLogInfo = Type.Object(
+  {
+    fnName: Type.String(),
+    installedAppId: Type.String(),
+    durationMs: Type.Number(),
+  },
+  { additionalProperties: false },
+);
+
 export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
@@ -228,7 +227,23 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('get-iframe-config'),
-      crossGroup: Type.Boolean(),
+      id: Type.String(),
+      subType: Type.Union([
+        Type.Literal('main'),
+        Type.Literal('asset'),
+        Type.Literal('creatable'),
+        Type.Literal('block'),
+      ]),
+      // TODO remove the crossGroup field altogether once it's removed in @theweave/api
+      // since it's not required anymore
+      crossGroup: Type.Optional(Type.Boolean()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('unregister-iframe'),
+      id: Type.String(),
     },
     { additionalProperties: false },
   ),
@@ -243,6 +258,13 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('sign-zome-call'),
       request: CallZomeRequest,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('log-zome-call'),
+      info: ZomeCallLogInfo,
     },
     { additionalProperties: false },
   ),
@@ -322,33 +344,6 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('localStorage.setItem'),
-      key: Type.String(),
-      value: Type.String(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('localStorage.removeItem'),
-      key: Type.String(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('localStorage.clear'),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('get-localStorage'),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
       type: Type.Literal('get-applet-iframe-script'),
     },
     { additionalProperties: false },
@@ -408,6 +403,15 @@ export const AppletToParentRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('user-select-asset'),
+      from: Type.Optional(
+        Type.Union([Type.Literal('search'), Type.Literal('pocket'), Type.Literal('create')]),
+      ),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('user-select-asset-relation-tag'),
     },
     { additionalProperties: false },
   ),
@@ -470,6 +474,13 @@ export const AppletToParentRequest = Type.Union([
       type: Type.Literal('remove-tags-from-asset-relation'),
       relationHash: EntryHash,
       tags: Type.Array(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('get-all-asset-relation-tags'),
+      crossGroup: Type.Optional(Type.Boolean()),
     },
     { additionalProperties: false },
   ),

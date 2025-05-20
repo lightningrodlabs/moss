@@ -281,11 +281,11 @@ export class AppletMain extends LitElement {
 
   renderCells() {
     const provisionedCells = this.cells
-      .filter((cell) => CellType.Provisioned in cell)
-      .map((cell) => cell[CellType.Provisioned] as ProvisionedCell);
+      .filter((cell) => cell.type === CellType.Provisioned)
+      .map((cell) => cell.value);
     const clonedCells = this.cells
-      .filter((cell) => CellType.Cloned in cell)
-      .map((cell) => cell[CellType.Cloned] as ClonedCell);
+      .filter((cell) => cell.type === CellType.Cloned)
+      .map((cell) => cell.value);
     return html`
       ${provisionedCells.map(
         (cell) => html`<div class="cell-card">${cell.name} (provisioned)</div>`
@@ -317,6 +317,22 @@ export class AppletMain extends LitElement {
             <button @click=${() => this.sendUrgentNotification(5000)}>
               Send High Urgency Notification with 5 seconds delay
             </button>
+
+            <h2>Local Storage</h2>
+
+            <button @click=${() => {
+              console.log('localstorage: ', window.localStorage);
+            }}>Log localstorage</button>
+
+            <h2>Media Access</h2>
+            <button @click=${async () => {
+              await navigator.mediaDevices.getUserMedia({
+                audio: {
+                  noiseSuppression: true,
+                  echoCancellation: true,
+                },
+              });
+            }}>Request Audio Access</button>
 
             <h2>on-before-unload behavior</h2>
 

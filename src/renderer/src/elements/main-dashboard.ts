@@ -39,6 +39,7 @@ import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
 import '../personal-views/welcome-view/welcome-view.js';
 import '../personal-views/activity-view/activity-view.js';
+import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './navigation/group-applets-sidebar.js';
@@ -57,19 +58,18 @@ import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
+import './asset-tags/tag-selection-dialog.js';
 import './pocket/pocket.js';
 import './pocket/pocket-drop.js';
-import './creatables/creatable-panel.js';
+import './creatables/creatable-palette.js';
 import { MossPocket } from './pocket/pocket.js';
-import { CreatablePanel } from './creatables/creatable-panel.js';
+import { CreatablePalette } from './creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import {
   decodeContext,
   getAllIframes,
-  logMossZomeCall,
-  postMessageToAppletIframes,
   postMessageToIframe,
   progenitorFromProperties,
 } from '../utils.js';
@@ -78,6 +78,8 @@ import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
+import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
+import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -143,11 +145,14 @@ export class MainDashboard extends LitElement {
   @query('#settings-dialog')
   settingsDialog!: SlDialog;
 
+  @query('#tag-selection-dialog')
+  _tagSelectionDialog!: TagSelectionDialog;
+
   @query('#pocket')
   _pocket!: MossPocket;
 
-  @query('#creatable-panel')
-  _creatablePanel!: CreatablePanel;
+  @query('#creatable-palette')
+  _creatablePalette!: CreatablePalette;
 
   @state()
   appVersion: string | undefined;
@@ -278,7 +283,7 @@ export class MainDashboard extends LitElement {
       throw new Error('Opening applet blocks is currently not implemented.');
     },
     openCrossGroupMain: (_appletBundleHash) => {
-      throw new Error('Opening cross-applet main views is currently not implemented.');
+      throw new Error('Opening cross-group main views is currently not implemented.');
     },
     openCrossGroupBlock: (_appletBundleHash, _block, _context) => {
       throw new Error('Opening cross-applet blocks is currently not implemented.');
@@ -309,8 +314,12 @@ export class MainDashboard extends LitElement {
         });
       }
     },
-    userSelectWal: async () => {
-      this._pocket.show('select');
+    userSelectWal: async (from, groupDnaHash) => {
+      if (from === 'create') {
+        this._creatablePalette.show(groupDnaHash);
+      } else {
+        this._pocket.show('select');
+      }
 
       return new Promise((resolve) => {
         const listener = (e) => {
@@ -327,6 +336,26 @@ export class MainDashboard extends LitElement {
         };
         this.addEventListener('wal-selected', listener);
         this.addEventListener('cancel-select-wal', listener);
+      });
+    },
+    userSelectAssetRelationTag: async () => {
+      this._tagSelectionDialog.show();
+
+      return new Promise((resolve) => {
+        const listener = (e) => {
+          switch (e.type) {
+            case 'cancel-select-asset-relation-tag':
+              this.removeEventListener('cancel-select-asset-relation-tag', listener);
+              return resolve(undefined);
+            case 'asset-relation-tag-selected':
+              const tag: string = e.detail;
+              this.removeEventListener('asset-relation-tag-selected', listener);
+              this._tagSelectionDialog.hide();
+              return resolve(tag);
+          }
+        };
+        this.addEventListener('asset-relation-tag-selected', listener);
+        this.addEventListener('cancel-select-asset-relation-tag', listener);
       });
     },
     toggleClipboard: () => this.toggleClipboard(),
@@ -519,7 +548,10 @@ export class MainDashboard extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await postMessageToAppletIframes({ type: 'all' }, { type: 'on-before-unload' });
+      await this._mossStore.iframeStore.postMessageToAppletIframes(
+        { type: 'all' },
+        { type: 'on-before-unload' },
+      );
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in index.html
@@ -543,25 +575,41 @@ export class MainDashboard extends LitElement {
 
     window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
-      console.log('Got cross window applet to parent message: ', payload);
-      if (!payload.message.appletHash)
-        throw new Error('appletHash not defined in AppletToParentMessage');
+      if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
         this._mossStore,
         this.openViews,
-        encodeHashToBase64(payload.message.appletHash),
+        payload.message.source,
         payload.message.request,
+        'wal-window',
       );
       await window.electronAPI.appletMessageToParentResponse(response, payload.id);
     });
+
+    // Received from WAL windows on request when the main window is reloaded
+    window.electronAPI.onIframeStoreSync((_e, payload) => {
+      const [appletIframes, crossGroupIframes] = payload;
+      Object.entries(appletIframes).forEach(([appletId, iframes]) => {
+        iframes.forEach(({ id, subType }) => {
+          this._mossStore.iframeStore.registerAppletIframe(appletId, id, subType, 'wal-window');
+        });
+      });
+      Object.entries(crossGroupIframes).forEach(([toolCompatibilityId, iframes]) => {
+        iframes.forEach(({ id, subType }) => {
+          this._mossStore.iframeStore.registerCrossGroupIframe(
+            toolCompatibilityId,
+            id,
+            subType,
+            'wal-window',
+          );
+        });
+      });
+    });
+
     window.electronAPI.onSwitchToApplet((_, appletId) => {
       if (appletId) {
         this.openViews.openAppletMain(decodeHashFromBase64(appletId));
       }
-    });
-
-    window.electronAPI.onZomeCallSigned((_, { cellIdB64, fnName, zomeName }) => {
-      logMossZomeCall(cellIdB64, fnName, zomeName);
     });
 
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
@@ -616,6 +664,10 @@ export class MainDashboard extends LitElement {
       }
     });
 
+    this._mossStore.on('open-asset', (wal) => {
+      this.handleOpenWal(wal);
+    });
+
     // setInterval(() => {
     //   const allIframes = getAllIframes();
     //   console.log('CURRENT IFRAME COUNT: ', allIframes.length);
@@ -629,15 +681,23 @@ export class MainDashboard extends LitElement {
         'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
       );
       const updateFeed = await response.json();
-      if (updateFeed['0.13.x']) {
-        this._updateFeed = updateFeed['0.13.x'];
+      if (updateFeed['0.14.x']) {
+        this._updateFeed = updateFeed['0.14.x'];
       }
     } catch (e) {
       console.warn('Failed to fetch update feed: ', e);
     }
 
+    await window.electronAPI.requestIframeStoreSync();
+
     // Load all notifications for the last week
     await this._mossStore.loadNotificationFeed(7);
+  }
+
+  selectedGroupDnaHash() {
+    return this._dashboardState.value.viewType === 'group'
+      ? this._dashboardState.value.groupHash
+      : undefined;
   }
 
   openClipboard() {
@@ -648,8 +708,8 @@ export class MainDashboard extends LitElement {
 
   openCreatablePanel() {
     this.showCreatablePanel = true;
-    this._creatablePanel.show();
-    this._creatablePanel.focus();
+    this._creatablePalette.show(this.selectedGroupDnaHash());
+    this._creatablePalette.focus();
   }
 
   closeClipboard() {
@@ -817,11 +877,16 @@ export class MainDashboard extends LitElement {
   }
 
   renderToolCrossGroupViews() {
+    const personalToolView =
+      this._dashboardState.value.viewType === 'personal' &&
+      this._dashboardState.value.viewState.type === 'tool';
     switch (this._runningAppletClasses.value.status) {
       case 'pending':
-        return html`Loading running tool classes...`;
+        return personalToolView ? html`Loading running tool classes...` : html``;
       case 'error':
-        return html`Failed to get running tool classes: ${this._runningAppletClasses.value.error}`;
+        return personalToolView
+          ? html`Failed to get running tool classes: ${this._runningAppletClasses.value.error}`
+          : html``;
       case 'complete':
         return repeat(
           Object.keys(this._runningAppletClasses.value.value),
@@ -859,6 +924,15 @@ export class MainDashboard extends LitElement {
           this.openViews.openAppletMain(e.detail.appletHash);
         }}
       ></welcome-view>
+
+      <assets-graph
+        id="assets-graph"
+        style="${this.displayMossView('assets-graph')
+          ? 'display: flex; flex: 1;'
+          : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: hidden;"
+      ></assets-graph>
 
       <activity-view
         @open-wal=${async (e) => {
@@ -1235,12 +1309,33 @@ export class MainDashboard extends LitElement {
           >Close</sl-button
         >
       </sl-dialog>
+      <tag-selection-dialog
+        id="tag-selection-dialog"
+        @asset-relation-tag-selected=${(e) => {
+          this.dispatchEvent(
+            new CustomEvent('asset-relation-tag-selected', {
+              detail: e.detail,
+              bubbles: false,
+              composed: false,
+            }),
+          );
+        }}
+        @sl-hide=${(_e) => {
+          this.dispatchEvent(
+            new CustomEvent('cancel-select-asset-relation-tag', {
+              bubbles: false,
+              composed: false,
+            }),
+          );
+          this.showClipboard = false;
+        }}
+      ></tag-selection-dialog>
       <moss-pocket
         id="pocket"
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
-        @open-creatable-panel=${() => this._creatablePanel.show()}
+        @open-creatable-palette=${() => this._creatablePalette.show(this.selectedGroupDnaHash())}
         @wal-selected=${(e) => {
           this.dispatchEvent(
             new CustomEvent('wal-selected', {
@@ -1260,8 +1355,8 @@ export class MainDashboard extends LitElement {
           this.showClipboard = false;
         }}
       ></moss-pocket>
-      <creatable-panel
-        id="creatable-panel"
+      <creatable-palette
+        id="creatable-palette"
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @wal-selected=${(e) => {
@@ -1273,7 +1368,7 @@ export class MainDashboard extends LitElement {
             }),
           );
         }}
-      ></creatable-panel>
+      ></creatable-palette>
 
       ${this.renderAddGroupDialog()}
 
@@ -1319,7 +1414,6 @@ export class MainDashboard extends LitElement {
             class="drawer-separator"
             style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
             @mousedown=${(e) => {
-              console.log('Got mousedown event: ', e);
               this.resizeMouseDownHandler(e);
             }}
           ></div>
@@ -1625,12 +1719,21 @@ export class MainDashboard extends LitElement {
             .selectedView=${this._dashboardState.value.viewType === 'personal'
               ? this._dashboardState.value.viewState
               : undefined}
-            @personal-view-selected=${(e) => {
-              console.log('@tool-selected: ', e);
+            @personal-view-selected=${async (e) => {
+              console.log('@personal-view-selected: ', e);
               this._mossStore.setDashboardState({
                 viewType: 'personal',
                 viewState: e.detail,
               });
+              if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
+                const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
+                  | AssetsGraph
+                  | null
+                  | undefined;
+                if (assetsGraphEl) {
+                  await assetsGraphEl.load();
+                }
+              }
             }}
           ></personal-view-sidebar>
         </div>

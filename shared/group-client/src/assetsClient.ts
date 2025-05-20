@@ -107,7 +107,7 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
       tags: tags ? tags : [],
     };
     const assetRelationWithTags = await this.callZome('add_asset_relation', input);
-    return decodeAssetRelationWALs(assetRelationWithTags);
+    return decodeAssetRelationWALs(assetRelationWithTags) as AssetRelationWithTags;
   }
 
   async removeAssetRelation(relationHash: EntryHash): Promise<void> {
@@ -122,7 +122,7 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
   }
 
   async removeTagsFromAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
-    return this.callZome('add_tags_to_asset_relation', {
+    return this.callZome('remove_tags_from_asset_relation', {
       relation_hash: relationHash,
       tags,
     });
@@ -141,7 +141,7 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
       'get_outgoing_asset_relations_with_tags',
       walEncodeContext(srcWal),
     );
-    return decodeAssetRelationsWALs(assetRelations);
+    return decodeAssetRelationsWALs(assetRelations) as AssetRelationWithTags[];
   }
 
   async getIncomingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
@@ -157,7 +157,7 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
       'get_incoming_asset_relations_with_tags',
       walEncodeContext(srcWal),
     );
-    return decodeAssetRelationsWALs(assetRelations);
+    return decodeAssetRelationsWALs(assetRelations) as AssetRelationWithTags[];
   }
 
   async addTagsToAsset(wal: WAL, tags: string[]): Promise<void> {
@@ -180,11 +180,40 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
   }
 
   async getAllRelationsForWal(wal: WAL): Promise<RelationsForWal> {
-    return this.callZome('get_all_relations_for_wal', walEncodeContext(wal));
+    const relationsForWal: RelationsForWal = await this.callZome(
+      'get_all_relations_for_wal',
+      walEncodeContext(wal),
+    );
+
+    return {
+      wal: relationsForWal.wal,
+      tags: relationsForWal.tags,
+      linked_from: decodeAssetRelationsWALs(relationsForWal.linked_from) as AssetRelationWithTags[],
+      linked_to: decodeAssetRelationsWALs(relationsForWal.linked_to) as AssetRelationWithTags[],
+    };
   }
 
   async batchGetAllRelationsForWal(wals: WAL[]): Promise<RelationsForWal[]> {
-    return this.callZome('batch_get_all_relations_for_wal', walsEncodeContext(wals));
+    const relationsForWals: RelationsForWal[] = await this.callZome(
+      'batch_get_all_relations_for_wal',
+      walsEncodeContext(wals),
+    );
+    return relationsForWals.map((relationsForWal) => ({
+      wal: relationsForWal.wal,
+      tags: relationsForWal.tags,
+      linked_from: decodeAssetRelationsWALs(relationsForWal.linked_from) as AssetRelationWithTags[],
+      linked_to: decodeAssetRelationsWALs(relationsForWal.linked_to) as AssetRelationWithTags[],
+    }));
+  }
+
+  async getAllAssetRelations(): Promise<AssetRelationAndHash[]> {
+    const assetRelationsAndHash = await this.callZome('get_all_asset_relations', null);
+    return decodeAssetRelationsWALs(assetRelationsAndHash);
+  }
+
+  async getAllAssetRelationsWithTags(): Promise<AssetRelationWithTags[]> {
+    const assetRelationsWithTags = await this.callZome('get_all_asset_relations_with_tags', null);
+    return decodeAssetRelationsWALs(assetRelationsWithTags) as AssetRelationWithTags[];
   }
 }
 
@@ -220,18 +249,25 @@ export function walsEncodeContext(wals: WAL[]): WAL[] {
 
 export function decodeAssetRelationsWALs(
   relationsWithTags: AssetRelationWithTags[],
-): AssetRelationWithTags[] {
+): AssetRelationWithTags[] | AssetRelationAndHash[] {
   return relationsWithTags.map((relationWithTags) => decodeAssetRelationWALs(relationWithTags));
 }
 
 export function decodeAssetRelationWALs(
-  relationWithTags: AssetRelationWithTags,
-): AssetRelationWithTags {
-  return {
-    src_wal: walDecodeContext(relationWithTags.src_wal),
-    dst_wal: walDecodeContext(relationWithTags.dst_wal),
-    tags: relationWithTags.tags,
-    relation_hash: relationWithTags.relation_hash,
-    created_at: relationWithTags.created_at,
-  };
+  relationWithTags: AssetRelationWithTags | AssetRelationAndHash,
+): AssetRelationWithTags | AssetRelationAndHash {
+  return 'tags' in relationWithTags
+    ? {
+        src_wal: walDecodeContext(relationWithTags.src_wal),
+        dst_wal: walDecodeContext(relationWithTags.dst_wal),
+        tags: relationWithTags.tags,
+        relation_hash: relationWithTags.relation_hash,
+        created_at: relationWithTags.created_at,
+      }
+    : {
+        src_wal: walDecodeContext(relationWithTags.src_wal),
+        dst_wal: walDecodeContext(relationWithTags.dst_wal),
+        relation_hash: relationWithTags.relation_hash,
+        created_at: relationWithTags.created_at,
+      };
 }

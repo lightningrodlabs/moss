@@ -33,7 +33,6 @@ export default defineConfig({
       '@holochain-open-dev/elements/dist/elements/display-error.js',
       '@theweave/api',
       '@theweave/elements',
-      '@theweave/attachments',
     ],
   },
   plugins: [
@@ -45,6 +44,10 @@ export default defineConfig({
         {
           src: '../../node_modules/@shoelace-style/shoelace/dist/assets',
           dest: path.resolve(__dirname, 'dist/shoelace'),
+        },
+        {
+          src: './weave.config.json',
+          dest: '.',
         },
       ],
     }),

@@ -14,6 +14,7 @@ import {
   desktopCapturer,
   Notification,
   systemPreferences,
+  MediaAccessPermissionRequest,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -66,15 +67,17 @@ import {
   AgentPubKeyB64,
   AppInfo,
   CallZomeRequest,
+  DnaHashB64,
   InstalledAppId,
   encodeHashToBase64,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
-import { handleAppletProtocol } from './customSchemes';
+import { handleAppletProtocol, handleCrossGroupProtocol } from './customSchemes';
 import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -86,6 +89,7 @@ import {
   appletIdFromAppId,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
+  toOriginalCaseB64,
 } from '@theweave/utils';
 import { Jimp } from 'jimp';
 
@@ -95,13 +99,13 @@ let appVersion = app.getVersion();
 
 // console.log('process.argv: ', process.argv);
 
-// Set as default protocol client for weave-0.13 deep links
+// Set as default protocol client for weave-0.14 deep links
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('weave-0.13', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient('weave-0.14', process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('weave-0.13');
+  app.setAsDefaultProtocolClient('weave-0.14');
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
@@ -181,7 +185,7 @@ program
   )
   .option(
     '--force-production-urls',
-    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use hc-local-services to spin up a local bootstrap and signaling server instead during development.',
+    'Explicitly allow using the production URLs of bootstrap and/or singaling server during applet development. It is recommended to use kitsune2-bootstrap-srv to spin up a local bootstrap and signaling server instead during development.',
   )
   .option(
     '--print-holochain-logs',
@@ -269,7 +273,7 @@ if (!RUNNING_WITH_COMMAND) {
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
-        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.13://'));
+        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.14://'));
       }
 
       // This event will always be triggered in the first instance, no matter with which profile
@@ -349,6 +353,10 @@ if (!RUNNING_WITH_COMMAND) {
       privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
     },
     {
+      scheme: 'cross-group',
+      privileges: { standard: true, supportFetchAPI: true, secure: true, stream: true },
+    },
+    {
       scheme: 'moss',
       privileges: {
         standard: true,
@@ -405,15 +413,6 @@ if (!RUNNING_WITH_COMMAND) {
 
   const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
     if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-    if (MAIN_WINDOW)
-      emitToWindow(MAIN_WINDOW, 'zome-call-signed', {
-        cellIdB64: [
-          encodeHashToBase64(new Uint8Array(zomeCall.cell_id[0])),
-          encodeHashToBase64(new Uint8Array(zomeCall.cell_id[1])),
-        ],
-        fnName: zomeCall.fn_name,
-        zomeName: zomeCall.zome_name,
-      });
     return signZomeCall(zomeCall, WE_RUST_HANDLER);
   };
 
@@ -592,11 +591,20 @@ if (!RUNNING_WITH_COMMAND) {
     session.defaultSession.setPermissionRequestHandler(
       async (webContents, permission, callback, details) => {
         if (permission === 'media') {
-          const unknownRequested = !details.mediaTypes || details.mediaTypes.length === 0;
-          const videoRequested = details.mediaTypes?.includes('video') || unknownRequested;
-          const audioRequested = details.mediaTypes?.includes('audio') || unknownRequested;
+          const unknownRequested =
+            !(details as MediaAccessPermissionRequest).mediaTypes ||
+            (details as MediaAccessPermissionRequest).mediaTypes?.length === 0;
+          const videoRequested =
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video') ||
+            unknownRequested;
+          const audioRequested =
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ||
+            unknownRequested;
 
-          console.log('@permissionRequestHandler: details.mediaTypes: ', details.mediaTypes);
+          console.log(
+            '@permissionRequestHandler: details.mediaTypes: ',
+            (details as MediaAccessPermissionRequest).mediaTypes,
+          );
 
           let requestingWindow: BrowserWindow | undefined;
           if (MAIN_WINDOW && webContents.id === MAIN_WINDOW.webContents.id) {
@@ -621,12 +629,15 @@ if (!RUNNING_WITH_COMMAND) {
             try {
               const assetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appletAppId);
               console.log('assetInfo: ', assetInfo);
-              if (assetInfo.distributionInfo.type === 'tools-library') {
-                toolId = assetInfo.distributionInfo.info.originalToolActionHash;
+              if (assetInfo.distributionInfo.type === 'web2-tool-list') {
+                toolId = assetInfo.distributionInfo.info.toolCompatibilityId;
               }
             } catch (e) {
               console.warn('Failed to read assetInfo during permission request.');
             }
+          } else if (details.requestingUrl.startsWith('cross-group://')) {
+            toolId = toOriginalCaseB64(details.requestingUrl.slice(14).split('/')[0]);
+            console.log('@permissionRequestHandler: GOT TOOLID for cross-group iframe: ', toolId);
           }
 
           // On macOS, OS level permission for camera/microhone access needs to be given
@@ -708,8 +719,10 @@ if (!RUNNING_WITH_COMMAND) {
           }
 
           let messageContent = `A Tool wants to access the following:${
-            details.mediaTypes?.includes('video') ? '\n* camera' : ''
-          }${details.mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
+              ? '\n* camera'
+              : ''
+          }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
           if (unknownRequested) {
             messageContent =
               'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
@@ -748,11 +761,12 @@ if (!RUNNING_WITH_COMMAND) {
     );
 
     SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
-    SYSTRAY.setToolTip('Moss (0.13)');
+    SYSTRAY.setToolTip('Moss (0.14)');
 
     const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
     handleAppletProtocol(WE_FILE_SYSTEM);
+    handleCrossGroupProtocol(WE_FILE_SYSTEM);
 
     const contextMenu = Menu.buildFromTemplate([
       {
@@ -792,7 +806,6 @@ if (!RUNNING_WITH_COMMAND) {
       },
     ]);
 
-    SYSTRAY.setToolTip('Moss');
     SYSTRAY.setContextMenu(contextMenu);
 
     if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
@@ -824,6 +837,8 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('exit', () => {
       app.exit(0);
     });
+    ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
+    ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
     ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',
@@ -928,13 +943,22 @@ if (!RUNNING_WITH_COMMAND) {
       'parent-to-applet-message',
       (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
         // We send this to all wal windows as they may also contain embeddables
-        console.log('Sending parent-to-applet-message to windows. Message: ', message);
-        console.log('Sending parent-to-applet-message to windows. forApplets: ', forApplets);
         Object.values(WAL_WINDOWS).forEach(({ window }) =>
           emitToWindow(window, 'parent-to-applet-message', { message, forApplets }),
         );
       },
     );
+    // This is called by the main window if it's being reloaded, in order to re-sync the
+    // IframeStore
+    ipcMain.handle('request-iframe-store-sync', (): void => {
+      Object.values(WAL_WINDOWS).forEach(({ window }) =>
+        emitToWindow(window, 'request-iframe-store-sync', null),
+      );
+    });
+    // Called by WAL windows to send their IframeStore state to the main window
+    ipcMain.handle('iframe-store-sync', (_e, storeContent): void => {
+      if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'iframe-store-sync', storeContent);
+    });
     ipcMain.handle('get-app-version', (): string => app.getVersion());
     ipcMain.handle(
       'dialog-messagebox',
@@ -993,7 +1017,7 @@ if (!RUNNING_WITH_COMMAND) {
         wal,
       };
     });
-    // To be called by WAL windows to find out which src the iframev is supposed to use
+    // To be called by WAL windows to find out which src the iframe is supposed to use
     ipcMain.handle(
       'get-my-src',
       (e): { iframeSrc: string; appletId: AppletId; wal: WAL } | undefined => {
@@ -1101,13 +1125,24 @@ if (!RUNNING_WITH_COMMAND) {
                 appAssetsInfo.type === 'webhapp' &&
                 appAssetsInfo.ui.location.type === 'localhost'
               ) {
+                // We want this to time out because it seems to never return sometimes
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 2000);
                 try {
                   // console.log('Trying to fetch weave.config.json from localhost');
                   const resp = await net.fetch(
                     `http://localhost:${appAssetsInfo.ui.location.port}/weave.config.json`,
+                    { signal: controller.signal },
                   );
+                  clearTimeout(id);
                   toolWeaveConfig = await resp.json();
-                } catch (e) {
+                } catch (e: any) {
+                  clearTimeout(id);
+                  if (e.name && e.name === 'AbortError') {
+                    console.error(
+                      `Fetch request for AssetInfo from localhost on port ${appAssetsInfo.ui.location.port} timed out after 2000ms.`,
+                    );
+                  }
                   // invalid or inexistent weave config - ignore
                 }
               }
@@ -1143,7 +1178,7 @@ if (!RUNNING_WITH_COMMAND) {
         app_port: HOLOCHAIN_MANAGER!.appPort,
         admin_port: HOLOCHAIN_MANAGER!.adminPort,
         moss_version: app.getVersion(),
-        weave_protocol_version: '0.13',
+        weave_protocol_version: '0.14',
       };
     });
     ipcMain.handle(
@@ -1157,6 +1192,18 @@ if (!RUNNING_WITH_COMMAND) {
           return readIcon(resourceLocation);
         }
         return WE_FILE_SYSTEM.readToolIcon(toolId);
+      },
+    );
+    ipcMain.handle(
+      'get-group-profile',
+      (_e, groupDnaHashB64: DnaHashB64): GroupProfile | undefined => {
+        return WE_FILE_SYSTEM.readGroupProfile(groupDnaHashB64);
+      },
+    );
+    ipcMain.handle(
+      'store-group-profile',
+      (_e, groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile): void => {
+        return WE_FILE_SYSTEM.storeGroupProfile(groupDnaHashB64, groupProfile);
       },
     );
     ipcMain.handle('lair-setup-required', (): [boolean, boolean] => {
@@ -1184,15 +1231,20 @@ if (!RUNNING_WITH_COMMAND) {
         : { progenitor: null };
 
       const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        path: groupHappPath,
+        source: {
+          type: 'path',
+          value: groupHappPath,
+        },
         installed_app_id: appId,
         agent_key: agentPubKey,
         network_seed: networkSeed,
         roles_settings: {
           group: {
-            type: 'Provisioned',
-            modifiers: {
-              properties,
+            type: 'provisioned',
+            value: {
+              modifiers: {
+                properties,
+              },
             },
           },
         },
@@ -1225,15 +1277,20 @@ if (!RUNNING_WITH_COMMAND) {
         const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
         const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          path: groupHappPath,
+          source: {
+            type: 'path',
+            value: groupHappPath,
+          },
           installed_app_id: appId,
           agent_key: agentPubKey,
           network_seed: networkSeed,
           roles_settings: {
             group: {
-              type: 'Provisioned',
-              modifiers: {
-                properties: { progenitor },
+              type: 'provisioned',
+              value: {
+                modifiers: {
+                  properties: { progenitor },
+                },
               },
             },
           },
@@ -1379,6 +1436,10 @@ if (!RUNNING_WITH_COMMAND) {
 
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
 
+        // Clear the cache of Tool Class UI asset directories to make sure
+        // cross-group views get the new UI served as well going forward
+        WE_FILE_SYSTEM.clearToolUiAssetsCache();
+
         return allAppletAppIds.map((id) => appletIdFromAppId(id));
       },
     );
@@ -1449,6 +1510,9 @@ if (!RUNNING_WITH_COMMAND) {
         );
         WE_FILE_SYSTEM.backupAppAssetsInfo(appId);
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
+        // Clear the cache of Tool Class UI asset directories to make sure
+        // cross-group views get the new UI served as well going forward
+        WE_FILE_SYSTEM.clearToolUiAssetsCache();
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
       },
     );
@@ -1465,7 +1529,7 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('dump-network-stats', async (_e): Promise<void> => {
       const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
       const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
-      fs.writeFileSync(filePath, stats, 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(stats, undefined, 2), 'utf-8');
     });
     ipcMain.handle(
       'install-applet-bundle',
@@ -1478,6 +1542,36 @@ if (!RUNNING_WITH_COMMAND) {
         appHashes: AppHashes,
         uiPort?: number,
       ): Promise<AppInfo> => {
+        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+        const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
+
+        // We need to distinguish 3 possible cases:
+        //
+        // 1. happ is not installed in the conductor yet (normal case)
+        //
+        // 2. happ is already installed in the conductor and app asset info is stored as well.
+        //    This case can occur in edge cases where Moss got interrupted after installing
+        //    an app into the conductor but before joining it in the group dna.
+        //
+        //    We handle this case by returning AppInfo directly and skipping any of the
+        //    installation steps.
+        //
+        // 3. happ is already installed in the conductor but app asset info is not stored yet.
+        //    This case should not happen at all but we cover it anyway to be sure.
+        //
+        //    We handle this case by skipping the installation of the happ in the conductor.
+
+        if (alreadyInstalledAppInfo) {
+          try {
+            WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+            // If reading app asset info succeds we're in case 2 and we return AppInfo
+            return alreadyInstalledAppInfo;
+          } catch (e) {
+            // We're in case 3 and will ignore installing the happ in the conductor later
+            // but can ignore this error
+          }
+        }
+
         if (distributionInfo.type !== 'web2-tool-list')
           throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
 
@@ -1523,7 +1617,7 @@ if (!RUNNING_WITH_COMMAND) {
         let sha256Webhapp = appHashes.type === 'webhapp' ? appHashes.sha256 : undefined;
         let sha256Happ = appHashes.type === 'webhapp' ? appHashes.happ.sha256 : appHashes.sha256;
         console.log('INSTALLING APPLET BUNDLE. uiPort: ', uiPort);
-        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+
         let agentPubKey = globalPubKeyFromListAppsResponse(apps);
         if (!agentPubKey) {
           agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
@@ -1560,8 +1654,10 @@ if (!RUNNING_WITH_COMMAND) {
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
 
           const assetBytes = Array.from(new Uint8Array(buffer));
+          console.log('validating webhapp...');
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
+          console.log('webhapp validated.');
 
           // Except in dev mode with a provided UI port, only .webhapp files are allowed, no pure .happ files
           if (!uiPort && !RUN_OPTIONS.devInfo && (!webhappSha256 || !uiSha256))
@@ -1601,7 +1697,9 @@ if (!RUNNING_WITH_COMMAND) {
           const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
           fs.writeFileSync(webHappPath, new Uint8Array(buffer));
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
+          console.log('Saving webhapp...');
           const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          console.log('webhapp saved.');
 
           happToBeInstalledPath = happPath;
           try {
@@ -1626,23 +1724,43 @@ if (!RUNNING_WITH_COMMAND) {
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
 
         let appInfo: AppInfo;
-        try {
-          appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-            path: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
-            installed_app_id: appId,
-            agent_key: agentPubKey,
-            network_seed: networkSeed,
-          });
-        } catch (e) {
-          // Remove AppMetaData directory again
-          WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
-          throw new Error(`Failed to install app: ${e}`);
+
+        if (!alreadyInstalledAppInfo) {
+          // We're in the normal Case 1.
+          try {
+            appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+              source: {
+                type: 'path',
+                value: happToBeInstalledPath ? happToBeInstalledPath : happAlreadyStoredPath,
+              },
+              installed_app_id: appId,
+              agent_key: agentPubKey,
+              network_seed: networkSeed,
+            });
+            console.log('@install-applet-bundle: app installed.');
+          } catch (e: any) {
+            // Remove app meta data directory again if the error unless it's a CellAlreadyExists error
+            // in which case we don't want to remove the meta data of an existing app
+            if (e.toString && !e.toString().includes('CellAlreadyExists')) {
+              WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
+            }
+            throw new Error(`Failed to install app: ${e}`);
+          }
+        } else {
+          // We're in Case 3
+          appInfo = alreadyInstalledAppInfo;
         }
 
-        console.log('@install-applet-bundle: app installed.');
-
         // Enable the app after storing metadata in case enabling fails
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        try {
+          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        } catch (e) {
+          // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
+          // but continue. The app would then need to get enabled in the UI.
+          if (appInfo.status.type !== 'awaiting_memproofs') {
+            WE_EMITTER.emitMossError(`ERROR: Failed to enable app: ${e}`);
+          }
+        }
 
         // remove temp dir again
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });

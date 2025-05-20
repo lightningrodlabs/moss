@@ -12,6 +12,7 @@ import {
   derived,
   manualReloadStore,
   asyncReadable,
+  Unsubscriber,
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
@@ -24,15 +25,17 @@ import {
 import {
   AgentPubKeyB64,
   AppAuthenticationToken,
-  AppClient,
   AppInfo,
   AppWebsocket,
+  CallZomeRequest,
+  DnaHashB64,
   InstalledAppId,
   ProvisionedCell,
+  RoleNameCallZomeRequest,
 } from '@holochain/client';
 import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
-import { ActionHash, AdminWebsocket, CellType, DnaHash, EntryHash } from '@holochain/client';
+import { ActionHash, AdminWebsocket, DnaHash, EntryHash } from '@holochain/client';
 import {
   CreatableResult,
   CreatableName,
@@ -44,6 +47,9 @@ import {
   AppletId,
   stringifyWal,
   deStringifyWal,
+  GroupProfile as GroupProfilePartial,
+  IframeKind,
+  ZomeCallLogInfo,
   ParentToAppletMessage,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
@@ -53,18 +59,18 @@ import {
   createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
+  getGroupProfile,
   getToolIcon,
   joinGroup,
+  storeGroupProfile,
 } from './electron-api.js';
 import {
   destringifyAndDecode,
   devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
-  initAppClient,
   isAppDisabled,
   isAppRunning,
-  postMessageToAppletIframes,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
@@ -90,16 +96,42 @@ import {
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
-import { AppletNotification, ToolAndCurationInfo, ToolInfoAndLatestVersion } from './types.js';
+import {
+  AppletNotification,
+  CallbackWithId,
+  MossEvent,
+  MossEventMap,
+  ToolAndCurationInfo,
+  ToolInfoAndLatestVersion,
+} from './types.js';
 import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
-import { WeCache } from './cache.js';
+import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { IframeStore } from './iframe-store.js';
 
 export type SearchStatus = 'complete' | 'loading';
+
+type ZomeCallLogInfoExtended = {
+  info: ZomeCallLogInfo;
+  subType?: string;
+};
+
+export type ZomeCallCounts = {
+  firstCall: number;
+  totalCounts: number;
+  functionCalls: Record<
+    string,
+    {
+      timestamp: number;
+      durationMs: number;
+      iframeType?: string;
+    }[]
+  >;
+};
 
 export type WalInPocket = {
   addedAt: number;
@@ -112,9 +144,6 @@ export type DevModeToolLibrary = {
 };
 
 export class MossStore {
-  public isAppletDev: boolean;
-  public devModeToolLibrary: DevModeToolLibrary | undefined;
-
   constructor(
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,
@@ -122,16 +151,140 @@ export class MossStore {
     public appletDevConfig: WeaveDevConfig | undefined,
   ) {
     this.myLatestActivity = Date.now();
-    this._version = conductorInfo.moss_version;
+    this.version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
     if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
   }
 
-  private _availableToolUpdates: Writable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> =
-    writable({});
+  /**
+   * Moss version number
+   */
+  version: string;
 
-  // The dashboardstate must be accessible by the AppletHost, which is why it needs to be tracked
-  // here at the MossStore level
+  persistedStore: PersistedStore = new PersistedStore();
+
+  mossCache: MossCache = new MossCache();
+
+  /**
+   * --------------------------------------------------------------------------
+   * Applet Dev Mode Related Logic
+   * --------------------------------------------------------------------------
+   */
+
+  public isAppletDev: boolean;
+
+  public devModeToolLibrary: DevModeToolLibrary | undefined;
+
+  /**
+   * Ports of applets running with hot-reloading in dev mode
+   */
+  _appletDevPorts: Record<AppletId, number> = {};
+
+  async getAppletDevPort(iframeKind: IframeKind) {
+    let appletId: AppletId;
+    if (iframeKind.type === 'applet') {
+      appletId = encodeHashToBase64(iframeKind.appletHash);
+    } else {
+      const applets = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
+      const appletIds = Object.keys(applets);
+      if (appletIds.length === 0)
+        throw new Error(
+          'Failed to get applet dev port: No applet found for the given ToolCompatibilityId',
+        );
+      appletId = appletIds[0];
+    }
+
+    const maybePort = this._appletDevPorts[appletId];
+    if (maybePort) return maybePort;
+    const port = await getAppletDevPort(appIdFromAppletId(appletId));
+    const appletPorts = this._appletDevPorts;
+    appletPorts[appletId] = port;
+    this._appletDevPorts = appletPorts;
+    return port;
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * iframe references and logic to post messages to them
+   * --------------------------------------------------------------------------
+   */
+
+  iframeStore = new IframeStore();
+
+  /**
+   * --------------------------------------------------------------------------
+   * Peer Status Related Logic
+   * --------------------------------------------------------------------------
+   */
+
+  /**
+   * Timestamp of when the latest user activity has been detected in Moss
+   * (mouse movement, keypress, ...). This value is being updated in the
+   * MossApp component through event listeners and used to derive one's
+   * "online status" to be sent to other peers
+   */
+  myLatestActivity: number;
+
+  _tzUtcOffset: number | undefined;
+
+  tzUtcOffset(): number {
+    return this._tzUtcOffset ? this._tzUtcOffset : new Date().getTimezoneOffset();
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Moss Event Logic
+   * --------------------------------------------------------------------------
+   */
+
+  _eventCallbacks: Record<MossEvent, CallbackWithId[]> = { 'open-asset': [] };
+
+  emit(event: MossEvent, detail: MossEventMap[MossEvent]): void {
+    const callbacksWithId = this._eventCallbacks[event];
+    console.log('Got callbacks: ', callbacksWithId);
+    if (callbacksWithId) {
+      callbacksWithId.forEach((cb) => cb.callback(detail));
+    }
+  }
+
+  on<MossEvent extends keyof MossEventMap>(
+    event: MossEvent,
+    callback: (e: MossEventMap[MossEvent]) => any,
+  ): Unsubscriber {
+    const existingCallbacks = this._eventCallbacks[event] || [];
+    let newCallbackId = 0;
+    const existingCallbackIds = existingCallbacks.map((callbackWithId) => callbackWithId.id);
+    if (existingCallbackIds && existingCallbackIds.length > 0) {
+      // every new callback gets a new id in increasing manner
+      const highestId = existingCallbackIds.sort((a, b) => b - a)[0];
+      newCallbackId = highestId + 1;
+    }
+
+    existingCallbacks.push({ id: newCallbackId, callback });
+
+    this._eventCallbacks[event] = existingCallbacks;
+
+    const unlisten = () => {
+      const allCallbacks = this._eventCallbacks[event] || [];
+      this._eventCallbacks[event] = allCallbacks.filter(
+        (callbackWithId) => callbackWithId.id !== newCallbackId,
+      );
+    };
+
+    // We return an unlistener function which removes the callback from the list of callbacks
+    return unlisten;
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * States used by UI components
+   * --------------------------------------------------------------------------
+   */
+
+  /**
+   * The dashboard state must be accessible by the AppletHost, which is why it needs to be tracked
+   * here at the MossStore level
+   */
   private _dashboardState: Writable<DashboardState> = writable({
     viewType: 'personal',
     viewState: {
@@ -140,22 +293,32 @@ export class MossStore {
     },
   });
 
+  dashboardState(): Readable<DashboardState> {
+    return derived(this._dashboardState, (state) => state);
+  }
+
+  setDashboardState(dashboardState: DashboardState) {
+    this._dashboardState.set(dashboardState);
+  }
+
   private _assetViewerState: Writable<AssetViewerState> = writable({
     position: 'side',
     visible: false,
   });
 
-  persistedStore: PersistedStore = new PersistedStore();
-
-  weCache: WeCache = new WeCache();
-
-  _version: string;
-
-  get version() {
-    return this._version;
+  assetViewerState(): Readable<AssetViewerState> {
+    return derived(this._assetViewerState, (state) => state);
   }
 
-  _notificationFeed: Writable<AppletNotification[]> = writable([]);
+  setAssetViewerState(state: AssetViewerState) {
+    this._assetViewerState.set(state);
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Applet Search
+   * --------------------------------------------------------------------------
+   */
 
   /**
    * search filter as well as number of applet hosts from which a response is expected
@@ -169,66 +332,293 @@ export class MossStore {
 
   _searchResults: Writable<[string, Array<WAL>, SearchStatus]> = writable(['', [], 'complete']);
 
+  updateSearchParams(filter: string, waitingForNHosts: number) {
+    this._searchParams = [filter, waitingForNHosts];
+    this._searchResponses = [filter, 0];
+  }
+
+  updateSearchResults(filter: string, results: WAL[], fromCache: boolean) {
+    if (!fromCache && this._searchResponses[0] === filter)
+      this._searchResponses = [filter, this._searchResponses[1] + 1];
+    let searchStatus;
+    // Only update the search status if the filter is the same as the filter in the _searchResponses
+    // otherwise results of earlier queries that arrive late may wrongly overrite the search status
+    // to be still loading
+    if (this._searchResponses[0] === filter) {
+      searchStatus = this._searchResponses[1] === this._searchParams[1] ? 'complete' : 'loading';
+    }
+    console.log('Filter: ', filter);
+    console.log('searchStatus: ', searchStatus);
+    this._searchResults.update((store) => {
+      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
+        return [filter, results, searchStatus ? searchStatus : store[2]];
+      } else if (this._searchParams[0] === filter) {
+        const deduplicatedResults = Array.from(
+          new Set([...store[1], ...results].map((wal) => stringifyWal(wal))),
+        ).map((stringifiedHrl) => deStringifyWal(stringifiedHrl));
+        return [filter, deduplicatedResults, searchStatus ? searchStatus : store[2]];
+      }
+      return store;
+    });
+  }
+
+  clearSearchResults() {
+    this._searchResults.set(['', [], 'complete']);
+  }
+
+  searchResults(): Readable<[WAL[], SearchStatus]> {
+    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
+  }
+
+  async search(filter: string) {
+    const hosts = await toPromise(this.allAppletsHosts);
+
+    const hostsArray = Array.from(hosts.entries());
+    this.updateSearchParams(filter, hostsArray.length);
+
+    // In setTimeout, store results to cache and update searchResults store in mossStore if latest search filter
+    // is still the same
+
+    const promises: Array<Promise<void>> = [];
+
+    // TODO fix case where applet host failed to initialize
+    for (const [appletHash, host] of hostsArray) {
+      promises.push(
+        (async () => {
+          const cachedResults = this.mossCache.searchResults.value(appletHash, filter);
+          // Update with cached results immediately if there are cached results
+          if (cachedResults) {
+            this.updateSearchResults(filter, cachedResults, true);
+          }
+          try {
+            // console.log(`searching for host ${host?.appletId}...`);
+            const results = host ? await host.search(filter) : [];
+            this.updateSearchResults(filter, results, false);
+
+            // Cache results here for an applet/filter pair.
+            this.mossCache.searchResults.set(results, appletHash, filter);
+            // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
+            // return results;
+          } catch (e) {
+            console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
+            // Update search results to allow for reaching 'complete' state
+            this.updateSearchResults(filter, [], false);
+          }
+        })(),
+      );
+    }
+
+    // Do this async and return function immediately.
+    setTimeout(async () => await Promise.all(promises));
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Creatables
+   * --------------------------------------------------------------------------
+   */
+
   _allCreatableTypes: Writable<Record<AppletId, Record<CreatableName, CreatableType>>> = writable(
     {},
   );
 
+  allCreatableTypes(): Readable<Record<AppletId, Record<CreatableName, CreatableType>>> {
+    return derived(this._allCreatableTypes, (store) => store);
+  }
+
+  updateCreatableTypes(appletId: AppletId, creatableTypes: Record<CreatableName, CreatableType>) {
+    this._allCreatableTypes.update((store) => {
+      store[appletId] = creatableTypes;
+      return store;
+    });
+  }
+
+  /**
+   * Contains a record of CreatableContextRestult ordered by dialog id.
+   */
+  _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
+
+  setCreatableDialogResult(dialogId: string, result: CreatableResult) {
+    this._creatableDialogResults.update((store) => {
+      store[dialogId] = result;
+      return store;
+    });
+  }
+
+  creatableDialogResult(dialogId: string): Readable<CreatableResult | undefined> {
+    return derived(this._creatableDialogResults, (store) => store[dialogId]);
+  }
+
+  clearCreatableDialogResult(dialogId): void {
+    this._creatableDialogResults.update((store) => {
+      delete store[dialogId];
+      return store;
+    });
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * WAL drag and drop
+   * --------------------------------------------------------------------------
+   */
+
   _dragWal: Writable<WAL | undefined> = writable(undefined);
+
+  dragWal(wal: WAL) {
+    this._dragWal.set(wal);
+  }
+
+  draggedWal(): Readable<WAL | undefined> {
+    return derived(this._dragWal, (store) => store);
+  }
+
+  clearDraggedWal() {
+    this._dragWal.set(undefined);
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Pocket
+   * --------------------------------------------------------------------------
+   */
 
   _addedToPocket: Writable<boolean> = writable(false);
 
-  // Contains a record of CreatableContextRestult ordered by dialog id.
-  _creatableDialogResults: Writable<Record<string, CreatableResult>> = writable({});
+  addedToPocket() {
+    return derived(this._addedToPocket, (store) => store);
+  }
 
-  _authenticationTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
+  walToPocket(wal: WAL) {
+    wal = validateWal(wal);
+    const pocketContent = this.persistedStore.pocket.value();
+    const walStringified = fromUint8Array(encode(wal));
+    const walToAdd: WalInPocket = {
+      addedAt: Date.now(),
+      wal: walStringified,
+    };
+    const newPocketContent = pocketContent.filter(
+      (walInPocket) => walInPocket.wal !== walToAdd.wal,
+    );
+    newPocketContent.push(walToAdd);
+    this.persistedStore.pocket.set(newPocketContent);
+    this._addedToPocket.set(true);
+    setTimeout(() => {
+      this._addedToPocket.set(false);
+    }, 2200);
+  }
 
-  _appClients: Record<InstalledAppId, AppClient> = {};
+  removeWalFromPocket(wal: WAL) {
+    const pocketContent = this.persistedStore.pocket.value();
+    const walStringified = fromUint8Array(encode(wal));
+    const newPocketContent = pocketContent.filter(
+      (walInPocket) => walInPocket.wal !== walStringified,
+    );
+    this.persistedStore.pocket.set(newPocketContent);
+  }
+
+  clearPocket() {
+    this.persistedStore.pocket.set([]);
+  }
+
+  walToRecentlyCreated(wal: WAL) {
+    wal = validateWal(wal);
+    let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();
+    const walStringified = fromUint8Array(encode(wal));
+    // Only add if it's not already there
+    if (
+      recentlyCreatedContent.filter(
+        (walStringifiedStored) => walStringifiedStored === walStringified,
+      ).length === 0
+    ) {
+      recentlyCreatedContent.push(walStringified);
+    }
+    // keep the 8 latest created items only
+    recentlyCreatedContent = recentlyCreatedContent.slice(0, 8);
+    this.persistedStore.recentlyCreated.set(recentlyCreatedContent);
+  }
 
   /**
-   * Ports of applets running with hot-reloading in dev mode
+   * --------------------------------------------------------------------------
+   * Notification Feed
+   * --------------------------------------------------------------------------
    */
-  _appletDevPorts: Record<AppletId, number> = {};
+
+  _notificationFeed: Writable<AppletNotification[]> = writable([]);
+
+  notificationFeed(): Readable<AppletNotification[]> {
+    return derived(this._notificationFeed, (store) => store);
+  }
+
+  /**
+   * Loads the notification feed n days back for all installed applets.
+   *
+   * @param nDaysBack
+   */
+  async loadNotificationFeed(nDaysBack: number) {
+    const allApplets = await toPromise(this.runningApplets);
+    const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
+    let allNotifications: AppletNotification[][] = [];
+    const daysSinceEpochToday = Math.floor(Date.now() / 8.64e7);
+    for (let i = 0; i < nDaysBack + 1; i++) {
+      const daysSinceEpoch = daysSinceEpochToday - i;
+      allAppletIds.forEach((appletId) => {
+        const notifications = this.persistedStore.appletNotifications.value(
+          appletId,
+          daysSinceEpoch,
+        );
+        allNotifications.push(
+          notifications.map((notification) => ({
+            appletId,
+            notification,
+          })),
+        );
+      });
+    }
+    const allNotificationsFlattened = allNotifications.flat(1);
+    this._notificationFeed.set(
+      allNotificationsFlattened.sort(
+        (appletNotification_a, appletNotification_b) =>
+          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
+      ),
+    );
+  }
+
+  /**
+   * Updates the notification feed for the given applet Id
+   *
+   * @param appletId
+   * @param daysSinceEpoch
+   */
+  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
+    this._notificationFeed.update((store) => {
+      // console.log('store: ', store);
+      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
+      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
+        .value(appletId, daysSinceEpoch)
+        .map((notification) => encodeAndStringify({ appletId, notification }));
+      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
+      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+      const updatedNotifications: string[] = [
+        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
+      ];
+      // console.log('updatedNotifications: ', updatedNotifications);
+      return updatedNotifications
+        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
+        .sort(
+          (appletNotification_a, appletNotification_b) =>
+            appletNotification_b.notification.timestamp -
+            appletNotification_a.notification.timestamp,
+        );
+    });
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Persisted Tool Icons & Group Profiles
+   * --------------------------------------------------------------------------
+   */
 
   _toolIcons: Record<ToolCompatibilityId, string> = {};
-
-  _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
-
-  _tzUtcOffset: number | undefined;
-
-  myLatestActivity: number;
-
-  async toolInfoFromRemote(
-    toolListUrl: string,
-    toolId: string,
-    versionBranch: string,
-    noCache = false,
-  ): Promise<ToolInfoAndVersions | undefined> {
-    const toolCompatibilityId = deriveToolCompatibilityId({
-      toolListUrl,
-      toolId,
-      versionBranch,
-    });
-    // If it's a Tool from the dev config, take it from the dev mode tool library
-    if (this.devModeToolLibrary && toolListUrl.startsWith('###DEVCONFIG###')) {
-      return this.devModeToolLibrary.tools.find(
-        (tool) => tool.toolCompatibilityId === toolCompatibilityId,
-      )?.toolInfoAndVersions;
-    }
-    const maybeCachedInfo = this._toolInfoRemoteCache[toolCompatibilityId];
-    if (!noCache && maybeCachedInfo) return maybeCachedInfo;
-    // Fetch latest version of the Tool
-    try {
-      const resp = await fetch(toolListUrl, { cache: 'no-cache' });
-      const toolList: DeveloperCollectiveToolList = await resp.json();
-      const toolInfo = toolList.tools.find(
-        (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
-      );
-      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
-      return toolInfo;
-    } catch (e) {
-      throw new Error(`Failed to fetch or parse Tool info: ${e}`);
-    }
-  }
 
   /**
    *
@@ -253,57 +643,31 @@ export class MossStore {
     return toolIcon;
   }
 
-  dragWal(wal: WAL) {
-    this._dragWal.set(wal);
+  /**
+   * Group profiles as persisted on disk and used to display for disabled groups
+   * (otherwise the group profile is fetched from the DHT)
+   */
+  _groupProfiles: Record<DnaHashB64, GroupProfilePartial> = {};
+
+  async groupProfile(groupDnaHashB64: DnaHashB64): Promise<GroupProfilePartial | undefined> {
+    let groupProfile: GroupProfilePartial | undefined = this._groupProfiles[groupDnaHashB64];
+    if (groupProfile) return groupProfile;
+    groupProfile = await getGroupProfile(groupDnaHashB64);
+    if (groupProfile) this._groupProfiles[groupDnaHashB64] = groupProfile;
+    return groupProfile;
   }
 
-  draggedWal(): Readable<WAL | undefined> {
-    return derived(this._dragWal, (store) => store);
-  }
+  /**
+   * --------------------------------------------------------------------------
+   * Tool Updates and Remote Tool Info
+   * --------------------------------------------------------------------------
+   */
 
-  clearDraggedWal() {
-    this._dragWal.set(undefined);
-  }
+  private _availableToolUpdates: Writable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> =
+    writable({});
 
-  addedToPocket() {
-    return derived(this._addedToPocket, (store) => store);
-  }
-
-  tzUtcOffset(): number {
-    return this._tzUtcOffset ? this._tzUtcOffset : new Date().getTimezoneOffset();
-  }
-
-  setCreatableDialogResult(dialogId: string, result: CreatableResult) {
-    this._creatableDialogResults.update((store) => {
-      store[dialogId] = result;
-      return store;
-    });
-  }
-
-  creatableDialogResult(dialogId: string): Readable<CreatableResult | undefined> {
-    return derived(this._creatableDialogResults, (store) => store[dialogId]);
-  }
-
-  clearCreatableDialogResult(dialogId): void {
-    this._creatableDialogResults.update((store) => {
-      delete store[dialogId];
-      return store;
-    });
-  }
-
-  async getAppletDevPort(appletId: AppletId) {
-    const maybePort = this._appletDevPorts[appletId];
-    if (maybePort) return maybePort;
-    const port = await getAppletDevPort(appIdFromAppletId(appletId));
-    const appletPorts = this._appletDevPorts;
-    appletPorts[appletId] = port;
-    this._appletDevPorts = appletPorts;
-    return port;
-  }
-
-  async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
-    const groupStores = await toPromise(this.groupStores);
-    return groupStores.get(groupDnaHash);
+  availableToolUpdates(): Readable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> {
+    return derived(this._availableToolUpdates, (store) => store);
   }
 
   async checkForUiUpdates() {
@@ -377,145 +741,60 @@ export class MossStore {
     this._availableToolUpdates.set(toolsWithAvailableUpdates);
   }
 
-  availableToolUpdates(): Readable<Record<ToolCompatibilityId, ToolInfoAndLatestVersion>> {
-    return derived(this._availableToolUpdates, (store) => store);
-  }
+  _toolInfoRemoteCache: Record<ToolCompatibilityId, ToolInfoAndVersions> = {};
 
-  dashboardState(): Readable<DashboardState> {
-    return derived(this._dashboardState, (state) => state);
-  }
-
-  setDashboardState(dashboardState: DashboardState) {
-    this._dashboardState.set(dashboardState);
-  }
-
-  assetViewerState(): Readable<AssetViewerState> {
-    return derived(this._assetViewerState, (state) => state);
-  }
-
-  setAssetViewerState(state: AssetViewerState) {
-    this._assetViewerState.set(state);
-  }
-
-  notificationFeed(): Readable<AppletNotification[]> {
-    return derived(this._notificationFeed, (store) => store);
+  async toolInfoFromRemote(
+    toolListUrl: string,
+    toolId: string,
+    versionBranch: string,
+    noCache = false,
+  ): Promise<ToolInfoAndVersions | undefined> {
+    const toolCompatibilityId = deriveToolCompatibilityId({
+      toolListUrl,
+      toolId,
+      versionBranch,
+    });
+    // If it's a Tool from the dev config, take it from the dev mode tool library
+    if (this.devModeToolLibrary && toolListUrl.startsWith('###DEVCONFIG###')) {
+      return this.devModeToolLibrary.tools.find(
+        (tool) => tool.toolCompatibilityId === toolCompatibilityId,
+      )?.toolInfoAndVersions;
+    }
+    const maybeCachedInfo = this._toolInfoRemoteCache[toolCompatibilityId];
+    if (!noCache && maybeCachedInfo) return maybeCachedInfo;
+    // Fetch latest version of the Tool
+    try {
+      const resp = await fetch(toolListUrl, { cache: 'no-cache' });
+      const toolList: DeveloperCollectiveToolList = await resp.json();
+      const toolInfo = toolList.tools.find(
+        (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
+      );
+      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      return toolInfo;
+    } catch (e) {
+      throw new Error(`Failed to fetch or parse Tool info: ${e}`);
+    }
   }
 
   /**
-   * Loads the notification feed n days back for all installed applets.
-   *
-   * @param nDaysBack
+   * --------------------------------------------------------------------------
+   * Installed / Running
+   * --------------------------------------------------------------------------
    */
-  async loadNotificationFeed(nDaysBack: number) {
-    const allApplets = await toPromise(this.runningApplets);
-    const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
-    let allNotifications: AppletNotification[][] = [];
-    const daysSinceEpochToday = Math.floor(Date.now() / 8.64e7);
-    for (let i = 0; i < nDaysBack + 1; i++) {
-      const daysSinceEpoch = daysSinceEpochToday - i;
-      allAppletIds.forEach((appletId) => {
-        const notifications = this.persistedStore.appletNotifications.value(
-          appletId,
-          daysSinceEpoch,
-        );
-        allNotifications.push(
-          notifications.map((notification) => ({
-            appletId,
-            notification,
-          })),
-        );
-      });
-    }
-    const allNotificationsFlattened = allNotifications.flat(1);
-    this._notificationFeed.set(
-      allNotificationsFlattened.sort(
-        (appletNotification_a, appletNotification_b) =>
-          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
-      ),
-    );
-  }
+
+  installedApps = manualReloadStore(async () => this.adminWebsocket.listApps({}));
+
+  runningApps = asyncDerived(this.installedApps, (apps) => apps.filter((app) => isAppRunning(app)));
 
   /**
-   * Updates the notification feed for the given applet Id
-   *
-   * @param appletId
-   * @param daysSinceEpoch
+   * --------------------------------------------------------------------------
+   * Groups
+   * --------------------------------------------------------------------------
    */
-  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
-    this._notificationFeed.update((store) => {
-      // console.log('store: ', store);
-      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
-      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
-        .value(appletId, daysSinceEpoch)
-        .map((notification) => encodeAndStringify({ appletId, notification }));
-      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
-      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
-      const updatedNotifications: string[] = [
-        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
-      ];
-      // console.log('updatedNotifications: ', updatedNotifications);
-      return updatedNotifications
-        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
-        .sort(
-          (appletNotification_a, appletNotification_b) =>
-            appletNotification_b.notification.timestamp -
-            appletNotification_a.notification.timestamp,
-        );
-    });
-  }
 
-  updateSearchParams(filter: string, waitingForNHosts: number) {
-    this._searchParams = [filter, waitingForNHosts];
-    this._searchResponses = [filter, 0];
-  }
-
-  updateSearchResults(filter: string, results: WAL[], fromCache: boolean) {
-    if (!fromCache && this._searchResponses[0] === filter)
-      this._searchResponses = [filter, this._searchResponses[1] + 1];
-    let searchStatus;
-    // Only update the search status if the filter is the same as the filter in the _searchResponses
-    // otherwise results of earlier queries that arrive late may wrongly overrite the search status
-    // to be still loading
-    if (this._searchResponses[0] === filter) {
-      searchStatus = this._searchResponses[1] === this._searchParams[1] ? 'complete' : 'loading';
-    }
-    console.log('Filter: ', filter);
-    console.log('searchStatus: ', searchStatus);
-    this._searchResults.update((store) => {
-      if (this._searchParams[0] !== store[0] || this._searchParams[0] === '') {
-        return [filter, results, searchStatus ? searchStatus : store[2]];
-      } else if (this._searchParams[0] === filter) {
-        const deduplicatedResults = Array.from(
-          new Set([...store[1], ...results].map((wal) => stringifyWal(wal))),
-        ).map((stringifiedHrl) => deStringifyWal(stringifiedHrl));
-        return [filter, deduplicatedResults, searchStatus ? searchStatus : store[2]];
-      }
-      return store;
-    });
-  }
-
-  clearSearchResults() {
-    this._searchResults.set(['', [], 'complete']);
-  }
-
-  searchResults(): Readable<[WAL[], SearchStatus]> {
-    return derived(this._searchResults, (store) => [store[1], store[2]]) as any;
-  }
-
-  updateCreatableTypes(appletId: AppletId, creatableTypes: Record<CreatableName, CreatableType>) {
-    this._allCreatableTypes.update((store) => {
-      store[appletId] = creatableTypes;
-      return store;
-    });
-  }
-
-  async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
-    // Send to iframes of main window
-    postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
-    // Send to iframes of WAL windows
-    console.log('@MossStore: emitParentToAppletMessage. Message: ', message);
-    return window.electronAPI.parentToAppletMessage(message, forApplets);
-  }
+  /**
+   * Actions
+   */
 
   /**
    * Clones the group DNA with a new unique network seed, and creates a group info entry in that DNA
@@ -524,9 +803,11 @@ export class MossStore {
     if (!logo) throw new Error('No logo provided.');
 
     const appInfo = await createGroup(useProgenitor);
+
     await this.reloadManualStores();
 
-    const groupDnaHash: DnaHash = appInfo.cell_info['group'][0][CellType.Provisioned].cell_id[0];
+    const groupDnaHash: DnaHash = (appInfo.cell_info['group'][0].value as ProvisionedCell)
+      .cell_id[0];
 
     const groupStore = await this.groupStore(groupDnaHash);
 
@@ -593,7 +874,7 @@ export class MossStore {
 
     const appToLeave = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -653,6 +934,21 @@ export class MossStore {
     const groupStore = await this.groupStore(groupDnaHash);
     if (!groupStore) throw new Error('No group store found for group.');
 
+    // 0. Store latest group profile to disk
+    try {
+      const groupProfile = await toPromise(groupStore.groupProfile);
+      const groupProfilePartial: GroupProfilePartial | undefined = groupProfile
+        ? {
+            name: groupProfile?.name,
+            icon_src: groupProfile?.icon_src,
+          }
+        : undefined;
+      if (groupProfilePartial)
+        storeGroupProfile(encodeHashToBase64(groupDnaHash), groupProfilePartial);
+    } catch (e) {
+      console.warn('Failed to store group profile while disabling group: ', e);
+    }
+
     // 1. disable all applets of that group
     try {
       await groupStore.disableAllApplets();
@@ -666,7 +962,7 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -703,7 +999,7 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        app.cell_info['group'][0][CellType.Provisioned].cell_id[0].toString() ===
+        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
         groupDnaHash.toString(),
     );
 
@@ -727,13 +1023,9 @@ export class MossStore {
     }
   }
 
-  disabledGroups = manualReloadStore(async () => {
-    const apps = await this.adminWebsocket.listApps({});
-    return apps
-      .filter((app) => app.installed_app_id.startsWith('group#'))
-      .filter((app) => isAppDisabled(app))
-      .map((app) => app.cell_info['group'][0][CellType.Provisioned].cell_id[0] as DnaHash);
-  });
+  /**
+   * Stores
+   */
 
   groupStores = manualReloadStore(async () => {
     const groupStores = new DnaHashMap<GroupStore>();
@@ -745,10 +1037,8 @@ export class MossStore {
     console.log('RUNNING GROUP APPS: ', runningGroupsApps);
     await Promise.all(
       runningGroupsApps.map(async (app) => {
-        const groupDnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
-
-        const token = await this.getAuthenticationToken(app.installed_app_id);
-        const groupAppWebsocket = await initAppClient(token);
+        const groupDnaHash = (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0];
+        const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const assetsClient = new AssetsClient(groupAppWebsocket);
 
         groupStores.set(
@@ -761,75 +1051,10 @@ export class MossStore {
     return groupStores;
   });
 
-  allAppAssetInfos = manualReloadStore(async () => getAllAppAssetsInfos());
-
-  installedApps = manualReloadStore(async () => this.adminWebsocket.listApps({}));
-
-  runningApps = asyncDerived(this.installedApps, (apps) => apps.filter((app) => isAppRunning(app)));
-
-  installedApplets = asyncDerived(this.installedApps, async (apps) =>
-    apps
-      .filter((app) => app.installed_app_id.startsWith('applet#'))
-      .map((app) => appletHashFromAppId(app.installed_app_id)),
-  );
-
-  runningApplets = asyncDerived(this.runningApps, async (apps) =>
-    apps
-      .filter((app) => app.installed_app_id.startsWith('applet#'))
-      .map((app) => appletHashFromAppId(app.installed_app_id)),
-  );
-
-  /**
-   * This only returns applets whose UI supports a cross group view according
-   * to its weave.config.json
-   */
-  runningAppletClasses = pipe(this.runningApplets, (applets) =>
-    asyncDerived(this.allAppAssetInfos, (assetInfos) => {
-      const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
-      const appletClasses: Record<
-        ToolCompatibilityId,
-        { appletIds: AppletId[]; toolName: string }
-      > = {};
-      Object.entries(assetInfos).forEach(([appId, [info, weaveConfig]]) => {
-        if (
-          appId.startsWith('applet#') &&
-          info.distributionInfo.type === 'web2-tool-list' &&
-          weaveConfig?.crossGroupView
-        ) {
-          const appletId = appletIdFromAppId(appId);
-          if (runningAppletIds.includes(appletId)) {
-            const classId = info.distributionInfo.info.toolCompatibilityId;
-            const otherAppletsOfSameClass = appletClasses[classId]?.appletIds;
-            if (otherAppletsOfSameClass) {
-              appletClasses[classId] = {
-                toolName: info.distributionInfo.info.toolName,
-                appletIds: [...otherAppletsOfSameClass, appletId],
-              };
-            } else {
-              appletClasses[classId] = {
-                toolName: info.distributionInfo.info.toolName,
-                appletIds: [appletId],
-              };
-            }
-          }
-        }
-      });
-      return appletClasses;
-    }),
-  );
-
-  appletClassInfo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
-    return pipe(this.runningAppletClasses, (appletClasses) => {
-      const found = Object.entries(appletClasses).find(([id, _]) => id === toolCompatibilityId);
-      if (found) {
-        return {
-          toolCompatibilityId: found[0],
-          toolName: found[1].toolName,
-        };
-      }
-      return undefined;
-    });
-  });
+  async groupStore(groupDnaHash: DnaHash): Promise<GroupStore | undefined> {
+    const groupStores = await toPromise(this.groupStores);
+    return groupStores.get(groupDnaHash);
+  }
 
   runningGroupsApps = asyncDerived(this.runningApps, (apps) =>
     apps.filter((app) => app.installed_app_id.startsWith('group#')),
@@ -839,56 +1064,25 @@ export class MossStore {
     const groupApps = apps.filter((app) => app.installed_app_id.startsWith('group#'));
 
     const groupsDnaHashes = groupApps.map((app) => {
-      const cell = app.cell_info['group'][0][CellType.Provisioned] as ProvisionedCell;
+      const cell = app.cell_info['group'][0].value as ProvisionedCell;
       return cell.cell_id[0];
     });
     return groupsDnaHashes;
   });
 
-  appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
-    asyncReadable<AppletStore>(async (set) => {
-      // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
-      const groups = await toPromise(this.groupsForApplet.get(appletHash));
-      // console.log(
-      //   '@appletStores: groups: ',
-      //   Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
-      // );
+  disabledGroups = manualReloadStore(async () => {
+    const apps = await this.adminWebsocket.listApps({});
+    return apps
+      .filter((app) => app.installed_app_id.startsWith('group#'))
+      .filter((app) => isAppDisabled(app))
+      .map((app) => (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0] as DnaHash);
+  });
 
-      if (groups.size === 0) throw new Error('Applet is not installed in any of the groups');
-
-      const applet = await Promise.race(
-        Array.from(groups.values()).map((groupStore) =>
-          toPromise(groupStore.applets.get(appletHash)),
-        ),
-      );
-
-      if (!applet) throw new Error('Applet not found yet');
-
-      const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
-
-      set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
-    }),
-  );
-
-  allCreatableTypes(): Readable<Record<AppletId, Record<CreatableName, CreatableType>>> {
-    return derived(this._allCreatableTypes, (store) => store);
-  }
-
-  allRunningApplets = pipe(this.runningApplets, async (appletsHashes) => {
-    // sliceAndJoin won't work here in case appletStores.get() returns an error
-    // because an applet is installed in the conductor but not part of any of the groups
-    const runningAppletStores = new HoloHashMap<AppletHash, AppletStore>();
-    for (const hash of appletsHashes) {
-      try {
-        const appletStore = await toPromise(this.appletStores.get(hash));
-        runningAppletStores.set(hash, appletStore);
-      } catch (e) {
-        console.warn(
-          `Failed to get AppletStore for applet with hash ${encodeHashToBase64(hash)}: ${e}`,
-        );
-      }
-    }
-    return runningAppletStores;
+  groupProfilePersisted = new LazyMap((groupDnaHashB64: DnaHashB64) => {
+    return asyncReadable<GroupProfilePartial | undefined>(async (set) => {
+      const groupProfile = await this.groupProfile(groupDnaHashB64);
+      set(groupProfile);
+    });
   });
 
   allGroupsProfiles = asyncDeriveStore(this.groupStores, (stores) =>
@@ -896,211 +1090,14 @@ export class MossStore {
   );
 
   /**
-   * A reliable function to get the groups for an applet and is guaranteed
-   * to reflect the current state.
+   * --------------------------------------------------------------------------
+   * Applets
+   * --------------------------------------------------------------------------
    */
-  getGroupsForApplet = async (appletHash: AppletHash) => {
-    const allApps = await this.adminWebsocket.listApps({});
-    const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
-    const groupsWithApplet: Array<DnaHash> = [];
-    await Promise.all(
-      groupApps.map(async (app) => {
-        const token = await this.getAuthenticationToken(app.installed_app_id);
-        const groupAppWebsocket = await initAppClient(token);
-        const groupDnaHash: DnaHash = app.cell_info['group'][0][CellType.Provisioned].cell_id[0];
-        const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
-        const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
-        if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
-          groupsWithApplet.push(groupDnaHash);
-        }
-      }),
-    );
-    return groupsWithApplet;
-  };
 
-  groupsForApplet = new LazyHoloHashMap((appletHash: EntryHash) =>
-    pipe(
-      this.groupStores,
-      (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
-      async (appletsByGroup) => {
-        // console.log(
-        //   'appletsByGroup: ',
-        //   Array.from(appletsByGroup.values()).map((hashes) =>
-        //     hashes.map((hash) => encodeHashToBase64(hash)),
-        //   ),
-        // );
-        const groupDnaHashes = Array.from(appletsByGroup.entries())
-          .filter(([_groupDnaHash, appletsHashes]) =>
-            appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
-          )
-          .map(([groupDnaHash, _]) => groupDnaHash);
-
-        // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
-        // console.log('groupDnaHashes: ', groupDnaHashes);
-
-        const groupStores = await toPromise(this.groupStores);
-
-        // console.log(
-        //   'GROUPSTORES HASHES: ',
-        //   Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
-        // );
-
-        // console.log(
-        //   'Sliced group stores: ',
-        //   Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
-        //     encodeHashToBase64(hash),
-        //   ),
-        // );
-
-        return slice(groupStores, groupDnaHashes);
-      },
-    ),
-  );
-
-  dnaLocations = new LazyHoloHashMap((dnaHash: DnaHash) =>
-    asyncDerived(this.installedApps, async (installedApps) => {
-      let app = findAppForDnaHash(installedApps, dnaHash);
-
-      if (!app) {
-        const installedAppsRecent = await this.adminWebsocket.listApps({});
-        app = findAppForDnaHash(installedAppsRecent, dnaHash);
-        if (!app) throw new Error('The given dna is not installed');
-      }
-      if (!app.appInfo.installed_app_id.startsWith('applet#'))
-        throw new Error("The given dna is part of an app that's not an applet.");
-
-      return {
-        appletHash: appletHashFromAppId(app.appInfo.installed_app_id),
-        appInfo: app.appInfo,
-        roleName: app.roleName,
-      } as DnaLocation;
-    }),
-  );
-
-  hrlLocations = new LazyHoloHashMap(
-    (dnaHash: DnaHash) =>
-      new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
-        return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
-          if (hash.toString() === NULL_HASH.toString()) {
-            return {
-              dnaLocation,
-              entryDefLocation: undefined,
-            } as HrlLocation;
-          }
-          const appToken = await this.getAuthenticationToken(dnaLocation.appInfo.installed_app_id);
-          const appClient = await initAppClient(appToken);
-          const entryDefLocation = await locateHrl(this.adminWebsocket, appClient, dnaLocation, [
-            dnaHash,
-            hash,
-          ]);
-          if (!entryDefLocation) return undefined;
-
-          return {
-            dnaLocation,
-            entryDefLocation,
-          } as HrlLocation;
-        });
-      }),
-  );
-
-  assetInfo = new LazyMap((walStringified: string) => {
-    const wal = deStringifyWal(walStringified);
-    return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
-      location
-        ? pipe(
-            this.appletStores.get(location.dnaLocation.appletHash),
-            (appletStore) => appletStore!.host,
-            (host) =>
-              lazyLoad(() =>
-                host
-                  ? host.getAppletAssetInfo(
-                      wal,
-                      location.entryDefLocation
-                        ? {
-                            roleName: location.dnaLocation.roleName,
-                            integrityZomeName: location.entryDefLocation.integrity_zome,
-                            entryType: location.entryDefLocation.entry_def,
-                          }
-                        : undefined,
-                    )
-                  : Promise.resolve(undefined),
-              ),
-          )
-        : completed(undefined),
-    );
-  });
-
-  appletsForToolId = new LazyMap((toolCompatibilityId: ToolCompatibilityId) =>
-    pipe(
-      this.allRunningApplets,
-      (runningApplets) =>
-        completed(
-          pickBy(
-            runningApplets,
-            (appletStore) =>
-              toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info) ===
-              toolCompatibilityId,
-          ),
-        ),
-      (appletsForThisToolId) =>
-        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
-      async (groupsByApplets) => {
-        const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
-
-        for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
-          const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
-          if (groups.size > 0) {
-            const firstGroupToken = Array.from(groups.values())[0].groupClient.authenticationToken;
-            appletsB64[encodeHashToBase64(appletHash)] = [
-              appletToken,
-              {
-                authenticationToken: firstGroupToken,
-                profilesRoleName: 'group',
-              },
-            ];
-          }
-        }
-        return appletsB64;
-      },
-    ),
-  );
-
-  allAppletsHosts = pipe(this.allRunningApplets, (applets) =>
-    mapAndJoin(applets, (appletStore) => appletStore.host),
-  );
-
-  toolLogo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
-    return asyncReadable<string | undefined>(async (set) => {
-      const toolIcon = await this.toolIcon(toolCompatibilityId);
-      set(toolIcon);
-    });
-  });
-
-  appletLogo = new LazyHoloHashMap((appletHash: AppletHash) =>
-    pipe(this.allAppAssetInfos, (assetInfos) => {
-      const assetInfoAndAppId = Object.entries(assetInfos).find(
-        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
-      );
-      if (!assetInfoAndAppId) return undefined;
-      const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
-        assetInfoAndAppId[1][0].distributionInfo,
-      );
-      return this.toolLogo.get(toolCompatibilityId);
-    }),
-  );
-
-  appletToolVersion = new LazyHoloHashMap((appletHash: AppletHash) =>
-    pipe(this.allAppAssetInfos, (assetInfos) => {
-      const assetInfoAndAppId = Object.entries(assetInfos).find(
-        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
-      );
-      if (!assetInfoAndAppId) return undefined;
-      const distributionInfo = assetInfoAndAppId[1][0].distributionInfo;
-      return distributionInfo.type === 'web2-tool-list'
-        ? distributionInfo.info.toolVersion
-        : undefined;
-    }),
-  );
+  /**
+   * Actions
+   */
 
   async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
     console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
@@ -1244,19 +1241,21 @@ export class MossStore {
     await this.reloadManualStores();
   }
 
-  async reloadManualStores() {
-    await this.disabledGroups.reload();
-    await this.groupStores.reload();
-    // const groupStores = await toPromise(this.groupStores);
-    // await Promise.all(
-    //   Array.from(groupStores.values()).map(async (store) => {
-    //     await store.allMyApplets.reload();
-    //     await store.allMyRunningApplets.reload();
-    //   }),
-    // );
-    await this.installedApps.reload();
-    await this.allAppAssetInfos.reload();
-  }
+  /**
+   * Stores
+   */
+
+  installedApplets = asyncDerived(this.installedApps, async (apps) =>
+    apps
+      .filter((app) => app.installed_app_id.startsWith('applet#'))
+      .map((app) => appletHashFromAppId(app.installed_app_id)),
+  );
+
+  runningApplets = asyncDerived(this.runningApps, async (apps) =>
+    apps
+      .filter((app) => app.installed_app_id.startsWith('applet#'))
+      .map((app) => appletHashFromAppId(app.installed_app_id)),
+  );
 
   isInstalled = new LazyHoloHashMap((appletHash: EntryHash) => {
     this.installedApps.reload(); // required after fresh installation of app
@@ -1273,96 +1272,327 @@ export class MossStore {
     ),
   );
 
-  walToPocket(wal: WAL) {
-    wal = validateWal(wal);
-    const pocketContent = this.persistedStore.pocket.value();
-    const walStringified = fromUint8Array(encode(wal));
-    const walToAdd: WalInPocket = {
-      addedAt: Date.now(),
-      wal: walStringified,
-    };
-    const newPocketContent = pocketContent.filter(
-      (walInPocket) => walInPocket.wal !== walToAdd.wal,
-    );
-    newPocketContent.push(walToAdd);
-    this.persistedStore.pocket.set(newPocketContent);
-    this._addedToPocket.set(true);
-    setTimeout(() => {
-      this._addedToPocket.set(false);
-    }, 2200);
-  }
+  appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
+    asyncReadable<AppletStore>(async (set) => {
+      // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
+      const groups = await toPromise(this.groupsForApplet.get(appletHash));
+      // console.log(
+      //   '@appletStores: groups: ',
+      //   Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
+      // );
 
-  clearPocket() {
-    this.persistedStore.pocket.set([]);
-  }
+      if (groups.size === 0) throw new Error('Applet is not installed in any of the groups');
 
-  walToRecentlyCreated(wal: WAL) {
-    wal = validateWal(wal);
-    let recentlyCreatedContent = this.persistedStore.recentlyCreated.value();
-    const walStringified = fromUint8Array(encode(wal));
-    // Only add if it's not already there
-    if (
-      recentlyCreatedContent.filter(
-        (walStringifiedStored) => walStringifiedStored === walStringified,
-      ).length === 0
-    ) {
-      recentlyCreatedContent.push(walStringified);
-    }
-    // keep the 8 latest created items only
-    recentlyCreatedContent = recentlyCreatedContent.slice(0, 8);
-    this.persistedStore.recentlyCreated.set(recentlyCreatedContent);
-  }
-
-  removeWalFromPocket(wal: WAL) {
-    const pocketContent = this.persistedStore.pocket.value();
-    const walStringified = fromUint8Array(encode(wal));
-    const newPocketContent = pocketContent.filter(
-      (walInPocket) => walInPocket.wal !== walStringified,
-    );
-    this.persistedStore.pocket.set(newPocketContent);
-  }
-
-  async search(filter: string) {
-    const hosts = await toPromise(this.allAppletsHosts);
-
-    const hostsArray = Array.from(hosts.entries());
-    this.updateSearchParams(filter, hostsArray.length);
-
-    // In setTimeout, store results to cache and update searchResults store in mossStore if latest search filter
-    // is still the same
-
-    const promises: Array<Promise<void>> = [];
-
-    // TODO fix case where applet host failed to initialize
-    for (const [appletHash, host] of hostsArray) {
-      promises.push(
-        (async () => {
-          const cachedResults = this.weCache.searchResults.value(appletHash, filter);
-          // Update with cached results immediately if there are cached results
-          if (cachedResults) {
-            this.updateSearchResults(filter, cachedResults, true);
-          }
-          try {
-            // console.log(`searching for host ${host?.appletId}...`);
-            const results = host ? await host.search(filter) : [];
-            this.updateSearchResults(filter, results, false);
-
-            // Cache results here for an applet/filter pair.
-            this.weCache.searchResults.set(results, appletHash, filter);
-            // console.log(`Got results for host ${host?.appletId}: ${JSON.stringify(results)}`);
-            // return results;
-          } catch (e) {
-            console.warn(`Search in applet ${host?.appletId} failed: ${e}`);
-            // Update search results to allow for reaching 'complete' state
-            this.updateSearchResults(filter, [], false);
-          }
-        })(),
+      const applet = await Promise.race(
+        Array.from(groups.values()).map((groupStore) =>
+          toPromise(groupStore.applets.get(appletHash)),
+        ),
       );
-    }
 
-    // Do this async and return function immediately.
-    setTimeout(async () => await Promise.all(promises));
-  }
+      if (!applet) throw new Error('Applet not found yet');
+
+      const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+
+      set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
+    }),
+  );
+
+  allRunningApplets = pipe(this.runningApplets, async (appletsHashes) => {
+    // sliceAndJoin won't work here in case appletStores.get() returns an error
+    // because an applet is installed in the conductor but not part of any of the groups
+    const runningAppletStores = new HoloHashMap<AppletHash, AppletStore>();
+    for (const hash of appletsHashes) {
+      try {
+        const appletStore = await toPromise(this.appletStores.get(hash));
+        runningAppletStores.set(hash, appletStore);
+      } catch (e) {
+        console.warn(
+          `Failed to get AppletStore for applet with hash ${encodeHashToBase64(hash)}: ${e}`,
+        );
+      }
+    }
+    return runningAppletStores;
+  });
+
+  allAppletsHosts = pipe(this.allRunningApplets, (applets) =>
+    mapAndJoin(applets, (appletStore) => appletStore.host),
+  );
+
+  appletLogo = new LazyHoloHashMap((appletHash: AppletHash) =>
+    pipe(this.allAppAssetInfos, (assetInfos) => {
+      const assetInfoAndAppId = Object.entries(assetInfos).find(
+        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
+      );
+      if (!assetInfoAndAppId) return undefined;
+      const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
+        assetInfoAndAppId[1][0].distributionInfo,
+      );
+      return this.toolLogo.get(toolCompatibilityId);
+    }),
+  );
+
+  appletToolVersion = new LazyHoloHashMap((appletHash: AppletHash) =>
+    pipe(this.allAppAssetInfos, (assetInfos) => {
+      const assetInfoAndAppId = Object.entries(assetInfos).find(
+        ([installedAppId, _]) => appIdFromAppletHash(appletHash) === installedAppId,
+      );
+      if (!assetInfoAndAppId) return undefined;
+      const distributionInfo = assetInfoAndAppId[1][0].distributionInfo;
+      return distributionInfo.type === 'web2-tool-list'
+        ? distributionInfo.info.toolVersion
+        : undefined;
+    }),
+  );
+
+  appletsForToolId = new LazyMap((toolCompatibilityId: ToolCompatibilityId) =>
+    pipe(
+      this.allRunningApplets,
+      (runningApplets) =>
+        completed(
+          pickBy(
+            runningApplets,
+            (appletStore) =>
+              toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info) ===
+              toolCompatibilityId,
+          ),
+        ),
+      (appletsForThisToolId) =>
+        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
+      async (groupsByApplets) => {
+        const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
+
+        for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
+          const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+          if (groups.size > 0) {
+            const firstGroupToken = Array.from(groups.values())[0].groupClient.authenticationToken;
+            appletsB64[encodeHashToBase64(appletHash)] = [
+              appletToken,
+              {
+                authenticationToken: firstGroupToken,
+                profilesRoleName: 'group',
+              },
+            ];
+          }
+        }
+        return appletsB64;
+      },
+    ),
+  );
+
+  groupsForApplet = new LazyHoloHashMap((appletHash: EntryHash) =>
+    pipe(
+      this.groupStores,
+      (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
+      async (appletsByGroup) => {
+        // console.log(
+        //   'appletsByGroup: ',
+        //   Array.from(appletsByGroup.values()).map((hashes) =>
+        //     hashes.map((hash) => encodeHashToBase64(hash)),
+        //   ),
+        // );
+        const groupDnaHashes = Array.from(appletsByGroup.entries())
+          .filter(([_groupDnaHash, appletsHashes]) =>
+            appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
+          )
+          .map(([groupDnaHash, _]) => groupDnaHash);
+
+        // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
+        // console.log('groupDnaHashes: ', groupDnaHashes);
+
+        const groupStores = await toPromise(this.groupStores);
+
+        // console.log(
+        //   'GROUPSTORES HASHES: ',
+        //   Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
+        // );
+
+        // console.log(
+        //   'Sliced group stores: ',
+        //   Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
+        //     encodeHashToBase64(hash),
+        //   ),
+        // );
+
+        return slice(groupStores, groupDnaHashes);
+      },
+    ),
+  );
+
+  /**
+   * A reliable function to get the groups for an applet and is guaranteed
+   * to reflect the current state.
+   */
+  getGroupsForApplet = async (appletHash: AppletHash) => {
+    const allApps = await this.adminWebsocket.listApps({});
+    const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
+    const groupsWithApplet: Array<DnaHash> = [];
+    await Promise.all(
+      groupApps.map(async (app) => {
+        const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
+        const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
+          .cell_id[0];
+        const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
+        const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
+        if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
+          groupsWithApplet.push(groupDnaHash);
+        }
+      }),
+    );
+    return groupsWithApplet;
+  };
+
+  /**
+   * --------------------------------------------------------------------------
+   * Applet Classes
+   * --------------------------------------------------------------------------
+   */
+
+  /**
+   * This only returns applets whose UI supports a cross group view according
+   * to its weave.config.json
+   */
+  runningAppletClasses = pipe(this.runningApplets, (applets) =>
+    asyncDerived(this.allAppAssetInfos, (assetInfos) => {
+      const runningAppletIds = applets.map((appletHash) => encodeHashToBase64(appletHash));
+      const appletClasses: Record<
+        ToolCompatibilityId,
+        { appletIds: AppletId[]; toolName: string }
+      > = {};
+      Object.entries(assetInfos).forEach(([appId, [info, weaveConfig]]) => {
+        if (
+          appId.startsWith('applet#') &&
+          info.distributionInfo.type === 'web2-tool-list' &&
+          weaveConfig?.crossGroupView
+        ) {
+          const appletId = appletIdFromAppId(appId);
+          if (runningAppletIds.includes(appletId)) {
+            const classId = info.distributionInfo.info.toolCompatibilityId;
+            const otherAppletsOfSameClass = appletClasses[classId]?.appletIds;
+            if (otherAppletsOfSameClass) {
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [...otherAppletsOfSameClass, appletId],
+              };
+            } else {
+              appletClasses[classId] = {
+                toolName: info.distributionInfo.info.toolName,
+                appletIds: [appletId],
+              };
+            }
+          }
+        }
+      });
+      return appletClasses;
+    }),
+  );
+
+  appletClassInfo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return pipe(this.runningAppletClasses, (appletClasses) => {
+      const found = Object.entries(appletClasses).find(([id, _]) => id === toolCompatibilityId);
+      if (found) {
+        return {
+          toolCompatibilityId: found[0],
+          toolName: found[1].toolName,
+        };
+      }
+      return undefined;
+    });
+  });
+
+  toolLogo = new LazyMap((toolCompatibilityId: ToolCompatibilityId) => {
+    return asyncReadable<string | undefined>(async (set) => {
+      const toolIcon = await this.toolIcon(toolCompatibilityId);
+      set(toolIcon);
+    });
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * Assets
+   * --------------------------------------------------------------------------
+   */
+
+  dnaLocations = new LazyHoloHashMap((dnaHash: DnaHash) =>
+    asyncDerived(this.installedApps, async (installedApps) => {
+      let app = findAppForDnaHash(installedApps, dnaHash);
+
+      if (!app) {
+        const installedAppsRecent = await this.adminWebsocket.listApps({});
+        app = findAppForDnaHash(installedAppsRecent, dnaHash);
+        if (!app) throw new Error('The given dna is not installed');
+      }
+      if (!app.appInfo.installed_app_id.startsWith('applet#'))
+        throw new Error("The given dna is part of an app that's not an applet.");
+
+      return {
+        appletHash: appletHashFromAppId(app.appInfo.installed_app_id),
+        appInfo: app.appInfo,
+        roleName: app.roleName,
+      } as DnaLocation;
+    }),
+  );
+
+  hrlLocations = new LazyHoloHashMap(
+    (dnaHash: DnaHash) =>
+      new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
+        return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
+          if (hash.toString() === NULL_HASH.toString()) {
+            return {
+              dnaLocation,
+              entryDefLocation: undefined,
+            } as HrlLocation;
+          }
+          const [appClient, _] = await this.getAppClient(dnaLocation.appInfo.installed_app_id);
+          const entryDefLocation = await locateHrl(this.adminWebsocket, appClient, dnaLocation, [
+            dnaHash,
+            hash,
+          ]);
+          if (!entryDefLocation) return undefined;
+
+          return {
+            dnaLocation,
+            entryDefLocation,
+          } as HrlLocation;
+        });
+      }),
+  );
+
+  assetInfo = new LazyMap((walStringified: string) => {
+    const wal = deStringifyWal(walStringified);
+    return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
+      location
+        ? pipe(
+            this.appletStores.get(location.dnaLocation.appletHash),
+            (appletStore) => appletStore!.host,
+            (host) =>
+              lazyLoad(() =>
+                host
+                  ? host.getAppletAssetInfo(
+                      wal,
+                      location.entryDefLocation
+                        ? {
+                            roleName: location.dnaLocation.roleName,
+                            integrityZomeName: location.entryDefLocation.integrity_zome,
+                            entryType: location.entryDefLocation.entry_def,
+                          }
+                        : undefined,
+                    )
+                  : Promise.resolve(undefined),
+              ),
+          )
+        : completed(undefined),
+    );
+  });
+
+  allAppAssetInfos = manualReloadStore(async () => getAllAppAssetsInfos());
+
+  /**
+   * --------------------------------------------------------------------------
+   * App Clients and Logging
+   * --------------------------------------------------------------------------
+   */
+
+  _authenticationTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
 
   async getAuthenticationToken(appId: InstalledAppId): Promise<AppAuthenticationToken> {
     let token = this._authenticationTokens[appId];
@@ -1379,12 +1609,93 @@ export class MossStore {
     return token;
   }
 
-  async getAppClient(appId: InstalledAppId): Promise<AppClient> {
+  _appClients: Record<InstalledAppId, [AppWebsocket, AppAuthenticationToken]> = {};
+
+  async getAppClient(appId: InstalledAppId): Promise<[AppWebsocket, AppAuthenticationToken]> {
     let appClient = this._appClients[appId];
     if (appClient) return appClient;
     const token = await this.getAuthenticationToken(appId);
-    return AppWebsocket.connect({
+    const appWs = await AppWebsocket.connect({
       token,
     });
+    if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+      // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
+      const callZomePure = AppWebsocket.prototype.callZome;
+
+      // Overwrite the callZome function to measure the duration of the zome call and log it
+      appWs.callZome = async <ReturnType>(
+        request: CallZomeRequest | RoleNameCallZomeRequest,
+        timeout?: number,
+      ): Promise<ReturnType> => {
+        const start = Date.now();
+        const response = callZomePure.apply(appWs, [request, timeout]);
+        const end = Date.now();
+        // We don't want to await this so we just schedule it
+        setTimeout(() =>
+          this.logZomeCall({
+            info: {
+              durationMs: end - start,
+              fnName: request.fn_name,
+              installedAppId: appId,
+            },
+          }),
+        );
+        return response as ReturnType;
+      };
+    }
+    this._appClients[appId] = [appWs, token];
+    return [appWs, token];
+  }
+
+  zomeCallLogs: Record<InstalledAppId, ZomeCallCounts> = {};
+
+  logZomeCall(info: ZomeCallLogInfoExtended) {
+    let logs = this.zomeCallLogs[info.info.installedAppId];
+    if (!logs) {
+      logs = {
+        totalCounts: 0,
+        functionCalls: {},
+        firstCall: Date.now(),
+      };
+    }
+
+    logs.totalCounts += 1;
+    let functionCallsFn = logs.functionCalls[info.info.fnName];
+    if (!functionCallsFn) functionCallsFn = [];
+    functionCallsFn.push({
+      timestamp: Date.now(),
+      durationMs: info.info.durationMs,
+      iframeType: info.subType ? info.subType : undefined,
+    });
+
+    logs.functionCalls[info.info.fnName] = functionCallsFn;
+    this.zomeCallLogs[info.info.installedAppId] = logs;
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Utilities
+   * --------------------------------------------------------------------------
+   */
+
+  async reloadManualStores() {
+    await this.disabledGroups.reload();
+    await this.groupStores.reload();
+    // const groupStores = await toPromise(this.groupStores);
+    // await Promise.all(
+    //   Array.from(groupStores.values()).map(async (store) => {
+    //     await store.allMyApplets.reload();
+    //     await store.allMyRunningApplets.reload();
+    //   }),
+    // );
+    await this.installedApps.reload();
+    await this.allAppAssetInfos.reload();
+  }
+
+  async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
+    // Send to iframes of main window
+    this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    // Send to iframes of WAL windows
+    return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
 }

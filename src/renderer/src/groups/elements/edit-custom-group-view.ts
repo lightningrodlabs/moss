@@ -23,7 +23,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { Applet } from '@theweave/group-client';
 import { CustomView } from '../../custom-views/types.js';
-import { appletOrigin } from '../../utils.js';
+import { iframeOrigin } from '../../utils.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 
@@ -73,7 +73,7 @@ export class EditCustomGroupView extends LitElement {
           label: block.label,
           media: block.icon_src,
           category: applets.get(appletHash)?.custom_name,
-          content: `<iframe src="${appletOrigin(appletHash)}?view=${
+          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, subType: 'block' })}?view=${
             block.view
           }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
         });

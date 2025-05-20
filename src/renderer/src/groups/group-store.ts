@@ -50,6 +50,7 @@ import { CustomViewsStore } from '../custom-views/custom-views-store.js';
 import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
+  dedupStringArray,
   isAppDisabled,
   isAppRunning,
   lazyReloadableStore,
@@ -57,6 +58,7 @@ import {
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
+  AssetRelationWithTags,
   decodeAssetRelationWALs,
   GroupRemoteSignal,
   PeerStatusClient,
@@ -220,24 +222,24 @@ export class GroupStore {
         const storeAndSubscribers = this._assetStores[walStringified];
         const linkedTo = relationsForWal.linked_to.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const newValue = {
           status: 'complete',
-          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
         };
         if (!isEqual(newValue, get(storeAndSubscribers.store))) {
           storeAndSubscribers.store.set({
             status: 'complete',
-            value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+            value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
           });
         }
       });
@@ -296,11 +298,11 @@ export class GroupStore {
       case 'AssetRelationCreated': {
         const decodedSignal: SignalPayloadAssets = {
           type: 'AssetRelationCreated',
-          relation: decodeAssetRelationWALs(signal.relation),
+          relation: decodeAssetRelationWALs(signal.relation) as AssetRelationWithTags,
         };
         // Add it to the asset store of the srcWal
-        const srcWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.src_wal));
-        const dstWalStringified = stringifyWal(walDecodeContext(decodedSignal.relation.dst_wal));
+        const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
+        const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
         const dstStoreAndSubscribers = this._assetStores[dstWalStringified];
         if (srcStoreAndSubscribers) {
@@ -311,9 +313,10 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
-              );
+              const newTags = dedupStringArray([
+                ...existingWalAndTags.tags,
+                ...decodedSignal.relation.tags,
+              ]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -327,7 +330,7 @@ export class GroupStore {
                 {
                   wal: decodedSignal.relation.dst_wal,
                   relationHash: decodedSignal.relation.relation_hash,
-                  tags: decodedSignal.relation.tags,
+                  tags: dedupStringArray(decodedSignal.relation.tags),
                   createdAt: decodedSignal.relation.created_at,
                 },
               ];
@@ -346,9 +349,10 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.relation.tags]),
-              );
+              const newTags = dedupStringArray([
+                ...existingWalAndTags.tags,
+                ...decodedSignal.relation.tags,
+              ]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -362,7 +366,7 @@ export class GroupStore {
                 {
                   wal: decodedSignal.relation.src_wal,
                   relationHash: decodedSignal.relation.relation_hash,
-                  tags: decodedSignal.relation.tags,
+                  tags: dedupStringArray(decodedSignal.relation.tags),
                   createdAt: decodedSignal.relation.created_at,
                 },
               ];
@@ -382,6 +386,7 @@ export class GroupStore {
             created_at: signal.relation.created_at,
           },
         };
+        console.log('ASSET RELATION REMOVED!', decodedSignal);
         const srcWalStringified = stringifyWal(decodedSignal.relation.src_wal);
         const dstWalStringified = stringifyWal(decodedSignal.relation.dst_wal);
         const srcStoreAndSubscribers = this._assetStores[srcWalStringified];
@@ -428,9 +433,7 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedFrom[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
-              );
+              const newTags = dedupStringArray([...existingWalAndTags.tags, ...decodedSignal.tags]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedFrom[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -453,9 +456,7 @@ export class GroupStore {
             );
             if (existingWalAndTagsIdx !== -1) {
               const existingWalAndTags = store.value.linkedTo[existingWalAndTagsIdx];
-              const newTags = Array.from(
-                new Set([...existingWalAndTags.tags, ...decodedSignal.tags]),
-              );
+              const newTags = dedupStringArray([...existingWalAndTags.tags, ...decodedSignal.tags]);
               // overwrite existing item with the one containing merged tags
               store.value.linkedTo[existingWalAndTagsIdx] = {
                 wal: existingWalAndTags.wal,
@@ -556,6 +557,8 @@ export class GroupStore {
         );
       }
     }
+
+    await this.allAssetRelations.reload();
   }
 
   /**
@@ -566,8 +569,6 @@ export class GroupStore {
    * @param appletIds
    */
   subscribeToAssetStore(wal: WAL, appletIds: AppletId[]) {
-    console.log('SUBSCRIBING: ', wal);
-    console.log('SUBSCRIBING: ', encodeHashToBase64(wal.hrl[0]), encodeHashToBase64(wal.hrl[1]));
     const walStringified = stringifyWal(wal);
     let storeAndSubscribers = this._assetStores[walStringified];
     if (!storeAndSubscribers) {
@@ -601,24 +602,19 @@ export class GroupStore {
         const relationsForWal = await this.assetsClient.getAllRelationsForWal(wal);
         const linkedTo = relationsForWal.linked_to.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
         const linkedFrom = relationsForWal.linked_from.map((v) => ({
           wal: v.dst_wal,
-          tags: v.tags,
+          tags: dedupStringArray(v.tags),
           relationHash: v.relation_hash,
           createdAt: v.created_at,
         }));
-        console.log('@subscribe: setting assetstore', {
-          tags: relationsForWal.tags,
-          linkedFrom,
-          linkedTo,
-        });
         storeAndSubscribers.store.set({
           status: 'complete',
-          value: { tags: relationsForWal.tags, linkedFrom, linkedTo },
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
         });
       });
     } else {
@@ -667,15 +663,27 @@ export class GroupStore {
     }
   }
 
+  /**
+   * Contains all asset relations for that group. Gets reloaded whenever a
+   * a asset signal arrives or when the asset graph view is selected
+   */
+  allAssetRelations = lazyReloadableStore(async () =>
+    this.assetsClient.getAllAssetRelationsWithTags(),
+  );
+
+  allAssetRelationTags = pipe(this.allAssetRelations, (assetRelations) => {
+    return dedupStringArray(assetRelations.map((assetRelation) => assetRelation.tags).flat());
+  });
+
   async groupDnaModifiers(): Promise<DnaModifiers> {
     const appInfo = await this.appWebsocket.appInfo();
     const cellInfo = appInfo.cell_info['group'].find(
-      (cellInfo) => CellType.Provisioned in cellInfo,
+      (cellInfo) => cellInfo.type === CellType.Provisioned,
     );
 
     if (!cellInfo) throw new Error('Could not find cell for this group');
 
-    return cellInfo[CellType.Provisioned].dna_modifiers;
+    return cellInfo.value.dna_modifiers;
   }
 
   modifiers = lazyLoad(async () => {
@@ -1149,7 +1157,7 @@ export class GroupStore {
   //     )
   // );
 
-  activeAppletStores = pipe(this.allMyApplets, (allApplets) =>
+  activeAppletStores = pipe(this.allMyRunningApplets, (allApplets) =>
     sliceAndJoin(this.mossStore.appletStores, allApplets),
   );
 
@@ -1207,6 +1215,16 @@ export class GroupStore {
           await appletHost.postMessage(message);
         }
       }),
+    );
+  }
+
+  async emitToGroupApplets(message: ParentToAppletMessage): Promise<void> {
+    const appletHashes = await toPromise(this.allMyRunningApplets);
+    // __PERFORMANCE__ TODO possibly store base64 versions of hashes already in group store
+    // instead of encoding each time
+    await this.mossStore.emitParentToAppletMessage(
+      message,
+      appletHashes.map((hash) => encodeHashToBase64(hash)),
     );
   }
 }

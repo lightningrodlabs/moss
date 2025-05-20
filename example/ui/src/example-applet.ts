@@ -13,12 +13,10 @@ import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@theweave/a
 import { weaveClientContext } from '@theweave/elements';
 
 import '@theweave/elements/dist/elements/weave-client-context.js';
-import '@theweave/attachments/dist/elements/attachments-context.js';
 
 import './applet-main.js';
 import './cross-group-main.js';
-import { AttachmentsStore } from '@theweave/attachments';
-import { ActionHash, CellType, DnaHash } from '@holochain/client';
+import { ActionHash, CellType, DnaHash, ProvisionedCell } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
 import { PostsClient } from './posts-client.js';
@@ -33,9 +31,6 @@ export class ExampleApplet extends LitElement {
 
   @property()
   postsStore!: PostsStore;
-
-  @property()
-  attachmentsStore!: AttachmentsStore;
 
   @property()
   interval: any;
@@ -79,33 +74,31 @@ export class ExampleApplet extends LitElement {
             const profilesStore = new ProfilesStore(this.weaveClient.renderInfo.profilesClient);
             return html`
               <posts-context .store=${this.postsStore}>
-                <attachments-context .store=${this.attachmentsStore}>
-                  <profiles-context .store=${profilesStore}>
-                    <applet-main
-                      .client=${this.weaveClient.renderInfo.appletClient}
-                      .weaveClient=${this.weaveClient}
-                      .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
-                      @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
-                      @post-selected=${async (e: CustomEvent) => {
-                        const appInfo = await client.appInfo();
-                        if (!appInfo) throw new Error('AppInfo is null.');
-                        const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
-                          .cell_id[0];
-                        this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
-                      }}
-                      @drag-post=${async (e: CustomEvent) => {
-                        console.log('GOT DRAG POST EVENT!');
-                        const appInfo = await client.appInfo();
-                        if (!appInfo) throw new Error('AppInfo is null.');
-                        const dnaHash = (appInfo.cell_info.forum[0] as any)[CellType.Provisioned]
-                          .cell_id[0];
-                        this.weaveClient!.assets.dragAsset({
-                          hrl: [dnaHash, e.detail],
-                        });
-                      }}
-                    ></applet-main>
-                  </profiles-context>
-                </attachments-context>
+                <profiles-context .store=${profilesStore}>
+                  <applet-main
+                    .client=${this.weaveClient.renderInfo.appletClient}
+                    .weaveClient=${this.weaveClient}
+                    .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
+                    @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
+                    @post-selected=${async (e: CustomEvent) => {
+                      const appInfo = await client.appInfo();
+                      if (!appInfo) throw new Error('AppInfo is null.');
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                        .cell_id[0];
+                      this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
+                    }}
+                    @drag-post=${async (e: CustomEvent) => {
+                      console.log('GOT DRAG POST EVENT!');
+                      const appInfo = await client.appInfo();
+                      if (!appInfo) throw new Error('AppInfo is null.');
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                        .cell_id[0];
+                      this.weaveClient!.assets.dragAsset({
+                        hrl: [dnaHash, e.detail],
+                      });
+                    }}
+                  ></applet-main>
+                </profiles-context>
               </posts-context>
             `;
           case 'block':
@@ -124,12 +117,10 @@ export class ExampleApplet extends LitElement {
                         case 'post':
                           return html`
                             <posts-context .store=${this.postsStore}>
-                              <attachments-context .store=${this.attachmentsStore}>
-                                <post-detail
-                                  .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
-                                  .weaveClient=${this.weaveClient}
-                                ></post-detail>
-                              </attachments-context>
+                              <post-detail
+                                .postHash=${this.weaveClient.renderInfo.view.wal.hrl[1]}
+                                .weaveClient=${this.weaveClient}
+                              ></post-detail>
                             </posts-context>
                           `;
                         default:
@@ -175,9 +166,8 @@ export class ExampleApplet extends LitElement {
                             const postRecord = await postsClient.createPost(post);
                             const appInfo = await appletClient.appInfo();
                             if (!appInfo) throw new Error('AppInfo is null.');
-                            const dnaHash = (appInfo.cell_info.forum[0] as any)[
-                              CellType.Provisioned
-                            ].cell_id[0];
+                            const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                              .cell_id[0];
                             const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
                             await resolve({
                               hrl,

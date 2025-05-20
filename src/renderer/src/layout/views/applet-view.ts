@@ -6,7 +6,7 @@ import { customElement, property } from 'lit/decorators.js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import { AppletView, RenderView } from '@theweave/api';
+import { AppletView, IframeKind, RenderView } from '@theweave/api';
 
 import { weStyles } from '../../shared-styles.js';
 import './view-frame.js';
@@ -43,11 +43,16 @@ export class AppletViewEl extends LitElement {
       type: 'applet-view',
       view: this.view,
     };
+    const iframeKind: IframeKind = {
+      type: 'applet',
+      appletHash: this.appletHash,
+      subType: this.view.type,
+    };
     return html`
       ${this.hostStyle()}
       <view-frame
         .renderView=${renderView}
-        .appletHash=${this.appletHash}
+        .iframeKind=${iframeKind}
         .reloading=${this.reloading}
         class="elevated"
         style="flex: 1; overflow: hidden;"

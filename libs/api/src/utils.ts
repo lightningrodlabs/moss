@@ -1,17 +1,27 @@
-import { HoloHashB64, decodeHashFromBase64 } from '@holochain/client';
-import { AppletToParentMessage, AppletToParentRequest } from './types';
+import { HoloHashB64 } from '@holochain/client';
+import { AppletToParentMessage, AppletToParentRequest, IframeKind } from './types';
+import { decode } from '@msgpack/msgpack';
+import { toUint8Array } from 'js-base64';
 
+/**
+ * A postMessage function used in applet dev mode by initializeHotReload()
+ *
+ * @param request
+ * @returns
+ */
 export async function postMessage<T>(request: AppletToParentRequest): Promise<T> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
 
-    const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
-    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-    const appletHash = decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id));
+    // In hot-reloading mode the applet UI is served on localhost and Moss
+    // appends the encoded iframe kind to the localhost URL so that we can
+    // read it here
+    const encodedIframeKind = window.location.href.split('#')[1];
+    const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
 
     const message: AppletToParentMessage = {
       request,
-      appletHash,
+      source: iframeKind,
     };
 
     // eslint-disable-next-line no-restricted-globals

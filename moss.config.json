@@ -1,34 +1,34 @@
 {
   "holochain": {
-    "version": "0.4.0",
+    "version": "0.5.2",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "f2e5d5c5c90a0c5eb85641bd8ab207396ddbbc304aaa51982dfde24037a0d0a9",
-      "x86_64-pc-windows-msvc.exe": "9b893527d1f4c1e69fa3c9fbd605987065087ca15ebc72bbe598edef9ab5b27a",
-      "x86_64-apple-darwin": "9d8e4996dd86441ec859faf9fa90c31bdfaddd49d5079bf67492d9c93d17c503",
-      "aarch64-apple-darwin": "1d206d09ddf90c85b781457514df3c87d8c7e38a6dab4e53f01a8f089acfa3d1"
+      "x86_64-unknown-linux-gnu": "bbbdb2e52693522eaaaddafd392c9861db19210e02a48e1ff80d1077a296a08e",
+      "x86_64-pc-windows-msvc.exe": "e111298fc3af3cc12bfc7adb742d5f29ced7d19f05267969a23d0b8e0d286d5c",
+      "x86_64-apple-darwin": "8bde56c485154b9ac31aa8a5c7232479503b6015fccf66035228b52680e2daf5",
+      "aarch64-apple-darwin": "3b6da6df698d86e5d66691b0c91c5ff0e308b07a400b7ea733f019ea62021cdd"
     }
   },
-  "hc": {
-    "version": "0.4.0",
+  "bootstrap": {
+    "version": "0.1.5",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "ec1b3153e7ac3878a6b431c2f539b33988c27c9eec512d2eb56e2e4fa27035a7",
-      "x86_64-pc-windows-msvc.exe": "4437369e509a1f8e671ec894a39ca11771f6e58e3ac174ce8cdccf9d53976516",
-      "x86_64-apple-darwin": "6f3d58c59dd3c86a3609186ed01cce9700dcfd7a4e3263add2093f4f2e95de65",
-      "aarch64-apple-darwin": "2262fc8fed00e876c77c52dc1972ed2f0e8f7bab7bddee09f2701059c95aa8b3"
+      "x86_64-unknown-linux-gnu": "3848ac44c99f0b487cbcce6c7c1f29a0f025becbb17b74da0bfc87f66dd6e4ea",
+      "x86_64-pc-windows-msvc.exe": "20706e6b3858520206b5a4edc1c98136dffc61368e9d2b65e8624baaccaa3843",
+      "x86_64-apple-darwin": "5f8b9d338aea9d97debdc15746a09cd8d5282cb3a367f67560a602e83ff80ab3",
+      "aarch64-apple-darwin": "acd94fbcd8f958023cb0d3c2a78052d79e439b96a5510d6faa5a6b7f20ad1fb1"
     }
   },
   "lair": {
-    "version": "0.5.3",
+    "version": "0.6.1",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "96a28b9b37c73ef46d8b5c56b9d799d558fd2fe77b41c577e2bcb37685a46396",
-      "x86_64-pc-windows-msvc.exe": "68b6453a19921072aac04dae52a4e94e725e7482005d2f54f907aec680e078de",
-      "x86_64-apple-darwin": "a53bfb8e501431870b99243cbac24f6103d67f8be094930f174829bb249f34c4",
-      "aarch64-apple-darwin": "6b15d977408847ac977c2e060c7aab84a69e6e90c79390098dd40a6b75256e50"
+      "x86_64-unknown-linux-gnu": "c5d5d912af41f17def1c9d1027abd8eb6ce6f088871f4347ed38e124a93023cc",
+      "x86_64-pc-windows-msvc.exe": "e11a0658c2d5a3c00409ea447241b3f1f3a215d70fa396b8a3ed633226f0a11f",
+      "x86_64-apple-darwin": "fed0e9c3fc32589031229fb177ef3b3324e0096e742802898976812174bdd12d",
+      "aarch64-apple-darwin": "dd36c33e495b8046501f0824fbc08f069973cab5ee210275ab9de3af932d79e8"
     }
   },
   "groupHapp": {
-    "version": "0.13.0-rc.1",
-    "sha256": "bbe91f4f25547aaa0911eee4cd3f9cc2f85f7f94932a432d02d2bddc00b39323"
+    "version": "0.14.0-rc.0",
+    "sha256": "b15154a85bf61bbe66c335cc6cbd8c110fb60ef152ba5418b0e8d080c75b0311"
   },
-  "binariesAppendix": "moss-0.13"
+  "binariesAppendix": "moss-0.14"
 }

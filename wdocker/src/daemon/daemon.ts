@@ -242,7 +242,6 @@ async function checkForNewGroupsAndApplets(
                   modifiers: {
                     network_seed: appletClone.network_seed,
                     properties: appletClone.properties,
-                    origin_time: appletClone.origin_time,
                   },
                 });
               } else {

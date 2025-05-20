@@ -15,6 +15,7 @@ import {
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { weStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
@@ -33,11 +34,11 @@ import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
-import { SlDialog } from '@shoelace-style/shoelace';
+import { SlDialog, SlSwitch } from '@shoelace-style/shoelace';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.13/curations-0.13.json',
+    url: 'https://lightningrodlabs.org/weave-tool-curation/0.14/curations-0.14.json',
     useLists: ['default'],
   },
 ];
@@ -77,6 +78,9 @@ export class ToolLibraryWeb2 extends LitElement {
   @query('#publish-dialog')
   _publishDialog!: SlDialog;
 
+  @query('#visibility-switch')
+  _visibilitySwitch: SlSwitch | undefined;
+
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
 
@@ -88,6 +92,9 @@ export class ToolLibraryWeb2 extends LitElement {
 
   @state()
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
+
+  @state()
+  showLowVisbility = false;
 
   async firstUpdated() {
     // TODO Option to add additional curator URLs and store them to localstorage
@@ -139,15 +146,19 @@ export class ToolLibraryWeb2 extends LitElement {
 
     // 2. Identify all distinct tool lists and fetch them
     const toolLists: Record<ToolListUrl, DeveloperCollectiveToolList> = {};
-
     const distinctToolListUrls = Array.from(
       new Set(curationLists.map((list) => list.list.tools.map((tool) => tool.toolListUrl)).flat()),
     );
+    console.log('curationLists: ', curationLists);
+
+    console.log('distinctToolListUrls: ', distinctToolListUrls);
+
     await Promise.allSettled(
       distinctToolListUrls.map(async (url) => {
         try {
           const resp = await fetch(url, { cache: 'no-cache' });
           const toolList: DeveloperCollectiveToolList = await resp.json();
+          console.log('Fetched tool list: ', toolList);
           toolLists[url] = toolList;
           developerCollectives[url] = toolList.developerCollective;
         } catch (e) {
@@ -211,12 +222,27 @@ export class ToolLibraryWeb2 extends LitElement {
   }
 
   renderMainView() {
+    const availableTools = this.showLowVisbility
+      ? Object.values(this.availableTools)
+      : Object.values(this.availableTools).filter(
+          (info) => info.curationInfos[0].info.visiblity !== 'low',
+        );
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
+        <div class="row items-center">
+          <div class="flex flex-1"></div>
+          <div style="margin-right: 10px;">${msg('Show experimental Tools')}</div>
+          <sl-switch
+            id="visibility-switch"
+            @sl-change=${() => {
+              this.showLowVisbility = this._visibilitySwitch!.checked;
+            }}
+          ></sl-switch>
+        </div>
         <installable-tools-web2
           style="display: flex; flex: 1; overflow-y: auto;"
           .devCollectives=${this.allDeveloperCollectives}
-          .installableTools=${Object.values(this.availableTools)}
+          .installableTools=${availableTools}
           @open-tool-detail-web2=${(e) => {
             this._selectedTool = e.detail;
             this.view = ToolLibraryView.ToolDetail;

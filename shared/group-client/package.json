@@ -1,6 +1,6 @@
 {
   "name": "@theweave/group-client",
-  "version": "0.2.0-alpha.4",
+  "version": "0.3.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -17,14 +17,14 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "^0.18.0",
-    "@holochain-open-dev/utils": "0.400.0",
+    "@holochain/client": "^0.19.0",
+    "@holochain-open-dev/utils": "^0.500.0",
     "@msgpack/msgpack": "^2.7.2",
-    "@theweave/api": "0.4.0-alpha.3"
+    "@theweave/api": "^0.5.0"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.8.3"
   },
   "publishConfig": {
     "access": "public"

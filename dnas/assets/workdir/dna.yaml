@@ -3,7 +3,6 @@ name: assets
 integrity:
   network_seed: null
   properties: null
-  origin_time: 1730294100668600
   zomes:
     - name: assets_integrity
       bundled: '../../../target/wasm32-unknown-unknown/release/assets_integrity.wasm'

@@ -11,13 +11,20 @@ export type AppletToParentRequest = {
     type: 'ready';
 } | {
     type: 'get-iframe-config';
-    crossGroup: boolean;
+    id: string;
+    subType: 'main' | 'asset' | 'block' | 'creatable';
+} | {
+    type: 'unregister-iframe';
+    id: string;
 } | {
     type: 'get-record-info';
     hrl: Hrl;
 } | {
     type: 'sign-zome-call';
     request: CallZomeRequest;
+} | {
+    type: 'log-zome-call';
+    info: ZomeCallLogInfo;
 } | {
     type: 'open-view';
     request: OpenViewRequest;
@@ -49,17 +56,6 @@ export type AppletToParentRequest = {
     result: CreatableResult;
     dialogId: string;
 } | {
-    type: 'localStorage.setItem';
-    key: string;
-    value: string;
-} | {
-    type: 'localStorage.removeItem';
-    key: string;
-} | {
-    type: 'localStorage.clear';
-} | {
-    type: 'get-localStorage';
-} | {
     type: 'get-applet-iframe-script';
 } | {
     type: 'request-close';
@@ -85,6 +81,9 @@ export type AppletToParentRequest = {
     wal: WAL;
 } | {
     type: 'user-select-asset';
+    from?: 'search' | 'pocket' | 'create';
+} | {
+    type: 'user-select-asset-relation-tag';
 } | {
     type: 'get-global-asset-info';
     wal: WAL;
@@ -116,6 +115,9 @@ export type AppletToParentRequest = {
     relationHash: EntryHash;
     tags: string[];
 } | {
+    type: 'get-all-asset-relation-tags';
+    crossGroup?: boolean;
+} | {
     type: 'subscribe-to-asset-store';
     wal: WAL;
 } | {
@@ -123,5 +125,5 @@ export type AppletToParentRequest = {
     wal: WAL;
 };
 ```
-**References:** [Hrl](./api.hrl.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)
+**References:** [Hrl](./api.hrl.md)<!-- -->, [ZomeCallLogInfo](./api.zomecallloginfo.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)
 

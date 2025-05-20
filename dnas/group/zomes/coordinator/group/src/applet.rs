@@ -311,7 +311,7 @@ fn get_joined_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<AppletAg
 
     for link in links {
         let maybe_group_pubkey = AgentPubKey::try_from(link.target).ok();
-        let maybe_applet_pubkey = AgentPubKey::from_raw_39(link.tag.as_ref().to_owned()).ok();
+        let maybe_applet_pubkey = AgentPubKey::try_from_raw_39(link.tag.as_ref().to_owned()).ok();
         match (maybe_group_pubkey, maybe_applet_pubkey) {
             (Some(gk), Some(ak)) => applet_agents.push(AppletAgent {
                 group_pubkey: gk,
@@ -335,7 +335,7 @@ fn get_abandoned_applet_agents(applet_hash: EntryHash) -> ExternResult<Vec<Apple
 
     for link in links {
         let maybe_group_pubkey = AgentPubKey::try_from(link.target).ok();
-        let maybe_applet_pubkey = AgentPubKey::from_raw_39(link.tag.as_ref().to_owned()).ok();
+        let maybe_applet_pubkey = AgentPubKey::try_from_raw_39(link.tag.as_ref().to_owned()).ok();
         match (maybe_group_pubkey, maybe_applet_pubkey) {
             (Some(gk), Some(ak)) => applet_agents.push(AppletAgent {
                 group_pubkey: gk,

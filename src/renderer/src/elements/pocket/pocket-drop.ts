@@ -42,7 +42,7 @@ export class PocketDrop extends LitElement {
 
   requestCreate() {
     this.dispatchEvent(
-      new CustomEvent('open-creatable-panel', {
+      new CustomEvent('open-creatable-palette', {
         bubbles: true,
         composed: true,
       }),

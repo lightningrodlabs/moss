@@ -31,7 +31,22 @@ export class CrossGroupMain extends LitElement {
   );
 
   render() {
-    return html`Hello from cross-group-main`;
+    return html`Hello from cross-group-main
+      <div>
+        <h2>Media Access</h2>
+        <button
+          @click=${async () => {
+            await navigator.mediaDevices.getUserMedia({
+              audio: {
+                noiseSuppression: true,
+                echoCancellation: true,
+              },
+            });
+          }}
+        >
+          Request Audio Access
+        </button>
+      </div> `;
   }
 
   static styles = [

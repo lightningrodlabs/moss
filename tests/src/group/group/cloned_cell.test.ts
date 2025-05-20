@@ -1,7 +1,13 @@
 import { assert, test } from 'vitest';
 
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { encodeHashToBase64, EntryHash, fakeDnaHash, fakeEntryHash } from '@holochain/client';
+import {
+  AppBundleSource,
+  encodeHashToBase64,
+  EntryHash,
+  fakeDnaHash,
+  fakeEntryHash,
+} from '@holochain/client';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 import { AppletClonedCell } from '@theweave/group-client';
@@ -12,8 +18,16 @@ test('join a cloned cell and test unjoined cells', async () => {
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = {
+      appBundleSource,
+    };
     // Add 2 players with the test app to the Scenario. The returned players
     // can be destructured.
     const [alice, bob] = await scenario.addPlayersWithApps([appSource, appSource]);
@@ -30,11 +44,6 @@ test('join a cloned cell and test unjoined cells', async () => {
       role_name: 'some test role',
       network_seed: 'blabla',
       properties: new Uint8Array(),
-      origin_time: Date.now() * 1000,
-      quantum_time: {
-        nanos: 0,
-        secs: 5,
-      },
     };
     //- Alice joins a cloned cell
     const clonedCellEntryHash: EntryHash = await groupCellAlice.callZome({

@@ -30,7 +30,7 @@ export class AppDebuggingDetails extends LitElement {
   cellsAndIds: Record<string, CellId> = {};
 
   async firstUpdated() {
-    const appClient = await this._mossStore.getAppClient(this.appId);
+    const [appClient, _] = await this._mossStore.getAppClient(this.appId);
     const appInfo = await appClient.appInfo();
     // if (!appInfo) throw new Error(`AppInfo of app '${appClient}' undefined.`);
     const cellInfos = Object.values(appInfo!.cell_info).flat();

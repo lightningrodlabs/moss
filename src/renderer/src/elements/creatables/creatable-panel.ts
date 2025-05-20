@@ -252,7 +252,7 @@ export class CreatablePanel extends LitElement {
         no-header
       >
           <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center; flex: 1; justify-content: center; margin-bottom: 30px;">
-            ${msg('Where do you want to create something?')}
+            ${msg('From which Tool do you want to create something?')}
           </div>
         <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
           ${this.renderAppletMatrix()}

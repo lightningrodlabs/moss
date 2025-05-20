@@ -1,5 +1,5 @@
-import { AgentPubKeyB64, DnaHash, FullStateDump } from '@holochain/client';
-import { AppletId, FrameNotification } from '@theweave/api';
+import { AgentPubKeyB64, DnaHash } from '@holochain/client';
+import { AppletId, FrameNotification, WAL } from '@theweave/api';
 import {
   CuratedTool,
   DistributionInfo,
@@ -42,11 +42,6 @@ export type UpdateFeedMessage = {
   message: string;
 };
 
-export type DumpData = {
-  dump: FullStateDump;
-  newOpsCount: number;
-};
-
 export type ToolWeaveConfig = {
   crossGroupView: boolean;
 };
@@ -69,4 +64,15 @@ export type ToolInfoAndLatestVersion = {
   toolInfo: ToolInfoAndVersions;
   latestVersion: ToolVersionInfo;
   distributionInfo: DistributionInfo;
+};
+
+export type MossEvent = 'open-asset';
+
+export type MossEventMap = {
+  'open-asset': WAL;
+};
+
+export type CallbackWithId = {
+  id: number;
+  callback: (e: MossEventMap[MossEvent]) => any;
 };

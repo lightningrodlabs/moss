@@ -452,6 +452,15 @@ The name that's being used in RenderInfo to tell which creatable should be rende
 </td></tr>
 <tr><td>
 
+[IframeKind](./api.iframekind.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [NotificationCount](./api.notificationcount.md)
 
 
@@ -614,7 +623,16 @@ Events
 
 </td><td>
 
-String of the format weave-0.13://
+String of the format weave-0.14://
+
+
+</td></tr>
+<tr><td>
+
+[ZomeCallLogInfo](./api.zomecallloginfo.md)
+
+
+</td><td>
 
 
 </td></tr>

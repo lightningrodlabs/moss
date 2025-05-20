@@ -6,9 +6,9 @@ import { fromUint8Array, toUint8Array } from 'js-base64';
 import { stringifyWal } from '@theweave/api';
 
 /**
- * Cache for We
+ * Cache for Moss
  */
-export class WeCache {
+export class MossCache {
   private store: KeyValueStore;
 
   constructor(store?: KeyValueStore) {

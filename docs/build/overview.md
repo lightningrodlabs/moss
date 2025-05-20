@@ -23,3 +23,7 @@ Here are links to a few existing Weave Tools that you may use as a starting poin
 
 - [Notebooks](https://github.com/lightningrodlabs/notebooks): Real-time note taking
 - [Presence](https://github.com/matthme/presence): Video Calling
+
+### React
+
+- [Acorn](https://github.com/lightningrodlabs/acorn): Project Management

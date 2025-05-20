@@ -16,7 +16,7 @@ If you want to install an unstable dev release, you can pick one on [the release
 
 ### Creating a Moss Tool
 
-The details on how to create a _Tool_ can be found [here](docs/how-to-create-a-tool.md).
+The details on how to create a _Tool_ can be found [here](https://dev.theweave.social/build/overview.html).
 
 ### Developering on Moss itself
 

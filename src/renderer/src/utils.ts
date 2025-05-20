@@ -1,9 +1,7 @@
 import {
   CellId,
   CellInfo,
-  DisabledAppReason,
   AppInfo,
-  AppWebsocket,
   ListAppsResponse,
   DnaHash,
   CellType,
@@ -11,12 +9,8 @@ import {
   ClonedCell,
   DnaHashB64,
   decodeHashFromBase64,
-  CallZomeRequest,
-  FunctionName,
-  ZomeName,
   AgentPubKeyB64,
   Timestamp,
-  AppAuthenticationToken,
   DnaModifiers,
   InstalledAppId,
 } from '@holochain/client';
@@ -28,6 +22,7 @@ import {
   AppletHash,
   AppletId,
   ParentToAppletMessage,
+  IframeKind,
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -49,28 +44,38 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
-import { appIdFromAppletId, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
-import { DeveloperCollecive, WeaveDevConfig } from '@theweave/moss-types';
+import {
+  appIdFromAppletId,
+  appletIdFromAppId,
+  deriveToolCompatibilityId,
+  toLowerCaseB64,
+  toOriginalCaseB64,
+} from '@theweave/utils';
+import { DeveloperCollecive, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
 
-export async function initAppClient(
-  token: AppAuthenticationToken,
-  defaultTimeout?: number,
-): Promise<AppWebsocket> {
-  const client = await AppWebsocket.connect({
-    token,
-    defaultTimeout,
-  });
-  client.cachedAppInfo = undefined;
-  await client.appInfo();
-  return client;
-}
-
-export function appletOrigin(appletHash: AppletHash): string {
-  return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
+export function iframeOrigin(iframeKind: IframeKind): string {
+  switch (iframeKind.type) {
+    case 'applet':
+      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
+    case 'cross-group':
+      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
+  }
 }
 
 export function appletOriginFromAppletId(appletId: AppletId): string {
   return `applet://${toLowerCaseB64(appletId)}`;
+}
+
+export function getAppletIdFromOrigin(origin: string): AppletId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
+}
+
+export function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
+  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
+  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+  return toOriginalCaseB64(lowercaseB64Id);
 }
 
 /**
@@ -87,12 +92,12 @@ export function findAppForDnaHash(
   for (const app of apps) {
     for (const [roleName, cells] of Object.entries(app.cell_info)) {
       for (const cell of cells) {
-        if (CellType.Cloned in cell) {
-          if (cell[CellType.Cloned].cell_id[0].toString() === dnaHash.toString()) {
-            return { appInfo: app, roleName };
+        if (cell.type === CellType.Cloned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
+            return { appInfo: app, roleName: cell.value.clone_id };
           }
-        } else if (CellType.Provisioned in cell) {
-          if (cell[CellType.Provisioned].cell_id[0].toString() === dnaHash.toString()) {
+        } else if (cell.type === CellType.Provisioned) {
+          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
             return { appInfo: app, roleName };
           }
         }
@@ -115,76 +120,44 @@ export function getStatus(app: AppInfo): string {
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return app.status === 'running';
+  return app.status.type === 'running';
 }
 export function isAppDisabled(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('disabled');
+  return app.status.type === 'disabled';
 }
 export function isAppPaused(app: AppInfo): boolean {
-  return Object.keys(app.status).includes('paused');
-}
-export function getReason(app: AppInfo): string | undefined {
-  if (isAppRunning(app)) return undefined;
-  if (isAppDisabled(app)) {
-    const reason = (
-      app.status as unknown as {
-        disabled: {
-          reason: DisabledAppReason;
-        };
-      }
-    ).disabled.reason;
-
-    if ((reason as any) === 'never_started') {
-      return 'App was never started';
-    } else if ((reason as any) === 'user') {
-      return 'App was disabled by the user';
-    } else {
-      return `There was an error with this app: ${
-        (
-          reason as {
-            error: string;
-          }
-        ).error
-      }`;
-    }
-  } else {
-    return (
-      app.status as unknown as {
-        paused: { reason: { error: string } };
-      }
-    ).paused.reason.error;
-  }
+  return app.status.type === 'paused';
 }
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.cell_id;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.cell_id;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.cell_id;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.cell_id;
   }
   return undefined;
 }
 
 export function getCellName(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.name;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.name;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.name;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.name;
   }
-  if ('stem' in cellInfo) {
-    return cellInfo.stem.name;
+  if (cellInfo.type === CellType.Stem) {
+    return cellInfo.value.name;
   }
   return undefined;
 }
 
 export function getCellNetworkSeed(cellInfo: CellInfo): string | undefined {
-  if ('provisioned' in cellInfo) {
-    return cellInfo.provisioned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
-  if ('cloned' in cellInfo) {
-    return cellInfo.cloned.dna_modifiers.network_seed;
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.dna_modifiers.network_seed;
   }
   return undefined;
 }
@@ -201,7 +174,7 @@ export function flattenCells(cell_info: Record<string, CellInfo[]>): [string, Ce
 
 export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
   const provisionedCells = flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'provisioned' in cellInfo)
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Provisioned)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -210,10 +183,8 @@ export function getProvisionedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => (cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => (cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -221,10 +192,8 @@ export function getEnabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
 
 export function getDisabledClonedCells(appInfo: AppInfo): [string, CellInfo][] {
   return flattenCells(appInfo.cell_info)
-    .filter(([_roleName, cellInfo]) => 'cloned' in cellInfo)
-    .filter(
-      ([_roleName, cellInfo]) => !(cellInfo as { [CellType.Cloned]: ClonedCell }).cloned.enabled,
-    )
+    .filter(([_roleName, cellInfo]) => cellInfo.type === CellType.Cloned)
+    .filter(([_roleName, cellInfo]) => !(cellInfo.value as ClonedCell).enabled)
     .sort(([roleName_a, _cellInfo_a], [roleName_b, _cellInfo_b]) =>
       roleName_a.localeCompare(roleName_b),
     );
@@ -422,6 +391,16 @@ export function destringifyAndDecode<T>(input: string): T {
   return decode(toUint8Array(input)) as T;
 }
 
+/**
+ * Deduplicates an array of strings
+ *
+ * @param arr
+ * @returns
+ */
+export function dedupStringArray(arr: string[]): string[] {
+  return Array.from(new Set(arr));
+}
+
 export function renderViewToQueryString(
   renderView:
     | RenderView
@@ -524,6 +503,22 @@ export function resizeAndExportImg(img: HTMLImageElement): string {
   return base64string;
 }
 
+/**
+ *
+ * @param iconSrc Takes an src attribute and if it's an SVG data url, encodes the svg part URI safe
+ */
+export function iconSrcURIEncodeSVG(iconSrc: string): string {
+  if (iconSrc.startsWith('data:image/svg+xml;utf8,')) {
+    return (
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(iconSrc.replace('data:image/svg+xml;utf8,', ''))
+    );
+  } else if (iconSrc.startsWith('data:image/svg+xml;')) {
+    return 'data:image/svg+xml;' + encodeURIComponent(iconSrc.replace('data:image/svg+xml;', ''));
+  }
+  return iconSrc;
+}
+
 export function urlFromAppletHash(appletHash: AppletHash): string {
   const appletHashB64 = encodeHashToBase64(appletHash);
   const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
@@ -559,16 +554,25 @@ export function refreshAllAppletIframes(appletId: AppletId): void {
   });
 }
 
-export function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
+function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
   const allIframes = getAllIframes();
   return allIframes.filter((iframe) => iframe.src.startsWith(appletOriginFromAppletId(appletId)));
 }
 
+/**
+ * Traverses the DOM to get all iframes. This actually only works for
+ * "first-level" iframes, i.e. not for nested iframes and I think
+ * that's because the DOM within an iframe cannot be accessed
+ * due to CORS
+ *
+ * @returns
+ */
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
 
   // Recursive function to traverse the DOM tree
   function traverse(node) {
+    // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
       result.push(node);
@@ -591,69 +595,6 @@ export function getAllIframes() {
   return result;
 }
 
-export function logAppletZomeCall(request: CallZomeRequest, appletId: AppletId) {
-  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    const zomeCallCounts = window[`__appletZomeCallCount_${appletId}`];
-    if (zomeCallCounts) {
-      zomeCallCounts.totalCounts += 1;
-      if (zomeCallCounts.functionCalls[request.fn_name]) {
-        zomeCallCounts.functionCalls[request.fn_name] += 1;
-      } else {
-        if (!zomeCallCounts.functionCalls) {
-          zomeCallCounts.functionCalls = {};
-        }
-        zomeCallCounts.functionCalls[request.fn_name] = 1;
-      }
-      window[`__appletZomeCallCount_${appletId}`] = zomeCallCounts;
-    } else {
-      window[`__appletZomeCallCount_${appletId}`] = {
-        firstCall: Date.now(),
-        totalCounts: 1,
-        functionCalls: {
-          [request.fn_name]: 1,
-        },
-      };
-    }
-  }
-}
-
-/**
- * Zome calls made by non-applet dnas
- *
- * @param request
- * @param appletId
- */
-export function logMossZomeCall(
-  cellId: [DnaHashB64, AgentPubKeyB64],
-  fnName: FunctionName,
-  _zomeName: ZomeName,
-) {
-  if ((window as any).__ZOME_CALL_LOGGING_ENABLED__) {
-    // We assume unique dna hashes for now
-    const zomeCallCounts = window[`__mossZomeCallCount_${cellId[0]}`];
-    if (zomeCallCounts) {
-      zomeCallCounts.totalCounts += 1;
-      if (zomeCallCounts.functionCalls[fnName]) {
-        zomeCallCounts.functionCalls[fnName] += 1;
-      } else {
-        if (!zomeCallCounts.functionCalls) {
-          zomeCallCounts.functionCalls = {};
-        }
-        zomeCallCounts.functionCalls[fnName] = 1;
-      }
-      window[`__mossZomeCallCount_${cellId[0]}`] = zomeCallCounts;
-    } else {
-      window[`__mossZomeCallCount_${cellId[0]}`] = {
-        firstCall: Date.now(),
-        totalCounts: 1,
-        functionCalls: {
-          [fnName]: 1,
-        },
-      };
-    }
-  }
-}
-
 export function dateStr(timestamp: Timestamp) {
   const date = new Date(timestamp / 1000);
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
@@ -666,7 +607,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.13://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.14://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {
@@ -820,7 +761,7 @@ export function lazyLoadAndPollUntil<T>(
   });
 }
 
-export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: MossStore) {
+export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   // determine iframeSrc, then open wal in window
   const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]));
   if (!location) throw new Error('Asset not found.');
@@ -838,18 +779,24 @@ export async function openWalInWindow(wal: WAL, appletId: AppletId, mossStore: M
         : undefined,
     },
   };
+  const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
     if (appletDevPort) {
+      const iframeKind: IframeKind = {
+        type: 'applet',
+        appletHash,
+        subType: 'asset',
+      };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
-      )}#${urlFromAppletHash(appletHash)}`;
+      )}#${fromUint8Array(encode(iframeKind))}`;
       return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
     }
   }
-  const iframeSrc = `${appletOrigin(appletHash)}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
 }
 
@@ -885,63 +832,6 @@ export function localTimeFromUtcOffset(offsetMinues: number): string {
 
   // Format the time in HH:MM format
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
-
-/**
- * Posts a message to all iframes of the specified AppletIds and returns the settled promises.
- * This includes iframes of assets associated to the AppletIds, not only the main view.
- *
- * TODO: Add option to only target main view or specific views
- *
- * @param appletIds
- * @param message
- * @returns
- */
-export async function postMessageToAppletIframes(
-  appletIds: { type: 'all' } | { type: 'some'; ids: AppletId[] },
-  message: ParentToAppletMessage,
-  extraOrigins?: Array<string>,
-) {
-  const allIframes = getAllIframes();
-  let allAppletIframes = allIframes.filter(
-    (iframe) => iframe.src.startsWith('applet://') || iframe.src.startsWith('http://localhost'),
-  );
-  console.log('postMessageToAppletIframes: allAppletIframes', allAppletIframes);
-  console.log('postMessageToAppletIframes: appletIds', appletIds);
-  console.log(
-    'postMessageToAppletIframes: iframeSrcs: ',
-    allAppletIframes.map((iframe) => iframe.src),
-  );
-  if (appletIds.type === 'some') {
-    const relevantSrcs = appletIds.ids.map((id) => appletOriginFromAppletId(id));
-    console.log('relevantSrcs', relevantSrcs);
-    allAppletIframes = allAppletIframes.filter((iframe) => {
-      let matches = false;
-      if (extraOrigins) {
-        extraOrigins.forEach((origin) => {
-          if (iframe.src.startsWith(origin)) {
-            matches = true;
-          }
-        });
-      }
-      relevantSrcs.forEach((origin) => {
-        if (iframe.src.startsWith(origin) || iframe.src.startsWith('http://localhost')) {
-          matches = true;
-        }
-      });
-      return matches;
-    });
-  }
-  console.log(
-    'Sending postMessate to the following iframes: ',
-    allAppletIframes.map((iframe) => iframe.src),
-  );
-
-  return Promise.allSettled(
-    allAppletIframes.map(async (iframe) => {
-      await postMessageToIframe(iframe, message);
-    }),
-  );
 }
 
 export async function postMessageToIframe<T>(
@@ -982,6 +872,10 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     icon: 'garbl',
   };
 
+  // For testing purposes assign random visibility
+  // const visibilities = ['high', 'low'];
+  // let counter = 0;
+
   const tools: ToolAndCurationInfo[] = config.applets.map((toolConfig) => {
     let toolUrl: string;
     switch (toolConfig.source.type) {
@@ -996,7 +890,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         break;
     }
     const toolListUrl = `###DEVCONFIG###${toolConfig.source.type === 'localhost' ? toolConfig.source.uiPort : ''}`;
-    return {
+    const toolAndCurationInfo: ToolAndCurationInfo = {
       toolCompatibilityId: deriveToolCompatibilityId({
         toolListUrl: toolListUrl,
         toolId: toolConfig.name,
@@ -1010,7 +904,8 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             toolListUrl: toolListUrl,
             toolId: 'REPLACE',
             versionBranch: '###DEVCONFIG###',
-            tags: [],
+            tags: ['some tag', 'another tag', 'cool', 'stuff'],
+            // visiblity: visibilities[counter % 2] as 'high' | 'low',
           },
           curator: {
             name: 'Moss dev mode test curator',
@@ -1057,6 +952,8 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         },
       },
     };
+    // counter += 1;
+    return toolAndCurationInfo;
   });
 
   return {

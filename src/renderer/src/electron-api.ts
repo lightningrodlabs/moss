@@ -13,6 +13,7 @@ import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile as GroupProfilePartial,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -48,6 +49,8 @@ declare global {
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       factoryReset: () => Promise<void>;
+      openLogs: () => Promise<void>;
+      exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
@@ -56,6 +59,30 @@ declare global {
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
       onWillNavigateExternal: (callback: (e: any) => any) => void;
+      onIframeStoreSync: (
+        callback: (
+          e: Electron.IpcRendererEvent,
+          payload: [
+            Record<
+              AppletId,
+              Array<{
+                id: string;
+                subType: string;
+                source: MessageEventSource | null | 'wal-window';
+              }>
+            >,
+            Record<
+              ToolCompatibilityId,
+              Array<{
+                id: string;
+                subType: string;
+                source: MessageEventSource | null | 'wal-window';
+              }>
+            >,
+          ],
+        ) => any,
+      ) => void;
+      requestIframeStoreSync: () => void;
       removeWillNavigateListeners: () => void;
       onZomeCallSigned: (
         callback: (
@@ -78,6 +105,11 @@ declare global {
       getAppVersion: () => Promise<string>;
       getInstalledApps: () => Promise<AppInfo[]>;
       getConductorInfo: () => Promise<ConductorInfo>;
+      storeGroupProfile: (
+        groupDnaHashB64: DnaHashB64,
+        groupProfile: GroupProfilePartial,
+      ) => Promise<void>;
+      getGroupProfile: (groupDnaHashB64: DnaHashB64) => Promise<GroupProfilePartial | undefined>;
       getToolIcon: (
         toolId: string,
         resourceLocation?: ResourceLocation,
@@ -190,6 +222,19 @@ export async function getAppVersion(): Promise<string> {
 
 export async function getConductorInfo(): Promise<ConductorInfo> {
   return window.electronAPI.getConductorInfo();
+}
+
+export async function storeGroupProfile(
+  groupDnaHashB64: DnaHashB64,
+  groupProfile: GroupProfilePartial,
+): Promise<void> {
+  return window.electronAPI.storeGroupProfile(groupDnaHashB64, groupProfile);
+}
+
+export async function getGroupProfile(
+  groupDnaHashB64: DnaHashB64,
+): Promise<GroupProfilePartial | undefined> {
+  return window.electronAPI.getGroupProfile(groupDnaHashB64);
 }
 
 export async function getToolIcon(

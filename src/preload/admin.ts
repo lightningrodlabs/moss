@@ -1,19 +1,13 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {
-  ActionHashB64,
-  AgentPubKeyB64,
-  CallZomeRequest,
-  DnaHashB64,
-  FunctionName,
-  ZomeName,
-} from '@holochain/client';
+import { ActionHashB64, AgentPubKeyB64, CallZomeRequest, DnaHashB64 } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
   AppletToParentMessage,
   FrameNotification,
+  GroupProfile,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -43,6 +37,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
+  openLogs: () => ipcRenderer.invoke('open-logs'),
+  exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
     ipcRenderer.on('moss-update-progress', callback),
   onRequestFactoryReset: (callback: (e: Electron.IpcRendererEvent) => any) =>
@@ -61,17 +57,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('window-closing', callback),
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('will-navigate-external', callback),
+  onIframeStoreSync: (callback: (e: Electron.IpcRendererEvent) => any) =>
+    ipcRenderer.on('iframe-store-sync', callback),
+  requestIframeStoreSync: () => ipcRenderer.invoke('request-iframe-store-sync'),
   removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
-  onZomeCallSigned: (
-    callback: (
-      e: Electron.IpcRendererEvent,
-      payload: {
-        cellIdB64: [DnaHashB64, AgentPubKeyB64];
-        fnName: FunctionName;
-        zomeName: ZomeName;
-      },
-    ) => any,
-  ) => ipcRenderer.on('zome-call-signed', callback),
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
@@ -84,6 +73,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getInstalledApps: () => ipcRenderer.invoke('get-installed-apps'),
   getConductorInfo: () => ipcRenderer.invoke('get-conductor-info'),
+  storeGroupProfile: (groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile) =>
+    ipcRenderer.invoke('store-group-profile', groupDnaHashB64, groupProfile),
+  getGroupProfile: (groupDnaHashB64: DnaHashB64) =>
+    ipcRenderer.invoke('get-group-profile', groupDnaHashB64),
   getToolIcon: (toolId: string, resourceLocation?: ResourceLocation) =>
     ipcRenderer.invoke('get-tool-icon', toolId, resourceLocation),
   mossUpdateAvailable: () => ipcRenderer.invoke('moss-update-available'),

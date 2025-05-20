@@ -12,6 +12,7 @@ const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://dev-test-bootstrap2.holochain.org',
   'https://bootstrap.holo.host',
   'https://bootstrap-2.infra.holochain.org',
   'https://bootstrap-1.infra.holochain.org',
@@ -21,6 +22,7 @@ export const PRODUCTION_BOOTSTRAP_URLS = [
 // here since there is a check to prevent accidental use of a production signaling server in development
 // mode
 export const PRODUCTION_SIGNALING_URLS = [
+  'wss://dev-test-bootstrap2.holochain.org',
   'wss://sbd.holo.host',
   'wss://sbd-0.main.infra.holo.host',
   'wss://signal-2.infra.holochain.org',
@@ -28,6 +30,8 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
+export const DEFAULT_ICE_URLS = ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
+
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
 export interface CliOpts {
@@ -55,7 +59,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
-  iceUrls: string[] | undefined;
+  iceUrls: string[];
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
   holochainWasmLog: string | undefined;
@@ -107,7 +111,7 @@ export function validateArgs(args: CliOpts): RunOptions {
       !args.forceProductionUrls
     )
       throw new Error(
-        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
     if (
       args.signalingUrl &&
@@ -115,7 +119,7 @@ export function validateArgs(args: CliOpts): RunOptions {
       !args.forceProductionUrls
     )
       throw new Error(
-        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with hc run-local-services. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
   }
   if (args.holochainPath && typeof args.holochainPath !== 'string') {
@@ -175,7 +179,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
-    iceUrls: args.iceUrls ? args.iceUrls.split(',') : undefined,
+    iceUrls: args.iceUrls ? args.iceUrls.split(',') : DEFAULT_ICE_URLS,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
     holochainWasmLog: args.holochainWasmLog ? args.holochainWasmLog : undefined,

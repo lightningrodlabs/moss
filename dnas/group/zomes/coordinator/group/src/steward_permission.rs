@@ -134,7 +134,7 @@ pub fn get_all_agent_permission_types() -> ExternResult<Option<Vec<(AgentPubKey,
             let all_permission_links = get_all_steward_permissions(())?;
             let mut pubkeys = all_permission_links
                 .iter()
-                .map(|l| AgentPubKey::from_raw_39(l.tag.0.clone()).ok())
+                .map(|l| AgentPubKey::try_from_raw_39(l.tag.0.clone()).ok())
                 .filter_map(|pk| pk)
                 .collect::<Vec<AgentPubKey>>();
 

@@ -35,6 +35,9 @@ export class AppletTitle extends LitElement {
   @property()
   icon: string | undefined;
 
+  @property({ type: Boolean })
+  invert = false;
+
   _applet = new StoreSubscriber(
     this,
     () =>
@@ -61,19 +64,28 @@ export class AppletTitle extends LitElement {
 
     return html`
       <div class="row" style="align-items: center;" title=${appletStore.applet.custom_name}>
+        ${this.invert
+          ? html`<span style="font-size: var(--font-size, initial); margin-right: 4px;"
+              >${appletStore.applet.custom_name}</span
+            >`
+          : html``}
         ${this._logo.value.status === 'complete'
           ? html`
               <img
-                .src=${this.icon}
+                .src=${this._logo.value.value}
                 alt="${appletStore.applet.custom_name}"
-                style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex; margin-right: 4px;"
+                style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex;"
               />
             `
           : html`<sl-skeleton
-              style="height: 25px; width: 25px; --border-radius: var(--border-radius, 20%); margin-right: 4px;"
+              style="height: var(--size, 25px); width: var(--size, 25px); --border-radius: var(--border-radius, 20%);"
               effect="pulse"
             ></sl-skeleton>`}
-        <span>${appletStore.applet.custom_name}</span>
+        ${this.invert
+          ? html``
+          : html`<span style="font-size: var(--font-size, initial); margin-left: 4px;"
+              >${appletStore.applet.custom_name}</span
+            >`}
       </div>
     `;
   }

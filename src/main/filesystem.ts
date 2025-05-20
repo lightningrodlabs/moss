@@ -1,12 +1,16 @@
 import path from 'path';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import semver from 'semver';
 import { v4 as uuidv4 } from 'uuid';
-import { InstalledAppId } from '@holochain/client';
+import { DnaHashB64, InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
-import { session } from 'electron';
+import { app, dialog, session, shell } from 'electron';
 import { platform } from '@electron-toolkit/utils';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
+import AdmZip from 'adm-zip';
+import { GroupProfile } from '@theweave/api';
+import { toolCompatibilityIdFromDistInfo } from '@theweave/utils';
 
 export type Profile = string;
 export type UiIdentifier = string;
@@ -31,6 +35,7 @@ export class MossFileSystem {
   public conductorDir: string;
   public keystoreDir: string;
   public appsDir: string;
+  public groupsDir: string;
   /**
    * This is the directory where information about Tools (i.e. not instances
    * but Tool as the class) is stored
@@ -48,6 +53,7 @@ export class MossFileSystem {
     this.conductorDir = path.join(profileDataDir, 'conductor');
     this.keystoreDir = path.join(profileDataDir, 'keystore');
     this.appsDir = path.join(profileDataDir, 'apps');
+    this.groupsDir = path.join(profileDataDir, 'groups');
     this.toolsDir = path.join(profileDataDir, 'tools');
     this.happsDir = path.join(profileDataDir, 'happs');
     this.uisDir = path.join(profileDataDir, 'uis');
@@ -56,6 +62,7 @@ export class MossFileSystem {
     createDirIfNotExists(this.conductorDir);
     createDirIfNotExists(this.keystoreDir);
     createDirIfNotExists(this.appsDir);
+    createDirIfNotExists(this.groupsDir);
     createDirIfNotExists(this.toolsDir);
     createDirIfNotExists(this.happsDir);
     createDirIfNotExists(this.uisDir);
@@ -104,8 +111,21 @@ export class MossFileSystem {
     return mossFileSystem;
   }
 
-  get conductorConfigPath() {
-    return path.join(this.conductorDir, 'conductor-config.yaml');
+  /**
+   * --------------------------------------------------------------------------------
+   * Apps (e.g. Tool instances)
+   * --------------------------------------------------------------------------------
+   */
+
+  /**
+   * Directory of an app (e.g. a Tool instance) where meta data about it is stored,
+   * e.g. user preferences
+   *
+   * @param appId
+   * @returns
+   */
+  appMetaDataDir(appId: string): string {
+    return path.join(this.appsDir, appId);
   }
 
   appUiDir(appId: string): string | undefined {
@@ -126,16 +146,137 @@ export class MossFileSystem {
     return undefined;
   }
 
+  appAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json');
+  }
+
+  appPreviousAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
+  }
+
   /**
-   * Directory of an app (e.g. a Tool instance) where meta data about it is stored,
-   * e.g. user preferences
+   * Stores information about happ and (optionally) UI of an installed app
    *
-   * @param appId
+   * @param installedAppId
+   * @param info
+   */
+  storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
+    const appMetaDataDir = this.appMetaDataDir(installedAppId);
+    createDirIfNotExists(appMetaDataDir);
+    const filePath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to write app assets info to json file: ${e}`);
+    }
+  }
+
+  readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
+    const filePath = this.appAssetInfoPath(installedAppId);
+    let appAssetsInfoJson: string | undefined;
+    try {
+      appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to read app assets info json file at path '${filePath}': ${e}`);
+    }
+    try {
+      const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
+      return appAssetsInfo;
+    } catch (e) {
+      throw new Error(`Failed to parse app assets info: ${e}`);
+    }
+  }
+
+  /**
+   * @param installedAppId
+   */
+  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
+    const filePath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.rmSync(filePath);
+    } catch (e) {
+      throw new Error(`Failed to delete app assets info json file: ${e}`);
+    }
+  }
+
+  backupAppAssetsInfo(installedAppId: InstalledAppId) {
+    const fileToBackup = this.appAssetInfoPath(installedAppId);
+    const backupPath = this.appPreviousAssetInfoPath(installedAppId);
+    try {
+      fs.copyFileSync(fileToBackup, backupPath);
+    } catch (e) {
+      throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * Deletes information about happ and (optionally) UI of an installed app
+   *
+   * @param installedAppId
+   */
+  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
+    try {
+      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
+    } catch (e) {
+      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * Groups
+   * --------------------------------------------------------------------------------
+   */
+
+  /**
+   * Directory of a group where meta data about it is stored, e.g. the group profile
+   * (image and group name)
+   *
+   * @param groupDnaHashB64
    * @returns
    */
-  appMetaDataDir(appId: string) {
-    return path.join(this.appsDir, appId);
+  groupMetaDataDir(groupDnaHashB64: DnaHashB64): string {
+    return path.join(this.groupsDir, groupDnaHashB64);
   }
+
+  groupProfilePath(groupDnaHashB64: DnaHashB64): string {
+    return path.join(this.groupMetaDataDir(groupDnaHashB64), 'profile.json');
+  }
+
+  storeGroupProfile(groupDnaHashB64: DnaHashB64, groupProfile: GroupProfile): void {
+    const groupMetaDataDir = this.groupMetaDataDir(groupDnaHashB64);
+    createDirIfNotExists(groupMetaDataDir);
+    const filePath = this.groupProfilePath(groupDnaHashB64);
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(groupProfile, undefined, 4), 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to write group profile to json file: ${e}`);
+    }
+  }
+
+  readGroupProfile(groupDnaHashB64: DnaHashB64): GroupProfile | undefined {
+    const filePath = this.groupProfilePath(groupDnaHashB64);
+    if (!fs.existsSync(filePath)) return undefined;
+
+    let groupProfileJson: string | undefined;
+    try {
+      groupProfileJson = fs.readFileSync(filePath, 'utf-8');
+    } catch (e) {
+      throw new Error(`Failed to read group profile json file at path '${filePath}': ${e}`);
+    }
+    try {
+      const groupProfile: GroupProfile = JSON.parse(groupProfileJson);
+      return groupProfile;
+    } catch (e) {
+      throw new Error(`Failed to parse group profile: ${e}`);
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * Tools (class, not instance)
+   * --------------------------------------------------------------------------------
+   */
 
   /**
    * Directory for data related to a Tool (not the instance but the class)
@@ -145,15 +286,81 @@ export class MossFileSystem {
    * @param toolId Identifier of a Tool (not the instance but the class)
    * @returns
    */
-  toolDir(toolId: string) {
+  toolDir(toolId: string): string {
     return path.join(this.toolsDir, toolId);
   }
 
-  toolUserPreferencesPath(toolId: string) {
+  /**
+   * Assets directories of Tool UIs are cached here for efficiency because they're
+   * being used frequently as part of the `cross-group://` custom protocol handler.
+   */
+  _toolUiAssetsDirCache: Record<string, string> = {};
+
+  /**
+   * Clear the cache of Tool UI assets directory paths. This is required after
+   * UI updates to make sure that the new UI assets get served through the
+   * `cross-group://` custom protocol handler.
+   */
+  clearToolUiAssetsCache() {
+    this._toolUiAssetsDirCache = {};
+  }
+
+  /**
+   * Directory where the UI assets are to be used for the cross-group view of that
+   * Tool.
+   *
+   * @param toolId
+   */
+  async toolUiAssetsDir(toolId: string, useCache = true): Promise<string | undefined> {
+    const maybeCached = this._toolUiAssetsDirCache[toolId];
+    if (maybeCached && useCache) return maybeCached;
+    // Iteratively read all applet app asset infos until one is found with
+    // the right toolId and if yes, infer the UI asset location from the
+    // asset info, add it to the cache and return it.
+    // If no matching asset info is found for the given tool id, return undefined.
+    const filesAndDirs = await fsPromises.readdir(this.appsDir, { withFileTypes: true });
+    for (const fileOrDir of filesAndDirs) {
+      if (fileOrDir.isDirectory() && fileOrDir.name.startsWith('applet#')) {
+        const assetInfoJsonPath = path.join(this.appsDir, fileOrDir.name, 'info.json');
+        if (fs.existsSync(assetInfoJsonPath)) {
+          let appAssetsInfoJson: string | undefined;
+          try {
+            appAssetsInfoJson = await fsPromises.readFile(assetInfoJsonPath, 'utf-8');
+          } catch (e) {
+            throw new Error(
+              `@toolUiAssetsDir: Failed to read app assets info json file at path '${assetInfoJsonPath}': ${e}`,
+            );
+          }
+          try {
+            const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
+            const toolCompatibilityId = toolCompatibilityIdFromDistInfo(
+              appAssetsInfo.distributionInfo,
+            );
+            if (toolCompatibilityId === toolId && appAssetsInfo.type === 'webhapp') {
+              if (appAssetsInfo.ui.location.type === 'filesystem') {
+                const uiAssetsDir = path.join(
+                  this.uisDir,
+                  appAssetsInfo.ui.location.sha256,
+                  'assets',
+                );
+                this._toolUiAssetsDirCache[toolId] = uiAssetsDir;
+                return uiAssetsDir;
+              }
+            }
+          } catch (e) {
+            throw new Error(`Failed to parse app assets info: ${e}`);
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  toolUserPreferencesPath(toolId: string): string {
     return path.join(this.toolDir(toolId), 'preferences.json');
   }
 
-  toolIconPath(toolId: string) {
+  toolIconPath(toolId: string): string {
     return path.join(this.toolDir(toolId), 'icon');
   }
 
@@ -182,12 +389,88 @@ export class MossFileSystem {
     return undefined;
   }
 
-  appAssetInfoPath(installedAppId: InstalledAppId): string {
-    return path.join(this.appMetaDataDir(installedAppId), 'info.json');
+  storeToolIconIfNecessary(toolId: string, icon: string): void {
+    if (!fs.existsSync(this.toolDir(toolId))) {
+      createDirIfNotExists(this.toolDir(toolId));
+    }
+    const toolIconPath = this.toolIconPath(toolId);
+    if (!fs.existsSync(toolIconPath)) {
+      fs.writeFileSync(toolIconPath, icon, 'utf-8');
+    }
   }
 
-  appPreviousAssetInfoPath(installedAppId: InstalledAppId): string {
-    return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
+  readToolIcon(toolId: string): string | undefined {
+    const toolIconPath = this.toolIconPath(toolId);
+    if (fs.existsSync(toolIconPath)) {
+      return fs.readFileSync(toolIconPath, 'utf-8');
+    }
+    return undefined;
+  }
+
+  grantCameraAccess(toolId: string): void {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.cameraAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        cameraAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  grantMicrophoneAccess(toolId: string): void {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.microphoneAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        microphoneAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  grantFullMediaAccess(toolId: string): void {
+    const userPreferences = this.toolUserPreferences(toolId);
+    if (userPreferences) {
+      userPreferences.fullMediaAccessGranted = true;
+      fs.writeFileSync(
+        this.toolUserPreferencesPath(toolId),
+        JSON.stringify(userPreferences),
+        'utf-8',
+      );
+    } else {
+      createDirIfNotExists(this.toolDir(toolId));
+      const preferences: ToolUserPreferences = {
+        microphoneAccessGranted: true,
+        cameraAccessGranted: true,
+        fullMediaAccessGranted: true,
+      };
+      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------------
+   * General Utilities
+   * --------------------------------------------------------------------------------
+   */
+
+  get conductorConfigPath() {
+    return path.join(this.conductorDir, 'conductor-config.yaml');
   }
 
   keystoreInitialized = () => {
@@ -208,148 +491,29 @@ export class MossFileSystem {
     return fs.existsSync(pwPath);
   }
 
-  /**
-   * Stores information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   * @param info
-   */
-  storeAppAssetsInfo(installedAppId: InstalledAppId, info: AppAssetsInfo) {
-    const appMetaDataDir = this.appMetaDataDir(installedAppId);
-    createDirIfNotExists(appMetaDataDir);
-    const filePath = this.appAssetInfoPath(installedAppId);
+  async openLogs() {
     try {
-      fs.writeFileSync(filePath, JSON.stringify(info, undefined, 4), 'utf-8');
+      await shell.openPath(this.profileLogsDir);
     } catch (e) {
-      throw new Error(`Failed to write app assets info to json file: ${e}`);
+      dialog.showErrorBox('Failed to open logs folder', (e as any).toString());
     }
   }
 
-  /**
-   * Stores information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   * @param info
-   */
-  deleteAppAssetsInfo(installedAppId: InstalledAppId) {
-    const filePath = this.appAssetInfoPath(installedAppId);
+  async exportLogs() {
     try {
-      fs.rmSync(filePath);
+      const zip = new AdmZip();
+      zip.addLocalFolder(this.profileLogsDir);
+      const exportToPathResponse = await dialog.showSaveDialog({
+        title: 'Export Logs',
+        buttonLabel: 'Export',
+        defaultPath: `Moss_${app.getVersion()}_logs_${Date.now()}.zip`,
+      });
+      if (exportToPathResponse.filePath) {
+        zip.writeZip(exportToPathResponse.filePath);
+        shell.showItemInFolder(exportToPathResponse.filePath);
+      }
     } catch (e) {
-      throw new Error(`Failed to delete app assets info json file: ${e}`);
-    }
-  }
-
-  backupAppAssetsInfo(installedAppId: InstalledAppId) {
-    const fileToBackup = this.appAssetInfoPath(installedAppId);
-    const backupPath = this.appPreviousAssetInfoPath(installedAppId);
-    try {
-      fs.copyFileSync(fileToBackup, backupPath);
-    } catch (e) {
-      throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
-    }
-  }
-
-  readAppAssetsInfo(installedAppId: InstalledAppId): AppAssetsInfo {
-    const filePath = this.appAssetInfoPath(installedAppId);
-    let appAssetsInfoJson: string | undefined;
-    try {
-      appAssetsInfoJson = fs.readFileSync(filePath, 'utf-8');
-    } catch (e) {
-      throw new Error(`Failed to read app assets info json file at path '${filePath}': ${e}`);
-    }
-    try {
-      const appAssetsInfo: AppAssetsInfo = JSON.parse(appAssetsInfoJson);
-      return appAssetsInfo;
-    } catch (e) {
-      throw new Error(`Failed to parse app assets info: ${e}`);
-    }
-  }
-
-  /**
-   * Deletes information about happ and (optionally) UI of an installed app
-   *
-   * @param installedAppId
-   */
-  deleteAppMetaDataDir(installedAppId: InstalledAppId) {
-    try {
-      fs.rmSync(this.appMetaDataDir(installedAppId), { recursive: true });
-    } catch (e) {
-      throw new Error(`Failed to delete app metadata directory for app '${installedAppId}': ${e}`);
-    }
-  }
-
-  storeToolIconIfNecessary(toolId: string, icon: string): void {
-    if (!fs.existsSync(this.toolDir(toolId))) {
-      createDirIfNotExists(this.toolDir(toolId));
-    }
-    const toolIconPath = this.toolIconPath(toolId);
-    if (!fs.existsSync(toolIconPath)) {
-      fs.writeFileSync(toolIconPath, icon, 'utf-8');
-    }
-  }
-
-  readToolIcon(toolId: string): string | undefined {
-    const toolIconPath = this.toolIconPath(toolId);
-    if (fs.existsSync(toolIconPath)) {
-      return fs.readFileSync(toolIconPath, 'utf-8');
-    }
-    return undefined;
-  }
-
-  grantCameraAccess(toolId: string) {
-    const userPreferences = this.toolUserPreferences(toolId);
-    if (userPreferences) {
-      userPreferences.cameraAccessGranted = true;
-      fs.writeFileSync(
-        this.toolUserPreferencesPath(toolId),
-        JSON.stringify(userPreferences),
-        'utf-8',
-      );
-    } else {
-      createDirIfNotExists(this.toolDir(toolId));
-      const preferences: ToolUserPreferences = {
-        cameraAccessGranted: true,
-      };
-      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
-    }
-  }
-
-  grantMicrophoneAccess(toolId: string) {
-    const userPreferences = this.toolUserPreferences(toolId);
-    if (userPreferences) {
-      userPreferences.microphoneAccessGranted = true;
-      fs.writeFileSync(
-        this.toolUserPreferencesPath(toolId),
-        JSON.stringify(userPreferences),
-        'utf-8',
-      );
-    } else {
-      createDirIfNotExists(this.toolDir(toolId));
-      const preferences: ToolUserPreferences = {
-        microphoneAccessGranted: true,
-      };
-      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
-    }
-  }
-
-  grantFullMediaAccess(toolId: string) {
-    const userPreferences = this.toolUserPreferences(toolId);
-    if (userPreferences) {
-      userPreferences.fullMediaAccessGranted = true;
-      fs.writeFileSync(
-        this.toolUserPreferencesPath(toolId),
-        JSON.stringify(userPreferences),
-        'utf-8',
-      );
-    } else {
-      createDirIfNotExists(this.toolDir(toolId));
-      const preferences: ToolUserPreferences = {
-        microphoneAccessGranted: true,
-        cameraAccessGranted: true,
-        fullMediaAccessGranted: true,
-      };
-      fs.writeFileSync(this.toolUserPreferencesPath(toolId), JSON.stringify(preferences), 'utf-8');
+      dialog.showErrorBox('Failed to export logs', (e as any).toString());
     }
   }
 

@@ -277,6 +277,12 @@ export type CuratedTool = {
    * Tags
    */
   tags: string[];
+  /**
+   * Visibility level of that Tool in the library. The default is "high", meaning that it
+   * is visible by default. Visibility level "low" requires additional user action in
+   * order for the Tool to become visible.
+   */
+  visiblity?: 'high' | 'low';
 };
 
 export type DeveloperCollectiveToolList = {

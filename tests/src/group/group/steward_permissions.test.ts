@@ -1,7 +1,12 @@
 import { assert, test } from 'vitest';
 
 import { runScenario, dhtSync } from '@holochain/tryorama';
-import { encodeHashToBase64, fakeAgentPubKey, Record as HolochainRecord } from '@holochain/client';
+import {
+  AppBundleSource,
+  encodeHashToBase64,
+  fakeAgentPubKey,
+  Record as HolochainRecord,
+} from '@holochain/client';
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 import {
@@ -17,8 +22,14 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(scenario, appSource.appBundleSource, ['group']);
@@ -110,8 +121,14 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     const expiry = (Date.now() + 90_000) * 1_000;
 
@@ -195,8 +212,14 @@ test('Steward can nominate additional stewards if their steward permission is no
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     const [
       [alice, alicePubKey],
@@ -255,8 +278,14 @@ test('Steward can NOT nominate additional stewards if their steward permission i
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     // Expiry is far in the future
     const expiry = (Date.now() + 600_000) * 1_000;
@@ -305,8 +334,14 @@ test('Steward can NOT nominate additional stewards without providing a valid per
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
     // Set up the app to be installed
-    const appSource = { appBundleSource: { path: testAppPath } };
+    const appSource = { appBundleSource };
 
     // Expiry is far in the future
     const expiry = (Date.now() + 600_000) * 1_000;

@@ -10,5 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getProfile: () => ipcRenderer.invoke('get-profile'),
   getVersion: () => ipcRenderer.invoke('get-version'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
+  openLogs: () => ipcRenderer.invoke('open-logs'),
+  exportLogs: () => ipcRenderer.invoke('export-logs'),
   exit: () => ipcRenderer.invoke('exit'),
 });
