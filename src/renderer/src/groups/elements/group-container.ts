@@ -58,7 +58,8 @@ export class GroupContainer extends LitElement {
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: #588121;
+        /* background-color: #588121; */
+        background-color: var(--moss-main-green);
         padding: 8px;
         border-radius: 5px 0 0 0;
       }

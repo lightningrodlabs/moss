@@ -300,10 +300,6 @@ export class MossPocket extends LitElement {
           display: flex;
         }
 
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-tertiary-0);
-        }
-
         sl-button.clear-pocket::part(base) {
           color: var(--sl-color-primary-600);
         }

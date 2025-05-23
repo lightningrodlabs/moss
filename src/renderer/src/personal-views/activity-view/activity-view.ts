@@ -443,11 +443,11 @@ export class ActivityView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: var(--moss-dark-green);
-        border-radius: 5px 0 0 0;
+        /* background-color: var(--moss-dark-green); */
+        border-radius: 8px;
       }
       .feed {
-        padding: 10px;
+        padding: 30px;
         height: calc(100vh - 70px);
       }
       .sort-buttons {

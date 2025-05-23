@@ -114,12 +114,13 @@ export class InstallableToolsWeb2 extends LitElement {
         cursor: pointer;
         border: none;
         --border-color: transparent;
-        --sl-panel-background-color: var(--sl-color-tertiary-100);
+        --sl-panel-background-color: #ffffff88;
         --sl-shadow-x-small: 1px 1px 2px 0 var(--sl-color-tertiary-700);
       }
 
       .tool-card:hover {
-        --sl-panel-background-color: var(--sl-color-tertiary-400);
+        --sl-panel-background-color: #ffffffbf;
+        /* --sl-panel-background-color: var(--sl-color-tertiary-400); */
       }
 
       .tool-card:focus {

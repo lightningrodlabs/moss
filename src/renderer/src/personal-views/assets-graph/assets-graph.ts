@@ -62,6 +62,9 @@ export class AssetsGraph extends LitElement {
           size: 50,
           mass: 12,
           shadow: true,
+          font: {
+            color: 'white',
+          },
         });
         // Add applet nodes and
         const appletStores = await toPromise(groupStore.activeAppletStores);
@@ -105,6 +108,9 @@ export class AssetsGraph extends LitElement {
               size: 35,
               mass: 8,
               shadow: true,
+              font: {
+                color: 'white',
+              },
             });
             // Create a connection between the group node and the applet node
             edges.push({
@@ -148,6 +154,10 @@ export class AssetsGraph extends LitElement {
                 shape: assetInfoSrc ? 'image' : 'triangleDown',
                 shadow: true,
                 size: 20,
+
+                font: {
+                  color: 'white',
+                },
               });
             }
             // Add the dst's asset node if it doesn't exist yet
@@ -159,6 +169,9 @@ export class AssetsGraph extends LitElement {
                 shape: assetInfoDst ? 'image' : 'triangleDown',
                 shadow: true,
                 size: 20,
+                font: {
+                  color: 'white',
+                },
               });
             }
 
@@ -323,7 +336,8 @@ export class AssetsGraph extends LitElement {
         display: block;
         width: calc(100vw - 74px);
         height: calc(100vh - 74px);
-        background: white;
+        color: white;
+        /* background: white; */
       }
       #graph-container {
         width: 100%;

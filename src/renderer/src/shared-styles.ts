@@ -150,6 +150,10 @@ export const mossStyles = [
 
     /* moss-dialog */
 
+    .moss-dialog {
+      color: black;
+    }
+
     .moss-dialog::part(panel) {
       border-radius: 20px;
       background: white;
@@ -307,8 +311,8 @@ export const mossStyles = [
     .moss-sidebar-button {
       all: unset;
       cursor: pointer;
-      height: 58px;
-      width: 58px;
+      height: 48px;
+      width: 48px;
       color: #fff;
       border-radius: 12px;
     }

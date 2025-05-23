@@ -48,19 +48,15 @@ export class TopBarButton extends LitElement {
       placement="${this.placement}"
       .content=${this.tooltipText}
     >
-      <button
+      <div
         class="icon-container column ${this.selected ? 'selected' : ''} ${this.invertColors
           ? 'inverted'
           : ''}"
         @click=${this.handleClick}
       >
-        <div class="column center-content">
-          <slot></slot>
-          ${this.selected
-            ? html`<div class="indicator ${this.invertColors ? 'inverted' : ''}"></div>`
-            : html``}
-        </div>
-      </button>
+        <slot></slot>
+        ${this.indicated ? html`<div class="indicator"></div>` : html``}
+      </div>
     </sl-tooltip>`;
   }
 
@@ -74,42 +70,39 @@ export class TopBarButton extends LitElement {
 
         .indicator {
           position: absolute;
-          bottom: -12px;
-          height: 4px;
-          border-radius: 2px;
-          width: 36px;
-          background: var(--moss-main-green);
-        }
-
-        .indicator:not(.inverted) {
-          background: var(--moss-dark-green);
+          bottom: 0;
+          height: 5px;
+          border-radius: 7px 7px 0 0;
+          width: 32px;
+          background: var(--sl-color-tertiary-50);
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {
-          all: unset;
           cursor: pointer;
           position: relative;
           align-items: center;
-          border-radius: 12px;
           justify-content: center;
-          border: 4px solid transparent;
-          margin: 0 4px;
+          border-radius: 20% 20% 0 0;
+          height: var(--sidebar-width);
+          margin: 0 2px;
+          width: var(--sidebar-width);
         }
-
         .icon-container:hover {
-          border: 4px solid var(--moss-main-green);
+          background-color: var(--hover-color, var(--sl-color-primary-900));
+        }
+        .selected:not(.inverted),
+        .icon-container:hover {
+          background: linear-gradient(180deg, #dbe755 0%, #588121 100%);
         }
 
-        .icon-container:hover:not(.inverted) {
-          border: 4px solid var(--moss-dark-green);
+        .inverted:hover {
+          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+          background: linear-gradient(180deg, #002800 0%, var(--moss-dark-green) 100%);
         }
-
         .selected {
-          border: 4px solid var(--moss-main-green);
-        }
-
-        .selected:not(.inverted) {
-          border: 4px solid var(--moss-dark-green);
+          /* background: linear-gradient(180deg, #002800 0%, #224b21 100%); */
+          background: linear-gradient(180deg, #002800 0%, var(--moss-dark-green) 100%);
         }
       `,
     ];

@@ -67,7 +67,7 @@ export class AppletTopBarButton extends LitElement {
           }}
           .notificationUrgency=${this.appletNotificationStatus.value[0]}
           .notificationCount=${this.appletNotificationStatus.value[1]}
-          style="z-index: 1; --size: 58px;"
+          style="z-index: 1; --size: 48px; --border-radius: 8px;"
         ></applet-logo-raw>
         <sl-tooltip
           hoist
@@ -126,7 +126,7 @@ export class AppletTopBarButton extends LitElement {
       .applet-icon {
         /* box-shadow: 0 0 2px 3px var(--sl-color-primary-400); */
         box-shadow: 1px 2px 10px 0px #102520ab;
-        border-radius: 12px;
+        border-radius: 8px;
       }
 
       /* .applet-icon:hover {

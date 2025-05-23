@@ -142,7 +142,6 @@ export class GroupsSidebar extends LitElement {
                     });
                     this.dragged = null;
                   }}
-                  style="border-radius: 50%; --size: 58px;"
                   .selected=${this.selectedGroupDnaHash &&
                   groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
                   .indicated=${this.indicatedGroupDnaHashes.includes(
@@ -191,7 +190,7 @@ export class GroupsSidebar extends LitElement {
       ${unknownGroups.map(
         ([groupDnaHash]) => html`
           <sidebar-button
-            style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
+            style="margin-bottom: -4px;"
             .selected=${this.selectedGroupDnaHash &&
             groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
@@ -215,7 +214,7 @@ export class GroupsSidebar extends LitElement {
       ${disabledGroups.map(
         ([groupDnaHash, groupProfile]) => html`
           <sidebar-button
-            style="margin-bottom: -4px; border-radius: 50%; --size: 58px; opacity: 0.7;"
+            style="margin-bottom: -4px; opacity: 0.6;"
             .selected=${this.selectedGroupDnaHash &&
             groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
@@ -249,15 +248,15 @@ export class GroupsSidebar extends LitElement {
         return html`
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px; margin-top: 15px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; margin-top: 15px; --border-radius: 8px;"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; --border-radius: 8px;"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; --border-radius: 8px;"
           ></sl-skeleton>
         `;
       case 'error':

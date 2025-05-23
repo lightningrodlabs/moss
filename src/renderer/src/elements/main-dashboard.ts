@@ -901,7 +901,6 @@ export class MainDashboard extends LitElement {
           (toolCompatibilityId) => html`
             <cross-group-main
               .toolCompatibilityId=${toolCompatibilityId}
-              hostColor="var(--moss-dark-green);"
               style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
                 ? ''
                 : 'display: none;'}
@@ -1492,28 +1491,14 @@ export class MainDashboard extends LitElement {
         @drop=${(e: any) => {
           console.log('GOT DROP EVENT: ', e);
         }}
-        class="column left-sidebar"
+        class="column left-sidebar items-center"
       >
-        <div
-          class="column top-left-corner ${this._dashboardState.value.viewType === 'personal' ||
-          this.hoverPersonalView
-            ? 'selected'
-            : ''}"
-          @mouseenter=${() => {
-            this.hoverMossButton = true;
-            this.hoverPersonalView = true;
-          }}
-          @mouseleave=${() => {
-            this.hoverMossButton = false;
-            setTimeout(() => {
-              if (!this.hoverTopBar) {
-                this.hoverPersonalView = false;
-              }
-            }, 50);
-          }}
-        >
+        <div class="column">
           <button
-            class="home-button"
+            class="home-button ${this._dashboardState.value.viewType === 'personal'
+              ? 'selected'
+              : ''}"
+            style="margin-top: 25px;"
             .selected=${false}
             .tooltipText=${msg('Home')}
             placement="bottom"
@@ -1540,9 +1525,25 @@ export class MainDashboard extends LitElement {
               }
             }}
           >
-            <img src="moss-m.svg" style="width: 38px; height: 38px;" />
+            <div class="column center-content">
+              <img src="moss-m-white.svg" style="width: 38px; height: 38px;" />
+            </div>
+          </button>
+          <button
+            class="moss-sidebar-button"
+            style="margin-top: 8px;"
+            @click=${() => this.openClipboard()}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                this.openClipboard();
+              }
+            }}
+          >
+            <div class="column center-content">${magnifyingGlassIcon(20)}</div>
           </button>
         </div>
+
+        <div class="sidebar-divider" style="margin-top: 14px;"></div>
 
         <groups-sidebar
           class="left-group-sidebar"
@@ -1584,26 +1585,13 @@ export class MainDashboard extends LitElement {
                 <img
                   class="moss-sidebar-button-icon"
                   src="magic-wand.svg"
-                  style="width: 30px; height: 30px;"
+                  style="width: 24px; height: 24px;"
                 />
               </div>
             </button>
           </sl-tooltip>
         </div>
         <div class="row center-content" style="margin-bottom: 10px; position: relative">
-          <sl-tooltip content="Search" placement="right" hoist>
-            <button
-              class="moss-sidebar-button"
-              @click=${() => this.openClipboard()}
-              @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.openClipboard();
-                }
-              }}
-            >
-              <div class="column center-content">${magnifyingGlassIcon(24)}</div>
-            </button>
-          </sl-tooltip>
           ${this._addedToPocket.value
             ? html`
                 <div
@@ -1642,7 +1630,7 @@ export class MainDashboard extends LitElement {
         !this.hoverPersonalView
           ? ''
           : 'personal-top-bar'}"
-        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
+        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
         @mouseenter=${() => {
           this.hoverTopBar = true;
         }}
@@ -1658,7 +1646,7 @@ export class MainDashboard extends LitElement {
         <div
           id="top-bar-scroller"
           class="row invisible-scrollbars"
-          style="overflow-x: auto; padding-right: 40px;"
+          style="overflow-x: auto; padding-right: 40px; height: 80px;"
           @wheel=${(e) => {
             const el = this.shadowRoot!.getElementById('top-bar-scroller');
             if (el)
@@ -1915,43 +1903,37 @@ export class MainDashboard extends LitElement {
           display: none;
         }
 
-        .top-left-corner {
-          align-items: center;
-          justify-content: center;
-          height: var(--sidebar-width);
-        }
-
         .home-button {
+          all: unset;
           /* background: linear-gradient(0deg, #203923 0%, #527a22 100%); */
-          background: var(--moss-dark-button);
-          border-radius: 15px;
-          border: none;
-          width: 58px;
-          height: 58px;
-          outline: none;
+          /* background: var(--moss-dark-button); */
+          background: none;
+          border-radius: 8px;
+          width: 48px;
+          height: 48px;
+          cursor: pointer;
+          color: white;
         }
 
         .home-button:hover {
-          cursor: pointer;
+          background: var(--moss-dark-button);
+          color: black;
         }
 
         .home-button:focus-visible {
-          outline: 2x solid var(--moss-purple);
-        }
-
-        .top-left-corner:hover {
-          border-radius: 20px 0 0 20px;
-          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
-          cursor: pointer;
+          outline: 2px solid var(--moss-purple);
         }
 
         .selected {
-          border-radius: 20px 0 0 20px;
-          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
+          background: var(--moss-dark-button);
+          color: black;
+        }
+
+        .sidebar-divider {
+          width: 40px;
+          height: 1px;
+          background: white;
+          opacity: 0.4;
         }
 
         .hover-browser {
@@ -2000,17 +1982,21 @@ export class MainDashboard extends LitElement {
           /* display: flex; */
           flex: 1;
           position: fixed;
-          top: 74px;
-          left: 74px;
-          bottom: 0;
-          right: 0;
+          top: 80px;
+          left: 80px;
+          bottom: 8px;
+          right: 8px;
           padding-left: 8px;
           /* background-color: #224b21; */
-          background-color: var(--moss-dark-green);
+          background-color: var(--moss-main-green);
+          border-radius: 0 0 10px 10px;
+          overflow: hidden;
         }
 
         .personal-view {
-          background-color: #689d19;
+          /* background-color: #689d19; */
+          /* background-color: var(--moss-dark-green); */
+          background: none;
         }
 
         #group-view-area {
@@ -2088,7 +2074,7 @@ export class MainDashboard extends LitElement {
           background: var(--sl-color-tertiary-800);
           cursor: pointer;
           /* margin: 5px; */
-          height: 74px;
+          height: 80px;
           width: 60px;
         }
 
@@ -2150,7 +2136,7 @@ export class MainDashboard extends LitElement {
           top: 0;
           bottom: 0;
           /* background: linear-gradient(270deg, #142510 0%, #3a622d 100%); */
-          width: 74px;
+          width: 80px;
         }
 
         .left-group-sidebar {
@@ -2169,12 +2155,13 @@ export class MainDashboard extends LitElement {
         .top-bar {
           position: relative;
           /* background: #224b21; */
-          background: var(--moss-dark-green);
+          background: var(--moss-main-green);
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
           -ms-overflow-style: none; /* IE and Edge */
           scrollbar-width: none; /* Firefox */
+          border-radius: 12px 12px 0 0;
         }
 
         .top-bar::-webkit-scrollbar {
@@ -2182,13 +2169,14 @@ export class MainDashboard extends LitElement {
         }
 
         .personal-top-bar {
-          background: #689d19;
+          background: transparent;
+          border-radius: 0;
         }
 
         .personal-view-indicator {
           position: absolute;
-          top: 74px;
-          left: 74px;
+          top: 80px;
+          left: 80px;
           font-size: 18px;
           background: #689d19;
           padding: 5px;

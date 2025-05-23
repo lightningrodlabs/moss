@@ -234,6 +234,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     return html`
       <sl-dialog
         id="applet-dialog"
+        class="moss-dialog"
         .label=${msg('Add New Tool to Group')}
         @sl-request-close=${(e) => {
           if (this._installing) {
@@ -285,10 +286,6 @@ export class InstallToolDialogWeb2 extends LitElement {
 
       .offline {
         background-color: #bfbfbf;
-      }
-
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-tertiary-0);
       }
     `,
   ];

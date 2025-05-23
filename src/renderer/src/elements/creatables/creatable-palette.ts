@@ -260,10 +260,6 @@ export class CreatablePalette extends LitElement {
         .creatable-item:hover {
           background: var(--sl-color-primary-200);
         }
-
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-tertiary-0);
-        }
       `,
     ];
   }

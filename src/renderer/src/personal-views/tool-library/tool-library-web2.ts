@@ -231,7 +231,7 @@ export class ToolLibraryWeb2 extends LitElement {
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
         <div class="row items-center">
           <div class="flex flex-1"></div>
-          <div style="margin-right: 10px;">${msg('Show experimental Tools')}</div>
+          <div style="margin-right: 10px; color: white;">${msg('Show experimental Tools')}</div>
           <sl-switch
             id="visibility-switch"
             @sl-change=${() => {
@@ -289,7 +289,8 @@ export class ToolLibraryWeb2 extends LitElement {
             </div>
             <span style="display: flex; flex: 1;"></span>
             <button
-              class="install-btn"
+              class="moss-button"
+              style="background: white; color: black;"
               @click=${async () => {
                 this._selectGroupDialog.show();
               }}
@@ -362,7 +363,12 @@ export class ToolLibraryWeb2 extends LitElement {
   }
 
   renderPublishDialog() {
-    return html` <sl-dialog id="publish-dialog" style="--width: 900px;" no-header>
+    return html` <sl-dialog
+      class="moss-dialog"
+      id="publish-dialog"
+      style="--width: 900px;"
+      no-header
+    >
       <div class="publish-dialog">
         <div
           class="row"
@@ -456,9 +462,12 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon-button>
           <div class="row" style="align-items: center; font-size: 34px;">
             <sl-icon .src=${wrapPathInSvg(mdiTools)}></sl-icon>
-            <span style="flex: 1; margin-left: 10px;">${msg('Tool Library')}</span>
+            <span style="flex: 1; margin-left: 10px; font-weight: bold;"
+              >${msg('Tool Library')}</span
+            >
           </div>
-          <sl-button
+          <button
+            class="moss-button"
             style="position: absolute; right: 20px;"
             @click=${() => this._publishDialog.show()}
           >
@@ -466,7 +475,7 @@ export class ToolLibraryWeb2 extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiPublish)} style="font-size: 20px;"></sl-icon>
               <span style="margin-left: 5px;">${msg('Publish')}</span>
             </div>
-          </sl-button>
+          </button>
         </div>
         <div class="column flex-scrollable-parent">
           <div class="flex-scrollable-container">
@@ -482,21 +491,23 @@ export class ToolLibraryWeb2 extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: var(--moss-dark-green);
+        /* background-color: var(--moss-dark-green); */
         overflow: auto;
         color: var(--sl-color-secondary-950);
         padding: 8px;
-        border-radius: 5px 0 0 0;
+        border-radius: 8px;
       }
 
       .container {
-        background: var(--sl-color-tertiary-0);
+        /* background: var(--sl-color-tertiary-0); */
+        border-radius: 8px;
+        overflow: hidden;
       }
 
       .header {
         color: white;
         height: 70px;
-        background: var(--sl-color-tertiary-950);
+        /* background: var(--sl-color-tertiary-950); */
       }
 
       .detail-header {
@@ -504,14 +515,16 @@ export class ToolLibraryWeb2 extends LitElement {
         padding: 30px;
         height: 200px;
         color: var(--sl-color-tertiary-0);
-        background: linear-gradient(var(--sl-color-tertiary-600), var(--sl-color-tertiary-700));
+        /* background: linear-gradient(var(--sl-color-tertiary-600), var(--sl-color-tertiary-700)); */
+        background: #ffffff40;
+        border-radius: 10px;
       }
 
       .body {
         flex: 1;
-        background: linear-gradient(var(--sl-color-tertiary-300), #9fa9c1);
+        /* background: linear-gradient(var(--sl-color-tertiary-300), #9fa9c1); */
         padding: 30px;
-        color: black;
+        color: white;
       }
 
       .back-btn {

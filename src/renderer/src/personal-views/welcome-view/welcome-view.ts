@@ -332,7 +332,7 @@ export class WelcomeView extends LitElement {
                 <div class="column" style="align-items: center; flex: 1; overflow: auto;">
                   <button
                     class="feedback-btn"
-                    style="position: absolute; top: 10px; right: 10px;"
+                    style="position: absolute; top: 20px; right: 10px;"
                     @click=${() => this._feedbackDialog.show()}
                   >
                     <div class="row items-center" style="font-size: 26px; justify-content: center;">
@@ -359,7 +359,7 @@ export class WelcomeView extends LitElement {
         flex: 1;
         /* background-color: #588121; */
         /* background-color: #224b21; */
-        background-color: var(--moss-dark-green);
+        /* background-color: var(--moss-dark-green); */
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }

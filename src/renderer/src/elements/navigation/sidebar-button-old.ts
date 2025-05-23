@@ -58,40 +58,38 @@ export class SidebarButton extends LitElement {
       placement="${this.placement}"
       .content=${this.tooltipText}
     >
-      <button class="icon-container ${this.selected ? 'selected' : ''}" @click=${this.handleClick}>
-        <div class="column center-content">
-          <div
-            class="row center-content notification-dot
+      <div
+        class="icon-container column ${this.selected ? 'selected' : ''}"
+        @click=${this.handleClick}
+      >
+        <div
+          class="row center-content notification-dot
             ${this.notificationUrgency === 'high' ? 'urgent' : ''}
             ${this.notificationUrgency === 'high' &&
-            this.notificationCount &&
-            this.notificationCount > 9
-              ? 'padded'
-              : ''}
+          this.notificationCount &&
+          this.notificationCount > 9
+            ? 'padded'
+            : ''}
           "
-            style="${!this.notificationUrgency || this.notificationUrgency === 'low'
-              ? 'display: none'
-              : ''}"
-          >
-            ${this.notificationCount && this.notificationUrgency === 'high'
-              ? this.notificationCount
-              : undefined}
-          </div>
-          ${this.slIcon
-            ? html` <div
-                class="icon column center-content"
-                style="opacity: 0.2; background: white;"
-              >
-                <sl-icon
-                  .src=${this.logoSrc}
-                  alt=${this.tooltipText}
-                  style="height: 30px; width: 30px;"
-                ></sl-icon>
-              </div>`
-            : html` <img class="icon" src=${this.logoSrc} alt=${this.tooltipText} /> `}
-          ${this.selected ? html`<div class="indicator"></div>` : html``}
+          style="${!this.notificationUrgency || this.notificationUrgency === 'low'
+            ? 'display: none'
+            : ''}"
+        >
+          ${this.notificationCount && this.notificationUrgency === 'high'
+            ? this.notificationCount
+            : undefined}
         </div>
-      </button>
+        ${this.slIcon
+          ? html` <div class="icon column center-content" style="opacity: 0.2; background: white;">
+              <sl-icon
+                .src=${this.logoSrc}
+                alt=${this.tooltipText}
+                style="height: 30px; width: 30px;"
+              ></sl-icon>
+            </div>`
+          : html` <img class="icon" src=${this.logoSrc} alt=${this.tooltipText} /> `}
+        ${this.indicated ? html`<div class="indicator"></div>` : html``}
+      </div>
     </sl-tooltip>`;
   }
 
@@ -105,8 +103,8 @@ export class SidebarButton extends LitElement {
         .icon {
           width: var(--size, 48px);
           height: var(--size, 48px);
-          border-radius: var(--border-radius, 12px);
-          background: var();
+          border-radius: var(--border-radius, 50%);
+          background: linear-gradient(180deg, #b2c85a 0%, #669d5a 62.38%, #7f6f52 92.41%);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         }
         /* .icon:hover {
@@ -115,27 +113,40 @@ export class SidebarButton extends LitElement {
       } */
         .indicator {
           position: absolute;
-          right: -12px;
-          height: 36px;
-          border-radius: 2px;
-          width: 4px;
-          background: var(--moss-main-green);
+          right: 0;
+          height: 32px;
+          border-radius: 7px 0 0 7px;
+          width: 5px;
+          background: var(--sl-color-tertiary-50);
+          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
         }
 
         .icon-container {
-          all: unset;
           cursor: pointer;
           position: relative;
           align-items: center;
-          border-radius: 12px;
+          border-radius: 50% 0 0 50%;
           justify-content: center;
-          border: 4px solid transparent;
+          height: var(--sidebar-width);
+          width: var(--sidebar-width);
+          transition: all 0.25s ease;
         }
         .icon-container:hover {
-          border: 4px solid var(--moss-main-green);
+          /* background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%); */
+          background: linear-gradient(
+            90deg,
+            var(--moss-medium-green) 0%,
+            var(--moss-dark-green) 90.91%
+          );
+          cursor: pointer;
         }
         .selected {
-          border: 4px solid var(--moss-main-green);
+          /* background: linear-gradient(90deg, #cddd58 0%, #224b21 90.91%); */
+          background: linear-gradient(
+            90deg,
+            var(--moss-medium-green) 0%,
+            var(--moss-dark-green) 90.91%
+          );
         }
 
         .notification-dot {

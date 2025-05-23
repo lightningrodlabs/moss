@@ -61,8 +61,8 @@ export class GroupAppletsSidebar extends LitElement {
     if (Array.from(applets.entries()).length === 0) {
       return html`
         <div class="row" style="align-items: center; font-size: 20px; font-weight: 500;">
-          <span style="color: #fff; font-size: 14px; opacity: .5;">
-            No applets installed or all applets disabled...
+          <span style="color: var(--moss-dark-green); font-size: 14px;">
+            No Tools installed or all Tools disabled...
           </span>
         </div>
       `;
@@ -195,15 +195,15 @@ export class GroupAppletsSidebar extends LitElement {
     switch (this._groupApplets.value.status) {
       case 'pending':
         return html`<sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
             effect="pulse"
           ></sl-skeleton> `;
       case 'error':
@@ -260,12 +260,16 @@ export class GroupAppletsSidebar extends LitElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        border-radius: 50%;
-        background: #0b2f00;
-        color: #dbe755;
-        width: 58px;
-        height: 58px;
-        box-shadow: 1px 2px 10px 0px #102520ab;
+        /* border-radius: 50%; */
+        border-radius: 8px;
+        /* background: #0b2f00; */
+        /* background: var(--moss-dark-green); */
+        /* color: #dbe755; */
+        /* color: var(--moss-main-green); */
+        color: var(--moss-dark-green);
+        width: 48px;
+        height: 48px;
+        /* box-shadow: 1px 2px 10px 0px #102520ab; */
       }
 
       .dropzone {

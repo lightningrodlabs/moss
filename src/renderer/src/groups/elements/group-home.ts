@@ -699,9 +699,9 @@ export class GroupHome extends LitElement {
           class="column"
           style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
         >
-          <div
+          <!-- <div
             style=" background-image: url(${groupProfile.icon_src}); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"
-          ></div>
+          ></div> -->
 
           <!-- Top Row -->
 
@@ -1102,9 +1102,10 @@ export class GroupHome extends LitElement {
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: #588121;
+        /* background-color: #588121; */
+        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
         padding: 8px;
-        border-radius: 5px 0 0 0;
+        border-radius: 5px;
       }
 
       .settings-btn {
@@ -1113,11 +1114,11 @@ export class GroupHome extends LitElement {
       }
 
       .settings-btn:hover {
-        color: var(--sl-color-tertiary-200);
+        color: var(--moss-dark-green);
       }
 
       .settings-btn:active {
-        color: var(--sl-color-tertiary-300);
+        color: var(--moss-dark-green);
       }
 
       .card-header {
@@ -1291,18 +1292,13 @@ export class GroupHome extends LitElement {
       }
 
       /* backdrop should only cover group section, not sidebar */
-      .moss-dialog::part(overlay) {
+      /* .moss-dialog::part(overlay) {
         top: 74px;
         left: 74px;
-      }
+      } */
 
       .profile-detail-popup::part(panel) {
         width: 360px;
-      }
-
-      sl-dialog {
-        color: black;
-        --sl-panel-background-color: var(--sl-color-primary-0);
       }
     `,
   ];

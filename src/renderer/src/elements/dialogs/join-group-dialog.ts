@@ -176,12 +176,5 @@ export class JoinGroupDialog extends LitElement {
     `;
   }
 
-  static styles = [
-    mossStyles,
-    css`
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-primary-0);
-      }
-    `,
-  ];
+  static styles = [mossStyles, css``];
 }

@@ -69,15 +69,15 @@ export class PersonalViewSidebar extends LitElement {
     switch (this._appletClasses.value.status) {
       case 'pending':
         return html`<sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 8px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 8px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 58px; width: 58px; margin-right: 10px; --border-radius: 20%;"
+            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 8px;"
             effect="pulse"
           ></sl-skeleton> `;
       case 'error':
@@ -144,7 +144,7 @@ export class PersonalViewSidebar extends LitElement {
         }}
       >
         <div class="moss-item-button">
-          <img src="mountain_stream.svg" class="black-svg" style="height: 40px;" />
+          <img src="mountain_stream.svg" style="height: 40px;" />
         </div>
       </topbar-button>
 
@@ -227,19 +227,22 @@ export class PersonalViewSidebar extends LitElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        border-radius: 50%;
+        /* border-radius: 50%; */
+        border-radius: 8px;
         /* color: #0b2f00; */
-        color: #173917;
-        background: #dbe755;
-        width: 58px;
-        height: 58px;
-        box-shadow: 1px 2px 10px 0px #102520ab;
+        /* color: #173917; */
+        color: white;
+        /* background: #dbe755; */
+        /* background: var(--moss-main-green); */
+        /* box-shadow: 1px 2px 10px 0px #102520ab; */
+        height: 48px;
+        width: 48px;
       }
 
-      .black-svg {
+      /* .black-svg {
         filter: invert(15%) sepia(16%) saturate(2032%) hue-rotate(71deg) brightness(94%)
           contrast(90%);
-      }
+      } */
     `,
   ];
 }
