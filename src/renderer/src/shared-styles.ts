@@ -224,6 +224,27 @@ export const weStyles = [
       font-size: 12px;
     }
 
+    /* moss-input-no-label */
+
+    .moss-input-no-label {
+      position: relative;
+      /* For the label color to only show up on :focus-within the default color is transparent */
+      /* color: transparent; */
+      color: var(--moss-grey-dark);
+    }
+    .moss-input-no-label::part(base) {
+      border-radius: 12px;
+      border: 1px solid --moss-grey-light;
+      font-size: 16px;
+    }
+    .moss-input-no-label {
+      --sl-input-focus-ring-color: var(--moss-main-green);
+      --sl-input-border-color-hover: var(--moss-dark-button);
+      --sl-input-border-color-focus: var(--moss-dark-button);
+      --sl-input-placeholder-color: var(--moss-grey-dark);
+      --sl-input-height-medium: 52px;
+    }
+
     /* moss-hover-icon */
 
     .moss-hover-icon-button {

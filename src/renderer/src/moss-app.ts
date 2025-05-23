@@ -1,6 +1,6 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
-import { AdminWebsocket, CellType, DnaHash, ProvisionedCell } from '@holochain/client';
+import { AdminWebsocket, DnaHash, ProvisionedCell } from '@holochain/client';
 import { LitElement, html, css } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
