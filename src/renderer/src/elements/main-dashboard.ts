@@ -82,7 +82,12 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
-import { closeIcon, magnifyingGlassIcon } from './_new_design/icons.js';
+import {
+  chevronDoubleLeftIcon,
+  chevronDoubleRightIcon,
+  closeIcon,
+  magnifyingGlassIcon,
+} from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -1749,22 +1754,37 @@ export class MainDashboard extends LitElement {
           ></personal-view-sidebar>
         </div>
         <div style="display: flex; flex: 1;"></div>
-        <div class="row">
-          <sl-tooltip
-            content="${this._assetViewerState.value.visible
-              ? 'Hide Asset Viewer'
-              : 'Show Asset Viewer'}"
-            placement="bottom"
-            hoist
-          >
-            <div
-              id="tab-bar-button"
-              class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
-              this._assetViewerState.value.position === 'side'
-                ? 'btn-selected'
-                : ''}"
-              tabindex="0"
-              @click="${(_e) => {
+      </div>
+
+      <!-- ASSET VIEWER TOGGLE -->
+
+      <div class="row" style="position: fixed; top: 0; right: 0;">
+        <sl-tooltip
+          content="${this._assetViewerState.value.visible
+            ? 'Hide Asset Viewer'
+            : 'Show Asset Viewer'}"
+          placement="left"
+          hoist
+        >
+          <button
+            id="tab-bar-button"
+            class="asset-viever-toggle-btn ${this._assetViewerState.value.visible &&
+            this._assetViewerState.value.position === 'side'
+              ? 'btn-selected'
+              : ''}"
+            tabindex="0"
+            @click="${(_e) => {
+              if (
+                this._assetViewerState.value.visible &&
+                this._assetViewerState.value.position === 'side'
+              ) {
+                this._mossStore.setAssetViewerState({ position: 'side', visible: false });
+                return;
+              }
+              this._mossStore.setAssetViewerState({ position: 'side', visible: true });
+            }}"
+            @keypress="${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
                 if (
                   this._assetViewerState.value.visible &&
                   this._assetViewerState.value.position === 'side'
@@ -1773,27 +1793,18 @@ export class MainDashboard extends LitElement {
                   return;
                 }
                 this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-              }}"
-              @keypress="${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  if (
-                    this._assetViewerState.value.visible &&
-                    this._assetViewerState.value.position === 'side'
-                  ) {
-                    this._mossStore.setAssetViewerState({ position: 'side', visible: false });
-                    return;
-                  }
-                  this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-                }
-              }}"
-            >
-              <div class="column center-content">
-                <img src="sidebar.svg" style="height: 34px;" />
-              </div>
+              }
+            }}"
+          >
+            <div class="column center-content">
+              ${this._assetViewerState.value.visible
+                ? chevronDoubleRightIcon(28)
+                : chevronDoubleLeftIcon(28)}
             </div>
-          </sl-tooltip>
-        </div>
+          </button>
+        </sl-tooltip>
       </div>
+
       <!-- POCKET OVERLAY -->
       ${this._draggedWal.value
         ? html` <div class="overlay column">
@@ -2065,7 +2076,8 @@ export class MainDashboard extends LitElement {
           box-shadow: 0 0 3px #808080;
         }
 
-        .entry-tab-bar-button {
+        .asset-viever-toggle-btn {
+          all: unset;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2074,11 +2086,12 @@ export class MainDashboard extends LitElement {
           background: var(--sl-color-tertiary-800);
           cursor: pointer;
           /* margin: 5px; */
-          height: 80px;
-          width: 60px;
+          height: 50px;
+          width: 50px;
+          border-radius: 5px 0 0 5px;
         }
 
-        .entry-tab-bar-button:hover {
+        .asset-viever-toggle-btn:hover {
           background: var(--sl-color-tertiary-50);
           color: var(--sl-color-tertiary-950);
           /* margin: 0; */
@@ -2086,21 +2099,9 @@ export class MainDashboard extends LitElement {
           /* height: 50px; */
         }
 
-        .entry-tab-bar-button:focus-visible {
+        .asset-viever-toggle-btn:focus-visible {
           background: var(--sl-color-tertiary-50);
           color: var(--sl-color-tertiary-950);
-        }
-
-        .entry-tab-bar-button img {
-          filter: invert(1);
-        }
-
-        .entry-tab-bar-button:hover img {
-          filter: none;
-        }
-
-        .entry-tab-bar-button:focus-visible img {
-          filter: none;
         }
 
         .btn-selected {

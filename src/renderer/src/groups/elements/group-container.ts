@@ -37,9 +37,14 @@ export class GroupContainer extends LitElement {
         <sl-icon style="font-size: 3rem;" .src=${wrapPathInSvg(mdiPowerPlugOff)}></sl-icon>
         <div style="margin-left: 10px;">${msg('This group is disabled.')}</div>
       </div>
-      <sl-button style="margin-top: 30px;" @click=${() => this.enableGroup()} variant="success"
-        >${msg('Enable')}</sl-button
+      <button
+        class="moss-button"
+        style="margin-top: 30px;"
+        @click=${() => this.enableGroup()}
+        variant="success"
       >
+        ${msg('Enable')}
+      </button>
       <div style="margin-top: 50px;">DNA hash: ${encodeHashToBase64(this.groupDnaHash)}</div>
     </div>`;
   }

@@ -374,7 +374,7 @@ export class ToolLibraryWeb2 extends LitElement {
           class="row"
           style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
         >
-          <span style="margin-left: 5px;">Publish Tool</span>
+          <span style="margin-left: 5px;">${msg('Publish A Tool')}</span>
         </div>
         <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
           To publish a Moss Tool it needs to be added to a Tool list hosted at a web2 URL. There is
@@ -468,7 +468,7 @@ export class ToolLibraryWeb2 extends LitElement {
           </div>
           <button
             class="moss-button"
-            style="position: absolute; right: 20px;"
+            style="position: absolute; right: 20px; background: #ffffff5e;"
             @click=${() => this._publishDialog.show()}
           >
             <div class="row items-center">

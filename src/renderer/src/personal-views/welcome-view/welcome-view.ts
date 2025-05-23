@@ -417,7 +417,8 @@ export class WelcomeView extends LitElement {
 
       .feedback-btn {
         all: unset;
-        background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%);
+        /* background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%); */
+        background: #ffffff5c;
         border-radius: 16px;
         padding: 16px 20px;
         font-size: 18px;

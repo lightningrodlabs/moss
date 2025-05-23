@@ -96,115 +96,120 @@ export class PersonalViewSidebar extends LitElement {
 
   renderMossButtons() {
     return html`
-      <topbar-button
-        .invertColors=${true}
-        style="margin-left: -4px; position: relative;"
-        .selected=${this.selectedView &&
-        this.selectedView.type === 'moss' &&
-        this.selectedView.name === 'welcome'}
-        .tooltipText=${'Home'}
-        placement="bottom"
-        @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('personal-view-selected', {
-              detail: {
-                type: 'moss',
-                name: 'welcome',
-              },
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
-      >
-        <div class="moss-item-button">
-          <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
-        </div>
-      </topbar-button>
+      <sl-tooltip .content="${msg('Home')}" placement="bottom" hoist>
+        <button
+          class="moss-item-button ${this.selectedView &&
+          this.selectedView.type === 'moss' &&
+          this.selectedView.name === 'welcome'
+            ? 'selected'
+            : ''}"
+          style="margin-left: -4px; position: relative;"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('personal-view-selected', {
+                detail: {
+                  type: 'moss',
+                  name: 'welcome',
+                },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="column center-content">
+            <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
+          </div>
+        </button>
+      </sl-tooltip>
 
-      <topbar-button
-        .invertColors=${true}
-        style="margin-left: -4px; position: relative;"
-        .selected=${this.selectedView &&
-        this.selectedView.type === 'moss' &&
-        this.selectedView.name === 'activity-view'}
-        .tooltipText=${'Activity Stream'}
-        placement="bottom"
-        @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('personal-view-selected', {
-              detail: {
-                type: 'moss',
-                name: 'activity-view',
-              },
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
-      >
-        <div class="moss-item-button">
-          <img src="mountain_stream.svg" style="height: 40px;" />
-        </div>
-      </topbar-button>
+      <sl-tooltip .content="${msg('Activity Stream')}" placement="bottom" hoist>
+        <button
+          class="moss-item-button ${this.selectedView &&
+          this.selectedView.type === 'moss' &&
+          this.selectedView.name === 'activity-view'
+            ? 'selected'
+            : ''}"
+          style="position: relative;"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('personal-view-selected', {
+                detail: {
+                  type: 'moss',
+                  name: 'activity-view',
+                },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="column center-content">
+            <img src="mountain_stream.svg" style="height: 38px;" />
+          </div>
+        </button>
+      </sl-tooltip>
 
-      <topbar-button
-        .invertColors=${true}
-        style="margin-left: -4px; position: relative;"
-        .selected=${this.selectedView &&
-        this.selectedView.type === 'moss' &&
-        this.selectedView.name === 'assets-graph'}
-        .tooltipText=${'Assets Graph'}
-        placement="bottom"
-        @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('personal-view-selected', {
-              detail: {
-                type: 'moss',
-                name: 'assets-graph',
-              },
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
-      >
-        <div class="moss-item-button">
-          <sl-icon
-            .src=${wrapPathInSvg(mdiGraph)}
-            style="font-size: 40px; margin-top: -3px"
-          ></sl-icon>
-        </div>
-      </topbar-button>
+      <sl-tooltip .content="${msg('Assetes Graph')}" placement="bottom" hoist>
+        <button
+          class="moss-item-button ${this.selectedView &&
+          this.selectedView.type === 'moss' &&
+          this.selectedView.name === 'assets-graph'
+            ? 'selected'
+            : ''}"
+          style="position: relative;"
+          placement="bottom"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('personal-view-selected', {
+                detail: {
+                  type: 'moss',
+                  name: 'assets-graph',
+                },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="column center-content">
+            <sl-icon
+              .src=${wrapPathInSvg(mdiGraph)}
+              style="font-size: 40px; margin-top: -3px"
+            ></sl-icon>
+          </div>
+        </button>
+      </sl-tooltip>
 
-      <topbar-button
-        .invertColors=${true}
-        style="margin-left: -4px; position: relative;"
-        .selected=${this.selectedView &&
-        this.selectedView.type === 'moss' &&
-        this.selectedView.name === 'tool-library'}
-        .tooltipText=${'Tool Library'}
-        placement="bottom"
-        @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('personal-view-selected', {
-              detail: {
-                type: 'moss',
-                name: 'tool-library',
-              },
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
-      >
-        <div class="moss-item-button">
-          <sl-icon
-            .src=${wrapPathInSvg(mdiStoreSearch)}
-            style="font-size: 40px; margin-left: 3px; margin-top: 3px;"
-          ></sl-icon>
-        </div>
-      </topbar-button>
+      <sl-tooltip .content="${msg('Tool Library')}" placement="bottom" hoist>
+        <button
+          class="moss-item-button ${this.selectedView &&
+          this.selectedView.type === 'moss' &&
+          this.selectedView.name === 'tool-library'
+            ? 'selected'
+            : ''}"
+          style="position: relative; margin-right: 8px;"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent('personal-view-selected', {
+                detail: {
+                  type: 'moss',
+                  name: 'tool-library',
+                },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
+        >
+          <div class="column center-content">
+            <sl-icon
+              .src=${wrapPathInSvg(mdiStoreSearch)}
+              style="font-size: 40px; margin-left: 3px; margin-top: 3px;"
+            ></sl-icon>
+          </div>
+        </button>
+      </sl-tooltip>
     `;
   }
 
@@ -224,19 +229,28 @@ export class PersonalViewSidebar extends LitElement {
       }
 
       .moss-item-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        /* border-radius: 50%; */
+        all: unset;
+        /* background: linear-gradient(0deg, #203923 0%, #527a22 100%); */
+        /* background: var(--moss-dark-button); */
+        background: none;
         border-radius: 8px;
-        /* color: #0b2f00; */
-        /* color: #173917; */
-        color: white;
-        /* background: #dbe755; */
-        /* background: var(--moss-main-green); */
-        /* box-shadow: 1px 2px 10px 0px #102520ab; */
-        height: 48px;
         width: 48px;
+        height: 48px;
+        cursor: pointer;
+        color: white;
+        margin: 4px;
+      }
+
+      .moss-item-button:hover {
+        background: var(--moss-dark-button);
+      }
+
+      .moss-item-button:focus-visible {
+        outline: 2px solid var(--moss-purple);
+      }
+
+      .selected {
+        background: var(--moss-dark-button);
       }
 
       /* .black-svg {

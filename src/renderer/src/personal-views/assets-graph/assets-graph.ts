@@ -320,12 +320,14 @@ export class AssetsGraph extends LitElement {
           console.log('Got click event: ', e);
         }}
       ></div>
-      <sl-button
+      <button
+        class="moss-button"
         variant="success"
-        style="position: absolute; top: 5px; right: 5px;"
+        style="position: absolute; top: 20px; right: 5px;"
         @click=${() => this.loadGraphContent()}
-        >Reload</sl-button
       >
+        Reload
+      </button>
     `;
   }
 
