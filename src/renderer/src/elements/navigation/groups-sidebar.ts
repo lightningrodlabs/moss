@@ -6,7 +6,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { GroupProfile } from '@theweave/api';
 import { localized, msg } from '@lit/localize';
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
-import { mdiAccountMultiplePlus, mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';
+import { mdiPowerPlugOffOutline, mdiTimerSand } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -20,8 +20,9 @@ import '../dialogs/create-group-dialog.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
+import { plusIcon } from '../_new_design/icons.js';
 
 @localized()
 @customElement('groups-sidebar')
@@ -141,7 +142,6 @@ export class GroupsSidebar extends LitElement {
                     });
                     this.dragged = null;
                   }}
-                  style="border-radius: 50%; --size: 58px;"
                   .selected=${this.selectedGroupDnaHash &&
                   groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
                   .indicated=${this.indicatedGroupDnaHashes.includes(
@@ -190,7 +190,7 @@ export class GroupsSidebar extends LitElement {
       ${unknownGroups.map(
         ([groupDnaHash]) => html`
           <sidebar-button
-            style="margin-bottom: -4px; border-radius: 50%; --size: 58px;"
+            style="margin-bottom: -4px;"
             .selected=${this.selectedGroupDnaHash &&
             groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
@@ -214,7 +214,7 @@ export class GroupsSidebar extends LitElement {
       ${disabledGroups.map(
         ([groupDnaHash, groupProfile]) => html`
           <sidebar-button
-            style="margin-bottom: -4px; border-radius: 50%; --size: 58px; opacity: 0.7;"
+            style="margin-bottom: -4px; opacity: 0.6;"
             .selected=${this.selectedGroupDnaHash &&
             groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
@@ -248,15 +248,15 @@ export class GroupsSidebar extends LitElement {
         return html`
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px; margin-top: 15px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; margin-top: 15px; --border-radius: 8px;"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; --border-radius: 8px;"
           ></sl-skeleton>
           <sl-skeleton
             effect="pulse"
-            style="width: 60px; height: 58px; margin-bottom: 10px;"
+            style="width: 48px; height: 48px; margin-bottom: 16px; --border-radius: 8px;"
           ></sl-skeleton>
         `;
       case 'error':
@@ -288,7 +288,8 @@ export class GroupsSidebar extends LitElement {
         ${this.renderGroupsLoading()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
-          <button class="moss-button"
+          <button class="moss-sidebar-button"
+            style="margin-top: 10px;"
             size="large"
             circle
             @click=${() => {
@@ -301,10 +302,7 @@ export class GroupsSidebar extends LitElement {
             }}
           >
             <div class="column center-content" style="height: 100%;">
-              <sl-icon
-                style="width: 25px; height: 25px;"
-                .src=${wrapPathInSvg(mdiAccountMultiplePlus)}
-              ></sl-icon>
+              ${plusIcon(26)}
             </div>
           </sl-button>
         </sl-tooltip>
@@ -313,7 +311,7 @@ export class GroupsSidebar extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         flex-direction: column;
@@ -366,22 +364,23 @@ export class GroupsSidebar extends LitElement {
         padding-bottom: 10px;
       }
 
-      .moss-button {
-        width: 40px;
-        height: 40px;
-        outline: none;
-        border: none;
-        color: #fff;
-        background: linear-gradient(0deg, #203923 0%, #527a22 100%);
-        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-        border-radius: 5px;
-        margin-top: 15px;
+      /* .add-group-button {
+        all: unset;
+        color: white;
+        background: var(--moss-dark-button);
+        border-radius: 12px;
+        cursor: pointer;
+        height: 58px;
+        width: 58px;
       }
 
-      .moss-button:hover {
-        background: linear-gradient(0deg, #203923 0%, #63912a 100%);
-        cursor: pointer;
+      .add-group-button:hover {
+        background: var(--moss-purple-semi-transparent);
       }
+
+      .add-group-button:focus-visible {
+        outline: 2px solid var(--moss-purple);
+      } */
     `,
   ];
 }

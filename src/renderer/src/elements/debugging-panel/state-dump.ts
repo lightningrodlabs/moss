@@ -25,7 +25,7 @@ import '../../applets/elements/applet-logo.js';
 import '../dialogs/create-group-dialog.js';
 import '../reusable/groups-for-applet.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { dateStr } from '../../utils.js';
 import { decode } from '@msgpack/msgpack';
 
@@ -260,7 +260,7 @@ export class StateDump extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

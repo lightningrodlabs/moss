@@ -17,7 +17,7 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('select-group-dialog')
@@ -114,7 +114,7 @@ export class SelectGroupDialog extends LitElement {
   }
 
   render() {
-    return html`<sl-dialog id="dialog" .label=${msg('Select Group')}>
+    return html`<sl-dialog id="dialog" class="moss-dialog" .label=${msg('Select Group')}>
       <div>${msg('Select the Group to which to add an instance of this Tool:')}</div>
       <div class="column" style="margin-top: 10px;">
         ${this.renderDialogContent()}
@@ -147,12 +147,5 @@ export class SelectGroupDialog extends LitElement {
     </sl-dialog>`;
   }
 
-  static styles = [
-    weStyles,
-    css`
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-tertiary-0);
-      }
-    `,
-  ];
+  static styles = [mossStyles, css``];
 }

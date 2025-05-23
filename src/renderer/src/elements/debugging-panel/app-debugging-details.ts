@@ -11,7 +11,7 @@ import '../dialogs/create-group-dialog.js';
 import '../reusable/groups-for-applet.js';
 import './cell-details.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -68,7 +68,7 @@ export class AppDebuggingDetails extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

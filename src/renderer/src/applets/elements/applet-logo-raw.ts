@@ -10,7 +10,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletHash } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
@@ -108,7 +108,7 @@ export class AppletLogo extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

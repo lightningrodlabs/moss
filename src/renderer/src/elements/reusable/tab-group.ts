@@ -2,7 +2,7 @@ import { html, LitElement, css, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('tab-group')
@@ -108,6 +108,6 @@ export class TabGroup extends LitElement {
         margin-left: var(--sidebar-width);
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

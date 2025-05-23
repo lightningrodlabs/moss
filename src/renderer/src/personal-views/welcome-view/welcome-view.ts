@@ -10,7 +10,7 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import './elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
@@ -154,6 +154,8 @@ export class WelcomeView extends LitElement {
   renderFeedbackDialog() {
     return html` <sl-dialog
       id="feedback-dialog"
+      class="moss-dialog"
+      no-header
       style="--width: 900px; --sl-panel-background-color: #fff4f4;"
       no-header
     >
@@ -328,21 +330,16 @@ export class WelcomeView extends LitElement {
             <div class="flex-scrollable-container">
               <div class="column flex-scrollable-y">
                 <div class="column" style="align-items: center; flex: 1; overflow: auto;">
-                  <div
+                  <button
                     class="feedback-btn"
-                    tabindex="0"
+                    style="position: absolute; top: 20px; right: 10px;"
                     @click=${() => this._feedbackDialog.show()}
-                    @keypress=${(e: KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        this._feedbackDialog.show();
-                      }
-                    }}
                   >
                     <div class="row items-center" style="font-size: 26px; justify-content: center;">
                       <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
                       <span style="margin-left: 5px;">${msg('Feedback')}</span>
                     </div>
-                  </div>
+                  </button>
 
                   <!-- Moss Update Feed -->
 
@@ -361,7 +358,8 @@ export class WelcomeView extends LitElement {
         display: flex;
         flex: 1;
         /* background-color: #588121; */
-        background-color: #224b21;
+        /* background-color: #224b21; */
+        /* background-color: var(--moss-dark-green); */
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
       }
@@ -418,22 +416,31 @@ export class WelcomeView extends LitElement {
       }
 
       .feedback-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        /* background: #f4fb86; */
-        background: linear-gradient(#ffa1a1, #d3364c);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        flex-direction: row;
-        padding: 10px;
-        box-shadow: 0 0 2px 2px #3a622d;
+        all: unset;
+        /* background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%); */
+        background: #ffffff5c;
+        border-radius: 16px;
+        padding: 16px 20px;
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 20px;
+        color: white;
         cursor: pointer;
+        text-align: center;
+        --sl-color-neutral-0: black;
+        --sl-color-primary-50: #455b36;
+      }
+      .feedback-btn:hover {
+        background: linear-gradient(#912f2f, #983441);
+      }
+      .feedback-btn:disabled {
+        opacity: 0.4;
+        background: var(--moss-grey-green);
+        cursor: default;
       }
 
-      .feedback-btn:hover {
-        background: linear-gradient(#ffbebe, #d2485a);
+      .feedback-btn:focus-visible {
+        outline: 2px solid var(--moss-purple);
       }
 
       .button-section {
@@ -503,6 +510,6 @@ export class WelcomeView extends LitElement {
         border-radius: 10px;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

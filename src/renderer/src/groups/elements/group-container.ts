@@ -6,7 +6,7 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { consume } from '@lit/context';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -37,9 +37,14 @@ export class GroupContainer extends LitElement {
         <sl-icon style="font-size: 3rem;" .src=${wrapPathInSvg(mdiPowerPlugOff)}></sl-icon>
         <div style="margin-left: 10px;">${msg('This group is disabled.')}</div>
       </div>
-      <sl-button style="margin-top: 30px;" @click=${() => this.enableGroup()} variant="success"
-        >${msg('Enable')}</sl-button
+      <button
+        class="moss-button"
+        style="margin-top: 30px;"
+        @click=${() => this.enableGroup()}
+        variant="success"
       >
+        ${msg('Enable')}
+      </button>
       <div style="margin-top: 50px;">DNA hash: ${encodeHashToBase64(this.groupDnaHash)}</div>
     </div>`;
   }
@@ -53,12 +58,13 @@ export class GroupContainer extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: #588121;
+        /* background-color: #588121; */
+        background-color: var(--moss-main-green);
         padding: 8px;
         border-radius: 5px 0 0 0;
       }

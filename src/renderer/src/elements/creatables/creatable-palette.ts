@@ -29,6 +29,7 @@ import '../navigation/group-applets-row.js';
 import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { mossStyles } from '../../shared-styles.js';
 
 export type CreatableInfo = {
   appletHash: AppletHash;
@@ -176,6 +177,7 @@ export class CreatablePalette extends LitElement {
     return html`
       <sl-dialog
         id="creatable-dialog"
+        class="moss-dialog"
         style="--width: 800px;"
         no-header
       >
@@ -243,6 +245,7 @@ export class CreatablePalette extends LitElement {
 
   static get styles() {
     return [
+      mossStyles,
       sharedStyles,
       css`
         :host {
@@ -256,10 +259,6 @@ export class CreatablePalette extends LitElement {
 
         .creatable-item:hover {
           background: var(--sl-color-primary-200);
-        }
-
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-tertiary-0);
         }
       `,
     ];

@@ -12,7 +12,7 @@
 
 // import { MossStore } from '../../../moss-store.js';
 // import { mossStoreContext } from '../../../context.js';
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 
 // @customElement('tool-bundle-title')
@@ -58,7 +58,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

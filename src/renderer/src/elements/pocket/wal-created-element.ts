@@ -13,7 +13,7 @@ import { encodeHashToBase64 } from '@holochain/client';
 
 import { WAL, weaveUrlFromWal } from '@theweave/api';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { encodeContext } from '../../utils.js';
@@ -133,7 +133,7 @@ export class WalCreatedElement extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .element {
         flex: 1;

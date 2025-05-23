@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { weStyles } from './shared-styles';
+import { mossStyles } from './shared-styles';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 @customElement('select-media-source')
@@ -84,7 +84,7 @@ export class SelectMediaSource extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         .thumbnail {
           border-radius: 5px;

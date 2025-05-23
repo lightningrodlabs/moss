@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('group-logo')
 export class GroupLogo extends LitElement {
@@ -71,7 +71,7 @@ export class GroupLogo extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

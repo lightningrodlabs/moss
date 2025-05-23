@@ -15,7 +15,7 @@ import { encodeContext, WAL } from '@theweave/api';
 
 import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/pocket/wal-pocket.js';
@@ -224,6 +224,6 @@ export class AssetView extends LitElement {
         width: 34px;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

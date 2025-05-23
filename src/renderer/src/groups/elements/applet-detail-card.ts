@@ -16,7 +16,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 
 import { ALWAYS_ONLINE_TAG, Applet, GroupAppletsMetaData } from '@theweave/group-client';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import {
@@ -517,7 +517,7 @@ export class AppletDetailCard extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .applet-card {
         flex: 1;

@@ -13,7 +13,7 @@ import './wal-element.js';
 import './wal-created-element.js';
 import './pocket-search.js';
 import { mdiArrowDownBoldBoxOutline } from '@mdi/js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { get } from '@holochain-open-dev/stores';
 
 export interface SearchResult {
@@ -125,7 +125,7 @@ export class PocketDrop extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;

@@ -25,6 +25,7 @@ import { mdiArrowRight, mdiMagnify } from '@mdi/js';
 import { mossStoreContext } from '../../context';
 import { MossStore } from '../../moss-store';
 import './search-result-element';
+import { mossStyles } from '../../shared-styles';
 
 /**
  * @element search-entry
@@ -74,7 +75,7 @@ export class PocketSearch extends LitElement implements FormField {
    * @attr field-label
    */
   @property({ type: String, attribute: 'field-label' })
-  fieldLabel: string = '';
+  fieldLabel: string = msg('search');
 
   /**
    * Label for the entry searching field.
@@ -255,13 +256,17 @@ export class PocketSearch extends LitElement implements FormField {
           <sl-dropdown style="display: flex; flex: 1; width: 600px;" id="dropdown" hoist>
             <sl-input
               id="textfield"
+              class="moss-input-no-label"
               slot="trigger"
               style="width: 600px;"
-              .label=${this._label}
               .placeholder=${this.placeholder}
               @input=${() => this.onFilterChange()}
             >
-              <sl-icon .src=${wrapPathInSvg(mdiMagnify)} slot="prefix"></sl-icon>
+              <sl-icon
+                .src=${wrapPathInSvg(mdiMagnify)}
+                style="font-size: 24px;"
+                slot="prefix"
+              ></sl-icon>
             </sl-input>
             <sl-menu
               id="search-results"
@@ -276,15 +281,18 @@ export class PocketSearch extends LitElement implements FormField {
           ${this.mode === 'open'
             ? html`
                 <button
-                  style="margin-left: 5px; padding: 3px; height: 32px; width: 32px;"
+                  class="moss-button"
+                  style="margin-left: 5px; padding: 12px; border-radius: 10px;"
                   title=${msg('Open URL')}
                   ?disabled=${!this.wurl}
                   @click=${() => this.openWurl()}
                 >
-                  <sl-icon
-                    style="font-size: 26px; color: white;"
-                    .src=${wrapPathInSvg(mdiArrowRight)}
-                  ></sl-icon>
+                  <div class="column center-content">
+                    <sl-icon
+                      style="font-size: 26px; color: white;"
+                      .src=${wrapPathInSvg(mdiArrowRight)}
+                    ></sl-icon>
+                  </div>
                 </button>
               `
             : html``}
@@ -295,6 +303,7 @@ export class PocketSearch extends LitElement implements FormField {
 
   static get styles() {
     return [
+      mossStyles,
       sharedStyles,
       css`
         :host {
@@ -310,30 +319,6 @@ export class PocketSearch extends LitElement implements FormField {
 
         .to-clipboard:hover {
           background: #7fd3eb;
-        }
-
-        button {
-          all: unset;
-          background: var(--sl-color-primary-300);
-          box-shadow: 1px 1px 1px 1px var(--sl-color-primary-600);
-          border-radius: 3px;
-          margin: 0;
-          padding: 0;
-          cursor: pointer;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: -2px;
-        }
-
-        button:hover:not(:disabled) {
-          background: var(--sl-color-primary-100);
-        }
-
-        button:disabled {
-          opacity: 0.6;
-          cursor: auto;
-          box-shadow: none;
         }
       `,
     ];

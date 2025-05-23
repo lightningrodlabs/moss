@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
 import '../../elements/dialogs/loading-dialog.js';
@@ -443,11 +443,11 @@ export class ActivityView extends LitElement {
       :host {
         display: flex;
         flex: 1;
-        background-color: #224b21;
-        border-radius: 5px 0 0 0;
+        /* background-color: var(--moss-dark-green); */
+        border-radius: 8px;
       }
       .feed {
-        padding: 10px;
+        padding: 30px;
         height: calc(100vh - 70px);
       }
       .sort-buttons {
@@ -478,6 +478,6 @@ export class ActivityView extends LitElement {
         outline: none;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

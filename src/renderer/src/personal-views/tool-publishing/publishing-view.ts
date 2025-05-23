@@ -8,7 +8,7 @@
 // import '@shoelace-style/shoelace/dist/components/input/input.js';
 // import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
-// import { weStyles } from '../../shared-styles.js';
+// import { mossStyles } from '../../shared-styles.js';
 // import '../../elements/dialogs/select-group-dialog.js';
 // import { mossStoreContext } from '../../context.js';
 // import { MossStore } from '../../moss-store.js';
@@ -280,7 +280,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

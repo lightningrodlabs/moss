@@ -15,7 +15,7 @@ import { profilesStoreContext } from '@holochain-open-dev/profiles';
 import { ProfilesStore } from '@holochain-open-dev/profiles';
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { weStyles } from '../../shared-styles';
+import { mossStyles } from '../../shared-styles';
 
 /**
  * @element profile-detail
@@ -146,5 +146,5 @@ export class ProfileDetail extends LitElement {
     }
   }
 
-  static styles = [weStyles];
+  static styles = [mossStyles];
 }

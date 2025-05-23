@@ -16,7 +16,7 @@ import '../dialogs/create-group-dialog.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
@@ -107,7 +107,7 @@ export class AppletsSidebar extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

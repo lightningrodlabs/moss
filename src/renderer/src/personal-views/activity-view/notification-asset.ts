@@ -18,7 +18,7 @@ import { AppletHash } from '@theweave/api';
 import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
 import { AppletNotification } from '../../types.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('notification-asset')
@@ -168,7 +168,7 @@ export class NotificationAsset extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .activity-asset-outer {
         display: flex;

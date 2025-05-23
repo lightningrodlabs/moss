@@ -22,7 +22,7 @@ import '../../applets/elements/applet-logo.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { CustomView } from '../../custom-views/types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
@@ -167,7 +167,7 @@ export class GroupApplets extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

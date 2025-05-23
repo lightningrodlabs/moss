@@ -13,9 +13,11 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
+import { defaultIcons } from '../_new_design/defaultIcons.js';
+import { closeIcon } from '../_new_design/icons.js';
 
 /**
  * @element create-group-dialog
@@ -87,62 +89,80 @@ export class CreateGroupDialog extends LitElement {
     return html`
       <sl-dialog
         id="dialog"
+        class="moss-dialog"
         .label=${msg('Create New Group')}
+        no-header
         @sl-request-close=${(e) => {
           if (this.committing) {
             e.preventDefault();
           }
         }}
       >
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Create New Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -22px; right: -11px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
         <form class="column" ${onSubmit((f) => this.createGroup(f))}>
-          <div class="row" style="justify-content: center">
-            <select-avatar required name="icon_src"></select-avatar>
+          <div class="column items-center">
+            <div class="column" style="justify-content: center">
+              <sl-input
+                name="name"
+                class="moss-input"
+                style="margin-left: 16px; width: 350px; margin-bottom: 20px;"
+                .label=${msg('Group name')}
+                required
+              ></sl-input>
+              <moss-select-avatar-fancy
+                style="margin-bottom: 30px;"
+                .defaultImgs=${defaultIcons}
+                label=""
+                required
+                name="icon_src"
+              ></moss-select-avatar-fancy>
+            </div>
 
-            <sl-input
-              name="name"
-              style="margin-left: 16px"
-              .label=${msg('Group name')}
-              required
-            ></sl-input>
+            <sl-radio-group style="margin-left: 50px;" label="🔑${msg(' Group Type:')}" value="1">
+              <sl-radio style="margin-top: 5px;" value="1"
+                ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
+                  >The group creator is the initial Steward. Only Stewards can edit the group
+                  profile, add and remove Tools and add additional Stewards.</span
+                ></sl-radio
+              >
+              <sl-radio style="margin-top: 5px;" value="0"
+                ><b>${msg('Unstewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
+                  >All members have full permissions.</span
+                ></sl-radio
+              >
+            </sl-radio-group>
+
+            <button
+              class="moss-button"
+              style="margin-top: 24px; margin-bottom: 20px; width: 200px;"
+              variant="primary"
+              type="submit"
+            >
+              ${this.committing
+                ? html`<div class="column center-content">
+                    <div class="dot-carousel" style="margin: 5px 0;"></div>
+                  </div>`
+                : html`${msg('Create Group')}`}
+            </button>
           </div>
-
-          <sl-radio-group
-            style="margin-left: 50px; margin-top: 30px;"
-            label="🔑${msg(' Group Type:')}"
-            value="1"
-          >
-            <sl-radio style="margin-top: 5px;" value="1"
-              ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
-                >The group creator is the initial Steward. Only Stewards can edit the group profile,
-                add and remove Tools and add additional Stewards.</span
-              ></sl-radio
-            >
-            <sl-radio style="margin-top: 5px;" value="0"
-              ><b>${msg('Unstewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
-                >All members have full permissions.</span
-              ></sl-radio
-            >
-          </sl-radio-group>
-
-          <sl-button
-            style="margin-top: 24px"
-            variant="primary"
-            type="submit"
-            .loading=${this.committing}
-          >
-            ${msg('Create Group')}
-          </sl-button>
         </form>
       </sl-dialog>
     `;
   }
 
-  static styles = [
-    weStyles,
-    css`
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-primary-0);
-      }
-    `,
-  ];
+  static styles = [mossStyles, css``];
 }

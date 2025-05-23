@@ -16,7 +16,7 @@ import '../../applets/elements/applet-logo-raw.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
@@ -56,7 +56,7 @@ export class PersonalViewSidebar extends LitElement {
             toolCompatibilityId: this.toolCompatibilityId,
           }}
           placement="bottom"
-          style="margin: 4px; --size: 58px;"
+          style="--size: 48px; --border-radius: 8px;"
         >
         </applet-logo-raw>
       </topbar-button>
@@ -65,7 +65,7 @@ export class PersonalViewSidebar extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;
@@ -73,8 +73,8 @@ export class PersonalViewSidebar extends LitElement {
 
       .applet-icon {
         /* box-shadow: 0 0 2px 3px var(--sl-color-primary-400); */
-        box-shadow: 1px 2px 10px 0px #102520ab;
-        border-radius: 12px;
+        /* box-shadow: 1px 2px 10px 0px #102520ab; */
+        border-radius: 8px;
       }
     `,
   ];
