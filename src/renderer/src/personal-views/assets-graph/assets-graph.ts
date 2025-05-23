@@ -11,7 +11,7 @@ import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { getCellId } from '../../utils';
-import { weStyles } from '../../shared-styles';
+import { mossStyles } from '../../shared-styles';
 
 @customElement('assets-graph')
 export class AssetsGraph extends LitElement {
@@ -317,7 +317,7 @@ export class AssetsGraph extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: block;

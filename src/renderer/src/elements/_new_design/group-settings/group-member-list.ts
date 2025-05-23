@@ -18,7 +18,7 @@ import './agent-permission-button';
 import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore, MaybeProfile } from '../../../groups/group-store.js';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { mossStoreContext } from '../../../context.js';
 import { SlRadioGroup } from '@shoelace-style/shoelace';
 
@@ -305,7 +305,7 @@ export class GroupMemberList extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .member-block {
         border-top: 1px solid var(--moss-grey-light);

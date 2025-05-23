@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import './group-settings/general-settings.js';
 import './group-settings/tools-settings.js';
 import './group-settings/group-member-list.js';
@@ -133,7 +133,7 @@ export class GroupSettings extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .tab-bar {
         max-width: 784px;

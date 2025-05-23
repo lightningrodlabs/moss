@@ -8,7 +8,7 @@ import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
@@ -220,7 +220,7 @@ export class GroupGeneralSettings extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .ruler {
         height: 1px;

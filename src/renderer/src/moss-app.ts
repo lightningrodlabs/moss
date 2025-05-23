@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
 import './elements/main-dashboard.js';
-import { weStyles } from './shared-styles.js';
+import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo } from './electron-api.js';
@@ -660,7 +660,7 @@ export class MossApp extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           flex: 1;

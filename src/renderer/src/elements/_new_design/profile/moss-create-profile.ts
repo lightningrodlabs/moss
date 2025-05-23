@@ -8,7 +8,7 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import './moss-edit-profile.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 
@@ -73,7 +73,7 @@ export class MossCreateProfile extends LitElement {
 
   static styles = [
     sharedStyles,
-    weStyles,
+    mossStyles,
     css`
       .moss-card {
         width: 630px;

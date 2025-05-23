@@ -10,7 +10,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import './view-frame.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 @localized()
@@ -56,7 +56,7 @@ export class CrossGroupMain extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

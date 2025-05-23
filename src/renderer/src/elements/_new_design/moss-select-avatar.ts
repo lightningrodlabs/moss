@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { resizeAndExportImg } from '../../utils.js';
 import { FormField, FormFieldController } from '@holochain-open-dev/elements';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { plusIcon } from './icons.js';
 
 @customElement('moss-select-avatar')
@@ -139,7 +139,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .image-picker-button {
         all: unset;

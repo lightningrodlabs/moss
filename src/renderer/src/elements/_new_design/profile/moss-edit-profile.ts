@@ -10,7 +10,7 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { weStyles } from '../../../shared-styles';
+import { mossStyles } from '../../../shared-styles';
 
 import '../moss-select-avatar';
 
@@ -185,5 +185,5 @@ export class MossEditProfile extends LitElement {
     `;
   }
 
-  static styles = [sharedStyles, weStyles];
+  static styles = [sharedStyles, mossStyles];
 }

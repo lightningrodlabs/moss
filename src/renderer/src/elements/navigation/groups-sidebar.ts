@@ -20,7 +20,7 @@ import '../dialogs/create-group-dialog.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
 import { plusIcon } from '../_new_design/icons.js';
 
@@ -312,7 +312,7 @@ export class GroupsSidebar extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         flex-direction: column;

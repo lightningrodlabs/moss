@@ -17,7 +17,7 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('select-group-dialog')
@@ -148,7 +148,7 @@ export class SelectGroupDialog extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       sl-dialog {
         --sl-panel-background-color: var(--sl-color-tertiary-0);

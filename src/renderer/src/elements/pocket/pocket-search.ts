@@ -25,7 +25,7 @@ import { mdiArrowRight, mdiMagnify } from '@mdi/js';
 import { mossStoreContext } from '../../context';
 import { MossStore } from '../../moss-store';
 import './search-result-element';
-import { weStyles } from '../../shared-styles';
+import { mossStyles } from '../../shared-styles';
 
 /**
  * @element search-entry
@@ -303,7 +303,7 @@ export class PocketSearch extends LitElement implements FormField {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       sharedStyles,
       css`
         :host {

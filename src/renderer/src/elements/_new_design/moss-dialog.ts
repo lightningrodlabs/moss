@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 import './moss-input.js';
 import './moss-select-avatar.js';
@@ -92,7 +92,7 @@ export class MossDialog extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       sl-dialog {
         /* --sl-panel-background-color: var(--sl-color-primary-0); */

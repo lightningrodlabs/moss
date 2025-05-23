@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { weStyles } from './shared-styles';
+import { mossStyles } from './shared-styles';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import {
   AppletHash,
@@ -405,7 +405,7 @@ export class WalWindow extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           flex: 1;

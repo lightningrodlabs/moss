@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import './install-tool-dialog.js';
 import '../../../groups/elements/group-context.js';
 
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
 import TimeAgo from 'javascript-time-ago';
@@ -126,6 +126,6 @@ export class InstallableToolsWeb2 extends LitElement {
         --sl-panel-background-color: var(--sl-color-tertiary-400);
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

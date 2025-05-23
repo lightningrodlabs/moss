@@ -16,7 +16,7 @@ import '../dialogs/create-group-dialog.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { groupStoreContext } from '../../groups/context.js';
@@ -250,7 +250,7 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

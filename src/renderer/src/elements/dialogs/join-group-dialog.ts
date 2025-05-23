@@ -16,7 +16,7 @@ import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { PartialModifiers } from '@theweave/moss-types';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { closeIcon } from '../_new_design/icons.js';
@@ -177,7 +177,7 @@ export class JoinGroupDialog extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       sl-dialog {
         --sl-panel-background-color: var(--sl-color-primary-0);

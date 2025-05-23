@@ -3,7 +3,7 @@ import { css } from 'lit';
 import '@fontsource/aileron';
 import '@fontsource-variable/inter';
 
-export const weStyles = [
+export const mossStyles = [
   sharedStyles,
   css`
     .default-font {

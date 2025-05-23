@@ -7,7 +7,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
 import '../../elements/dialogs/loading-dialog.js';
@@ -478,6 +478,6 @@ export class ActivityView extends LitElement {
         outline: none;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

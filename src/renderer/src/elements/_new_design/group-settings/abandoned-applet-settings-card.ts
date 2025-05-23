@@ -23,7 +23,7 @@ import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { threeDots, threeDotsVertical } from '../icons';
 
 @localized()
@@ -354,7 +354,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .container {
         border-top: 1px solid var(--moss-grey-light);

@@ -3,7 +3,7 @@ import { customElement, property, query } from 'lit/decorators.js';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import SlTooltip from '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('topbar-button')
 export class TopBarButton extends LitElement {
@@ -62,7 +62,7 @@ export class TopBarButton extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;

@@ -54,7 +54,7 @@ import './debugging-panel/debugging-panel.js';
 
 import './_new_design/moss-dialog.js';
 
-import { weStyles } from '../shared-styles.js';
+import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
@@ -1850,7 +1850,7 @@ export class MainDashboard extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           flex: 1;

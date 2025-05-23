@@ -17,7 +17,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import { mdiChevronLeft, mdiEmailOutline, mdiPublish, mdiTools, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
@@ -571,6 +571,6 @@ export class ToolLibraryWeb2 extends LitElement {
         line-height: 1.2;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

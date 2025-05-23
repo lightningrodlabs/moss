@@ -9,7 +9,7 @@
 // import '@shoelace-style/shoelace/dist/components/input/input.js';
 // import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import { mossStoreContext } from '../../../context.js';
 // import { MossStore } from '../../../moss-store.js';
 // import { consume } from '@lit/context';
@@ -343,7 +343,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

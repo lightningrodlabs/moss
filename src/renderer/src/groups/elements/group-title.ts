@@ -6,7 +6,7 @@ import { msg } from '@lit/localize';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('group-title')
 export class GroupTitle extends LitElement {
@@ -37,7 +37,7 @@ export class GroupTitle extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

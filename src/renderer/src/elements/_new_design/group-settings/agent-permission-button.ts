@@ -13,7 +13,7 @@ import { PermissionType } from '@theweave/group-client';
 import { localized, msg } from '@lit/localize';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { pencilIcon } from '../../../icons/icons.js';
 
 /**
@@ -124,7 +124,7 @@ export class AgentPermissionButton extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .container {
         width: 200px;

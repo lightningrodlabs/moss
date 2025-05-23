@@ -10,7 +10,7 @@ import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
 
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import './elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
@@ -509,6 +509,6 @@ export class WelcomeView extends LitElement {
         border-radius: 10px;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

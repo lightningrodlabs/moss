@@ -19,7 +19,7 @@ import './wal-created-element.js';
 import './pocket-search.js';
 import { PocketSearch } from './pocket-search.js';
 import { mdiDelete } from '@mdi/js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;
@@ -293,7 +293,7 @@ export class MossPocket extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       sharedStyles,
       css`
         :host {
