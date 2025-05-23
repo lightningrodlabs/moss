@@ -1534,6 +1534,7 @@ export class MainDashboard extends LitElement {
               <img src="moss-m-white.svg" style="width: 38px; height: 38px;" />
             </div>
           </button>
+
           <button
             class="moss-sidebar-button"
             style="margin-top: 8px;"
@@ -1596,30 +1597,10 @@ export class MainDashboard extends LitElement {
             </button>
           </sl-tooltip>
         </div>
-        <div class="row center-content" style="margin-bottom: 10px; position: relative">
-          ${this._addedToPocket.value
-            ? html`
-                <div
-                  class="row items-center"
-                  style="position: absolute; left: calc(100% - 17px); cursor: default;"
-                  @click=${() => this.openClipboard()}
-                >
-                  <div class="arrow-left" style="z-index: 0"></div>
-                  <div class="row items-center justify-center added-to-pocket">
-                    <img style="height: 30px;" src="pocket_black.png" />
-                    <span style="margin-left: 10px;">Added to Pocket</span>
-                  </div>
-                </div>
-              `
-            : html``}
-        </div>
         <div
           @dblclick=${() => this.openZomeCallPanel()}
           style="color: white; text-align: center; margin-bottom: 3px;"
-          title=${this.appVersion
-            ? `
-        Lightningrod Labs We version ${this.appVersion}`
-            : ``}
+          title=${this.appVersion ? `Moss version ${this.appVersion}` : ``}
         >
           ${this.appVersion ? `v${this.appVersion}` : ''}
         </div>
@@ -1844,6 +1825,23 @@ export class MainDashboard extends LitElement {
             `
           : html``}
       </div>
+
+      <!-- Added to pocket indicator -->
+      ${this._addedToPocket.value
+        ? html`
+            <div
+              class="row items-center"
+              style="position: fixed; left: 60px; top: 68px; cursor: default;"
+              @click=${() => this.openClipboard()}
+            >
+              <div class="arrow-left" style="z-index: 1;"></div>
+              <div class="row items-center justify-center added-to-pocket">
+                <img style="height: 30px;" src="pocket_black.png" />
+                <span style="margin-left: 10px;">${msg('Added to Pocket')}</span>
+              </div>
+            </div>
+          `
+        : html``}
     `;
   }
 
@@ -1903,7 +1901,7 @@ export class MainDashboard extends LitElement {
         }
 
         .added-to-pocket {
-          padding: 20px 15px;
+          padding: 20px 5px;
           border-radius: 10px;
           background: #dbe755;
           min-width: 200px;
