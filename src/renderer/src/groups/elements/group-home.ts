@@ -114,6 +114,9 @@ export class GroupHome extends LitElement {
   @query('#group-settings-dialog')
   groupSettingsDialog: SlDialog | undefined;
 
+  @query('#invite-member-dialog')
+  inviteMemberDialog: SlDialog | undefined;
+
   @state()
   _peerStatusLoading = true;
 
@@ -824,7 +827,7 @@ export class GroupHome extends LitElement {
                 class="moss-dialog-close-button"
                 style="position: absolute; top: -22px; right: -11px;"
                 @click=${() => {
-                  (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).hide();
+                  this.inviteMemberDialog?.hide();
                 }}
               >
                 ${closeIcon(24)}
@@ -877,7 +880,7 @@ export class GroupHome extends LitElement {
             class="invite-btn"
             variant="primary"
             @click=${() => {
-              (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).show();
+              this.inviteMemberDialog?.show();
             }}
           >
             <div class="row center-content items-center;">
@@ -1081,8 +1084,24 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <sl-dialog class="moss-dialog profile-detail-popup" no-header id="member-profile">
-            ${this._selectedAgent ? this.renderMemberProfile() : ``}
+          <sl-dialog
+            class="moss-dialog profile-detail-popup"
+            no-header
+            id="member-profile"
+            style="position: relative;"
+          >
+            <div class="column center-content" style="position: relative;">
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -12px; right: -12px;"
+                @click=${() => {
+                  this._memberProfileDialog?.hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+              ${this._selectedAgent ? this.renderMemberProfile() : ``}
+            </div>
           </sl-dialog>
           <moss-profile-prompt>
             ${this.renderContent(groupProfile, modifiers)}
