@@ -180,7 +180,7 @@ export class WelcomeView extends LitElement {
           If you have more general feedback or are not familiar with Github, you can write to the
           following email address:<br /><br />
 
-          <a href="mailto:moss.0.13.feedback@theweave.social">moss.0.13.feedback@theweave.social</a>
+          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
         </div>
       </div>
     </sl-dialog>`;

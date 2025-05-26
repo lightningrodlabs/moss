@@ -597,7 +597,7 @@ export class MossApp extends LitElement {
               'If you want to support us in finding the problem, please export the logs and send them to ',
             )}</span
           >
-          <a href="mailto:moss.0.13.feedback@theweave.social">moss.0.13.feedback@theweave.social</a>
+          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
         </div>
         <div class="row items-center">
           <button
