@@ -5,7 +5,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { SlDialog } from '@shoelace-style/shoelace';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('loading-dialog')
 export class LoadingDialog extends LitElement {
@@ -39,7 +39,7 @@ export class LoadingDialog extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;

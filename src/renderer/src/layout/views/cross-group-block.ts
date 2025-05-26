@@ -10,7 +10,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import './view-frame.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 @localized()
@@ -45,5 +45,5 @@ export class CrossGroupBlock extends LitElement {
     return html`<view-frame .renderView=${renderView} .iframeKind=${iframeKind}> </view-frame>`;
   }
 
-  static styles = [weStyles];
+  static styles = [mossStyles];
 }

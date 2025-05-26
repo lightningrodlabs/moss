@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { weStyles } from './shared-styles';
+import { mossStyles } from './shared-styles';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiClose, mdiCog, mdiLockOpenOutline, mdiLockOpenVariantOutline } from '@mdi/js';
 import { SlDialog } from '@shoelace-style/shoelace';
@@ -444,7 +444,7 @@ export class SplashScreen extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           flex: 1;

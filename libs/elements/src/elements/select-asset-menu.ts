@@ -177,7 +177,7 @@ export class SelectAssetMenu extends LitElement {
       .menu {
         background: #ffff;
         color: black;
-        font-family: 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         border-radius: 5px;
         box-shadow: 0 0 3px 1px #ababab;
       }

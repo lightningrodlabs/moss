@@ -31,7 +31,7 @@ import './app-debugging-details.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore, ZomeCallCounts } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
 import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
@@ -671,7 +671,7 @@ export class DebuggingPanel extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

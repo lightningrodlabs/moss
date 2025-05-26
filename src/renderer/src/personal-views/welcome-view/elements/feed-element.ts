@@ -18,7 +18,7 @@ import { AppletNotification, GroupDnaHash } from '../../../types.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import TimeAgo from 'javascript-time-ago';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { stringToMessageParts } from '../../../utils.js';
 import { toPromise } from '@holochain-open-dev/stores';
 
@@ -192,6 +192,6 @@ export class FeedElement extends LitElement {
         cursor: pointer;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

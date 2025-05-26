@@ -4,7 +4,7 @@ import { customElement, property } from 'lit/decorators.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletHash } from '@theweave/api';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
@@ -86,7 +86,7 @@ export class GroupsForApplet extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;

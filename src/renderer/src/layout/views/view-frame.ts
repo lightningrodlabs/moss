@@ -4,7 +4,7 @@ import { encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { IframeKind, RenderView } from '@theweave/api';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { iframeOrigin, renderViewToQueryString } from '../../utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -159,6 +159,6 @@ export class ViewFrame extends LitElement {
         display: flex;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

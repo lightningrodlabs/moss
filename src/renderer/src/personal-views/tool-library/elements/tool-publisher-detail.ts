@@ -12,7 +12,7 @@
 
 // import { MossStore } from '../../../moss-store.js';
 // import { mossStoreContext } from '../../../context.js';
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import { DeveloperCollective, UpdateableEntity } from '@theweave/tool-library-client';
 // import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 
@@ -92,7 +92,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

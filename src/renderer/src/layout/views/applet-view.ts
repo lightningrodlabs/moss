@@ -8,7 +8,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import { AppletView, IframeKind, RenderView } from '@theweave/api';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import './view-frame.js';
 @localized()
 @customElement('applet-view')
@@ -55,7 +55,7 @@ export class AppletViewEl extends LitElement {
         .iframeKind=${iframeKind}
         .reloading=${this.reloading}
         class="elevated"
-        style="flex: 1; overflow: hidden;"
+        style="flex: 1;"
       ></view-frame>
     `;
   }
@@ -70,9 +70,10 @@ export class AppletViewEl extends LitElement {
 
       .elevated {
         border-radius: 5px;
-        filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5));
+        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+        overflow: hidden;
       }
     `,
-    weStyles,
+    mossStyles,
   ];
 }

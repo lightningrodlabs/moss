@@ -13,7 +13,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiMagnify } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -52,7 +52,9 @@ import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
-import { weStyles } from '../shared-styles.js';
+import './_new_design/moss-dialog.js';
+
+import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
 import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
@@ -80,6 +82,12 @@ import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
+import {
+  chevronDoubleLeftIcon,
+  chevronDoubleRightIcon,
+  closeIcon,
+  magnifyingGlassIcon,
+} from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -153,6 +161,9 @@ export class MainDashboard extends LitElement {
 
   @query('#creatable-palette')
   _creatablePalette!: CreatablePalette;
+
+  @property()
+  initialGroup: DnaHash | undefined;
 
   @state()
   appVersion: string | undefined;
@@ -566,6 +577,7 @@ export class MainDashboard extends LitElement {
   };
 
   async firstUpdated() {
+    if (this.initialGroup) this.openGroup(this.initialGroup);
     // add the beforeunload listener only 10 seconds later as there won't be anything
     // meaningful to save by applets before and it will ensure that the iframes
     // are ready to respond to the on-before-reload event
@@ -894,7 +906,6 @@ export class MainDashboard extends LitElement {
           (toolCompatibilityId) => html`
             <cross-group-main
               .toolCompatibilityId=${toolCompatibilityId}
-              hostColor="#224b21"
               style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
                 ? ''
                 : 'display: none;'}
@@ -1247,10 +1258,26 @@ export class MainDashboard extends LitElement {
 
   renderAddGroupDialog() {
     return html`
-      <sl-dialog id="add-group-dialog" label="${msg('Add Group')}">
-        <div class="row center-content" style="margin-bottom: 30px;">
-          <sl-button
-            style="margin: 0 5px;"
+      <sl-dialog id="add-group-dialog" class="moss-dialog" no-header label="${msg('Add Group')}">
+        <div
+          class="column center-content dialog-title"
+          style="margin: 10px 0 40px 0; position: relative;"
+        >
+          <span>${msg('Add Group')}</span>
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -23px; right: -12px;"
+            @click=${() => {
+              (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+        </div>
+        <div class="row center-content moss-title" style="margin-bottom: 30px;">
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${(_e) => {
               this.joinGroupDialog.open();
@@ -1264,9 +1291,10 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${'Join Group'}</span>
             </div>
-          </sl-button>
-          <sl-button
-            style="margin: 0 5px;"
+          </button>
+          <button
+            class="moss-button"
+            style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${() => {
               this.createGroupDialog.open();
@@ -1280,7 +1308,7 @@ export class MainDashboard extends LitElement {
               ></sl-icon>
               <span>${msg('Create Group')}</span>
             </div>
-          </sl-button>
+          </button>
         </div>
       </sl-dialog>
     `;
@@ -1288,6 +1316,10 @@ export class MainDashboard extends LitElement {
 
   render() {
     return html`
+      <img
+        src="turing-pattern-bottom-left.svg"
+        style="position: fixed; bottom: 0; left: 0; height: 250px;"
+      />
       <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
         <div class="column">
           <div><b>Factory Reset</b></div>
@@ -1464,32 +1496,17 @@ export class MainDashboard extends LitElement {
         @drop=${(e: any) => {
           console.log('GOT DROP EVENT: ', e);
         }}
-        class="column left-sidebar"
+        class="column left-sidebar items-center"
       >
-        <div
-          class="column top-left-corner ${this._dashboardState.value.viewType === 'personal' ||
-          this.hoverPersonalView
-            ? 'selected'
-            : ''}"
-          @mouseenter=${() => {
-            this.hoverMossButton = true;
-            this.hoverPersonalView = true;
-          }}
-          @mouseleave=${() => {
-            this.hoverMossButton = false;
-            setTimeout(() => {
-              if (!this.hoverTopBar) {
-                this.hoverPersonalView = false;
-              }
-            }, 50);
-          }}
-        >
+        <div class="column">
           <button
-            class="home-button"
+            class="home-button ${this._dashboardState.value.viewType === 'personal'
+              ? 'selected'
+              : ''}"
+            style="margin-top: 25px;"
             .selected=${false}
             .tooltipText=${msg('Home')}
             placement="bottom"
-            tabindex="0"
             @click=${() => {
               this._mossStore.setDashboardState({
                 viewType: 'personal',
@@ -1513,9 +1530,26 @@ export class MainDashboard extends LitElement {
               }
             }}
           >
-            <img src="moss-icon.svg" />
+            <div class="column center-content">
+              <img src="moss-m-white.svg" style="width: 38px; height: 38px;" />
+            </div>
+          </button>
+
+          <button
+            class="moss-sidebar-button"
+            style="margin-top: 8px;"
+            @click=${() => this.openClipboard()}
+            @keypress=${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                this.openClipboard();
+              }
+            }}
+          >
+            <div class="column center-content">${magnifyingGlassIcon(20)}</div>
           </button>
         </div>
+
+        <div class="sidebar-divider" style="margin-top: 14px;"></div>
 
         <groups-sidebar
           class="left-group-sidebar"
@@ -1545,7 +1579,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <button
               tabindex="0"
-              class="moss-button"
+              class="moss-sidebar-button"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1553,57 +1587,20 @@ export class MainDashboard extends LitElement {
                 }
               }}
             >
-              <img
-                tabindex="0"
-                class="moss-button-icon"
-                src="magic-wand.svg"
-                style="width: 24px; height: 24px;"
-              />
+              <div class="column center-content">
+                <img
+                  class="moss-sidebar-button-icon"
+                  src="magic-wand.svg"
+                  style="width: 24px; height: 24px;"
+                />
+              </div>
             </button>
           </sl-tooltip>
-        </div>
-        <div class="row center-content" style="margin-bottom: 5px; position: relative">
-          <sl-tooltip content="Search" placement="right" hoist>
-            <button
-              class="moss-button"
-              @click=${() => this.openClipboard()}
-              @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.openClipboard();
-                }
-              }}
-            >
-              <sl-icon
-                tabindex="0"
-                class="moss-button-icon"
-                .src=${wrapPathInSvg(mdiMagnify)}
-                style="color: #fff; height: 24px; width: 24px"
-              ></sl-icon>
-            </button>
-          </sl-tooltip>
-          ${this._addedToPocket.value
-            ? html`
-                <div
-                  class="row items-center"
-                  style="position: absolute; left: calc(100% - 17px); cursor: default;"
-                  @click=${() => this.openClipboard()}
-                >
-                  <div class="arrow-left" style="z-index: 0"></div>
-                  <div class="row items-center justify-center added-to-pocket">
-                    <img style="height: 30px;" src="pocket_black.png" />
-                    <span style="margin-left: 10px;">Added to Pocket</span>
-                  </div>
-                </div>
-              `
-            : html``}
         </div>
         <div
           @dblclick=${() => this.openZomeCallPanel()}
           style="color: white; text-align: center; margin-bottom: 3px;"
-          title=${this.appVersion
-            ? `
-        Lightningrod Labs We version ${this.appVersion}`
-            : ``}
+          title=${this.appVersion ? `Moss version ${this.appVersion}` : ``}
         >
           ${this.appVersion ? `v${this.appVersion}` : ''}
         </div>
@@ -1619,7 +1616,7 @@ export class MainDashboard extends LitElement {
         !this.hoverPersonalView
           ? ''
           : 'personal-top-bar'}"
-        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 0; right: 0;"
+        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
         @mouseenter=${() => {
           this.hoverTopBar = true;
         }}
@@ -1635,7 +1632,7 @@ export class MainDashboard extends LitElement {
         <div
           id="top-bar-scroller"
           class="row invisible-scrollbars"
-          style="overflow-x: auto; padding-right: 40px;"
+          style="overflow-x: auto; padding-right: 40px; height: 80px;"
           @wheel=${(e) => {
             const el = this.shadowRoot!.getElementById('top-bar-scroller');
             if (el)
@@ -1738,22 +1735,37 @@ export class MainDashboard extends LitElement {
           ></personal-view-sidebar>
         </div>
         <div style="display: flex; flex: 1;"></div>
-        <div class="row">
-          <sl-tooltip
-            content="${this._assetViewerState.value.visible
-              ? 'Hide Asset Viewer'
-              : 'Show Asset Viewer'}"
-            placement="bottom"
-            hoist
-          >
-            <div
-              id="tab-bar-button"
-              class="entry-tab-bar-button ${this._assetViewerState.value.visible &&
-              this._assetViewerState.value.position === 'side'
-                ? 'btn-selected'
-                : ''}"
-              tabindex="0"
-              @click="${(_e) => {
+      </div>
+
+      <!-- ASSET VIEWER TOGGLE -->
+
+      <div class="row" style="position: fixed; top: 0; right: 0;">
+        <sl-tooltip
+          content="${this._assetViewerState.value.visible
+            ? 'Hide Asset Viewer'
+            : 'Show Asset Viewer'}"
+          placement="left"
+          hoist
+        >
+          <button
+            id="tab-bar-button"
+            class="asset-viever-toggle-btn ${this._assetViewerState.value.visible &&
+            this._assetViewerState.value.position === 'side'
+              ? 'btn-selected'
+              : ''}"
+            tabindex="0"
+            @click="${(_e) => {
+              if (
+                this._assetViewerState.value.visible &&
+                this._assetViewerState.value.position === 'side'
+              ) {
+                this._mossStore.setAssetViewerState({ position: 'side', visible: false });
+                return;
+              }
+              this._mossStore.setAssetViewerState({ position: 'side', visible: true });
+            }}"
+            @keypress="${(e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
                 if (
                   this._assetViewerState.value.visible &&
                   this._assetViewerState.value.position === 'side'
@@ -1762,33 +1774,17 @@ export class MainDashboard extends LitElement {
                   return;
                 }
                 this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-              }}"
-              @keypress="${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  if (
-                    this._assetViewerState.value.visible &&
-                    this._assetViewerState.value.position === 'side'
-                  ) {
-                    this._mossStore.setAssetViewerState({ position: 'side', visible: false });
-                    return;
-                  }
-                  this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-                }
-              }}"
-            >
-              <div class="column center-content">
-                <img src="sidebar.svg" style="height: 34px;" />
-              </div>
+              }
+            }}"
+          >
+            <div class="column center-content">
+              ${this._assetViewerState.value.visible
+                ? chevronDoubleRightIcon(28)
+                : chevronDoubleLeftIcon(28)}
             </div>
-          </sl-tooltip>
-        </div>
+          </button>
+        </sl-tooltip>
       </div>
-      <!-- POCKET OVERLAY -->
-      ${this._draggedWal.value
-        ? html` <div class="overlay column">
-            <pocket-drop class="flex flex-1"></pocket-drop>
-          </div>`
-        : html``}
 
       <!-- Reloading overlay -->
 
@@ -1822,12 +1818,37 @@ export class MainDashboard extends LitElement {
             `
           : html``}
       </div>
+
+      <!-- Added to pocket indicator -->
+      ${this._addedToPocket.value
+        ? html`
+            <div
+              class="row items-center"
+              style="position: fixed; left: 60px; top: 68px; cursor: default;"
+              @click=${() => this.openClipboard()}
+            >
+              <div class="arrow-left" style="z-index: 1;"></div>
+              <div class="row items-center justify-center added-to-pocket">
+                <img style="height: 30px;" src="pocket_black.png" />
+                <span style="margin-left: 10px;">${msg('Added to Pocket')}</span>
+              </div>
+            </div>
+          `
+        : html``}
+
+      <!-- POCKET OVERLAY -->
+      <!-- disabled for now because it's not working across origins. Possible workaround: https://github.com/James-E-Adams/iframe-drag-n-drop -->
+      <!-- ${this._draggedWal.value
+        ? html` <div class="overlay column">
+            <pocket-drop class="flex flex-1" style="z-index: 999;"></pocket-drop>
+          </div>`
+        : html``} -->
     `;
   }
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           flex: 1;
@@ -1881,53 +1902,48 @@ export class MainDashboard extends LitElement {
         }
 
         .added-to-pocket {
-          padding: 20px 15px;
+          padding: 20px 5px;
           border-radius: 10px;
           background: #dbe755;
           min-width: 200px;
           box-shadow: 0 0 2px 2px #042007b4;
         }
 
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-primary-0);
-        }
-
         .hidden {
           display: none;
         }
 
-        .top-left-corner {
-          align-items: center;
-          justify-content: center;
-          height: var(--sidebar-width);
-        }
-
         .home-button {
-          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
-          border-radius: 15px;
-          border: none;
-          width: 58px;
-          height: 58px;
-          outline: none;
+          all: unset;
+          /* background: linear-gradient(0deg, #203923 0%, #527a22 100%); */
+          /* background: var(--moss-dark-button); */
+          background: none;
+          border-radius: 8px;
+          width: 48px;
+          height: 48px;
+          cursor: pointer;
+          color: white;
         }
 
         .home-button:hover {
-          cursor: pointer;
+          background: var(--moss-dark-button);
+          color: black;
         }
 
-        .top-left-corner:hover {
-          border-radius: 20px 0 0 20px;
-          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
-          cursor: pointer;
+        .home-button:focus-visible {
+          outline: 2px solid var(--moss-purple);
         }
 
         .selected {
-          border-radius: 20px 0 0 20px;
-          /* background: linear-gradient(90deg, #cedd58 0%, #224b21 90.91%); */
-          /* background: linear-gradient(90deg, #012f00 0%, #224b21 90.91%); */
-          background: linear-gradient(90deg, #012f00 0%, #689d19 90.91%);
+          background: var(--moss-dark-button);
+          color: black;
+        }
+
+        .sidebar-divider {
+          width: 40px;
+          height: 1px;
+          background: white;
+          opacity: 0.4;
         }
 
         .hover-browser {
@@ -1976,16 +1992,21 @@ export class MainDashboard extends LitElement {
           /* display: flex; */
           flex: 1;
           position: fixed;
-          top: 74px;
-          left: 74px;
-          bottom: 0;
-          right: 0;
+          top: 80px;
+          left: 80px;
+          bottom: 8px;
+          right: 8px;
           padding-left: 8px;
-          background-color: #224b21;
+          /* background-color: #224b21; */
+          background-color: var(--moss-main-green);
+          border-radius: 0 0 10px 10px;
+          overflow: hidden;
         }
 
         .personal-view {
-          background-color: #689d19;
+          /* background-color: #689d19; */
+          /* background-color: var(--moss-dark-green); */
+          background: none;
         }
 
         #group-view-area {
@@ -2054,7 +2075,8 @@ export class MainDashboard extends LitElement {
           box-shadow: 0 0 3px #808080;
         }
 
-        .entry-tab-bar-button {
+        .asset-viever-toggle-btn {
+          all: unset;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2063,11 +2085,12 @@ export class MainDashboard extends LitElement {
           background: var(--sl-color-tertiary-800);
           cursor: pointer;
           /* margin: 5px; */
-          height: 74px;
-          width: 60px;
+          height: 50px;
+          width: 50px;
+          border-radius: 5px 0 0 5px;
         }
 
-        .entry-tab-bar-button:hover {
+        .asset-viever-toggle-btn:hover {
           background: var(--sl-color-tertiary-50);
           color: var(--sl-color-tertiary-950);
           /* margin: 0; */
@@ -2075,21 +2098,9 @@ export class MainDashboard extends LitElement {
           /* height: 50px; */
         }
 
-        .entry-tab-bar-button:focus-visible {
+        .asset-viever-toggle-btn:focus-visible {
           background: var(--sl-color-tertiary-50);
           color: var(--sl-color-tertiary-950);
-        }
-
-        .entry-tab-bar-button img {
-          filter: invert(1);
-        }
-
-        .entry-tab-bar-button:hover img {
-          filter: none;
-        }
-
-        .entry-tab-bar-button:focus-visible img {
-          filter: none;
         }
 
         .btn-selected {
@@ -2124,8 +2135,8 @@ export class MainDashboard extends LitElement {
           left: 0;
           top: 0;
           bottom: 0;
-          background: linear-gradient(270deg, #142510 0%, #3a622d 100%);
-          width: 74px;
+          /* background: linear-gradient(270deg, #142510 0%, #3a622d 100%); */
+          width: 80px;
         }
 
         .left-group-sidebar {
@@ -2143,12 +2154,14 @@ export class MainDashboard extends LitElement {
 
         .top-bar {
           position: relative;
-          background: #224b21;
+          /* background: #224b21; */
+          background: var(--moss-main-green);
           min-height: var(--sidebar-width);
           align-items: center;
           overflow-x: auto;
           -ms-overflow-style: none; /* IE and Edge */
           scrollbar-width: none; /* Firefox */
+          border-radius: 12px 12px 0 0;
         }
 
         .top-bar::-webkit-scrollbar {
@@ -2156,47 +2169,18 @@ export class MainDashboard extends LitElement {
         }
 
         .personal-top-bar {
-          background: #689d19;
+          background: transparent;
+          border-radius: 0;
         }
 
         .personal-view-indicator {
           position: absolute;
-          top: 74px;
-          left: 74px;
+          top: 80px;
+          left: 80px;
           font-size: 18px;
           background: #689d19;
           padding: 5px;
           border-radius: 0 0 10px 10px;
-        }
-
-        .moss-button-icon {
-          font-size: 66px;
-          color: #fff;
-          cursor: pointer;
-        }
-
-        .moss-button-icon:hover {
-          color: var(--sl-color-primary-50);
-        }
-
-        .moss-button-icon:focus {
-          color: var(--sl-color-primary-50);
-        }
-
-        .moss-button {
-          width: 40px;
-          height: 40px;
-          outline: none;
-          border: none;
-          color: #fff;
-          background: linear-gradient(0deg, #203923 0%, #527a22 100%);
-          box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-          border-radius: 5px;
-        }
-
-        .moss-button:hover {
-          background: linear-gradient(0deg, #203923 0%, #63912a 100%);
-          cursor: pointer;
         }
       `,
     ];

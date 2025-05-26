@@ -12,7 +12,7 @@
 
 // import { MossStore } from '../../../moss-store.js';
 // import { mossStoreContext } from '../../../context.js';
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 // import { mdiInformationVariantCircle } from '@mdi/js';
 // import { DeveloperCollective, UpdateableEntity } from '@theweave/tool-library-client';
@@ -109,7 +109,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

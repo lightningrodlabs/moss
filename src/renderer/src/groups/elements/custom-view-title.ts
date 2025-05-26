@@ -10,7 +10,7 @@ import { EntryRecord } from '@holochain-open-dev/utils';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { GroupStore } from '../group-store.js';
 import { groupStoreContext } from '../context.js';
 import { CustomView } from '../../custom-views/types.js';
@@ -58,7 +58,7 @@ export class CustomViewTitle extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

@@ -10,7 +10,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -103,5 +103,5 @@ export class EditGroupProfile extends LitElement {
     }
   }
 
-  static styles = [weStyles, css``];
+  static styles = [mossStyles, css``];
 }

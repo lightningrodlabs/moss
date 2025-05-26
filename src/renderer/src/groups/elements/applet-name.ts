@@ -13,7 +13,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { Applet } from '@theweave/group-client';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('applet-name')
 export class AppletName extends LitElement {
@@ -50,5 +50,5 @@ export class AppletName extends LitElement {
     }
   }
 
-  static styles = weStyles;
+  static styles = mossStyles;
 }

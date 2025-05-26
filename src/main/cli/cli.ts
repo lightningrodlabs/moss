@@ -30,7 +30,7 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
-export const DEFAULT_ICE_URLS = ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
+export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 

@@ -15,7 +15,7 @@ import {
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { dateStr } from '../../utils.js';
 import { decode } from '@msgpack/msgpack';
 
@@ -141,7 +141,7 @@ export class DhtOpDetail extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;
