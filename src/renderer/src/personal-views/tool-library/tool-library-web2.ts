@@ -19,7 +19,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import '../../elements/dialogs/select-group-dialog.js';
-import { mdiChevronLeft, mdiEmailOutline, mdiPublish, mdiTools, mdiWeb } from '@mdi/js';
+import { mdiChevronLeft, mdiEmailOutline, mdiPublish, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';

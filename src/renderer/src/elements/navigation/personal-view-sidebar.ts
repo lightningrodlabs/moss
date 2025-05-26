@@ -20,7 +20,7 @@ import { mossStyles } from '../../shared-styles.js';
 import { AppletId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiGraph, mdiHome, mdiStoreSearch } from '@mdi/js';
+import { mdiGraph, mdiHome } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { appStoreIcon } from '../../icons/icons.js';
 
