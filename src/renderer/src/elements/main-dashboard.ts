@@ -1786,13 +1786,6 @@ export class MainDashboard extends LitElement {
         </sl-tooltip>
       </div>
 
-      <!-- POCKET OVERLAY -->
-      ${this._draggedWal.value
-        ? html` <div class="overlay column">
-            <pocket-drop class="flex flex-1"></pocket-drop>
-          </div>`
-        : html``}
-
       <!-- Reloading overlay -->
 
       <div
@@ -1842,6 +1835,14 @@ export class MainDashboard extends LitElement {
             </div>
           `
         : html``}
+
+      <!-- POCKET OVERLAY -->
+      <!-- disabled for now because it's not working across origins. Possible workaround: https://github.com/James-E-Adams/iframe-drag-n-drop -->
+      <!-- ${this._draggedWal.value
+        ? html` <div class="overlay column">
+            <pocket-drop class="flex flex-1" style="z-index: 999;"></pocket-drop>
+          </div>`
+        : html``} -->
     `;
   }
 

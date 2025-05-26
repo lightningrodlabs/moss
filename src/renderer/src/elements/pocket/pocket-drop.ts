@@ -40,6 +40,11 @@ export class PocketDrop extends LitElement {
   @state()
   dragCounter = 0;
 
+  firstUpdated() {
+    // Clear if not dropped after 3 seconds
+    setTimeout(() => this.handleDropCancel(), 3000);
+  }
+
   requestCreate() {
     this.dispatchEvent(
       new CustomEvent('open-creatable-palette', {

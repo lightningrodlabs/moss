@@ -61,7 +61,7 @@ export class GroupAppletsSidebar extends LitElement {
     if (Array.from(applets.entries()).length === 0) {
       return html`
         <div class="row" style="align-items: center; font-size: 20px; font-weight: 500;">
-          <span style="color: var(--moss-dark-green); font-size: 14px;">
+          <span style="color: var(--moss-dark-green); font-size: 14px; margin-left: 10px;">
             No Tools installed or all Tools disabled...
           </span>
         </div>

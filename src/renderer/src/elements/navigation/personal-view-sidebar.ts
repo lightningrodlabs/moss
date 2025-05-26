@@ -22,6 +22,7 @@ import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiGraph, mdiHome, mdiStoreSearch } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
+import { appStoreIcon } from '../../icons/icons.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -202,12 +203,7 @@ export class PersonalViewSidebar extends LitElement {
             );
           }}
         >
-          <div class="column center-content">
-            <sl-icon
-              .src=${wrapPathInSvg(mdiStoreSearch)}
-              style="font-size: 40px; margin-left: 3px; margin-top: 3px;"
-            ></sl-icon>
-          </div>
+          <div class="column center-content">${appStoreIcon(32)}</div>
         </button>
       </sl-tooltip>
     `;
