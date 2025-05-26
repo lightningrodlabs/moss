@@ -1583,6 +1583,18 @@
     lodash-es "^4.17.21"
     sort-keys "^5.0.0"
 
+"@holochain-open-dev/utils@^0.500.1":
+  version "0.500.1"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.500.1.tgz#05d40197661d0a2d4705ec9e67d4a6e331488456"
+  integrity sha512-uxyiAYnGrR7G2oxVHkZcyfOgI01Cps/sWOAfv8Fsgh5GU2TGOJP3OmfyDaAUQ9pgTtyPAhKbDr/9yi1mgbJ1eQ==
+  dependencies:
+    "@holochain/client" "^0.19.0"
+    "@msgpack/msgpack" "^2.8.0"
+    blakejs "^1.2.1"
+    emittery "^1.0.1"
+    lodash-es "^4.17.21"
+    sort-keys "^5.0.0"
+
 "@holochain-playground/cli@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
@@ -3114,7 +3126,7 @@
     "@holochain-open-dev/elements" "^0.500.0"
     "@holochain-open-dev/profiles" "^0.500.0"
     "@holochain-open-dev/stores" "^0.500.0"
-    "@holochain-open-dev/utils" "^0.500.0"
+    "@holochain-open-dev/utils" "^0.500.1"
     "@holochain/client" "^0.19.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
