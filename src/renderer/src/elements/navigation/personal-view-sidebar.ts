@@ -203,7 +203,7 @@ export class PersonalViewSidebar extends LitElement {
             );
           }}
         >
-          <div class="column center-content">${appStoreIcon(32)}</div>
+          <div class="column center-content">${appStoreIcon(30)}</div>
         </button>
       </sl-tooltip>
     `;

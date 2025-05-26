@@ -461,7 +461,6 @@ export class ToolLibraryWeb2 extends LitElement {
               : 'display: none;'}"
           ></sl-icon-button>
           <div class="row" style="align-items: center; font-size: 34px;">
-            <sl-icon .src=${wrapPathInSvg(mdiTools)}></sl-icon>
             <span style="flex: 1; margin-left: 10px; font-weight: bold;"
               >${msg('Tool Library')}</span
             >
