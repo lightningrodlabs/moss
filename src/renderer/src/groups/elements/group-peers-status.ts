@@ -136,7 +136,7 @@ export class GroupPeersStatus extends LitElement {
             }}
           >
             <profile-detail-moss
-              style="color: white"
+              style="color: black"
               no-additional-fields
               .agentPubKey=${myPubKey}
             ></profile-detail-moss>
@@ -175,7 +175,7 @@ export class GroupPeersStatus extends LitElement {
                 }}
               >
                 <profile-detail-moss
-                  style="color: white"
+                  style="color: black"
                   no-additional-fields
                   .agentPubKey=${agentInfo.agent}
                 ></profile-detail-moss>
@@ -220,7 +220,7 @@ export class GroupPeersStatus extends LitElement {
                       }}
                     >
                       <profile-detail-moss
-                        style="opacity: 0.5; color: white;"
+                        style="opacity: 0.5; color: black;"
                         no-additional-fields
                         .agentPubKey=${agentInfo.agent}
                       ></profile-detail-moss>
@@ -259,7 +259,7 @@ export class GroupPeersStatus extends LitElement {
                       }}
                     >
                       <profile-detail-moss
-                        style="color: white; ${agentInfo.status ? '' : 'opacity: 0.5'}"
+                        style="color: black; ${agentInfo.status ? '' : 'opacity: 0.5'}"
                         no-additional-fields
                         .agentPubKey=${agentInfo.agent}
                       ></profile-detail-moss>
@@ -294,16 +294,16 @@ export class GroupPeersStatus extends LitElement {
     css`
       profile-detail {
         margin: 5px;
-        color: #fff;
+        color: black;
       }
 
       .agents-list {
-        color: #fff;
+        color: black;
         font-size: 1.1rem;
       }
 
       .agents-list span {
-        color: white;
+        color: black;
       }
 
       .profile {
@@ -321,7 +321,7 @@ export class GroupPeersStatus extends LitElement {
         left: 25px;
         height: 11px;
         width: 11px;
-        border: 2px solid #1e3b25;
+        border: 2px solid var(--moss-fishy-green);
         border-radius: 50%;
         background: #44d944;
       }

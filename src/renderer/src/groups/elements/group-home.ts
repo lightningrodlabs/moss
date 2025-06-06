@@ -876,8 +876,9 @@ export class GroupHome extends LitElement {
             </div>
           </sl-dialog>
 
-          <sl-button
-            class="invite-btn"
+          <button
+            class="moss-button"
+            style="padding: 10px 0;"
             variant="primary"
             @click=${() => {
               this.inviteMemberDialog?.show();
@@ -885,11 +886,9 @@ export class GroupHome extends LitElement {
           >
             <div class="row center-content items-center;">
               <div class="column" style="color: white;">${personPlusIcon(25)}</div>
-              <div style="font-size: 16px; margin-top: 4px; margin-left: 5px;">
-                ${msg('Invite Member')}
-              </div>
+              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite Member')}</div>
             </div>
-          </sl-button>
+          </button>
         </div>
       </div>
     `;
@@ -923,141 +922,6 @@ export class GroupHome extends LitElement {
       ></edit-custom-group-view>
     </div>`;
   }
-
-  // renderNewSettings() {
-  //   const tabs = [
-  //     [
-  //       'Tools',
-  //       html`<group-applets-settings
-  //         @uninstall-applet=${async (e) => this.uninstallApplet(e)}
-  //         @applets-disabled=${(e) => {
-  //           this.dispatchEvent(
-  //             new CustomEvent('applets-disabled', {
-  //               detail: e.detail,
-  //               bubbles: true,
-  //               composed: true,
-  //             }),
-  //           );
-  //         }}
-  //         style="display: flex; flex: 1;"
-  //       ></group-applets-settings>`,
-  //     ],
-  //     // [
-  //     //   'Custom Views',
-  //     //   html`
-  //     //     <div class="column center-content" style="flex: 1;">
-  //     //       <span class="placeholder" style="margin-top: 200px;"
-  //     //         >${msg(
-  //     //           'You can add custom views to this group, combining the relevant blocks from each applet.',
-  //     //         )}</span
-  //     //       >
-  //     //       <all-custom-views
-  //     //         style="margin-top: 8px; flex: 1;"
-  //     //         @edit-custom-view=${(e) => {
-  //     //           this.view = {
-  //     //             view: 'edit-custom-view',
-  //     //             customViewHash: e.detail.customViewHash,
-  //     //           };
-  //     //         }}
-  //     //       ></all-custom-views>
-  //     //       <div class="row" style="flex: 1">
-  //     //         <span style="flex: 1"></span>
-  //     //         <sl-button
-  //     //           variant="primary"
-  //     //           @click=${() => {
-  //     //             this.view = { view: 'create-custom-view' };
-  //     //           }}
-  //     //           >${msg('Create Custom View')}</sl-button
-  //     //         >
-  //     //       </div>
-  //     //     </div>
-  //     //   `,
-  //     // ],
-  //     [
-  //       'Your Settings',
-  //       html`
-  //         <div class="column center-content" style="flex: 1;">
-  //           <your-settings
-  //             @group-left=${(e) =>
-  //               this.dispatchEvent(
-  //                 new CustomEvent('group-left', {
-  //                   detail: {
-  //                     groupDnaHash: e.detail.groupDnaHash,
-  //                   },
-  //                   bubbles: true,
-  //                   composed: true,
-  //                 }),
-  //               )}
-  //           ></your-settings>
-  //         </div>
-  //       `,
-  //     ],
-  //   ];
-
-  //   if (this.permissionType.value.status === 'complete') {
-  //     if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
-  //       tabs.splice(2, 0, [
-  //         'Group Stewards',
-  //         html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
-  //       ]);
-  //       tabs.push([
-  //         'Group Profile',
-  //         html`
-  //           <div class="column center-content" style="flex: 1;">
-  //             <edit-group-profile
-  //               style="background: white; padding: 20px; border-radius: 10px;"
-  //             ></edit-group-profile>
-  //           </div>
-  //         `,
-  //       ]);
-  //     }
-  //   }
-
-  //   return html`
-  //     <div class="column" style="flex: 1; position: relative;">
-  //       <div
-  //         class="row"
-  //         style="height: 68px; align-items: center; background: var(--sl-color-primary-200)"
-  //       >
-  //         <sl-icon-button
-  //           .src=${wrapPathInSvg(mdiArrowLeft)}
-  //           @click=${() => {
-  //             this.view = { view: 'main' };
-  //           }}
-  //           style="margin-left: 20px; font-size: 30px;"
-  //         ></sl-icon-button>
-  //         <span style="display: flex; flex: 1;"></span>
-  //         <span class="title" style="margin-right: 20px; font-weight: bold;"
-  //           >${msg('Group Settings')}</span
-  //         >
-  //       </div>
-
-  //       <tab-group .tabs=${tabs} style="display: flex; flex: 1;"> </tab-group>
-
-  //       <sl-button
-  //         variant="warning"
-  //         style="position: absolute; bottom: 10px; right: 10px;"
-  //         @click=${async () => {
-  //           this.dispatchEvent(
-  //             new CustomEvent('disable-group', {
-  //               detail: this.groupStore.groupDnaHash,
-  //               bubbles: true,
-  //               composed: true,
-  //             }),
-  //           );
-  //         }}
-  //       >
-  //         <div class="row" style="align-items: center;">
-  //           <sl-icon
-  //             style="margin-right: 5px; font-size: 1.3rem;"
-  //             .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
-  //           ></sl-icon>
-  //           <div>${msg('Disable group')}</div>
-  //         </div></sl-button
-  //       >
-  //     </div>
-  //   `;
-  // }
 
   renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
@@ -1176,16 +1040,12 @@ export class GroupHome extends LitElement {
       .title {
         font-size: 25px;
         font-weight: bold;
-        color: white;
+        color: black;
       }
       .subtitle {
         font-size: 18px;
         font-weight: bold;
         color: #fff;
-      }
-      .invite-btn::part(base) {
-        background-color: #69982c;
-        border-color: #69982c;
       }
       .applet-card {
         width: 100%;
@@ -1206,38 +1066,33 @@ export class GroupHome extends LitElement {
         font-size: 1.25rem;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #383838;
         height: 50px;
         width: 180px;
-        box-shadow: 1px 1px 6px 0px #223607;
+        /* box-shadow: 1px 1px 6px 0px var(--moss-fishy-green); */
         border-radius: 5px 5px 0 0;
-        /* background: linear-gradient(0, #142919c1 0%, #1e3b25b3 50.91%); */
-        background: #1e3b2585;
+        background: #d4dfcf;
         cursor: pointer;
         clip-path: inset(-20px -20px 0 -20px);
       }
 
       .tab:hover {
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
       }
 
       .tab-selected {
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
+        color: black;
+        box-shadow: 1px 1px 6px 0px var(--moss-fishy-green);
       }
 
       .main-panel {
         flex: 1;
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
-        color: white;
+        /* background: var(--moss-fishy-green); */
+        background: var(--moss-fishy-green);
+        color: black;
         border-radius: 0 5px 5px 5px;
-        box-shadow: 1px 1px 3px 0px #223607;
-        box-shadow: 1px 1px 6px 0px #223607;
+        box-shadow: 1px 1px 6px 0px var(--moss-fishy-green);
         overflow-y: auto;
       }
 
@@ -1255,19 +1110,18 @@ export class GroupHome extends LitElement {
 
       .foyer-panel {
         /* border-left: solid 1px white; */
+        color: black;
         padding-left: 5px;
-        background: #08230e;
+        background: #d4dfcf;
       }
 
       .online-status-bar {
-        color: var(--sl-color-secondary-100);
+        color: black;
         width: 230px;
         padding: 16px;
-        /* background: #3a5b0c; */
-        /* background: #335c21; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
         border-radius: 5px;
-        box-shadow: 1px 1px 6px 0px #223607;
+        box-shadow: 1px 1px 6px 0px var(moss-fishy-green);
       }
 
       .indicator {

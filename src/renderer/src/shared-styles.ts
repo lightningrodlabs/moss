@@ -32,6 +32,8 @@ export const mossStyles = [
 
       --moss-medium-green: #85b46e;
 
+      --moss-fishy-green: #bac9af;
+
       --moss-dark-green: #1c251e;
 
       --moss-hint-green: #324d47;
