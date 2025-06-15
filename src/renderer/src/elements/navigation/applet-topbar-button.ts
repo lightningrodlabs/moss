@@ -115,7 +115,7 @@ export class AppletTopBarButton extends LitElement {
         position: absolute;
         bottom: -1px;
         right: -1px;
-        color: white;
+        color: black;
         z-index: 1;
       }
 

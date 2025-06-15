@@ -30,7 +30,6 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
-import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -1029,14 +1028,6 @@ export class GroupHome extends LitElement {
         justify-content: space-between;
         align-items: center;
       }
-
-      sl-tab-panel::part(base) {
-        width: 600px;
-      }
-      sl-tab-panel[active] {
-        display: flex;
-        justify-content: center;
-      }
       .title {
         font-size: 25px;
         font-weight: bold;
@@ -1069,7 +1060,7 @@ export class GroupHome extends LitElement {
         color: #383838;
         height: 50px;
         width: 180px;
-        /* box-shadow: 1px 1px 6px 0px var(--moss-fishy-green); */
+        box-shadow: 0px 0px 6px 0px var(--moss-fishy-green);
         border-radius: 5px 5px 0 0;
         background: #d4dfcf;
         cursor: pointer;
@@ -1078,12 +1069,14 @@ export class GroupHome extends LitElement {
 
       .tab:hover {
         background: var(--moss-fishy-green);
+        z-index: 2;
       }
 
       .tab-selected {
         background: var(--moss-fishy-green);
         color: black;
-        box-shadow: 1px 1px 6px 0px var(--moss-fishy-green);
+        box-shadow: 0px 0px 6px 0px #606f54;
+        z-index: 2;
       }
 
       .main-panel {
@@ -1092,8 +1085,10 @@ export class GroupHome extends LitElement {
         background: var(--moss-fishy-green);
         color: black;
         border-radius: 0 5px 5px 5px;
-        box-shadow: 1px 1px 6px 0px var(--moss-fishy-green);
+        /* box-shadow: 1px 1px 6px 0px var(--moss-fishy-green); */
+        box-shadow: 0px 0px 6px 0px #606f54;
         overflow-y: auto;
+        z-index: 1;
       }
 
       .main-panel a {
@@ -1130,8 +1125,8 @@ export class GroupHome extends LitElement {
         color: black;
         font-weight: bold;
         font-size: 1.05rem;
-        top: 7px;
-        right: 9px;
+        top: 4px;
+        right: 4px;
         min-width: 20px;
         height: 20px;
         border-radius: 10px;
