@@ -550,10 +550,13 @@ export class GroupHome extends LitElement {
         }
         if (!this._groupDescription.value.value) {
           return html`
-            <div class="column center-content" style="flex: 1;">
+            <div class="column center-content" style="flex: 1; padding: 40px 0;">
               No group description.
               <button
-                style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
+                class="moss-button"
+                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.hasStewardPermission()
+                  ? ''
+                  : 'display: none;'}"
                 @click=${() => {
                   this._editGroupDescription = true;
                 }}
