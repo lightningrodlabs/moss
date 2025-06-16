@@ -140,8 +140,8 @@ export class SidebarButton extends LitElement {
 
         .notification-dot {
           position: absolute;
-          top: 5px;
-          right: 5px;
+          top: -5px;
+          right: -5px;
           font-weight: bold;
           background: #355dfa;
           border-radius: 10px;

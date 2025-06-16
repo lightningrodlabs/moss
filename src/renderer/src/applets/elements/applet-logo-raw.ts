@@ -118,8 +118,8 @@ export class AppletLogo extends LitElement {
 
       .notification-dot {
         position: absolute;
-        top: 0;
-        right: 0;
+        top: -5px;
+        right: -5px;
         font-weight: bold;
         background: #355dfa;
         border-radius: 10px;
