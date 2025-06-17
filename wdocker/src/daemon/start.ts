@@ -263,7 +263,14 @@ export async function fetchHolochainBinary(dstPath: string): Promise<void> {
   let targetEnding;
   switch (process.platform) {
     case 'linux':
-      targetEnding = 'x86_64-unknown-linux-gnu';
+      switch (process.arch) {
+        case 'arm64':
+          targetEnding = 'aarch64-unknown-linux-gnu';
+          break;
+        case 'x64':
+          targetEnding = 'x86_64-unknown-linux-gnu';
+          break;
+      }
       break;
     case 'win32':
       targetEnding = 'x86_64-pc-windows-msvc.exe';
