@@ -262,6 +262,7 @@ export class GroupsSidebar extends LitElement {
       case 'error':
         console.error('Error displaying the groups: ', this._groupsProfiles.value.error);
         return html`<display-error
+          style="margin-top: 20px;"
           .headline=${msg('Error displaying the groups')}
           tooltip
           .error=${this._groupsProfiles.value.error}

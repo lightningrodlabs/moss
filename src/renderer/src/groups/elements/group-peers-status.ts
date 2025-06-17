@@ -337,7 +337,7 @@ export class GroupPeersStatus extends LitElement {
         height: 9px;
         width: 9px;
         border-radius: 50%;
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
       }
     `,
   ];
