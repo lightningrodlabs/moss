@@ -2,16 +2,21 @@
  * Starts a new conductor as a detached process and returns the resulting `RunningInfo`
  */
 
-import rustUtils from '@lightningrodlabs/we-rust-utils';
 import getPort from 'get-port';
 import fs from 'fs';
 import split from 'split';
+import yaml from 'js-yaml';
 import * as childProcess from 'child_process';
 import { password as passwordInput } from '@inquirer/prompts';
 
 import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';
-import { PRODUCTION_BOOTSTRAP_URLS, PRODUCTION_SIGNALING_URLS } from '../const.js';
+import {
+  CONDUCTOR_CONFIG_TEMPLATE,
+  DEFAULT_ICE_URLS,
+  PRODUCTION_BOOTSTRAP_URLS,
+  PRODUCTION_SIGNALING_URLS,
+} from '../const.js';
 import { nanoid } from 'nanoid';
 import { MOSS_CONFIG } from '../const.js';
 import { downloadFile } from '../utils.js';
@@ -134,42 +139,44 @@ export async function startConductor(
   const allowedOrigin = nanoid(20);
 
   const bootstrapUrl = PRODUCTION_BOOTSTRAP_URLS[0];
-  const signalingUrl = PRODUCTION_SIGNALING_URLS[0];
+  const signalUrl = PRODUCTION_SIGNALING_URLS[0];
+  const iceUrls = DEFAULT_ICE_URLS;
   const rustLog = undefined;
   const wasmLog = undefined;
 
   // Generate conductor config with in-process lair
   const configPath = wDockerFs.conductorConfigPath;
-  let conductorConfig: string;
+  let conductorConfig;
 
-  if (fs.existsSync(configPath)) {
-    conductorConfig = rustUtils.overwriteConfig(
-      adminPort,
-      configPath,
-      'unused because we use in-process lair here',
-      bootstrapUrl,
-      signalingUrl,
-      allowedOrigin,
-      false,
-      undefined,
-      keystoreEnvDir,
+  // Read
+  try {
+    conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+  } catch (e) {
+    console.warn(
+      'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
     );
-  } else {
-    // TODO Reuse existing config and only overwrite chosen values if necessary
-    conductorConfig = rustUtils.defaultConductorConfig(
-      adminPort,
-      conductorEnvDir,
-      'unused because we use in-process lair here',
-      bootstrapUrl,
-      signalingUrl,
-      allowedOrigin,
-      false,
-      undefined,
-      keystoreEnvDir,
-    );
+    conductorConfig = CONDUCTOR_CONFIG_TEMPLATE;
   }
 
-  fs.writeFileSync(configPath, conductorConfig);
+  conductorConfig.data_root_path = conductorEnvDir;
+  // We want in-process lair keystore
+  conductorConfig.keystore.type = 'lair_server_in_proc';
+  conductorConfig.keystore.lair_root = keystoreEnvDir;
+  delete conductorConfig.keystore.connection_url;
+
+  conductorConfig.admin_interfaces = [
+    {
+      driver: { type: 'websocket', port: adminPort, allowed_origins: allowedOrigin },
+    },
+  ];
+
+  // network parameters
+  conductorConfig.network.bootstrap_url = bootstrapUrl;
+  conductorConfig.network.signal_url = signalUrl;
+  conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
+
+  console.log('Writing conductor-config.yaml...');
+  fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
   const conductorHandle = childProcess.spawn(
     wDockerFs.holochainBinaryPath,

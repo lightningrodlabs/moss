@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +29,8 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal.holo.host',
 ];
 
+export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
+
 const packageJsonPath = path.join(__dirname, '../package.json');
 const packageJsonJSON = fs.readFileSync(packageJsonPath, 'utf-8');
 export const PACKAGE_JSON = JSON.parse(packageJsonJSON);
@@ -35,6 +38,13 @@ export const PACKAGE_JSON = JSON.parse(packageJsonJSON);
 const mossConfigPath = path.join(__dirname, 'moss.config.json');
 const mossConfigJSON = fs.readFileSync(mossConfigPath, 'utf-8');
 export const MOSS_CONFIG = JSON.parse(mossConfigJSON);
+
+const conductorConfigTemplateString = fs.readFileSync(
+  path.join(__dirname, 'conductor-config.yaml'),
+  'utf-8',
+);
+export const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
+
 export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
 
 export const GROUP_HAPP_URL = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${MOSS_CONFIG.groupHapp.version}/group.happ`;

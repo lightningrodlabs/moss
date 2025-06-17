@@ -7,6 +7,7 @@ import Table from 'cli-table';
 import {
   AdminWebsocket,
   AppWebsocket,
+  CallZomeRequest,
   CallZomeTransform,
   CellId,
   CellInfo,
@@ -73,7 +74,7 @@ export async function getAppWs(
     single_use: true,
   });
   const callZomeTransform: CallZomeTransform = {
-    input: (req) => signZomeCall(req, weRustHandler),
+    input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
     output: (o) => decode(o as any),
   };
   return AppWebsocket.connect({
@@ -122,7 +123,7 @@ export async function downloadGroupHappIfNecessary() {
   }
 
   if (needsToBeFetched) {
-    downloadFile(GROUP_HAPP_URL, groupHappPath, happSha256, false);
+    await downloadFile(GROUP_HAPP_URL, groupHappPath, happSha256, false);
   }
 }
 
