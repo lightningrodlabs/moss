@@ -1,6 +1,6 @@
 {
   "name": "@theweave/wdocker",
-  "version": "0.14.0-rc.0",
+  "version": "0.14.0-rc.2",
   "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
