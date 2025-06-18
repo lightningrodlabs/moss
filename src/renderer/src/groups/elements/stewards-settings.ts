@@ -15,7 +15,7 @@ import { mossStoreContext } from '../../context.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64 } from '@holochain/client';
 import { PermissionType } from '@theweave/group-client';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
 import '../../elements/reusable/profile-detail.js';
@@ -232,7 +232,7 @@ export class StewardsSettings extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .permission {
         width: 700px;

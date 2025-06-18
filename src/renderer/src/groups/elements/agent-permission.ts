@@ -1,4 +1,4 @@
-import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey } from '@holochain/client';
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { PermissionType } from '@theweave/group-client';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('agent-permission')
 export class AgentPermission extends LitElement {
@@ -41,7 +41,6 @@ export class AgentPermission extends LitElement {
   }
 
   render() {
-    console.log('Rendering permission for agent: ', encodeHashToBase64(this.agent));
     switch (this.permissionType.value.status) {
       case 'pending':
         return html`loading...`;
@@ -53,5 +52,5 @@ export class AgentPermission extends LitElement {
     }
   }
 
-  static styles = weStyles;
+  static styles = mossStyles;
 }

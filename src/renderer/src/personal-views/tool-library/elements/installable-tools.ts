@@ -14,7 +14,7 @@
 // import './install-tool-dialog.js';
 // import '../../../groups/elements/group-context.js';
 
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import { MossStore } from '../../../moss-store.js';
 // import { mossStoreContext } from '../../../context.js';
 // import { SelectGroupDialog } from '../../../elements/dialogs/select-group-dialog.js';
@@ -188,6 +188,6 @@
 //         --sl-panel-background-color: var(--sl-color-tertiary-400);
 //       }
 //     `,
-//     weStyles,
+//     mossStyles,
 //   ];
 // }

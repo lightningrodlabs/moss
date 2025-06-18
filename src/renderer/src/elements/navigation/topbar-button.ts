@@ -3,7 +3,7 @@ import { customElement, property, query } from 'lit/decorators.js';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import SlTooltip from '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('topbar-button')
 export class TopBarButton extends LitElement {
@@ -48,21 +48,25 @@ export class TopBarButton extends LitElement {
       placement="${this.placement}"
       .content=${this.tooltipText}
     >
-      <div
+      <button
         class="icon-container column ${this.selected ? 'selected' : ''} ${this.invertColors
           ? 'inverted'
           : ''}"
         @click=${this.handleClick}
       >
-        <slot></slot>
-        ${this.indicated ? html`<div class="indicator"></div>` : html``}
-      </div>
+        <div class="column center-content">
+          <slot></slot>
+          ${this.selected
+            ? html`<div class="indicator ${this.invertColors ? 'inverted' : ''}"></div>`
+            : html``}
+        </div>
+      </button>
     </sl-tooltip>`;
   }
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;
@@ -70,37 +74,42 @@ export class TopBarButton extends LitElement {
 
         .indicator {
           position: absolute;
-          bottom: 0;
-          height: 5px;
-          border-radius: 7px 7px 0 0;
-          width: 32px;
-          background: var(--sl-color-tertiary-50);
-          box-shadow: 0 0 1px 2px var(--sl-color-tertiary-400);
+          bottom: -12px;
+          height: 4px;
+          border-radius: 2px;
+          width: 36px;
+          background: var(--moss-main-green);
+        }
+
+        .indicator:not(.inverted) {
+          background: var(--moss-dark-green);
         }
 
         .icon-container {
+          all: unset;
           cursor: pointer;
           position: relative;
           align-items: center;
+          border-radius: 12px;
           justify-content: center;
-          border-radius: 20% 20% 0 0;
-          height: var(--sidebar-width);
-          margin: 0 2px;
-          width: var(--sidebar-width);
-        }
-        .icon-container:hover {
-          background-color: var(--hover-color, var(--sl-color-primary-900));
-        }
-        .selected:not(.inverted),
-        .icon-container:hover {
-          background: linear-gradient(180deg, #dbe755 0%, #588121 100%);
+          border: 4px solid transparent;
+          margin: 0 4px;
         }
 
-        .inverted:hover {
-          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+        .icon-container:hover {
+          border: 4px solid var(--moss-main-green);
         }
+
+        .icon-container:hover:not(.inverted) {
+          border: 4px solid var(--moss-dark-green);
+        }
+
         .selected {
-          background: linear-gradient(180deg, #002800 0%, #224b21 100%);
+          border: 4px solid var(--moss-main-green);
+        }
+
+        .selected:not(.inverted) {
+          border: 4px solid var(--moss-dark-green);
         }
       `,
     ];

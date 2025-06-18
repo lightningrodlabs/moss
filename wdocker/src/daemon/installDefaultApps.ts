@@ -18,7 +18,10 @@ export async function installDefaultAppsIfNecessary(adminWs: AdminWebsocket): Pr
     const pubkey = await adminWs.generateAgentPubKey();
 
     await adminWs.installApp({
-      path: wDockerFs.toolsLibraryHappPath,
+      source: {
+        type: 'path',
+        value: wDockerFs.toolsLibraryHappPath,
+      },
       installed_app_id: TOOLS_LIBRARY_APP_ID,
       agent_key: pubkey,
       network_seed: toolLibraryNetworkSeed,

@@ -173,9 +173,10 @@ export class GroupStore {
       }
     });
 
-    this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) =>
-      this.agentsProfiles(agents),
-    );
+    this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
+      console.log('Piping allProfiles');
+      return this.agentsProfiles(agents);
+    });
 
     setTimeout(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
@@ -206,7 +207,8 @@ export class GroupStore {
 
     window.setInterval(async () => {
       const walsToPoll = Object.entries(this._assetStores)
-        .filter(([_, storeAndSubscribers]) => {
+        .filter(([s, storeAndSubscribers]) => {
+          console.log('stringified wal: ', s);
           // We only poll for stores with active subscribers
           return (
             Object.values(storeAndSubscribers.subscriberCounts).reduce(
@@ -220,6 +222,11 @@ export class GroupStore {
       relations.forEach((relationsForWal) => {
         const walStringified = stringifyWal(relationsForWal.wal);
         const storeAndSubscribers = this._assetStores[walStringified];
+        console.log('Got storeAndSubscribers...');
+        if (!storeAndSubscribers) {
+          console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
+          return;
+        }
         const linkedTo = relationsForWal.linked_to.map((v) => ({
           wal: v.dst_wal,
           tags: dedupStringArray(v.tags),
@@ -733,6 +740,7 @@ export class GroupStore {
   membersProfiles = new LazyHoloHashMap((agent: AgentPubKey) =>
     asyncReadable<MaybeProfile | undefined>(async (set) => {
       try {
+        console.log('Getting agent profile.');
         const profile = await this.profilesStore.client.getAgentProfile(agent);
         profile ? set({ type: 'profile', profile }) : set({ type: 'unknown' });
       } catch (e) {

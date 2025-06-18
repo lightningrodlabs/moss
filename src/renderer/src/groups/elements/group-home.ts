@@ -20,31 +20,23 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
-import {
-  mdiArrowLeft,
-  mdiCog,
-  mdiContentCopy,
-  mdiHomeOutline,
-  mdiLinkVariantPlus,
-  mdiPowerPlugOffOutline,
-} from '@mdi/js';
+import { mdiCog, mdiHomeOutline } from '@mdi/js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import TimeAgo from 'javascript-time-ago';
 import { Value } from '@sinclair/typebox/value';
 
-import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
-import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
 import './group-applets.js';
@@ -59,13 +51,16 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/reusable/profile-detail.js';
+import '../../elements/_new_design/profile/moss-profile-prompt.js';
+import '../../elements/_new_design/group-settings.js';
+import '../../elements/_new_design/profile/moss-profile-detail.js';
+import '../../elements/_new_design/copy-hash.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import {
@@ -79,12 +74,12 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
+import { closeIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
       view: 'main';
     }
-  | { view: 'settings' }
   | { view: 'create-custom-view' }
   | {
       view: 'edit-custom-view';
@@ -114,6 +109,12 @@ export class GroupHome extends LitElement {
 
   @query('#member-profile')
   _memberProfileDialog!: SlDialog;
+
+  @query('#group-settings-dialog')
+  groupSettingsDialog: SlDialog | undefined;
+
+  @query('#invite-member-dialog')
+  inviteMemberDialog: SlDialog | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -549,10 +550,13 @@ export class GroupHome extends LitElement {
         }
         if (!this._groupDescription.value.value) {
           return html`
-            <div class="column center-content" style="flex: 1;">
+            <div class="column center-content" style="flex: 1; padding: 40px 0;">
               No group description.
               <button
-                style="margin-top: 10px;${this.hasStewardPermission() ? '' : 'display: none;'}"
+                class="moss-button"
+                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.hasStewardPermission()
+                  ? ''
+                  : 'display: none;'}"
                 @click=${() => {
                   this._editGroupDescription = true;
                 }}
@@ -636,17 +640,25 @@ export class GroupHome extends LitElement {
 
   renderMemberProfile() {
     return html`
-      <div class="column">
-        <profile-detail-moss
+      <div class="column" style="margin-bottom: 40px;">
+        <moss-profile-detail
           no-additional-fields
           .agentPubKey=${this._selectedAgent?.agent}
-        ></profile-detail-moss>
+          style="margin-top: 40px;"
+        ></moss-profile-detail>
+        <div class="column items-center" style="margin-top: 9px;">
+          <copy-hash
+            .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
+            .tooltipText=${msg('click to copy public key')}
+            shortened
+          ></copy-hash>
+        </div>
         <div class="row" style="align-items: center; margin-top: 20px;">
-          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Role:</span>
+          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
           <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
         </div>
         <div class="row" style="align-items: center; margin-top: 15px;">
-          <span style="font-size: 14px; font-weight: bold; margin-right: 10px;">Local Time:</span>
+          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
           ${this._selectedAgent?.tzUtcOffset
             ? html`<span
                 >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
@@ -658,18 +670,6 @@ export class GroupHome extends LitElement {
               >`
             : html`<span>unknown</span>`}
         </div>
-        <span style="font-size: 13px; font-weight: bold; margin-top: 40px;">Public key:</span>
-        <div
-          class="row pubkey-copy"
-          style="align-items: center;"
-          @click=${async () => {
-            await navigator.clipboard.writeText(encodeHashToBase64(this._selectedAgent!.agent));
-            notify(msg('Hash Copied to clipboard.'));
-          }}
-        >
-          <span style="margin-right: 5px;">${encodeHashToBase64(this._selectedAgent!.agent)}</span>
-          <sl-icon .src=${wrapPathInSvg(mdiContentCopy)}></sl-icon>
-        </div>
       </div>
     `;
   }
@@ -677,19 +677,36 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
+      <sl-dialog
+        class="moss-dialog"
+        no-header
+        id="group-settings-dialog"
+        no-header
+        style="--width: 1024px;"
+      >
+        <div class="column" style="position: relative">
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -12px; right: -12px;"
+            @click=${() => {
+              this.groupSettingsDialog?.hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+          <group-settings
+            @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+          ></group-settings>
+        </div>
+      </sl-dialog>
       <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
         <div
           class="column"
           style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
         >
-          <div class="column" style="color: white; position: absolute; bottom: 6px; left: 23px;">
-            ${this.renderHashForCopying('Group DNA Hash', this.groupStore.groupDnaHash)}
-            ${this.renderHashForCopying('Your Public Key', this.groupStore.groupClient.myPubKey)}
-          </div>
-
-          <div
+          <!-- <div
             style=" background-image: url(${groupProfile.icon_src}); background-size: cover; filter: blur(10px); position: absolute; top: 0; bottom: 0; left: 0; right: 0; opacity: 0.2; z-index: -1;"
-          ></div>
+          ></div> -->
 
           <!-- Top Row -->
 
@@ -708,19 +725,20 @@ export class GroupHome extends LitElement {
             </div>
 
             <div
-              class="row settings-btn"
-              style="align-items: center;"
+              class="row settings-btn items-center"
               tabindex="0"
               @click=${() => {
-                this.view = { view: 'settings' };
+                this.groupSettingsDialog?.show();
               }}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  this.view = { view: 'settings' };
+                  this.groupSettingsDialog?.show();
                 }
               }}
             >
-              <div style="font-weight: bold; margin-right: 3px; font-size: 18px;">
+              <div
+                style="font-weight: bold; margin-right: 3px; font-size: 18px; margin-bottom: 5px;"
+              >
                 ${msg('Settings')}
               </div>
               <div style="position: relative;">
@@ -796,39 +814,83 @@ export class GroupHome extends LitElement {
             </div>
           </div>
 
-          <sl-dialog id="invite-member-dialog" .label=${msg('Invite New Member')}>
-            <div class="column">
-              <span>${msg('To invite other people to join this group, send them this link:')}</span>
+          <sl-dialog
+            id="invite-member-dialog"
+            class="moss-dialog invite-dialog"
+            .label=${msg('Invite People')}
+            no-header
+          >
+            <div
+              class="column center-content dialog-title"
+              style="margin: 10px 0 40px 0; position: relative;"
+            >
+              <span>${msg('Invite People')}</span>
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -22px; right: -11px;"
+                @click=${() => {
+                  this.inviteMemberDialog?.hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+            </div>
 
-              <div class="row" style="margin-top: 16px">
-                <sl-input value=${invitationUrl} style="margin-right: 8px; flex: 1"> </sl-input>
-                <sl-button
-                  variant="primary"
-                  @click=${async () => {
-                    await navigator.clipboard.writeText(invitationUrl);
-                    notify(msg('Invite link copied to clipboard.'));
-                  }}
-                  >${msg('Copy')}</sl-button
+            <div class="column items-center">
+              <div class="column" style="max-width: 440px;">
+                <span style="opacity: 0.6; font-size: 16px;"
+                  >${msg('Copy and send the link below to invite people:')}</span
                 >
+                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+                  <sl-input
+                    disabled
+                    value=${invitationUrl}
+                    class="moss-input copy-link-input"
+                    style="margin-right: 8px; cursor: pointer; flex: 1;"
+                    @click=${async () => {
+                      console.log('CLIKED');
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                  </sl-input>
+                  <button
+                    variant="primary"
+                    class="moss-button"
+                    @click=${async () => {
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                    ${msg('Copy')}
+                  </button>
+                </div>
+
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                  ${msg('About invite links:')}
+                </div>
+                <div style="font-size: 12px; opacity: 0.6;">
+                  ${msg(
+                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+                  )}
+                </div>
               </div>
             </div>
           </sl-dialog>
 
-          <sl-button
-            class="invite-btn"
+          <button
+            class="moss-button"
+            style="padding: 10px 0;"
             variant="primary"
             @click=${() => {
-              (this.shadowRoot?.getElementById('invite-member-dialog') as SlDialog).show();
+              this.inviteMemberDialog?.show();
             }}
           >
-            <div class="row center-content">
-              <sl-icon
-                .src=${wrapPathInSvg(mdiLinkVariantPlus)}
-                style="color: white; height: 25px; width: 25px; margin-right: 12px; "
-              ></sl-icon>
-              <div style="font-size: 16px; margin-top: 4px;">${msg('Invite Member')}</div>
+            <div class="row center-content items-center;">
+              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
+              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite Member')}</div>
             </div>
-          </sl-button>
+          </button>
         </div>
       </div>
     `;
@@ -863,147 +925,10 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderNewSettings() {
-    const tabs = [
-      [
-        'Tools',
-        html`<group-applets-settings
-          @uninstall-applet=${async (e) => this.uninstallApplet(e)}
-          @applets-disabled=${(e) => {
-            this.dispatchEvent(
-              new CustomEvent('applets-disabled', {
-                detail: e.detail,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
-          style="display: flex; flex: 1;"
-        ></group-applets-settings>`,
-      ],
-      // [
-      //   'Custom Views',
-      //   html`
-      //     <div class="column center-content" style="flex: 1;">
-      //       <span class="placeholder" style="margin-top: 200px;"
-      //         >${msg(
-      //           'You can add custom views to this group, combining the relevant blocks from each applet.',
-      //         )}</span
-      //       >
-      //       <all-custom-views
-      //         style="margin-top: 8px; flex: 1;"
-      //         @edit-custom-view=${(e) => {
-      //           this.view = {
-      //             view: 'edit-custom-view',
-      //             customViewHash: e.detail.customViewHash,
-      //           };
-      //         }}
-      //       ></all-custom-views>
-      //       <div class="row" style="flex: 1">
-      //         <span style="flex: 1"></span>
-      //         <sl-button
-      //           variant="primary"
-      //           @click=${() => {
-      //             this.view = { view: 'create-custom-view' };
-      //           }}
-      //           >${msg('Create Custom View')}</sl-button
-      //         >
-      //       </div>
-      //     </div>
-      //   `,
-      // ],
-      [
-        'Your Settings',
-        html`
-          <div class="column center-content" style="flex: 1;">
-            <your-settings
-              @group-left=${(e) =>
-                this.dispatchEvent(
-                  new CustomEvent('group-left', {
-                    detail: {
-                      groupDnaHash: e.detail.groupDnaHash,
-                    },
-                    bubbles: true,
-                    composed: true,
-                  }),
-                )}
-            ></your-settings>
-          </div>
-        `,
-      ],
-    ];
-
-    if (this.permissionType.value.status === 'complete') {
-      if (['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)) {
-        tabs.splice(2, 0, [
-          'Group Stewards',
-          html`<stewards-settings style="display: flex; flex: 1;"></stewards-settings>`,
-        ]);
-        tabs.push([
-          'Group Profile',
-          html`
-            <div class="column center-content" style="flex: 1;">
-              <edit-group-profile
-                style="background: white; padding: 20px; border-radius: 10px;"
-              ></edit-group-profile>
-            </div>
-          `,
-        ]);
-      }
-    }
-
-    return html`
-      <div class="column" style="flex: 1; position: relative;">
-        <div
-          class="row"
-          style="height: 68px; align-items: center; background: var(--sl-color-primary-200)"
-        >
-          <sl-icon-button
-            .src=${wrapPathInSvg(mdiArrowLeft)}
-            @click=${() => {
-              this.view = { view: 'main' };
-            }}
-            style="margin-left: 20px; font-size: 30px;"
-          ></sl-icon-button>
-          <span style="display: flex; flex: 1;"></span>
-          <span class="title" style="margin-right: 20px; font-weight: bold;"
-            >${msg('Group Settings')}</span
-          >
-        </div>
-
-        <tab-group .tabs=${tabs} style="display: flex; flex: 1;"> </tab-group>
-
-        <sl-button
-          variant="warning"
-          style="position: absolute; bottom: 10px; right: 10px;"
-          @click=${async () => {
-            this.dispatchEvent(
-              new CustomEvent('disable-group', {
-                detail: this.groupStore.groupDnaHash,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
-        >
-          <div class="row" style="align-items: center;">
-            <sl-icon
-              style="margin-right: 5px; font-size: 1.3rem;"
-              .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
-            ></sl-icon>
-            <div>${msg('Disable group')}</div>
-          </div></sl-button
-        >
-      </div>
-    `;
-  }
-
   renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
         return this.renderMain(groupProfile, modifiers);
-      case 'settings':
-        return this.renderNewSettings();
       case 'create-custom-view':
         return this.renderCreateCustomView();
       case 'edit-custom-view':
@@ -1025,17 +950,28 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <sl-dialog no-header id="member-profile">
-            ${this._selectedAgent ? this.renderMemberProfile() : ``}
+          <sl-dialog
+            class="moss-dialog profile-detail-popup"
+            no-header
+            id="member-profile"
+            style="position: relative;"
+          >
+            <div class="column center-content" style="position: relative;">
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -12px; right: -12px;"
+                @click=${() => {
+                  this._memberProfileDialog?.hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+              ${this._selectedAgent ? this.renderMemberProfile() : ``}
+            </div>
           </sl-dialog>
-          <profile-prompt
-            ><span slot="hero" style="max-width: 500px; margin-bottom: 32px" class="placeholder"
-              >${msg(
-                'Create your personal profile for this group. Only members of this group will be able to see your profile.',
-              )}</span
-            >
+          <moss-profile-prompt>
             ${this.renderContent(groupProfile, modifiers)}
-          </profile-prompt>
+          </moss-profile-prompt>
         `;
       case 'error':
         return html`<display-error
@@ -1046,14 +982,15 @@ export class GroupHome extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;
         /* background: var(--sl-color-secondary-0); */
-        background-color: #588121;
+        /* background-color: #588121; */
+        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
         padding: 8px;
-        border-radius: 5px 0 0 0;
+        border-radius: 5px;
       }
 
       .settings-btn {
@@ -1062,11 +999,11 @@ export class GroupHome extends LitElement {
       }
 
       .settings-btn:hover {
-        color: var(--sl-color-tertiary-200);
+        color: var(--moss-dark-green);
       }
 
       .settings-btn:active {
-        color: var(--sl-color-tertiary-300);
+        color: var(--moss-dark-green);
       }
 
       .card-header {
@@ -1094,27 +1031,15 @@ export class GroupHome extends LitElement {
         justify-content: space-between;
         align-items: center;
       }
-
-      sl-tab-panel::part(base) {
-        width: 600px;
-      }
-      sl-tab-panel[active] {
-        display: flex;
-        justify-content: center;
-      }
       .title {
         font-size: 25px;
         font-weight: bold;
-        color: #fff;
+        color: black;
       }
       .subtitle {
         font-size: 18px;
         font-weight: bold;
         color: #fff;
-      }
-      .invite-btn::part(base) {
-        background-color: #69982c;
-        border-color: #69982c;
       }
       .applet-card {
         width: 100%;
@@ -1135,39 +1060,38 @@ export class GroupHome extends LitElement {
         font-size: 1.25rem;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #383838;
         height: 50px;
         width: 180px;
-        box-shadow: 1px 1px 6px 0px #223607;
+        box-shadow: 0px 0px 6px 0px var(--moss-fishy-green);
         border-radius: 5px 5px 0 0;
-        /* background: linear-gradient(0, #142919c1 0%, #1e3b25b3 50.91%); */
-        background: #1e3b2585;
+        background: #d4dfcf;
         cursor: pointer;
         clip-path: inset(-20px -20px 0 -20px);
       }
 
       .tab:hover {
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
+        z-index: 2;
       }
 
       .tab-selected {
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
+        color: black;
+        box-shadow: 0px 0px 6px 0px #606f54;
+        z-index: 2;
       }
 
       .main-panel {
         flex: 1;
-        /* background: #335c21; */
-        /* background: #e1efda; */
-        background: #1e3b25;
-        color: white;
+        /* background: var(--moss-fishy-green); */
+        background: var(--moss-fishy-green);
+        color: black;
         border-radius: 0 5px 5px 5px;
-        box-shadow: 1px 1px 3px 0px #223607;
-        box-shadow: 1px 1px 6px 0px #223607;
+        /* box-shadow: 1px 1px 6px 0px var(--moss-fishy-green); */
+        box-shadow: 0px 0px 6px 0px #606f54;
         overflow-y: auto;
+        z-index: 1;
       }
 
       .main-panel a {
@@ -1184,19 +1108,18 @@ export class GroupHome extends LitElement {
 
       .foyer-panel {
         /* border-left: solid 1px white; */
+        color: black;
         padding-left: 5px;
-        background: #08230e;
+        background: #d4dfcf;
       }
 
       .online-status-bar {
-        color: var(--sl-color-secondary-100);
+        color: black;
         width: 230px;
         padding: 16px;
-        /* background: #3a5b0c; */
-        /* background: #335c21; */
-        background: #1e3b25;
+        background: var(--moss-fishy-green);
         border-radius: 5px;
-        box-shadow: 1px 1px 6px 0px #223607;
+        box-shadow: 1px 1px 6px 0px var(moss-fishy-green);
       }
 
       .indicator {
@@ -1205,8 +1128,8 @@ export class GroupHome extends LitElement {
         color: black;
         font-weight: bold;
         font-size: 1.05rem;
-        top: 7px;
-        right: 9px;
+        top: 4px;
+        right: 4px;
         min-width: 20px;
         height: 20px;
         border-radius: 10px;
@@ -1230,9 +1153,23 @@ export class GroupHome extends LitElement {
         margin: 2px 0;
       }
 
-      sl-dialog {
-        color: black;
-        --sl-panel-background-color: var(--sl-color-primary-0);
+      .copy-link-input::part(input) {
+        cursor: default;
+      }
+
+      .invite-dialog::part(panel) {
+        width: 564px;
+        height: 380px;
+      }
+
+      /* backdrop should only cover group section, not sidebar */
+      /* .moss-dialog::part(overlay) {
+        top: 74px;
+        left: 74px;
+      } */
+
+      .profile-detail-popup::part(panel) {
+        width: 360px;
       }
     `,
   ];

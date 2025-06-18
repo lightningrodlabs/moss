@@ -16,7 +16,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { groupStoreContext } from '../../../groups/context.js';
-import { weStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
@@ -234,6 +234,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     return html`
       <sl-dialog
         id="applet-dialog"
+        class="moss-dialog"
         .label=${msg('Add New Tool to Group')}
         @sl-request-close=${(e) => {
           if (this._installing) {
@@ -270,7 +271,7 @@ export class InstallToolDialogWeb2 extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       .online-dot {
         border-radius: 50%;
@@ -285,10 +286,6 @@ export class InstallToolDialogWeb2 extends LitElement {
 
       .offline {
         background-color: #bfbfbf;
-      }
-
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-tertiary-0);
       }
     `,
   ];

@@ -9,7 +9,7 @@
 // import '@shoelace-style/shoelace/dist/components/input/input.js';
 // import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-// import { weStyles } from '../../../shared-styles.js';
+// import { mossStyles } from '../../../shared-styles.js';
 // import '../../../elements/dialogs/select-group-dialog.js';
 // import './publish-tool.js';
 // import './update-tool.js';
@@ -548,7 +548,7 @@
 //   }
 
 //   static styles = [
-//     weStyles,
+//     mossStyles,
 //     css`
 //       :host {
 //         display: flex;

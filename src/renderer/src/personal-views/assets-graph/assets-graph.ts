@@ -11,7 +11,7 @@ import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { getCellId } from '../../utils';
-import { weStyles } from '../../shared-styles';
+import { mossStyles } from '../../shared-styles';
 
 @customElement('assets-graph')
 export class AssetsGraph extends LitElement {
@@ -62,6 +62,9 @@ export class AssetsGraph extends LitElement {
           size: 50,
           mass: 12,
           shadow: true,
+          font: {
+            color: 'white',
+          },
         });
         // Add applet nodes and
         const appletStores = await toPromise(groupStore.activeAppletStores);
@@ -105,6 +108,9 @@ export class AssetsGraph extends LitElement {
               size: 35,
               mass: 8,
               shadow: true,
+              font: {
+                color: 'white',
+              },
             });
             // Create a connection between the group node and the applet node
             edges.push({
@@ -148,6 +154,10 @@ export class AssetsGraph extends LitElement {
                 shape: assetInfoSrc ? 'image' : 'triangleDown',
                 shadow: true,
                 size: 20,
+
+                font: {
+                  color: 'white',
+                },
               });
             }
             // Add the dst's asset node if it doesn't exist yet
@@ -159,6 +169,9 @@ export class AssetsGraph extends LitElement {
                 shape: assetInfoDst ? 'image' : 'triangleDown',
                 shadow: true,
                 size: 20,
+                font: {
+                  color: 'white',
+                },
               });
             }
 
@@ -307,23 +320,26 @@ export class AssetsGraph extends LitElement {
           console.log('Got click event: ', e);
         }}
       ></div>
-      <sl-button
+      <button
+        class="moss-button"
         variant="success"
-        style="position: absolute; top: 5px; right: 5px;"
+        style="position: absolute; top: 20px; right: 5px;"
         @click=${() => this.loadGraphContent()}
-        >Reload</sl-button
       >
+        Reload
+      </button>
     `;
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: block;
         width: calc(100vw - 74px);
         height: calc(100vh - 74px);
-        background: white;
+        color: white;
+        /* background: white; */
       }
       #graph-container {
         width: 100%;

@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @customElement('applet-logo')
 export class AppletLogo extends LitElement {
@@ -32,7 +32,13 @@ export class AppletLogo extends LitElement {
   );
 
   renderLogo(logo: string | undefined) {
-    if (!logo) return html``;
+    if (!logo)
+      return html`<div
+        class="column center-content"
+        style="color: white; font-size: 16px; height: var(--size, 64px); width: var(--size, 64px); border-radius: var(--override-border-radius, 20%); background: gray;"
+      >
+        ?
+      </div>`;
 
     return html`
       <img
@@ -64,7 +70,7 @@ export class AppletLogo extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

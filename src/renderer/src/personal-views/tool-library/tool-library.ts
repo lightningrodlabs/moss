@@ -6,7 +6,7 @@
 // import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 // import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-// import { weStyles } from '../../shared-styles.js';
+// import { mossStyles } from '../../shared-styles.js';
 // import '../../elements/dialogs/select-group-dialog.js';
 // import { mdiChevronLeft, mdiTools } from '@mdi/js';
 // import { wrapPathInSvg } from '@holochain-open-dev/elements';
@@ -319,6 +319,6 @@
 //         background: var(--sl-color-primary-600);
 //       }
 //     `,
-//     weStyles,
+//     mossStyles,
 //   ];
 // }

@@ -181,8 +181,8 @@ export class GroupSidebarButton extends LitElement {
       css`
         .online-agents {
           position: absolute;
-          bottom: -2px;
-          right: 3px;
+          bottom: 6px;
+          right: 0px;
           border-radius: 10px;
           padding: 1px 2px;
           align-items: center;

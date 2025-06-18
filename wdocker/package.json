@@ -1,6 +1,6 @@
 {
   "name": "@theweave/wdocker",
-  "version": "0.14.0-rc.0",
+  "version": "0.14.0-rc.2",
   "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
@@ -13,13 +13,13 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc && cp ../moss.config.json ./dist"
+    "build": "tsc && cp ../moss.config.json ./dist && cp ../resources/conductor-config.yaml ./dist"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
     "@holochain/client": "^0.19.0",
     "@inquirer/prompts": "6.0.1",
-    "@lightningrodlabs/we-rust-utils": "0.500.0-rc.3",
+    "@lightningrodlabs/we-rust-utils": "0.500.0",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
     "@theweave/api": "^0.5.0",
@@ -31,6 +31,7 @@
     "get-folder-size": "5.0.0",
     "get-port": "7.0.0",
     "js-yaml": "^4.1.0",
+    "js-sha512": "^0.9.0",
     "mime": "4.0.0",
     "nanoid": "5.0.4",
     "node-fetch": "3.3.2",

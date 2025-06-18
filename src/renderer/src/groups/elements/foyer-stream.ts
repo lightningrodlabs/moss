@@ -368,7 +368,7 @@ export class FoyerStream extends LitElement {
         opacity: 0.7;
       }
       .person-feed {
-        color: white;
+        color: black;
         display: flex;
         flex: 1;
         flex-direction: column;

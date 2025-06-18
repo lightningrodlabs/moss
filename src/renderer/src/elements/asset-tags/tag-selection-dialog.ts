@@ -17,6 +17,7 @@ import { GroupDnaHash } from '../../types.js';
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { dedupStringArray } from '../../utils.js';
 import { mdiArrowRight } from '@mdi/js';
+import { mossStyles } from '../../shared-styles.js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;
@@ -153,12 +154,13 @@ export class TagSelectionDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog id="tag-selection-dialog" style="--width: 800px;" no-header>
+      <sl-dialog id="tag-selection-dialog" class="moss-dialog" style="--width: 800px;" no-header>
         <div class="column center-content">
           <h2>${msg('Choose Asset Relation Tag:')}</h2>
-          <div class="row" style="margin-bottom: 20px;">
+          <div class="row center-content" style="margin-bottom: 20px;">
             <sl-input
               id="new-tag-input"
+              class="moss-input-no-label"
               slot="trigger"
               style="width: 600px;"
               .placeholder=${msg('Enter new tag')}
@@ -173,16 +175,19 @@ export class TagSelectionDialog extends LitElement {
             >
             </sl-input>
             <button
-              class="enter-btn"
+              class="moss-button"
+              style="margin-left: 5px; padding: 12px; border-radius: 10px;"
               style="margin-left: 5px; padding: 3px; height: 32px; width: 32px;"
               title=${msg('Enter')}
               ?disabled=${this._newTagInput && this._newTagInput.value === ''}
               @click=${() => this.returnInputTag()}
             >
-              <sl-icon
-                style="font-size: 26px; color: white;"
-                .src=${wrapPathInSvg(mdiArrowRight)}
-              ></sl-icon>
+              <div class="column center-content">
+                <sl-icon
+                  style="font-size: 26px; color: white;"
+                  .src=${wrapPathInSvg(mdiArrowRight)}
+                ></sl-icon>
+              </div>
             </button>
           </div>
           ${this.renderTags()}
@@ -193,14 +198,11 @@ export class TagSelectionDialog extends LitElement {
 
   static get styles() {
     return [
+      mossStyles,
       sharedStyles,
       css`
         :host {
           display: flex;
-        }
-
-        sl-dialog {
-          --sl-panel-background-color: var(--sl-color-tertiary-0);
         }
 
         sl-button.clear-pocket::part(base) {
@@ -212,23 +214,8 @@ export class TagSelectionDialog extends LitElement {
         }
 
         #new-tag-input {
-          height: 26px;
           font-size: 18px;
           margin-right: 5px;
-        }
-
-        .enter-btn {
-          all: unset;
-          background: var(--sl-color-primary-300);
-          box-shadow: 1px 1px 1px 1px var(--sl-color-primary-600);
-          border-radius: 3px;
-          margin: 0;
-          padding: 0;
-          cursor: pointer;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: -2px;
         }
 
         .enter-btn:disabled {

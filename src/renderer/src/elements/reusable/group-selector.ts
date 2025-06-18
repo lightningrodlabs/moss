@@ -16,7 +16,7 @@ import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js'
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('group-selector')
@@ -130,12 +130,5 @@ export class GroupSelector extends LitElement {
     }
   }
 
-  static styles = [
-    weStyles,
-    css`
-      sl-dialog {
-        --sl-panel-background-color: var(--sl-color-tertiary-0);
-      }
-    `,
-  ];
+  static styles = [mossStyles, css``];
 }

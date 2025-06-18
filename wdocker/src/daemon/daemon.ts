@@ -131,7 +131,7 @@ setTimeout(async () => {
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
     peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Ping') {
-        // console.log('Received ping from ', encodeHashToBase64(signal.from_agent));
+        console.log('Received ping from ', encodeHashToBase64(signal.from_agent));
         await peerStatusClient.pong([signal.from_agent], 'online', tzOffset);
       }
     });
@@ -365,7 +365,10 @@ async function tryJoinApplet(
     throw new Error('App with the same app id is already installed.');
 
   const appInfo = await adminWs.installApp({
-    path: WDOCKER_FILE_SYSTEM.happFilePath(appHashes.happ.sha256),
+    source: {
+      type: 'path',
+      value: WDOCKER_FILE_SYSTEM.happFilePath(appHashes.happ.sha256),
+    },
     installed_app_id: appId,
     agent_key: groupClient.appClient.myPubKey,
     network_seed: applet.network_seed,

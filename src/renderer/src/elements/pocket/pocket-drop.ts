@@ -13,7 +13,7 @@ import './wal-element.js';
 import './wal-created-element.js';
 import './pocket-search.js';
 import { mdiArrowDownBoldBoxOutline } from '@mdi/js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { get } from '@holochain-open-dev/stores';
 
 export interface SearchResult {
@@ -39,6 +39,11 @@ export class PocketDrop extends LitElement {
   // https://stackoverflow.com/questions/7110353/html5-dragleave-fired-when-hovering-a-child-element
   @state()
   dragCounter = 0;
+
+  firstUpdated() {
+    // Clear if not dropped after 3 seconds
+    setTimeout(() => this.handleDropCancel(), 3000);
+  }
 
   requestCreate() {
     this.dispatchEvent(
@@ -125,7 +130,7 @@ export class PocketDrop extends LitElement {
 
   static get styles() {
     return [
-      weStyles,
+      mossStyles,
       css`
         :host {
           display: flex;

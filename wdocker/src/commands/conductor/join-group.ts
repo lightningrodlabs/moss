@@ -92,15 +92,20 @@ export async function installGroup(
   console.log('Installing app');
 
   const appInfo = await adminWs.installApp({
-    path: wDockerFs.groupHappPath,
+    source: {
+      type: 'path',
+      value: wDockerFs.groupHappPath,
+    },
     installed_app_id: appId,
     agent_key: agentPubKey,
     network_seed: partialModifiers.networkSeed,
     roles_settings: {
       group: {
-        type: 'Provisioned',
-        modifiers: {
-          properties,
+        type: 'provisioned',
+        value: {
+          modifiers: {
+            properties,
+          },
         },
       },
     },

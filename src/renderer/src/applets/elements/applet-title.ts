@@ -21,7 +21,7 @@ import { mapValues } from '@holochain-open-dev/utils';
 
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { weStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../applet-store.js';
 
 @customElement('applet-title')
@@ -106,7 +106,7 @@ export class AppletTitle extends LitElement {
   }
 
   static styles = [
-    weStyles,
+    mossStyles,
     css`
       :host {
         display: flex;

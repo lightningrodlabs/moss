@@ -1511,6 +1511,11 @@
     write "^2.0.0"
     yaml "^2.3.1"
 
+"@fontsource-variable/inter@^5.2.5":
+  version "5.2.5"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/inter/-/inter-5.2.5.tgz#10f44952c460d8145fd9eac7133e0012ca17d252"
+  integrity sha512-TrWffUAFOnT8zroE9YmGybagoOgM/HjRqMQ8k9R0vVgXlnUh/vnpbGPAS/Caz1KIlOPnPGh6fvJbb7DHbFCncA==
+
 "@fontsource/aileron@^5.0.5":
   version "5.2.5"
   resolved "https://registry.yarnpkg.com/@fontsource/aileron/-/aileron-5.2.5.tgz#b2dae5ec47592813a59cf240bac4b84eac35bf8e"
@@ -1521,7 +1526,7 @@
   resolved "https://registry.yarnpkg.com/@holo-host/identicon/-/identicon-0.1.0.tgz#126f176d07f2992677f017863aeaeeed5b325c5f"
   integrity sha512-Dn5pTV/m3XaK1Zvq3liw/vQUt7goM7Y84x2zUyH8cb9CNMs4kPCNHs3kalbJZ/ymzFvwcdiLwwNW8AKk+WWN5A==
 
-"@holochain-open-dev/elements@^0.500.0", "@holochain-open-dev/elements@^0.500.0-rc.0":
+"@holochain-open-dev/elements@^0.500.0":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.500.0.tgz#40f9bacd2eeef34d9032d45b48b278f896b32ab2"
   integrity sha512-TRtHMBdGf1h4ah49+gTgRjpmHGU2YfFnqT1bTnnt9szP0rKVXxwH5hoAxgF18q59dPDIf2P6StZAIwwIQYM8Sg==
@@ -1536,21 +1541,6 @@
     prosemirror-keymap "^1.2.2"
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
-
-"@holochain-open-dev/profiles@0.500.0-rc.1":
-  version "0.500.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.500.0-rc.1.tgz#32a7c88169cfc10b37a6bd7ed404ed356bd4a275"
-  integrity sha512-dYsot8gU7y/EeVN/rtLPvu6F+a770KcRGdahIH2eUotJzXZBG6cXZlqoYWqa3fptYCvsk403eFmB3eDPoWTdvQ==
-  dependencies:
-    "@holochain-open-dev/elements" "^0.500.0-rc.0"
-    "@holochain-open-dev/stores" "^0.500.0-rc.1"
-    "@holochain-open-dev/utils" "^0.500.0-rc.1"
-    "@holochain/client" "0.19.0-rc.0"
-    "@lit/context" "^1.0.1"
-    "@lit/localize" "^0.12.0"
-    "@mdi/js" "^7.1.96"
-    "@shoelace-style/shoelace" "^2.11.0"
-    lit "^3.0.2"
 
 "@holochain-open-dev/profiles@^0.500.0":
   version "0.500.0"
@@ -1567,7 +1557,7 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/stores@^0.500.0", "@holochain-open-dev/stores@^0.500.0-rc.1":
+"@holochain-open-dev/stores@^0.500.0":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.500.0.tgz#2d0674a8fad647f8166ad6200c547c98a3120828"
   integrity sha512-ePj7YP9/45vzqnNwRgAMWf74Y4zuCAEVRJihqRrfxy01R34mqOTLqVeC4227mBWpql9o6OeKsH3/s2Qk+ZlEKA==
@@ -1581,10 +1571,22 @@
     lit-svelte-stores "^0.3.0"
     svelte "^3.53.1"
 
-"@holochain-open-dev/utils@^0.500.0", "@holochain-open-dev/utils@^0.500.0-rc.1":
+"@holochain-open-dev/utils@^0.500.0":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.500.0.tgz#b32ef89ac4b3ee0e44b2d3ef700cc0ad74245894"
   integrity sha512-DnJhvl49FSHhH3msAYojaqUaoeLre2LO+mCONrAG+SGn5LfQjsA1Zcqp7P54r1bG3esPPe7FHQD7GaOd5426SQ==
+  dependencies:
+    "@holochain/client" "^0.19.0"
+    "@msgpack/msgpack" "^2.8.0"
+    blakejs "^1.2.1"
+    emittery "^1.0.1"
+    lodash-es "^4.17.21"
+    sort-keys "^5.0.0"
+
+"@holochain-open-dev/utils@^0.500.1":
+  version "0.500.1"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.500.1.tgz#05d40197661d0a2d4705ec9e67d4a6e331488456"
+  integrity sha512-uxyiAYnGrR7G2oxVHkZcyfOgI01Cps/sWOAfv8Fsgh5GU2TGOJP3OmfyDaAUQ9pgTtyPAhKbDr/9yi1mgbJ1eQ==
   dependencies:
     "@holochain/client" "^0.19.0"
     "@msgpack/msgpack" "^2.8.0"
@@ -1602,21 +1604,6 @@
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0.tgz#5bf3cf9ef58f2da9a060b31160daf197cfaf2346"
   integrity sha512-LAiuQwyAQlLJp5Y0uT7EKuWy2AoCxMLdTECCLOs8ALADZzhNykFi2rmeC9hzskPXMR441bOhHPBWynqzQH95Ew==
-  dependencies:
-    "@bitgo/blake2b" "^3.2.4"
-    "@msgpack/msgpack" "^3.1.1"
-    emittery "^1.0.1"
-    isomorphic-ws "^5.0.0"
-    js-base64 "^3.7.5"
-    js-sha512 "^0.9.0"
-    libsodium-wrappers "^0.7.13"
-    lodash-es "^4.17.21"
-    ws "^8.14.2"
-
-"@holochain/client@0.19.0-rc.0":
-  version "0.19.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0-rc.0.tgz#7e4f510a2518aca19ab72097117bbd01c1a45457"
-  integrity sha512-MFSsCy1BrtDlwlFSrt9ARa45c4QrplobRAZPuhqdHhTupI29ty6wj2Z44/G9XdhTv69xMCgq3Velx6GARGN+Cw==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
     "@msgpack/msgpack" "^3.1.1"
@@ -2145,25 +2132,61 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@lightningrodlabs/we-rust-utils-darwin-arm64@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.500.0.tgz#3a0432b608266513011c498a865fb2056b11e2bc"
+  integrity sha512-RZ0+x0wE0SeX+yBQByWfSBeqXb9++PjGz2Y67wHhCfvbJ8bLs7NQwIzW52BHrOtIruf2obvfeleYnQFu8Ji3yQ==
+
 "@lightningrodlabs/we-rust-utils-darwin-arm64@0.500.0-rc.3":
   version "0.500.0-rc.3"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.500.0-rc.3.tgz#8a59bb214cf64e5e2d2d7c8a756ec42ee4eccf9f"
   integrity sha512-r/wTbnJJIbMl8Z/24Ce/gqDypK1avDo8/hyMovnr/8Cjet7/FOavJMiFIabTiwQ7NNJ2XqtgE6EGh48oXrApxQ==
+
+"@lightningrodlabs/we-rust-utils-darwin-x64@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.500.0.tgz#8b25c73ff2cd02aca43638ee63b4195c5a3c850a"
+  integrity sha512-y5aBx8pjo9nJDoQJnvClan+S52zzMDDWXy7Pxi8k1TNp4TuoT3VK0fRDAYzCdrHMkOAbZ8jYKgQq4WG41cLNhw==
 
 "@lightningrodlabs/we-rust-utils-darwin-x64@0.500.0-rc.3":
   version "0.500.0-rc.3"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.500.0-rc.3.tgz#732a35cbbf9513ad67b81faeea1c8d043653a1ef"
   integrity sha512-35qkHHIjrPFndp8sB6lj3dmzjp7fdLa9NixXERbCs88dF2qcfiIW8YSxHtfTrbFMVGf+wddLIgeUOW0Nl7BCqQ==
 
+"@lightningrodlabs/we-rust-utils-linux-arm64-gnu@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-arm64-gnu/-/we-rust-utils-linux-arm64-gnu-0.500.0.tgz#46da5fd9078729af46985e09bb391292fc8d08c9"
+  integrity sha512-Y9h04Sd8Dq/bvf16qi5ghxBPY5pfR6adAe3fctiUo+NTt7zINawQZxx8JQPXcBiaaAI77EeUxxgDVfd51txeTA==
+
+"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.500.0.tgz#f7e03c53754ecc1624b995533abe8481d4726175"
+  integrity sha512-rIGr/W4qxfINtQlE+GNKCNxD0q/PnRTYwVSqK5iS6/vGAuoKkTTVlTM4L3gk+uw4Qm99N3Jj76p0u668n0FUzA==
+
 "@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.500.0-rc.3":
   version "0.500.0-rc.3"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.500.0-rc.3.tgz#c8fbb6d9b1e5c468e1fc18a79be57934eec8eb6d"
   integrity sha512-fFJMAyuB8xSplPd1OXqK+Ap5UbqUmix3JKcVbtk6YaI3MbS3YGznTzBI3gkaeY1vJ+9nMLX7RuxgeV7sGU8aVw==
 
+"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.500.0.tgz#e944b01c861ff24637fca19371b6542381c77b5a"
+  integrity sha512-FetsB/1ICTy/PpxmfP7lhgSO0tEobV0sskERGSRJOkrd1+E0pZTsE3kVFb1AI7lDx0e5/1whhoY7dCVSFbQfKQ==
+
 "@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.500.0-rc.3":
   version "0.500.0-rc.3"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.500.0-rc.3.tgz#d6f8ad2ba3ba4339f6867a193d18a836e16911da"
   integrity sha512-OHNq0iqSiRoJjaPQSUyYezyd0OKQt+g3WF03pnsA9cFo4l8QukXQKUWldK8m0BRGaGMMDdnkUn3BvV9A8/C6Cw==
+
+"@lightningrodlabs/we-rust-utils@0.500.0":
+  version "0.500.0"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.500.0.tgz#3ab290b39050e28736a66e27d88a34c3a4a2eb9a"
+  integrity sha512-a9/YjNpJGw+SlajwISYJOiAovkCP1oQhZnsSZ3FB3mBDWiIzxI+V+gRbbVuvRnQ6SV1N2gll3Sp2/DGawwhxUQ==
+  optionalDependencies:
+    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.500.0"
+    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.500.0"
+    "@lightningrodlabs/we-rust-utils-linux-arm64-gnu" "0.500.0"
+    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.500.0"
+    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.500.0"
 
 "@lightningrodlabs/we-rust-utils@0.500.0-rc.3":
   version "0.500.0-rc.3"
@@ -2741,6 +2764,13 @@
   resolved "https://registry.yarnpkg.com/@pkgr/core/-/core-0.2.4.tgz#d897170a2b0ba51f78a099edccd968f7b103387c"
   integrity sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==
 
+"@polymer/polymer@^3.0.0", "@polymer/polymer@^3.2.0":
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/@polymer/polymer/-/polymer-3.5.2.tgz#af0e7e13976df53ace6728e841121c36aca351de"
+  integrity sha512-fWwImY/UH4bb2534DVSaX+Azs2yKg8slkMBHOyGeU2kKx7Xmxp6Lee0jP8p6B3d7c1gFUPB2Z976dTUtX81pQA==
+  dependencies:
+    "@webcomponents/shadycss" "^1.9.1"
+
 "@rollup/plugin-babel@^5.2.2":
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.3.1.tgz#04bc0608f4aa4b2e4b1aebf284344d0f68fda283"
@@ -3083,16 +3113,6 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
-"@theweave/api@0.5.0-rc.0":
-  version "0.5.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@theweave/api/-/api-0.5.0-rc.0.tgz#98865457831a5a52aecea8ddb3447b8392151af9"
-  integrity sha512-QY3u6BD/BY0LWCuFbWJT0G+YFQ1DZ9Q2MqW1dJLz92wAUFosHg1dKcIZvzC1sOXGu2OOww1ElM4QJJMl60MYEw==
-  dependencies:
-    "@holochain-open-dev/profiles" "0.500.0-rc.1"
-    "@holochain/client" "^0.19.0-rc.0"
-    "@msgpack/msgpack" "^2.8.0"
-    js-base64 "^3.7.2"
-
 "@theweave/api@file:libs/api":
   version "0.5.0"
   dependencies:
@@ -3101,10 +3121,10 @@
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
-"@theweave/cli@0.14.0-rc.3":
-  version "0.14.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.14.0-rc.3.tgz#4678e44dd1c87914c7800c8e9b81e6422c8d6be2"
-  integrity sha512-NtRkekXpDFz6AP+FrsesA/q2TA6ix9SKkZszSdo+/O0GZUEk6t+AKq5vjZpXkRHSwjm2wKG/MyVVyNmnhSdHUQ==
+"@theweave/cli@0.14.0-rc.5":
+  version "0.14.0-rc.5"
+  resolved "https://registry.yarnpkg.com/@theweave/cli/-/cli-0.14.0-rc.5.tgz#acfc755a0ac0a010c00314ea3eb467c9032f6abe"
+  integrity sha512-l8HBHzMKXedGwujbyHZkeF8XPkikVHRC04XwOvpnR0Ux1nTpYcCWC6J9KviXPSbQVcqJxfO884xRq5ivwRLBNg==
   dependencies:
     "@electron-toolkit/preload" "^2.0.0"
     "@electron-toolkit/utils" "^2.0.0"
@@ -3118,12 +3138,12 @@
     "@msgpack/msgpack" "^2.8.0"
     "@sinclair/typebox" "0.33.12"
     "@theweave/api" "^0.5.0"
-    "@theweave/moss-types" "0.4.0-rc.0"
-    "@theweave/utils" "0.4.0-rc.0"
+    "@theweave/moss-types" "0.4.0"
+    "@theweave/utils" "0.4.0"
     adm-zip "0.5.14"
     bufferutil "4.0.8"
     commander "11.1.0"
-    electron "^29.3.1"
+    electron "^32.3.3"
     electron-context-menu "3.6.1"
     jimp "1.6.0"
     js-sha512 "^0.9.0"
@@ -3142,7 +3162,7 @@
     "@holochain-open-dev/elements" "^0.500.0"
     "@holochain-open-dev/profiles" "^0.500.0"
     "@holochain-open-dev/stores" "^0.500.0"
-    "@holochain-open-dev/utils" "^0.500.0"
+    "@holochain-open-dev/utils" "^0.500.1"
     "@holochain/client" "^0.19.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
@@ -3151,28 +3171,6 @@
     "@theweave/api" "^0.5.0"
     js-base64 "^3.7.5"
     lit "^3.0.2"
-
-"@theweave/moss-types@0.4.0-rc.0":
-  version "0.4.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@theweave/moss-types/-/moss-types-0.4.0-rc.0.tgz#c783588764dbf7b2642523dcb5c34996f7547e55"
-  integrity sha512-x7GTGGlKy64LwfWEvSUBD/csoRpYK/Eb7y7Hat82SDqETnl5+U6MY9ujaqYwTZr0w45xtxRRWwH53aHSbSYxUg==
-  dependencies:
-    "@holochain/client" "^0.19.0-rc.0"
-    "@sinclair/typebox" "0.33.12"
-    "@theweave/api" "0.5.0-rc.0"
-
-"@theweave/utils@0.4.0-rc.0":
-  version "0.4.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@theweave/utils/-/utils-0.4.0-rc.0.tgz#091d6c6481f391f7c3e661397b65e0d82396b4d4"
-  integrity sha512-3tqNPWGiTvLiRe+ESRhZEzpkOygOthyrkAY8/Kf92ytBJ+AZjOt2WQhBa197UKJ3TzJZ65dFtfIecjfPoFrX9g==
-  dependencies:
-    "@holochain/client" "^0.19.0-rc.0"
-    "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "0.5.0-rc.0"
-    "@theweave/moss-types" "0.4.0-rc.0"
-    compare-versions "6.1.1"
-    js-base64 "^3.7.2"
-    ts-md5 "1.3.1"
 
 "@tokenizer/token@^0.3.0":
   version "0.3.0"
@@ -3780,6 +3778,238 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
+"@vaadin/a11y-base@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/a11y-base/-/a11y-base-24.7.5.tgz#ca7568220c47124ea934289313a501e065e245ee"
+  integrity sha512-eFn27uBhDXZ1CYqySbMe/no7IQJ7hpC1ux3xnHLN7lfbMeLKt0mRoQA3Nh+gF5HDxPP7+ll3bA+uqSnc5bYboA==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/component-base" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/button@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/button/-/button-24.7.5.tgz#b7cfd4cc52d118e382a7d32ce436259237d53a7d"
+  integrity sha512-FlgPT0EZC//1YfzARATEL2ereUh/FJwrWUwZWQvzuiMSQA5M3HL8hL+bq63fjgJUNirB+ZiMYLeoCrRIosYk9w==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/combo-box@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/combo-box/-/combo-box-24.7.5.tgz#6f553b518c6e700e7da1a8693e9f53b668bb0d8a"
+  integrity sha512-xH7pnK6zCY0KxRqSb1wjdkpSRZ1Fa91Pvc/HZB0wj8EXkIEYLGyvbig39T94sNNPM0OTRdIQc4YUV07vMZuUhw==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/field-base" "~24.7.5"
+    "@vaadin/input-container" "~24.7.5"
+    "@vaadin/item" "~24.7.5"
+    "@vaadin/lit-renderer" "~24.7.5"
+    "@vaadin/overlay" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/component-base@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/component-base/-/component-base-24.7.5.tgz#e1616f93e36609b74bf79e72f50319603a182988"
+  integrity sha512-qLgQ0hgmM0MJnVEQZHO42G70KPSGi3DuUo+vaP+w4Gyc5qopj7zQ2fLx1P8Os+V9Oh0ehBw5vOzKud0yaboPGA==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/vaadin-development-mode-detector" "^2.0.0"
+    "@vaadin/vaadin-usage-statistics" "^2.1.0"
+    lit "^3.0.0"
+
+"@vaadin/custom-field@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/custom-field/-/custom-field-24.7.5.tgz#8288b2b2a96948b81e93527439e40fe7f2273d83"
+  integrity sha512-+n2Kg6W0XrmozNhGzE9G97wNGT002gOHel4kboaOjODK9CWe0OLAjz9ZJ8ZzwoeoIQHVQMUEFPws/0P9VG3v0g==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/field-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/date-picker@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/date-picker/-/date-picker-24.7.5.tgz#a4773884a9a15185c5d072077a2d995cb7f08875"
+  integrity sha512-j2t0r/RQKi/k5nn2XAp9EpTTRFbioqXF/T1Dm3LCs6M13CvGDYXbr7KqD9CO7/byVbeoWjZXzSRL1Hx4stNaIA==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.2.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/button" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/field-base" "~24.7.5"
+    "@vaadin/input-container" "~24.7.5"
+    "@vaadin/overlay" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/date-time-picker@^24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/date-time-picker/-/date-time-picker-24.7.5.tgz#189b19a666811687488ec2654b01508b60667840"
+  integrity sha512-rbjtC/rfee8KoIhOjdBSaEsrYRYnUaT3/aRFkIziQaXiWb1kzj3U1jviaWo+qlRkf3cm6Fck7z4rcf3cwtUVNg==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/custom-field" "~24.7.5"
+    "@vaadin/date-picker" "~24.7.5"
+    "@vaadin/field-base" "~24.7.5"
+    "@vaadin/time-picker" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/field-base@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/field-base/-/field-base-24.7.5.tgz#121e529017034017acbd86d2f44924a7ccc5dc97"
+  integrity sha512-Itr/UKUNsTjwxfjRuYQ0GC0PvQAP84Bl3fx2VfyLxGJg9YwARKxDrKd13CfTHKzHMnk/Xg1VIi2SLqebw48B7A==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/icon@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/icon/-/icon-24.7.5.tgz#ccb5d7464fe01c7d03c3cb183c09f6412688aba3"
+  integrity sha512-LRAtlLv6yGUhky0qXAaIHoVA7i3E6cKcDC2qskILy+3ngbEF+t3xPX/HeJca3d7PGSVX2DRcZ3gvj2CADjUi7g==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/input-container@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/input-container/-/input-container-24.7.5.tgz#24d1c02b0ddcde074cb3f1ee6b9e1770894bf348"
+  integrity sha512-7p57H/F5ZYzPN/LPO0gyPGbizA1fRtJl+8NpKUNbgxZuBVdO2HO62iTdkz+LR4vs08NWhCMuUFw6vEw2JGXOdw==
+  dependencies:
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/item@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/item/-/item-24.7.5.tgz#7295f6c64d789d64c27a2c4971a92a552abbe4af"
+  integrity sha512-yeE58hXtgYROdpmLzXZ1AFnFa8opSPkReS4+LH+K59xNo3qYekhitMVAuhkIg5CkdzKpAHXbdvS1olKxKW9xMw==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/lit-renderer@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/lit-renderer/-/lit-renderer-24.7.5.tgz#8340a756c7ca264df7dd479ac668c7f2053a5c0c"
+  integrity sha512-7F6p6e0/4DB0TyEf+fWUtDn2JHsYDRxEo9W9MdRs2F/SPEU/P4XispJbGua50RjfpxBuPBDG81UGRghw07i4hA==
+  dependencies:
+    lit "^3.0.0"
+
+"@vaadin/overlay@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/overlay/-/overlay-24.7.5.tgz#38b3eb91e036e8f4a933619ca4f6b907d1a59ed0"
+  integrity sha512-dOayo7N92+y2EIyC+ZiQ+4AnnunFUCNtHrEyHUINHrgBRdj7RGOWooSqHMTCd5lGdI86uYkwA3IWISFnKnoczA==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/a11y-base" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/time-picker@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/time-picker/-/time-picker-24.7.5.tgz#86305772abd5352d49d6c736d0947392b4e4ce81"
+  integrity sha512-v8xw9oSoLoI7zruuGBlzOVKngYN+f8+V0XGBv8thgN0UPAV7uHMfwPi/ifR333izBtHp85Pfuy/eqyQcwtbWRw==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/combo-box" "~24.7.5"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/field-base" "~24.7.5"
+    "@vaadin/input-container" "~24.7.5"
+    "@vaadin/item" "~24.7.5"
+    "@vaadin/overlay" "~24.7.5"
+    "@vaadin/vaadin-lumo-styles" "~24.7.5"
+    "@vaadin/vaadin-material-styles" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+    lit "^3.0.0"
+
+"@vaadin/vaadin-development-mode-detector@^2.0.0":
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/@vaadin/vaadin-development-mode-detector/-/vaadin-development-mode-detector-2.0.7.tgz#fea2f6c8cd8e16a312a28d5d1acfb5206892a752"
+  integrity sha512-9FhVhr0ynSR3X2ao+vaIEttcNU5XfzCbxtmYOV8uIRnUCtNgbvMOIcyGBvntsX9I5kvIP2dV3cFAOG9SILJzEA==
+
+"@vaadin/vaadin-lumo-styles@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/vaadin-lumo-styles/-/vaadin-lumo-styles-24.7.5.tgz#e4c49968047598601be9089ecdac41054222d709"
+  integrity sha512-8/Z4sRVpw/2CST3+xQ3PmhAz1NI48m4IbOzFPprkng1xC1Ha3Lpd0/9EhLqJGYFDTAP1CFES+ikagzZTgw8yag==
+  dependencies:
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/icon" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+
+"@vaadin/vaadin-material-styles@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/vaadin-material-styles/-/vaadin-material-styles-24.7.5.tgz#39aa0848073d2ed36c93189370c16c6adee81e9f"
+  integrity sha512-FFSriJjiGkcqP/RbZKzOz5Me5fuK3WF8m9oC2vUieIi8W8J43b1OpADlXpslX+5UL+sHE+SEYWnZDx2XVH3dKw==
+  dependencies:
+    "@polymer/polymer" "^3.0.0"
+    "@vaadin/component-base" "~24.7.5"
+    "@vaadin/vaadin-themable-mixin" "~24.7.5"
+
+"@vaadin/vaadin-themable-mixin@~24.7.5":
+  version "24.7.5"
+  resolved "https://registry.yarnpkg.com/@vaadin/vaadin-themable-mixin/-/vaadin-themable-mixin-24.7.5.tgz#d69fb93e3fcbd258a27fe05b55aeb78a4f3e4184"
+  integrity sha512-cWKQM2gBZ4rOat4fjKYkh7H27JglGFm6HyCZVthkF2QfC51R3iu3SLm6YdHkA+4LJpSzT/oaYb1WxDbd1ATH7Q==
+  dependencies:
+    "@open-wc/dedupe-mixin" "^1.3.0"
+    lit "^3.0.0"
+
+"@vaadin/vaadin-usage-statistics@^2.1.0":
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/@vaadin/vaadin-usage-statistics/-/vaadin-usage-statistics-2.1.3.tgz#e75aa5c9d33fbbaf87a5f10ff3148d427bb6da37"
+  integrity sha512-8r4TNknD7OJQADe3VygeofFR7UNAXZ2/jjBFP5dgI8+2uMfnuGYgbuHivasKr9WSQ64sPej6m8rDoM1uSllXjQ==
+  dependencies:
+    "@vaadin/vaadin-development-mode-detector" "^2.0.0"
+
 "@vitejs/plugin-vue@^5.1.2":
   version "5.2.3"
   resolved "https://registry.yarnpkg.com/@vitejs/plugin-vue/-/plugin-vue-5.2.3.tgz#71a8fc82d4d2e425af304c35bf389506f674d89b"
@@ -4126,7 +4356,7 @@
   resolved "https://registry.yarnpkg.com/@web/storybook-prebuilt/-/storybook-prebuilt-0.1.37.tgz#e0333abbc3d2d89abf0315439ded4ee1d0da12d3"
   integrity sha512-je4BAbOJiEjQOkeFJfw+fnezKpU3fQW+5ZTiY24UGB1xPaZfU7ZMrC9tW6699vy/QRVJhiJyQrcIQ35OVSlCQA==
 
-"@webcomponents/shadycss@^1.11.0":
+"@webcomponents/shadycss@^1.11.0", "@webcomponents/shadycss@^1.9.1":
   version "1.11.2"
   resolved "https://registry.yarnpkg.com/@webcomponents/shadycss/-/shadycss-1.11.2.tgz#7539b0ad29598aa2eafee8b341059e20ac9e1006"
   integrity sha512-vRq+GniJAYSBmTRnhCYPAPq6THYqovJ/gzGThWbgEZUQaBccndGTi1hdiUP15HzEco0I6t4RCtXyX0rsSmwgPw==
@@ -6259,15 +6489,6 @@ electron-vite@2.3.0:
     esbuild "^0.21.5"
     magic-string "^0.30.10"
     picocolors "^1.0.1"
-
-electron@^29.3.1:
-  version "29.4.6"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-29.4.6.tgz#10826aaebea13c1de781399c3bbbebde6343d70d"
-  integrity sha512-fz8ndj8cmmf441t4Yh2FDP3Rn0JhLkVGvtUf2YVMbJ5SdJPlc0JWll9jYkhh60jDKVVCr/tBAmfxqRnXMWJpzg==
-  dependencies:
-    "@electron/get" "^2.0.0"
-    "@types/node" "^20.9.0"
-    extract-zip "^2.0.1"
 
 electron@^32.3.3:
   version "32.3.3"
