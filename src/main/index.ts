@@ -1688,8 +1688,8 @@ if (!RUNNING_WITH_COMMAND) {
         // on the filesystem.
         if (!happAlreadyStored || !uiAlreadyStored || isDevModeAndTrustedToolFromDevConfig) {
           // fetch webhapp from URL
-          const fixedHappOrWebHappUrl = happOrWebHappUrl.startsWith('file://./')
-            ? `file://${process.cwd()}${happOrWebHappUrl.slice(8)}`
+          const fixedHappOrWebHappUrl = happOrWebHappUrl.startsWith('file://')
+            ? `file://${path.resolve(happOrWebHappUrl.slice(7))}`
             : happOrWebHappUrl;
 
           console.log('Fetching happ/webhapp from URL: ', fixedHappOrWebHappUrl);
