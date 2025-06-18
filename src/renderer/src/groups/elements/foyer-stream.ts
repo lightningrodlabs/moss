@@ -340,7 +340,7 @@ export class FoyerStream extends LitElement {
           <sl-button
             style="margin-left:10px;"
             circle
-            ${this.disabled ? 'disabled' : ''}
+            ?disabled=${this.disabled}
             @click=${() => this.sendMessage()}
           >
             <svg
