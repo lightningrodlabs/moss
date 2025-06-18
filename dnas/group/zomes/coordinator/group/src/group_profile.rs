@@ -1,5 +1,6 @@
 use group_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 
 use crate::get_latest_record_from_links;
 #[hdk_extern]
@@ -19,11 +20,12 @@ pub fn set_group_profile(group_profile: GroupProfile) -> ExternResult<Record> {
 }
 
 #[hdk_extern]
-pub fn get_group_profile() -> ExternResult<Option<Record>> {
+pub fn get_group_profile(input: ZomeFnInput<()>) -> ExternResult<Option<Record>> {
     let path = Path::from("all_group_profiles");
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllGroupProfiles)?
+            .get_options(input.clone().into())
             .build(),
     )?;
-    get_latest_record_from_links(links)
+    get_latest_record_from_links(links, input.into())
 }

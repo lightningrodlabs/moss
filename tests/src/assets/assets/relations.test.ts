@@ -60,7 +60,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input1,
+      payload: { input: input1 },
     });
 
     console.log('Hello4');
@@ -73,7 +73,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const allAssetRelations: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_all_asset_relations',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(allAssetRelations.length === 1);
@@ -87,7 +87,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const allAssetRelationHashes: EntryHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_all_asset_relation_hashes',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(allAssetRelationHashes.length === 1);
@@ -99,7 +99,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const assetRelation2: AssetRelation | undefined = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relation_by_hash',
-      payload: assetRelation1.relation_hash,
+      payload: { input: assetRelation1.relation_hash },
     });
 
     assert(!!assetRelation2);
@@ -111,7 +111,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'remove_asset_relation',
-      payload: assetRelation1.relation_hash,
+      payload: { input: assetRelation1.relation_hash },
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
@@ -119,7 +119,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const allAssetRelationsAlice: AssetRelationAndHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_all_asset_relations',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(allAssetRelationsAlice.length === 0);
@@ -127,7 +127,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
     const allAssetRelationHashesAlice: EntryHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_all_asset_relation_hashes',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(allAssetRelationHashesAlice.length === 0);
@@ -186,7 +186,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input1,
+      payload: { input: input1 },
     });
 
     const input2: RelateAssetsInput = {
@@ -198,7 +198,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     const assetRelation2: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input2,
+      payload: { input: input2 },
     });
 
     // Alice tries to read them
@@ -208,7 +208,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       {
         zome_name: 'assets',
         fn_name: 'get_outgoing_asset_relations',
-        payload: wal1,
+        payload: { input: wal1 },
       },
     );
 
@@ -240,7 +240,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       {
         zome_name: 'assets',
         fn_name: 'get_incoming_asset_relations',
-        payload: wal2,
+        payload: { input: wal2 },
       },
     );
 
@@ -256,7 +256,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
       {
         zome_name: 'assets',
         fn_name: 'get_incoming_asset_relations',
-        payload: wal3,
+        payload: { input: wal3 },
       },
     );
 
@@ -274,7 +274,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     const outgoingRelationsReadByBob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_outgoing_asset_relations',
-      payload: wal1,
+      payload: { input: wal1 },
     });
 
     const wal1RelationReadByBob = outgoingRelationsReadByBob.find(
@@ -304,7 +304,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     const incomingRelationsWal2ReadByBob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_incoming_asset_relations',
-      payload: wal2,
+      payload: { input: wal2 },
     });
 
     assert(incomingRelationsWal2ReadByBob.length === 1);
@@ -318,7 +318,7 @@ test('Add two asset relations between 3 WALs and read them', async () => {
     const incomingRelationsWal3ReadByBob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_incoming_asset_relations',
-      payload: wal3,
+      payload: { input: wal3 },
     });
 
     assert(incomingRelationsWal3ReadByBob.length === 1);
@@ -378,7 +378,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input1,
+      payload: { input: input1 },
     });
 
     // Bob tries to read the relation
@@ -388,7 +388,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     const outgoingRelationsWal1ReadByBob: AssetRelationWithTags[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_outgoing_asset_relations_with_tags',
-      payload: wal1,
+      payload: { input: wal1 },
     });
 
     assert(outgoingRelationsWal1ReadByBob.length === 1);
@@ -412,7 +412,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'remove_tags_from_asset_relation',
-      payload: input,
+      payload: { input },
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
@@ -421,7 +421,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
       await assetsCellAlice.callZome({
         zome_name: 'assets',
         fn_name: 'get_outgoing_asset_relations_with_tags',
-        payload: wal1,
+        payload: { input: wal1 },
       });
 
     assert(outgoingRelationsWal1ReadByAlice.length === 1);
@@ -447,21 +447,21 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     const assetRelationsLinkedToTag1: AssetRelationAndHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'depends_on',
+      payload: { input: 'depends_on' },
     });
     assert(assetRelationsLinkedToTag1.length === 0);
 
     const assetRelationsLinkedToTag2: AssetRelationAndHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'loves',
+      payload: { input: 'loves' },
     });
     assert(assetRelationsLinkedToTag2.length === 0);
 
     const assetRelationsLinkedToTag3: AssetRelationAndHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'cares_about',
+      payload: { input: 'cares_about' },
     });
     assert(assetRelationsLinkedToTag3.length === 1);
     assert.deepEqual(input1.src_wal.hrl, assetRelationsLinkedToTag3[0].src_wal.hrl);
@@ -478,7 +478,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     const assetRelationsLinkedToTag4: AssetRelationAndHash[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'likes',
+      payload: { input: 'likes' },
     });
     assert(assetRelationsLinkedToTag4.length === 1);
     assert.deepEqual(input1.src_wal.hrl, assetRelationsLinkedToTag4[0].src_wal.hrl);
@@ -496,7 +496,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'remove_asset_relation',
-      payload: assetRelation1.relation_hash,
+      payload: { input: assetRelation1.relation_hash },
     });
 
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
@@ -504,28 +504,28 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
     const assetRelationsLinkedToTag1Bob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'depends_on',
+      payload: { input: 'depends_on' },
     });
     assert(assetRelationsLinkedToTag1Bob.length === 0);
 
     const assetRelationsLinkedToTag2Bob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'loves',
+      payload: { input: 'loves' },
     });
     assert(assetRelationsLinkedToTag2Bob.length === 0);
 
     const assetRelationsLinkedToTag3Bob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'cares_about',
+      payload: { input: 'cares_about' },
     });
     assert(assetRelationsLinkedToTag3Bob.length === 0);
 
     const assetRelationsLinkedToTag4Bob: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_asset_relations_for_relationship_tag',
-      payload: 'likes',
+      payload: { input: 'likes' },
     });
     assert(assetRelationsLinkedToTag4Bob.length === 0);
 
@@ -533,7 +533,7 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
       await assetsCellBob.callZome({
         zome_name: 'assets',
         fn_name: 'get_outgoing_asset_relations_with_tags',
-        payload: wal1,
+        payload: { input: wal1 },
       });
     assert(outgoingRelationsWithTagsWal1ReadByBob2.length === 0);
 
@@ -541,21 +541,21 @@ test('Add an asset relation between 2 WALs, then read and modify it', async () =
       await assetsCellBob.callZome({
         zome_name: 'assets',
         fn_name: 'get_incoming_asset_relations_with_tags',
-        payload: wal2,
+        payload: { input: wal2 },
       });
     assert(incomingRelationsWithTagsWal2ReadByBob2.length === 0);
 
     const outgoingRelationsWal1ReadByBob2: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_outgoing_asset_relations',
-      payload: wal1,
+      payload: { input: wal1 },
     });
     assert(outgoingRelationsWal1ReadByBob2.length === 0);
 
     const incomingRelationsWal2ReadByBob2: AssetRelationAndHash[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_incoming_asset_relations',
-      payload: wal2,
+      payload: { input: wal2 },
     });
     assert(incomingRelationsWal2ReadByBob2.length === 0);
   });
@@ -613,7 +613,7 @@ test('Add two asset relations with tags and read them with get_all_asset_relatio
     const assetRelation1: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input1,
+      payload: { input: input1 },
     });
 
     const input2: RelateAssetsInput = {
@@ -625,7 +625,7 @@ test('Add two asset relations with tags and read them with get_all_asset_relatio
     const assetRelation2: AssetRelationWithTags = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'add_asset_relation',
-      payload: input2,
+      payload: { input: input2 },
     });
 
     // Bob tries to read them
@@ -635,7 +635,7 @@ test('Add two asset relations with tags and read them with get_all_asset_relatio
     const allAssetRelationsWithTags: AssetRelationWithTags[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_all_asset_relations_with_tags',
-      payload: null,
+      payload: { input: null },
     });
 
     const wal1RelationReadByAlice = allAssetRelationsWithTags.find(

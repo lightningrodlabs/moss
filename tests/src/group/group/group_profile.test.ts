@@ -61,7 +61,7 @@ test('Create, read and update group profile in group without progenitor', async 
     const groupProfileRecord: HolochainRecord | undefined = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_group_profile',
-      payload: null,
+      payload: { input: null },
     });
     const r1 = groupProfileRecord ? new EntryRecord(groupProfileRecord) : undefined;
     assert(!!groupProfileRecord);
@@ -71,7 +71,7 @@ test('Create, read and update group profile in group without progenitor', async 
     const groupProfileRecord2: HolochainRecord | undefined = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_group_profile',
-      payload: null,
+      payload: { input: null },
     });
     const r2 = groupProfileRecord2 ? new EntryRecord(groupProfileRecord2) : undefined;
     assert(!!groupProfileRecord2);
@@ -96,7 +96,7 @@ test('Create, read and update group profile in group without progenitor', async 
     const groupProfileRecord3: HolochainRecord | undefined = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_group_profile',
-      payload: null,
+      payload: { input: null },
     });
     const r3 = groupProfileRecord3 ? new EntryRecord(groupProfileRecord3) : undefined;
     assert(!!groupProfileRecord3);
@@ -201,7 +201,7 @@ test('Can update group profile with valid steward permission', async () => {
     const groupProfileRecord: HolochainRecord | undefined = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_group_profile',
-      payload: null,
+      payload: { input: null },
     });
     const r1 = groupProfileRecord ? new EntryRecord(groupProfileRecord) : undefined;
     assert(!!groupProfileRecord);

@@ -21,6 +21,8 @@ holochain = { version = "0.5.0" }
 
 serde = "1"
 
+[workspace.dependencies.moss_helpers]
+path = "crates/moss_helpers"
 
 [workspace.dependencies.group]
 path = "dnas/group/zomes/coordinator/group"

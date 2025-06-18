@@ -34,7 +34,7 @@ export async function threeAgentsOneProgenitorOneStewardOneMember(
   const permissionType: PermissionType = await groupCellAlice.callZome({
     zome_name: 'group',
     fn_name: 'get_agent_permission_type',
-    payload: bobPubKey,
+    payload: { input: bobPubKey },
   });
 
   if (permissionType.type !== 'Steward') {
@@ -81,7 +81,7 @@ export async function twoAgentsOneProgenitorAndOneSteward(
   const permissionType: PermissionType = await groupCellAlice.callZome({
     zome_name: 'group',
     fn_name: 'get_agent_permission_type',
-    payload: bobPubKey,
+    payload: { input: bobPubKey },
   });
 
   if (permissionType.type !== 'Steward') {

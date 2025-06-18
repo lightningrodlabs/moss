@@ -58,10 +58,22 @@ export class GroupClient {
     });
   }
 
-  /** GroupProfile */
+  /**
+   * =============================================================================================
+   * Group Profile
+   * =============================================================================================
+   */
 
-  async getGroupProfile(): Promise<EntryRecord<GroupProfile> | undefined> {
-    const record = await this.callZome<Record | undefined>('get_group_profile', null);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getGroupProfile(local: boolean): Promise<EntryRecord<GroupProfile> | undefined> {
+    const record = await this.callZome<Record | undefined>('get_group_profile', {
+      input: null,
+      local,
+    });
     return record ? new EntryRecord(record) : undefined;
   }
 
@@ -69,18 +81,39 @@ export class GroupClient {
     await this.callZome('set_group_profile', groupProfile);
   }
 
-  /** Applets */
+  /**
+   * =============================================================================================
+   * Applets
+   * =============================================================================================
+   */
 
-  async getPublicApplet(appletHash: AppletHash): Promise<EntryRecord<Applet> | undefined> {
-    const response: Record | undefined = await this.callZome('get_public_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getPublicApplet(
+    appletHash: AppletHash,
+    local?: boolean,
+  ): Promise<EntryRecord<Applet> | undefined> {
+    const response: Record | undefined = await this.callZome('get_public_applet', {
+      input: appletHash,
+      local,
+    });
     if (response) {
       return new EntryRecord(response);
     }
     return undefined;
   }
 
-  async getGroupApplets(): Promise<Array<EntryHash>> {
-    return this.callZome('get_group_applets', null);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getGroupApplets(local?: boolean): Promise<Array<EntryHash>> {
+    return this.callZome('get_group_applets', { input: null, local });
   }
 
   /**
@@ -103,27 +136,45 @@ export class GroupClient {
   /**
    * Gets Applet entries that have been advertised by other agents in the
    * group but have never been installed into the local conductor yet.
+   *
+   * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getUnjoinedApplets(): Promise<Array<[EntryHash, AgentPubKey, number]>> {
-    return this.callZome('get_unjoined_applets', null);
+  async getUnjoinedApplets(local?: boolean): Promise<Array<[EntryHash, AgentPubKey, number]>> {
+    return this.callZome('get_unjoined_applets', { input: null, local });
   }
 
   /**
    * Gets Applet entries that have been advertised by other agents in the
    * group but have never been installed into the local conductor yet.
+   *
+   * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getUnjoinedArchivedApplets(): Promise<Array<EntryHash>> {
-    return this.callZome('get_unjoined_archived_applets', null);
+  async getUnjoinedArchivedApplets(local?: boolean): Promise<Array<EntryHash>> {
+    return this.callZome('get_unjoined_archived_applets', { input: null, local });
   }
 
-  async getArchivedApplets(): Promise<Array<EntryHash>> {
-    return this.callZome('get_archived_applets', null);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getArchivedApplets(local?: boolean): Promise<Array<EntryHash>> {
+    return this.callZome('get_archived_applets', { input: null, local });
   }
 
-  async getApplet(appletHash: EntryHash): Promise<Applet | undefined> {
-    const maybeApplet = await this.callZome<Applet | undefined>('get_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getApplet(appletHash: EntryHash, local?: boolean): Promise<Applet | undefined> {
+    const maybeApplet = await this.callZome<Applet | undefined>('get_applet', {
+      input: appletHash,
+      local,
+    });
     if (!maybeApplet) {
       console.warn(
         `@group-client: @getApplet: No applet found for hash: ${encodeHashToBase64(appletHash)}`,
@@ -133,12 +184,27 @@ export class GroupClient {
     return maybeApplet;
   }
 
-  async getJoinedAppletAgents(appletHash: EntryHash): Promise<Array<AppletAgent>> {
-    return this.callZome('get_joined_applet_agents', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getJoinedAppletAgents(appletHash: EntryHash, local?: boolean): Promise<Array<AppletAgent>> {
+    return this.callZome('get_joined_applet_agents', { input: appletHash, local });
   }
 
-  async getAbandonedAppletAgents(appletHash: EntryHash): Promise<Array<AppletAgent>> {
-    return this.callZome('get_abandoned_applet_agents', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAbandonedAppletAgents(
+    appletHash: EntryHash,
+    local: boolean,
+  ): Promise<Array<AppletAgent>> {
+    return this.callZome('get_abandoned_applet_agents', { input: appletHash, local });
   }
 
   /**
@@ -175,53 +241,102 @@ export class GroupClient {
    * that the applet has been abandoned.
    *
    * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async abandonApplet(appletHash: AppletHash): Promise<void> {
-    return this.callZome('abandon_applet', appletHash);
+  async abandonApplet(appletHash: AppletHash, local?: boolean): Promise<void> {
+    return this.callZome('abandon_applet', { input: appletHash, local });
   }
 
   async hashApplet(applet: Applet): Promise<EntryHash> {
     return this.callZome('hash_applet', applet);
   }
 
-  async archiveApplet(appletHash: EntryHash): Promise<void> {
-    return this.callZome('archive_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async archiveApplet(appletHash: EntryHash, local?: boolean): Promise<void> {
+    return this.callZome('archive_applet', { input: appletHash, local });
   }
 
   async unarchiveApplet(appletHash: EntryHash): Promise<void> {
     return this.callZome('unarchive_applet', appletHash);
   }
 
+  /**
+   * =============================================================================================
+   * Steward permissions
+   * =============================================================================================
+   */
+
+  /**
+   *
+   * @param input
+   * @returns
+   */
   async createStewardPermission(input: StewardPermission): Promise<EntryRecord<StewardPermission>> {
     const response: Record = await this.callZome('create_steward_permission', input);
     return new EntryRecord(response);
   }
 
+  /**
+   *
+   * @param permissionHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
   async getStewardPermission(
     permissionHash: AppletHash,
+    local?: boolean,
   ): Promise<EntryRecord<StewardPermission> | undefined> {
-    const response: Record | undefined = await this.callZome(
-      'get_steward_permission',
-      permissionHash,
-    );
+    const response: Record | undefined = await this.callZome('get_steward_permission', {
+      input: permissionHash,
+      local,
+    });
     if (response) {
       return new EntryRecord(response);
     }
     return undefined;
   }
 
-  async getMyPermissionType(): Promise<PermissionType> {
-    return this.callZome('get_my_permission_type', null);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getMyPermissionType(local?: boolean): Promise<PermissionType> {
+    return this.callZome('get_my_permission_type', { input: null, local });
   }
 
-  async getAgentPermissionType(agent: AgentPubKey): Promise<PermissionType> {
-    return this.callZome('get_agent_permission_type', agent);
+  /**
+   *
+   * @param agent
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAgentPermissionType(agent: AgentPubKey, local?: boolean): Promise<PermissionType> {
+    return this.callZome('get_agent_permission_type', { input: agent, local });
   }
 
-  async getAllAgentPermissionTypes(): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
-    return this.callZome('get_all_agent_permission_types', null);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAllAgentPermissionTypes(
+    local?: boolean,
+  ): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
+    return this.callZome('get_all_agent_permission_types', { input: null, local });
   }
+
+  /**
+   * =============================================================================================
+   * Group Metadata
+   * =============================================================================================
+   */
 
   async setGroupDescription(
     permissionHash: ActionHash | undefined,
@@ -234,8 +349,13 @@ export class GroupClient {
     });
   }
 
-  async getGroupDescription(): Promise<EntryRecord<GroupMetaData> | undefined> {
-    return this.getGroupMetaData(GROUP_DESCRIPTION_NAME);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getGroupDescription(local?: boolean): Promise<EntryRecord<GroupMetaData> | undefined> {
+    return this.getGroupMetaData(GROUP_DESCRIPTION_NAME, local);
   }
 
   async setGroupAppletsMetaData(
@@ -249,15 +369,26 @@ export class GroupClient {
     });
   }
 
-  async getGroupAppletsMetaData(): Promise<GroupAppletsMetaData | undefined> {
-    const metaDataRecord = await this.getGroupMetaData(GROUP_APPLETS_META_DATA_NAME);
+  /**
+   *
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getGroupAppletsMetaData(local?: boolean): Promise<GroupAppletsMetaData | undefined> {
+    const metaDataRecord = await this.getGroupMetaData(GROUP_APPLETS_META_DATA_NAME, local);
     const maybeAppletsMetadata = metaDataRecord?.entry.data;
     if (!maybeAppletsMetadata) return undefined;
     return JSON.parse(maybeAppletsMetadata);
   }
 
-  async getGroupMetaData(name: string): Promise<EntryRecord<GroupMetaData> | undefined> {
-    const record = await this.callZome<Record | undefined>('get_group_meta_data', name);
+  async getGroupMetaData(
+    name: string,
+    local?: boolean,
+  ): Promise<EntryRecord<GroupMetaData> | undefined> {
+    const record = await this.callZome<Record | undefined>('get_group_meta_data', {
+      ipnut: name,
+      local,
+    });
     return record ? new EntryRecord(record) : undefined;
   }
 
@@ -266,25 +397,84 @@ export class GroupClient {
     return new EntryRecord(record);
   }
 
-  async joinClonedCell(input: AppletClonedCell): Promise<EntryHash> {
-    return this.callZome('join_cloned_cell', input);
+  /**
+   * =============================================================================================
+   * Cloned Cells
+   * =============================================================================================
+   */
+
+  /**
+   *
+   * @param input
+   * @param local Whether to use GetOptions::local() (a get request is made here to check
+   * whether an `AppletClonedCell` entry had already been created by someone else and this
+   * get request can potentially fail over the network)
+   * @returns
+   */
+  async joinClonedCell(input: AppletClonedCell, local?: boolean): Promise<EntryHash> {
+    return this.callZome('join_cloned_cell', { input, local });
   }
 
-  async getAppletClonedCell(entryHash: EntryHash): Promise<AppletClonedCell | undefined> {
-    return this.callZome('get_applet_cloned_cell', entryHash);
+  /**
+   *
+   * @param entryHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAppletClonedCell(
+    entryHash: EntryHash,
+    local?: boolean,
+  ): Promise<AppletClonedCell | undefined> {
+    return this.callZome('get_applet_cloned_cell', { input: entryHash, local });
   }
 
-  async getAllClonedCellEntryHashesForApplet(appletHash: EntryHash): Promise<EntryHash[]> {
-    return this.callZome('get_all_cloned_cell_entry_hashes_for_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAllClonedCellEntryHashesForApplet(
+    appletHash: EntryHash,
+    local?: boolean,
+  ): Promise<EntryHash[]> {
+    return this.callZome('get_all_cloned_cell_entry_hashes_for_applet', {
+      input: appletHash,
+      local,
+    });
   }
 
-  async getAllClonedCellsForApplet(appletHash: EntryHash): Promise<AppletClonedCell[]> {
-    return this.callZome('get_all_cloned_cells_for_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getAllClonedCellsForApplet(
+    appletHash: EntryHash,
+    local?: boolean,
+  ): Promise<AppletClonedCell[]> {
+    return this.callZome('get_all_cloned_cells_for_applet', { input: appletHash, local });
   }
 
-  async getUnjoinedClonedCellsForApplet(appletHash: EntryHash): Promise<EntryHash[]> {
-    return this.callZome('get_unjoined_cloned_cells_for_applet', appletHash);
+  /**
+   *
+   * @param appletHash
+   * @param local Whether to use GetStrategy::Local or not
+   * @returns
+   */
+  async getUnjoinedClonedCellsForApplet(
+    appletHash: EntryHash,
+    local?: boolean,
+  ): Promise<EntryHash[]> {
+    return this.callZome('get_unjoined_cloned_cells_for_applet', { input: appletHash, local });
   }
+
+  /**
+   * =============================================================================================
+   * General stuff
+   * =============================================================================================
+   */
 
   /**
    * Send arbitrary data to peers via remote signal

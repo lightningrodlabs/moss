@@ -175,6 +175,7 @@ dependencies = [
  "assets_integrity",
  "hdk",
  "itertools 0.13.0",
+ "moss_helpers",
  "serde",
 ]
 
@@ -1148,6 +1149,7 @@ dependencies = [
  "futures",
  "hdk",
  "holochain",
+ "moss_helpers",
  "serde",
  "tokio",
 ]
@@ -1720,6 +1722,7 @@ version = "0.0.2"
 dependencies = [
  "foyer_integrity",
  "hdk",
+ "moss_helpers",
  "serde",
 ]
 
@@ -1953,6 +1956,7 @@ version = "0.0.1"
 dependencies = [
  "group_integrity",
  "hdk",
+ "moss_helpers",
  "serde",
 ]
 
@@ -4082,6 +4086,14 @@ name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
+
+[[package]]
+name = "moss_helpers"
+version = "0.0.1"
+dependencies = [
+ "hdk",
+ "serde",
+]
 
 [[package]]
 name = "mr_bundle"
