@@ -1,10 +1,13 @@
 use custom_views_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 #[hdk_extern]
-pub fn get_all_custom_views(_: ()) -> ExternResult<Vec<Record>> {
+pub fn get_all_custom_views(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_custom_views");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllCustomViews)?.build(),
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllCustomViews)?
+            .get_options(input.into())
+            .build(),
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

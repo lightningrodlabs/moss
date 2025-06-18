@@ -1,6 +1,7 @@
 use crate::Signal;
 use assets_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TagsToAssetInput {
@@ -36,16 +37,18 @@ pub fn add_tags_to_asset(input: TagsToAssetInput) -> ExternResult<()> {
 }
 
 #[hdk_extern]
-pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
-    let wal_hash = hash_entry(input.wal.clone())?;
+pub fn remove_tags_from_asset(input: ZomeFnInput<TagsToAssetInput>) -> ExternResult<()> {
+    let wal_hash = hash_entry(input.input.wal.clone())?;
     // 1. Remove links from WAL to tags
     let links = get_links(
-        GetLinksInputBuilder::try_new(wal_hash.clone(), LinkTypes::WalToAssociationTags)?.build(),
+        GetLinksInputBuilder::try_new(wal_hash.clone(), LinkTypes::WalToAssociationTags)?
+            .get_options(input.get_strategy())
+            .build(),
     )?;
     for link in links {
         match std::str::from_utf8(&link.tag.0) {
             Ok(tag) => {
-                if input.tags.contains(&tag.to_string()) {
+                if input.input.tags.contains(&tag.to_string()) {
                     delete_link(link.create_link_hash)?;
                 }
             }
@@ -56,10 +59,12 @@ pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
     }
 
     // 2. Remove links from tags to WAL
-    for tag in input.tags.clone() {
+    for tag in input.input.tags.clone() {
         let tag_entry_hash = association_tag_entry_hash(&tag)?;
         let links = get_links(
-            GetLinksInputBuilder::try_new(tag_entry_hash, LinkTypes::AssociationTagToWals)?.build(),
+            GetLinksInputBuilder::try_new(tag_entry_hash, LinkTypes::AssociationTagToWals)?
+                .get_options(input.get_strategy())
+                .build(),
         )?;
         for link in links {
             if link.target.clone().into_hash() == wal_hash.clone().into() {
@@ -69,18 +74,20 @@ pub fn remove_tags_from_asset(input: TagsToAssetInput) -> ExternResult<()> {
     }
 
     emit_signal(Signal::AssetTagsRemoved {
-        wal: input.wal,
-        tags: input.tags,
+        wal: input.input.wal,
+        tags: input.input.tags,
     })?;
 
     Ok(())
 }
 
 #[hdk_extern]
-pub fn get_tags_for_asset(wal: WAL) -> ExternResult<Vec<String>> {
-    let wal_hash = hash_entry(wal)?;
+pub fn get_tags_for_asset(wal: ZomeFnInput<WAL>) -> ExternResult<Vec<String>> {
+    let wal_hash = hash_entry(wal.input.clone())?;
     let links = get_links(
-        GetLinksInputBuilder::try_new(wal_hash, LinkTypes::WalToAssociationTags)?.build(),
+        GetLinksInputBuilder::try_new(wal_hash, LinkTypes::WalToAssociationTags)?
+            .get_options(wal.get_strategy())
+            .build(),
     )?;
     Ok(links
         .iter()

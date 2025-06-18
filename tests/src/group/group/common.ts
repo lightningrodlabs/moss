@@ -6,7 +6,14 @@ import {
   RoleName,
   RoleSettingsMap,
 } from '@holochain/client';
-import { AgentApp, dhtSync, enableAndGetAgentApp, Player, Scenario } from '@holochain/tryorama';
+import {
+  AgentApp,
+  dhtSync,
+  enableAndGetAgentApp,
+  Player,
+  PlayerApp,
+  Scenario,
+} from '@holochain/tryorama';
 import { PermissionType, StewardPermission } from '@theweave/group-client';
 import { getCellByRoleName } from '../../shared';
 
@@ -15,7 +22,9 @@ export async function threeAgentsOneProgenitorOneStewardOneMember(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   expiry?: number,
-): Promise<[[Player, AgentPubKey], [Player, AgentPubKey, ActionHash], [Player, AgentPubKey]]> {
+): Promise<
+  [[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash], [PlayerApp, AgentPubKey]]
+> {
   const [[alice, alicePubKey], [bob, bobPubKey], [neitherBobNorAlice, neitherBobNorAlicePubKey]] =
     await nAgentsOneProgenitor(scenario, appBundleSource, roleNames, 3);
 
@@ -34,7 +43,7 @@ export async function threeAgentsOneProgenitorOneStewardOneMember(
   const permissionType: PermissionType = await groupCellAlice.callZome({
     zome_name: 'group',
     fn_name: 'get_agent_permission_type',
-    payload: bobPubKey,
+    payload: { input: bobPubKey },
   });
 
   if (permissionType.type !== 'Steward') {
@@ -59,7 +68,7 @@ export async function twoAgentsOneProgenitorAndOneSteward(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   expiry?: number,
-): Promise<[[Player, AgentPubKey], [Player, AgentPubKey, ActionHash]]> {
+): Promise<[[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash]]> {
   const [[alice, alicePubKey], [bob, bobPubKey]] = await nAgentsOneProgenitor(
     scenario,
     appBundleSource,
@@ -81,7 +90,7 @@ export async function twoAgentsOneProgenitorAndOneSteward(
   const permissionType: PermissionType = await groupCellAlice.callZome({
     zome_name: 'group',
     fn_name: 'get_agent_permission_type',
-    payload: bobPubKey,
+    payload: { input: bobPubKey },
   });
 
   if (permissionType.type !== 'Steward') {
@@ -105,7 +114,7 @@ export async function nAgentsOneProgenitor(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   nAgents: number,
-): Promise<[Player, AgentPubKey][]> {
+): Promise<[PlayerApp, AgentPubKey][]> {
   const [alice, alicePubKey] = await installAppWithProgenitor(
     scenario,
     appBundleSource,
@@ -113,7 +122,7 @@ export async function nAgentsOneProgenitor(
     true,
   );
 
-  const allAgents: [Player, AgentPubKey][] = [[alice, alicePubKey]];
+  const allAgents: [PlayerApp, AgentPubKey][] = [[alice, alicePubKey]];
 
   for (let i = 0; i < nAgents; i++) {
     const [player, playerPubKey] = await installAppWithProgenitor(
@@ -143,7 +152,7 @@ export async function installAppWithProgenitor(
   roleNames: RoleName[],
   progenitorPattern: boolean,
   progenitor?: AgentPubKey,
-): Promise<[Player, AgentPubKey]> {
+): Promise<[PlayerApp, AgentPubKey]> {
   let generatedKey: AgentPubKey | undefined;
   const conductor = await scenario.addConductor();
   if (progenitorPattern && !progenitor) {
@@ -167,9 +176,12 @@ export async function installAppWithProgenitor(
     };
   });
 
-  const appInfo = await conductor.installApp(appBundleSource, {
-    rolesSettings,
-    agentPubKey: generatedKey,
+  const appInfo = await conductor.installApp({
+    appBundleSource,
+    options: {
+      rolesSettings,
+      agentPubKey: generatedKey,
+    },
   });
   const adminWs = conductor.adminWs();
   const port = await conductor.attachAppInterface();

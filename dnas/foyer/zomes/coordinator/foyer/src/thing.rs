@@ -1,5 +1,6 @@
 use foyer_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 
 #[hdk_extern]
 pub fn create_thing(thing: Thing) -> ExternResult<Record> {
@@ -17,12 +18,17 @@ pub fn create_thing(thing: Thing) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_thing(original_thing_hash: ActionHash) -> ExternResult<Option<Record>> {
+pub fn get_thing(original_thing_hash: ZomeFnInput<ActionHash>) -> ExternResult<Option<Record>> {
     let input =
-        GetLinksInputBuilder::try_new(original_thing_hash.clone(), LinkTypes::ThingUpdates)?
+        GetLinksInputBuilder::try_new(original_thing_hash.input.clone(), LinkTypes::ThingUpdates)?
+            .get_options(original_thing_hash.get_strategy())
             .build();
     let links = get_links(input)?;
-    get_latest_record_from_links_with_original_hash(links, original_thing_hash)
+    get_latest_record_from_links_with_original_hash(
+        links,
+        original_thing_hash.input.clone(),
+        original_thing_hash.get_options(),
+    )
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateThingInput {
@@ -51,10 +57,11 @@ pub fn delete_thing(original_thing_hash: ActionHash) -> ExternResult<ActionHash>
 }
 
 #[hdk_extern]
-pub fn get_things(_: ()) -> ExternResult<Vec<Link>> {
+pub fn get_things(input: ZomeFnInput<()>) -> ExternResult<Vec<Link>> {
     let path = Path::from("all_things");
-    let input =
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?.build();
+    let input = GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?
+        .get_options(input.get_strategy())
+        .build();
     let links = get_links(input)?;
 
     Ok(links)
@@ -65,16 +72,17 @@ pub fn get_things(_: ()) -> ExternResult<Vec<Link>> {
 pub fn get_latest_record_from_links_with_original_hash(
     mut links: Vec<Link>,
     original_hash: ActionHash,
+    get_options: GetOptions,
 ) -> ExternResult<Option<Record>> {
     links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
     for link in links {
         if let Some(action_hash) = link.target.into_action_hash() {
-            let maybe_record = get(action_hash, GetOptions::default())?;
+            let maybe_record = get(action_hash, get_options.clone())?;
             if let Some(record) = maybe_record {
                 return Ok(Some(record));
             }
         }
     }
-    Ok(get(original_hash, GetOptions::default())?)
+    Ok(get(original_hash, get_options)?)
 }

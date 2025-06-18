@@ -9,8 +9,8 @@ name = "custom_views"
 
 [dependencies]
 hdk = { workspace = true }
-
 serde = { workspace = true }
+moss_helpers = { workspace = true }
 
 custom_views_integrity = { path = "../../integrity/custom_views" }
 

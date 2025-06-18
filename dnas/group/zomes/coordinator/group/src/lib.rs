@@ -62,12 +62,15 @@ fn remote_signal_arbitrary(input: ArbitrarySignalPayload) -> ExternResult<()> {
 
 /// Assumes that the passed links has an action hash as target and tries to get the Record
 /// associated to the target of the link with the latest timestamp
-pub fn get_latest_record_from_links(mut links: Vec<Link>) -> ExternResult<Option<Record>> {
+pub fn get_latest_record_from_links(
+    mut links: Vec<Link>,
+    get_options: GetOptions,
+) -> ExternResult<Option<Record>> {
     links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
     for link in links {
         if let Some(action_hash) = link.target.into_action_hash() {
-            let maybe_record = get(action_hash, GetOptions::default())?;
+            let maybe_record = get(action_hash, get_options.clone())?;
             if let Some(record) = maybe_record {
                 return Ok(Some(record));
             }

@@ -96,67 +96,143 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
     super(client, roleName, zomeName);
   }
 
+  /**
+   *
+   * @param srcWal
+   * @param dstWal
+   * @param tags
+   * @param local Whether to use `GetStrategy::Local` or not. The `GetStrategy` is being used
+   * to check whether the AssetRelation does already exist and may not need to be created
+   * @returns
+   */
   async addAssetRelation(
     srcWal: WAL,
     dstWal: WAL,
     tags?: string[],
+    local?: boolean,
   ): Promise<AssetRelationWithTags> {
     let input: RelateAssetsInput = {
       src_wal: walEncodeContext(srcWal),
       dst_wal: walEncodeContext(dstWal),
       tags: tags ? tags : [],
     };
-    const assetRelationWithTags = await this.callZome('add_asset_relation', input);
+    const assetRelationWithTags = await this.callZome('add_asset_relation', { input, local });
     return decodeAssetRelationWALs(assetRelationWithTags) as AssetRelationWithTags;
   }
 
-  async removeAssetRelation(relationHash: EntryHash): Promise<void> {
-    return this.callZome('remove_asset_relation', relationHash);
+  /**
+   *
+   * @param relationHash
+   * @param local Whether to use `GetStrategy::Local` or not. The `GetStrategy` is being used
+   * amongst others to get all the links to be deleted.
+   * @returns
+   */
+  async removeAssetRelation(relationHash: EntryHash, local?: boolean): Promise<void> {
+    return this.callZome('remove_asset_relation', { input: relationHash, local });
   }
 
-  async addTagsToAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
+  /**
+   *
+   * @param relationHash
+   * @param tags
+   * @param local Whether to use `GetStrategy::Local` or not (the GetStrategy is being used
+   * when checking whether the asset to which tags are to be added actually exists)
+   * @returns
+   */
+  async addTagsToAssetRelation(
+    relationHash: EntryHash,
+    tags: string[],
+    local?: boolean,
+  ): Promise<void> {
     return this.callZome('add_tags_to_asset_relation', {
-      relation_hash: relationHash,
-      tags,
+      input: {
+        relation_hash: relationHash,
+        tags,
+      },
+      local,
     });
   }
 
-  async removeTagsFromAssetRelation(relationHash: EntryHash, tags: string[]): Promise<void> {
+  /**
+   *
+   * @param relationHash
+   * @param tags
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async removeTagsFromAssetRelation(
+    relationHash: EntryHash,
+    tags: string[],
+    local?: boolean,
+  ): Promise<void> {
     return this.callZome('remove_tags_from_asset_relation', {
-      relation_hash: relationHash,
-      tags,
+      input: {
+        relation_hash: relationHash,
+        tags,
+      },
+      local,
     });
   }
 
-  async getOutgoingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    const assetRelations = await this.callZome(
-      'get_outgoing_asset_relations',
-      walEncodeContext(srcWal),
-    );
+  /**
+   *
+   * @param srcWal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getOutgoingAssetRelations(srcWal: WAL, local: boolean): Promise<AssetRelationAndHash[]> {
+    const assetRelations = await this.callZome('get_outgoing_asset_relations', {
+      input: walEncodeContext(srcWal),
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelations);
   }
 
-  async getOutgoingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    const assetRelations = await this.callZome(
-      'get_outgoing_asset_relations_with_tags',
-      walEncodeContext(srcWal),
-    );
+  /**
+   *
+   * @param srcWal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getOutgoingAssetRelationsWithTags(
+    srcWal: WAL,
+    local?: boolean,
+  ): Promise<AssetRelationWithTags[]> {
+    const assetRelations = await this.callZome('get_outgoing_asset_relations_with_tags', {
+      input: walEncodeContext(srcWal),
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelations) as AssetRelationWithTags[];
   }
 
-  async getIncomingAssetRelations(srcWal: WAL): Promise<AssetRelationAndHash[]> {
-    const assetRelations = await this.callZome(
-      'get_incoming_asset_relations',
-      walEncodeContext(srcWal),
-    );
+  /**
+   *
+   * @param srcWal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getIncomingAssetRelations(srcWal: WAL, local?: boolean): Promise<AssetRelationAndHash[]> {
+    const assetRelations = await this.callZome('get_incoming_asset_relations', {
+      input: walEncodeContext(srcWal),
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelations);
   }
 
-  async getIncomingAssetRelationsWithTags(srcWal: WAL): Promise<AssetRelationWithTags[]> {
-    const assetRelations = await this.callZome(
-      'get_incoming_asset_relations_with_tags',
-      walEncodeContext(srcWal),
-    );
+  /**
+   *
+   * @param srcWal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getIncomingAssetRelationsWithTags(
+    srcWal: WAL,
+    local?: boolean,
+  ): Promise<AssetRelationWithTags[]> {
+    const assetRelations = await this.callZome('get_incoming_asset_relations_with_tags', {
+      input: walEncodeContext(srcWal),
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelations) as AssetRelationWithTags[];
   }
 
@@ -175,15 +251,27 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
     });
   }
 
-  async getTagsForAsset(wal: WAL): Promise<string[]> {
-    return this.callZome('get_tags_for_asset', walEncodeContext(wal));
+  /**
+   *
+   * @param wal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getTagsForAsset(wal: WAL, local?: boolean): Promise<string[]> {
+    return this.callZome('get_tags_for_asset', { input: walEncodeContext(wal), local });
   }
 
-  async getAllRelationsForWal(wal: WAL): Promise<RelationsForWal> {
-    const relationsForWal: RelationsForWal = await this.callZome(
-      'get_all_relations_for_wal',
-      walEncodeContext(wal),
-    );
+  /**
+   *
+   * @param wal
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getAllRelationsForWal(wal: WAL, local?: boolean): Promise<RelationsForWal> {
+    const relationsForWal: RelationsForWal = await this.callZome('get_all_relations_for_wal', {
+      input: walEncodeContext(wal),
+      local,
+    });
 
     return {
       wal: relationsForWal.wal,
@@ -193,10 +281,16 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
     };
   }
 
-  async batchGetAllRelationsForWal(wals: WAL[]): Promise<RelationsForWal[]> {
+  /**
+   *
+   * @param wals
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async batchGetAllRelationsForWal(wals: WAL[], local?: boolean): Promise<RelationsForWal[]> {
     const relationsForWals: RelationsForWal[] = await this.callZome(
       'batch_get_all_relations_for_wal',
-      walsEncodeContext(wals),
+      { input: walsEncodeContext(wals), local },
     );
     return relationsForWals.map((relationsForWal) => ({
       wal: relationsForWal.wal,
@@ -206,13 +300,29 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
     }));
   }
 
-  async getAllAssetRelations(): Promise<AssetRelationAndHash[]> {
-    const assetRelationsAndHash = await this.callZome('get_all_asset_relations', null);
+  /**
+   *
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getAllAssetRelations(local?: boolean): Promise<AssetRelationAndHash[]> {
+    const assetRelationsAndHash = await this.callZome('get_all_asset_relations', {
+      input: null,
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelationsAndHash);
   }
 
-  async getAllAssetRelationsWithTags(): Promise<AssetRelationWithTags[]> {
-    const assetRelationsWithTags = await this.callZome('get_all_asset_relations_with_tags', null);
+  /**
+   *
+   * @param local Whether to use `GetStrategy::Local` or not
+   * @returns
+   */
+  async getAllAssetRelationsWithTags(local?: boolean): Promise<AssetRelationWithTags[]> {
+    const assetRelationsWithTags = await this.callZome('get_all_asset_relations_with_tags', {
+      input: null,
+      local,
+    });
     return decodeAssetRelationsWALs(assetRelationsWithTags) as AssetRelationWithTags[];
   }
 }
