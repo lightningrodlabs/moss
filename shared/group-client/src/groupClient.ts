@@ -386,7 +386,7 @@ export class GroupClient {
     local?: boolean,
   ): Promise<EntryRecord<GroupMetaData> | undefined> {
     const record = await this.callZome<Record | undefined>('get_group_meta_data', {
-      ipnut: name,
+      input: name,
       local,
     });
     return record ? new EntryRecord(record) : undefined;
