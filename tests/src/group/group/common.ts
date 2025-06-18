@@ -6,14 +6,7 @@ import {
   RoleName,
   RoleSettingsMap,
 } from '@holochain/client';
-import {
-  AgentApp,
-  dhtSync,
-  enableAndGetAgentApp,
-  Player,
-  PlayerApp,
-  Scenario,
-} from '@holochain/tryorama';
+import { AgentApp, dhtSync, enableAndGetAgentApp, Player, Scenario } from '@holochain/tryorama';
 import { PermissionType, StewardPermission } from '@theweave/group-client';
 import { getCellByRoleName } from '../../shared';
 
@@ -22,9 +15,7 @@ export async function threeAgentsOneProgenitorOneStewardOneMember(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   expiry?: number,
-): Promise<
-  [[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash], [PlayerApp, AgentPubKey]]
-> {
+): Promise<[[Player, AgentPubKey], [Player, AgentPubKey, ActionHash], [Player, AgentPubKey]]> {
   const [[alice, alicePubKey], [bob, bobPubKey], [neitherBobNorAlice, neitherBobNorAlicePubKey]] =
     await nAgentsOneProgenitor(scenario, appBundleSource, roleNames, 3);
 
@@ -68,7 +59,7 @@ export async function twoAgentsOneProgenitorAndOneSteward(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   expiry?: number,
-): Promise<[[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash]]> {
+): Promise<[[Player, AgentPubKey], [Player, AgentPubKey, ActionHash]]> {
   const [[alice, alicePubKey], [bob, bobPubKey]] = await nAgentsOneProgenitor(
     scenario,
     appBundleSource,
@@ -114,7 +105,7 @@ export async function nAgentsOneProgenitor(
   appBundleSource: AppBundleSource,
   roleNames: RoleName[],
   nAgents: number,
-): Promise<[PlayerApp, AgentPubKey][]> {
+): Promise<[Player, AgentPubKey][]> {
   const [alice, alicePubKey] = await installAppWithProgenitor(
     scenario,
     appBundleSource,
@@ -122,7 +113,7 @@ export async function nAgentsOneProgenitor(
     true,
   );
 
-  const allAgents: [PlayerApp, AgentPubKey][] = [[alice, alicePubKey]];
+  const allAgents: [Player, AgentPubKey][] = [[alice, alicePubKey]];
 
   for (let i = 0; i < nAgents; i++) {
     const [player, playerPubKey] = await installAppWithProgenitor(
@@ -152,7 +143,7 @@ export async function installAppWithProgenitor(
   roleNames: RoleName[],
   progenitorPattern: boolean,
   progenitor?: AgentPubKey,
-): Promise<[PlayerApp, AgentPubKey]> {
+): Promise<[Player, AgentPubKey]> {
   let generatedKey: AgentPubKey | undefined;
   const conductor = await scenario.addConductor();
   if (progenitorPattern && !progenitor) {
@@ -176,12 +167,9 @@ export async function installAppWithProgenitor(
     };
   });
 
-  const appInfo = await conductor.installApp({
-    appBundleSource,
-    options: {
-      rolesSettings,
-      agentPubKey: generatedKey,
-    },
+  const appInfo = await conductor.installApp(appBundleSource, {
+    rolesSettings,
+    agentPubKey: generatedKey,
   });
   const adminWs = conductor.adminWs();
   const port = await conductor.attachAppInterface();

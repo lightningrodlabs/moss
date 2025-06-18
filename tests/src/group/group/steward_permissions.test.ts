@@ -130,7 +130,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     // Set up the app to be installed
     const appSource = { appBundleSource };
 
-    const expiry = (Date.now() + 90_000) * 1_000;
+    const expiry = (Date.now() + 100_000) * 1_000;
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(
