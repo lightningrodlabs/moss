@@ -202,7 +202,7 @@ export class GroupClient {
    */
   async getAbandonedAppletAgents(
     appletHash: EntryHash,
-    local: boolean,
+    local?: boolean,
   ): Promise<Array<AppletAgent>> {
     return this.callZome('get_abandoned_applet_agents', { input: appletHash, local });
   }
