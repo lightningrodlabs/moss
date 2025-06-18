@@ -397,7 +397,7 @@ export class FoyerStream extends LitElement {
         padding: 3px 10px;
         flex-shrink: 1;
         align-self: flex-start;
-        background-color: #305f19;
+        background-color: #323c1c;
       }
       .msg-content {
         display: flex;
@@ -407,7 +407,7 @@ export class FoyerStream extends LitElement {
       }
       .my-msg {
         align-self: flex-end;
-        background-color: #72b51b;
+        background-color: #4b461b;
       }
       .send-controls {
         display: flex;
@@ -424,7 +424,7 @@ export class FoyerStream extends LitElement {
         min-width: 16px;
         height: 16px;
         margin-left: 5px;
-        background-color: #f3ff3b;
+        background-color: #bac9af;
         color: black;
         font-size: 80%;
         border-radius: 8px;
@@ -453,7 +453,7 @@ export class FoyerStream extends LitElement {
         position: absolute;
         top: 2px;
         right: 14px;
-        background-color: #f3ff3b;
+        background-color: #bac9af;
         margin-top: 5px;
         padding: 5px;
         color: white;
