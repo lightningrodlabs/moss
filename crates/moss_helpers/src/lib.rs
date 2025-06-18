@@ -12,11 +12,6 @@ impl<T> ZomeFnInput<T> {
         Self { input, local }
     }
 
-    pub fn local(mut self) -> Self {
-        self.local = Some(true);
-        self
-    }
-
     pub fn get_strategy(&self) -> GetStrategy {
         let local = self.local.unwrap_or(false);
         match local {

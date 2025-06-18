@@ -1557,6 +1557,21 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
+"@holochain-open-dev/profiles@^0.501.0":
+  version "0.501.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.501.0.tgz#5ccc8abf1a4fe96362865f58f771207a14a1a28c"
+  integrity sha512-sOBnp2sDuVXCV8m/AB/XMZM1lyCeKWR7PNXxugJhPgfK7NBvKyYMVkb2AZMmg/1HTo1iJnMQx28k8pL7Wj6E8g==
+  dependencies:
+    "@holochain-open-dev/elements" "^0.500.0"
+    "@holochain-open-dev/stores" "^0.500.0"
+    "@holochain-open-dev/utils" "^0.500.0"
+    "@holochain/client" "0.19.0-rc.1"
+    "@lit/context" "^1.0.1"
+    "@lit/localize" "^0.12.0"
+    "@mdi/js" "^7.1.96"
+    "@shoelace-style/shoelace" "^2.11.0"
+    lit "^3.0.2"
+
 "@holochain-open-dev/stores@^0.500.0":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.500.0.tgz#2d0674a8fad647f8166ad6200c547c98a3120828"
@@ -1600,7 +1615,7 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
-"@holochain/client@0.19.0", "@holochain/client@^0.19.0", "@holochain/client@^0.19.0-rc.0":
+"@holochain/client@0.19.0", "@holochain/client@^0.19.0":
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0.tgz#5bf3cf9ef58f2da9a060b31160daf197cfaf2346"
   integrity sha512-LAiuQwyAQlLJp5Y0uT7EKuWy2AoCxMLdTECCLOs8ALADZzhNykFi2rmeC9hzskPXMR441bOhHPBWynqzQH95Ew==
@@ -1615,16 +1630,31 @@
     lodash-es "^4.17.21"
     ws "^8.14.2"
 
-"@holochain/tryorama@0.18.0-rc.1":
-  version "0.18.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@holochain/tryorama/-/tryorama-0.18.0-rc.1.tgz#fe56224d2cc1663bbc567d0e00291f651a502fa7"
-  integrity sha512-uZFpDWor701JmFHPbJ3or7+nfmTKzdIJR2uLq6aB1oSWSeXrKZHC27/sRaSWVWQnWL2gRrbZtDgbTHAvTTS8RQ==
+"@holochain/client@0.19.0-rc.1":
+  version "0.19.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0-rc.1.tgz#91f39904ae1692c864b986b12b8bfc6e154b25a3"
+  integrity sha512-3eqc4NUV63sIu2zmQ5iW8oPY2F+R1WCGNbFBcx7mdm/59gtDvx1be/Vf8DhY8aa6/jSXdhTrUBkob7ea1fLWgw==
   dependencies:
-    "@holochain/client" "^0.19.0-rc.0"
-    get-port "^6.1.2"
+    "@bitgo/blake2b" "^3.2.4"
+    "@msgpack/msgpack" "^3.1.1"
+    emittery "^1.0.1"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.5"
+    js-sha512 "^0.9.0"
+    libsodium-wrappers "^0.7.13"
+    lodash-es "^4.17.21"
+    ws "^8.14.2"
+
+"@holochain/tryorama@^0.18.2":
+  version "0.18.2"
+  resolved "https://registry.yarnpkg.com/@holochain/tryorama/-/tryorama-0.18.2.tgz#5afc35ebbb3a2a75e793924f140607594806180d"
+  integrity sha512-6LfttoYm2kZ4Qqb64jkJGcsXdkn9rsAs1mjrsbcSiwNz+M8CFuX4lHX2Usyf6S2QMhpkA7hzqm5pG8CGS54aqQ==
+  dependencies:
+    "@holochain/client" "^0.19.0"
+    get-port "^7.0.0"
     js-yaml "^4.1.0"
     lodash "^4.17.21"
-    uuid "^8.3.2"
+    uuid "^11.0.0"
     winston "^3.8.2"
     ws "^8.11.0"
 
@@ -3116,7 +3146,7 @@
 "@theweave/api@file:libs/api":
   version "0.5.0"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.500.0"
+    "@holochain-open-dev/profiles" "^0.501.0"
     "@holochain/client" "^0.19.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
@@ -3160,7 +3190,7 @@
   version "0.5.0"
   dependencies:
     "@holochain-open-dev/elements" "^0.500.0"
-    "@holochain-open-dev/profiles" "^0.500.0"
+    "@holochain-open-dev/profiles" "^0.501.0"
     "@holochain-open-dev/stores" "^0.500.0"
     "@holochain-open-dev/utils" "^0.500.1"
     "@holochain/client" "^0.19.0"
@@ -7631,10 +7661,10 @@ get-port@7.0.0:
   resolved "https://registry.yarnpkg.com/get-port/-/get-port-7.0.0.tgz#ffcd83da826146529e307a341d7801cae351daff"
   integrity sha512-mDHFgApoQd+azgMdwylJrv2DX47ywGq1i5VFJE7fZ0dttNq3iQMfsU4IvEgBHojA3KqEudyu7Vq+oN8kNaNkWw==
 
-get-port@^6.1.2:
-  version "6.1.2"
-  resolved "https://registry.yarnpkg.com/get-port/-/get-port-6.1.2.tgz#c1228abb67ba0e17fb346da33b15187833b9c08a"
-  integrity sha512-BrGGraKm2uPqurfGVj/z97/zv8dPleC6x9JBNRTrDNtCkkRF4rPwrQXFgL7+I+q8QSdU4ntLQX2D7KIxSy8nGw==
+get-port@^7.0.0:
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/get-port/-/get-port-7.1.0.tgz#d5a500ebfc7aa705294ec2b83cc38c5d0e364fec"
+  integrity sha512-QB9NKEeDg3xxVwCCwJQ9+xycaz6pBB6iQ76wiWMl1927n0Kir6alPiP+yuiICLLU4jpMe08dXfpebuQppFA2zw==
 
 get-proto@^1.0.0, get-proto@^1.0.1:
   version "1.0.1"
@@ -13145,6 +13175,11 @@ uuid@9.0.1:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
   integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
+
+uuid@^11.0.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 uuid@^8.3.2:
   version "8.3.2"
