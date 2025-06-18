@@ -5,7 +5,6 @@ import {
   encodeHashToBase64,
   type AgentPubKey,
   InstalledAppId,
-  DnaHash,
   RoleNameCallZomeRequest,
   AppAuthenticationToken,
 } from '@holochain/client';
@@ -23,7 +22,7 @@ import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
 import { FrameNotification, GroupProfile } from '@theweave/api';
-import { MossStore } from '../moss-store';
+import { GroupStore } from './group-store';
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {
@@ -156,12 +155,14 @@ export class FoyerStore {
             fromAgent: message.from,
             timestamp: message.payload.created,
           };
+          const groupDna = encodeHashToBase64(this.groupStore.groupDnaHash);
           await window.electronAPI.notification(
             notification,
             true,
             true,
             undefined,
             `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
+            groupDna,
           );
         }
 
@@ -173,8 +174,7 @@ export class FoyerStore {
   }
 
   static async create(
-    groupDnaHash: DnaHash,
-    mossStore: MossStore,
+    groupStore: GroupStore,
     profilesStore: ProfilesStore,
     clientIn: AppClient,
     authenticationToken: AppAuthenticationToken,
@@ -182,11 +182,9 @@ export class FoyerStore {
     zomeName: string = ZOME_NAME,
   ) {
     let groupProfile: undefined | GroupProfile = undefined;
-    const groupStore = await mossStore.groupStore(groupDnaHash);
-    if (groupStore) {
-      groupProfile = await toPromise(groupStore.groupProfile);
-    }
+    groupProfile = await toPromise(groupStore.groupProfile);
     return new FoyerStore(
+      groupStore,
       groupProfile,
       profilesStore,
       clientIn,
@@ -197,6 +195,7 @@ export class FoyerStore {
   }
 
   constructor(
+    protected groupStore: GroupStore,
     protected groupProfile: GroupProfile | undefined,
     public profilesStore: ProfilesStore,
     protected clientIn: AppClient,

@@ -928,6 +928,7 @@ if (!RUNNING_WITH_COMMAND) {
         notifyOS: boolean,
         appletId: AppletId | undefined,
         appletName: string | undefined,
+        group: DnaHashB64 | undefined,
       ): void => {
         if (showInSystray && notification.urgency === 'high') {
           SYSTRAY_ICON_STATE = 'high';
@@ -949,7 +950,8 @@ if (!RUNNING_WITH_COMMAND) {
             .on('click', () => {
               console.log('Clicked on OS notification');
               createOrShowMainWindow();
-              emitToWindow(MAIN_WINDOW!, 'switch-to-applet', appletId);
+              if (appletId) emitToWindow(MAIN_WINDOW!, 'switch-to-applet', appletId);
+              else if (group) emitToWindow(MAIN_WINDOW!, 'switch-to-group', group);
               SYSTRAY_ICON_STATE = undefined;
               if (SYSTRAY) SYSTRAY.setImage(SYSTRAY_ICON_DEFAULT);
             })

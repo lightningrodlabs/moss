@@ -58,6 +58,7 @@ declare global {
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
       onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => void;
+      onSwitchToGroup: (callback: (e: any, payload: DnaHashB64) => any) => void;
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
       onWillNavigateExternal: (callback: (e: any) => any) => void;
@@ -137,6 +138,7 @@ declare global {
         notifyOS: boolean,
         appletId: AppletId | undefined,
         appletName: string | undefined,
+        group?: DnaHashB64 | undefined,
       ) => Promise<void>;
       enableDevMode: () => Promise<void>;
       disableDevMode: () => Promise<void>;

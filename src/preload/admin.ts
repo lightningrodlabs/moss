@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('deep-link-received', callback),
   onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
     ipcRenderer.on('switch-to-applet', callback),
+  onSwitchToGroup: (callback: (e: Electron.IpcRendererEvent, payload: string) => any) =>
+    ipcRenderer.on('switch-to-group', callback),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
@@ -114,8 +116,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     notifyOS: boolean,
     appletId: AppletId | undefined,
     appletName: string | undefined,
+    group?: DnaHashB64 | undefined,
   ) =>
-    ipcRenderer.invoke('notification', notification, showInSystray, notifyOS, appletId, appletName),
+    ipcRenderer.invoke(
+      'notification',
+      notification,
+      showInSystray,
+      notifyOS,
+      appletId,
+      appletName,
+      group,
+    ),
   enableDevMode: () => ipcRenderer.invoke('enable-dev-mode'),
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>

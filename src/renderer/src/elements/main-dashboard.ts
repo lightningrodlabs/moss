@@ -624,6 +624,12 @@ export class MainDashboard extends LitElement {
       }
     });
 
+    window.electronAPI.onSwitchToGroup((_, dnaHashB64) => {
+      if (dnaHashB64) {
+        this.openGroup(decodeHashFromBase64(dnaHashB64));
+      }
+    });
+
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
       console.log('Received deeplink: ', deepLink);
       try {
