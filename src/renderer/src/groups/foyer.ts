@@ -21,7 +21,7 @@ import {
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
-import { FrameNotification, GroupProfile } from '@theweave/api';
+import { FrameNotification, GroupProfile, WeaveLocation } from '@theweave/api';
 import { GroupStore } from './group-store';
 
 export const time = readable(Date.now(), function start(set) {
@@ -155,14 +155,16 @@ export class FoyerStore {
             fromAgent: message.from,
             timestamp: message.payload.created,
           };
-          const groupDna = encodeHashToBase64(this.groupStore.groupDnaHash);
+          const weaveLocation: WeaveLocation = {
+            type: 'group',
+            dnaHash: this.groupStore.groupDnaHash,
+          };
           await window.electronAPI.notification(
             notification,
             true,
             true,
-            undefined,
+            weaveLocation,
             `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
-            groupDna,
           );
         }
 

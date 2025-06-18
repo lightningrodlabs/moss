@@ -79,6 +79,7 @@ import {
   GroupProfile,
   ParentToAppletMessage,
   WAL,
+  WeaveLocation,
 } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
@@ -926,9 +927,8 @@ if (!RUNNING_WITH_COMMAND) {
         notification: FrameNotification,
         showInSystray: boolean,
         notifyOS: boolean,
-        appletId: AppletId | undefined,
+        weaveLocation: WeaveLocation | undefined,
         appletName: string | undefined,
-        group: DnaHashB64 | undefined,
       ): void => {
         if (showInSystray && notification.urgency === 'high') {
           SYSTRAY_ICON_STATE = 'high';
@@ -950,8 +950,8 @@ if (!RUNNING_WITH_COMMAND) {
             .on('click', () => {
               console.log('Clicked on OS notification');
               createOrShowMainWindow();
-              if (appletId) emitToWindow(MAIN_WINDOW!, 'switch-to-applet', appletId);
-              else if (group) emitToWindow(MAIN_WINDOW!, 'switch-to-group', group);
+              if (weaveLocation)
+                emitToWindow(MAIN_WINDOW!, 'switch-to-weave-location', weaveLocation);
               SYSTRAY_ICON_STATE = undefined;
               if (SYSTRAY) SYSTRAY.setImage(SYSTRAY_ICON_DEFAULT);
             })
