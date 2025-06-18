@@ -37,6 +37,7 @@ jobs:
         run: |
           echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
           echo "HOLOCHAIN_VERSION=$(node ./scripts/read-holochain-version.mjs)" >> $GITHUB_OUTPUT
+          shasum -a 256 workdir/group.happ
         id: version
 
       - id: create-release
