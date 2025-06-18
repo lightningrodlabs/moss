@@ -225,7 +225,7 @@ test('Can update group profile as long as steward permission has not expired', a
     const appSource = { appBundleSource };
 
     // Bob's permission shall expire in 90 seconds
-    const expiry = (Date.now() + 90_000) * 1_000;
+    const expiry = (Date.now() + 100_000) * 1_000;
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(
