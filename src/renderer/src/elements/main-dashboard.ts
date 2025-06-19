@@ -1086,7 +1086,8 @@ export class MainDashboard extends LitElement {
         return html`
           <div
             class="column"
-            style="display: flex; flex: 1; ${this._selectedTab && this._selectedTab.id === tab.id
+            style="overflow: auto; display: flex; flex: 1; ${this._selectedTab &&
+            this._selectedTab.id === tab.id
               ? ''
               : 'display: none;'}"
           >
@@ -1963,7 +1964,7 @@ export class MainDashboard extends LitElement {
 
         .side-drawer {
           position: relative;
-          max-height: calc(100vh - 124px);
+          max-height: calc(100vh - 142px);
           background: var(--sl-color-tertiary-0);
           border-top: 4px solid var(--sl-color-tertiary-50);
         }
@@ -2045,6 +2046,7 @@ export class MainDashboard extends LitElement {
           align-items: center;
           padding-left: 5px;
           height: 50px;
+          border-radius: 5px 0 5px 5px;
           color: var(--sl-color-secondary-950);
           /* background: #51ed18; */
           /* background: var(--sl-color-secondary-950); */

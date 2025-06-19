@@ -345,7 +345,7 @@ export class DebuggingPanel extends LitElement {
 
   renderGroups(groups: DnaHash[]) {
     return html`
-      <div class="column flex-scrollable-y" style="align-items: flex-start;">
+      <div class="column" style="align-items: flex-start;">
         <div class="row" style="align-items: center;">
           <div style="align-items: center; width: 300px;"></div>
           <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
@@ -457,7 +457,7 @@ export class DebuggingPanel extends LitElement {
 
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
-      <div class="column flex-scrollable-y" style="align-items: flex-start;">
+      <div class="column" style="align-items: flex-start;">
         <div class="row" style="align-items: center;">
           <div style="align-items: center; width: 300px;"></div>
           <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
@@ -615,7 +615,7 @@ export class DebuggingPanel extends LitElement {
 
   render() {
     return html`
-      <div class="column" style="height: calc(100vh - 140px); padding: 30px; overflow-y: auto;">
+      <div class="column container" style="padding: 30px;">
         <div class="warning column center-content">
           <div class="row items-center">
             <div>
@@ -673,8 +673,9 @@ export class DebuggingPanel extends LitElement {
   static styles = [
     mossStyles,
     css`
-      :host {
+      .container {
         display: flex;
+        flex: 1;
       }
 
       .warning {
