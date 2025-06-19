@@ -22,6 +22,8 @@ import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { mdiChat, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { mossStyles } from '../../shared-styles.js';
+import { sendIcon } from '../../elements/_new_design/icons.js';
 
 @localized()
 @customElement('foyer-stream')
@@ -325,7 +327,7 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="width:100%"
+            style="width:100%;"
             @sl-input=${(e) => {
               this.disabled = !e.target.value || !this._msgInput.value;
             }}
@@ -337,25 +339,14 @@ export class FoyerStream extends LitElement {
             }}
             placeholder="Message"
           ></sl-input>
-          <sl-button
-            style="margin-left:10px;"
-            circle
+          <button
+            class="moss-button"
+            style="margin-left: 10px; padding: 0 11px; border-radius: 9px;"
             ?disabled=${this.disabled}
             @click=${() => this.sendMessage()}
           >
-            <svg
-              style="margin-top:10px"
-              xmlns="http://www.w3.org/2000/svg"
-              height="16"
-              width="16"
-              viewBox="0 0 512 512"
-            >
-              <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.-->
-              <path
-                d="M16.1 260.2c-22.6 12.9-20.5 47.3 3.6 57.3L160 376V479.3c0 18.1 14.6 32.7 32.7 32.7c9.7 0 18.9-4.3 25.1-11.8l62-74.3 123.9 51.6c18.9 7.9 40.8-4.5 43.9-24.7l64-416c1.9-12.1-3.4-24.3-13.5-31.2s-23.3-7.5-34-1.4l-448 256zm52.1 25.5L409.7 90.6 190.1 336l1.2 1L68.2 285.7zM403.3 425.4L236.7 355.9 450.8 116.6 403.3 425.4z"
-              />
-            </svg>
-          </sl-button>
+            <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
+          </button>
         </div>
       </div>
     `;
@@ -363,6 +354,7 @@ export class FoyerStream extends LitElement {
 
   static styles = [
     sharedStyles,
+    mossStyles,
     css`
       .info:hover {
         opacity: 0.7;
