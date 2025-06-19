@@ -399,7 +399,7 @@ if (!RUNNING_WITH_COMMAND) {
 
   // icons
   const SYSTRAY_ICON_DEFAULT = nativeImage.createFromPath(
-    path.join(ICONS_DIRECTORY, '32x32@2x.png'),
+    path.join(ICONS_DIRECTORY, 'icon_systray_32x32@2x.png'),
   );
   const SYSTRAY_ICON_QUITTING = nativeImage.createFromPath(
     path.join(ICONS_DIRECTORY, 'transparent32x32@2x.png'),
