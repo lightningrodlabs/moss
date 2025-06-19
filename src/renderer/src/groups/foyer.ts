@@ -145,13 +145,19 @@ export class FoyerStore {
 
       if (b64From != this.myPubKeyB64) {
         if (!mainWindowFocused) {
-          const profile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
+          const myProfile = await toPromise(this.profilesStore.myProfile);
+          const myNickName = myProfile ? myProfile.entry.nickname : undefined;
+
+          const amIMentioned = message.payload.text.includes(`@${myNickName}`);
+          const urgency = amIMentioned ? 'high' : 'medium';
           const notification: FrameNotification = {
-            title: `from ${profile ? profile.entry.nickname : b64From}`,
+            title: `from ${senderNickname}`,
             body: message.payload.text,
             notification_type: 'message',
             icon_src: undefined,
-            urgency: 'high',
+            urgency,
             fromAgent: message.from,
             timestamp: message.payload.created,
           };
@@ -162,7 +168,7 @@ export class FoyerStore {
           await window.electronAPI.notification(
             notification,
             true,
-            true,
+            amIMentioned,
             weaveLocation,
             `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
           );
