@@ -212,7 +212,7 @@ export async function devSetup(
             role_name: 'group',
             zome_name: 'group',
             fn_name: 'get_unjoined_applets',
-            payload: null,
+            payload: { input: null },
           });
         if (unjoinedApplets.length === 0) {
           logDevSetup(
