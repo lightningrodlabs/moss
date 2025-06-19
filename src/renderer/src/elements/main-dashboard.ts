@@ -1166,7 +1166,7 @@ export class MainDashboard extends LitElement {
           }
         }}
       >
-        ×
+        ${closeIcon(36)}
       </div>
     `;
   }
