@@ -1,14 +1,13 @@
 [package]
-name = "group"
-version = "0.0.1"
+authors = ["matthme"]
 edition = "2021"
+name = "moss_helpers"
+version = "0.0.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-name = "group"
+name = "moss_helpers"
 
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
-group_integrity = { workspace = true }
-moss_helpers = { workspace = true }

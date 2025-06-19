@@ -41,7 +41,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     const permissionTypeAlice: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_my_permission_type',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(permissionTypeAlice.type === 'Progenitor');
@@ -49,7 +49,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     const permissionTypeAlice2: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_permission_type',
-      payload: alicePubKey,
+      payload: { input: alicePubKey },
     });
 
     assert(permissionTypeAlice2.type === 'Progenitor');
@@ -58,7 +58,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     const permissionTypeBob: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_permission_type',
-      payload: bobPubKey,
+      payload: { input: bobPubKey },
     });
 
     assert(permissionTypeBob.type === 'Steward');
@@ -78,7 +78,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     const permissionTypeBob2: PermissionType = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_my_permission_type',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(permissionTypeBob2.type === 'Steward');
@@ -98,7 +98,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
     const permissionTypeBob3: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_permission_type',
-      payload: bobPubKey,
+      payload: { input: bobPubKey },
     });
 
     assert(permissionTypeBob3.type === 'Steward');
@@ -130,7 +130,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     // Set up the app to be installed
     const appSource = { appBundleSource };
 
-    const expiry = (Date.now() + 90_000) * 1_000;
+    const expiry = (Date.now() + 100_000) * 1_000;
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(
@@ -147,7 +147,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const permissionTypeBob: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_permission_type',
-      payload: bobPubKey,
+      payload: { input: bobPubKey },
     });
 
     assert(permissionTypeBob.type === 'Steward');
@@ -167,7 +167,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const permissionTypeBob2: PermissionType = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_my_permission_type',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(permissionTypeBob2.type === 'Steward');
@@ -191,7 +191,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const permissionTypeBob3: PermissionType = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_permission_type',
-      payload: bobPubKey,
+      payload: { input: bobPubKey },
     });
 
     assert(permissionTypeBob3.type === 'Member');
@@ -200,7 +200,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const permissionTypeBob4: PermissionType = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_my_permission_type',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(permissionTypeBob4.type === 'Member');
@@ -251,7 +251,7 @@ test('Steward can nominate additional stewards if their steward permission is no
     const permissionTypeNbnoralice: PermissionType = await groupCellNeitherBobNorAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_my_permission_type',
-      payload: null,
+      payload: { input: null },
     });
 
     assert(permissionTypeNbnoralice.type === 'Steward');

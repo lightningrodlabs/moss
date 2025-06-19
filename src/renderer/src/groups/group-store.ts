@@ -706,11 +706,17 @@ export class GroupStore {
   groupProfile = reloadableLazyLoadAndPollUntil(
     async () => {
       // only poll in case groupProfile is not yet defined
-      const entryRecord = await this.groupClient.getGroupProfile();
+      const entryRecord = await this.groupClient.getGroupProfile(false);
       return entryRecord?.entry;
     },
     undefined,
     3000,
+    'Failed to fetch group profile',
+    async () => {
+      // only poll in case groupProfile is not yet defined
+      const entryRecord = await this.groupClient.getGroupProfile(true);
+      return entryRecord?.entry;
+    },
   );
 
   groupDescription = reloadableLazyLoadAndPollUntil(
@@ -720,6 +726,7 @@ export class GroupStore {
     },
     undefined,
     10000,
+    'Failed to get group description',
   );
 
   groupAppletsMetaData = lazyReloadableStore(async () =>

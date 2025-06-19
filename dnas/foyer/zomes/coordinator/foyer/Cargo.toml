@@ -10,4 +10,5 @@ name = "foyer"
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
+moss_helpers = { workspace = true }
 foyer_integrity = { path = '../../integrity/foyer' }

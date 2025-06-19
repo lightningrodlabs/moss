@@ -1557,6 +1557,21 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
+"@holochain-open-dev/profiles@^0.501.0":
+  version "0.501.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.501.0.tgz#5ccc8abf1a4fe96362865f58f771207a14a1a28c"
+  integrity sha512-sOBnp2sDuVXCV8m/AB/XMZM1lyCeKWR7PNXxugJhPgfK7NBvKyYMVkb2AZMmg/1HTo1iJnMQx28k8pL7Wj6E8g==
+  dependencies:
+    "@holochain-open-dev/elements" "^0.500.0"
+    "@holochain-open-dev/stores" "^0.500.0"
+    "@holochain-open-dev/utils" "^0.500.0"
+    "@holochain/client" "0.19.0-rc.1"
+    "@lit/context" "^1.0.1"
+    "@lit/localize" "^0.12.0"
+    "@mdi/js" "^7.1.96"
+    "@shoelace-style/shoelace" "^2.11.0"
+    lit "^3.0.2"
+
 "@holochain-open-dev/stores@^0.500.0":
   version "0.500.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.500.0.tgz#2d0674a8fad647f8166ad6200c547c98a3120828"
@@ -1604,6 +1619,21 @@
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0.tgz#5bf3cf9ef58f2da9a060b31160daf197cfaf2346"
   integrity sha512-LAiuQwyAQlLJp5Y0uT7EKuWy2AoCxMLdTECCLOs8ALADZzhNykFi2rmeC9hzskPXMR441bOhHPBWynqzQH95Ew==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@msgpack/msgpack" "^3.1.1"
+    emittery "^1.0.1"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.5"
+    js-sha512 "^0.9.0"
+    libsodium-wrappers "^0.7.13"
+    lodash-es "^4.17.21"
+    ws "^8.14.2"
+
+"@holochain/client@0.19.0-rc.1":
+  version "0.19.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.19.0-rc.1.tgz#91f39904ae1692c864b986b12b8bfc6e154b25a3"
+  integrity sha512-3eqc4NUV63sIu2zmQ5iW8oPY2F+R1WCGNbFBcx7mdm/59gtDvx1be/Vf8DhY8aa6/jSXdhTrUBkob7ea1fLWgw==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
     "@msgpack/msgpack" "^3.1.1"
@@ -3116,7 +3146,7 @@
 "@theweave/api@file:libs/api":
   version "0.5.0"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.500.0"
+    "@holochain-open-dev/profiles" "^0.501.0"
     "@holochain/client" "^0.19.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
@@ -3160,7 +3190,7 @@
   version "0.5.0"
   dependencies:
     "@holochain-open-dev/elements" "^0.500.0"
-    "@holochain-open-dev/profiles" "^0.500.0"
+    "@holochain-open-dev/profiles" "^0.501.0"
     "@holochain-open-dev/stores" "^0.500.0"
     "@holochain-open-dev/utils" "^0.500.1"
     "@holochain/client" "^0.19.0"

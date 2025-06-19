@@ -49,14 +49,14 @@ test('join a cloned cell and test unjoined cells', async () => {
     const clonedCellEntryHash: EntryHash = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'join_cloned_cell',
-      payload: cloneCell,
+      payload: { input: cloneCell },
     });
 
     //- Alice shuould now have zero unjoined cloned cells
     const unjoinedClones: EntryHash[] = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_unjoined_cloned_cells_for_applet',
-      payload: appletHash,
+      payload: { input: appletHash },
     });
 
     console.log('unjoinedClones', unjoinedClones);
@@ -69,7 +69,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const cloneEntryHashes: EntryHash[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_all_cloned_cell_entry_hashes_for_applet',
-      payload: appletHash,
+      payload: { input: appletHash },
     });
 
     assert(
@@ -80,7 +80,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const cloneEntries: AppletClonedCell[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_all_cloned_cells_for_applet',
-      payload: appletHash,
+      payload: { input: appletHash },
     });
 
     assert(cloneEntries.length === 1);
@@ -89,7 +89,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const unjoinedClonesBob: EntryHash[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_unjoined_cloned_cells_for_applet',
-      payload: appletHash,
+      payload: { input: appletHash },
     });
 
     assert(
@@ -101,7 +101,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const appletClonedCell: AppletClonedCell = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_applet_cloned_cell',
-      payload: unjoinedClonesBob[0],
+      payload: { input: unjoinedClonesBob[0] },
     });
 
     assert(!!appletClonedCell);
@@ -110,7 +110,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const clonedCellEntryHashBob = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'join_cloned_cell',
-      payload: cloneCell,
+      payload: { input: cloneCell },
     });
 
     assert.deepEqual(clonedCellEntryHash, clonedCellEntryHashBob);
@@ -118,7 +118,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const unjoinedClonesBob2: EntryHash[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_unjoined_cloned_cells_for_applet',
-      payload: appletHash,
+      payload: { input: appletHash },
     });
 
     assert(unjoinedClonesBob2.length === 0);
@@ -128,7 +128,7 @@ test('join a cloned cell and test unjoined cells', async () => {
     const appletClonedCell2: AppletClonedCell = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_applet_cloned_cell',
-      payload: clonedCellEntryHashBob,
+      payload: { input: clonedCellEntryHashBob },
     });
 
     assert(!!appletClonedCell2);

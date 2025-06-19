@@ -58,7 +58,7 @@ test('Add and remove tags from asset', async () => {
     const tagsReadByAlice: string[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_tags_for_asset',
-      payload: wal,
+      payload: { input: wal },
     });
 
     assert(
@@ -73,7 +73,7 @@ test('Add and remove tags from asset', async () => {
     const tagsReadByBob: string[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_tags_for_asset',
-      payload: wal,
+      payload: { input: wal },
     });
 
     assert(
@@ -87,8 +87,10 @@ test('Add and remove tags from asset', async () => {
       zome_name: 'assets',
       fn_name: 'remove_tags_from_asset',
       payload: {
-        wal,
-        tags: ['random tag'],
+        input: {
+          wal,
+          tags: ['random tag'],
+        },
       },
     });
 
@@ -96,7 +98,7 @@ test('Add and remove tags from asset', async () => {
     const tagsReadByBob2: string[] = await assetsCellBob.callZome({
       zome_name: 'assets',
       fn_name: 'get_tags_for_asset',
-      payload: wal,
+      payload: { input: wal },
     });
 
     assert(
@@ -111,7 +113,7 @@ test('Add and remove tags from asset', async () => {
     const tagsReadByAlice2: string[] = await assetsCellAlice.callZome({
       zome_name: 'assets',
       fn_name: 'get_tags_for_asset',
-      payload: wal,
+      payload: { input: wal },
     });
 
     assert(

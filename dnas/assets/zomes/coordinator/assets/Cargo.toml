@@ -10,5 +10,6 @@ name = "assets"
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
+moss_helpers = { workspace = true }
 assets_integrity = { workspace = true }
 itertools = "0.13.0"
