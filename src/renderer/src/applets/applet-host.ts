@@ -490,7 +490,7 @@ export async function handleAppletIframeMessage(
                 notification,
                 notificationTypeSettings.showInSystray,
                 notificationTypeSettings.allowOSNotification && notification.urgency === 'high',
-                appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
+                appletStore ? { type: 'applet', appletHash: appletStore.appletHash } : undefined,
                 appletStore ? appletStore.applet.custom_name : undefined,
               );
             }
