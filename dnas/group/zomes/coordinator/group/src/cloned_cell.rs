@@ -1,21 +1,22 @@
 use group_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 
 /// Registers the cloned cell in the group DNA. This is probably mainly useful
 /// for always-online nodes and has implications for privacy in case that there
 /// are cloned cells that are not supposed to be joined by all group members
 #[hdk_extern]
-fn join_cloned_cell(input: AppletClonedCell) -> ExternResult<EntryHash> {
-    let entry_hash = hash_entry(&input)?;
+fn join_cloned_cell(input: ZomeFnInput<AppletClonedCell>) -> ExternResult<EntryHash> {
+    let entry_hash = hash_entry(&input.input)?;
 
     // try to get the entry and only create it if not found
-    let maybe_entry = get(entry_hash.clone(), GetOptions::default())?;
+    let maybe_entry = get(entry_hash.clone(), input.get_options())?;
 
     if let None = maybe_entry {
-        create_entry(EntryTypes::AppletClonedCell(input.clone()))?;
+        create_entry(EntryTypes::AppletClonedCell(input.input.clone()))?;
         // Create a link from the Applet entry to make this cloned cell be discoverable
         create_link(
-            input.applet_hash.clone(),
+            input.input.applet_hash.clone(),
             entry_hash.clone(),
             LinkTypes::AppletToAppletClonedCell,
             (),
@@ -26,7 +27,7 @@ fn join_cloned_cell(input: AppletClonedCell) -> ExternResult<EntryHash> {
     create_entry(EntryTypes::AppletClonedCellPrivate(
         AppletClonedCellPrivate {
             public_entry_hash: entry_hash.clone(),
-            applet_cloned_cell: input,
+            applet_cloned_cell: input.input,
         },
     ))?;
 
@@ -36,11 +37,15 @@ fn join_cloned_cell(input: AppletClonedCell) -> ExternResult<EntryHash> {
 /// Gets all cloned cells related to an Applet
 #[hdk_extern]
 fn get_all_cloned_cell_entry_hashes_for_applet(
-    applet_hash: EntryHash,
+    applet_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<Vec<EntryHash>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(applet_hash.clone(), LinkTypes::AppletToAppletClonedCell)?
-            .build(),
+        GetLinksInputBuilder::try_new(
+            applet_hash.input.clone(),
+            LinkTypes::AppletToAppletClonedCell,
+        )?
+        .get_options(applet_hash.into())
+        .build(),
     )?;
     Ok(links
         .into_iter()
@@ -50,10 +55,16 @@ fn get_all_cloned_cell_entry_hashes_for_applet(
 
 /// Gets all cloned cells related to an Applet
 #[hdk_extern]
-fn get_all_cloned_cells_for_applet(applet_hash: EntryHash) -> ExternResult<Vec<AppletClonedCell>> {
+fn get_all_cloned_cells_for_applet(
+    applet_hash: ZomeFnInput<EntryHash>,
+) -> ExternResult<Vec<AppletClonedCell>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(applet_hash.clone(), LinkTypes::AppletToAppletClonedCell)?
-            .build(),
+        GetLinksInputBuilder::try_new(
+            applet_hash.input.clone(),
+            LinkTypes::AppletToAppletClonedCell,
+        )?
+        .get_options(applet_hash.clone().into())
+        .build(),
     )?;
 
     let get_input: Vec<GetInput> = links
@@ -66,7 +77,7 @@ fn get_all_cloned_cells_for_applet(applet_hash: EntryHash) -> ExternResult<Vec<A
                         "Link target is not an entry hash".to_string()
                     )))?
                     .into(),
-                GetOptions::default(),
+                applet_hash.get_options(),
             ))
         })
         .collect::<ExternResult<Vec<GetInput>>>()?;
@@ -80,7 +91,9 @@ fn get_all_cloned_cells_for_applet(applet_hash: EntryHash) -> ExternResult<Vec<A
 }
 
 #[hdk_extern]
-fn get_unjoined_cloned_cells_for_applet(applet_hash: EntryHash) -> ExternResult<Vec<EntryHash>> {
+fn get_unjoined_cloned_cells_for_applet(
+    applet_hash: ZomeFnInput<EntryHash>,
+) -> ExternResult<Vec<EntryHash>> {
     let entry_type: EntryType = UnitEntryTypes::AppletClonedCellPrivate.try_into()?;
     let filter = ChainQueryFilter::new()
         .entry_type(entry_type)
@@ -110,15 +123,17 @@ fn get_unjoined_cloned_cells_for_applet(applet_hash: EntryHash) -> ExternResult<
 
 #[hdk_extern]
 fn get_applet_cloned_cell(
-    applet_cloned_cell_entry_hash: EntryHash,
+    applet_cloned_cell_entry_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<Option<AppletClonedCell>> {
     // First try getting it from the source chain
-    match get_private_applet_cloned_cell_copy(applet_cloned_cell_entry_hash.clone()) {
+    match get_private_applet_cloned_cell_copy(applet_cloned_cell_entry_hash.input.clone()) {
         Ok(Some(applet_cloned_cell_copy)) => Ok(Some(applet_cloned_cell_copy.applet_cloned_cell)),
         // Otherwise try getting it from the network
         Ok(None) => {
-            let maybe_applet_cloned_cell_record =
-                get(applet_cloned_cell_entry_hash, GetOptions::default())?;
+            let maybe_applet_cloned_cell_record = get(
+                applet_cloned_cell_entry_hash.input.clone(),
+                applet_cloned_cell_entry_hash.get_options(),
+            )?;
             match maybe_applet_cloned_cell_record {
                 Some(record) => record
                     .entry

@@ -29,7 +29,7 @@ export class MossProfilePrompt extends LitElement {
 
   /** Private properties */
 
-  myProfile = new StoreSubscriber(
+  myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
     this,
     () => this.store.myProfile,
     () => [this.store],

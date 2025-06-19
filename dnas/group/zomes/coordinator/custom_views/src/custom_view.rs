@@ -1,5 +1,6 @@
 use custom_views_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 #[hdk_extern]
 pub fn create_custom_view(custom_view: CustomView) -> ExternResult<Record> {
     let custom_view_hash = create_entry(&EntryTypes::CustomView(custom_view.clone()))?;
@@ -16,13 +17,21 @@ pub fn create_custom_view(custom_view: CustomView) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_custom_view(original_custom_view_hash: ActionHash) -> ExternResult<Option<Record>> {
+pub fn get_custom_view(
+    original_custom_view_hash: ZomeFnInput<ActionHash>,
+) -> ExternResult<Option<Record>> {
     get_latest_custom_view(original_custom_view_hash)
 }
-fn get_latest_custom_view(custom_view_hash: ActionHash) -> ExternResult<Option<Record>> {
-    let details = get_details(custom_view_hash, GetOptions::default())?.ok_or(wasm_error!(
-        WasmErrorInner::Guest("CustomView not found".into())
-    ))?;
+fn get_latest_custom_view(
+    custom_view_hash: ZomeFnInput<ActionHash>,
+) -> ExternResult<Option<Record>> {
+    let details = get_details(
+        custom_view_hash.input.clone(),
+        custom_view_hash.get_options(),
+    )?
+    .ok_or(wasm_error!(WasmErrorInner::Guest(
+        "CustomView not found".into()
+    )))?;
     let record_details = match details {
         Details::Entry(_) => Err(wasm_error!(WasmErrorInner::Guest(
             "Malformed details".into()
@@ -33,7 +42,10 @@ fn get_latest_custom_view(custom_view_hash: ActionHash) -> ExternResult<Option<R
         return Ok(None);
     }
     match record_details.updates.last() {
-        Some(update) => get_latest_custom_view(update.action_address().clone()),
+        Some(update) => get_latest_custom_view(ZomeFnInput::new(
+            update.action_address().clone(),
+            custom_view_hash.local,
+        )),
         None => Ok(Some(record_details.record)),
     }
 }

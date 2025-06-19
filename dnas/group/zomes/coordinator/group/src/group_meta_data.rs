@@ -1,5 +1,6 @@
 use group_integrity::*;
 use hdk::prelude::*;
+use moss_helpers::ZomeFnInput;
 
 use crate::get_latest_record_from_links;
 #[hdk_extern]
@@ -19,11 +20,12 @@ pub fn set_group_meta_data(group_meta_data: GroupMetaData) -> ExternResult<Recor
 }
 
 #[hdk_extern]
-pub fn get_group_meta_data(name: String) -> ExternResult<Option<Record>> {
-    let path = Path::from(name.as_str());
+pub fn get_group_meta_data(input: ZomeFnInput<String>) -> ExternResult<Option<Record>> {
+    let path = Path::from(input.input.as_str());
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::GroupMetaDataToAnchor)?
+            .get_options(input.clone().into())
             .build(),
     )?;
-    get_latest_record_from_links(links)
+    get_latest_record_from_links(links, input.into())
 }

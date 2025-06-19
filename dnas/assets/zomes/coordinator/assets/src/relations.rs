@@ -3,6 +3,7 @@ use core::str;
 use assets_integrity::*;
 use hdk::prelude::*;
 use itertools::Itertools;
+use moss_helpers::ZomeFnInput;
 
 use crate::{associations::get_tags_for_asset, Signal};
 
@@ -34,15 +35,17 @@ pub struct RelateAssetsInput {
 /// encoded into that format client-side because a WAL in general can be any arbitrary
 /// javascript object
 #[hdk_extern]
-pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelationWithTags> {
+pub fn add_asset_relation(
+    input: ZomeFnInput<RelateAssetsInput>,
+) -> ExternResult<AssetRelationWithTags> {
     let asset_relation = AssetRelation {
-        src_wal: input.src_wal.clone(),
-        dst_wal: input.dst_wal.clone(),
+        src_wal: input.input.src_wal.clone(),
+        dst_wal: input.input.dst_wal.clone(),
     };
 
     // 1. Create entry and add it to the ALL_ASSET_RELATIONS_ANCHOR if no entry exists yet
     let relation_hash = hash_entry(asset_relation.clone())?;
-    let record = match get(relation_hash.clone(), GetOptions::default()) {
+    let record = match get(relation_hash.clone(), input.get_options()) {
         Ok(Some(r)) => r,
         _ => {
             let action_hash = create_entry(&EntryTypes::AssetRelation(asset_relation.clone()))?;
@@ -60,20 +63,23 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
     };
 
     // 2. Add tags to the asset relation entry hash
-    add_tags_to_asset_relation(AddTagsToAssetRelationInput {
-        relation_hash: relation_hash.clone(),
-        tags: input.tags.clone(),
-    })?;
+    add_tags_to_asset_relation(ZomeFnInput::new(
+        AddTagsToAssetRelationInput {
+            relation_hash: relation_hash.clone(),
+            tags: input.input.tags.clone(),
+        },
+        input.local,
+    ))?;
 
     // 3. Create links from the associated WALs with the WAL of the opposite end of the link in the tag
-    let src_wal_entry_hash = hash_entry(input.src_wal.clone())?;
+    let src_wal_entry_hash = hash_entry(input.input.src_wal.clone())?;
     create_link(
         src_wal_entry_hash,
         relation_hash.clone(),
         LinkTypes::SrcWalToAssetRelations,
         (),
     )?;
-    let dst_wal_entry_hash = hash_entry(input.dst_wal.clone())?;
+    let dst_wal_entry_hash = hash_entry(input.input.dst_wal.clone())?;
     create_link(
         dst_wal_entry_hash,
         relation_hash.clone(),
@@ -82,9 +88,9 @@ pub fn add_asset_relation(input: RelateAssetsInput) -> ExternResult<AssetRelatio
     )?;
 
     let asset_relation_with_tags = AssetRelationWithTags {
-        src_wal: input.src_wal,
-        dst_wal: input.dst_wal,
-        tags: input.tags,
+        src_wal: input.input.src_wal,
+        dst_wal: input.input.dst_wal,
+        tags: input.input.tags,
         relation_hash,
         created_at: record.action().timestamp(),
     };
@@ -104,13 +110,15 @@ pub struct AddTagsToAssetRelationInput {
 
 /// Adds tags to an asset relation
 #[hdk_extern]
-pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternResult<()> {
+pub fn add_tags_to_asset_relation(
+    input: ZomeFnInput<AddTagsToAssetRelationInput>,
+) -> ExternResult<()> {
     // 1. Get the AssetRelation entry to a) check that it exists and b) be able to return
     //    the src_wal and dst_wal in the signal
-    let asset_relation_record =
-        get(input.relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
-            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
-        ))?;
+    let asset_relation_record = get(input.input.relation_hash.clone(), input.get_options())?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found for the provided hash.".into()
+        )))?;
 
     let asset_relation = asset_relation_record
         .entry()
@@ -125,11 +133,11 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
             "No AssetRelation entry found in the Record associated to the provided hash.".into()
         )))?;
 
-    for tag in input.tags.clone() {
+    for tag in input.input.tags.clone() {
         let rt_entry_hash = relationship_tag_entry_hash(&tag)?;
         let backlink_action_hash = create_link(
             rt_entry_hash.clone(),
-            input.relation_hash.clone(),
+            input.input.relation_hash.clone(),
             LinkTypes::RelationshipTagToAssetRelation,
             (),
         )?;
@@ -145,7 +153,7 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
             })?
             .into_vec();
         create_link(
-            input.relation_hash.clone(),
+            input.input.relation_hash.clone(),
             rt_entry_hash,
             LinkTypes::AssetRelationToRelationshipTags,
             LinkTag(link_tag_content_serialized),
@@ -153,20 +161,20 @@ pub fn add_tags_to_asset_relation(input: AddTagsToAssetRelationInput) -> ExternR
     }
 
     emit_signal(Signal::RelationTagsAdded {
-        relation_hash: input.relation_hash,
+        relation_hash: input.input.relation_hash,
         src_wal: asset_relation.src_wal,
         dst_wal: asset_relation.dst_wal,
-        tags: input.tags,
+        tags: input.input.tags,
     })?;
     Ok(())
 }
 
 #[hdk_extern]
-pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
-    let asset_relation_record =
-        get(relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
-            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
-        ))?;
+pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
+    let asset_relation_record = get(relation_hash.input.clone(), relation_hash.get_options())?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found for the provided hash.".into()
+        )))?;
 
     let asset_relation = asset_relation_record
         .entry()
@@ -192,11 +200,12 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
+            .get_options(relation_hash.get_strategy())
             .build(),
     )?;
     for link in links {
         if let Some(target) = link.target.into_entry_hash() {
-            if target.eq(&relation_hash) {
+            if target.eq(&relation_hash.input) {
                 delete_link(link.create_link_hash)?;
             }
         }
@@ -209,10 +218,11 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
     let src_wal_entry_hash = hash_entry(asset_relation.src_wal.clone())?;
     let src_wal_links = get_links(
         GetLinksInputBuilder::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?
+            .get_options(relation_hash.get_strategy())
             .build(),
     )?;
     for link in src_wal_links {
-        if link.target.clone().into_hash() == relation_hash.clone().into() {
+        if link.target.clone().into_hash() == relation_hash.input.clone().into() {
             delete_link(link.create_link_hash)?;
         }
     }
@@ -221,10 +231,11 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
     let dst_wal_entry_hash = hash_entry(asset_relation.dst_wal.clone())?;
     let dst_wal_links = get_links(
         GetLinksInputBuilder::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?
+            .get_options(relation_hash.get_strategy())
             .build(),
     )?;
     for link in dst_wal_links {
-        if link.target.clone().into_hash() == relation_hash.clone().into() {
+        if link.target.clone().into_hash() == relation_hash.input.clone().into() {
             delete_link(link.create_link_hash)?;
         }
     }
@@ -233,7 +244,7 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
         relation: AssetRelationAndHash {
             src_wal: asset_relation.src_wal,
             dst_wal: asset_relation.dst_wal,
-            relation_hash,
+            relation_hash: relation_hash.input,
             created_at: asset_relation_record.action().timestamp(),
         },
     })?;
@@ -241,12 +252,15 @@ pub fn remove_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
     Ok(())
 }
 
-pub fn remove_all_tags_from_asset_relation(relation_hash: EntryHash) -> ExternResult<()> {
+pub fn remove_all_tags_from_asset_relation(
+    relation_hash: ZomeFnInput<EntryHash>,
+) -> ExternResult<()> {
     let links = get_links(
         GetLinksInputBuilder::try_new(
-            relation_hash.clone(),
+            relation_hash.input.clone(),
             LinkTypes::AssetRelationToRelationshipTags,
         )?
+        .get_options(relation_hash.get_strategy())
         .build(),
     )?;
     for link in links {
@@ -271,14 +285,14 @@ pub struct RemoveTagsFromAssetRelationInput {
 
 #[hdk_extern]
 pub fn remove_tags_from_asset_relation(
-    input: RemoveTagsFromAssetRelationInput,
+    input: ZomeFnInput<RemoveTagsFromAssetRelationInput>,
 ) -> ExternResult<()> {
     // 1. Get the AssetRelation entry to a) check that it exists and b) be able to return
     //    the src_wal and dst_wal in the signal
-    let asset_relation_record =
-        get(input.relation_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
-            WasmErrorInner::Guest("No AssetRelation entry found for the provided hash.".into())
-        ))?;
+    let asset_relation_record = get(input.input.relation_hash.clone(), input.get_options())?
+        .ok_or(wasm_error!(WasmErrorInner::Guest(
+            "No AssetRelation entry found for the provided hash.".into()
+        )))?;
 
     let asset_relation = asset_relation_record
         .entry()
@@ -295,9 +309,10 @@ pub fn remove_tags_from_asset_relation(
 
     let links = get_links(
         GetLinksInputBuilder::try_new(
-            input.relation_hash.clone(),
+            input.input.relation_hash.clone(),
             LinkTypes::AssetRelationToRelationshipTags,
         )?
+        .get_options(input.get_strategy())
         .build(),
     )?;
     for link in links {
@@ -309,7 +324,7 @@ pub fn remove_tags_from_asset_relation(
                 )))
             }) {
             Ok(link_tag_content) => {
-                if input.tags.contains(&link_tag_content.tag) {
+                if input.input.tags.contains(&link_tag_content.tag) {
                     delete_link(link.create_link_hash)?;
                     delete_link(link_tag_content.backlink_action_hash)?;
                 }
@@ -320,27 +335,30 @@ pub fn remove_tags_from_asset_relation(
         }
     }
     emit_signal(Signal::RelationTagsRemoved {
-        relation_hash: input.relation_hash,
+        relation_hash: input.input.relation_hash,
         src_wal: asset_relation.src_wal,
         dst_wal: asset_relation.dst_wal,
-        tags: input.tags,
+        tags: input.input.tags,
     })?;
     Ok(())
 }
 
 #[hdk_extern]
-pub fn get_asset_relation_by_hash(relation_hash: EntryHash) -> ExternResult<Option<AssetRelation>> {
-    match get(relation_hash, GetOptions::default())? {
+pub fn get_asset_relation_by_hash(
+    relation_hash: ZomeFnInput<EntryHash>,
+) -> ExternResult<Option<AssetRelation>> {
+    match get(relation_hash.input.clone(), relation_hash.get_options())? {
         Some(r) => Ok(r.entry().to_app_option::<AssetRelation>().ok().flatten()),
         None => Ok(None),
     }
 }
 
 #[hdk_extern]
-pub fn get_all_asset_relation_hashes() -> ExternResult<Vec<EntryHash>> {
+pub fn get_all_asset_relation_hashes(input: ZomeFnInput<()>) -> ExternResult<Vec<EntryHash>> {
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
+            .get_options(input.get_strategy())
             .build(),
     )?;
     Ok(links
@@ -350,17 +368,18 @@ pub fn get_all_asset_relation_hashes() -> ExternResult<Vec<EntryHash>> {
 }
 
 #[hdk_extern]
-pub fn get_all_asset_relations() -> ExternResult<Vec<AssetRelationAndHash>> {
+pub fn get_all_asset_relations(input: ZomeFnInput<()>) -> ExternResult<Vec<AssetRelationAndHash>> {
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
         GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
+            .get_options(input.get_strategy())
             .build(),
     )?;
 
     let get_input: Vec<GetInput> = links
         .into_iter()
         .filter_map(|l| l.target.into_entry_hash())
-        .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
+        .map(|target| Ok(GetInput::new(target.into(), input.get_options())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
 
     let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
@@ -390,8 +409,10 @@ pub fn get_all_asset_relations() -> ExternResult<Vec<AssetRelationAndHash>> {
 }
 
 #[hdk_extern]
-pub fn get_all_asset_relations_with_tags() -> ExternResult<Vec<AssetRelationWithTags>> {
-    let asset_relations = get_all_asset_relations(())?;
+pub fn get_all_asset_relations_with_tags(
+    input: ZomeFnInput<()>,
+) -> ExternResult<Vec<AssetRelationWithTags>> {
+    let asset_relations = get_all_asset_relations(input.clone())?;
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
@@ -399,6 +420,7 @@ pub fn get_all_asset_relations_with_tags() -> ExternResult<Vec<AssetRelationWith
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
             )?
+            .get_options(input.get_strategy())
             .build(),
         )?;
         let tags = links
@@ -424,9 +446,9 @@ pub fn get_all_asset_relations_with_tags() -> ExternResult<Vec<AssetRelationWith
 
 #[hdk_extern]
 pub fn get_outgoing_asset_relations_with_tags(
-    src_wal: WAL,
+    src_wal: ZomeFnInput<WAL>,
 ) -> ExternResult<Vec<AssetRelationWithTags>> {
-    let asset_relations = get_outgoing_asset_relations(src_wal)?;
+    let asset_relations = get_outgoing_asset_relations(src_wal.clone())?;
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
@@ -434,6 +456,7 @@ pub fn get_outgoing_asset_relations_with_tags(
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
             )?
+            .get_options(src_wal.get_strategy())
             .build(),
         )?;
         let tags = links
@@ -458,17 +481,20 @@ pub fn get_outgoing_asset_relations_with_tags(
 }
 
 #[hdk_extern]
-pub fn get_outgoing_asset_relations(src_wal: WAL) -> ExternResult<Vec<AssetRelationAndHash>> {
-    let src_wal_entry_hash = hash_entry(src_wal)?;
+pub fn get_outgoing_asset_relations(
+    src_wal: ZomeFnInput<WAL>,
+) -> ExternResult<Vec<AssetRelationAndHash>> {
+    let src_wal_entry_hash = hash_entry(&src_wal.input)?;
     let src_wal_links = get_links(
         GetLinksInputBuilder::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?
+            .get_options(src_wal.get_strategy())
             .build(),
     )?;
     let get_input: Vec<GetInput> = src_wal_links
         .into_iter()
         .filter_map(|l| l.target.into_entry_hash())
         .unique() // We filter out duplicate links here
-        .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
+        .map(|target| Ok(GetInput::new(target.into(), src_wal.get_options())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
     let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
@@ -505,9 +531,9 @@ pub fn get_outgoing_asset_relations(src_wal: WAL) -> ExternResult<Vec<AssetRelat
 
 #[hdk_extern]
 pub fn get_incoming_asset_relations_with_tags(
-    dst_wal: WAL,
+    dst_wal: ZomeFnInput<WAL>,
 ) -> ExternResult<Vec<AssetRelationWithTags>> {
-    let asset_relations = get_incoming_asset_relations(dst_wal)?;
+    let asset_relations = get_incoming_asset_relations(dst_wal.clone())?;
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
@@ -515,6 +541,7 @@ pub fn get_incoming_asset_relations_with_tags(
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
             )?
+            .get_options(dst_wal.get_strategy())
             .build(),
         )?;
         let tags = links
@@ -539,17 +566,20 @@ pub fn get_incoming_asset_relations_with_tags(
 }
 
 #[hdk_extern]
-pub fn get_incoming_asset_relations(dst_wal: WAL) -> ExternResult<Vec<AssetRelationAndHash>> {
-    let dst_wal_entry_hash = hash_entry(dst_wal)?;
+pub fn get_incoming_asset_relations(
+    dst_wal: ZomeFnInput<WAL>,
+) -> ExternResult<Vec<AssetRelationAndHash>> {
+    let dst_wal_entry_hash = hash_entry(&dst_wal.input)?;
     let dst_wal_links = get_links(
         GetLinksInputBuilder::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?
+            .get_options(dst_wal.get_strategy())
             .build(),
     )?;
     let get_input: Vec<GetInput> = dst_wal_links
         .into_iter()
         .filter_map(|l| l.target.into_entry_hash())
         .unique() // We filter out duplicate links here
-        .map(|target| Ok(GetInput::new(target.into(), GetOptions::default())))
+        .map(|target| Ok(GetInput::new(target.into(), dst_wal.get_options())))
         .collect::<ExternResult<Vec<GetInput>>>()?;
     let records: Vec<Option<Record>> = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let mut asset_relations: Vec<AssetRelationAndHash> = Vec::new();
@@ -586,11 +616,12 @@ pub fn get_incoming_asset_relations(dst_wal: WAL) -> ExternResult<Vec<AssetRelat
 
 #[hdk_extern]
 pub fn get_asset_relations_for_relationship_tag(
-    tag: String,
+    tag: ZomeFnInput<String>,
 ) -> ExternResult<Vec<AssetRelationAndHash>> {
-    let rt_entry_hash = relationship_tag_entry_hash(&tag)?;
+    let rt_entry_hash = relationship_tag_entry_hash(&tag.input)?;
     let links = get_links(
         GetLinksInputBuilder::try_new(rt_entry_hash, LinkTypes::RelationshipTagToAssetRelation)?
+            .get_options(tag.get_strategy())
             .build(),
     )?;
     let get_input: Vec<GetInput> = links
@@ -603,7 +634,7 @@ pub fn get_asset_relations_for_relationship_tag(
                         "Link target is not an entry hash".to_string()
                     )))?
                     .into(),
-                GetOptions::default(),
+                tag.get_options(),
             ))
         })
         .collect::<ExternResult<Vec<GetInput>>>()?;
@@ -649,12 +680,12 @@ pub struct RelationsForWal {
 }
 
 #[hdk_extern]
-pub fn get_all_relations_for_wal(wal: WAL) -> ExternResult<RelationsForWal> {
+pub fn get_all_relations_for_wal(wal: ZomeFnInput<WAL>) -> ExternResult<RelationsForWal> {
     let tags = get_tags_for_asset(wal.clone())?;
     let linked_from = get_outgoing_asset_relations_with_tags(wal.clone())?;
     let linked_to = get_incoming_asset_relations_with_tags(wal.clone())?;
     Ok(RelationsForWal {
-        wal,
+        wal: wal.input,
         tags,
         linked_to,
         linked_from,
@@ -662,10 +693,15 @@ pub fn get_all_relations_for_wal(wal: WAL) -> ExternResult<RelationsForWal> {
 }
 
 #[hdk_extern]
-pub fn batch_get_all_relations_for_wal(wals: Vec<WAL>) -> ExternResult<Vec<RelationsForWal>> {
+pub fn batch_get_all_relations_for_wal(
+    wals: ZomeFnInput<Vec<WAL>>,
+) -> ExternResult<Vec<RelationsForWal>> {
     let mut result: Vec<RelationsForWal> = Vec::new();
-    for wal in wals {
-        result.push(get_all_relations_for_wal(wal)?)
+    for wal in wals.input {
+        result.push(get_all_relations_for_wal(ZomeFnInput {
+            input: wal,
+            local: wals.local,
+        })?)
     }
     Ok(result)
 }
