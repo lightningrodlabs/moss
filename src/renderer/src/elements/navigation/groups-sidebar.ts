@@ -365,14 +365,14 @@ export class GroupsSidebar extends LitElement {
         padding-bottom: 10px;
       }
 
-      /* .add-group-button {
+      .add-group-button {
         all: unset;
-        color: white;
+        color: var(--moss-purple);
         background: var(--moss-dark-button);
-        border-radius: 12px;
+        border-radius: 10px;
         cursor: pointer;
-        height: 58px;
-        width: 58px;
+        height: 48px;
+        width: 48px;
       }
 
       .add-group-button:hover {
@@ -381,7 +381,7 @@ export class GroupsSidebar extends LitElement {
 
       .add-group-button:focus-visible {
         outline: 2px solid var(--moss-purple);
-      } */
+      }
     `,
   ];
 }

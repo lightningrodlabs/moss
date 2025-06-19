@@ -46,7 +46,7 @@ export const mossStyles = [
       --moss-dark-button: #151a11;
 
       --moss-purple: #7461eb;
-      --moss-purple-semi-transparent: #7461eb38;
+      --moss-purple-semi-transparent: #2d2941;
 
       --moss-field-grey: #f4f4f4;
 
