@@ -53,7 +53,10 @@ export class GroupContainer extends LitElement {
     if (!this.groupStore) {
       return this.renderDisabledGroup();
     } else {
-      return html`<group-home style="flex: 1; position: relative;"></group-home>`;
+      return html`<group-home
+        class="group-home"
+        style="flex: 1; position: relative;"
+      ></group-home>`;
     }
   }
 
@@ -61,12 +64,14 @@ export class GroupContainer extends LitElement {
     mossStyles,
     css`
       :host {
+      }
+
+      .group-home {
         display: flex;
-        /* background: var(--sl-color-secondary-0); */
-        /* background-color: #588121; */
-        background-color: var(--moss-main-green);
         padding: 8px;
-        border-radius: 5px 0 0 0;
+        background: var(--moss-fishy-green);
+        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+        border-radius: 5px;
       }
     `,
   ];

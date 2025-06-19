@@ -337,7 +337,7 @@ export class AssetsGraph extends LitElement {
       :host {
         display: block;
         width: calc(100vw - 74px);
-        height: calc(100vh - 74px);
+        height: calc(100vh - 138px);
         color: white;
         /* background: white; */
       }
