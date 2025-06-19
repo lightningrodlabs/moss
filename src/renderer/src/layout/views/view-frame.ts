@@ -77,26 +77,25 @@ export class ViewFrame extends LitElement {
         class="column center-content"
         style="flex: 1; padding: 0; margin: 0; ${this.loading ? '' : 'display: none'}"
       >
-        <img src="moss-icon.svg" style="height: 80px; width: 80px;" />
-        <div style="margin-top: 25px; margin-left: 10px; font-size: 24px; color: #142510">
+        <img src="loading_animation.svg" />
+        <div style="margin-left: 10px; font-size: 18px; color: #142510">
           ${this.reloading ? msg('reloading...') : msg('loading...')}
         </div>
         ${this.slowLoading
           ? html`
-              <div
-                class="column items-center"
-                style="margin-top: 50px; max-width: 600px;color: white;"
-              >
+              <div class="column items-center" style="margin-top: 50px; max-width: 600px;">
                 <div>This Tool takes unusually long to reload. Do you want to force reload?</div>
-                <div style="margin-top: 10px;">
-                  (force reloading may interrupt the Tool from saving unsaved content)
+                <div style="margin-top: 10px; margin-bottom: 20px;">
+                  (<b>Warning:</b> Force reloading may interrupt the Tool from saving unsaved
+                  content)
                 </div>
-                <sl-button
-                  variant="danger"
+                <button
+                  class="moss-button"
                   @click=${() => this.hardRefresh()}
                   style="margin-top: 20px; width: 150px;"
-                  >Force Reload</sl-button
                 >
+                  Force Reload
+                </button>
               </div>
             `
           : html``}

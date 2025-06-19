@@ -122,6 +122,7 @@ export class CreateGroupDialog extends LitElement {
                 style="margin-left: 16px; width: 350px; margin-bottom: 20px;"
                 .label=${msg('Group name')}
                 required
+                ?disabled=${this.committing}
               ></sl-input>
               <moss-select-avatar-fancy
                 style="margin-bottom: 30px;"
