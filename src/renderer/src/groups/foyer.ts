@@ -150,7 +150,7 @@ export class FoyerStore {
           const myProfile = await toPromise(this.profilesStore.myProfile);
           const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
 
-          const amIMentioned = message.payload.text.includes(`@${myNickName}`);
+          const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
           const urgency = amIMentioned ? 'high' : 'medium';
           const notification: FrameNotification = {
             title: `from ${senderNickname}`,
