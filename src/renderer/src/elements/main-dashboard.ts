@@ -618,9 +618,11 @@ export class MainDashboard extends LitElement {
       });
     });
 
-    window.electronAPI.onSwitchToApplet((_, appletId) => {
-      if (appletId) {
-        this.openViews.openAppletMain(decodeHashFromBase64(appletId));
+    window.electronAPI.onSwitchToWeaveLocation((_, weaveLocation) => {
+      if (weaveLocation) {
+        if (weaveLocation.type === 'applet')
+          this.openViews.openAppletMain(weaveLocation.appletHash);
+        else if (weaveLocation.type === 'group') this.openGroup(weaveLocation.dnaHash);
       }
     });
 

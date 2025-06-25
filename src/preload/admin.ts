@@ -10,6 +10,7 @@ import {
   GroupProfile,
   ParentToAppletMessage,
   WAL,
+  WeaveLocation,
 } from '@theweave/api';
 import {
   AppHashes,
@@ -53,8 +54,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) => ipcRenderer.on('applet-to-parent-message', callback),
   onDeepLinkReceived: (callback: (e: Electron.IpcRendererEvent, payload: string) => any) =>
     ipcRenderer.on('deep-link-received', callback),
-  onSwitchToApplet: (callback: (e: Electron.IpcRendererEvent, payload: AppletId) => any) =>
-    ipcRenderer.on('switch-to-applet', callback),
+  onSwitchToWeaveLocation: (
+    callback: (e: Electron.IpcRendererEvent, payload: WeaveLocation) => any,
+  ) => ipcRenderer.on('switch-to-weave-location', callback),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
@@ -112,10 +114,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     notification: FrameNotification,
     showInSystray: boolean,
     notifyOS: boolean,
-    appletId: AppletId | undefined,
+    weaveLocation: WeaveLocation | undefined,
     appletName: string | undefined,
   ) =>
-    ipcRenderer.invoke('notification', notification, showInSystray, notifyOS, appletId, appletName),
+    ipcRenderer.invoke(
+      'notification',
+      notification,
+      showInSystray,
+      notifyOS,
+      weaveLocation,
+      appletName,
+    ),
   enableDevMode: () => ipcRenderer.invoke('enable-dev-mode'),
   disableDevMode: () => ipcRenderer.invoke('disable-dev-mode'),
   fetchIcon: (appActionHashB64: ActionHashB64) =>
