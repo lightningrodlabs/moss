@@ -148,7 +148,7 @@ export class FoyerStore {
           const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from));
           const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
           const myProfile = await toPromise(this.profilesStore.myProfile);
-          const myNickName = myProfile ? myProfile.entry.nickname : undefined;
+          const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
 
           const amIMentioned = message.payload.text.includes(`@${myNickName}`);
           const urgency = amIMentioned ? 'high' : 'medium';
