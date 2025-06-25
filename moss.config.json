@@ -12,10 +12,10 @@
   "bootstrap": {
     "version": "0.1.5",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "3848ac44c99f0b487cbcce6c7c1f29a0f025becbb17b74da0bfc87f66dd6e4ea",
-      "x86_64-pc-windows-msvc.exe": "20706e6b3858520206b5a4edc1c98136dffc61368e9d2b65e8624baaccaa3843",
-      "x86_64-apple-darwin": "5f8b9d338aea9d97debdc15746a09cd8d5282cb3a367f67560a602e83ff80ab3",
-      "aarch64-apple-darwin": "acd94fbcd8f958023cb0d3c2a78052d79e439b96a5510d6faa5a6b7f20ad1fb1"
+      "x86_64-unknown-linux-gnu": "9bc6b80e138bab64f3cfea83c0cf317725983a382b4818a90842d708ecd857c7",
+      "x86_64-pc-windows-msvc.exe": "7ace57451dd503fea27be8d589b5a20593fe7b797ccd76695e5b1598ba9adce2",
+      "x86_64-apple-darwin": "49e4aa1345e80b329d44a05e391245d46ca29c8fe33a1639d0f81eea96ad7313",
+      "aarch64-apple-darwin": "ff3983fa07e696dbae42b1b99ad7c502d4ee2eb557c0d8667b349e6c194d39ac"
     }
   },
   "lair": {
