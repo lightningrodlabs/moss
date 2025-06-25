@@ -165,7 +165,7 @@ const weaveApi: WeaveServices = {
             // TODO verify that this does not remove the event listener for other
             // subscribers to the same WAL
             window.removeEventListener('asset-store-update', listener);
-            console.log('UNSUBSCRIBING.');
+            console.log('@applet-iframe: UNSUBSCRIBING from assetStore of wal ', stringifyWal(wal));
             setTimeout(async () => {
               await postMessage({
                 type: 'unsubscribe-from-asset-store',

@@ -868,6 +868,7 @@ export async function handleAppletIframeMessage(
           'Subscribing to an asset store from within cross-group view is currently not supported.',
         );
       }
+      console.log('Got asset store subscription for wal: ', stringifyWal(message.wal));
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
