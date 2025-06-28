@@ -11,7 +11,7 @@ import {
   PACKAGE_JSON,
 } from './const.js';
 import { nanoid } from 'nanoid';
-import { Type } from '@sinclair/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
 
 export type RunningInfo = {
@@ -64,6 +64,12 @@ export type WDockerConductorConfig = {
   defaultNodeDescription: string;
 };
 
+const WDockerRootConfigSchema = Type.Object({
+  rootDir: Type.Optional(Type.String()),
+});
+
+type WDockerRootConfig = Static<typeof WDockerRootConfigSchema>;
+
 const WDockerConductorConfigSchema = Type.Object({
   checkForGroupsAndToolsFrequencySeconds: Type.Number(),
   defaultProfileName: Type.String(),
@@ -71,7 +77,7 @@ const WDockerConductorConfigSchema = Type.Object({
 });
 
 export class WDockerFilesystem {
-  rootDir: string;
+  versionRootDir: string;
   allConductorsDir: string;
   binsDir: string;
   happsDir: string;
@@ -80,17 +86,33 @@ export class WDockerFilesystem {
 
   breakingVersion: string;
 
+  rootConfig: WDockerRootConfig;
+
   // TODO pass logger here
   constructor() {
     const versionString = breakingVersion(PACKAGE_JSON.version);
     const dirs = xdg();
-    const rootDir = path.join(dirs.data, 'wdocker', versionString);
+    const rootDir = path.join(dirs.data, 'wdocker');
 
-    const allConductorsDir = path.join(rootDir, 'conductors');
-    const binsDir = path.join(rootDir, 'bins');
-    const happsDir = path.join(rootDir, 'happs');
+    // Read the root config file which may specify a different root directory
+    const rootConfigPath = path.join(rootDir, '.config.json');
+    if (fs.existsSync(rootConfigPath)) {
+      const configString = fs.readFileSync(rootConfigPath, 'utf-8');
+      const rootConfig = JSON.parse(configString);
+      Value.Assert(WDockerRootConfigSchema, rootConfig);
+      this.rootConfig = rootConfig;
+    } else {
+      this.rootConfig = {};
+    }
+    const versionRootDir = this.rootConfig.rootDir
+      ? path.join(this.rootConfig.rootDir, versionString)
+      : path.join(rootDir, versionString);
 
-    this.rootDir = rootDir;
+    const allConductorsDir = path.join(versionRootDir, 'conductors');
+    const binsDir = path.join(versionRootDir, 'bins');
+    const happsDir = path.join(versionRootDir, 'happs');
+
+    this.versionRootDir = versionRootDir;
     this.allConductorsDir = allConductorsDir;
     this.binsDir = binsDir;
     this.happsDir = happsDir;

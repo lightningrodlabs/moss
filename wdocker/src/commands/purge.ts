@@ -8,11 +8,11 @@ export async function purgeConductor(conductorId: string) {
     console.log(`There is no conductor with name '${conductorId}'`);
     return;
   }
+  wDockerFs.setConductorId(conductorId);
   const confirmed = await confirm({
-    message: 'Are you sure you want to delete this whole conductor? This action is irreversible.',
+    message: `Are you sure you want to delete this whole conductor?\nThis will irreversibly delete all data in ${wDockerFs.conductorDataDir}`,
   });
   if (confirmed) {
-    wDockerFs.setConductorId(conductorId);
     fs.rmSync(wDockerFs.conductorDataDir, { recursive: true });
     console.log('Conductor deleted.');
   }
