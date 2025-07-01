@@ -727,6 +727,10 @@ export class GroupStore {
     undefined,
     10000,
     'Failed to get group description',
+    async () => {
+      const entryRecord = await this.groupClient.getGroupDescription(true);
+      return entryRecord?.entry;
+    },
   );
 
   groupAppletsMetaData = lazyReloadableStore(async () =>

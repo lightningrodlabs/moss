@@ -737,19 +737,28 @@ export function lazyLoadAndPollUntil<T>(
   load: () => Promise<T>,
   untilNot: any,
   pollIntervalMs: number,
+  errDescription: string,
+  firstLoad: () => Promise<T>,
 ): AsyncReadable<T> {
   return readable<AsyncStatus<T>>({ status: 'pending' }, (set) => {
     let interval;
     let currentValue;
-    let firstLoad = true;
+    let isFirstLoad = true;
     async function loadInner(): Promise<boolean> {
-      const value = await load();
-      if (firstLoad || !isEqual(value, currentValue)) {
+      let value;
+      if (isFirstLoad && !!firstLoad) {
+        value = await firstLoad();
+      } else {
+        value = await load();
+      }
+      if (isFirstLoad || !isEqual(value, currentValue)) {
         currentValue = value;
-        firstLoad = false;
+        isFirstLoad = false;
         set({ status: 'complete', value });
       }
-      if (!isEqual(value, untilNot)) {
+      // The first load may fetch with GetOptions::Local so we still
+      // want to poll one more time with GetOptions::Network in any case
+      if (!isEqual(value, untilNot) && !isFirstLoad) {
         return false;
       }
       return true;
@@ -762,7 +771,9 @@ export function lazyLoadAndPollUntil<T>(
             .then((proceed) => {
               if (!proceed) clearInterval(interval);
             })
-            .catch(() => {});
+            .catch((e) => {
+              console.warn(errDescription, e);
+            });
         }, pollIntervalMs);
       })
       .catch((e) => {

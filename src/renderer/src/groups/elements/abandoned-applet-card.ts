@@ -36,6 +36,7 @@ export class AbandonedAppletCard extends LitElement {
       lazyLoadAndPoll(
         () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
         20000,
+        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
       ),
     () => [this.groupStore],
   );
@@ -46,6 +47,7 @@ export class AbandonedAppletCard extends LitElement {
       lazyLoadAndPoll(
         () => this.groupStore.groupClient.getAbandonedAppletAgents(this.appletHash),
         20000,
+        () => this.groupStore.groupClient.getAbandonedAppletAgents(this.appletHash, true),
       ),
     () => [this.groupStore],
   );
