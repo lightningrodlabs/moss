@@ -9,10 +9,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # platform: [windows-2019]
+        platform: [windows-2022]
         # platform: [ubuntu-22.04]
-        platform: [windows-2019, macos-13, macos-latest, ubuntu-22.04]
-        # platform: [windows-2019, ubuntu-22.04]
+        # platform: [windows-2022, macos-13, macos-latest, ubuntu-22.04]
+        # platform: [windows-2022, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
 
@@ -101,7 +101,7 @@ jobs:
 
       - name: build, sign and upload the app (Windows)
         shell: bash
-        if: matrix.platform == 'windows-2019'
+        if: matrix.platform == 'windows-2022'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
