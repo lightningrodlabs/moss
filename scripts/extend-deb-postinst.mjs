@@ -45,7 +45,7 @@ if [ -e /etc/lsb-release ]; then
   done < /etc/lsb-release
 
 
-  if [[ $release_version == 24* ]]; then
+  if [[ $release_version > 24* ]]; then
 
   # chown the sandbox on Ubuntu 24.04
   chown root '/opt/${productName}/chrome-sandbox' || true
