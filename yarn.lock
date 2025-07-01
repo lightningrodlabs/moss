@@ -1573,10 +1573,10 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/profiles@^0.501.1":
-  version "0.501.1"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.501.1.tgz#339c843e2fbb67b2da91d49f489bd193ad0ecda4"
-  integrity sha512-2ndgNvU52A4IrKNpEU6sUdNCv15OOKQC7V5AOvdZ7qQ3KrltUzWnM6kfBRZA9VMvTWNgkvBuCuI6IW94Z55esQ==
+"@holochain-open-dev/profiles@^0.501.2":
+  version "0.501.2"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.501.2.tgz#d251b0d07fe700ec2b4bb80b9e0a8d607e0addd8"
+  integrity sha512-yZbvrESL+B7hdAq4XhCBmtJ6zqqcKbndbRSnIczh8A+tSNLVnhEHHZr5c9Vn7VOpo39xzovO0iSAs1bCCFJamA==
   dependencies:
     "@holochain-open-dev/elements" "^0.500.1"
     "@holochain-open-dev/stores" "^0.500.1"
@@ -3190,7 +3190,7 @@
 "@theweave/api@file:libs/api":
   version "0.5.0"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.501.1"
+    "@holochain-open-dev/profiles" "^0.501.2"
     "@holochain/client" "^0.19.1"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
@@ -3234,7 +3234,7 @@
   version "0.5.0"
   dependencies:
     "@holochain-open-dev/elements" "^0.500.1"
-    "@holochain-open-dev/profiles" "^0.501.1"
+    "@holochain-open-dev/profiles" "^0.501.2"
     "@holochain-open-dev/stores" "^0.500.2"
     "@holochain-open-dev/utils" "^0.500.2"
     "@holochain/client" "^0.19.1"
