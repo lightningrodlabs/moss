@@ -47,10 +47,10 @@ if [ -e /etc/lsb-release ]; then
 
   if [[ $release_version > 24* ]]; then
 
-  # chown the sandbox on Ubuntu 24.04
+  # chown the sandbox on Ubuntu 24.04 or higher
   chown root '/opt/${productName}/chrome-sandbox' || true
 
-  # add AppArmor profile on Ubuntu 24.04
+  # add AppArmor profile on Ubuntu 24.04 or higher
   profile_content="# This profile allows everything and only exists to give the
 # application a name instead of having the label "unconfined"
 
