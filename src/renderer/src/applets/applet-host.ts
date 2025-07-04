@@ -43,7 +43,7 @@ import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
-import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
+import { GroupStore } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
 
 export function getIframeKind(
@@ -614,7 +614,7 @@ export async function handleAppletIframeMessage(
             const peersToSendSignal = Object.entries(peerStatuses)
               .filter(
                 ([pubkeyB64, status]) =>
-                  status.lastSeen > Date.now() - OFFLINE_THRESHOLD &&
+                  status.status !== 'offline' &&
                   pubkeyB64 !== encodeHashToBase64(store.groupClient.myPubKey),
               )
               .map(([pubkeyB64, _]) => decodeHashFromBase64(pubkeyB64));
