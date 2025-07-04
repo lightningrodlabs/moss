@@ -1,6 +1,6 @@
 {
   "name": "@theweave/api",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -21,7 +21,8 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch --preserveWatchOutput",
-    "build:api-docs": "api-extractor run --local && api-documenter markdown -i docs/temp"
+    "build:api-docs": "api-extractor run --local && api-documenter markdown -i docs/temp",
+    "prepublish": "yarn build"
   },
   "type": "module",
   "dependencies": {
