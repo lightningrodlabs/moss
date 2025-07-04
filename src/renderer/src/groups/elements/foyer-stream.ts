@@ -85,7 +85,10 @@ export class FoyerStream extends LitElement {
     else {
       for (const key in peers) {
         const status = peers[key];
-        if (key != this.groupStore.foyerStore.myPubKeyB64 && status.status == 'online')
+        if (
+          key != this.groupStore.foyerStore.myPubKeyB64 &&
+          (status.status === 'online' || status.status === 'inactive')
+        )
           agents.push(decodeHashFromBase64(key));
       }
     }
