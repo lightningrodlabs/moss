@@ -207,6 +207,60 @@ test('Create expiring steward permission and retrieve it in different ways', asy
   });
 });
 
+test('get_my_permission_type returns the correct result after getting permission type of another agent with unlimited steward permission', async () => {
+  await runScenario(async (scenario) => {
+    // Construct proper paths for your app.
+    // This assumes app bundle created by the `hc app pack` command.
+    const testAppPath = GROUP_HAPP_PATH;
+
+    const appBundleSource: AppBundleSource = {
+      type: 'path',
+      value: testAppPath,
+    };
+
+    // Set up the app to be installed
+    const appSource = { appBundleSource };
+
+    const [
+      [progenitor, progenitorPubKey],
+      [steward, stewardPubKey, stewardPermissionHash],
+      [member, memberPubKey],
+    ] = await threeAgentsOneProgenitorOneStewardOneMember(scenario, appSource.appBundleSource, [
+      'group',
+    ]);
+
+    const groupCellProgenitor = getCellByRoleName(progenitor, 'group');
+    const groupCellSteward = getCellByRoleName(steward, 'group');
+    const groupCellMember = getCellByRoleName(member, 'group');
+
+    // Normal member gets permission type of themselves to make sure the
+    // threeAgentsOneProgenitorOneStewardOneMember() function did its job correctlyu
+    const myPermissionTypeBefore: PermissionType = await groupCellMember.callZome({
+      zome_name: 'group',
+      fn_name: 'get_my_permission_type',
+      payload: { input: null },
+    });
+    console.log('Got my permission type before: ', myPermissionTypeBefore);
+    assert(myPermissionTypeBefore.type === 'Member');
+
+    // Normal member gets permission type of steward
+    const permissionTypeSteward: PermissionType = await groupCellMember.callZome({
+      zome_name: 'group',
+      fn_name: 'get_agent_permission_type',
+      payload: { input: groupCellSteward.cell_id[1] },
+    });
+
+    // Normal member then gets permission type of themselves
+    const myPermissionTypeAfter: PermissionType = await groupCellMember.callZome({
+      zome_name: 'group',
+      fn_name: 'get_my_permission_type',
+      payload: { input: null },
+    });
+    console.log('Got my permission type after: ', myPermissionTypeAfter);
+    assert(myPermissionTypeAfter.type === 'Member');
+  });
+});
+
 test('Steward can nominate additional stewards if their steward permission is not expiring', async () => {
   await runScenario(async (scenario) => {
     // Construct proper paths for your app.

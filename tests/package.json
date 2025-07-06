@@ -5,7 +5,8 @@
   "scripts": {
     "test": "vitest run",
     "test:group": "vitest --dir ./src/group/group run",
-    "test:assets": "vitest --dir ./src/assets/assets run"
+    "test:assets": "vitest --dir ./src/assets/assets run",
+    "test:stewards": "vitest ./src/group/group/steward_permissions.test.ts run"
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",

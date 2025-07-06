@@ -7,3 +7,4 @@ export function getCellByRoleName(player: Player, roleName: string): CallableCel
 }
 
 export const GROUP_HAPP_PATH = process.cwd() + '/../workdir/group.happ';
+// export const GROUP_HAPP_PATH = process.cwd() + '/../resources/default-apps/group.happ';
