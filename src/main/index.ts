@@ -449,6 +449,8 @@ if (!RUNNING_WITH_COMMAND) {
         // uncomment this line to get fetch requests working while testing publishing of tools:
         // webSecurity: app.isPackaged ? true : false,
         safeDialogs: true,
+        // Otherwise polling zome calls will stop working properly
+        backgroundThrottling: false,
       },
       show: false,
     });
