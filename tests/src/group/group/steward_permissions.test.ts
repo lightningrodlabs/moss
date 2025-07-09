@@ -221,6 +221,8 @@ test('get_my_permission_type returns the correct result after getting permission
     // Set up the app to be installed
     const appSource = { appBundleSource };
 
+    console.log('Starting conductors');
+
     const [
       [progenitor, progenitorPubKey],
       [steward, stewardPubKey, stewardPermissionHash],
@@ -240,7 +242,6 @@ test('get_my_permission_type returns the correct result after getting permission
       fn_name: 'get_my_permission_type',
       payload: { input: null },
     });
-    console.log('Got my permission type before: ', myPermissionTypeBefore);
     assert(myPermissionTypeBefore.type === 'Member');
 
     // Normal member gets permission type of steward
@@ -256,7 +257,6 @@ test('get_my_permission_type returns the correct result after getting permission
       fn_name: 'get_my_permission_type',
       payload: { input: null },
     });
-    console.log('Got my permission type after: ', myPermissionTypeAfter);
     assert(myPermissionTypeAfter.type === 'Member');
   });
 });
