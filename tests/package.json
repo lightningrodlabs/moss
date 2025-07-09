@@ -10,7 +10,7 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "@holochain/client": "^0.19.1",
-    "@holochain/tryorama": "0.18.0-rc.1",
+    "@holochain/tryorama": "^0.18.2",
     "@holochain-open-dev/utils": "^0.500.2",
     "@theweave/group-client": "^0.4.0",
     "@theweave/api": "^0.5.0",
