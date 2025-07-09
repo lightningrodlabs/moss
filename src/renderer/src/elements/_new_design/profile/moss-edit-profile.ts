@@ -79,11 +79,8 @@ export class MossEditProfile extends LitElement {
 
   checkDisabled() {
     // profile nickname the same or not and icon the same or not
-    console.log('Checking disabled');
     const avatarEqual = this.profile?.fields['avatar'] === this.avatar;
-    console.log('avatarEqual: ', avatarEqual);
     const nicknameEqual = this.profile?.nickname === this.nickname;
-    console.log('nicknameEqual: ', nicknameEqual);
     if (!avatarEqual || !nicknameEqual) {
       this.disabled = false;
     } else {
