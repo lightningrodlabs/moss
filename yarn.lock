@@ -1689,10 +1689,10 @@
     lodash-es "^4.17.21"
     ws "^8.14.2"
 
-"@holochain/tryorama@^0.18.2":
-  version "0.18.2"
-  resolved "https://registry.yarnpkg.com/@holochain/tryorama/-/tryorama-0.18.2.tgz#5afc35ebbb3a2a75e793924f140607594806180d"
-  integrity sha512-6LfttoYm2kZ4Qqb64jkJGcsXdkn9rsAs1mjrsbcSiwNz+M8CFuX4lHX2Usyf6S2QMhpkA7hzqm5pG8CGS54aqQ==
+"@holochain/tryorama@^0.18.3":
+  version "0.18.3"
+  resolved "https://registry.yarnpkg.com/@holochain/tryorama/-/tryorama-0.18.3.tgz#07da54c4cabf7b3946f565440658777643f51f23"
+  integrity sha512-Q4AdxR5wxMG7poBbkUOxeHhRbRF1nu/YLgLpie4z24xR8R0rbAs5X9QjonldWce0MINoqTi1xo3tlGaUEkDXOg==
   dependencies:
     "@holochain/client" "^0.19.0"
     get-port "^7.0.0"
