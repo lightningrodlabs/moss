@@ -109,7 +109,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
     ipcRenderer.invoke('join-group', networkSeed, progenitor),
-  createGroup: (useProgenitor: boolean) => ipcRenderer.invoke('create-group', useProgenitor),
+  installGroupHapp: (useProgenitor: boolean) =>
+    ipcRenderer.invoke('install-group-happ', useProgenitor),
   notification: (
     notification: FrameNotification,
     showInSystray: boolean,

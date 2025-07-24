@@ -1259,7 +1259,7 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('lair-setup-required', (): boolean => {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });
-    ipcMain.handle('create-group', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
+    ipcMain.handle('install-group-happ', async (_e, withProgenitor: boolean): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let agentPubKey = globalPubKeyFromListAppsResponse(apps);
       if (!agentPubKey) {
@@ -1280,25 +1280,54 @@ if (!RUNNING_WITH_COMMAND) {
         ? { progenitor: encodeHashToBase64(agentPubKey) }
         : { progenitor: null };
 
-      const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-        source: {
-          type: 'path',
-          value: groupHappPath,
-        },
-        installed_app_id: appId,
-        agent_key: agentPubKey,
-        network_seed: networkSeed,
-        roles_settings: {
-          group: {
-            type: 'provisioned',
-            value: {
-              modifiers: {
-                properties,
+      let appInfo: AppInfo;
+
+      // Try installing the app twice. It may fail the first time with a timeout error
+      // if wasms take too long to compile. This should only happen the very first time
+      // a group happ is being installed.
+      try {
+        appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+          source: {
+            type: 'path',
+            value: groupHappPath,
+          },
+          installed_app_id: appId,
+          agent_key: agentPubKey,
+          network_seed: networkSeed,
+          roles_settings: {
+            group: {
+              type: 'provisioned',
+              value: {
+                modifiers: {
+                  properties,
+                },
               },
             },
           },
-        },
-      });
+        });
+      } catch (e) {
+        console.warn('Failed to install group happ: ', e, '\nRetrying once...');
+        WE_EMITTER.emitMossError(`Failed to install group happ: ${e}.\n Retrying once...`);
+        appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+          source: {
+            type: 'path',
+            value: groupHappPath,
+          },
+          installed_app_id: appId,
+          agent_key: agentPubKey,
+          network_seed: networkSeed,
+          roles_settings: {
+            group: {
+              type: 'provisioned',
+              value: {
+                modifiers: {
+                  properties,
+                },
+              },
+            },
+          },
+        });
+      }
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
       return appInfo;
     });
