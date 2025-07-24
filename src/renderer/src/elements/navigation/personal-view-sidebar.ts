@@ -151,7 +151,7 @@ export class PersonalViewSidebar extends LitElement {
         </button>
       </sl-tooltip>
 
-      <sl-tooltip .content="${msg('Assetes Graph')}" placement="bottom" hoist>
+      <sl-tooltip .content="${msg('Assets Graph')}" placement="bottom" hoist>
         <button
           class="moss-item-button ${this.selectedView &&
           this.selectedView.type === 'moss' &&
