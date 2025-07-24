@@ -337,33 +337,33 @@ export const mossStyles = [
       width: 10px;
       height: 10px;
       border-radius: 5px;
-      background-color: #ffffff;
-      color: #ffffff;
+      background-color: var(--carousel-color, #ffffff);
+      color: var(--carousel-color, #ffffff);
       box-shadow:
-        9984px 0 0 0 #ffffff,
-        9999px 0 0 0 #ffffff,
-        10014px 0 0 0 #ffffff;
+        9984px 0 0 0 var(--carousel-color, #ffffff),
+        9999px 0 0 0 var(--carousel-color, #ffffff),
+        10014px 0 0 0 var(--carousel-color, #ffffff);
       animation: dot-carousel 1.5s infinite linear;
     }
 
     @keyframes dot-carousel {
       0% {
         box-shadow:
-          9984px 0 0 -1px #ffffff,
-          9999px 0 0 1px #ffffff,
-          10014px 0 0 -1px #ffffff;
+          9984px 0 0 -1px var(--carousel-color, #ffffff),
+          9999px 0 0 1px var(--carousel-color, #ffffff),
+          10014px 0 0 -1px var(--carousel-color, #ffffff);
       }
       50% {
         box-shadow:
-          10014px 0 0 -1px #ffffff,
-          9984px 0 0 -1px #ffffff,
-          9999px 0 0 1px #ffffff;
+          10014px 0 0 -1px var(--carousel-color, #ffffff),
+          9984px 0 0 -1px var(--carousel-color, #ffffff),
+          9999px 0 0 1px var(--carousel-color, #ffffff);
       }
       100% {
         box-shadow:
-          9999px 0 0 1px #ffffff,
-          10014px 0 0 -1px #ffffff,
-          9984px 0 0 -1px #ffffff;
+          9999px 0 0 1px var(--carousel-color, #ffffff),
+          10014px 0 0 -1px var(--carousel-color, #ffffff),
+          9984px 0 0 -1px var(--carousel-color, #ffffff);
       }
     }
 
