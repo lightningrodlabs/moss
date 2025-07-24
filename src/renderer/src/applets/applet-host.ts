@@ -611,13 +611,20 @@ export async function handleAppletIframeMessage(
         Array.from(groupStores.values()).map(async (store) => {
           const peerStatuses = get(store.peerStatuses());
           if (peerStatuses) {
-            const peersToSendSignal = Object.entries(peerStatuses)
+            let peersToSendSignal = Object.entries(peerStatuses)
               .filter(
                 ([pubkeyB64, status]) =>
                   status.status !== 'offline' &&
                   pubkeyB64 !== encodeHashToBase64(store.groupClient.myPubKey),
               )
               .map(([pubkeyB64, _]) => decodeHashFromBase64(pubkeyB64));
+
+            if (message.toAgents) {
+              const toAgents = message.toAgents.map((a) => encodeHashToBase64(a));
+              peersToSendSignal = peersToSendSignal.filter((agent) =>
+                toAgents.includes(encodeHashToBase64(agent)),
+              );
+            }
 
             await store.groupClient.remoteSignalArbitrary(remoteSignalPayload, peersToSendSignal);
           }

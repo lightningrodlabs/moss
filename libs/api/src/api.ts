@@ -420,9 +420,11 @@ export interface WeaveServices {
    * that are currently online.
    *
    * @param payload Arbitrary payload, for example any msgpack encoded javascript object
+   * @param toAgents (optional) To which agents to send the signal. Default is all agents
+   * of the group in which this instance of the Tool is installed in.
    * @returns
    */
-  sendRemoteSignal: (payload: Uint8Array) => Promise<void>;
+  sendRemoteSignal: (payload: Uint8Array, toAgents?: AgentPubKey[]) => Promise<void>;
   /**
    * Event listener allowing to register a callback that will get executed if a remote
    * signal that had been sent with `WeaveClient.sendRemoteSignal()` arrives.
@@ -543,7 +545,8 @@ export class WeaveClient implements WeaveServices {
 
   appletParticipants = () => window.__WEAVE_API__.appletParticipants();
 
-  sendRemoteSignal = (payload: Uint8Array) => window.__WEAVE_API__.sendRemoteSignal(payload);
+  sendRemoteSignal = (payload: Uint8Array, toAgents?: AgentPubKey[]) =>
+    window.__WEAVE_API__.sendRemoteSignal(payload, toAgents);
 
   onRemoteSignal = (callback: (payload: Uint8Array) => any) =>
     window.__WEAVE_API__.onRemoteSignal(callback);
