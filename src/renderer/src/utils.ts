@@ -448,8 +448,8 @@ export function decodeContext(contextStringified: string): any {
 }
 
 /**
- * Fetches an image, crops it to 300x300px and returns the base64 encoded value of the
- * resized image.
+ * Fetches an image, crops it to 300x300px, compresses it to max 200KB and
+ * returns the base64 encoded value of the resized image.
  *
  * @param src
  * @returns
@@ -471,9 +471,10 @@ export async function fetchResizeAndExportImg(src: string): Promise<string> {
 }
 
 /**
- * Crop the image and return a base64 bytes string of its content
+ * Crop the image and return a base64 bytes string of its content and compress it
+ * if it exceeds the maximum size (default: 200KB).
  */
-export function resizeAndExportImg(img: HTMLImageElement): string {
+export function resizeAndExportImg(img: HTMLImageElement, maxSizeKB = 200): string {
   const MAX_WIDTH = 300;
   const MAX_HEIGHT = 300;
 
@@ -501,9 +502,47 @@ export function resizeAndExportImg(img: HTMLImageElement): string {
   ctx.drawImage(img, 0, 0, width, height);
 
   // return the .toDataURL of the temp canvas
-  const base64string = canvas.toDataURL();
+  let dataUrl = canvas.toDataURL();
+
+  let sizeInKB = getStringSizeInKB(dataUrl);
+  if (sizeInKB < maxSizeKB) {
+    return dataUrl;
+  }
+
+  // If it's too large, we try to compress it
+
+  // Computes a compression that always decreases with a 10th of the current
+  // order of magnitude, i.e. 0.9, 0.8, 0.7, ..., 0.1, 0.09, 0.08, ..., 0.01, 0.009, 0.008, ...
+  const compressionAtStep = (n: number) => {
+    if (n < 1) {
+      throw new Error('Compression step must be a positive integer.');
+    }
+    const orderOfMagnitude = Math.ceil(n / 9);
+    const positionInOrder = (n - 1) % 9;
+    return (9 - positionInOrder) / Math.pow(10, orderOfMagnitude);
+  };
+
+  let n = 1;
+  while (sizeInKB > maxSizeKB) {
+    if (n > 20) {
+      throw new Error('Image is too large.');
+    }
+    const compression = compressionAtStep(n);
+    // console.log('Compressing at', compression);
+    dataUrl = canvas.toDataURL('image/jpeg', compression);
+    sizeInKB = getStringSizeInKB(dataUrl);
+    n++;
+  }
+
   canvas.remove();
-  return base64string;
+  return dataUrl;
+}
+
+function getStringSizeInKB(str: string) {
+  const blob = new Blob([str]);
+  const sizeInBytes = blob.size;
+  const sizeInKB = sizeInBytes / 1024;
+  return sizeInKB;
 }
 
 /**
