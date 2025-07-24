@@ -1,5 +1,5 @@
 import { css, html, LitElement } from 'lit';
-import { property, customElement } from 'lit/decorators.js';
+import { property, customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { sharedStyles, notifyError } from '@holochain-open-dev/elements';
@@ -26,7 +26,7 @@ export class MossCreateProfile extends LitElement {
    */
   @consume({ context: profilesStoreContext, subscribe: true })
   @property()
-  store!: ProfilesStore;
+  profileStore!: ProfilesStore;
 
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
@@ -37,11 +37,26 @@ export class MossCreateProfile extends LitElement {
   @property()
   buttonLabel = msg('Enter the space');
 
-  /** Private properties */
+  @state()
+  profile: Profile | undefined;
+
+  firstUpdated() {
+    // pre-populate with the profile we used last time
+    const personas = this.mossStore.persistedStore.personas.value();
+    const defaultPersona = personas[0];
+    console.log('defaultPersona: ', defaultPersona);
+    if (defaultPersona) {
+      this.profile = defaultPersona;
+    }
+  }
 
   async createProfile(profile: Profile) {
     try {
-      await this.store.client.createProfile(profile);
+      await this.profileStore.client.createProfile(profile);
+      // We persist the profile in localStorage as the default profile
+      // to use pre-populate the profile next time a new profile needs to
+      // be created
+      this.mossStore.persistedStore.personas.set([profile]);
       this.dispatchEvent(
         new CustomEvent('profile-created', {
           detail: {
@@ -65,6 +80,7 @@ export class MossCreateProfile extends LitElement {
         >
         <moss-edit-profile
           .saveProfileLabel=${this.buttonLabel}
+          .profile=${this.profile}
           @save-profile=${(e: CustomEvent) => this.createProfile(e.detail.profile)}
         ></moss-edit-profile>
       </div>

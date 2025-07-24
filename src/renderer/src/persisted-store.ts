@@ -3,6 +3,7 @@ import { AppletId, FrameNotification } from '@theweave/api';
 import { AppletNotificationSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
 import { WalInPocket } from './moss-store';
+import { Profile } from '@holochain-open-dev/profiles';
 
 /**
  * A store that's persisted.
@@ -26,6 +27,16 @@ export class PersistedStore {
     },
     set: (value) => {
       this.store.setItem<string[]>('declinedMossUpdates', value);
+    },
+  };
+
+  personas: SubStore<Profile[], Profile[], []> = {
+    value: () => {
+      const personas = this.store.getItem<Profile[]>('personas');
+      return personas ? personas : [];
+    },
+    set: (value) => {
+      this.store.setItem<Profile[]>('personas', value);
     },
   };
 
