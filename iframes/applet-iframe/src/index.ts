@@ -1,6 +1,7 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
+  AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -310,10 +311,11 @@ const weaveApi: WeaveServices = {
       type: 'applet-participants',
     }),
 
-  sendRemoteSignal: (payload: Uint8Array) =>
+  sendRemoteSignal: (payload: Uint8Array, toAgents?: AgentPubKey[]) =>
     postMessage({
       type: 'send-remote-signal',
       payload,
+      toAgents,
     }),
 
   onRemoteSignal: (callback: (payload: Uint8Array) => any) => {
