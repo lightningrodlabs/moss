@@ -226,9 +226,7 @@ export class WelcomeView extends LitElement {
         <div class="update-type"></div>
         <div class="column">
           <div class="row" style="align-items: center;">
-            <div class="moss-icon column center-content">
-              <img src="moss-icon.svg" style="width: 40px; height: 40px; border-radius: 14px;" />
-            </div>
+            <img src="icon.png" class="moss-icon" />
             <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
               Moss Update Available:
             </div>
@@ -365,12 +363,10 @@ export class WelcomeView extends LitElement {
       }
 
       .moss-icon {
-        background: linear-gradient(0deg, #203923 0%, #527a22 100%);
-        border-radius: 15px;
-        border: none;
         width: 58px;
         height: 58px;
-        outline: none;
+        border-radius: 15px;
+        box-shadow: 0 0 2px 2px #0000001f;
       }
 
       .recent-activity-header {
@@ -461,10 +457,10 @@ export class WelcomeView extends LitElement {
         padding: 20px;
         padding-top: 45px;
         border-radius: 10px;
-        background: #193423;
+        background: var(--moss-dark-green);
         margin: 6px;
         color: #fff;
-        box-shadow: 0 0 2px 2px #193423;
+        box-shadow: 0 0 2px 2px var(--moss-dark-green);
         /* border: 2px solid #102520; */
         transition: all 0.25s ease;
         font-size: 18px;
@@ -476,8 +472,9 @@ export class WelcomeView extends LitElement {
       }
 
       .bg-highlighted {
-        background: #7e9100;
-        box-shadow: 0 0 2px 2px #333b00;
+        background: var(--moss-fishy-green);
+        color: black;
+        box-shadow: 0 0 2px 2px var(--moss-dark-green);
       }
 
       .update-date {
