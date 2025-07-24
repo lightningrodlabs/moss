@@ -45,7 +45,7 @@ export class GroupContainer extends LitElement {
       >
         ${msg('Enable')}
       </button>
-      <div style="margin-top: 50px;">DNA hash: ${encodeHashToBase64(this.groupDnaHash)}</div>
+      <div style="margin-top: 50px;">Group ID: ${encodeHashToBase64(this.groupDnaHash)}</div>
     </div>`;
   }
 
