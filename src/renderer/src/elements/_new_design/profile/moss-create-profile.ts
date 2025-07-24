@@ -54,7 +54,7 @@ export class MossCreateProfile extends LitElement {
     try {
       await this.profileStore.client.createProfile(profile);
       // We persist the profile in localStorage as the default profile
-      // to use pre-populate the profile next time a new profile needs to
+      // to pre-populate the profile next time a new profile needs to
       // be created
       this.mossStore.persistedStore.personas.set([profile]);
       this.dispatchEvent(
