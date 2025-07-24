@@ -120,7 +120,8 @@ export class GroupAppletsSidebar extends LitElement {
                 id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
                 .appletStore=${appletStore}
                 .selected=${this.selectedAppletHash &&
-                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+                encodeHashToBase64(this.selectedAppletHash) ===
+                  encodeHashToBase64(appletStore.appletHash)}
                 .indicated=${this.indicatedAppletHashes.includes(
                   encodeHashToBase64(appletStore.appletHash),
                 )}

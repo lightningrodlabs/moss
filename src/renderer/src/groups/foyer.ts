@@ -6,13 +6,23 @@ import {
   type AgentPubKey,
   InstalledAppId,
   RoleNameCallZomeRequest,
+  AppAuthenticationToken,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
-import { type Writable, writable, get, type Readable, readable } from '@holochain-open-dev/stores';
+import {
+  type Writable,
+  writable,
+  get,
+  type Readable,
+  readable,
+  toPromise,
+} from '@holochain-open-dev/stores';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
+import { FrameNotification, GroupProfile, WeaveLocation } from '@theweave/api';
+import { GroupStore } from './group-store';
 
 export const time = readable(Date.now(), function start(set) {
   const interval = setInterval(() => {
@@ -130,19 +140,40 @@ export class FoyerStore {
 
     stream.addMessage(message);
     if (message.payload.type == 'Msg') {
-      //   if (isWeaveContext()) {
-      //     this.weaveClient.notifyFrame([
-      //       {
-      //         title: `message from ${encodeHashToBase64(message.from)}`,
-      //         body: message.payload.text,
-      //         notification_type: 'message',
-      //         icon_src: undefined,
-      //         urgency: 'high',
-      //         timestamp: message.payload.created,
-      //       },
-      //     ]);
-      //   }
-      if (encodeHashToBase64(message.from) != this.myPubKeyB64) {
+      const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+      let b64From = encodeHashToBase64(message.from);
+
+      if (b64From != this.myPubKeyB64) {
+        if (!mainWindowFocused) {
+          const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
+          const myProfile = await toPromise(this.profilesStore.myProfile);
+          const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
+
+          const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
+          const urgency = amIMentioned ? 'high' : 'medium';
+          const notification: FrameNotification = {
+            title: `from ${senderNickname}`,
+            body: message.payload.text,
+            notification_type: 'message',
+            icon_src: undefined,
+            urgency,
+            fromAgent: message.from,
+            timestamp: message.payload.created,
+          };
+          const weaveLocation: WeaveLocation = {
+            type: 'group',
+            dnaHash: this.groupStore.groupDnaHash,
+          };
+          await window.electronAPI.notification(
+            notification,
+            true,
+            amIMentioned,
+            weaveLocation,
+            `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
+          );
+        }
+
         await this.client.sendMessage(streamId, { type: 'Ack', created: message.payload.created }, [
           message.from,
         ]);
@@ -150,9 +181,33 @@ export class FoyerStore {
     }
   }
 
+  static async create(
+    groupStore: GroupStore,
+    profilesStore: ProfilesStore,
+    clientIn: AppClient,
+    authenticationToken: AppAuthenticationToken,
+    roleName: RoleName,
+    zomeName: string = ZOME_NAME,
+  ) {
+    let groupProfile: undefined | GroupProfile = undefined;
+    groupProfile = await toPromise(groupStore.groupProfile);
+    return new FoyerStore(
+      groupStore,
+      groupProfile,
+      profilesStore,
+      clientIn,
+      authenticationToken,
+      roleName,
+      zomeName,
+    );
+  }
+
   constructor(
+    protected groupStore: GroupStore,
+    protected groupProfile: GroupProfile | undefined,
     public profilesStore: ProfilesStore,
     protected clientIn: AppClient,
+    protected authenticationToken: AppAuthenticationToken,
     protected roleName: RoleName,
     protected zomeName: string = ZOME_NAME,
   ) {

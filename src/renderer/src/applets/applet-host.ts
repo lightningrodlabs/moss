@@ -43,7 +43,7 @@ import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
-import { GroupStore, OFFLINE_THRESHOLD } from '../groups/group-store.js';
+import { GroupStore } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
 
 export function getIframeKind(
@@ -448,7 +448,7 @@ export async function handleAppletIframeMessage(
       const ignoreNotification =
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
-        dashboardMode.appletHash.toString() === appletHash.toString() &&
+        encodeHashToBase64(dashboardMode.appletHash) === encodeHashToBase64(appletHash) &&
         mainWindowFocused;
 
       // add notifications to unread messages and store them in the persisted notifications log
@@ -490,7 +490,7 @@ export async function handleAppletIframeMessage(
                 notification,
                 notificationTypeSettings.showInSystray,
                 notificationTypeSettings.allowOSNotification && notification.urgency === 'high',
-                appletStore ? encodeHashToBase64(appletStore.appletHash) : undefined,
+                appletStore ? { type: 'applet', appletHash: appletStore.appletHash } : undefined,
                 appletStore ? appletStore.applet.custom_name : undefined,
               );
             }
@@ -611,13 +611,20 @@ export async function handleAppletIframeMessage(
         Array.from(groupStores.values()).map(async (store) => {
           const peerStatuses = get(store.peerStatuses());
           if (peerStatuses) {
-            const peersToSendSignal = Object.entries(peerStatuses)
+            let peersToSendSignal = Object.entries(peerStatuses)
               .filter(
                 ([pubkeyB64, status]) =>
-                  status.lastSeen > Date.now() - OFFLINE_THRESHOLD &&
+                  status.status !== 'offline' &&
                   pubkeyB64 !== encodeHashToBase64(store.groupClient.myPubKey),
               )
               .map(([pubkeyB64, _]) => decodeHashFromBase64(pubkeyB64));
+
+            if (message.toAgents) {
+              const toAgents = message.toAgents.map((a) => encodeHashToBase64(a));
+              peersToSendSignal = peersToSendSignal.filter((agent) =>
+                toAgents.includes(encodeHashToBase64(agent)),
+              );
+            }
 
             await store.groupClient.remoteSignalArbitrary(remoteSignalPayload, peersToSendSignal);
           }
@@ -868,6 +875,7 @@ export async function handleAppletIframeMessage(
           'Subscribing to an asset store from within cross-group view is currently not supported.',
         );
       }
+      console.log('Got asset store subscription for wal: ', stringifyWal(message.wal));
       const hrl = message.wal.hrl;
       const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');

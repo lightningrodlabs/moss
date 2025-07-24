@@ -358,6 +358,7 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('send-remote-signal'),
       payload: Type.Uint8Array(),
+      toAgents: Type.Optional(Type.Array(Type.Uint8Array())),
     },
     { additionalProperties: false },
   ),

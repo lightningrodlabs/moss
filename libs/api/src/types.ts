@@ -415,6 +415,7 @@ export type AppletToParentRequest =
   | {
       type: 'send-remote-signal';
       payload: Uint8Array;
+      toAgents?: AgentPubKey[];
     }
   | {
       type: 'create-clone-cell';

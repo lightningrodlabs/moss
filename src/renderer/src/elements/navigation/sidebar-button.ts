@@ -105,8 +105,7 @@ export class SidebarButton extends LitElement {
         .icon {
           width: var(--size, 48px);
           height: var(--size, 48px);
-          border-radius: var(--border-radius, 12px);
-          background: var();
+          border-radius: var(--border-radius, 8px);
           box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         }
         /* .icon:hover {

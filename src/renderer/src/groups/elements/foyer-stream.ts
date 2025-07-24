@@ -22,6 +22,8 @@ import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { mdiChat, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { mossStyles } from '../../shared-styles.js';
+import { sendIcon } from '../../elements/_new_design/icons.js';
 
 @localized()
 @customElement('foyer-stream')
@@ -83,7 +85,7 @@ export class FoyerStream extends LitElement {
     else {
       for (const key in peers) {
         const status = peers[key];
-        if (key != this.groupStore.foyerStore.myPubKeyB64 && status.status == 'online')
+        if (key != this.groupStore.foyerStore.myPubKeyB64 && status.status !== 'offline')
           agents.push(decodeHashFromBase64(key));
       }
     }
@@ -206,60 +208,62 @@ export class FoyerStream extends LitElement {
       return html`
         <div class="row" style="position: relative;">
           ${isMyMessage ? html`<span style="flex: 1;"></span>` : html``}
+          ${!isMyMessage
+            ? html`
+                <agent-avatar
+                  style="margin-right:5px"
+                  disable-copy=${true}
+                  size=${32}
+                  agent-pub-key=${encodeHashToBase64(msg.from)}
+                ></agent-avatar>
+              `
+            : ''}
           <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
             <div class="msg-content">
               ${msg.payload.type === 'Msg'
                 ? html`
-                    ${!isMyMessage
-                      ? html`
-                          <agent-avatar
-                            style="margin-right:5px"
-                            disable-copy=${true}
-                            size=${20}
-                            agent-pub-key=${encodeHashToBase64(msg.from)}
-                          ></agent-avatar>
-                        `
-                      : ''}
                     ${unsafeHTML(msgText)}
-                    <span
-                      title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
-                      class="msg-timestamp"
-                      >${new Date(msg.payload.created).toLocaleTimeString()}</span
-                    >
-                    <div class="column">
-                      ${isMyMessage
-                        ? html`
-                            ${ackCount > 0
-                              ? html`
-                                  <div
-                                    tabindex="0"
-                                    style="margin-top: 1px;"
-                                    @mouseover=${() => {
-                                      console.log('mouseover');
-                                      if (this._showRecipients !== msg.payload.created) {
-                                        this._showRecipients = msg.payload.created;
-                                      }
-                                    }}
-                                    @keypress=${(e: KeyboardEvent) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        if (this._showRecipients === msg.payload.created) {
-                                          this._showRecipients = 0;
-                                        } else {
+                    <div class="msg-meta">
+                      <span
+                        class="msg-timestamp"
+                        title=${`Received: ${new Date(msg.received).toLocaleTimeString()}`}
+                        >${new Date(msg.payload.created).toLocaleTimeString()}</span
+                      >
+                      <div class="column">
+                        ${isMyMessage
+                          ? html`
+                              ${ackCount > 0
+                                ? html`
+                                    <div
+                                      tabindex="0"
+                                      style="margin-top: 1px;"
+                                      @mouseover=${() => {
+                                        console.log('mouseover');
+                                        if (this._showRecipients !== msg.payload.created) {
                                           this._showRecipients = msg.payload.created;
                                         }
-                                      }
-                                    }}
-                                    class="ack-count row center-content ${ackCount > 9
-                                      ? 'padded'
-                                      : ''}"
-                                  >
-                                    ${ackCount}
-                                  </div>
-                                `
-                              : '...'}
-                          `
-                        : ''}
-                      <span style="flex: 1;"></span>
+                                      }}
+                                      @keypress=${(e: KeyboardEvent) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                          if (this._showRecipients === msg.payload.created) {
+                                            this._showRecipients = 0;
+                                          } else {
+                                            this._showRecipients = msg.payload.created;
+                                          }
+                                        }
+                                      }}
+                                      class="ack-count row center-content ${ackCount > 9
+                                        ? 'padded'
+                                        : ''}"
+                                    >
+                                      ${ackCount}
+                                    </div>
+                                  `
+                                : '...'}
+                            `
+                          : ''}
+                        <span style="flex: 1;"></span>
+                      </div>
                     </div>
                   `
                 : ''}
@@ -325,7 +329,7 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="width:100%"
+            style="width:100%;"
             @sl-input=${(e) => {
               this.disabled = !e.target.value || !this._msgInput.value;
             }}
@@ -335,27 +339,16 @@ export class FoyerStream extends LitElement {
                 e.stopPropagation();
               }
             }}
-            placeholder="Message"
+            placeholder="my message"
           ></sl-input>
-          <sl-button
-            style="margin-left:10px;"
-            circle
-            ${this.disabled ? 'disabled' : ''}
+          <button
+            class="moss-button"
+            style="margin-left: 10px; padding: 0 11px; border-radius: 9px;"
+            ?disabled=${this.disabled}
             @click=${() => this.sendMessage()}
           >
-            <svg
-              style="margin-top:10px"
-              xmlns="http://www.w3.org/2000/svg"
-              height="16"
-              width="16"
-              viewBox="0 0 512 512"
-            >
-              <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.-->
-              <path
-                d="M16.1 260.2c-22.6 12.9-20.5 47.3 3.6 57.3L160 376V479.3c0 18.1 14.6 32.7 32.7 32.7c9.7 0 18.9-4.3 25.1-11.8l62-74.3 123.9 51.6c18.9 7.9 40.8-4.5 43.9-24.7l64-416c1.9-12.1-3.4-24.3-13.5-31.2s-23.3-7.5-34-1.4l-448 256zm52.1 25.5L409.7 90.6 190.1 336l1.2 1L68.2 285.7zM403.3 425.4L236.7 355.9 450.8 116.6 403.3 425.4z"
-              />
-            </svg>
-          </sl-button>
+            <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
+          </button>
         </div>
       </div>
     `;
@@ -363,6 +356,7 @@ export class FoyerStream extends LitElement {
 
   static styles = [
     sharedStyles,
+    mossStyles,
     css`
       .info:hover {
         opacity: 0.7;
@@ -393,41 +387,58 @@ export class FoyerStream extends LitElement {
         flex-direction: column;
         margin: 3px 5px;
         border-radius: 10px;
-        color: white;
+        color: black;
         padding: 3px 10px;
         flex-shrink: 1;
         align-self: flex-start;
-        background-color: #305f19;
+        background-color: white;
       }
       .msg-content {
         display: flex;
+        flex-direction: column;
+        font-size: 16px;
       }
       a {
         text-decoration: underline;
+        color: black;
       }
       .my-msg {
         align-self: flex-end;
-        background-color: #72b51b;
+        background-color: #7461eb;
+        color: white;
       }
+      .my-msg a {
+        color: white;
+      }
+
       .send-controls {
         display: flex;
         justify-content: flex-end;
         padding: 5px;
       }
+      .msg-meta {
+        display: flex;
+        flex-direction: row;
+        align-self: flex-end;
+      }
       .msg-timestamp {
         margin-left: 4px;
-        font-size: 80%;
-        color: #ccc;
+        font-size: 12px;
+        font-weight: 500;
+        color: rgba(50, 77, 71, 1);
+      }
+      .my-msg .msg-timestamp {
+        color: #e0eed5;
       }
       .ack-count {
         margin: auto;
-        min-width: 16px;
-        height: 16px;
+        min-width: 14px;
+        height: 14px;
         margin-left: 5px;
-        background-color: #f3ff3b;
-        color: black;
-        font-size: 80%;
-        border-radius: 8px;
+        background-color: rgba(1, 1, 1, 16%);
+        color: rgba(224, 238, 213, 1);
+        font-size: 11px;
+        border-radius: 4px;
       }
 
       .padded {
@@ -451,13 +462,13 @@ export class FoyerStream extends LitElement {
         z-index: 1;
         align-items: flex-end;
         position: absolute;
-        top: 2px;
-        right: 14px;
-        background-color: #f3ff3b;
+        top: 20px;
+        right: 5px;
+        background-color: #bac9af;
         margin-top: 5px;
         padding: 5px;
         color: white;
-        border-radius: 8px;
+        border-radius: 4px;
         max-width: 220px;
       }
       .msg-recipients-title {

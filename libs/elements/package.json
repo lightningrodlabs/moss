@@ -1,6 +1,6 @@
 {
   "name": "@theweave/elements",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -17,16 +17,17 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch --preserveWatchOutput"
+    "build:watch": "tsc --watch --preserveWatchOutput",
+    "prepublish": "yarn build"
   },
   "type": "module",
   "dependencies": {
-    "@holochain-open-dev/elements": "^0.500.0",
-    "@holochain-open-dev/profiles": "^0.501.0",
-    "@holochain-open-dev/stores": "^0.500.0",
-    "@holochain-open-dev/utils": "^0.500.1",
-    "@holochain/client": "^0.19.0",
-    "@theweave/api": "^0.5.0",
+    "@holochain-open-dev/elements": "^0.500.1",
+    "@holochain-open-dev/profiles": "^0.501.2",
+    "@holochain-open-dev/stores": "^0.500.2",
+    "@holochain-open-dev/utils": "^0.500.2",
+    "@holochain/client": "^0.19.1",
+    "@theweave/api": "^0.5.1",
     "@lit/context": "^1.0.1",
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.0",

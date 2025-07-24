@@ -16,6 +16,7 @@ import {
   GroupProfile as GroupProfilePartial,
   ParentToAppletMessage,
   WAL,
+  WeaveLocation,
 } from '@theweave/api';
 
 import {
@@ -57,7 +58,7 @@ declare global {
         callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
-      onSwitchToApplet: (callback: (e: any, payload: AppletId) => any) => void;
+      onSwitchToWeaveLocation: (callback: (e: any, payload: WeaveLocation) => any) => void;
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
       onWillNavigateExternal: (callback: (e: any) => any) => void;
@@ -130,12 +131,12 @@ declare global {
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
-      createGroup: (useProgenitor: boolean) => Promise<AppInfo>;
+      installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
         notifyOS: boolean,
-        appletId: AppletId | undefined,
+        weaveLocation: WeaveLocation | undefined,
         appletName: string | undefined,
       ) => Promise<void>;
       enableDevMode: () => Promise<void>;
@@ -194,8 +195,8 @@ export async function joinGroup(
   return window.electronAPI.joinGroup(networkSeed, progenitor);
 }
 
-export async function createGroup(useProgenitor: boolean): Promise<AppInfo> {
-  return window.electronAPI.createGroup(useProgenitor);
+export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo> {
+  return window.electronAPI.installGroupHapp(useProgenitor);
 }
 
 export async function dialogMessagebox(

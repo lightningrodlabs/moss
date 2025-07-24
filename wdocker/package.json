@@ -1,6 +1,6 @@
 {
   "name": "@theweave/wdocker",
-  "version": "0.14.0-rc.2",
+  "version": "0.14.3",
   "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
-    "@holochain/client": "^0.19.0",
+    "@holochain/client": "^0.19.1",
     "@inquirer/prompts": "6.0.1",
     "@lightningrodlabs/we-rust-utils": "0.500.0",
     "@msgpack/msgpack": "^2.8.0",

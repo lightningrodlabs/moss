@@ -614,9 +614,11 @@ export class MainDashboard extends LitElement {
       });
     });
 
-    window.electronAPI.onSwitchToApplet((_, appletId) => {
-      if (appletId) {
-        this.openViews.openAppletMain(decodeHashFromBase64(appletId));
+    window.electronAPI.onSwitchToWeaveLocation((_, weaveLocation) => {
+      if (weaveLocation) {
+        if (weaveLocation.type === 'applet')
+          this.openViews.openAppletMain(weaveLocation.appletHash);
+        else if (weaveLocation.type === 'group') this.openGroup(weaveLocation.dnaHash);
       }
     });
 
@@ -787,7 +789,7 @@ export class MainDashboard extends LitElement {
     return (
       this._dashboardState.value.viewType === 'group' &&
       this._dashboardState.value.appletHash &&
-      this._dashboardState.value.appletHash.toString() === appletHash.toString()
+      encodeHashToBase64(this._dashboardState.value.appletHash) === encodeHashToBase64(appletHash)
     );
   }
 
@@ -795,7 +797,7 @@ export class MainDashboard extends LitElement {
     return (
       this._dashboardState.value.viewType === 'group' &&
       !this._dashboardState.value.appletHash &&
-      this._dashboardState.value.groupHash.toString() === groupHash.toString()
+      encodeHashToBase64(this._dashboardState.value.groupHash) === encodeHashToBase64(groupHash)
     );
   }
 

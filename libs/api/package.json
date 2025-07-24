@@ -1,6 +1,6 @@
 {
   "name": "@theweave/api",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -21,12 +21,13 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch --preserveWatchOutput",
-    "build:api-docs": "api-extractor run --local && api-documenter markdown -i docs/temp"
+    "build:api-docs": "api-extractor run --local && api-documenter markdown -i docs/temp",
+    "prepublish": "yarn build"
   },
   "type": "module",
   "dependencies": {
-    "@holochain-open-dev/profiles": "^0.501.0",
-    "@holochain/client": "^0.19.0",
+    "@holochain-open-dev/profiles": "^0.501.2",
+    "@holochain/client": "^0.19.1",
     "@msgpack/msgpack": "^2.8.0",
     "js-base64": "^3.7.2"
   },

@@ -17,6 +17,8 @@ export const createWalWindow = (): BrowserWindow => {
     webPreferences: {
       preload: path.resolve(__dirname, '../preload/walwindow.js'),
       safeDialogs: true,
+      // Otherwise polling zome calls will stop working properly
+      backgroundThrottling: false,
     },
   });
 
@@ -129,6 +131,8 @@ export const createHappWindow = (
       preload: path.resolve(__dirname, '../preload/happs.js'),
       partition,
       safeDialogs: true,
+      // Otherwise polling zome calls will stop working properly
+      backgroundThrottling: false,
     },
   });
 

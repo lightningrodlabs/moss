@@ -107,7 +107,7 @@ export class CreateGroupDialog extends LitElement {
             class="moss-dialog-close-button"
             style="position: absolute; top: -22px; right: -11px;"
             @click=${() => {
-              (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
+              if (!this.committing) (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
             }}
           >
             ${closeIcon(24)}

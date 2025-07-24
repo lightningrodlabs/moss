@@ -95,6 +95,7 @@ pub fn get_my_permission_type(input: ZomeFnInput<()>) -> ExternResult<Permission
                 .map(|record| record.entry.to_app_option::<StewardPermissionClaim>().ok())
                 .filter_map(|ac| ac)
                 .filter_map(|ac| ac)
+                .filter(|ac| ac.permission.for_agent == my_pub_key)
                 .collect::<Vec<StewardPermissionClaim>>();
 
             match claims.into_iter().find(|c| c.permission.expiry.is_none()) {
@@ -190,14 +191,16 @@ pub fn network_get_agent_permission_type(
                         if let Some(permission) = maybe_permission {
                             match permission.expiry {
                                 None => {
-                                    // If it's an unlimited permission, store it as a private entry
                                     let claim = StewardPermissionClaim {
                                         permission_hash: permission_record.action_address().clone(),
                                         permission,
                                     };
-                                    create_entry(EntryTypes::StewardPermissionClaim(
-                                        claim.clone(),
-                                    ))?;
+                                    // If it's an unlimited permission and one for myself, store it as a private entry
+                                    if agent.input == agent_info()?.agent_initial_pubkey {
+                                        create_entry(EntryTypes::StewardPermissionClaim(
+                                            claim.clone(),
+                                        ))?;
+                                    }
                                     return Ok(PermissionType::Steward(claim));
                                 }
                                 Some(expiry) => {

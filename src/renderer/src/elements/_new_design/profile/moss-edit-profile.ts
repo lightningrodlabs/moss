@@ -1,4 +1,4 @@
-import { html, LitElement } from 'lit';
+import { html, LitElement, PropertyValueMap } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { consume } from '@lit/context';
@@ -77,13 +77,20 @@ export class MossEditProfile extends LitElement {
     }
   }
 
+  async willUpdate(changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>) {
+    if (changedProperties.has('profile')) {
+      if (this.profile) {
+        this.checkDisabled(); // We want to enable the button now if the profile had been set in the parent component
+        this.nickname = this.profile.nickname;
+        this.avatar = this.profile.fields.avatar;
+      }
+    }
+  }
+
   checkDisabled() {
     // profile nickname the same or not and icon the same or not
-    console.log('Checking disabled');
     const avatarEqual = this.profile?.fields['avatar'] === this.avatar;
-    console.log('avatarEqual: ', avatarEqual);
     const nicknameEqual = this.profile?.nickname === this.nickname;
-    console.log('nicknameEqual: ', nicknameEqual);
     if (!avatarEqual || !nicknameEqual) {
       this.disabled = false;
     } else {

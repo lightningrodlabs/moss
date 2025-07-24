@@ -63,11 +63,7 @@ test('Add an asset relation, remove it again and try to get it from the ALL_ASSE
       payload: { input: input1 },
     });
 
-    console.log('Hello4');
-
     await dhtSync([alice, bob], assetsCellAlice.cell_id[0]);
-
-    console.log('Hello5');
 
     // Bob tries to get it from the anchor
     const allAssetRelations: AssetRelationAndHash[] = await assetsCellBob.callZome({

@@ -925,7 +925,7 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderContent(groupProfile: GroupProfile, modifiers: DnaModifiers) {
+  renderContentInner(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
         return this.renderMain(groupProfile, modifiers);
@@ -936,11 +936,11 @@ export class GroupHome extends LitElement {
     }
   }
 
-  render() {
+  renderContent() {
     switch (this.groupProfile.value.status) {
       case 'pending':
         return html`<div class="row center-content" style="flex: 1">
-          <sl-spinner style="font-size: 2rem"></sl-spinner>
+          <img src="loading_animation.svg" />
         </div>`;
       case 'complete':
         const groupProfile = this.groupProfile.value.value[0];
@@ -970,7 +970,7 @@ export class GroupHome extends LitElement {
             </div>
           </sl-dialog>
           <moss-profile-prompt>
-            ${this.renderContent(groupProfile, modifiers)}
+            ${this.renderContentInner(groupProfile, modifiers)}
           </moss-profile-prompt>
         `;
       case 'error':
@@ -979,6 +979,31 @@ export class GroupHome extends LitElement {
           .error=${this.groupProfile.value.error}
         ></display-error>`;
     }
+  }
+
+  render() {
+    return html`
+      <sl-dialog
+        class="moss-dialog profile-detail-popup"
+        no-header
+        id="member-profile"
+        style="position: relative;"
+      >
+        <div class="column center-content" style="position: relative;">
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -12px; right: -12px;"
+            @click=${() => {
+              this._memberProfileDialog?.hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+          ${this._selectedAgent ? this.renderMemberProfile() : ``}
+        </div>
+      </sl-dialog>
+      <moss-profile-prompt> ${this.renderContent()} </moss-profile-prompt>
+    `;
   }
 
   static styles = [

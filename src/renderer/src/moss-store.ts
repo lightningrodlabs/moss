@@ -56,11 +56,11 @@ import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import {
   ConductorInfo,
-  createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
   getGroupProfile,
   getToolIcon,
+  installGroupHapp,
   joinGroup,
   storeGroupProfile,
 } from './electron-api.js';
@@ -802,7 +802,7 @@ export class MossStore {
   public async createGroup(name: string, logo: string, useProgenitor: boolean): Promise<AppInfo> {
     if (!logo) throw new Error('No logo provided.');
 
-    const appInfo = await createGroup(useProgenitor);
+    const appInfo = await installGroupHapp(useProgenitor);
 
     await this.reloadManualStores();
 
@@ -874,8 +874,8 @@ export class MossStore {
 
     const appToLeave = groupApps.find(
       (app) =>
-        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
-        groupDnaHash.toString(),
+        encodeHashToBase64((app.cell_info['group'][0].value as ProvisionedCell).cell_id[0]) ===
+        encodeHashToBase64(groupDnaHash),
     );
 
     if (!appToLeave) throw new Error('Group with this DNA hash not found in the conductor.');
@@ -962,8 +962,8 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
-        groupDnaHash.toString(),
+        encodeHashToBase64((app.cell_info['group'][0].value as ProvisionedCell).cell_id[0]) ===
+        encodeHashToBase64(groupDnaHash),
     );
 
     if (!appToDisable) throw new Error('Group with this DNA hash not found in the conductor.');
@@ -999,8 +999,8 @@ export class MossStore {
 
     const appToDisable = groupApps.find(
       (app) =>
-        (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0].toString() ===
-        groupDnaHash.toString(),
+        encodeHashToBase64((app.cell_info['group'][0].value as ProvisionedCell).cell_id[0]) ===
+        encodeHashToBase64(groupDnaHash),
     );
 
     if (!appToDisable) throw new Error('Group with this DNA hash not found in the conductor.');
@@ -1261,14 +1261,16 @@ export class MossStore {
     this.installedApps.reload(); // required after fresh installation of app
     return asyncDerived(
       this.installedApplets,
-      (appletsHashes) => !!appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
+      (appletsHashes) =>
+        !!appletsHashes.find((hash) => encodeHashToBase64(hash) === encodeHashToBase64(appletHash)),
     );
   });
 
   isRunning = new LazyHoloHashMap((appletHash: EntryHash) =>
     asyncDerived(
       this.runningApplets,
-      (appletsHashes) => !!appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
+      (appletsHashes) =>
+        !!appletsHashes.find((hash) => encodeHashToBase64(hash) === encodeHashToBase64(appletHash)),
     ),
   );
 
@@ -1392,7 +1394,9 @@ export class MossStore {
         // );
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
-            appletsHashes.find((hash) => hash.toString() === appletHash.toString()),
+            appletsHashes.find(
+              (hash) => encodeHashToBase64(hash) === encodeHashToBase64(appletHash),
+            ),
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
 
@@ -1536,7 +1540,7 @@ export class MossStore {
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
         return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
-          if (hash.toString() === NULL_HASH.toString()) {
+          if (encodeHashToBase64(hash) === encodeHashToBase64(NULL_HASH)) {
             return {
               dnaLocation,
               entryDefLocation: undefined,

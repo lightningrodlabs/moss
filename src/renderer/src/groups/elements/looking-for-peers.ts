@@ -16,6 +16,8 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { dialogMessagebox } from '../../electron-api.js';
+import { telescopeIcon } from '../../elements/_new_design/icons.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('looking-for-peers')
@@ -89,14 +91,16 @@ export class LookingForPeers extends LitElement {
         >${msg('Leave Group')}
       </sl-button>
       <div class="column center-content" style="flex: 1">
+        ${telescopeIcon(120)}
+        <div class="dot-carousel" style="margin-top: 20px; --carousel-color: black;"></div>
         <h2>${msg('Looking for peers...')}</h2>
         <span style="max-width: 600px; text-align: center"
           >${msg(
-            "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can synchronize with them.",
+            "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.",
           )}</span
         >
         <span style="max-width: 600px; text-align: center; margin-top: 40px;"
-          >${msg("The group's DNA hash is: ")}<pre></pre>${encodeHashToBase64(
+          >${msg('The group ID is: ')}<pre></pre>${encodeHashToBase64(
             this.groupStore.groupDnaHash,
           )}</pre></span
         >
@@ -104,5 +108,5 @@ export class LookingForPeers extends LitElement {
     `;
   }
 
-  static styles = [sharedStyles];
+  static styles = [sharedStyles, mossStyles];
 }

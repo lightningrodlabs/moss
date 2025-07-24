@@ -19,6 +19,7 @@ import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { ToolAndCurationInfo } from '../../../types.js';
+import { flaskIcon } from '../../../elements/_new_design/icons.js';
 
 @localized()
 @customElement('installable-tools-web2')
@@ -63,7 +64,12 @@ export class InstallableToolsWeb2 extends LitElement {
           }
         }}
       >
-        <div class="row" style="flex: 1;">
+        <div class="row" style="flex: 1; position: relative">
+          ${tool.curationInfos[0].info.visiblity === 'low'
+            ? html`<div class="row items-center experimental-badge">
+                ${flaskIcon()}&nbsp;experimental
+              </div>`
+            : ''}
           ${tool.toolInfoAndVersions.icon
             ? html`<img
                 src=${tool.toolInfoAndVersions.icon}
@@ -85,7 +91,20 @@ export class InstallableToolsWeb2 extends LitElement {
   render() {
     const nonDeprecatedTools = this.installableTools
       .filter((toolAndCollective) => !toolAndCollective.toolInfoAndVersions.deprecation)
-      .sort((tool_a, tool_b) => tool_b.latestVersion.releasedAt - tool_a.latestVersion.releasedAt);
+      .sort((tool_a, tool_b) => tool_b.latestVersion.releasedAt - tool_a.latestVersion.releasedAt)
+      .sort((tool_a, tool_b) => {
+        if (
+          tool_a.curationInfos[0].info.visiblity === 'low' &&
+          tool_b.curationInfos[0].info.visiblity !== 'low'
+        )
+          return 1;
+        if (
+          tool_b.curationInfos[0].info.visiblity === 'low' &&
+          tool_a.curationInfos[0].info.visiblity !== 'low'
+        )
+          return -1;
+        return 0;
+      });
     return html`
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
@@ -125,6 +144,15 @@ export class InstallableToolsWeb2 extends LitElement {
 
       .tool-card:focus {
         --sl-panel-background-color: var(--sl-color-tertiary-400);
+      }
+
+      .experimental-badge {
+        position: absolute;
+        top: -21px;
+        right: -21px;
+        border-radius: 0 15px 0 15px;
+        background: #e2c5ed;
+        padding: 4px 8px;
       }
     `,
     mossStyles,

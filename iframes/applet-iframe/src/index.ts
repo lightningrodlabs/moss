@@ -1,6 +1,7 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
 import {
+  AgentPubKey,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
@@ -165,7 +166,7 @@ const weaveApi: WeaveServices = {
             // TODO verify that this does not remove the event listener for other
             // subscribers to the same WAL
             window.removeEventListener('asset-store-update', listener);
-            console.log('UNSUBSCRIBING.');
+            console.log('@applet-iframe: UNSUBSCRIBING from assetStore of wal ', stringifyWal(wal));
             setTimeout(async () => {
               await postMessage({
                 type: 'unsubscribe-from-asset-store',
@@ -310,10 +311,11 @@ const weaveApi: WeaveServices = {
       type: 'applet-participants',
     }),
 
-  sendRemoteSignal: (payload: Uint8Array) =>
+  sendRemoteSignal: (payload: Uint8Array, toAgents?: AgentPubKey[]) =>
     postMessage({
       type: 'send-remote-signal',
       payload,
+      toAgents,
     }),
 
   onRemoteSignal: (callback: (payload: Uint8Array) => any) => {
@@ -816,7 +818,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
-      if (hrl[1].toString() === NULL_HASH.toString()) {
+      if (encodeHashToBase64(hrl[1]) === encodeHashToBase64(NULL_HASH)) {
         return {
           type: view,
           view: {

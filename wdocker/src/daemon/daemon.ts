@@ -136,21 +136,38 @@ setTimeout(async () => {
       }
     });
     const myPubkeySum = Array.from(groupAppWs.myPubKey).reduce((acc, curr) => acc + curr, 0);
+
+    // Get all local agents first, then try getting them over the network
     const allAgents: AgentPubKey[] = await groupAppWs.callZome({
       role_name: 'group',
       zome_name: 'profiles',
       fn_name: 'get_agents_with_profile',
-      payload: null,
+      payload: { input: null, local: true },
     });
     GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
-    setInterval(async () => {
+    try {
       const allAgents: AgentPubKey[] = await groupAppWs.callZome({
         role_name: 'group',
         zome_name: 'profiles',
         fn_name: 'get_agents_with_profile',
-        payload: null,
+        payload: { input: null, local: false },
       });
       GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
+    } catch (e) {
+      console.warn('WARN: Failed to get agents with profile via the network.');
+    }
+    setInterval(async () => {
+      try {
+        const allAgents: AgentPubKey[] = await groupAppWs.callZome({
+          role_name: 'group',
+          zome_name: 'profiles',
+          fn_name: 'get_agents_with_profile',
+          payload: { input: null, local: false },
+        });
+        GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
+      } catch (e) {
+        console.warn('WARN: Failed to get agents with profile via the network.');
+      }
     }, 300_000);
     // Ping all agents
     setInterval(async () => {
