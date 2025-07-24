@@ -85,7 +85,16 @@ export class DangerTone extends LitElement {
         <div class="row items-center">
           <div style="margin-right: 10px;">⚠️</div>
           <div>
-            <b>${msg('This will delete all your Tools of this group and the data therein')}</b>
+            <b
+              >${msg(
+                'This will delete all your data related to this group and the Tools you joined therein from your computer.',
+              )}</b
+            >
+            <span
+              >${msg(
+                'Other members of the group can keep using the group and any Tools they joined themselves.',
+              )}</span
+            >
           </div>
         </div>
       </div>
@@ -145,7 +154,7 @@ export class DangerTone extends LitElement {
           </button>
           <div style="margin-left: 40px;">
             ${msg(
-              'Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer.',
+              'Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.',
             )}
           </div>
         </div>
