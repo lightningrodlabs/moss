@@ -816,7 +816,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     case 'asset':
       if (!hrl) throw new Error(`Invalid query string: ${s}. Missing hrl parameter.`);
       if (view !== 'applet-view') throw new Error(`Invalid query string: ${s}.`);
-      if (hrl[1].toString() === NULL_HASH.toString()) {
+      if (encodeHashToBase64(hrl[1]) === encodeHashToBase64(NULL_HASH)) {
         return {
           type: view,
           view: {

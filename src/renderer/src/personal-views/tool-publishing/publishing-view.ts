@@ -124,8 +124,8 @@
 //               (entity) =>
 //                 html`<div
 //                   tabindex="0"
-//                   class="sidebar-btn ${this._selectedDeveloperCollective?.toString() ===
-//                   entity.originalActionHash.toString()
+//                   class="sidebar-btn ${encodeHashToBase64(this._selectedDeveloperCollective?) ===
+//                   encodeHashToBase64(entity.originalActionHash)
 //                     ? 'selected'
 //                     : ''}"
 //                   @click=${() => {
@@ -173,8 +173,8 @@
 //               (entity) =>
 //                 html`<div
 //                   tabindex="0"
-//                   class="sidebar-btn ${this._selectedDeveloperCollective?.toString() ===
-//                   entity.originalActionHash.toString()
+//                   class="sidebar-btn ${encodeHashToBase64(this._selectedDeveloperCollective?) ===
+//                   encodeHashToBase64(entity.originalActionHash)
 //                     ? 'selected'
 //                     : ''}"
 //                   @click=${() => {

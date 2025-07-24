@@ -93,11 +93,11 @@ export function findAppForDnaHash(
     for (const [roleName, cells] of Object.entries(app.cell_info)) {
       for (const cell of cells) {
         if (cell.type === CellType.Cloned) {
-          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
+          if (encodeHashToBase64(cell.value.cell_id[0]) === encodeHashToBase64(dnaHash)) {
             return { appInfo: app, roleName: cell.value.clone_id };
           }
         } else if (cell.type === CellType.Provisioned) {
-          if (cell.value.cell_id[0].toString() === dnaHash.toString()) {
+          if (encodeHashToBase64(cell.value.cell_id[0]) === encodeHashToBase64(dnaHash)) {
             return { appInfo: app, roleName };
           }
         }

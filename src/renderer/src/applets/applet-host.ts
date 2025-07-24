@@ -448,7 +448,7 @@ export async function handleAppletIframeMessage(
       const ignoreNotification =
         dashboardMode.viewType === 'group' &&
         dashboardMode.appletHash &&
-        dashboardMode.appletHash.toString() === appletHash.toString() &&
+        encodeHashToBase64(dashboardMode.appletHash) === encodeHashToBase64(appletHash) &&
         mainWindowFocused;
 
       // add notifications to unread messages and store them in the persisted notifications log

@@ -143,7 +143,8 @@ export class GroupsSidebar extends LitElement {
                     this.dragged = null;
                   }}
                   .selected=${this.selectedGroupDnaHash &&
-                  groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+                  encodeHashToBase64(groupDnaHash) ===
+                    encodeHashToBase64(this.selectedGroupDnaHash)}
                   .indicated=${this.indicatedGroupDnaHashes.includes(
                     encodeHashToBase64(groupDnaHash),
                   )}
@@ -192,7 +193,7 @@ export class GroupsSidebar extends LitElement {
           <sidebar-button
             style="margin-bottom: -4px;"
             .selected=${this.selectedGroupDnaHash &&
-            groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+            encodeHashToBase64(groupDnaHash) === encodeHashToBase64(this.selectedGroupDnaHash)}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
             .logoSrc=${wrapPathInSvg(mdiTimerSand)}
             .slIcon=${true}
@@ -216,7 +217,7 @@ export class GroupsSidebar extends LitElement {
           <sidebar-button
             style="margin-bottom: -4px; opacity: 0.6;"
             .selected=${this.selectedGroupDnaHash &&
-            groupDnaHash.toString() === this.selectedGroupDnaHash.toString()}
+            encodeHashToBase64(groupDnaHash) === encodeHashToBase64(this.selectedGroupDnaHash)}
             .indicated=${this.indicatedGroupDnaHashes.includes(encodeHashToBase64(groupDnaHash))}
             .logoSrc=${groupProfile?.icon_src
               ? groupProfile.icon_src

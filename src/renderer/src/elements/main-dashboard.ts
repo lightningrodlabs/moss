@@ -793,7 +793,7 @@ export class MainDashboard extends LitElement {
     return (
       this._dashboardState.value.viewType === 'group' &&
       this._dashboardState.value.appletHash &&
-      this._dashboardState.value.appletHash.toString() === appletHash.toString()
+      encodeHashToBase64(this._dashboardState.value.appletHash) === encodeHashToBase64(appletHash)
     );
   }
 
@@ -801,7 +801,7 @@ export class MainDashboard extends LitElement {
     return (
       this._dashboardState.value.viewType === 'group' &&
       !this._dashboardState.value.appletHash &&
-      this._dashboardState.value.groupHash.toString() === groupHash.toString()
+      encodeHashToBase64(this._dashboardState.value.groupHash) === encodeHashToBase64(groupHash)
     );
   }
 

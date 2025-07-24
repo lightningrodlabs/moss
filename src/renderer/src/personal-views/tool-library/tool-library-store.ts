@@ -28,7 +28,8 @@ export class ToolsLibraryStore {
     asyncDerived(this.allInstallableTools, async (toolEntities) =>
       toolEntities.find(
         (toolEntity) =>
-          toolEntity.originalActionHash.toString() === orignalToolActionHash.toString(),
+          encodeHashToBase64(toolEntity.originalActionHash) ===
+          encodeHashToBase64(orignalToolActionHash),
       ),
     ),
   );

@@ -755,7 +755,11 @@ export class GroupStore {
       }
 
       return this.profilesStore.client.onSignal((signal) => {
-        if (this.profilesStore.client.client.myPubKey.toString() !== agent.toString()) return;
+        if (
+          encodeHashToBase64(this.profilesStore.client.client.myPubKey) !==
+          encodeHashToBase64(agent)
+        )
+          return;
         if (!(signal.type === 'EntryCreated' || signal.type === 'EntryUpdated')) return;
         const record = new EntryRecord<Profile>({
           entry: {
@@ -826,7 +830,8 @@ export class GroupStore {
     if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
       const agentsThatNeedPinging = this.allAgents.filter(
         (agent) =>
-          agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
+          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
+          this.needsPinging(agent),
       );
       this._agentsRefetchCounter += 1;
       return agentsThatNeedPinging.length > 0
@@ -837,7 +842,8 @@ export class GroupStore {
       this.allAgents = allAgents;
       const agentsThatNeedPinging = allAgents.filter(
         (agent) =>
-          agent.toString() !== this.groupClient.myPubKey.toString() && this.needsPinging(agent),
+          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
+          this.needsPinging(agent),
       );
       this._agentsRefetchCounter = 0;
       return agentsThatNeedPinging.length > 0
@@ -1166,7 +1172,7 @@ export class GroupStore {
   //     myApplets.filter((appletHash) =>
   //       installedApplets.find(
   //         (installedAppletHash) =>
-  //           installedAppletHash.toString() === appletHash.toString()
+  //           encodeHashToBase64(installedAppletHash) === encodeHashToBase64(appletHash)
   //       )
   //     )
   // );

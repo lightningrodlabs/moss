@@ -4,6 +4,7 @@ import {
   CreateCloneCellRequest,
   CreateCloneCellResponse,
   DisableCloneCellRequest,
+  DnaHash,
   EnableCloneCellRequest,
   EntryHash,
   decodeHashFromBase64,
@@ -380,13 +381,13 @@ export interface WeaveServices {
    * @param groupHash
    * @returns
    */
-  groupProfile: (groupHash) => Promise<any>;
+  groupProfile: (groupHash: DnaHash) => Promise<any>;
   /**
    * Returns Applet info of the specified Applet
    * @param appletHash
    * @returns
    */
-  appletInfo: (appletHash) => Promise<AppletInfo | undefined>;
+  appletInfo: (appletHash: AppletHash) => Promise<AppletInfo | undefined>;
   /**
    * Sends notifications to We and depending on user settings and urgency level
    * further to the operating system.
@@ -527,9 +528,9 @@ export class WeaveClient implements WeaveServices {
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
   };
 
-  groupProfile = (groupHash) => window.__WEAVE_API__.groupProfile(groupHash);
+  groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
-  appletInfo = (appletHash) => window.__WEAVE_API__.appletInfo(appletHash);
+  appletInfo = (appletHash: AppletHash) => window.__WEAVE_API__.appletInfo(appletHash);
 
   notifyFrame = (notifications: Array<FrameNotification>) =>
     window.__WEAVE_API__.notifyFrame(notifications);

@@ -309,7 +309,7 @@
 
 //   renderContributors(developerCollective: UpdateableEntity<DeveloperCollective>) {
 //     const myPubKey = this.mossStore.toolsLibraryStore.toolsLibraryClient.client.myPubKey;
-//     const amIOwner = myPubKey.toString() === developerCollective.record.action.author.toString();
+//     const amIOwner = encodeHashToBase64(myPubKey) === encodeHashToBase64(developerCollective.record.action.author);
 //     return html` <div class="column" style="align-items: center;">
 //       <div class="row" style="align-items: center; margin-bottom: 10px;">
 //         <pre style="font-size: 16px; margin: 0;">
@@ -332,7 +332,7 @@
 //                 ? new Date(permission.entry.expiry / 1000).toISOString()
 //                 : 'Never'}</span
 //             >
-//             ${myPubKey.toString() === permission.entry.for_agent.toString()
+//             ${encodeHashToBase64(myPubKey) === encodeHashToBase64(permission.entry.for_agent)
 //               ? html` <span style="margin-left: 5px; font-weight: bold;">(You)</span> `
 //               : html``}
 //           </div>
