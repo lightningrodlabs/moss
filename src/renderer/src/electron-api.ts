@@ -131,7 +131,7 @@ declare global {
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
-      createGroup: (useProgenitor: boolean) => Promise<AppInfo>;
+      installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
@@ -195,8 +195,8 @@ export async function joinGroup(
   return window.electronAPI.joinGroup(networkSeed, progenitor);
 }
 
-export async function createGroup(useProgenitor: boolean): Promise<AppInfo> {
-  return window.electronAPI.createGroup(useProgenitor);
+export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo> {
+  return window.electronAPI.installGroupHapp(useProgenitor);
 }
 
 export async function dialogMessagebox(

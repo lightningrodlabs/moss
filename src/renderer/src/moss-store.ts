@@ -56,11 +56,11 @@ import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
 import {
   ConductorInfo,
-  createGroup,
   getAllAppAssetsInfos,
   getAppletDevPort,
   getGroupProfile,
   getToolIcon,
+  installGroupHapp,
   joinGroup,
   storeGroupProfile,
 } from './electron-api.js';
@@ -802,7 +802,7 @@ export class MossStore {
   public async createGroup(name: string, logo: string, useProgenitor: boolean): Promise<AppInfo> {
     if (!logo) throw new Error('No logo provided.');
 
-    const appInfo = await createGroup(useProgenitor);
+    const appInfo = await installGroupHapp(useProgenitor);
 
     await this.reloadManualStores();
 
