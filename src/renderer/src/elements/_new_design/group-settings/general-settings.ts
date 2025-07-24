@@ -180,7 +180,7 @@ export class GroupGeneralSettings extends LitElement {
                     ${msg('Only stewards can change the group profile.')}
                   </div>`}
 
-              <div style="margin-top: 28px; margin-bottom: 4px;">${msg('Group DNA hash')}:</div>
+              <div style="margin-top: 28px; margin-bottom: 4px;">${msg('Group ID')}:</div>
               <div class="row">
                 <copy-hash .hash=${encodeHashToBase64(this._groupStore.groupDnaHash)}></copy-hash>
               </div>
