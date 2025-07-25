@@ -201,7 +201,7 @@ export class GroupStore {
 
     window.setInterval(async () => {
       const walsToPoll = Object.entries(this._assetStores)
-        .filter(([s, storeAndSubscribers]) => {
+        .filter(([_, storeAndSubscribers]) => {
           // We only poll for stores with active subscribers
           return (
             Object.values(storeAndSubscribers.subscriberCounts).reduce(
