@@ -13,6 +13,7 @@
     "version": "0.1.5",
     "sha256": {
       "x86_64-unknown-linux-gnu": "3848ac44c99f0b487cbcce6c7c1f29a0f025becbb17b74da0bfc87f66dd6e4ea",
+      "aarch64-unknown-linux-gnu": "94256410c55c7ed890a32859557067508716b84295a4ed61f57b806b5fd5e529",
       "x86_64-pc-windows-msvc.exe": "20706e6b3858520206b5a4edc1c98136dffc61368e9d2b65e8624baaccaa3843",
       "x86_64-apple-darwin": "5f8b9d338aea9d97debdc15746a09cd8d5282cb3a367f67560a602e83ff80ab3",
       "aarch64-apple-darwin": "acd94fbcd8f958023cb0d3c2a78052d79e439b96a5510d6faa5a6b7f20ad1fb1"
