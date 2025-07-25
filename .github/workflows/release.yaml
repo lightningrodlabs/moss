@@ -105,6 +105,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # use fpm for correct architecture (see https://github.com/electron-userland/electron-builder/issues/6116)
+          sudo apt-get install ruby-dev build-essential
+          sudo gem install fpm
+          export USE_SYSTEM_FPM=true
+
           yarn build:linux
           ls dist
 

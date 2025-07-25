@@ -13,7 +13,18 @@ const packageJson = JSON.parse(fs.readFileSync('package.json'));
 const appId = electronBuilderYaml.appId;
 const productName = electronBuilderYaml.productName;
 const appVersion = packageJson.version;
-const debFileName = `${appId}_${appVersion}_amd64.deb`;
+
+let arch;
+switch (process.arch) {
+  case 'arm64':
+    arch = 'arm64';
+    break;
+  case 'x64':
+    arch = 'amd64';
+    break;
+}
+
+const debFileName = `${appId}-${appVersion}-${arch}.deb`;
 const debFilePath = `dist/${debFileName}`;
 
 const fileBytesBefore = fs.readFileSync(debFilePath);
