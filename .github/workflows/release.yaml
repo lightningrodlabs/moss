@@ -11,8 +11,8 @@ jobs:
       matrix:
         # platform: [windows-2022]
         # platform: [ubuntu-22.04]
-        platform: [windows-2022, macos-13, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
-        # platform: [ubuntu-22.04, ubuntu-22.04-arm]
+        # platform: [windows-2022, macos-13, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+        platform: [ubuntu-22.04, ubuntu-22.04-arm]
         # platform: [windows-2022, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.13
