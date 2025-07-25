@@ -57,7 +57,6 @@ export class MossProfilePrompt extends LitElement {
   }
 
   render() {
-    console.log('Rerendering profile prompt: ', this.myProfile);
     switch (this.myProfile.value.status) {
       case 'complete':
         return this.renderPrompt(this.myProfile.value.value);
