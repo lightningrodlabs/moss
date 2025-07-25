@@ -103,7 +103,7 @@ hasher.update(fileBytes);
 const sha512 = hasher.digest('base64');
 
 const latestYaml = yaml.load(
-  fs.readFileSync(`dist/latest-linux.yml${arch === 'arm64' ? '-arm64' : ''}`),
+  fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),
 );
 
 console.log('latestYaml before modification:\n', latestYaml);
