@@ -38,8 +38,7 @@ linux:
   maintainer: lightningrodlabs.org
   category: Utility
   icon: ./build/icon.icns
-appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-${arch}.${ext}
 npmRebuild: false
 # publish:
 #   provider: generic
