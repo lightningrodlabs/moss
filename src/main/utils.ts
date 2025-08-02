@@ -28,8 +28,12 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       return;
     }
     if (e.url.startsWith('weave-0.14://')) {
-      emitToWindow(browserWindow, 'deep-link-received', e.url);
       e.preventDefault();
+      // This event is emitted to allow the window to prevent the
+      // beforeunload event to execute
+      // (https://github.com/electron/electron/issues/29921)
+      emitToWindow(browserWindow, 'will-navigate-external', null);
+      emitToWindow(browserWindow, 'deep-link-received', e.url);
       return;
     }
     if (
@@ -40,6 +44,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       e.preventDefault();
       // This event is emitted to allow the window to prevent the
       // beforeunload event to execute
+      // (https://github.com/electron/electron/issues/29921)
       emitToWindow(browserWindow, 'will-navigate-external', null);
       shell.openExternal(e.url);
     }
