@@ -3188,7 +3188,7 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.5.1"
+  version "0.5.2"
   dependencies:
     "@holochain-open-dev/profiles" "^0.501.2"
     "@holochain/client" "^0.19.1"

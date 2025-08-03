@@ -204,7 +204,7 @@ export class OverlayPocket extends LitElement {
                 >
                   <div class="row" style="align-items: center;">
                     <img
-                      src="magic_hat.svg"
+                      src="magic-wand.svg"
                       style="height: 23px; margin-right: 3px; filter: invert(100%) sepia(0%) saturate(7482%) hue-rotate(211deg) brightness(99%) contrast(102%);"
                     />
                     <div>Create New</div>
@@ -222,7 +222,7 @@ export class OverlayPocket extends LitElement {
             ? html`
                 <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
                   <img
-                    src="magic_hat.svg"
+                    src="magic-wand.svg"
                     style="height: 45px; margin-right: 10px; margin-bottom: 10px;"
                   />
                   ${msg('Recently created:')}
