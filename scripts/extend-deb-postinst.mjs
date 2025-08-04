@@ -13,7 +13,18 @@ const packageJson = JSON.parse(fs.readFileSync('package.json'));
 const appId = electronBuilderYaml.appId;
 const productName = electronBuilderYaml.productName;
 const appVersion = packageJson.version;
-const debFileName = `${appId}_${appVersion}_amd64.deb`;
+
+let arch;
+switch (process.arch) {
+  case 'arm64':
+    arch = 'arm64';
+    break;
+  case 'x64':
+    arch = 'amd64';
+    break;
+}
+
+const debFileName = `${appId}-${appVersion}-${arch}.deb`;
 const debFilePath = `dist/${debFileName}`;
 
 const fileBytesBefore = fs.readFileSync(debFilePath);
@@ -91,7 +102,9 @@ const hasher = crypto.createHash('sha512');
 hasher.update(fileBytes);
 const sha512 = hasher.digest('base64');
 
-const latestYaml = yaml.load(fs.readFileSync('dist/latest-linux.yml'));
+const latestYaml = yaml.load(
+  fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),
+);
 
 console.log('latestYaml before modification:\n', latestYaml);
 
@@ -107,4 +120,8 @@ latestYaml.files = files;
 console.log('\n\nsha512: ', sha512);
 console.log('\n\nlatestYaml after modification: ', latestYaml);
 
-fs.writeFileSync('latest-linux.yml', yaml.dump(latestYaml, { lineWidth: -1 }), 'utf-8');
+fs.writeFileSync(
+  `latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`,
+  yaml.dump(latestYaml, { lineWidth: -1 }),
+  'utf-8',
+);

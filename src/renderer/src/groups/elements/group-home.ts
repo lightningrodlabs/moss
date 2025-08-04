@@ -588,7 +588,9 @@ export class GroupHome extends LitElement {
                 </button>
               </div>
             </div>
-            <div>${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}</div>
+            <div class="group-description">
+              ${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}
+            </div>
           `;
         }
     }
@@ -1186,6 +1188,14 @@ export class GroupHome extends LitElement {
 
       .profile-detail-popup::part(panel) {
         width: 360px;
+      }
+
+      .group-description a {
+        color: var(--moss-purple);
+      }
+
+      .group-description a:hover {
+        color: var(--moss-purple-semi-transparent);
       }
     `,
   ];

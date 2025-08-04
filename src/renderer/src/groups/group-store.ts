@@ -169,7 +169,6 @@ export class GroupStore {
     });
 
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
-      console.log('Piping allProfiles');
       return this.agentsProfiles(agents);
     });
 
@@ -202,8 +201,7 @@ export class GroupStore {
 
     window.setInterval(async () => {
       const walsToPoll = Object.entries(this._assetStores)
-        .filter(([s, storeAndSubscribers]) => {
-          console.log('stringified wal: ', s);
+        .filter(([_, storeAndSubscribers]) => {
           // We only poll for stores with active subscribers
           return (
             Object.values(storeAndSubscribers.subscriberCounts).reduce(
@@ -217,7 +215,6 @@ export class GroupStore {
       relations.forEach((relationsForWal) => {
         const walStringified = stringifyWal(relationsForWal.wal);
         const storeAndSubscribers = this._assetStores[walStringified];
-        console.log('Got storeAndSubscribers...');
         if (!storeAndSubscribers) {
           console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
           return;

@@ -13,6 +13,7 @@
     "version": "0.1.5",
     "sha256": {
       "x86_64-unknown-linux-gnu": "3848ac44c99f0b487cbcce6c7c1f29a0f025becbb17b74da0bfc87f66dd6e4ea",
+      "aarch64-unknown-linux-gnu": "94256410c55c7ed890a32859557067508716b84295a4ed61f57b806b5fd5e529",
       "x86_64-pc-windows-msvc.exe": "20706e6b3858520206b5a4edc1c98136dffc61368e9d2b65e8624baaccaa3843",
       "x86_64-apple-darwin": "5f8b9d338aea9d97debdc15746a09cd8d5282cb3a367f67560a602e83ff80ab3",
       "aarch64-apple-darwin": "acd94fbcd8f958023cb0d3c2a78052d79e439b96a5510d6faa5a6b7f20ad1fb1"
@@ -22,6 +23,7 @@
     "version": "0.6.2",
     "sha256": {
       "x86_64-unknown-linux-gnu": "3c9ea3dbfc0853743dad3874856fdcfe391dca1769a6a81fc91b7578c73e92a7",
+      "aarch64-unknown-linux-gnu": "2718e7242e3c78ae41afd0fa21bd82dfcfcbfaa72cb421a5067078140fce5142",
       "x86_64-pc-windows-msvc.exe": "6392ce85e985483d43fa01709bfd518f8f67aed8ddfa5950591b4ed51d226b8e",
       "x86_64-apple-darwin": "746403e5d1655ecf14d95bccaeef11ad1abfc923e428c2f3d87c683edb6fdcdc",
       "aarch64-apple-darwin": "05c7270749bb1a5cf61b0eb344a7d7a562da34090d5ea81b4c5b6cf040dd32e8"
