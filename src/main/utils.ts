@@ -187,3 +187,33 @@ function _arrayBufferToBase64(buffer) {
 export function logIf(condition: boolean, msg: string, ...args: any[]) {
   if (condition) console.log(msg, ...args);
 }
+
+/**
+ * Retries to call the given callback at most n times. Waits 'delay' milliseconds
+ * between each attempt.
+ *
+ * @param callback
+ * @param n
+ * @param delay
+ * @returns
+ */
+export async function retryNTimes<T>(
+  callback: () => Promise<T>,
+  n: number,
+  delay: number,
+): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= n; attempt++) {
+    try {
+      return await callback();
+    } catch (e) {
+      lastError = e as Error;
+      if (attempt < n) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw new Error(`Callback failed after ${n} attempts: ${lastError}`);
+}

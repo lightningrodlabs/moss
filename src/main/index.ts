@@ -39,6 +39,7 @@ import {
   emitToWindow,
   logIf,
   readIcon,
+  retryNTimes,
   setLinkOpenHandlers,
   signZomeCall,
 } from './utils';
@@ -1678,13 +1679,20 @@ if (!RUNNING_WITH_COMMAND) {
               );
               if (!toolInfo) throw new Error('Tool not found in fetched Tool list.');
               const iconUrl = new URL(toolInfo.icon); // Validate that it's a proper URL
-              const iconResponse = await net.fetch(iconUrl.toString());
-              const image = await Jimp.fromBuffer(await iconResponse.arrayBuffer());
-              image.resize({ w: 300, h: 300 });
-              const mimeType = mime.getType(toolInfo.icon) || 'image/png';
-              if (!['image/jpeg', 'image/png'].includes(mimeType))
-                throw new Error('Only jpg and png icons are supported.');
-              const base64Icon = await image.getBase64(mimeType as 'image/jpeg' | 'image/png');
+              // Try to fetch the icon 3 times in case it fails due to
+              const base64Icon = await retryNTimes(
+                async () => {
+                  const iconResponse = await net.fetch(iconUrl.toString());
+                  const image = await Jimp.fromBuffer(await iconResponse.arrayBuffer());
+                  image.resize({ w: 300, h: 300 });
+                  const mimeType = mime.getType(toolInfo.icon) || 'image/png';
+                  if (!['image/jpeg', 'image/png'].includes(mimeType))
+                    throw new Error('Only jpg and png icons are supported.');
+                  return await image.getBase64(mimeType as 'image/jpeg' | 'image/png');
+                },
+                3,
+                100,
+              );
               WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Icon);
             } catch (e) {
               throw new Error(`Failed to fetch Tool icon: ${e}`);
