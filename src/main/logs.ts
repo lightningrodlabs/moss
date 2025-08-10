@@ -12,6 +12,7 @@ import {
   WeEmitter,
   WASM_LOG,
   MOSS_ERROR,
+  MOSS_LOG,
 } from './weEmitter';
 
 const { combine, timestamp } = format;
@@ -44,6 +45,7 @@ export function setupLogs(
   });
 
   const lairLogger = createLairLogger(logFileTransport);
+  const mossLogger = createMossLogger(logFileTransport);
 
   weEmitter.on(LAIR_LOG, (log) => {
     const logLine = `[LAIR] ${log}`;
@@ -53,18 +55,28 @@ export function setupLogs(
   weEmitter.on(LAIR_ERROR, (log) => {
     const logLine = `[LAIR] ERROR: ${log}`;
     console.log(logLine);
-    lairLogger.log('info', logLine);
+    lairLogger.log('error', logLine);
+  });
+  weEmitter.on(MOSS_LOG, (log) => {
+    const logLine = `[MOSS] ${log}`;
+    console.log(logLine);
+    mossLogger.log('ingo', logLine);
   });
   weEmitter.on(MOSS_ERROR, (log) => {
     const logLine = `[MOSS] ${log}`;
     console.log(logLine);
-    lairLogger.log('info', logLine);
+    mossLogger.log('error', logLine);
   });
   weEmitter.on(HOLOCHAIN_LOG, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
+    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal, 'info');
   });
   weEmitter.on(HOLOCHAIN_ERROR, (holochainData) => {
-    logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
+    logHolochain(
+      holochainData as HolochainData,
+      logFileTransport,
+      holochainLogsToTerminal,
+      'error',
+    );
   });
   weEmitter.on(WASM_LOG, (holochainData) => {
     logHolochain(holochainData as HolochainData, logFileTransport, holochainLogsToTerminal);
@@ -75,6 +87,7 @@ function logHolochain(
   holochainData: HolochainData,
   logFileTransport: winston.transports.FileTransportInstance,
   printToTerminal: boolean,
+  level?: string,
 ) {
   const holochainVersion = (holochainData as HolochainData).version;
   const line = (holochainData as HolochainData).data;
@@ -84,11 +97,11 @@ function logHolochain(
   }
   let logger = HOLOCHAIN_LOGGERS[holochainVersion];
   if (logger) {
-    logger.log('info', line);
+    logger.log(level ? level : 'info', line);
   } else {
     logger = createHolochainLogger(holochainVersion, logFileTransport);
     HOLOCHAIN_LOGGERS[holochainVersion] = logger;
-    logger.log('info', line);
+    logger.log(level ? level : 'info', line);
   }
 }
 
@@ -123,6 +136,25 @@ function createLairLogger(
         return JSON.stringify({
           timestamp,
           label: 'LAIR',
+          level,
+          message,
+        });
+      }),
+    ),
+  });
+}
+
+function createMossLogger(
+  logFileTransport: winston.transports.FileTransportInstance,
+): winston.Logger {
+  return createLogger({
+    transports: [logFileTransport],
+    format: combine(
+      timestamp(),
+      format.printf(({ level, message, timestamp }) => {
+        return JSON.stringify({
+          timestamp,
+          label: 'MOSS',
           level,
           message,
         });

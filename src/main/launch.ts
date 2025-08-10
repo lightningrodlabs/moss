@@ -38,26 +38,31 @@ export async function launch(
         'loading-progress-update',
         'Initializing lair keystore...',
       );
-    // TODO: https://github.com/holochain/launcher/issues/144
-    // const lairHandle = childProcess.spawn(lairBinary, ["init", "-p"], { cwd: WE_FILE_SYSTEM.keystoreDir });
-    // lairHandle.stdin.write(password);
-    // lairHandle.stdin.end();
-    // lairHandle.stdout.pipe(split()).on("data", (line: string) => {
-    //   console.log("[LAIR INIT]: ", line);
-    // })
-    await initializeLairKeystore(LAIR_BINARY, mossFileSystem.keystoreDir, weEmitter, password);
+    try {
+      await initializeLairKeystore(LAIR_BINARY, mossFileSystem.keystoreDir, weEmitter, password);
+    } catch (e) {
+      weEmitter.emitMossError(`Failed to initialize lair keystore: ${e}`);
+      throw new Error(`Failed to initialize lair keystore: ${e}`);
+    }
   }
   if (splashscreenWindow)
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
 
   // launch lair keystore
-  const [lairHandle, lairUrl] = await launchLairKeystore(
-    LAIR_BINARY,
-    mossFileSystem.keystoreDir,
-    weEmitter,
-    password,
-    runOptions.lairRustLog,
-  );
+  let lairHandle: childProcess.ChildProcessWithoutNullStreams;
+  let lairUrl: string;
+  try {
+    [lairHandle, lairUrl] = await launchLairKeystore(
+      LAIR_BINARY,
+      mossFileSystem.keystoreDir,
+      weEmitter,
+      password,
+      runOptions.lairRustLog,
+    );
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to launch lair keystore: ${e}`);
+    throw new Error(`Failed to launch lair keystore: ${e}`);
+  }
 
   const holochainVersion = MOSS_CONFIG.holochain.version;
 
@@ -68,26 +73,38 @@ export async function launch(
     );
 
   // launch holochain
-  const holochainManager = await HolochainManager.launch(
-    weEmitter,
-    mossFileSystem,
-    customBinary ? customBinary : HOLOCHAIN_BINARIES[holochainVersion],
-    password,
-    holochainVersion,
-    mossFileSystem.conductorDir,
-    mossFileSystem.conductorConfigPath,
-    lairUrl,
-    runOptions.bootstrapUrl!,
-    runOptions.signalingUrl!,
-    runOptions.iceUrls,
-    runOptions.holochainRustLog,
-    runOptions.holochainWasmLog,
-  );
+  let holochainManager: HolochainManager;
+  try {
+    holochainManager = await HolochainManager.launch(
+      weEmitter,
+      mossFileSystem,
+      customBinary ? customBinary : HOLOCHAIN_BINARIES[holochainVersion],
+      password,
+      holochainVersion,
+      mossFileSystem.conductorDir,
+      mossFileSystem.conductorConfigPath,
+      lairUrl,
+      runOptions.bootstrapUrl!,
+      runOptions.signalingUrl!,
+      runOptions.iceUrls,
+      runOptions.holochainRustLog,
+      runOptions.holochainWasmLog,
+    );
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to launch HolochainManager: ${e}`);
+    throw new Error(`Failed to launch HolochainManager: ${e}`);
+  }
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   // APP_PORT = holochainManager.appPort;cd di
 
-  const weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
+  let weRustHandler: WeRustHandler;
+  try {
+    weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to connect to WeRustHandler: ${e}`);
+    throw new Error(`Failed to connect to WeRustHandler: ${e}`);
+  }
 
   // // Install default appstore if necessary:
   // if (
