@@ -416,12 +416,12 @@ if (!RUNNING_WITH_COMMAND) {
 
   const handleSignZomeCall = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
     if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-    return signZomeCall(zomeCall, WE_RUST_HANDLER);
+    return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
 
   const handleSignZomeCallApplet = (_e: IpcMainInvokeEvent, zomeCall: CallZomeRequest) => {
     if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
-    return signZomeCall(zomeCall, WE_RUST_HANDLER);
+    return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
 
   const createOrShowMainWindow = (): BrowserWindow => {

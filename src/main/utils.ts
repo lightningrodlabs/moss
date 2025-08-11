@@ -14,6 +14,7 @@ import { encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
 import { sha512 } from 'js-sha512';
+import { WeEmitter } from './weEmitter';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -122,6 +123,7 @@ export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
 export async function signZomeCall(
   request: CallZomeRequest,
   handler: WeRustHandler,
+  weEmitter: WeEmitter,
 ): Promise<CallZomeRequestSigned> {
   if (!request.provenance)
     return Promise.reject(
@@ -141,7 +143,13 @@ export async function signZomeCall(
   const zomeCallBytes = encode(zomeCallToSign);
   const bytesHash = sha512.array(zomeCallBytes);
 
-  const signature: number[] = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
+  let signature: number[];
+  try {
+    signature = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to sign zome call: ${e}`);
+    throw new Error(`Failed to sign zome call: ${e}`);
+  }
 
   const signedZomeCall: CallZomeRequestSigned = {
     bytes: zomeCallBytes,

@@ -60,8 +60,8 @@ export async function launchLairKeystore(
       }
       const socket = connectionUrlLine.split('socket?')[1];
       if (!socket) {
-        weEmitter.emitMossError('Failed to read socket from in lair-keystore-config.yaml.');
-        throw new Error('Failed to read socket from in lair-keystore-config.yaml.');
+        weEmitter.emitMossError('Failed to read socket from lair-keystore-config.yaml.');
+        throw new Error('Failed to read socket from lair-keystore-config.yaml.');
       }
       const tmpDirConnectionUrl = `unix://${keystoreDir}/socket?${socket}`;
       weEmitter.emitMossLog(`Temp directory lair connection URL: ${tmpDirConnectionUrl}`);
