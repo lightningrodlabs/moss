@@ -1998,7 +1998,7 @@ export class MainDashboard extends LitElement {
         }
 
         .group-area-sidebar {
-          width: 170px;
+          /* width: 170px; */
         }
 
         .group-container {

@@ -1,5 +1,6 @@
 import {
   AsyncReadable,
+  AsyncStatus,
   joinAsync,
   pipe,
   sliceAndJoin,
@@ -27,7 +28,9 @@ import { mossStyles } from '../../../shared-styles.js';
 import { PersistedStore } from '../../../persisted-store.js';
 
 import './applet-sidebar-button.js';
-import { plusIcon } from '../icons.js';
+import { circleHalfIcon, plusIcon } from '../icons.js';
+import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -37,7 +40,11 @@ export class GroupAppletsSidebar extends LitElement {
   mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  groupStore!: GroupStore;
+  private _groupStore!: GroupStore;
+
+  @consume({ context: profilesStoreContext, subscribe: true })
+  @property()
+  profileStore!: ProfilesStore;
 
   @property()
   selectedAppletHash?: AppletHash;
@@ -46,37 +53,52 @@ export class GroupAppletsSidebar extends LitElement {
   indicatedAppletHashes: AppletId[] = [];
 
   @state()
+  collapsed = true;
+
+  @state()
   dragged: AppletId | null = null;
 
   permissionType = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
-    () => [this.groupStore],
+    () => this._groupStore.permissionType,
+    () => [this._groupStore],
   );
 
   groupProfile = new StoreSubscriber(
     this,
     () => {
       const store = joinAsync([
-        this.groupStore.groupProfile,
-        this.groupStore.modifiers,
+        this._groupStore.groupProfile,
+        this._groupStore.modifiers,
       ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
       // (window as any).groupProfileStore = store;
       return store;
     },
-    () => [this.groupStore, this.mossStore],
+    () => [this._groupStore, this.mossStore],
+  );
+
+  _peerStatuses = new StoreSubscriber(
+    this,
+    () => this._groupStore.peerStatuses(),
+    () => [this._groupStore],
+  );
+
+  _myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
+    this,
+    () => this._groupStore.profilesStore.myProfile,
+    () => [this._groupStore],
   );
 
   // All the Applets that are running and part of this Group
   _groupApplets = new StoreSubscriber(
     this,
     () =>
-      this.groupStore
-        ? (pipe(this.groupStore.allMyRunningApplets, (myRunningApplets) =>
+      this._groupStore
+        ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
             sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
           ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
-    () => [this.groupStore],
+    () => [this._groupStore],
   );
 
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
@@ -89,7 +111,7 @@ export class GroupAppletsSidebar extends LitElement {
         </div>
       `;
     }
-    const groupId = encodeHashToBase64(this.groupStore!.groupDnaHash);
+    const groupId = encodeHashToBase64(this._groupStore!.groupDnaHash);
 
     let customAppletOrder = this.mossStore.persistedStore.groupAppletOrder.value(groupId);
     if (!customAppletOrder) {
@@ -138,50 +160,52 @@ export class GroupAppletsSidebar extends LitElement {
           ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
           ([appletHash, appletStore]) => html`
             <div style="position: relative;">
-              <applet-sidebar-button
-                id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
-                .appletStore=${appletStore}
-                .selected=${this.selectedAppletHash &&
-                this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
-                .indicated=${this.indicatedAppletHashes.includes(
-                  encodeHashToBase64(appletStore.appletHash),
-                )}
-                .tooltipText=${appletStore.applet.custom_name}
-                placement="bottom"
-                @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('applet-selected', {
-                      detail: {
-                        groupDnaHash: this.groupStore!.groupDnaHash,
-                        appletHash: appletStore.appletHash,
-                      },
-                      bubbles: true,
-                      composed: true,
-                    }),
-                  );
-                  appletStore.clearNotificationStatus();
-                }}
-                draggable="true"
-                @dragstart=${(e: DragEvent) => {
-                  console.log('DRAGSTART!');
-                  (e.target as HTMLElement).classList.add('dragging');
-                  this.dragged = encodeHashToBase64(appletHash);
-                }}
-                @dragend=${(e: DragEvent) => {
-                  (e.target as HTMLElement).classList.remove('dragging');
-                  Array.from(
-                    (
-                      e.target as HTMLElement
-                    ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
-                      'dropzone',
-                    ),
-                  ).forEach((el) => {
-                    el.classList.remove('active');
-                  });
-                  this.dragged = null;
-                }}
-              >
-              </applet-sidebar-button>
+              <sl-tooltip content="${appletStore.applet.custom_name}" placement="right" hoist>
+                <applet-sidebar-button
+                  id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
+                  .appletStore=${appletStore}
+                  .selected=${this.selectedAppletHash &&
+                  this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+                  ?collapsed=${this.collapsed}
+                  .indicated=${this.indicatedAppletHashes.includes(
+                    encodeHashToBase64(appletStore.appletHash),
+                  )}
+                  placement="bottom"
+                  @click=${() => {
+                    this.dispatchEvent(
+                      new CustomEvent('applet-selected', {
+                        detail: {
+                          groupDnaHash: this._groupStore!.groupDnaHash,
+                          appletHash: appletStore.appletHash,
+                        },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                    appletStore.clearNotificationStatus();
+                  }}
+                  draggable="true"
+                  @dragstart=${(e: DragEvent) => {
+                    console.log('DRAGSTART!');
+                    (e.target as HTMLElement).classList.add('dragging');
+                    this.dragged = encodeHashToBase64(appletHash);
+                  }}
+                  @dragend=${(e: DragEvent) => {
+                    (e.target as HTMLElement).classList.remove('dragging');
+                    Array.from(
+                      (
+                        e.target as HTMLElement
+                      ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
+                        'dropzone',
+                      ),
+                    ).forEach((el) => {
+                      el.classList.remove('active');
+                    });
+                    this.dragged = null;
+                  }}
+                >
+                </applet-sidebar-button>
+              </sl-tooltip>
               <div
                 class="row center-content dropzone right"
                 style="position: absolute;"
@@ -213,7 +237,7 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   renderAppletsLoading() {
-    if (!this.groupStore) return html`group hash undefined.`;
+    if (!this._groupStore) return html`group hash undefined.`;
     switch (this._groupApplets.value.status) {
       case 'pending':
         return html`<sl-skeleton
@@ -267,14 +291,17 @@ export class GroupAppletsSidebar extends LitElement {
     switch (this.groupProfile.value.status) {
       case 'pending':
         return html`<sl-skeleton
-          style="height: var(--size, 28px); width: var(--size, 28px); --border-radius: 8px"
+          style="height: var(--size, ${this.collapsed ? '35px' : '28px'}); width: var(--size, ${this
+            .collapsed
+            ? '35px'
+            : '28px'}); --border-radius: 8px"
           effect="pulse"
         ></sl-skeleton> `;
       case 'complete':
         return html`
           ${this.groupProfile.value.value[0]?.icon_src
             ? html`<img
-                class="icon"
+                class="icon ${this.collapsed ? 'icon-large' : ''}"
                 .src=${this.groupProfile.value.value[0].icon_src}
                 alt=${`${this.groupProfile.value.value[0].name} group icon`}
               />`
@@ -303,26 +330,128 @@ export class GroupAppletsSidebar extends LitElement {
     }
   }
 
+  renderMyProfileAvatar() {
+    switch (this._myProfile.value.status) {
+      case 'pending':
+        return html`<sl-skeleton
+          style="height: var(--size, ${this.collapsed ? '35px' : '28px'}); width: var(--size, ${this
+            .collapsed
+            ? '35px'
+            : '28px'}); --border-radius: 8px"
+          effect="pulse"
+        ></sl-skeleton> `;
+      case 'complete':
+        return html`
+          ${this._myProfile.value.value?.entry?.fields.avatar
+            ? html`<img
+                class="icon ${this.collapsed ? 'icon-large' : ''}"
+                .src=${this._myProfile.value.value.entry.fields.avatar}
+                alt=${msg('my profile image')}
+              />`
+            : html`<div class="column center-content icon" style="background: gray;">?</div>`}
+        `;
+      case 'error':
+        // console.error('Failed to fetch group profile: ', this._myProfile.value.error);
+        return html`<display-error
+          tooltip
+          .headline=${msg('Error fetching the group profile')}
+          .error=${this._myProfile.value.error}
+        ></display-error>`;
+    }
+  }
+
+  myProfileNickName() {
+    switch (this._myProfile.value.status) {
+      case 'pending':
+        return msg('Loading...');
+      case 'complete':
+        return this._myProfile.value.value?.entry.nickname
+          ? this._myProfile.value.value?.entry.nickname
+          : 'unknown';
+      case 'error':
+        return 'ERROR';
+    }
+  }
+
+  numPeersOnline(): number | undefined {
+    if (!this._peerStatuses.value) return undefined;
+    const myPubKeyB64 = encodeHashToBase64(this._groupStore.groupClient.myPubKey);
+    // We don't count ourselves as online
+    return Object.entries(this._peerStatuses.value).filter(
+      ([pubkeyB64, status]) =>
+        pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
+    ).length;
+  }
+
+  renderPeersOnline() {
+    if (!this._peerStatuses.value) return html`??<span style="color: #505050;">/??</span>`;
+    const totalPeers = Object.keys(this._peerStatuses.value).length;
+    return html`${this.numPeersOnline()}<span style="color: #505050;">/${totalPeers - 1}</span>`; // We don't count ourselves to the totl number of peers
+  }
+
   render() {
     return html`
-      <div class="column flex-1" style="margin-top: 2px;">
-        <button
-          class="btn ${!this.selectedAppletHash ? 'selected' : ''}"
-          @click=${() => {
-            this.dispatchEvent(
-              new CustomEvent('group-home-selected', {
-                bubbles: false,
-                composed: true,
-              }),
-            );
-          }}
+      <div
+        class="column flex-1 container ${this.collapsed ? 'container-collapsed' : ''}"
+        style="margin-top: 2px;"
+      >
+        <!-- group home button -->
+        <sl-tooltip content="${this.groupName()}" placement="right" hoist>
+          <button
+            class="btn ${!this.selectedAppletHash ? 'selected' : ''}"
+            @click=${() => {
+              this.dispatchEvent(
+                new CustomEvent('group-home-selected', {
+                  bubbles: false,
+                  composed: true,
+                }),
+              );
+            }}
+          >
+            <div class="row items-center">
+              <div class="row items-center">${this.renderGroupLogo()}</div>
+              ${this.collapsed
+                ? html``
+                : html`<div class="row items-center" style="margin-left: 4px;">
+                    ${this.groupName()}
+                  </div>`}
+            </div>
+          </button>
+        </sl-tooltip>
+
+        <!-- Online Peers indicator -->
+        <sl-tooltip
+          content="${msg('Your Peers')}${this._peerStatuses.value
+            ? ` (${this.numPeersOnline()} online)`
+            : ''}"
+          placement="right"
+          hoist
         >
-          <div class="row items-center">
-            <div class="row items-center">${this.renderGroupLogo()}</div>
-            <div class="row items-center" style="margin-left: 4px;">${this.groupName()}</div>
-          </div>
-        </button>
+          <button class="btn">
+            <div class="column center-content">
+              <div>${circleHalfIcon(12)}</div>
+              <div style="font-size: 16px;">${this.renderPeersOnline()}</div>
+            </div>
+          </button>
+        </sl-tooltip>
+
+        <!-- My own Profile -->
+        <sl-tooltip content="${this.myProfileNickName()} (me)" placement="right" hoist>
+          <button class="btn">
+            <div class="row items-center">
+              ${this.renderMyProfileAvatar()}
+              ${this.collapsed
+                ? html``
+                : html`<div style="margin-left: 5px;">
+                    ${this.myProfileNickName()} ${msg('(me)')}
+                  </div>`}
+            </div>
+          </button>
+        </sl-tooltip>
+
         <div class="ruler" style="margin-top: 20px;"></div>
+
+        <!-- Tool Buttons -->
         <div class="section-title" style="margin-bottom: 10px;">${msg('Tools')}</div>
         ${this.renderAppletsLoading()}
         <sl-tooltip content="${msg('add a tool')}" placement="bottom">
@@ -350,6 +479,14 @@ export class GroupAppletsSidebar extends LitElement {
       :host {
         display: flex;
         padding: 4px;
+      }
+
+      .container {
+        width: 170px;
+      }
+
+      .container-collapsed {
+        width: 43px;
       }
 
       .ruler {
@@ -405,6 +542,11 @@ export class GroupAppletsSidebar extends LitElement {
         height: 28px;
         width: 28px;
         border-radius: 8px;
+      }
+
+      .icon-large {
+        height: 35px;
+        width: 35px;
       }
 
       .selected {
