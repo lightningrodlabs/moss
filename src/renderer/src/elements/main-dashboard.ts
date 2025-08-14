@@ -1004,7 +1004,7 @@ export class MainDashboard extends LitElement {
   renderGroupArea() {
     return html`
       <div class="row flex-1">
-        <div class="group-area-sidebar">
+        <div class="group-area-sidebar flex">
           <group-context .groupDnaHash=${this.selectedGroup()}>
             <group-area-sidebar
               .selectedAppletHash=${this.selectedAppletHash()}
@@ -1995,10 +1995,6 @@ export class MainDashboard extends LitElement {
         .top-8 {
           top: 8px;
           border-radius: 10px;
-        }
-
-        .group-area-sidebar {
-          /* width: 170px; */
         }
 
         .group-container {

@@ -28,7 +28,13 @@ import { mossStyles } from '../../../shared-styles.js';
 import { PersistedStore } from '../../../persisted-store.js';
 
 import './applet-sidebar-button.js';
-import { circleHalfIcon, plusIcon } from '../icons.js';
+import {
+  chevronDoubleLeftIcon,
+  chevronDoubleRightIcon,
+  circleHalfIcon,
+  downloadIcon,
+  plusIcon,
+} from '../icons.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
 
@@ -98,6 +104,12 @@ export class GroupAppletsSidebar extends LitElement {
             sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
           ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
+    () => [this._groupStore],
+  );
+
+  _unjoinedApplets = new StoreSubscriber(
+    this,
+    () => this._groupStore.unjoinedApplets,
     () => [this._groupStore],
   );
 
@@ -389,6 +401,43 @@ export class GroupAppletsSidebar extends LitElement {
     return html`${this.numPeersOnline()}<span style="color: #505050;">/${totalPeers - 1}</span>`; // We don't count ourselves to the totl number of peers
   }
 
+  numUnjoinedTools(): number | undefined {
+    if (this._unjoinedApplets.value.status !== 'complete') return undefined;
+    return this._unjoinedApplets.value.value.size;
+  }
+
+  renderUnjoinedAppletsButton() {
+    if (
+      this._unjoinedApplets.value.status !== 'complete' ||
+      (this._unjoinedApplets.value.value.size === 0 && false)
+    )
+      return html``;
+    return html`<sl-tooltip
+      content="${this.numUnjoinedTools()} unjoined Tools"
+      placement="right"
+      hoist
+    >
+      <button class="btn">
+        ${this.collapsed
+          ? html`<div
+              class="column center-content"
+              style="height: 35px; width: 35px; background: var(--moss-light-green); border-radius: 8px; position: relative;"
+            >
+              <div class="column center-content unjoined-tools-indicator">
+                ${this.numUnjoinedTools()}
+              </div>
+              ${downloadIcon()}
+            </div>`
+          : html`<div
+              class="column center-content"
+              style="height: 36px; background: var(--moss-light-green); border-radius: 8px; opacity: 0.7; font-size: 13px;"
+            >
+              +${this.numUnjoinedTools()} ${msg('more used by peers')}
+            </div>`}
+      </button>
+    </sl-tooltip>`;
+  }
+
   render() {
     return html`
       <div
@@ -449,11 +498,16 @@ export class GroupAppletsSidebar extends LitElement {
           </button>
         </sl-tooltip>
 
-        <div class="ruler" style="margin-top: 20px;"></div>
+        <div class="ruler ${this.collapsed ? 'short' : ''}" style="margin-top: 10px;"></div>
 
         <!-- Tool Buttons -->
         <div class="section-title" style="margin-bottom: 10px;">${msg('Tools')}</div>
         ${this.renderAppletsLoading()}
+
+        <!-- Unjoined Tools Button -->
+        ${this.renderUnjoinedAppletsButton()}
+
+        <!-- Add Tool Button -->
         <sl-tooltip content="${msg('add a tool')}" placement="bottom">
           <button
             class="purple-btn"
@@ -469,6 +523,18 @@ export class GroupAppletsSidebar extends LitElement {
             <div class="column center-content">${plusIcon()}</div>
           </button>
         </sl-tooltip>
+
+        <!-- menu folding toggle -->
+        <sl-tooltip content="${this.collapsed ? msg('expand the menu') : msg('fold the menu')}">
+          <button
+            class="menu-fold-toggle"
+            @click=${() => {
+              this.collapsed = !this.collapsed;
+            }}
+          >
+            ${this.collapsed ? chevronDoubleRightIcon(18) : chevronDoubleLeftIcon(18)}
+          </button>
+        </sl-tooltip>
       </div>
     `;
   }
@@ -479,6 +545,8 @@ export class GroupAppletsSidebar extends LitElement {
       :host {
         display: flex;
         padding: 4px;
+        position: relative;
+        flex: 1;
       }
 
       .container {
@@ -494,6 +562,10 @@ export class GroupAppletsSidebar extends LitElement {
         background: var(--moss-dark-button);
         width: 160px;
         opacity: 0.2;
+      }
+
+      .short {
+        width: 46px;
       }
 
       .section-title {
@@ -551,6 +623,31 @@ export class GroupAppletsSidebar extends LitElement {
 
       .selected {
         background: white;
+      }
+
+      .unjoined-tools-indicator {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        height: 16px;
+        min-width: 18px;
+        background: var(--moss-purple);
+        color: white;
+        font-size: 12px;
+        border-radius: 4px;
+      }
+
+      .menu-fold-toggle {
+        all: unset;
+        cursor: pointer;
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        opacity: 0.6;
+      }
+
+      .menu-fold-toggle:hover {
+        opacity: 1;
       }
 
       .dropzone {
