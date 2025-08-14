@@ -49,15 +49,27 @@ export async function launchLairKeystore(
       const lairConfigString = fs.readFileSync(lairConfigPath, 'utf-8');
       const lines = lairConfigString.split('\n');
       const idx = lines.findIndex((line) => line.includes('connectionUrl:'));
-      if (idx === -1)
+      if (idx === -1) {
+        weEmitter.emitMossError('Failed to find connectionUrl line in lair-keystore-config.yaml.');
         throw new Error('Failed to find connectionUrl line in lair-keystore-config.yaml.');
+      }
       const connectionUrlLine = lines[idx];
+      if (!connectionUrlLine) {
+        weEmitter.emitMossError('No connectionUrl line found in lair-keystore-config.yaml.');
+        throw new Error('No connectionUrl line found in lair-keystore-config.yaml.');
+      }
       const socket = connectionUrlLine.split('socket?')[1];
+      if (!socket) {
+        weEmitter.emitMossError('Failed to read socket from lair-keystore-config.yaml.');
+        throw new Error('Failed to read socket from lair-keystore-config.yaml.');
+      }
       const tmpDirConnectionUrl = `unix://${keystoreDir}/socket?${socket}`;
+      weEmitter.emitMossLog(`Temp directory lair connection URL: ${tmpDirConnectionUrl}`);
       lines[idx] = `connectionUrl: ${tmpDirConnectionUrl}`;
       const newLairConfigString = lines.join('\n');
       fs.writeFileSync(lairConfigPath, newLairConfigString);
     } catch (e) {
+      weEmitter.emitMossError(`Failed to create symlinked lair directory: ${e}`);
       return Promise.reject(`Failed to create symlinked lair directory: ${e}`);
     }
   }

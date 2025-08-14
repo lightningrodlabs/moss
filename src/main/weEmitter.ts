@@ -16,6 +16,8 @@ export type HOLOCHAIN_FATAL_PANIC = 'holochain-fatal-panic';
 export const HOLOCHAIN_FATAL_PANIC = 'holochain-fatal-panic';
 export type HOLOCHAIN_LOG = 'holochain-log';
 export const HOLOCHAIN_LOG = 'holochain-log';
+export type MOSS_LOG = 'moss-log';
+export const MOSS_LOG = 'moss-log';
 export type MOSS_ERROR = 'moss-error';
 export const MOSS_ERROR = 'moss-error';
 export type WASM_LOG = 'wasm-log';
@@ -35,6 +37,7 @@ export declare interface WeEmitter {
       | LAIR_FATAL_PANIC
       | LAIR_LOG
       | LAIR_READY
+      | MOSS_LOG
       | MOSS_ERROR
       | WRONG_PASSWORD
       | HOLOCHAIN_ERROR
@@ -62,6 +65,9 @@ export class WeEmitter extends EventEmitter {
   }
   emitLairReady(url: string) {
     this.emit(LAIR_READY, url);
+  }
+  emitMossLog(log: string) {
+    this.emit(MOSS_LOG, log);
   }
   emitMossError(error: string) {
     this.emit(MOSS_ERROR, error);

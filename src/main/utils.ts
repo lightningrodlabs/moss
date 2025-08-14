@@ -14,6 +14,7 @@ import { encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
 import { sha512 } from 'js-sha512';
+import { WeEmitter } from './weEmitter';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -122,6 +123,7 @@ export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
 export async function signZomeCall(
   request: CallZomeRequest,
   handler: WeRustHandler,
+  weEmitter: WeEmitter,
 ): Promise<CallZomeRequestSigned> {
   if (!request.provenance)
     return Promise.reject(
@@ -141,7 +143,13 @@ export async function signZomeCall(
   const zomeCallBytes = encode(zomeCallToSign);
   const bytesHash = sha512.array(zomeCallBytes);
 
-  const signature: number[] = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
+  let signature: number[];
+  try {
+    signature = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to sign zome call: ${e}`);
+    throw new Error(`Failed to sign zome call: ${e}`);
+  }
 
   const signedZomeCall: CallZomeRequestSigned = {
     bytes: zomeCallBytes,
@@ -186,4 +194,34 @@ function _arrayBufferToBase64(buffer) {
 
 export function logIf(condition: boolean, msg: string, ...args: any[]) {
   if (condition) console.log(msg, ...args);
+}
+
+/**
+ * Retries to call the given callback at most n times. Waits 'delay' milliseconds
+ * between each attempt.
+ *
+ * @param callback
+ * @param n
+ * @param delay
+ * @returns
+ */
+export async function retryNTimes<T>(
+  callback: () => Promise<T>,
+  n: number,
+  delay: number,
+): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= n; attempt++) {
+    try {
+      return await callback();
+    } catch (e) {
+      lastError = e as Error;
+      if (attempt < n) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw new Error(`Callback failed after ${n} attempts: ${lastError}`);
 }

@@ -19,7 +19,7 @@
     "@folder/xdg": "4.0.1",
     "@holochain/client": "^0.19.1",
     "@inquirer/prompts": "6.0.1",
-    "@lightningrodlabs/we-rust-utils": "0.500.0",
+    "@lightningrodlabs/we-rust-utils": "^0.501.0",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
     "@theweave/api": "^0.5.0",
