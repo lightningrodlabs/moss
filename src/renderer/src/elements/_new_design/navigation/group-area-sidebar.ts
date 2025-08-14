@@ -346,10 +346,10 @@ export class GroupAppletsSidebar extends LitElement {
     switch (this._myProfile.value.status) {
       case 'pending':
         return html`<sl-skeleton
-          style="height: var(--size, ${this.collapsed ? '35px' : '28px'}); width: var(--size, ${this
+          style="height: var(--size, ${this.collapsed ? '35px' : '32px'}); width: var(--size, ${this
             .collapsed
             ? '35px'
-            : '28px'}); --border-radius: 8px"
+            : '32px'}); --border-radius: 8px"
           effect="pulse"
         ></sl-skeleton> `;
       case 'complete':
@@ -441,7 +441,7 @@ export class GroupAppletsSidebar extends LitElement {
   render() {
     return html`
       <div
-        class="column flex-1 container ${this.collapsed ? 'container-collapsed' : ''}"
+        class="column flex-1 container ${this.collapsed ? 'container-collapsed items-center' : ''}"
         style="margin-top: 2px;"
       >
         <!-- group home button -->
@@ -477,10 +477,17 @@ export class GroupAppletsSidebar extends LitElement {
           hoist
         >
           <button class="btn">
-            <div class="column center-content">
-              <div>${circleHalfIcon(12)}</div>
-              <div style="font-size: 16px;">${this.renderPeersOnline()}</div>
-            </div>
+            ${this.collapsed
+              ? html`<div class="column center-content" style="width: 35px;">
+                  <div>${circleHalfIcon(12)}</div>
+                  <div style="font-size: 16px;">${this.renderPeersOnline()}</div>
+                </div>`
+              : html`<div class="column center-content" m style="height: 35px;">
+                  <div class="row items-center">
+                    <div style="margin-right: 10px;">${circleHalfIcon(12)}</div>
+                    ${this.renderPeersOnline()}&nbsp;${msg('online')}
+                  </div>
+                </div>`}
           </button>
         </sl-tooltip>
 
@@ -510,7 +517,7 @@ export class GroupAppletsSidebar extends LitElement {
         <!-- Add Tool Button -->
         <sl-tooltip content="${msg('add a tool')}" placement="bottom">
           <button
-            class="purple-btn"
+            class="purple-btn ${this.collapsed ? 'purple-btn-large' : ''}"
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('add-tool-requested', {
@@ -610,9 +617,16 @@ export class GroupAppletsSidebar extends LitElement {
         background: #7461eb33;
       }
 
+      .purple-btn-large {
+        height: 38px;
+        width: 38px;
+        border-radius: 8px;
+        padding: 0;
+      }
+
       .icon {
-        height: 28px;
-        width: 28px;
+        height: 32px;
+        width: 32px;
         border-radius: 8px;
       }
 

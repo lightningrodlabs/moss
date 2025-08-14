@@ -103,7 +103,10 @@ export class AppletSidebarButton extends LitElement {
   render() {
     return html`
       <div class="column flex-1">
-        <button class="btn ${this.selected ? 'selected' : ''}">
+        <button
+          class="btn ${this.selected ? 'selected' : ''}"
+          style="${this.collapsed ? 'margin: 1px 0;' : ''}"
+        >
           <div class="row items-center">
             <div class="row items-center">${this.renderLogo()}</div>
             ${this.collapsed
