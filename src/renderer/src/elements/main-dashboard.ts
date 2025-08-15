@@ -83,6 +83,8 @@ import {
   chevronDoubleRightIcon,
   closeIcon,
   magnifyingGlassIcon,
+  turingBlobIcon,
+  turingBlobIconHover,
 } from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
@@ -1638,7 +1640,8 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <button
               tabindex="0"
-              class="moss-sidebar-button"
+              class="create-asset-btn"
+              style="all: unset; cursor: pointer;"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1646,13 +1649,8 @@ export class MainDashboard extends LitElement {
                 }
               }}
             >
-              <div class="column center-content">
-                <img
-                  class="moss-sidebar-button-icon"
-                  src="magic-wand.svg"
-                  style="width: 24px; height: 24px;"
-                />
-              </div>
+              <div class="column center-content default-image">${turingBlobIcon()}</div>
+              <div class="column center-content hover-image">${turingBlobIconHover()}</div>
             </button>
           </sl-tooltip>
         </div>
@@ -2184,6 +2182,26 @@ export class MainDashboard extends LitElement {
           background: #689d19;
           padding: 5px;
           border-radius: 0 0 10px 10px;
+        }
+
+        /* Create New Asset Button */
+
+        .create-asset-btn .default-image {
+          display: block;
+        }
+
+        .create-asset-btn .hover-image {
+          display: none;
+        }
+
+        .create-asset-btn:hover .default-image,
+        .create-asset-btn:focus-visible .default-image {
+          display: none;
+        }
+
+        .create-asset-btn:hover .hover-image,
+        .create-asset-btn:focus-visible .hover-image {
+          display: block;
         }
       `,
     ];
