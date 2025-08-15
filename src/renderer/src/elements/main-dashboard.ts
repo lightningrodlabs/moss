@@ -42,10 +42,8 @@ import '../personal-views/activity-view/activity-view.js';
 import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
-import './navigation/group-applets-sidebar.js';
 import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
-import '../layout/views/applet-main.js';
 import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
 import '../layout/views/asset-view.js';
@@ -69,12 +67,7 @@ import { CreatablePalette } from './creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import {
-  decodeContext,
-  getAllIframes,
-  postMessageToIframe,
-  progenitorFromProperties,
-} from '../utils.js';
+import { decodeContext, progenitorFromProperties } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
@@ -87,6 +80,8 @@ import {
   chevronDoubleRightIcon,
   closeIcon,
   magnifyingGlassIcon,
+  turingBlobIcon,
+  turingBlobIconHover,
 } from './_new_design/icons.js';
 
 TimeAgo.addDefaultLocale(en);
@@ -708,12 +703,6 @@ export class MainDashboard extends LitElement {
     await this._mossStore.loadNotificationFeed(7);
   }
 
-  selectedGroupDnaHash() {
-    return this._dashboardState.value.viewType === 'group'
-      ? this._dashboardState.value.groupHash
-      : undefined;
-  }
-
   openClipboard() {
     this.showClipboard = true;
     this._pocket.show('open');
@@ -800,9 +789,14 @@ export class MainDashboard extends LitElement {
   displayGroupContainer(groupHash: DnaHash) {
     return (
       this._dashboardState.value.viewType === 'group' &&
-      !this._dashboardState.value.appletHash &&
       encodeHashToBase64(this._dashboardState.value.groupHash) === encodeHashToBase64(groupHash)
     );
+  }
+
+  selectedGroupDnaHash() {
+    return this._dashboardState.value.viewType === 'group'
+      ? this._dashboardState.value.groupHash
+      : undefined;
   }
 
   async openGroup(groupDnaHash: DnaHash) {
@@ -852,42 +846,6 @@ export class MainDashboard extends LitElement {
       console.warn('Failed to activate applets for group since group store is not (yet) defined.');
     }
     this.requestUpdate();
-  }
-
-  renderAppletMainViews() {
-    switch (this._runningApplets.value.status) {
-      case 'pending':
-        return html`Loading running applets...`;
-      case 'error':
-        return html`Failed to get running applets: ${this._runningApplets.value.error}`;
-      case 'complete':
-        return repeat(
-          this._runningApplets.value.value,
-          (appletHash) => encodeHashToBase64(appletHash),
-          (appletHash) => html`
-            <applet-main
-              .appletHash=${appletHash}
-              .reloading=${this._reloadingApplets.includes(encodeHashToBase64(appletHash))}
-              style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
-              @hard-refresh=${async () => {
-                // emit onBeforeUnload event and wait for callback to be executed
-                const appletId = encodeHashToBase64(appletHash);
-
-                const allIframes = getAllIframes();
-                const appletIframe = allIframes.find((iframe) => iframe.id === appletId);
-                if (appletIframe) {
-                  appletIframe.src += '';
-                }
-                const reloadingApplets = [...this._reloadingApplets];
-
-                // Remove AppletId from reloading applets
-                this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
-                console.log('this._reloadingApplets after reloading: ', this._reloadingApplets);
-              }}
-            ></applet-main>
-          `,
-        );
-    }
   }
 
   renderToolCrossGroupViews() {
@@ -949,7 +907,6 @@ export class MainDashboard extends LitElement {
 
       <activity-view
         @open-wal=${async (e) => {
-          console.log('Opening WAL 3: ', e.detail);
           await this.handleOpenWal(e.detail);
         }}
         @open-applet-main=${(e: CustomEvent) => {
@@ -991,15 +948,15 @@ export class MainDashboard extends LitElement {
     `;
   }
 
-  renderDashboard() {
+  renderGroupArea() {
     return html`
-      ${this.renderAppletMainViews()}
       ${repeat(
         this._openGroups,
         (group) => encodeHashToBase64(group),
         (groupHash) => html`
           <group-context .groupDnaHash=${groupHash}>
             <group-container
+              class="group-container"
               .groupDnaHash=${groupHash}
               style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
                 ? ''
@@ -1026,9 +983,6 @@ export class MainDashboard extends LitElement {
                   notifyError(msg('Failed to disable Group.'));
                 }
               }}
-              @applet-selected=${(e: CustomEvent) => {
-                this.openViews.openAppletMain(e.detail.appletHash);
-              }}
               @applet-installed=${(e: {
                 detail: {
                   appletEntryHash: AppletHash;
@@ -1054,6 +1008,38 @@ export class MainDashboard extends LitElement {
                 this._openApplets = this._openApplets.filter(
                   (appletHash) => !disabledApplets.includes(appletHash.toString()),
                 );
+              }}
+              @group-home-selected=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'group',
+                  groupHash: (this._dashboardState.value as any).groupHash,
+                });
+              }}
+              @applet-selected=${(e: {
+                detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+              }) => {
+                if (
+                  !this._openApplets
+                    .map((appletHash) => appletHash.toString())
+                    .includes(e.detail.appletHash.toString())
+                ) {
+                  this._openApplets = [...this._openApplets, e.detail.appletHash];
+                }
+                this._mossStore.setDashboardState({
+                  viewType: 'group',
+                  groupHash: e.detail.groupDnaHash,
+                  appletHash: e.detail.appletHash,
+                });
+                this.openViews.openAppletMain(e.detail.appletHash);
+              }}
+              @add-tool-requested=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: {
+                    type: 'moss',
+                    name: 'tool-library',
+                  },
+                });
               }}
               @custom-view-selected=${(_e) => {
                 throw new Error('Displaying custom views is currently not implemented.');
@@ -1422,13 +1408,17 @@ export class MainDashboard extends LitElement {
       <div
         class="group-viewer invisible-scrollbars column ${this._dashboardState.value.viewType ===
         'group'
-          ? ''
+          ? 'top-8'
           : 'personal-view'}"
       >
         <div
           class="row"
-          style="flex: 1; ${this._assetViewerState.value.visible
+          style="flex: 1; ${this._assetViewerState.value.visible &&
+          this._dashboardState.value.viewType === 'personal'
             ? 'max-height: calc(100vh - 124px);'
+            : ''} ${this._assetViewerState.value.visible &&
+          this._dashboardState.value.viewType === 'group'
+            ? 'max-height: calc(100vh - 66px)'
             : ''}"
         >
           <!-- PERSONAL VIEW -->
@@ -1436,14 +1426,16 @@ export class MainDashboard extends LitElement {
 
           <!-- GROUP VIEW -->
           <div
-            id="group-view-area"
+            id="group-view-area ${this._dashboardState.value.viewType === 'personal'
+              ? 'height-constrained'
+              : ''}"
             style="${this._dashboardState.value.viewType === 'group'
               ? 'display: flex; flex: 1;'
               : 'display: none;'}${this._drawerResizing
               ? 'pointer-events: none; user-select: none;'
               : ''} overflow-x: auto;"
           >
-            ${this.renderDashboard()}
+            ${this.renderGroupArea()}
           </div>
           <div
             class="drawer-separator"
@@ -1460,6 +1452,7 @@ export class MainDashboard extends LitElement {
               hidden:
                 !this._assetViewerState.value.visible &&
                 this._assetViewerState.value.position === 'side',
+              'drawer-height-constrained': this._dashboardState.value.viewType === 'personal',
             })}"
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
               ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
@@ -1514,10 +1507,6 @@ export class MainDashboard extends LitElement {
               this._mossStore.setDashboardState({
                 viewType: 'personal',
                 viewState: { type: 'moss', name: 'welcome' },
-              });
-              this._mossStore.setAssetViewerState({
-                position: this._assetViewerState.value.position,
-                visible: false,
               });
             }}
             @keypress=${(e: KeyboardEvent) => {
@@ -1582,7 +1571,8 @@ export class MainDashboard extends LitElement {
           <sl-tooltip content="${msg('Create New Asset')}" placement="right" hoist>
             <button
               tabindex="0"
-              class="moss-sidebar-button"
+              class="create-asset-btn"
+              style="all: unset; cursor: pointer;"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -1590,13 +1580,8 @@ export class MainDashboard extends LitElement {
                 }
               }}
             >
-              <div class="column center-content">
-                <img
-                  class="moss-sidebar-button-icon"
-                  src="magic-wand.svg"
-                  style="width: 24px; height: 24px;"
-                />
-              </div>
+              <div class="column center-content default-image">${turingBlobIcon()}</div>
+              <div class="column center-content hover-image">${turingBlobIconHover()}</div>
             </button>
           </sl-tooltip>
         </div>
@@ -1614,131 +1599,60 @@ export class MainDashboard extends LitElement {
         : html``}
 
       <!-- TOP BAR -->
-      <div
-        class="top-bar row ${this._dashboardState.value.viewType === 'group' &&
-        !this.hoverPersonalView
-          ? ''
-          : 'personal-top-bar'}"
-        style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
-        @mouseenter=${() => {
-          this.hoverTopBar = true;
-        }}
-        @mouseleave=${() => {
-          this.hoverTopBar = false;
-          setTimeout(() => {
-            if (!this.hoverMossButton) {
-              this.hoverPersonalView = false;
-            }
-          }, 50);
-        }}
-      >
-        <div
-          id="top-bar-scroller"
-          class="row invisible-scrollbars"
-          style="overflow-x: auto; padding-right: 40px; height: 80px;"
-          @wheel=${(e) => {
-            const el = this.shadowRoot!.getElementById('top-bar-scroller');
-            if (el)
-              el.scrollBy({
-                left: e.deltaY < 0 ? -30 : 30,
-              });
-          }}
-        >
-          ${this._dashboardState.value.viewType === 'group'
-            ? html`
-                <group-context .groupDnaHash=${this._dashboardState.value.groupHash}>
-                  <group-applets-sidebar
-                    id="group-applets-sidebar"
-                    style="margin-left: 12px; flex: 1; overflow-x: sroll; ${this.hoverPersonalView
-                      ? 'display: none'
-                      : ''}"
-                    .selectedAppletHash=${this._dashboardState.value.appletHash}
-                    .indicatedAppletHashes=${this._assetViewerState.value.visible &&
-                    this._selectedTab &&
-                    this._selectedTab.tab.type === 'wal'
-                      ? this._selectedTab.tab.appletIds
-                      : []}
-                    @group-home-selected=${() => {
-                      this._mossStore.setDashboardState({
-                        viewType: 'group',
-                        groupHash: (this._dashboardState.value as any).groupHash,
-                      });
-                    }}
-                    @applet-selected=${(e: {
-                      detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-                    }) => {
-                      if (
-                        !this._openApplets
-                          .map((appletHash) => appletHash.toString())
-                          .includes(e.detail.appletHash.toString())
-                      ) {
-                        this._openApplets = [...this._openApplets, e.detail.appletHash];
+      ${this._dashboardState.value.viewType === 'personal'
+        ? html`
+            <div
+              class="top-bar row personal-top-bar"
+              style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
+              @mouseenter=${() => {
+                this.hoverTopBar = true;
+              }}
+              @mouseleave=${() => {
+                this.hoverTopBar = false;
+                setTimeout(() => {
+                  if (!this.hoverMossButton) {
+                    this.hoverPersonalView = false;
+                  }
+                }, 50);
+              }}
+            >
+              <div
+                id="top-bar-scroller"
+                class="row invisible-scrollbars"
+                style="overflow-x: auto; padding-right: 40px; height: 80px;"
+                @wheel=${(e) => {
+                  const el = this.shadowRoot!.getElementById('top-bar-scroller');
+                  if (el)
+                    el.scrollBy({
+                      left: e.deltaY < 0 ? -30 : 30,
+                    });
+                }}
+              >
+                <personal-view-sidebar
+                  style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px;"
+                  .selectedView=${this._dashboardState.value.viewState}
+                  @personal-view-selected=${async (e) => {
+                    console.log('@personal-view-selected: ', e);
+                    this._mossStore.setDashboardState({
+                      viewType: 'personal',
+                      viewState: e.detail,
+                    });
+                    if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
+                      const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
+                        | AssetsGraph
+                        | null
+                        | undefined;
+                      if (assetsGraphEl) {
+                        await assetsGraphEl.load();
                       }
-                      this._mossStore.setDashboardState({
-                        viewType: 'group',
-                        groupHash: e.detail.groupDnaHash,
-                        appletHash: e.detail.appletHash,
-                      });
-                    }}
-                    @refresh-applet=${async (e: CustomEvent) => {
-                      // emit onBeforeUnload event and wait for callback to be executed
-                      const appletId = encodeHashToBase64(e.detail.appletHash);
-
-                      const reloadingApplets = [...this._reloadingApplets];
-                      reloadingApplets.push(appletId);
-                      this._reloadingApplets = reloadingApplets;
-
-                      const allIframes = getAllIframes();
-                      const appletIframe = allIframes.find((iframe) => iframe.id === appletId);
-                      if (appletIframe) {
-                        try {
-                          await postMessageToIframe(appletIframe, { type: 'on-before-unload' });
-                        } catch (e) {
-                          console.warn(
-                            'WARNING: onBeforeUnload callback failed for applet with id',
-                            appletId,
-                            ':',
-                            e,
-                          );
-                        }
-                        appletIframe.src += '';
-                      }
-
-                      // Remove AppletId from reloading applets
-                      this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
-                    }}
-                  ></group-applets-sidebar>
-                </group-context>
-              `
-            : html``}
-          <personal-view-sidebar
-            style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px; ${this
-              ._dashboardState.value.viewType === 'personal' || this.hoverPersonalView
-              ? ''
-              : 'display: none'}"
-            .selectedView=${this._dashboardState.value.viewType === 'personal'
-              ? this._dashboardState.value.viewState
-              : undefined}
-            @personal-view-selected=${async (e) => {
-              console.log('@personal-view-selected: ', e);
-              this._mossStore.setDashboardState({
-                viewType: 'personal',
-                viewState: e.detail,
-              });
-              if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
-                const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
-                  | AssetsGraph
-                  | null
-                  | undefined;
-                if (assetsGraphEl) {
-                  await assetsGraphEl.load();
-                }
-              }
-            }}
-          ></personal-view-sidebar>
-        </div>
-        <div style="display: flex; flex: 1;"></div>
-      </div>
+                    }
+                  }}
+                ></personal-view-sidebar>
+              </div>
+              <div style="display: flex; flex: 1;"></div>
+            </div>
+          `
+        : html``}
 
       <!-- ASSET VIEWER TOGGLE -->
 
@@ -1966,9 +1880,12 @@ export class MainDashboard extends LitElement {
 
         .side-drawer {
           position: relative;
-          max-height: calc(100vh - 142px);
           background: var(--sl-color-tertiary-0);
           border-top: 4px solid var(--sl-color-tertiary-50);
+        }
+
+        .drawer-height-constrained {
+          max-height: calc(100vh - 142px);
         }
 
         .asset-viewer {
@@ -1998,11 +1915,20 @@ export class MainDashboard extends LitElement {
           left: 80px;
           bottom: 8px;
           right: 8px;
-          padding-left: 8px;
           /* background-color: #224b21; */
           background-color: var(--moss-main-green);
           border-radius: 0 0 10px 10px;
           overflow: hidden;
+        }
+
+        .top-8 {
+          top: 8px;
+          border-radius: 10px;
+        }
+
+        .group-container {
+          display: flex;
+          padding: 8px 8px 8px 0;
         }
 
         .personal-view {
@@ -2013,6 +1939,9 @@ export class MainDashboard extends LitElement {
 
         #group-view-area {
           overflow: hidden;
+        }
+
+        .height-constrained {
           max-height: calc(100vh - 70px);
         }
 
@@ -2184,6 +2113,26 @@ export class MainDashboard extends LitElement {
           background: #689d19;
           padding: 5px;
           border-radius: 0 0 10px 10px;
+        }
+
+        /* Create New Asset Button */
+
+        .create-asset-btn .default-image {
+          display: block;
+        }
+
+        .create-asset-btn .hover-image {
+          display: none;
+        }
+
+        .create-asset-btn:hover .default-image,
+        .create-asset-btn:focus-visible .default-image {
+          display: none;
+        }
+
+        .create-asset-btn:hover .hover-image,
+        .create-asset-btn:focus-visible .hover-image {
+          display: block;
         }
       `,
     ];

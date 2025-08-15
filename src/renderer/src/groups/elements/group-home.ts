@@ -51,7 +51,6 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/_new_design/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings.js';
 import '../../elements/_new_design/profile/moss-profile-detail.js';
 import '../../elements/_new_design/copy-hash.js';
@@ -561,7 +560,7 @@ export class GroupHome extends LitElement {
                   this._editGroupDescription = true;
                 }}
               >
-                Add Description
+                + Add Description
               </button>
             </div>
           `;
@@ -701,7 +700,7 @@ export class GroupHome extends LitElement {
           ></group-settings>
         </div>
       </sl-dialog>
-      <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
+      <div class="row" style="flex: 1;">
         <div
           class="column"
           style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
@@ -1004,22 +1003,13 @@ export class GroupHome extends LitElement {
           ${this._selectedAgent ? this.renderMemberProfile() : ``}
         </div>
       </sl-dialog>
-      <moss-profile-prompt> ${this.renderContent()} </moss-profile-prompt>
+      ${this.renderContent()}
     `;
   }
 
   static styles = [
     mossStyles,
     css`
-      :host {
-        display: flex;
-        /* background: var(--sl-color-secondary-0); */
-        /* background-color: #588121; */
-        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
-        padding: 8px;
-        border-radius: 5px;
-      }
-
       .settings-btn {
         color: white;
         cursor: pointer;

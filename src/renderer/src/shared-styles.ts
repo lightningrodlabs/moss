@@ -52,6 +52,9 @@ export const mossStyles = [
 
       /* shoelace dialog overlay background */
       --sl-overlay-background-color: #324d4781;
+
+      /* tooltip border radius */
+      --sl-tooltip-border-radius: 8px;
     }
 
     .items-center {
