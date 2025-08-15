@@ -560,7 +560,7 @@ export class GroupHome extends LitElement {
                   this._editGroupDescription = true;
                 }}
               >
-                Add Description
+                + Add Description
               </button>
             </div>
           `;

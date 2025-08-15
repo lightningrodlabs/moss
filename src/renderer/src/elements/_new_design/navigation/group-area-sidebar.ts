@@ -60,18 +60,18 @@ export class GroupAppletsSidebar extends LitElement {
   indicatedAppletHashes: AppletId[] = [];
 
   @state()
-  collapsed = true;
+  collapsed = false;
 
   @state()
   dragged: AppletId | null = null;
 
-  permissionType = new StoreSubscriber(
+  private _permissionType = new StoreSubscriber(
     this,
     () => this._groupStore.permissionType,
     () => [this._groupStore],
   );
 
-  groupProfile = new StoreSubscriber(
+  private _groupProfile = new StoreSubscriber(
     this,
     () => {
       const store = joinAsync([
@@ -84,20 +84,21 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore, this.mossStore],
   );
 
-  _peerStatuses = new StoreSubscriber(
+  private _peerStatuses = new StoreSubscriber(
     this,
     () => this._groupStore.peerStatuses(),
     () => [this._groupStore],
   );
 
-  _myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
-    this,
-    () => this._groupStore.profilesStore.myProfile,
-    () => [this._groupStore],
-  );
+  private _myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> =
+    new StoreSubscriber(
+      this,
+      () => this._groupStore.profilesStore.myProfile,
+      () => [this._groupStore],
+    );
 
   // All the Applets that are running and part of this Group
-  _groupApplets = new StoreSubscriber(
+  private _groupApplets = new StoreSubscriber(
     this,
     () =>
       this._groupStore
@@ -108,22 +109,20 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore],
   );
 
-  _unjoinedApplets = new StoreSubscriber(
+  private _unjoinedApplets = new StoreSubscriber(
     this,
     () => this._groupStore.unjoinedApplets,
     () => [this._groupStore],
   );
 
+  amISteward(): boolean {
+    return (
+      this._permissionType.value.status === 'complete' &&
+      ['Progenitor', 'Steward'].includes(this._permissionType.value.value.type)
+    );
+  }
+
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
-    if (Array.from(applets.entries()).length === 0) {
-      return html`
-        <div class="row" style="align-items: center; font-size: 20px; font-weight: 500;">
-          <span style="color: var(--moss-dark-green); font-size: 14px; margin-left: 10px;">
-            No Tools installed or all Tools disabled...
-          </span>
-        </div>
-      `;
-    }
     const groupId = encodeHashToBase64(this._groupStore!.groupDnaHash);
 
     let customAppletOrder = this.mossStore.persistedStore.groupAppletOrder.value(groupId);
@@ -273,35 +272,35 @@ export class GroupAppletsSidebar extends LitElement {
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        return this.renderApplets(this._groupApplets.value.value);
+        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amISteward()
+          ? html`<div
+              class="column items-center"
+              style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
+            >
+              <div style="text-align: center; margin-bottom: 10px;">
+                ${msg('No tools yet.')}<br />${msg("Let's change that:")}
+              </div>
+              <button
+                class="moss-button flex flex-1"
+                style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
+                @click=${() => {
+                  this.dispatchEvent(
+                    new CustomEvent('add-tool-requested', {
+                      bubbles: false,
+                      composed: true,
+                    }),
+                  );
+                }}
+              >
+                <div class="flex- flex-1">+ ${msg('add a tool')}</div>
+              </button>
+            </div>`
+          : this.renderApplets(this._groupApplets.value.value);
     }
   }
 
-  // renderMossButtons() {
-  //   return html`
-  //     <topbar-button
-  //       style="position: relative;"
-  //       .selected=${!this.selectedAppletHash}
-  //       .tooltipText=${'Home'}
-  //       placement="bottom"
-  //       @click=${() => {
-  //         this.dispatchEvent(
-  //           new CustomEvent('group-home-selected', {
-  //             bubbles: false,
-  //             composed: true,
-  //           }),
-  //         );
-  //       }}
-  //     >
-  //       <div class="moss-item-button">
-  //         <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
-  //       </div>
-  //     </topbar-button>
-  //   `;
-  // }
-
   renderGroupLogo() {
-    switch (this.groupProfile.value.status) {
+    switch (this._groupProfile.value.status) {
       case 'pending':
         return html`<sl-skeleton
           style="height: var(--size, ${this.collapsed ? '35px' : '28px'}); width: var(--size, ${this
@@ -312,31 +311,31 @@ export class GroupAppletsSidebar extends LitElement {
         ></sl-skeleton> `;
       case 'complete':
         return html`
-          ${this.groupProfile.value.value[0]?.icon_src
+          ${this._groupProfile.value.value[0]?.icon_src
             ? html`<img
                 class="icon ${this.collapsed ? 'icon-large' : ''}"
-                .src=${this.groupProfile.value.value[0].icon_src}
-                alt=${`${this.groupProfile.value.value[0].name} group icon`}
+                .src=${this._groupProfile.value.value[0].icon_src}
+                alt=${`${this._groupProfile.value.value[0].name} group icon`}
               />`
             : html`<div class="column center-content icon" style="background: gray;">?</div>`}
         `;
       case 'error':
-        console.error('Failed to fetch group profile: ', this.groupProfile.value.error);
+        console.error('Failed to fetch group profile: ', this._groupProfile.value.error);
         return html`<display-error
           tooltip
           .headline=${msg('Error fetching the group profile')}
-          .error=${this.groupProfile.value.error}
+          .error=${this._groupProfile.value.error}
         ></display-error>`;
     }
   }
 
   groupName() {
-    switch (this.groupProfile.value.status) {
+    switch (this._groupProfile.value.status) {
       case 'pending':
         return msg('Loading...');
       case 'complete':
-        return this.groupProfile.value.value[0]?.name
-          ? this.groupProfile.value.value[0]?.name
+        return this._groupProfile.value.value[0]?.name
+          ? this._groupProfile.value.value[0]?.name
           : 'unknown';
       case 'error':
         return 'ERROR';
@@ -416,7 +415,7 @@ export class GroupAppletsSidebar extends LitElement {
   renderUnjoinedAppletsButton() {
     if (
       this._unjoinedApplets.value.status !== 'complete' ||
-      (this._unjoinedApplets.value.value.size === 0 && false)
+      this._unjoinedApplets.value.value.size === 0
     )
       return html``;
     return html`<sl-tooltip
@@ -521,22 +520,27 @@ export class GroupAppletsSidebar extends LitElement {
         <!-- Unjoined Tools Button -->
         ${this.renderUnjoinedAppletsButton()}
 
-        <!-- Add Tool Button -->
-        <sl-tooltip content="${msg('Add a tool')}" placement="bottom">
-          <button
-            class="purple-btn ${this.collapsed ? 'purple-btn-large' : ''}"
-            @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent('add-tool-requested', {
-                  bubbles: false,
-                  composed: true,
-                }),
-              );
-            }}
-          >
-            <div class="column center-content">${plusIcon()}</div>
-          </button>
-        </sl-tooltip>
+        <!-- Add Tool Button - Hidden if no Tools are installed yet and the sidebar is expanded -->
+        ${(this._groupApplets.value.status === 'complete' &&
+          this._groupApplets.value.value.size === 0 &&
+          !this.collapsed) ||
+        !this.amISteward()
+          ? html``
+          : html`<sl-tooltip content="${msg('Add a tool')}" placement="bottom">
+              <button
+                class="purple-btn ${this.collapsed ? 'purple-btn-large' : ''}"
+                @click=${() => {
+                  this.dispatchEvent(
+                    new CustomEvent('add-tool-requested', {
+                      bubbles: false,
+                      composed: true,
+                    }),
+                  );
+                }}
+              >
+                <div class="column center-content">${plusIcon()}</div>
+              </button>
+            </sl-tooltip>`}
 
         <!-- menu folding toggle -->
         <sl-tooltip content="${this.collapsed ? msg('Expand the menu') : msg('Fold the menu')}">

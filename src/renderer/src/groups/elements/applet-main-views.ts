@@ -31,7 +31,7 @@ export class AppletMainViews extends LitElement {
   _runningGroupApplets = new StoreSubscriber(
     this,
     () => this._groupStore.allMyRunningApplets,
-    () => [this._mossStore],
+    () => [this._groupStore],
   );
 
   _dashboardState = new StoreSubscriber(

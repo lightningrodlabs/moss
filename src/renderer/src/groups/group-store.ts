@@ -1101,7 +1101,10 @@ export class GroupStore {
     const output = allMyApplets.filter((appletHash) =>
       runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
-    // console.log('Got allMyRunningApplets: ', output);
+    // console.log(
+    //   'Got allMyRunningApplets: ',
+    //   output.map((h) => encodeHashToBase64(h)),
+    // );
     return output;
   });
 
