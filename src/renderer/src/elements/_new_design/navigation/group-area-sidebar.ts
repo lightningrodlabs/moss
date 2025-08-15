@@ -44,7 +44,7 @@ import { EntryRecord } from '@holochain-open-dev/utils';
 @customElement('group-area-sidebar')
 export class GroupAppletsSidebar extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
-  mossStore!: MossStore;
+  private _mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
   private _groupStore!: GroupStore;
@@ -58,9 +58,6 @@ export class GroupAppletsSidebar extends LitElement {
 
   @property()
   indicatedAppletHashes: AppletId[] = [];
-
-  @state()
-  collapsed = false;
 
   @state()
   dragged: AppletId | null = null;
@@ -81,7 +78,7 @@ export class GroupAppletsSidebar extends LitElement {
       // (window as any).groupProfileStore = store;
       return store;
     },
-    () => [this._groupStore, this.mossStore],
+    () => [this._groupStore, this._mossStore],
   );
 
   private _peerStatuses = new StoreSubscriber(
@@ -103,7 +100,7 @@ export class GroupAppletsSidebar extends LitElement {
     () =>
       this._groupStore
         ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-            sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+            sliceAndJoin(this._mossStore.appletStores, myRunningApplets),
           ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],
@@ -115,6 +112,17 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore],
   );
 
+  private _collapsed = new StoreSubscriber(
+    this,
+    () => this._mossStore.appletSidebarCollapsed,
+    () => [this._mossStore],
+  );
+
+  @state()
+  get collapsed(): boolean | null {
+    return this._collapsed.value;
+  }
+
   amISteward(): boolean {
     return (
       this._permissionType.value.status === 'complete' &&
@@ -125,18 +133,18 @@ export class GroupAppletsSidebar extends LitElement {
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     const groupId = encodeHashToBase64(this._groupStore!.groupDnaHash);
 
-    let customAppletOrder = this.mossStore.persistedStore.groupAppletOrder.value(groupId);
+    let customAppletOrder = this._mossStore.persistedStore.groupAppletOrder.value(groupId);
     if (!customAppletOrder) {
       customAppletOrder = Array.from(applets.entries())
         .sort(([_, a], [__, b]) => a.applet.custom_name.localeCompare(b.applet.custom_name))
         .map(([hash, _profile]) => encodeHashToBase64(hash));
-      this.mossStore.persistedStore.groupAppletOrder.set(customAppletOrder, groupId);
+      this._mossStore.persistedStore.groupAppletOrder.set(customAppletOrder, groupId);
     }
     Array.from(applets.entries()).forEach(([hash, _]) => {
       if (!customAppletOrder!.includes(encodeHashToBase64(hash))) {
         customAppletOrder!.splice(0, 0, encodeHashToBase64(hash));
       }
-      this.mossStore.persistedStore.groupAppletOrder.set(customAppletOrder!, groupId);
+      this._mossStore.persistedStore.groupAppletOrder.set(customAppletOrder!, groupId);
       this.requestUpdate();
     });
 
@@ -547,7 +555,7 @@ export class GroupAppletsSidebar extends LitElement {
           <button
             class="menu-fold-toggle"
             @click=${() => {
-              this.collapsed = !this.collapsed;
+              this._mossStore.setAppletSidebarCollapsed(!this.collapsed);
             }}
           >
             ${this.collapsed ? chevronDoubleRightIcon(18) : chevronDoubleLeftIcon(18)}
