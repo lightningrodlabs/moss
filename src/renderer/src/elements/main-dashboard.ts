@@ -706,12 +706,6 @@ export class MainDashboard extends LitElement {
     await this._mossStore.loadNotificationFeed(7);
   }
 
-  selectedGroupDnaHash() {
-    return this._dashboardState.value.viewType === 'group'
-      ? this._dashboardState.value.groupHash
-      : undefined;
-  }
-
   openClipboard() {
     this.showClipboard = true;
     this._pocket.show('open');
@@ -803,11 +797,10 @@ export class MainDashboard extends LitElement {
     );
   }
 
-  selectedGroup(): DnaHash | undefined {
-    if (this._dashboardState.value.viewType === 'group') {
-      return this._dashboardState.value.groupHash;
-    }
-    return undefined;
+  selectedGroupDnaHash() {
+    return this._dashboardState.value.viewType === 'group'
+      ? this._dashboardState.value.groupHash
+      : undefined;
   }
 
   selectedAppletHash(): AppletHash | undefined {
@@ -961,7 +954,6 @@ export class MainDashboard extends LitElement {
 
       <activity-view
         @open-wal=${async (e) => {
-          console.log('Opening WAL 3: ', e.detail);
           await this.handleOpenWal(e.detail);
         }}
         @open-applet-main=${(e: CustomEvent) => {
@@ -1006,44 +998,46 @@ export class MainDashboard extends LitElement {
   renderGroupArea() {
     return html`
       <div class="row flex-1">
-        <div class="group-area-sidebar flex">
-          <group-context .groupDnaHash=${this.selectedGroup()}>
-            <group-area-sidebar
-              .selectedAppletHash=${this.selectedAppletHash()}
-              @group-home-selected=${() => {
-                this._mossStore.setDashboardState({
-                  viewType: 'group',
-                  groupHash: (this._dashboardState.value as any).groupHash,
-                });
-              }}
-              @applet-selected=${(e: {
-                detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-              }) => {
-                if (
-                  !this._openApplets
-                    .map((appletHash) => appletHash.toString())
-                    .includes(e.detail.appletHash.toString())
-                ) {
-                  this._openApplets = [...this._openApplets, e.detail.appletHash];
-                }
-                this._mossStore.setDashboardState({
-                  viewType: 'group',
-                  groupHash: e.detail.groupDnaHash,
-                  appletHash: e.detail.appletHash,
-                });
-              }}
-              @add-tool-requested=${() => {
-                this._mossStore.setDashboardState({
-                  viewType: 'personal',
-                  viewState: {
-                    type: 'moss',
-                    name: 'tool-library',
-                  },
-                });
-              }}
-            ></group-area-sidebar>
-          </group-context>
-        </div>
+        ${this.selectedGroupDnaHash()
+          ? html` <div class="flex">
+              <group-context .groupDnaHash=${this.selectedGroupDnaHash()}>
+                <group-area-sidebar
+                  .selectedAppletHash=${this.selectedAppletHash()}
+                  @group-home-selected=${() => {
+                    this._mossStore.setDashboardState({
+                      viewType: 'group',
+                      groupHash: (this._dashboardState.value as any).groupHash,
+                    });
+                  }}
+                  @applet-selected=${(e: {
+                    detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+                  }) => {
+                    if (
+                      !this._openApplets
+                        .map((appletHash) => appletHash.toString())
+                        .includes(e.detail.appletHash.toString())
+                    ) {
+                      this._openApplets = [...this._openApplets, e.detail.appletHash];
+                    }
+                    this._mossStore.setDashboardState({
+                      viewType: 'group',
+                      groupHash: e.detail.groupDnaHash,
+                      appletHash: e.detail.appletHash,
+                    });
+                  }}
+                  @add-tool-requested=${() => {
+                    this._mossStore.setDashboardState({
+                      viewType: 'personal',
+                      viewState: {
+                        type: 'moss',
+                        name: 'tool-library',
+                      },
+                    });
+                  }}
+                ></group-area-sidebar>
+              </group-context>
+            </div>`
+          : html``}
         <div class="column flex-1">
           ${this.renderAppletMainViews()}
           ${repeat(

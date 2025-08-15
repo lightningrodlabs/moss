@@ -515,7 +515,7 @@ export class GroupAppletsSidebar extends LitElement {
         ${this.renderUnjoinedAppletsButton()}
 
         <!-- Add Tool Button -->
-        <sl-tooltip content="${msg('add a tool')}" placement="bottom">
+        <sl-tooltip content="${msg('Add a tool')}" placement="bottom">
           <button
             class="purple-btn ${this.collapsed ? 'purple-btn-large' : ''}"
             @click=${() => {
@@ -532,7 +532,7 @@ export class GroupAppletsSidebar extends LitElement {
         </sl-tooltip>
 
         <!-- menu folding toggle -->
-        <sl-tooltip content="${this.collapsed ? msg('expand the menu') : msg('fold the menu')}">
+        <sl-tooltip content="${this.collapsed ? msg('Expand the menu') : msg('Fold the menu')}">
           <button
             class="menu-fold-toggle"
             @click=${() => {
