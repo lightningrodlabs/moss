@@ -11,24 +11,42 @@ import { consume } from '@lit/context';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
+import './applet-main-views.js';
+import '../../elements/_new_design/navigation/group-area-sidebar.js';
 import './group-home.js';
+import '../../elements/_new_design/profile/moss-profile-prompt.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiPowerPlugOff } from '@mdi/js';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { AppletHash } from '@theweave/api';
 
 @localized()
 @customElement('group-container')
 export class GroupContainer extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
-  mossStore!: MossStore;
+  private _mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  groupStore: GroupStore | undefined;
+  private _groupStore: GroupStore | undefined;
 
   @property()
   groupDnaHash!: DnaHash;
 
+  _dashboardState = new StoreSubscriber(
+    this,
+    () => this._mossStore.dashboardState(),
+    () => [this._mossStore],
+  );
+
+  selectedAppletHash(): AppletHash | undefined {
+    if (this._dashboardState.value.viewType === 'group') {
+      return this._dashboardState.value.appletHash;
+    }
+    return undefined;
+  }
+
   async enableGroup() {
-    await this.mossStore.enableGroup(this.groupDnaHash);
+    await this._mossStore.enableGroup(this.groupDnaHash);
   }
 
   renderDisabledGroup() {
@@ -50,13 +68,28 @@ export class GroupContainer extends LitElement {
   }
 
   render() {
-    if (!this.groupStore) {
+    if (!this._groupStore) {
       return this.renderDisabledGroup();
     } else {
-      return html`<group-home
-        class="group-home"
-        style="flex: 1; position: relative;"
-      ></group-home>`;
+      return html`
+        <moss-profile-prompt>
+          <div class="row flex-1">
+            <group-area-sidebar
+              .selectedAppletHash=${this.selectedAppletHash()}
+            ></group-area-sidebar>
+            <applet-main-views
+              class="flex flex-1"
+              style="${this.selectedAppletHash() ? '' : 'display: none;'}"
+            ></applet-main-views>
+            <group-home
+              class="group-home"
+              style="flex: 1; position: relative; ${this.selectedAppletHash()
+                ? 'display: none;'
+                : ''}"
+            ></group-home>
+          </div>
+        </moss-profile-prompt>
+      `;
     }
   }
 

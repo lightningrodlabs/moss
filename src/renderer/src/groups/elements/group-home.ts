@@ -51,7 +51,6 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/_new_design/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings.js';
 import '../../elements/_new_design/profile/moss-profile-detail.js';
 import '../../elements/_new_design/copy-hash.js';
@@ -1004,7 +1003,7 @@ export class GroupHome extends LitElement {
           ${this._selectedAgent ? this.renderMemberProfile() : ``}
         </div>
       </sl-dialog>
-      <moss-profile-prompt> ${this.renderContent()} </moss-profile-prompt>
+      ${this.renderContent()}
     `;
   }
 

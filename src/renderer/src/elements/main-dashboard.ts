@@ -42,10 +42,8 @@ import '../personal-views/activity-view/activity-view.js';
 import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
-import './navigation/group-applets-sidebar.js';
 import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
-import '../layout/views/applet-main.js';
 import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
 import '../layout/views/asset-view.js';
@@ -53,7 +51,6 @@ import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
 import './_new_design/moss-dialog.js';
-import './_new_design/navigation/group-area-sidebar.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -70,7 +67,7 @@ import { CreatablePalette } from './creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
-import { decodeContext, getAllIframes, progenitorFromProperties } from '../utils.js';
+import { decodeContext, progenitorFromProperties } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
@@ -792,7 +789,6 @@ export class MainDashboard extends LitElement {
   displayGroupContainer(groupHash: DnaHash) {
     return (
       this._dashboardState.value.viewType === 'group' &&
-      !this._dashboardState.value.appletHash &&
       encodeHashToBase64(this._dashboardState.value.groupHash) === encodeHashToBase64(groupHash)
     );
   }
@@ -801,13 +797,6 @@ export class MainDashboard extends LitElement {
     return this._dashboardState.value.viewType === 'group'
       ? this._dashboardState.value.groupHash
       : undefined;
-  }
-
-  selectedAppletHash(): AppletHash | undefined {
-    if (this._dashboardState.value.viewType === 'group') {
-      return this._dashboardState.value.appletHash;
-    }
-    return undefined;
   }
 
   async openGroup(groupDnaHash: DnaHash) {
@@ -857,42 +846,6 @@ export class MainDashboard extends LitElement {
       console.warn('Failed to activate applets for group since group store is not (yet) defined.');
     }
     this.requestUpdate();
-  }
-
-  renderAppletMainViews() {
-    switch (this._runningApplets.value.status) {
-      case 'pending':
-        return html`Loading running applets...`;
-      case 'error':
-        return html`Failed to get running applets: ${this._runningApplets.value.error}`;
-      case 'complete':
-        return repeat(
-          this._runningApplets.value.value,
-          (appletHash) => encodeHashToBase64(appletHash),
-          (appletHash) => html`
-            <applet-main
-              .appletHash=${appletHash}
-              .reloading=${this._reloadingApplets.includes(encodeHashToBase64(appletHash))}
-              style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
-              @hard-refresh=${async () => {
-                // emit onBeforeUnload event and wait for callback to be executed
-                const appletId = encodeHashToBase64(appletHash);
-
-                const allIframes = getAllIframes();
-                const appletIframe = allIframes.find((iframe) => iframe.id === appletId);
-                if (appletIframe) {
-                  appletIframe.src += '';
-                }
-                const reloadingApplets = [...this._reloadingApplets];
-
-                // Remove AppletId from reloading applets
-                this._reloadingApplets = reloadingApplets.filter((id) => id !== appletId);
-                console.log('this._reloadingApplets after reloading: ', this._reloadingApplets);
-              }}
-            ></applet-main>
-          `,
-        );
-    }
   }
 
   renderToolCrossGroupViews() {
@@ -997,123 +950,107 @@ export class MainDashboard extends LitElement {
 
   renderGroupArea() {
     return html`
-      <div class="row flex-1">
-        ${this.selectedGroupDnaHash()
-          ? html` <div class="flex">
-              <group-context .groupDnaHash=${this.selectedGroupDnaHash()}>
-                <group-area-sidebar
-                  .selectedAppletHash=${this.selectedAppletHash()}
-                  @group-home-selected=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: (this._dashboardState.value as any).groupHash,
-                    });
-                  }}
-                  @applet-selected=${(e: {
-                    detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-                  }) => {
-                    if (
-                      !this._openApplets
-                        .map((appletHash) => appletHash.toString())
-                        .includes(e.detail.appletHash.toString())
-                    ) {
-                      this._openApplets = [...this._openApplets, e.detail.appletHash];
-                    }
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletHash,
-                    });
-                  }}
-                  @add-tool-requested=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: {
-                        type: 'moss',
-                        name: 'tool-library',
-                      },
-                    });
-                  }}
-                ></group-area-sidebar>
-              </group-context>
-            </div>`
-          : html``}
-        <div class="column flex-1">
-          ${this.renderAppletMainViews()}
-          ${repeat(
-            this._openGroups,
-            (group) => encodeHashToBase64(group),
-            (groupHash) => html`
-              <group-context .groupDnaHash=${groupHash}>
-                <group-container
-                  class="group-container"
-                  .groupDnaHash=${groupHash}
-                  style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
-                    ? ''
-                    : 'display: none'}"
-                  @group-left=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: { type: 'moss', name: 'welcome' },
-                    });
-                  }}
-                  @disable-group=${async (e: CustomEvent) => {
-                    const confirmation = await dialogMessagebox({
-                      message:
-                        'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
-                      type: 'warning',
-                      buttons: ['Cancel', 'Continue'],
-                    });
-                    if (confirmation.response === 0) return;
-                    try {
-                      await this._mossStore.disableGroup(e.detail);
-                      window.location.reload();
-                    } catch (e) {
-                      console.error(`Failed to disable Group: ${e}`);
-                      notifyError(msg('Failed to disable Group.'));
-                    }
-                  }}
-                  @applet-selected=${(e: CustomEvent) => {
-                    this.openViews.openAppletMain(e.detail.appletHash);
-                  }}
-                  @applet-installed=${(e: {
-                    detail: {
-                      appletEntryHash: AppletHash;
-                      groupDnaHash: DnaHash;
-                    };
-                  }) => {
-                    if (
-                      !this._openApplets
-                        .map((appletHash) => appletHash.toString())
-                        .includes(e.detail.appletEntryHash.toString())
-                    ) {
-                      this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
-                    }
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletEntryHash,
-                    });
-                  }}
-                  @applets-disabled=${(e: { detail: Array<AppletHash> }) => {
-                    // Make sure applet iframes get removed in the background
-                    const disabledApplets = e.detail.map((appletHash) => appletHash.toString());
-                    this._openApplets = this._openApplets.filter(
-                      (appletHash) => !disabledApplets.includes(appletHash.toString()),
-                    );
-                  }}
-                  @custom-view-selected=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                  @custom-view-created=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                ></group-container>
-              </group-context>
-            `,
-          )}
-        </div>
-      </div>
+      ${repeat(
+        this._openGroups,
+        (group) => encodeHashToBase64(group),
+        (groupHash) => html`
+          <group-context .groupDnaHash=${groupHash}>
+            <group-container
+              class="group-container"
+              .groupDnaHash=${groupHash}
+              style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
+                ? ''
+                : 'display: none'}"
+              @group-left=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: { type: 'moss', name: 'welcome' },
+                });
+              }}
+              @disable-group=${async (e: CustomEvent) => {
+                const confirmation = await dialogMessagebox({
+                  message:
+                    'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+                  type: 'warning',
+                  buttons: ['Cancel', 'Continue'],
+                });
+                if (confirmation.response === 0) return;
+                try {
+                  await this._mossStore.disableGroup(e.detail);
+                  window.location.reload();
+                } catch (e) {
+                  console.error(`Failed to disable Group: ${e}`);
+                  notifyError(msg('Failed to disable Group.'));
+                }
+              }}
+              @applet-installed=${(e: {
+                detail: {
+                  appletEntryHash: AppletHash;
+                  groupDnaHash: DnaHash;
+                };
+              }) => {
+                if (
+                  !this._openApplets
+                    .map((appletHash) => appletHash.toString())
+                    .includes(e.detail.appletEntryHash.toString())
+                ) {
+                  this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+                }
+                this._mossStore.setDashboardState({
+                  viewType: 'group',
+                  groupHash: e.detail.groupDnaHash,
+                  appletHash: e.detail.appletEntryHash,
+                });
+              }}
+              @applets-disabled=${(e: { detail: Array<AppletHash> }) => {
+                // Make sure applet iframes get removed in the background
+                const disabledApplets = e.detail.map((appletHash) => appletHash.toString());
+                this._openApplets = this._openApplets.filter(
+                  (appletHash) => !disabledApplets.includes(appletHash.toString()),
+                );
+              }}
+              @group-home-selected=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'group',
+                  groupHash: (this._dashboardState.value as any).groupHash,
+                });
+              }}
+              @applet-selected=${(e: {
+                detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+              }) => {
+                if (
+                  !this._openApplets
+                    .map((appletHash) => appletHash.toString())
+                    .includes(e.detail.appletHash.toString())
+                ) {
+                  this._openApplets = [...this._openApplets, e.detail.appletHash];
+                }
+                this._mossStore.setDashboardState({
+                  viewType: 'group',
+                  groupHash: e.detail.groupDnaHash,
+                  appletHash: e.detail.appletHash,
+                });
+                this.openViews.openAppletMain(e.detail.appletHash);
+              }}
+              @add-tool-requested=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: {
+                    type: 'moss',
+                    name: 'tool-library',
+                  },
+                });
+              }}
+              @custom-view-selected=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+              @custom-view-created=${(_e) => {
+                throw new Error('Displaying custom views is currently not implemented.');
+              }}
+            ></group-container>
+          </group-context>
+        `,
+      )}
     `;
   }
 
@@ -1991,7 +1928,7 @@ export class MainDashboard extends LitElement {
 
         .group-container {
           display: flex;
-          padding: 8px;
+          padding: 8px 8px 8px 0;
         }
 
         .personal-view {

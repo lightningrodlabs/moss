@@ -13,6 +13,7 @@ import { localized, msg } from '@lit/localize';
 import { DnaHashB64, DnaModifiers, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
+import '@holochain-open-dev/elements/dist/elements/holo-identicon.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -360,7 +361,13 @@ export class GroupAppletsSidebar extends LitElement {
                 .src=${this._myProfile.value.value.entry.fields.avatar}
                 alt=${msg('my profile image')}
               />`
-            : html`<div class="column center-content icon" style="background: gray;">?</div>`}
+            : html` <holo-identicon
+                .disableCopy=${true}
+                .disableTooltip=${true}
+                .hash=${this._groupStore.groupClient.myPubKey}
+                .size=${32}
+              >
+              </holo-identicon>`}
         `;
       case 'error':
         // console.error('Failed to fetch group profile: ', this._myProfile.value.error);
@@ -551,17 +558,19 @@ export class GroupAppletsSidebar extends LitElement {
     css`
       :host {
         display: flex;
-        padding: 4px;
+        padding: 0 8px 0 4px;
         position: relative;
-        flex: 1;
       }
 
       .container {
         width: 170px;
+        max-width: 170px;
+        position: relative;
       }
 
       .container-collapsed {
         width: 43px;
+        max-width: 43px;
       }
 
       .ruler {
