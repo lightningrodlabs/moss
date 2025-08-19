@@ -14,7 +14,12 @@ import fs from 'fs';
 
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
-import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
+import {
+  getAdminWsAndAppPort,
+  getAppWs,
+  getWeRustHandler,
+  isAppRunning,
+} from '../helpers/helpers.js';
 import {
   ALWAYS_ONLINE_TAG,
   GroupClient,
@@ -122,11 +127,13 @@ setTimeout(async () => {
 
   // Set up handler for remote signals and update agent profiles
   const allApps = await adminWs.listApps({});
-  const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
+  const enabledGroupApps = allApps
+    .filter((appInfo) => appInfo.installed_app_id.startsWith('group#'))
+    .filter((appInfo) => isAppRunning(appInfo));
 
   const tzOffset = new Date().getTimezoneOffset();
   // TODO wrap in try catch blocks
-  for (const groupApp of groupApps) {
+  for (const groupApp of enabledGroupApps) {
     const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
     peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
@@ -178,10 +185,10 @@ setTimeout(async () => {
           encodeHashToBase64(agent) !== encodeHashToBase64(groupAppWs.myPubKey) &&
           needsPinging(agent, myPubkeySum),
       );
-      // console.log(
-      //   'Pinging agents: ',
-      //   agentsThatNeedPinging.map((hash) => encodeHashToBase64(hash)),
-      // );
+      console.log(
+        'Pinging agents: ',
+        agentsThatNeedPinging.map((hash) => encodeHashToBase64(hash)),
+      );
       await peerStatusClient.ping(agentsThatNeedPinging, 'online', tzOffset);
     }, PING_AGENTS_FREQUENCY_MS);
   }
@@ -213,10 +220,12 @@ async function checkForNewGroupsAndApplets(
     `\n\n************************************************\n${new Date()}\nChecking for new Groups and Tools`,
   );
   const allApps = await adminWs.listApps({});
-  const groupApps = allApps.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
+  const enabledGroupApps = allApps
+    .filter((appInfo) => appInfo.installed_app_id.startsWith('group#'))
+    .filter((appInfo) => isAppRunning(appInfo));
 
   // Check for unjoined applets and try to install them
-  for (const groupApp of groupApps) {
+  for (const groupApp of enabledGroupApps) {
     try {
       const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
       const groupClient = new GroupClient(groupAppWs, [], 'group');

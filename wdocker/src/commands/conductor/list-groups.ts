@@ -1,4 +1,10 @@
-import { cleanTable, getAdminWs, getCellId, getPassword } from '../../helpers/helpers.js';
+import {
+  cleanTable,
+  getAdminWs,
+  getCellId,
+  getPassword,
+  getStatus,
+} from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
 import { encodeHashToBase64 } from '@holochain/client';
 
@@ -14,11 +20,12 @@ export async function listGroups(conductorId: string): Promise<void> {
   const response = await adminWs.listApps({});
   const groups = response.filter((appInfo) => appInfo.installed_app_id.startsWith('group#'));
   const table = cleanTable();
-  table.push(['GROUP DNA HASH']);
+  table.push(['Group DNA hash', 'status']);
   groups.forEach((appInfo) => {
     const groupCellInfo = appInfo.cell_info['group'][0];
     const cellId = getCellId(groupCellInfo);
-    table.push([encodeHashToBase64(cellId![0])]);
+    const status = getStatus(appInfo);
+    table.push([encodeHashToBase64(cellId![0]), status]);
   });
   console.log(table.toString());
   adminWs.client.close();

@@ -10,6 +10,8 @@ import { purgeConductor } from './commands/purge.js';
 import { info } from './commands/info.js';
 import { listApps } from './commands/conductor/list-apps.js';
 import { joinGroup } from './commands/conductor/join-group.js';
+import { disableGroup } from './commands/conductor/disable-group.js';
+import { enableGroup } from './commands/conductor/enable-group.js';
 import { listGroups } from './commands/conductor/list-groups.js';
 import { groupInfo } from './commands/conductor/group-info.js';
 import os from 'os';
@@ -48,6 +50,15 @@ wDocker
   .argument('<conductor-name>')
   .action(async (conductorId) => {
     await stopConductor(conductorId);
+  });
+
+wDocker
+  .command('restart')
+  .description('restart a conductor')
+  .argument('<conductor-name>')
+  .action(async (conductorId) => {
+    await stopConductor(conductorId);
+    await start(conductorId, false);
   });
 
 wDocker
@@ -124,6 +135,30 @@ wDocker
     );
     const response = await joinGroup(conductorId, inviteLink);
     if (response) console.log('Joined group:\n', response);
+    process.exit(0);
+  });
+
+wDocker
+  .command('disable-group')
+  .description('Disable a Moss group and all the tools installed in it.')
+  .argument('<conductor-name>', 'id (name) of the conductor in which to disable the group')
+  .argument('<dna-hash-base64>', 'dna hash of the group')
+  .action(async (conductorId, dnaHashB64) => {
+    await disableGroup(conductorId, dnaHashB64);
+    console.log(`Group with dna hash ${dnaHashB64} disabled.`);
+    console.log('Conductor needs to be restarted in order for the change to take effect fully.');
+    process.exit(0);
+  });
+
+wDocker
+  .command('enable-group')
+  .description('Enable a Moss group and all the tools installed in it.')
+  .argument('<conductor-name>', 'id (name) of the conductor in which to enable the group')
+  .argument('<dna-hash-base64>', 'dna hash of the group')
+  .action(async (conductorId, dnaHashB64) => {
+    await enableGroup(conductorId, dnaHashB64);
+    console.log(`Group with dna hash ${dnaHashB64} enabled.`);
+    console.log('Conductor needs to be restarted in order for the change to take effect fully.');
     process.exit(0);
   });
 
