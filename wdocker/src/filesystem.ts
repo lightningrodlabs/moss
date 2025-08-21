@@ -62,19 +62,35 @@ export type WDockerConductorConfig = {
    * Default description of this node to be shown in a Moss group
    */
   defaultNodeDescription: string;
+  /**
+   * Rust log levels to use for the holochain process
+   */
+  rustLog?: string;
+  /**
+   * Wasm log levels to use for the holochain process
+   */
+  wasmLog?: string;
 };
 
-const WDockerRootConfigSchema = Type.Object({
-  rootDir: Type.Optional(Type.String()),
-});
+const WDockerRootConfigSchema = Type.Object(
+  {
+    rootDir: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
 type WDockerRootConfig = Static<typeof WDockerRootConfigSchema>;
 
-const WDockerConductorConfigSchema = Type.Object({
-  checkForGroupsAndToolsFrequencySeconds: Type.Number(),
-  defaultProfileName: Type.String(),
-  defaultNodeDescription: Type.String(),
-});
+const WDockerConductorConfigSchema = Type.Object(
+  {
+    checkForGroupsAndToolsFrequencySeconds: Type.Number(),
+    defaultProfileName: Type.String(),
+    defaultNodeDescription: Type.String(),
+    rustLog: Type.Optional(Type.String()),
+    wasmLog: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
 export class WDockerFilesystem {
   versionRootDir: string;
@@ -99,7 +115,11 @@ export class WDockerFilesystem {
     if (fs.existsSync(rootConfigPath)) {
       const configString = fs.readFileSync(rootConfigPath, 'utf-8');
       const rootConfig = JSON.parse(configString);
-      Value.Assert(WDockerRootConfigSchema, rootConfig);
+      try {
+        Value.Assert(WDockerRootConfigSchema, rootConfig);
+      } catch (e) {
+        throw new Error(`The root config file has an invalid format: ${e}`);
+      }
       this.rootConfig = rootConfig;
     } else {
       this.rootConfig = {};
@@ -240,7 +260,14 @@ export class WDockerFilesystem {
       fs.writeFileSync(configPath, JSON.stringify(defaultConfig, undefined, 2), 'utf-8');
       return defaultConfig;
     }
-    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    let parsedConfig: string;
+    try {
+      parsedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      Value.Assert(WDockerConductorConfigSchema, parsedConfig);
+    } catch (e) {
+      throw new Error(`The conductor-level wdocker config file has an invalid format: ${e}`);
+    }
+    return parsedConfig;
   }
 
   setWdockerConductorConfig(config: WDockerConductorConfig): void {
@@ -248,7 +275,13 @@ export class WDockerFilesystem {
       throw Error(
         'conductorId not set. Use WDockerFilesystem.setConductorId() to set the conductorId.',
       );
-    Value.Assert(WDockerConductorConfigSchema, config);
+    try {
+      Value.Assert(WDockerConductorConfigSchema, config);
+    } catch (e) {
+      throw new Error(
+        `The conductor-level wdocker config file to be set has an invalid format: ${e}`,
+      );
+    }
     const configPath = path.join(this.conductorDataDir, '._config.json');
     fs.writeFileSync(configPath, JSON.stringify(config, undefined, 2), 'utf-8');
   }

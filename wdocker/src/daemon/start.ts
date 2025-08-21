@@ -7,6 +7,7 @@ import fs from 'fs';
 import split from 'split';
 import yaml from 'js-yaml';
 import * as childProcess from 'child_process';
+import winston, { createLogger, transports, format } from 'winston';
 import { password as passwordInput } from '@inquirer/prompts';
 
 import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../filesystem.js';
@@ -22,6 +23,8 @@ import { MOSS_CONFIG } from '../const.js';
 import { downloadFile } from '../utils.js';
 import psList from 'ps-list';
 import path from 'path';
+
+const { combine, timestamp } = format;
 
 // 0. check already running
 
@@ -141,8 +144,8 @@ export async function startConductor(
   const bootstrapUrl = PRODUCTION_BOOTSTRAP_URLS[0];
   const signalUrl = PRODUCTION_SIGNALING_URLS[0];
   const iceUrls = DEFAULT_ICE_URLS;
-  const rustLog = undefined;
-  const wasmLog = undefined;
+  const rustLog = wDockerFs.wdockerConductorConfig.rustLog;
+  const wasmLog = wDockerFs.wdockerConductorConfig.wasmLog;
 
   // Generate conductor config with in-process lair
   const configPath = wDockerFs.conductorConfigPath;
@@ -178,6 +181,8 @@ export async function startConductor(
   console.log('Writing conductor-config.yaml...');
   fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
+  const holochainLogger = setupHolochainLogger(wDockerFs);
+
   const conductorHandle = childProcess.spawn(
     wDockerFs.holochainBinaryPath,
     ['-c', configPath, '-p'],
@@ -201,10 +206,7 @@ export async function startConductor(
   conductorHandle.stdin.end();
   conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
     console.log('[HOLOCHAIN]: ', line);
-    // weEmitter.emitHolochainLog({
-    //   version,
-    //   data: line,
-    // });
+    holochainLogger.log('info', line);
   });
   let wrongPassword = false;
   conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
@@ -213,11 +215,8 @@ export async function startConductor(
     }
     if (!wrongPassword) {
       console.log('[HOLOCHAIN]: ERROR: ', line);
+      holochainLogger.log('error', line);
     }
-    // weEmitter.emitHolochainError({
-    //   version,
-    //   data: line,
-    // });
   });
 
   return new Promise((resolve, reject) => {
@@ -299,4 +298,33 @@ export async function fetchHolochainBinary(dstPath: string): Promise<void> {
     MOSS_CONFIG.holochain.sha256[targetEnding],
     true,
   );
+}
+
+function setupHolochainLogger(wDockerFs: WDockerFilesystem, prefix?: string): winston.Logger {
+  // Create a logger to log the holochain logs to a file
+  const logFilePath = path.join(wDockerFs.conductorLogsDir, 'wdocker.log');
+
+  // Use log file rotation with max size of a single file of 50MB and max 5 total files
+  const logFileTransport = new transports.File({
+    filename: logFilePath,
+    maxsize: 50_000_000,
+    maxFiles: 5,
+  });
+
+  const holochainLogger = createLogger({
+    transports: [logFileTransport],
+    format: combine(
+      timestamp(),
+      format.printf(({ level, message, timestamp }) => {
+        return JSON.stringify({
+          timestamp,
+          label: `${prefix ? `${prefix} ` : ''}HOLOCHAIN ${MOSS_CONFIG.holochain.version}`,
+          level,
+          message,
+        });
+      }),
+    ),
+  });
+
+  return holochainLogger;
 }

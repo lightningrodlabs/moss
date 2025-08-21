@@ -60,7 +60,7 @@ export function setupLogs(
   weEmitter.on(MOSS_LOG, (log) => {
     const logLine = `[MOSS] ${log}`;
     console.log(logLine);
-    mossLogger.log('ingo', logLine);
+    mossLogger.log('info', logLine);
   });
   weEmitter.on(MOSS_ERROR, (log) => {
     const logLine = `[MOSS] ${log}`;
