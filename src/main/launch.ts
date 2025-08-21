@@ -23,7 +23,6 @@ export async function launch(
   splashscreenWindow: BrowserWindow | undefined,
   password: string,
   runOptions: RunOptions,
-  customBinary?: string,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   // Initialize lair if necessary
@@ -78,7 +77,7 @@ export async function launch(
     holochainManager = await HolochainManager.launch(
       weEmitter,
       mossFileSystem,
-      customBinary ? customBinary : HOLOCHAIN_BINARIES[holochainVersion],
+      runOptions.customBinary ? runOptions.customBinary : HOLOCHAIN_BINARIES[holochainVersion],
       password,
       holochainVersion,
       mossFileSystem.conductorDir,
