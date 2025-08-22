@@ -6,13 +6,17 @@ import Table from 'cli-table';
 
 import {
   AdminWebsocket,
+  AppInfo,
   AppWebsocket,
   CallZomeRequest,
   CallZomeTransform,
   CellId,
   CellInfo,
   CellType,
+  DnaHashB64,
+  encodeHashToBase64,
   InstalledAppId,
+  ProvisionedCell,
 } from '@holochain/client';
 import { password as passwordInput } from '@inquirer/prompts';
 
@@ -94,6 +98,27 @@ export async function getWeRustHandler(
   const lairUrl = wDockerFs.readLairUrl();
   if (!lairUrl) throw new Error('Failed to read lair connection url');
   return rustUtils.WeRustHandler.connect(lairUrl, password);
+}
+
+/**
+ * Get AppInfo of a group happ
+ *
+ * @param adminWs
+ * @param groupDnaHashB64
+ * @returns
+ */
+export async function getGroupAppInfo(
+  adminWs: AdminWebsocket,
+  groupDnaHashB64: DnaHashB64,
+): Promise<AppInfo | undefined> {
+  const allApps = await adminWs.listApps({});
+  const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
+
+  return groupApps.find(
+    (app) =>
+      encodeHashToBase64((app.cell_info['group'][0].value as ProvisionedCell).cell_id[0]) ===
+      groupDnaHashB64,
+  );
 }
 
 /**
@@ -189,4 +214,26 @@ export function getCellId(cellInfo: CellInfo): CellId | undefined {
     return cellInfo.value.cell_id;
   }
   return undefined;
+}
+
+export function getStatus(app: AppInfo): string {
+  if (isAppRunning(app)) {
+    return 'running';
+  } else if (isAppDisabled(app)) {
+    return 'disabled';
+  } else if (isAppPaused(app)) {
+    return 'paused';
+  } else {
+    return 'unknown status';
+  }
+}
+
+export function isAppRunning(app: AppInfo): boolean {
+  return app.status.type === 'running';
+}
+export function isAppDisabled(app: AppInfo): boolean {
+  return app.status.type === 'disabled';
+}
+export function isAppPaused(app: AppInfo): boolean {
+  return app.status.type === 'paused';
 }

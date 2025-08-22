@@ -823,9 +823,9 @@ export class GroupHome extends LitElement {
           >
             <div
               class="column center-content dialog-title"
-              style="margin: 10px 0 40px 0; position: relative;"
+              style="margin: 10px 0 15px 0; position: relative;"
             >
-              <span>${msg('Invite People')}</span>
+              <span>${msg('Invite People to')}</span>
               <button
                 class="moss-dialog-close-button"
                 style="position: absolute; top: -22px; right: -11px;"
@@ -838,6 +838,14 @@ export class GroupHome extends LitElement {
             </div>
 
             <div class="column items-center">
+              <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
+                <img
+                  .src=${groupProfile.icon_src}
+                  style="height: 40px; width: 40px; margin-right: 16px; border-radius: 50%;"
+                  alt="${groupProfile.name}"
+                />
+                <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
+              </div>
               <div class="column" style="max-width: 440px;">
                 <span style="opacity: 0.6; font-size: 16px;"
                   >${msg('Copy and send the link below to invite people:')}</span

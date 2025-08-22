@@ -1014,16 +1014,16 @@ export class MossStore {
     const allApps = await this.adminWebsocket.listApps({});
     const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
 
-    const appToDisable = groupApps.find(
+    const appToEnable = groupApps.find(
       (app) =>
         encodeHashToBase64((app.cell_info['group'][0].value as ProvisionedCell).cell_id[0]) ===
         encodeHashToBase64(groupDnaHash),
     );
 
-    if (!appToDisable) throw new Error('Group with this DNA hash not found in the conductor.');
+    if (!appToEnable) throw new Error('Group with this DNA hash not found in the conductor.');
 
     await this.adminWebsocket.enableApp({
-      installed_app_id: appToDisable.installed_app_id,
+      installed_app_id: appToEnable.installed_app_id,
     });
 
     await this.disabledGroups.reload();
