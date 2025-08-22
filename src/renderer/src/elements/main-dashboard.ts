@@ -1948,15 +1948,6 @@ export class MainDashboard extends LitElement {
           max-height: calc(100vh - 70px);
         }
 
-        .invisible-scrollbars {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
-        }
-
-        .invisible-scrollbars::-webkit-scrollbar {
-          display: none;
-        }
-
         .close-tab-button {
           font-size: 26px;
           display: flex;

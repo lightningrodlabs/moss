@@ -156,7 +156,8 @@ export class AppletSidebarButton extends LitElement {
       }
 
       .btn:focus-visible {
-        outline: 2px solid var(--moss-purple);
+        border: 2px solid var(--moss-purple);
+        padding: 2px;
       }
 
       .icon {

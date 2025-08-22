@@ -471,7 +471,9 @@ export class GroupAppletsSidebar extends LitElement {
   render() {
     return html`
       <div
-        class="column flex-1 container ${this.collapsed ? 'container-collapsed items-center' : ''}"
+        class="column flex-1 container invisible-scrollbars ${this.collapsed
+          ? 'container-collapsed items-center'
+          : ''}"
         style="margin-top: 2px;"
       >
         <!-- group home button -->
@@ -559,9 +561,9 @@ export class GroupAppletsSidebar extends LitElement {
           !this.collapsed) ||
         !this.amISteward()
           ? html``
-          : html`<sl-tooltip content="${msg('Add a tool')}" placement="bottom">
+          : html`<sl-tooltip hoist content="${msg('Add a tool')}" placement="bottom">
               <button
-                class="purple-btn ${this.collapsed ? 'purple-btn-large' : ''}"
+                class="${this.collapsed ? 'purple-btn-large' : 'purple-btn'}"
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('add-tool-requested', {
@@ -574,19 +576,18 @@ export class GroupAppletsSidebar extends LitElement {
                 <div class="column center-content">${plusIcon()}</div>
               </button>
             </sl-tooltip>`}
-
-        <!-- menu folding toggle -->
-        <sl-tooltip content="${this.collapsed ? msg('Expand the menu') : msg('Fold the menu')}">
-          <button
-            class="menu-fold-toggle"
-            @click=${() => {
-              this._mossStore.setAppletSidebarCollapsed(!this.collapsed);
-            }}
-          >
-            ${this.collapsed ? chevronDoubleRightIcon(18) : chevronDoubleLeftIcon(18)}
-          </button>
-        </sl-tooltip>
       </div>
+      <!-- menu folding toggle -->
+      <sl-tooltip content="${this.collapsed ? msg('Expand the menu') : msg('Fold the menu')}">
+        <button
+          class="menu-fold-toggle"
+          @click=${() => {
+            this._mossStore.setAppletSidebarCollapsed(!this.collapsed);
+          }}
+        >
+          ${this.collapsed ? chevronDoubleRightIcon(18) : chevronDoubleLeftIcon(18)}
+        </button>
+      </sl-tooltip>
     `;
   }
 
@@ -603,6 +604,8 @@ export class GroupAppletsSidebar extends LitElement {
         width: 170px;
         max-width: 170px;
         position: relative;
+        overflow-y: auto;
+        height: calc(100vh - 32px);
       }
 
       .container-collapsed {
@@ -641,7 +644,8 @@ export class GroupAppletsSidebar extends LitElement {
       }
 
       .btn:focus-visible {
-        outline: 2px solid var(--moss-purple);
+        border: 2px solid var(--moss-purple);
+        padding: 2px;
       }
 
       .purple-btn {
@@ -652,11 +656,12 @@ export class GroupAppletsSidebar extends LitElement {
         font-size: 16px;
         cursor: pointer;
         color: var(--moss-purple);
-        height: 30px;
+        min-height: 30px;
       }
 
       .purple-btn:focus-visible {
-        outline: 2px solid var(--moss-purple);
+        border: 2px solid var(--moss-purple);
+        padding: 2px;
       }
 
       .purple-btn:hover {
@@ -664,10 +669,23 @@ export class GroupAppletsSidebar extends LitElement {
       }
 
       .purple-btn-large {
-        height: 38px;
-        width: 38px;
+        margin-top: 4px;
+        all: unset;
+        height: 32px;
+        width: 32px;
+        cursor: pointer;
+        color: var(--moss-purple);
         border-radius: 8px;
-        padding: 0;
+        min-height: 28px;
+        border: 2px solid transparent;
+      }
+
+      .purple-btn-large:focus-visible {
+        border: 2px solid var(--moss-purple);
+      }
+
+      .purple-btn-large:hover {
+        background: #7461eb33;
       }
 
       .icon {
@@ -701,9 +719,14 @@ export class GroupAppletsSidebar extends LitElement {
         all: unset;
         cursor: pointer;
         position: absolute;
-        bottom: 14px;
-        right: 14px;
+        bottom: 5px;
+        right: 18px;
         opacity: 0.6;
+      }
+
+      .menu-fold-toggle:focus-visible {
+        outline: 2px solid var(--moss-purple);
+        border-radius: 4px;
       }
 
       .menu-fold-toggle:hover {

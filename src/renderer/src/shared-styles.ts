@@ -85,6 +85,17 @@ export const mossStyles = [
       font-weight: bold;
     }
 
+    /* Invisible scrollbars */
+
+    .invisible-scrollbars {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .invisible-scrollbars::-webkit-scrollbar {
+      display: none;
+    }
+
     /* Shoelace element styling */
 
     /* moss-button */

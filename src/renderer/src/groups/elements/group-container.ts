@@ -108,6 +108,7 @@ export class GroupContainer extends LitElement {
           </sl-dialog>
           <div class="row flex-1">
             <group-area-sidebar
+              class="flex"
               .selectedAppletHash=${this.selectedAppletHash()}
               @unjoined-tools-clicked=${() => {
                 console.log('unjoined tools clicked');
