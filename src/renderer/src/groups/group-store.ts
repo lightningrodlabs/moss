@@ -109,6 +109,8 @@ export class GroupStore {
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
+  private _ignoredApplets: Writable<AppletId[]> = writable([]);
+
   foyerStore!: FoyerStore;
 
   /**
@@ -171,6 +173,10 @@ export class GroupStore {
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
       return this.agentsProfiles(agents);
     });
+
+    this._ignoredApplets.set(
+      this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
+    );
 
     setTimeout(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
@@ -265,6 +271,20 @@ export class GroupStore {
     this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
 
     this.constructed = true;
+  }
+
+  ignoredApplets(): Readable<AppletId[]> {
+    return derived(this._ignoredApplets, (a) => a);
+  }
+
+  ignoreApplet(appletHash: AppletHash) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
+    ignoredApplets.push(encodeHashToBase64(appletHash));
+    // deduplicate ignored applets
+    ignoredApplets = Array.from(new Set(ignoredApplets));
+    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
+    this._ignoredApplets.set(ignoredApplets);
   }
 
   async assetSignalHandler(signal: SignalPayloadAssets, sendRemote: boolean): Promise<void> {

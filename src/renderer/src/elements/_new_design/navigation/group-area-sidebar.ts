@@ -112,6 +112,12 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore],
   );
 
+  private _ignoredApplets = new StoreSubscriber(
+    this,
+    () => this._groupStore.ignoredApplets(),
+    () => [this._groupStore],
+  );
+
   private _collapsed = new StoreSubscriber(
     this,
     () => this._mossStore.appletSidebarCollapsed,
@@ -417,17 +423,18 @@ export class GroupAppletsSidebar extends LitElement {
 
   numUnjoinedTools(): number | undefined {
     if (this._unjoinedApplets.value.status !== 'complete') return undefined;
-    return this._unjoinedApplets.value.value.size;
+    const unjoinedAppletHashesB64 = Array.from(this._unjoinedApplets.value.value.keys()).map((h) =>
+      encodeHashToBase64(h),
+    );
+
+    return unjoinedAppletHashesB64.filter((hB64) => !this._ignoredApplets.value.includes(hB64))
+      .length;
   }
 
   renderUnjoinedAppletsButton() {
-    if (
-      this._unjoinedApplets.value.status !== 'complete' ||
-      this._unjoinedApplets.value.value.size === 0
-    )
-      return html``;
+    if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
     return html`<sl-tooltip
-      content="${this.numUnjoinedTools()} unjoined Tools"
+      content="${this.numUnjoinedTools()} ${msg('unjoined Tool(s)')}"
       placement="right"
       hoist
     >

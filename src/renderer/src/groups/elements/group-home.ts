@@ -92,18 +92,24 @@ export class GroupHome extends LitElement {
   mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  groupStore!: GroupStore;
+  private _groupStore!: GroupStore;
 
   permissionType = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
-    () => [this.groupStore],
+    () => this._groupStore.permissionType,
+    () => [this._groupStore],
   );
 
   _peersStatus = new StoreSubscriber(
     this,
-    () => this.groupStore.peerStatuses(),
-    () => [this.groupStore],
+    () => this._groupStore.peerStatuses(),
+    () => [this._groupStore],
+  );
+
+  private _ignoredApplets = new StoreSubscriber(
+    this,
+    () => this._groupStore.ignoredApplets(),
+    () => [this._groupStore],
   );
 
   @query('#member-profile')
@@ -137,20 +143,20 @@ export class GroupHome extends LitElement {
 
   _groupDescription = new StoreSubscriber(
     this,
-    () => this.groupStore.groupDescription,
-    () => [this.groupStore],
+    () => this._groupStore.groupDescription,
+    () => [this._groupStore],
   );
 
   _unjoinedApplets = new StoreSubscriber(
     this,
     () =>
-      pipe(this.groupStore.unjoinedApplets, async (appletsAndKeys) =>
+      pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           Array.from(appletsAndKeys.entries()).map(
             async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
               let appletEntry: Applet | undefined;
               try {
-                appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash));
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
@@ -187,7 +193,7 @@ export class GroupHome extends LitElement {
           ),
         ),
       ),
-    () => [this.groupStore, this.mossStore],
+    () => [this._groupStore, this.mossStore],
   );
 
   @state()
@@ -205,28 +211,28 @@ export class GroupHome extends LitElement {
     this,
     () => {
       const store = joinAsync([
-        this.groupStore.groupProfile,
-        this.groupStore.modifiers,
+        this._groupStore.groupProfile,
+        this._groupStore.modifiers,
       ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
       // (window as any).groupProfileStore = store;
       return store;
     },
-    () => [this.groupStore, this.mossStore],
+    () => [this._groupStore, this.mossStore],
   );
 
   async firstUpdated() {
     this._peerStatusInterval = window.setInterval(async () => {
-      await this.groupStore.emitToGroupApplets({
+      await this._groupStore.emitToGroupApplets({
         type: 'peer-status-update',
         payload: this._peersStatus.value ? this._peersStatus.value : {},
       });
     }, 5000);
 
-    // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
+    // const allGroupApplets = await this._groupStore.groupClient.getGroupApplets();
     setTimeout(() => {
       this._peerStatusLoading = false;
     }, 2500);
-    await this.groupStore.groupDescription.reload();
+    await this._groupStore.groupDescription.reload();
   }
 
   disconnectedCallback(): void {
@@ -269,12 +275,12 @@ export class GroupHome extends LitElement {
   async joinNewApplet(appletHash: AppletHash) {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
-      await this.groupStore.installApplet(appletHash);
+      await this._groupStore.installApplet(appletHash);
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
           detail: {
             appletEntryHash: appletHash,
-            groupDnaHash: this.groupStore.groupDnaHash,
+            groupDnaHash: this._groupStore.groupDnaHash,
           },
           composed: true,
           bubbles: true,
@@ -288,16 +294,6 @@ export class GroupHome extends LitElement {
       console.error(e);
     }
     this._joiningNewApplet = undefined;
-  }
-
-  ignoreApplet(appletHash: AppletHash) {
-    const groupDnaHashB64 = encodeHashToBase64(this.groupStore.groupDnaHash);
-    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
-    ignoredApplets.push(encodeHashToBase64(appletHash));
-    // deduplicate ignored applets
-    ignoredApplets = Array.from(new Set(ignoredApplets));
-    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
-    this.requestUpdate();
   }
 
   toggleIgnoredApplets() {
@@ -314,9 +310,7 @@ export class GroupHome extends LitElement {
 
   newAppletsAvailable(): number {
     if (this._unjoinedApplets.value.status === 'complete') {
-      const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
-        encodeHashToBase64(this.groupStore.groupDnaHash),
-      );
+      const ignoredApplets = this._ignoredApplets.value;
       const filteredApplets = this._unjoinedApplets.value.value
         .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
         .map(([appletHash, appletEntry, agentKey, timestamp, joinedMembers]) => ({
@@ -350,7 +344,7 @@ export class GroupHome extends LitElement {
       case 'complete':
         const timeAgo = new TimeAgo('en-US');
         const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
-          encodeHashToBase64(this.groupStore.groupDnaHash),
+          encodeHashToBase64(this._groupStore.groupDnaHash),
         );
         const filteredApplets = this._unjoinedApplets.value.value
           .filter(
@@ -469,7 +463,7 @@ export class GroupHome extends LitElement {
                                   <sl-button
                                     style="margin-left: 5px;"
                                     variant="warning"
-                                    @click=${() => this.ignoreApplet(info.appletHash)}
+                                    @click=${() => this._groupStore.ignoreApplet(info.appletHash)}
                                     >${msg('Ignore')}</sl-button
                                   >
                                 `}
@@ -513,7 +507,7 @@ export class GroupHome extends LitElement {
                   const descriptionInput = this.shadowRoot!.getElementById(
                     'group-description-input',
                   ) as HTMLTextAreaElement;
-                  const myPermission = await toPromise(this.groupStore.permissionType);
+                  const myPermission = await toPromise(this._groupStore.permissionType);
                   if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
                     this._editGroupDescription = false;
                     notifyError('No permission to edit group profile.');
@@ -521,7 +515,7 @@ export class GroupHome extends LitElement {
                   } else {
                     console.log('Saving decription...');
                     console.log('Value: ', descriptionInput.value);
-                    const result = await this.groupStore.groupClient.setGroupDescription(
+                    const result = await this._groupStore.groupClient.setGroupDescription(
                       myPermission.type === 'Steward'
                         ? myPermission.content.permission_hash
                         : undefined,
@@ -530,7 +524,7 @@ export class GroupHome extends LitElement {
 
                     console.log('decription saved: ', result.entry);
 
-                    await this.groupStore.groupDescription.reload();
+                    await this._groupStore.groupDescription.reload();
                     this._editGroupDescription = false;
                   }
                 }}
@@ -574,7 +568,7 @@ export class GroupHome extends LitElement {
                     this._loadingDescription = true;
                     // Reload group description in case another Steward has edited it in the meantime
                     try {
-                      await this.groupStore.groupDescription.reload();
+                      await this._groupStore.groupDescription.reload();
                     } catch (e) {
                       console.warn('Failed to load description: ', e);
                     }
