@@ -76,8 +76,9 @@ export class AppletSidebarButton extends LitElement {
     switch (this.appletLogo.value.status) {
       case 'pending':
         return html`<sl-skeleton
-          style="height: var(--size, ${this.collapsed ? '35px' : '28px'}); width: var(--size, ${this
-            .collapsed
+          style="--color: #9d90f7; height: var(--size, ${this.collapsed
+            ? '35px'
+            : '28px'}); width: var(--size, ${this.collapsed
             ? '35px'
             : '28px'}); --border-radius: 8px"
           effect="pulse"
@@ -90,7 +91,7 @@ export class AppletSidebarButton extends LitElement {
                 .src=${this.appletLogo.value.value}
                 alt=${`${this.appletStore.applet.custom_name} Tool icon`}
               />`
-            : html`<div class="column center-content icon" style="background: gray;">?</div>`}
+            : html`<div class="column center-content icon" style="background: #9d90f7;">?</div>`}
         `;
       case 'error':
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);

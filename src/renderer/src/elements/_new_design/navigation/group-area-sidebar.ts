@@ -267,15 +267,24 @@ export class GroupAppletsSidebar extends LitElement {
     switch (this._groupApplets.value.status) {
       case 'pending':
         return html`<sl-skeleton
-            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
+            style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
+              .collapsed
+              ? '35px'
+              : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
+            style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
+              .collapsed
+              ? '35px'
+              : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
-            style="height: 48px; width: 48px; margin-right: 10px; --border-radius: 20%;"
+            style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
+              .collapsed
+              ? '35px'
+              : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton> `;
       case 'error':
@@ -616,7 +625,7 @@ export class GroupAppletsSidebar extends LitElement {
       .ruler {
         height: 1px;
         background: var(--moss-dark-button);
-        width: 160px;
+        width: 170px;
         opacity: 0.2;
       }
 
