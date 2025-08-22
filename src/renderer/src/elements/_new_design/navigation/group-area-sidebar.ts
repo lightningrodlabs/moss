@@ -523,7 +523,16 @@ export class GroupAppletsSidebar extends LitElement {
 
         <!-- My own Profile -->
         <sl-tooltip content="${this.myProfileNickName()} (me)" placement="right" hoist>
-          <button class="btn">
+          <button
+            class="btn"
+            @click=${() => {
+              this.dispatchEvent(
+                new CustomEvent('my-profile-clicked', {
+                  composed: true,
+                }),
+              );
+            }}
+          >
             <div class="row items-center">
               ${this.renderMyProfileAvatar()}
               ${this.collapsed

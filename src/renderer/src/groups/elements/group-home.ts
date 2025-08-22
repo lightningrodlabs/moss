@@ -676,13 +676,7 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     const invitationUrl = modifiersToInviteUrl(modifiers);
     return html`
-      <sl-dialog
-        class="moss-dialog"
-        no-header
-        id="group-settings-dialog"
-        no-header
-        style="--width: 1024px;"
-      >
+      <sl-dialog class="moss-dialog" id="group-settings-dialog" no-header style="--width: 1024px;">
         <div class="column" style="position: relative">
           <button
             class="moss-dialog-close-button"
@@ -823,7 +817,7 @@ export class GroupHome extends LitElement {
               class="column center-content dialog-title"
               style="margin: 10px 0 15px 0; position: relative;"
             >
-              <span>${msg('Invite People to')}</span>
+              <span>${msg('Invite People')}</span>
               <button
                 class="moss-dialog-close-button"
                 style="position: absolute; top: -22px; right: -11px;"

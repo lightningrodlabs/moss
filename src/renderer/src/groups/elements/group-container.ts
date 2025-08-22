@@ -15,11 +15,15 @@ import './applet-main-views.js';
 import '../../elements/_new_design/navigation/group-area-sidebar.js';
 import './group-home.js';
 import '../../elements/_new_design/profile/moss-profile-prompt.js';
+import '../../elements/_new_design/group-settings/my-profile-settings.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiPowerPlugOff } from '@mdi/js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
 import { GroupHome } from './group-home.js';
+import { closeIcon } from '../../elements/_new_design/icons.js';
+import { SlDialog } from '@shoelace-style/shoelace';
+import { MyProfileSettings } from '../../elements/_new_design/group-settings/my-profile-settings.js';
 
 @localized()
 @customElement('group-container')
@@ -31,12 +35,18 @@ export class GroupContainer extends LitElement {
   private _groupStore: GroupStore | undefined;
 
   @query('#group-home')
-  _groupHome: GroupHome | undefined;
+  private _groupHome: GroupHome | undefined;
+
+  @query('#my-profile-dialog')
+  private _myProfileDialog: SlDialog | undefined;
+
+  @query('#my-profile-settings')
+  private _myProfileSettings: MyProfileSettings | undefined;
 
   @property()
   groupDnaHash!: DnaHash;
 
-  _dashboardState = new StoreSubscriber(
+  private _dashboardState = new StoreSubscriber(
     this,
     () => this._mossStore.dashboardState(),
     () => [this._mossStore],
@@ -77,6 +87,25 @@ export class GroupContainer extends LitElement {
     } else {
       return html`
         <moss-profile-prompt>
+          <sl-dialog class="moss-dialog" id="my-profile-dialog" no-header>
+            <div
+              class="column center-content dialog-title"
+              style="margin: 10px 0 0; position: relative;"
+            >
+              <span>${msg('My Profile')}</span>
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -22px; right: -11px;"
+                @click=${() => {
+                  this._myProfileSettings?.resetProfile();
+                  this._myProfileDialog?.hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+            </div>
+            <my-profile-settings id="my-profile-settings" show-group-profile></my-profile-settings>
+          </sl-dialog>
           <div class="row flex-1">
             <group-area-sidebar
               .selectedAppletHash=${this.selectedAppletHash()}
@@ -91,6 +120,9 @@ export class GroupContainer extends LitElement {
                   );
                   this._groupHome.selectTab('unjoined tools');
                 }
+              }}
+              @my-profile-clicked=${() => {
+                this._myProfileDialog?.show();
               }}
             ></group-area-sidebar>
             <applet-main-views

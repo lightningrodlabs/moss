@@ -55,7 +55,7 @@ export class GroupSettings extends LitElement {
   }
 
   renderMyProfile() {
-    return html` <my-profile-settings></my-profile-settings>`;
+    return html` <my-profile-settings style="margin-top: 40px;"></my-profile-settings>`;
   }
 
   renderDangerZone() {
