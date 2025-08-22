@@ -87,7 +87,14 @@ export class GroupContainer extends LitElement {
     } else {
       return html`
         <moss-profile-prompt>
-          <sl-dialog class="moss-dialog" id="my-profile-dialog" no-header>
+          <sl-dialog
+            class="moss-dialog"
+            id="my-profile-dialog"
+            no-header
+            @sl-hide=${() => {
+              this._myProfileSettings?.resetProfile();
+            }}
+          >
             <div
               class="column center-content dialog-title"
               style="margin: 10px 0 0; position: relative;"
@@ -97,7 +104,6 @@ export class GroupContainer extends LitElement {
                 class="moss-dialog-close-button"
                 style="position: absolute; top: -22px; right: -11px;"
                 @click=${() => {
-                  this._myProfileSettings?.resetProfile();
                   this._myProfileDialog?.hide();
                 }}
               >

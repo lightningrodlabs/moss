@@ -86,6 +86,7 @@ export class MossEditProfile extends LitElement {
       this.avatar = this.profile.fields.avatar;
       this._selectAvatar.value = this.avatar;
     }
+    this.checkDisabled();
   }
 
   firstUpdated() {
