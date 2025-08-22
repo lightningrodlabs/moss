@@ -240,6 +240,10 @@ export class GroupHome extends LitElement {
     if (this._peerStatusInterval) clearInterval(this._peerStatusInterval);
   }
 
+  public selectTab(tab: 'home' | 'unjoined tools'): void {
+    this._selectedTab = tab;
+  }
+
   hasStewardPermission(): boolean {
     return (
       this.permissionType.value.status === 'complete' &&

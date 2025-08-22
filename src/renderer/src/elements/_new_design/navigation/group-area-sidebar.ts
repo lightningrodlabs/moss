@@ -438,7 +438,16 @@ export class GroupAppletsSidebar extends LitElement {
       placement="right"
       hoist
     >
-      <button class="btn">
+      <button
+        class="btn"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('unjoined-tools-clicked', {
+              composed: true,
+            }),
+          );
+        }}
+      >
         ${this.collapsed
           ? html`<div
               class="column center-content"

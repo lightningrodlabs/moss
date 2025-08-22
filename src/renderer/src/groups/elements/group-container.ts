@@ -1,6 +1,6 @@
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, query } from 'lit/decorators.js';
 import { DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -19,6 +19,7 @@ import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiPowerPlugOff } from '@mdi/js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
+import { GroupHome } from './group-home.js';
 
 @localized()
 @customElement('group-container')
@@ -28,6 +29,9 @@ export class GroupContainer extends LitElement {
 
   @consume({ context: groupStoreContext, subscribe: true })
   private _groupStore: GroupStore | undefined;
+
+  @query('#group-home')
+  _groupHome: GroupHome | undefined;
 
   @property()
   groupDnaHash!: DnaHash;
@@ -76,12 +80,25 @@ export class GroupContainer extends LitElement {
           <div class="row flex-1">
             <group-area-sidebar
               .selectedAppletHash=${this.selectedAppletHash()}
+              @unjoined-tools-clicked=${() => {
+                console.log('unjoined tools clicked');
+                if (this._groupHome) {
+                  this.dispatchEvent(
+                    new CustomEvent('group-selected', {
+                      detail: { groupDnaHash: this.groupDnaHash },
+                      composed: true,
+                    }),
+                  );
+                  this._groupHome.selectTab('unjoined tools');
+                }
+              }}
             ></group-area-sidebar>
             <applet-main-views
               class="flex flex-1"
               style="${this.selectedAppletHash() ? '' : 'display: none;'}"
             ></applet-main-views>
             <group-home
+              id="group-home"
               class="group-home"
               style="flex: 1; position: relative; ${this.selectedAppletHash()
                 ? 'display: none;'

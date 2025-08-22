@@ -967,6 +967,9 @@ export class MainDashboard extends LitElement {
                   viewState: { type: 'moss', name: 'welcome' },
                 });
               }}
+              @group-selected=${(e: CustomEvent) => {
+                this.openGroup(e.detail.groupDnaHash);
+              }}
               @disable-group=${async (e: CustomEvent) => {
                 const confirmation = await dialogMessagebox({
                   message:
