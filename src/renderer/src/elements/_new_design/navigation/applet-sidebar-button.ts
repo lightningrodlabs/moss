@@ -29,25 +29,7 @@ export class AppletSidebarButton extends LitElement {
   selected = false;
 
   @property()
-  notificationCount: number | undefined;
-
-  @property()
-  notificationUrgency: 'low' | 'medium' | 'high' | undefined;
-
-  @property()
   appletStore!: AppletStore;
-
-  appletLogo = new StoreSubscriber(
-    this,
-    () => this.mossStore.appletLogo.get(this.appletStore.appletHash),
-    () => [this.appletStore],
-  );
-
-  appletNotificationStatus = new StoreSubscriber(
-    this,
-    () => this.appletStore.unreadNotifications(),
-    () => [this.appletStore],
-  );
 
   @property()
   logoSrc!: string;
@@ -69,6 +51,26 @@ export class AppletSidebarButton extends LitElement {
 
   @property()
   indicated = false;
+
+  appletLogo = new StoreSubscriber(
+    this,
+    () => this.mossStore.appletLogo.get(this.appletStore.appletHash),
+    () => [this.appletStore],
+  );
+
+  appletNotificationStatus = new StoreSubscriber(
+    this,
+    () => this.appletStore.unreadNotifications(),
+    () => [this.appletStore],
+  );
+
+  notificationUrgency(): string | undefined {
+    return this.appletNotificationStatus.value[0];
+  }
+
+  notificationCount(): number | undefined {
+    return this.appletNotificationStatus.value[1];
+  }
 
   renderLogo() {
     switch (this.appletLogo.value.status) {
@@ -116,6 +118,19 @@ export class AppletSidebarButton extends LitElement {
                 </div>`}
           </div>
         </button>
+        ${this.notificationUrgency() === 'low' || !this.notificationUrgency()
+          ? html``
+          : html`
+              <div
+                class="row center-content notification-dot ${this.notificationUrgency() === 'high'
+                  ? 'urgent'
+                  : ''}"
+              >
+                ${this.notificationCount() && this.notificationUrgency() === 'high'
+                  ? this.notificationCount()
+                  : ''}
+              </div>
+            `}
       </div>
     `;
   }
@@ -133,6 +148,7 @@ export class AppletSidebarButton extends LitElement {
         border-radius: 12px;
         margin: 2px 0;
         cursor: pointer;
+        position: relative;
       }
 
       .btn:hover:not(.selected) {
@@ -162,6 +178,26 @@ export class AppletSidebarButton extends LitElement {
 
       .selected {
         background: white;
+      }
+
+      .notification-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        font-weight: bold;
+        background: var(--moss-purple);
+        border-radius: 10px;
+        height: 10px;
+        min-width: 10px;
+      }
+
+      .urgent {
+        height: 16px;
+        min-width: 18px;
+        border-radius: 4px;
+        color: white;
+        font-size: 12px;
+        padding: 0 3px;
       }
     `,
   ];

@@ -136,7 +136,7 @@ export class GroupAppletsSidebar extends LitElement {
     );
   }
 
-  renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
+  renderAppletButtons(applets: ReadonlyMap<EntryHash, AppletStore>) {
     const groupId = encodeHashToBase64(this._groupStore!.groupDnaHash);
 
     let customAppletOrder = this._mossStore.persistedStore.groupAppletOrder.value(groupId);
@@ -262,7 +262,7 @@ export class GroupAppletsSidebar extends LitElement {
     `;
   }
 
-  renderAppletsLoading() {
+  renderAppletButtonsLoading() {
     if (!this._groupStore) return html`group hash undefined.`;
     switch (this._groupApplets.value.status) {
       case 'pending':
@@ -309,7 +309,7 @@ export class GroupAppletsSidebar extends LitElement {
                 <div class="flex- flex-1">+ ${msg('add a tool')}</div>
               </button>
             </div>`
-          : this.renderApplets(this._groupApplets.value.value);
+          : this.renderAppletButtons(this._groupApplets.value.value);
     }
   }
 
@@ -548,7 +548,7 @@ export class GroupAppletsSidebar extends LitElement {
 
         <!-- Tool Buttons -->
         <div class="section-title" style="margin-bottom: 10px;">${msg('Tools')}</div>
-        ${this.renderAppletsLoading()}
+        ${this.renderAppletButtonsLoading()}
 
         <!-- Unjoined Tools Button -->
         ${this.renderUnjoinedAppletsButton()}
