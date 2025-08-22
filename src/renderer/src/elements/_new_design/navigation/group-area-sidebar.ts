@@ -678,8 +678,8 @@ export class GroupAppletsSidebar extends LitElement {
       }
 
       .purple-btn-large {
-        margin-top: 4px;
         all: unset;
+        margin: 2px 0;
         height: 32px;
         width: 32px;
         cursor: pointer;
