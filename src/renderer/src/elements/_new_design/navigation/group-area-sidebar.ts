@@ -157,7 +157,7 @@ export class GroupAppletsSidebar extends LitElement {
     return html`
       <div class="column;" style="position: relative;">
         <div
-          class="row center-content dropzone"
+          class="row center-content dropzone dropzone-top ${this.collapsed ? '' : 'dropzone-wide'}"
           style="position: absolute;"
           @dragenter=${(e: DragEvent) => {
             (e.target as HTMLElement).classList.add('active');
@@ -175,7 +175,7 @@ export class GroupAppletsSidebar extends LitElement {
             this.requestUpdate();
           }}
         >
-          <div class="dropzone-indicator"></div>
+          <div class="dropzone-indicator ${this.collapsed ? '' : 'dropzone-indicator-wide'}"></div>
         </div>
         ${repeat(
           Array.from(applets.entries()).sort(
@@ -186,9 +186,13 @@ export class GroupAppletsSidebar extends LitElement {
           ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
           ([appletHash, appletStore]) => html`
             <div style="position: relative;">
-              <sl-tooltip content="${appletStore.applet.custom_name}" placement="right" hoist>
+              <sl-tooltip
+                content="${appletStore.applet.custom_name}"
+                placement="right"
+                hoist
+                id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
+              >
                 <applet-sidebar-button
-                  id="${`groupAppletIcon#${encodeHashToBase64(appletHash)}`}"
                   .appletStore=${appletStore}
                   .selected=${this.selectedAppletHash &&
                   this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
@@ -212,7 +216,6 @@ export class GroupAppletsSidebar extends LitElement {
                   }}
                   draggable="true"
                   @dragstart=${(e: DragEvent) => {
-                    console.log('DRAGSTART!');
                     (e.target as HTMLElement).classList.add('dragging');
                     this.dragged = encodeHashToBase64(appletHash);
                   }}
@@ -233,7 +236,7 @@ export class GroupAppletsSidebar extends LitElement {
                 </applet-sidebar-button>
               </sl-tooltip>
               <div
-                class="row center-content dropzone right"
+                class="row center-content dropzone ${this.collapsed ? '' : 'dropzone-wide'}"
                 style="position: absolute;"
                 @dragenter=${(e: DragEvent) => {
                   (e.target as HTMLElement).classList.add('active');
@@ -253,7 +256,9 @@ export class GroupAppletsSidebar extends LitElement {
                   this.requestUpdate();
                 }}
               >
-                <div class="dropzone-indicator"></div>
+                <div
+                  class="dropzone-indicator ${this.collapsed ? '' : 'dropzone-indicator-wide'}"
+                ></div>
               </div>
             </div>
           `,
@@ -614,6 +619,7 @@ export class GroupAppletsSidebar extends LitElement {
         max-width: 170px;
         position: relative;
         overflow-y: auto;
+        overflow-x: hidden;
         height: calc(100vh - 32px);
       }
 
@@ -743,22 +749,28 @@ export class GroupAppletsSidebar extends LitElement {
       }
 
       .dropzone {
-        height: 58px;
-        width: 4px;
-        top: 6px;
-        padding: 4px 0;
+        position: absolute;
+        bottom: -10px;
+        height: 20px;
+        width: 42px;
         z-index: 1;
+      }
+
+      .dropzone-top {
+        top: -8px;
+        bottom: unset;
+      }
+
+      .dropzone-wide {
+        width: 170px;
       }
 
       .dropzone-indicator {
         position: absolute;
-        bottom: 54px;
-        left: -8px;
-        width: 0;
-        height: 0;
-        border-right: 10px solid transparent;
-        border-top: 20px solid var(--sl-color-primary-100);
-        border-left: 10px solid transparent;
+        width: 42px;
+        background: var(--moss-purple);
+        height: 4px;
+        border-radius: 2px;
         display: none;
       }
 
@@ -766,9 +778,8 @@ export class GroupAppletsSidebar extends LitElement {
         display: block;
       }
 
-      .right {
-        position: absolute;
-        right: 0;
+      .dropzone-indicator-wide {
+        width: 168px;
       }
     `,
   ];
