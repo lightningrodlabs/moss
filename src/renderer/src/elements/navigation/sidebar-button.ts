@@ -114,11 +114,11 @@ export class SidebarButton extends LitElement {
       } */
         .indicator {
           position: absolute;
-          right: -12px;
-          height: 36px;
+          right: -20px;
+          height: 30px;
           border-radius: 2px;
-          width: 4px;
-          background: var(--moss-main-green);
+          width: 20px;
+          background-image: url(indicator.svg);
         }
 
         .icon-container {
@@ -139,7 +139,7 @@ export class SidebarButton extends LitElement {
 
         .notification-dot {
           position: absolute;
-          top: -8px;
+          top: -4px;
           right: -8px;
           font-weight: bold;
           background: var(--moss-purple);

@@ -184,8 +184,8 @@ export class AppletSidebarButton extends LitElement {
 
       .notification-dot {
         position: absolute;
-        top: -2px;
-        right: -2px;
+        top: -4px;
+        right: 0px;
         font-weight: bold;
         background: var(--moss-purple);
         border-radius: 10px;

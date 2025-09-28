@@ -290,7 +290,7 @@ export class GroupsSidebar extends LitElement {
         ${this.renderGroupsLoading()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
-          <button class="moss-sidebar-button"
+          <button class="add-group-button"
             style="margin-top: 10px;"
             size="large"
             circle

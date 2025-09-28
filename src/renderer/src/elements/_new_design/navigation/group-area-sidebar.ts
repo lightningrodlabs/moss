@@ -720,13 +720,14 @@ export class GroupAppletsSidebar extends LitElement {
 
       .unjoined-tools-indicator {
         position: absolute;
-        top: -6px;
-        right: -6px;
-        height: 16px;
+        top: -3px;
+        right: -4px;
+        height: 14px;
         min-width: 18px;
         background: var(--moss-purple);
         color: white;
-        font-size: 12px;
+        font-size: 11px;
+        font-weight: 600;
         border-radius: 4px;
       }
 

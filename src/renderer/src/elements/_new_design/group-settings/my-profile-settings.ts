@@ -1,9 +1,9 @@
-import { AsyncReadable, AsyncStatus, joinAsync, StoreSubscriber } from '@holochain-open-dev/stores';
+import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { DnaModifiers, EntryHash } from '@holochain/client';
+import { EntryHash } from '@holochain/client';
 import { hashState, notify } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
