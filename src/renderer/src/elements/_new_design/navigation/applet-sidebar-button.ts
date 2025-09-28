@@ -195,7 +195,6 @@ export class AppletSidebarButton extends LitElement {
 
       .urgent {
         height: 16px;
-        min-width: 18px;
         border-radius: 4px;
         color: white;
         font-size: 12px;

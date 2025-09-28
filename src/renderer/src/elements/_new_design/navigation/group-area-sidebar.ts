@@ -430,9 +430,9 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   renderPeersOnline() {
-    if (!this._peerStatuses.value) return html`??<span style="color: #505050;">/??</span>`;
+    if (!this._peerStatuses.value) return html`??<span style="opacity: 0.3;">/??</span>`;
     const totalPeers = Object.keys(this._peerStatuses.value).length;
-    return html`${this.numPeersOnline()}<span style="color: #505050;">/${totalPeers - 1}</span>`; // We don't count ourselves to the totl number of peers
+    return html`${this.numPeersOnline()}<span style="opacity: 0.3;">/${totalPeers - 1}</span>`; // We don't count ourselves to the totl number of peers
   }
 
   numUnjoinedTools(): number | undefined {
@@ -476,7 +476,7 @@ export class GroupAppletsSidebar extends LitElement {
               class="column center-content"
               style="height: 36px; background: var(--moss-light-green); border-radius: 8px; opacity: 0.7; font-size: 13px;"
             >
-              +${this.numUnjoinedTools()} ${msg('more used by peers')}
+              + ${this.numUnjoinedTools()} ${msg('more used by peers')}
             </div>`}
       </button>
     </sl-tooltip>`;

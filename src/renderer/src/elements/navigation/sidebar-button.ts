@@ -146,6 +146,7 @@ export class SidebarButton extends LitElement {
           border-radius: 10px;
           height: 10px;
           min-width: 10px;
+          z-index: 1;
         }
 
         .urgent {

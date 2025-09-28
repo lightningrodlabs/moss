@@ -370,7 +370,7 @@ export class GroupsSidebar extends LitElement {
         all: unset;
         color: var(--moss-purple);
         background: var(--moss-dark-button);
-        border-radius: 10px;
+        border-radius: 8px;
         cursor: pointer;
         height: 48px;
         width: 48px;

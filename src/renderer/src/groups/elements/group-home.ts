@@ -1142,15 +1142,15 @@ export class GroupHome extends LitElement {
       .indicator {
         position: absolute;
         text-align: center;
-        color: black;
+        color: white;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1rem;
         top: 4px;
         right: 4px;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 10px;
-        background: #fcee2d;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: var(--moss-purple);
       }
 
       .padded {

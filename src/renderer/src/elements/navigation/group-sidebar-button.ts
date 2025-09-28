@@ -100,7 +100,11 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
-    // console.log('this._peerStatuses.value: ', this._peerStatuses.value);
+    console.log('this._peerStatuses.value: ', this._peerStatuses.value);
+    const totalAgentCount =
+      this._peerStatuses.value || this._peerStatuses.value === 0
+        ? Object.keys(this._peerStatuses.value).length - 1
+        : undefined;
     const onlineAgentCount =
       this._peerStatuses.value || this._peerStatuses.value === 0
         ? Object.entries(this._peerStatuses.value).filter(
@@ -119,19 +123,14 @@ export class GroupSidebarButton extends LitElement {
           : 'gray'}"
         title="${this._loadingPeerCount
           ? msg('Loading number of online members')
-          : `${onlineAgentCount} ${msg('member(s) online')}`}"
+          : `${onlineAgentCount}/${totalAgentCount} ${msg('member(s) online')}`}"
       >
         ${onlineAgentCount === undefined
           ? html`<sl-spinner
               style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
             ></sl-spinner>`
-          : html`
-              <sl-icon
-                .src=${wrapPathInSvg(mdiAccountMultiple)}
-                style="font-size: 20px; font-weight: bold;"
-              ></sl-icon>
-              <span>${onlineAgentCount}</span>
-            `}
+          : html` <span>${onlineAgentCount}</span
+              ><span class="gray" style="font-weight:400">/${onlineAgentCount}</span>`}
       </div>
     `;
   }
@@ -181,15 +180,16 @@ export class GroupSidebarButton extends LitElement {
       css`
         .online-agents {
           position: absolute;
-          bottom: 6px;
-          right: 0px;
-          border-radius: 10px;
-          padding: 1px 2px;
+          bottom: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          border-radius: 4px;
+          padding: 2px 2px;
           align-items: center;
-          background: var(--sl-color-primary-900);
-          min-width: 34px;
-          height: 22px;
-          pointer-events: none;
+          background: var(--moss-dark-button);
+          height: 14px;
+          font-weight: 600;
+          font-size: 12px;
         }
 
         .green {
