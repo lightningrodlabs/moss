@@ -377,7 +377,7 @@ export class GroupAppletsSidebar extends LitElement {
           style="height: var(--size, ${this.collapsed ? '35px' : '32px'}); width: var(--size, ${this
             .collapsed
             ? '35px'
-            : '32px'}); --border-radius: 8px"
+            : '32px'}); --border-radius: 50%"
           effect="pulse"
         ></sl-skeleton> `;
       case 'complete':
@@ -706,7 +706,7 @@ export class GroupAppletsSidebar extends LitElement {
       .icon {
         height: 32px;
         width: 32px;
-        border-radius: 8px;
+        border-radius: var(--border-radius, 50%);
       }
 
       .icon-large {
