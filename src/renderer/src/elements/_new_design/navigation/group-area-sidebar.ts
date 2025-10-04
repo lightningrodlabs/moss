@@ -8,7 +8,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { DnaHashB64, DnaModifiers, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -28,8 +28,11 @@ import { AppletStore } from '../../../applets/applet-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { PersistedStore } from '../../../persisted-store.js';
 
+import '../../../groups/elements/group-peers-status.js';
 import './applet-sidebar-button.js';
 import {
+  chevronSingleUpIcon,
+  chevronSingleDownIcon,
   chevronDoubleLeftIcon,
   chevronDoubleRightIcon,
   circleHalfIcon,
@@ -38,6 +41,8 @@ import {
 } from '../icons.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
+import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
+import { SlDialog } from '@shoelace-style/shoelace';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -61,6 +66,37 @@ export class GroupAppletsSidebar extends LitElement {
 
   @state()
   dragged: AppletId | null = null;
+
+  @state()
+  _peerStatusLoading = true;
+
+  _peerStatusInterval: number | null | undefined;
+
+  _peersStatus = new StoreSubscriber(
+    this,
+    () => this._groupStore.peerStatuses(),
+    () => [this._groupStore],
+  );
+  async firstUpdated() {
+    this._peerStatusInterval = window.setInterval(async () => {
+      await this._groupStore.emitToGroupApplets({
+        type: 'peer-status-update',
+        payload: this._peersStatus.value ? this._peersStatus.value : {},
+      });
+    }, 5000);
+
+    // const allGroupApplets = await this._groupStore.groupClient.getGroupApplets();
+    setTimeout(() => {
+      this._peerStatusLoading = false;
+    }, 2500);
+    await this._groupStore.groupDescription.reload();
+  }
+
+  @state()
+  _selectedAgent: AgentAndTzOffset | undefined;
+
+  @query('#member-profile')
+  _memberProfileDialog!: SlDialog;
 
   private _permissionType = new StoreSubscriber(
     this,
@@ -128,6 +164,9 @@ export class GroupAppletsSidebar extends LitElement {
   get collapsed(): boolean | null {
     return this._collapsed.value;
   }
+
+  @state()
+  onlinePeersCollapsed: boolean = false;
 
   amISteward(): boolean {
     return (
@@ -514,6 +553,52 @@ export class GroupAppletsSidebar extends LitElement {
           </button>
         </sl-tooltip>
 
+        ${!this.onlinePeersCollapsed
+          ? ''
+          : html`
+              <div class="column online-list">
+                <div class="row">
+                  <span>${msg('Online')}</span>
+                  <button
+                    class="btn"
+                    @click=${() => (this.onlinePeersCollapsed = !this.onlinePeersCollapsed)}
+                    style="margin-left: auto"
+                  >
+                    ${chevronSingleUpIcon(18)}
+                  </button>
+                </div>
+                <group-peers-status
+                  style="${this._peerStatusLoading ? 'display: none;' : ''}"
+                  @profile-selected=${(e) => {
+                    this._selectedAgent = e.detail;
+                    this._memberProfileDialog.show();
+                  }}
+                ></group-peers-status>
+                <!-- My own Profile -->
+                <sl-tooltip content="${this.myProfileNickName()} (me)" placement="right" hoist>
+                  <button
+                    class="btn"
+                    @click=${() => {
+                      this.dispatchEvent(
+                        new CustomEvent('my-profile-clicked', {
+                          composed: true,
+                        }),
+                      );
+                    }}
+                  >
+                    <div class="row items-center">
+                      ${this.renderMyProfileAvatar()}
+                      ${this.collapsed
+                        ? html``
+                        : html`<div style="margin-left: 5px;">
+                            ${this.myProfileNickName()} ${msg('(me)')}
+                          </div>`}
+                    </div>
+                  </button>
+                </sl-tooltip>
+              </div>
+            `}
+
         <!-- Online Peers indicator -->
         <sl-tooltip
           content="${msg('Your Peers')}${this._peerStatuses.value
@@ -522,41 +607,26 @@ export class GroupAppletsSidebar extends LitElement {
           placement="right"
           hoist
         >
-          <button class="btn">
+          <button
+            class="btn"
+            @click=${() => (this.onlinePeersCollapsed = !this.onlinePeersCollapsed)}
+          >
             ${this.collapsed
               ? html`<div class="column center-content" style="width: 35px;">
                   <div>${circleHalfIcon(12)}</div>
                   <div style="font-size: 16px;">${this.renderPeersOnline()}</div>
                 </div>`
-              : html`<div class="column center-content" m style="height: 35px;">
+              : html`<div class="column" style="height: 35px;">
                   <div class="row items-center">
                     <div style="margin-right: 10px;">${circleHalfIcon(12)}</div>
                     ${this.renderPeersOnline()}&nbsp;${msg('online')}
+                    <div style="margin-left: auto">
+                      ${this.onlinePeersCollapsed
+                        ? html`${chevronSingleUpIcon(18)}`
+                        : html`${chevronSingleDownIcon(18)}`}
+                    </div>
                   </div>
                 </div>`}
-          </button>
-        </sl-tooltip>
-
-        <!-- My own Profile -->
-        <sl-tooltip content="${this.myProfileNickName()} (me)" placement="right" hoist>
-          <button
-            class="btn"
-            @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent('my-profile-clicked', {
-                  composed: true,
-                }),
-              );
-            }}
-          >
-            <div class="row items-center">
-              ${this.renderMyProfileAvatar()}
-              ${this.collapsed
-                ? html``
-                : html`<div style="margin-left: 5px;">
-                    ${this.myProfileNickName()} ${msg('(me)')}
-                  </div>`}
-            </div>
           </button>
         </sl-tooltip>
 
@@ -716,6 +786,17 @@ export class GroupAppletsSidebar extends LitElement {
 
       .selected {
         background: white;
+      }
+
+      .online-list {
+        padding: 4px;
+        position: absolute;
+        top: 52px;
+        left: 2px;
+        width: 158px;
+        background-color: white;
+        border-radius: var(--border-radius, 8px);
+        z-index: 10;
       }
 
       .unjoined-tools-indicator {

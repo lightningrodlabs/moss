@@ -9,8 +9,7 @@ import { GroupStore } from '../../groups/group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import './sidebar-button.js';
-import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountMultiple } from '@mdi/js';
+import { sharedStyles } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 import { encodeHashToBase64 } from '@holochain/client';
 
