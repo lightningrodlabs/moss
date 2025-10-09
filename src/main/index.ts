@@ -124,19 +124,28 @@ const hashWebhapp = new Command();
 hashWebhapp
   .name('hash-webhapp')
   .description('Compute the sha256 hashes of the webhapp and its contents')
+  .argument('<versionNumber>')
   .argument('<pathOrUrl>')
-  .action(async (pathOrUrl) => {
+  .action(async (versionNumber, pathOrUrl) => {
+    let hashes: string[];
     if (pathOrUrl.startsWith('https://')) {
       const webhapp = await fetch(pathOrUrl);
-      const appHashes = await rustUtils.validateHappOrWebhapp(
+      hashes = await rustUtils.validateHappOrWebhapp(
         Array.from(new Uint8Array(await webhapp.arrayBuffer())),
       );
-      console.log(JSON.stringify(appHashes, undefined, 4));
     } else {
       const webhapp = fs.readFileSync(pathOrUrl);
-      const appHashes = await rustUtils.validateHappOrWebhapp(Array.from(webhapp));
-      console.log(JSON.stringify(appHashes, undefined, 4));
+      hashes = await rustUtils.validateHappOrWebhapp(Array.from(webhapp));
     }
+    const version = {
+      version: versionNumber,
+      url: pathOrUrl,
+      hashes,
+      changelog: "FIXME",
+      releasedAt: Date.now(),
+    }
+    console.log(JSON.stringify(version, undefined, 4));
+
     app.quit();
   });
 

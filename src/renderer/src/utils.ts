@@ -51,7 +51,7 @@ import {
   toLowerCaseB64,
   toOriginalCaseB64,
 } from '@theweave/utils';
-import { DeveloperCollecive, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollective, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -926,9 +926,9 @@ export async function postMessageToIframe<T>(
  */
 export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
   tools: ToolAndCurationInfo[];
-  devCollective: DeveloperCollecive;
+  devCollective: DeveloperCollective;
 } {
-  const devModeDeveloperCollective: DeveloperCollecive = {
+  const devModeDeveloperCollective: DeveloperCollective = {
     id: '###DEVCONFIG###',
     name: 'This Tool is listed in the dev config file.',
     description: 'Moss dev mode test dev collective',
