@@ -233,7 +233,7 @@ export type ToolCurator = {
     email?: string;
   };
   /**
-   * String in a format that can be used in an src atribute of an html <img/> tag
+   * String in a format that can be used in a src attribute of a html <img/> tag
    */
   icon: string;
 };
@@ -286,11 +286,11 @@ export type CuratedTool = {
 };
 
 export type DeveloperCollectiveToolList = {
-  developerCollective: DeveloperCollecive;
+  developerCollective: DeveloperCollective;
   tools: Array<ToolInfoAndVersions>;
 };
 
-export type DeveloperCollecive = {
+export type DeveloperCollective = {
   /**
    * ID of the developer collective. No whitespaces.
    *

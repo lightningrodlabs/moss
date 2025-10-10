@@ -3,7 +3,7 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
 import {
-  DeveloperCollecive,
+  DeveloperCollective,
   DeveloperCollectiveToolList,
   ToolCompatibilityId,
   ToolCurationConfig,
@@ -88,7 +88,7 @@ export class ToolLibraryWeb2 extends LitElement {
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
   @state()
-  allDeveloperCollectives: Record<ToolListUrl, DeveloperCollecive> = {};
+  allDeveloperCollectives: Record<ToolListUrl, DeveloperCollective> = {};
 
   @state()
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
@@ -100,7 +100,7 @@ export class ToolLibraryWeb2 extends LitElement {
     // TODO Option to add additional curator URLs and store them to localstorage
 
     const allTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
-    const developerCollectives: Record<ToolListUrl, DeveloperCollecive> = {};
+    const developerCollectives: Record<ToolListUrl, DeveloperCollective> = {};
 
     let toolCurationConfigs: ToolCurationConfig[];
     // In applet dev mode, we use a fake list generated from the weave.dev.config
@@ -304,7 +304,7 @@ export class ToolLibraryWeb2 extends LitElement {
     `;
   }
 
-  renderPublisher(publisher: DeveloperCollecive | undefined) {
+  renderPublisher(publisher: DeveloperCollective | undefined) {
     if (!publisher) return html``;
 
     return html`
