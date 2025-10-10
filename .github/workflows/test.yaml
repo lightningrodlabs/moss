@@ -1,0 +1,113 @@
+name: test-workflow
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-moss:
+    strategy:
+      fail-fast: true
+      matrix:
+        # platform: [windows-2022]
+        # platform: [ubuntu-22.04]
+        platform: [windows-2022, macos-13, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+        # platform: [ubuntu-22.04-arm]
+        # platform: [windows-2022, ubuntu-22.04]
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.13
+
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 20
+
+      - name: Retrieve version
+        run: |
+          echo "Retrieved App version: $(node -p -e "require('./package.json').version")"
+          echo "APP_VERSION=$(node -p -e "require('./package.json').version")" >> $GITHUB_OUTPUT
+        id: version
+        shell: bash
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.83.0
+
+      - name: Install Go stable
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Setup environment
+        run: |
+          mkdir resources/default-apps
+          mkdir resources/bins
+          yarn setup
+
+      - name: Build zomes
+        run: |
+          rustup target add wasm32-unknown-unknown
+          yarn build:zomes
+
+      - name: build the app (macOS arm64)
+        if: matrix.platform == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*
+        run: |
+          yarn build:mac-arm64
+          ls dist
+
+      - name: build the app (macOS x86)
+        if: matrix.platform == 'macos-13'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*
+        run: |
+          yarn build:mac-x64
+          ls dist
+
+      - name: build and upload the app (Ubuntu 22.04)
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn build:linux
+          ls dist
+
+      - name: build and app (Ubuntu 22.04 aarch64)
+        if: matrix.platform == 'ubuntu-22.04-arm'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # use fpm for correct architecture (see https://github.com/electron-userland/electron-builder/issues/6116)
+          sudo apt-get install ruby-dev build-essential
+          sudo gem install fpm
+          export USE_SYSTEM_FPM=true
+
+          yarn build:linux
+          ls dist
+
+      - name: build,the app (Windows)
+        shell: bash
+        if: matrix.platform == 'windows-2022'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Retry 5 times on Windows due to weird flaky issue
+          yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
+          ls dist
