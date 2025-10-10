@@ -8,7 +8,7 @@ on:
 jobs:
   build-moss:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         # platform: [windows-2022]
         # platform: [ubuntu-22.04]
