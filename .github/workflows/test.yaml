@@ -24,6 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Setup for macOS code signing
+        if: matrix.platform == 'macos-13' || matrix.platform == 'macos-latest'
+        uses: matthme/import-codesign-certs@5565bb656f60c98c8fc515f3444dd8db73545dc2
+        with:
+          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
+          
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
