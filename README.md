@@ -72,6 +72,10 @@ yarn build:mac
 yarn build:linux
 ```
 
+### Release
+
+To release Moss or update it to use a new version of holochain, follow the [Release And Update Guide](./moss-docs/RELEASE.md).
+
 ## License
 
 [![License: CAL 1.0](https://img.shields.io/badge/License-CAL%201.0-blue.svg)](https://github.com/holochain/cryptographic-autonomy-license)
