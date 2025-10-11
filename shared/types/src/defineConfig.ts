@@ -64,6 +64,10 @@ export interface AppletConfig {
    */
   icon: ResourceLocation;
   /**
+   * Tags that may be used in Tool libraries
+   */
+  tags?: string[];
+  /**
    * Where to get the .happ/.webhapp file from to install in devmode
    */
   source: WebHappLocation;

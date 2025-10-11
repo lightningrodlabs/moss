@@ -22,7 +22,6 @@ import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiGraph, mdiHome } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
-import { appStoreIcon } from '../../icons/icons.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -179,31 +178,6 @@ export class PersonalViewSidebar extends LitElement {
               style="font-size: 40px; margin-top: -3px"
             ></sl-icon>
           </div>
-        </button>
-      </sl-tooltip>
-
-      <sl-tooltip .content="${msg('Tool Library')}" placement="bottom" hoist>
-        <button
-          class="moss-item-button ${this.selectedView &&
-          this.selectedView.type === 'moss' &&
-          this.selectedView.name === 'tool-library'
-            ? 'selected'
-            : ''}"
-          style="position: relative; margin-right: 8px;"
-          @click=${() => {
-            this.dispatchEvent(
-              new CustomEvent('personal-view-selected', {
-                detail: {
-                  type: 'moss',
-                  name: 'tool-library',
-                },
-                bubbles: false,
-                composed: true,
-              }),
-            );
-          }}
-        >
-          <div class="column center-content">${appStoreIcon(30)}</div>
         </button>
       </sl-tooltip>
     `;

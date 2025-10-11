@@ -989,7 +989,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         title: toolConfig.name,
         subtitle: toolConfig.subtitle,
         description: toolConfig.description,
-        tags: [],
+        tags: toolConfig.tags ? toolConfig.tags : [],
         versionBranch: '###DEVCONFIG###',
         icon:
           toolConfig.icon.type === 'filesystem'

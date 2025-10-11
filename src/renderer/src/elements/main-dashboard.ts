@@ -76,6 +76,7 @@ import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
 import {
+  appStoreIcon,
   chevronDoubleLeftIcon,
   chevronDoubleRightIcon,
   closeIcon,
@@ -1305,7 +1306,13 @@ export class MainDashboard extends LitElement {
       </sl-dialog>
     `;
   }
-
+  isLibrarySelected(): boolean {
+    return (
+      this._dashboardState.value.viewType === 'personal' &&
+      this._dashboardState.value.viewState.type === 'moss' &&
+      this._dashboardState.value.viewState.name === 'tool-library'
+    );
+  }
   render() {
     return html`
       <img
@@ -1415,6 +1422,14 @@ export class MainDashboard extends LitElement {
           : 'personal-view'}"
       >
         <div
+          class="library-viewer invisible-scrollbars column ${this._dashboardState.value
+            .viewType === 'personal' &&
+          this._dashboardState.value.viewState.type == 'moss' &&
+          this._dashboardState.value.viewState.name === 'tool-library'
+            ? 'top-80'
+            : 'personal-view'}"
+        ></div>
+        <div
           class="row"
           style="flex: 1; ${this._assetViewerState.value.visible &&
           this._dashboardState.value.viewType === 'personal'
@@ -1497,7 +1512,7 @@ export class MainDashboard extends LitElement {
         }}
         class="column left-sidebar items-center"
       >
-        <div class="column">
+        <div class="column items-center sidebar-items">
           <button
             class="home-button ${this._dashboardState.value.viewType === 'personal'
               ? 'selected'
@@ -1542,6 +1557,24 @@ export class MainDashboard extends LitElement {
           >
             <div class="column center-content">${magnifyingGlassIcon(20)}</div>
           </button>
+          <sl-tooltip .content="${msg('Tool Library')}" placement="right" hoist>
+            <button
+              class="moss-sidebar-button ${this.isLibrarySelected() ? 'library-selected' : ''}"
+              style="position: relative;"
+              @click=${() => {
+                this._mossStore.setDashboardState({
+                  viewType: 'personal',
+                  viewState: {
+                    type: 'moss',
+                    name: 'tool-library',
+                  },
+                });
+              }}
+            >
+              <div class="column center-content">${appStoreIcon(30)}</div>
+            </button>
+          </sl-tooltip>
+          ${this.isLibrarySelected() ? html`<div class="indicator"></div>` : ''}
         </div>
 
         <div class="sidebar-divider" style="margin-top: 14px;"></div>
@@ -1846,7 +1879,6 @@ export class MainDashboard extends LitElement {
 
         .home-button:hover {
           background: var(--moss-dark-button);
-          color: black;
         }
 
         .home-button:focus-visible {
@@ -1854,8 +1886,32 @@ export class MainDashboard extends LitElement {
         }
 
         .selected {
-          background: var(--moss-dark-button);
           color: black;
+          background: var(--moss-dark-button);
+        }
+
+        .library-selected {
+          border: solid 4px var(--moss-main-green);
+          color: black;
+          background: var(--moss-main-green);
+        }
+
+        .library-selected:hover {
+          color: black;
+          background: var(--moss-main-green);
+        }
+
+        .indicator {
+          position: absolute;
+          right: -4px;
+          top: 142px;
+          height: 30px;
+          border-radius: 2px;
+          width: 20px;
+          background-image: url(indicator.svg);
+        }
+        .moss-sidebar-items {
+          position: relative;
         }
 
         .sidebar-divider {
@@ -1924,8 +1980,27 @@ export class MainDashboard extends LitElement {
           overflow: hidden;
         }
 
+        .library-viewer {
+          /* display: flex; */
+          flex: 1;
+          position: fixed;
+          top: 180px;
+          left: 80px;
+          bottom: 8px;
+          right: 8px;
+          /* background-color: #224b21; */
+          background-color: var(--moss-main-green);
+          border-radius: 0 0 10px 10px;
+          overflow-x: auto;
+        }
+
         .top-8 {
           top: 8px;
+          border-radius: 10px;
+        }
+
+        .top-80 {
+          top: 80px;
           border-radius: 10px;
         }
 
