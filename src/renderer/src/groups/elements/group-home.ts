@@ -66,14 +66,13 @@ import {
   UTCOffsetStringFromOffsetMinutes,
   localTimeFromUtcOffset,
   markdownParseSafe,
-  modifiersToInviteUrl,
   relativeTzOffsetString,
 } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
-import { closeIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
+import { closeIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -117,9 +116,6 @@ export class GroupHome extends LitElement {
 
   @query('#group-settings-dialog')
   groupSettingsDialog: SlDialog | undefined;
-
-  @query('#invite-member-dialog')
-  inviteMemberDialog: SlDialog | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -221,17 +217,6 @@ export class GroupHome extends LitElement {
   );
 
   async firstUpdated() {
-    this._peerStatusInterval = window.setInterval(async () => {
-      await this._groupStore.emitToGroupApplets({
-        type: 'peer-status-update',
-        payload: this._peersStatus.value ? this._peersStatus.value : {},
-      });
-    }, 5000);
-
-    // const allGroupApplets = await this._groupStore.groupClient.getGroupApplets();
-    setTimeout(() => {
-      this._peerStatusLoading = false;
-    }, 2500);
     await this._groupStore.groupDescription.reload();
   }
 
@@ -673,8 +658,7 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
-    const invitationUrl = modifiersToInviteUrl(modifiers);
+  renderMain(groupProfile: GroupProfile) {
     return html`
       <sl-dialog class="moss-dialog" id="group-settings-dialog" no-header style="--width: 1024px;">
         <div class="column" style="position: relative">
@@ -783,116 +767,6 @@ export class GroupHome extends LitElement {
           </div>
           <div class="column main-panel">${this.renderMainPanelContent()}</div>
         </div>
-
-        <div class="column online-status-bar">
-          <div class="flex-scrollable-parent">
-            <div class="flex-scrollable-container">
-              <div class="flex-scrollable-y">
-                ${this._peerStatusLoading
-                  ? html`<div
-                      class="column center-content"
-                      style="margin-top: 20px; font-size: 20px;"
-                    >
-                      <sl-spinner></sl-spinner>
-                    </div>`
-                  : html``}
-                <group-peers-status
-                  style="${this._peerStatusLoading ? 'display: none;' : ''}"
-                  @profile-selected=${(e) => {
-                    this._selectedAgent = e.detail;
-                    this._memberProfileDialog.show();
-                  }}
-                ></group-peers-status>
-              </div>
-            </div>
-          </div>
-
-          <sl-dialog
-            id="invite-member-dialog"
-            class="moss-dialog invite-dialog"
-            .label=${msg('Invite People')}
-            no-header
-          >
-            <div
-              class="column center-content dialog-title"
-              style="margin: 10px 0 15px 0; position: relative;"
-            >
-              <span>${msg('Invite People')}</span>
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -22px; right: -11px;"
-                @click=${() => {
-                  this.inviteMemberDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-            </div>
-
-            <div class="column items-center">
-              <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
-                <img
-                  .src=${groupProfile.icon_src}
-                  style="height: 40px; width: 40px; margin-right: 16px; border-radius: 50%;"
-                  alt="${groupProfile.name}"
-                />
-                <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
-              </div>
-              <div class="column" style="max-width: 440px;">
-                <span style="opacity: 0.6; font-size: 16px;"
-                  >${msg('Copy and send the link below to invite people:')}</span
-                >
-                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
-                  <sl-input
-                    disabled
-                    value=${invitationUrl}
-                    class="moss-input copy-link-input"
-                    style="margin-right: 8px; cursor: pointer; flex: 1;"
-                    @click=${async () => {
-                      console.log('CLIKED');
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
-                  >
-                  </sl-input>
-                  <button
-                    variant="primary"
-                    class="moss-button"
-                    @click=${async () => {
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
-                  >
-                    ${msg('Copy')}
-                  </button>
-                </div>
-
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
-                  ${msg('About invite links:')}
-                </div>
-                <div style="font-size: 12px; opacity: 0.6;">
-                  ${msg(
-                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
-                  )}
-                </div>
-              </div>
-            </div>
-          </sl-dialog>
-
-          <button
-            class="moss-button"
-            style="padding: 10px 0;"
-            variant="primary"
-            @click=${() => {
-              this.inviteMemberDialog?.show();
-            }}
-          >
-            <div class="row center-content items-center;">
-              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
-              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite Member')}</div>
-            </div>
-          </button>
-        </div>
       </div>
     `;
   }
@@ -926,10 +800,10 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderContentInner(groupProfile: GroupProfile, modifiers: DnaModifiers) {
+  renderContentInner(groupProfile: GroupProfile, _: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
-        return this.renderMain(groupProfile, modifiers);
+        return this.renderMain(groupProfile);
       case 'create-custom-view':
         return this.renderCreateCustomView();
       case 'edit-custom-view':
@@ -1128,15 +1002,6 @@ export class GroupHome extends LitElement {
         color: black;
         padding-left: 5px;
         background: #d4dfcf;
-      }
-
-      .online-status-bar {
-        color: black;
-        width: 230px;
-        padding: 16px;
-        background: var(--moss-fishy-green);
-        border-radius: 5px;
-        box-shadow: 1px 1px 6px 0px var(moss-fishy-green);
       }
 
       .indicator {

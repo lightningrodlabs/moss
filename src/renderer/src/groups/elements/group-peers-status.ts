@@ -102,7 +102,7 @@ export class GroupPeersStatus extends LitElement {
 
     return html`
       <div class="column agents-list">
-        <div style="margin-bottom: 5px;">${msg('Online')}</div>
+        <div class="status-text">${msg('Online')}</div>
         <div class="column">
           <div
             class="row profile"
@@ -191,7 +191,7 @@ export class GroupPeersStatus extends LitElement {
           })}
         </div>
         ${offlineAgents.length > 0
-          ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Offline')}</div>
+          ? html` <div style="margin-top:24px;" class="status-text">${msg('Offline')}</div>
               <div class="column">
                 ${offlineAgents.map(
                   (agentInfo) => html`
@@ -307,11 +307,11 @@ export class GroupPeersStatus extends LitElement {
       }
 
       .profile {
-        border-radius: 5px;
+        border-radius: 8px;
       }
 
       .profile:hover {
-        background: #ffffff1f;
+        background: #eff7ea;
         cursor: pointer;
       }
 
@@ -338,6 +338,16 @@ export class GroupPeersStatus extends LitElement {
         width: 9px;
         border-radius: 50%;
         background: var(--moss-fishy-green);
+      }
+
+      .status-text {
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 8px;
+        opacity: 0.6;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
       }
     `,
   ];

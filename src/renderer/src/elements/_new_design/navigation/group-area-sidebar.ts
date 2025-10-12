@@ -38,11 +38,20 @@ import {
   circleHalfIcon,
   downloadIcon,
   plusIcon,
+  closeIcon,
+  personPlusIcon,
 } from '../icons.js';
-import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
+import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
 import { SlDialog } from '@shoelace-style/shoelace';
+import {
+  localTimeFromUtcOffset,
+  modifiersToInviteUrl,
+  relativeTzOffsetString,
+  UTCOffsetStringFromOffsetMinutes,
+} from '../../../utils.js';
+import { notify } from '@holochain-open-dev/elements/dist/notify.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -54,10 +63,6 @@ export class GroupAppletsSidebar extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   private _groupStore!: GroupStore;
 
-  @consume({ context: profilesStoreContext, subscribe: true })
-  @property()
-  profileStore!: ProfilesStore;
-
   @property()
   selectedAppletHash?: AppletHash;
 
@@ -66,9 +71,6 @@ export class GroupAppletsSidebar extends LitElement {
 
   @state()
   dragged: AppletId | null = null;
-
-  @state()
-  _peerStatusLoading = true;
 
   _peerStatusInterval: number | null | undefined;
 
@@ -86,17 +88,30 @@ export class GroupAppletsSidebar extends LitElement {
     }, 5000);
 
     // const allGroupApplets = await this._groupStore.groupClient.getGroupApplets();
-    setTimeout(() => {
-      this._peerStatusLoading = false;
-    }, 2500);
     await this._groupStore.groupDescription.reload();
   }
 
   @state()
   _selectedAgent: AgentAndTzOffset | undefined;
 
+  groupProfile = new StoreSubscriber(
+    this,
+    () => {
+      const store = joinAsync([
+        this._groupStore.groupProfile,
+        this._groupStore.modifiers,
+      ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
+      // (window as any).groupProfileStore = store;
+      return store;
+    },
+    () => [this._groupStore, this._mossStore],
+  );
+
   @query('#member-profile')
   _memberProfileDialog!: SlDialog;
+
+  @query('#invite-member-dialog')
+  inviteMemberDialog: SlDialog | undefined;
 
   private _permissionType = new StoreSubscriber(
     this,
@@ -484,6 +499,109 @@ export class GroupAppletsSidebar extends LitElement {
       .length;
   }
 
+  renderInviteSection() {
+    switch (this._groupProfile.value.status) {
+      case 'pending':
+        return msg('Loading...');
+      case 'complete':
+        const [groupProfile, modifiers] = this._groupProfile.value.value;
+        if (!groupProfile) {
+          return `Profile not found...`;
+        }
+        const invitationUrl = modifiersToInviteUrl(modifiers);
+
+        return html`
+          <sl-dialog
+            id="invite-member-dialog"
+            class="moss-dialog invite-dialog"
+            .label=${msg('Invite People')}
+            no-header
+          >
+            <div
+              class="column center-content dialog-title"
+              style="margin: 10px 0 15px 0; position: relative;"
+            >
+              <span>${msg('Invite People')}</span>
+              <button
+                class="moss-dialog-close-button"
+                style="position: absolute; top: -22px; right: -11px;"
+                @click=${() => {
+                  this.inviteMemberDialog?.hide();
+                }}
+              >
+                ${closeIcon(24)}
+              </button>
+            </div>
+
+            <div class="column items-center">
+              <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
+                <img
+                  .src=${groupProfile.icon_src}
+                  style="height: 40px; width: 40px; margin-right: 16px; border-radius: 50%;"
+                  alt="${groupProfile.name}"
+                />
+                <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
+              </div>
+              <div class="column" style="max-width: 440px;">
+                <span style="opacity: 0.6; font-size: 16px;"
+                  >${msg('Copy and send the link below to invite people:')}</span
+                >
+                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+                  <sl-input
+                    disabled
+                    value=${invitationUrl}
+                    class="moss-input copy-link-input"
+                    style="margin-right: 8px; cursor: pointer; flex: 1;"
+                    @click=${async () => {
+                      console.log('CLIKED');
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                  </sl-input>
+                  <button
+                    variant="primary"
+                    class="moss-button"
+                    @click=${async () => {
+                      await navigator.clipboard.writeText(invitationUrl);
+                      notify(msg('Invite link copied to clipboard.'));
+                    }}
+                  >
+                    ${msg('Copy')}
+                  </button>
+                </div>
+
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                  ${msg('About invite links:')}
+                </div>
+                <div style="font-size: 12px; opacity: 0.6;">
+                  ${msg(
+                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+                  )}
+                </div>
+              </div>
+            </div>
+          </sl-dialog>
+
+          <button
+            class="moss-button"
+            style="padding: 10px 0; margin: 40px 6px 6px 6px;"
+            variant="primary"
+            @click=${() => {
+              this.inviteMemberDialog?.show();
+            }}
+          >
+            <div class="row center-content items-center;">
+              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
+              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite People')}</div>
+            </div>
+          </button>
+        `;
+      case 'error':
+        return 'ERROR';
+    }
+  }
+
   renderUnjoinedAppletsButton() {
     if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
     return html`<sl-tooltip
@@ -521,8 +639,96 @@ export class GroupAppletsSidebar extends LitElement {
     </sl-tooltip>`;
   }
 
+  renderMemberProfile() {
+    return html`
+      <div class="column" style="margin-bottom: 40px;">
+        <moss-profile-detail
+          no-additional-fields
+          .agentPubKey=${this._selectedAgent?.agent}
+          style="margin-top: 40px;"
+        ></moss-profile-detail>
+        <div class="column items-center" style="margin-top: 9px;">
+          <copy-hash
+            .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
+            .tooltipText=${msg('click to copy public key')}
+            shortened
+          ></copy-hash>
+        </div>
+        <div class="row" style="align-items: center; margin-top: 20px;">
+          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
+          <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
+        </div>
+        <div class="row" style="align-items: center; margin-top: 15px;">
+          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
+          ${this._selectedAgent?.tzUtcOffset
+            ? html`<span
+                >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
+                (${relativeTzOffsetString(
+                  this._mossStore.tzUtcOffset(),
+                  this._selectedAgent.tzUtcOffset,
+                )},
+                ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
+              >`
+            : html`<span>unknown</span>`}
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     return html`
+      ${!this.onlinePeersCollapsed
+        ? ''
+        : html`
+            <sl-dialog
+              class="moss-dialog profile-detail-popup"
+              no-header
+              id="member-profile"
+              style="position: relative;"
+            >
+              <div class="column center-content" style="position: relative;">
+                <button
+                  class="moss-dialog-close-button"
+                  style="position: absolute; top: -12px; right: -12px;"
+                  @click=${() => {
+                    this._memberProfileDialog?.hide();
+                  }}
+                >
+                  ${closeIcon(24)}
+                </button>
+                ${this._selectedAgent ? this.renderMemberProfile() : ``}
+              </div>
+            </sl-dialog>
+            <div class="column online-list" style="${this.collapsed ? 'left:60px' : ''}">
+              <div class="row" style="position: absolute;right: 3px;">
+                <button
+                  class="btn"
+                  @click=${() => (this.onlinePeersCollapsed = !this.onlinePeersCollapsed)}
+                  style="margin-left: auto"
+                >
+                  ${closeIcon(18)}
+                </button>
+              </div>
+              <group-peers-status
+                @profile-selected=${(e) => {
+                  if (
+                    encodeHashToBase64(this._groupStore.groupClient.myPubKey) ===
+                    encodeHashToBase64(e.detail.agent)
+                  ) {
+                    this.dispatchEvent(
+                      new CustomEvent('my-profile-clicked', {
+                        composed: true,
+                      }),
+                    );
+                  } else {
+                    this._selectedAgent = e.detail;
+                    this._memberProfileDialog.show();
+                  }
+                }}
+              ></group-peers-status>
+              ${this.renderInviteSection()}
+            </div>
+          `}
       <div
         class="column flex-1 container invisible-scrollbars ${this.collapsed
           ? 'container-collapsed items-center'
@@ -552,52 +758,6 @@ export class GroupAppletsSidebar extends LitElement {
             </div>
           </button>
         </sl-tooltip>
-
-        ${!this.onlinePeersCollapsed
-          ? ''
-          : html`
-              <div class="column online-list">
-                <div class="row">
-                  <span>${msg('Online')}</span>
-                  <button
-                    class="btn"
-                    @click=${() => (this.onlinePeersCollapsed = !this.onlinePeersCollapsed)}
-                    style="margin-left: auto"
-                  >
-                    ${chevronSingleUpIcon(18)}
-                  </button>
-                </div>
-                <group-peers-status
-                  style="${this._peerStatusLoading ? 'display: none;' : ''}"
-                  @profile-selected=${(e) => {
-                    this._selectedAgent = e.detail;
-                    this._memberProfileDialog.show();
-                  }}
-                ></group-peers-status>
-                <!-- My own Profile -->
-                <sl-tooltip content="${this.myProfileNickName()} (me)" placement="right" hoist>
-                  <button
-                    class="btn"
-                    @click=${() => {
-                      this.dispatchEvent(
-                        new CustomEvent('my-profile-clicked', {
-                          composed: true,
-                        }),
-                      );
-                    }}
-                  >
-                    <div class="row items-center">
-                      ${this.renderMyProfileAvatar()}
-                      ${this.collapsed
-                        ? html``
-                        : html`<div style="margin-left: 5px;">
-                            ${this.myProfileNickName()} ${msg('(me)')}
-                          </div>`}
-                    </div>
-                  </button>
-                </sl-tooltip>
-              </div>
-            `}
 
         <!-- Online Peers indicator -->
         <sl-tooltip
@@ -662,7 +822,7 @@ export class GroupAppletsSidebar extends LitElement {
             </sl-tooltip>`}
       </div>
       <!-- menu folding toggle -->
-      <sl-tooltip content="${this.collapsed ? msg('Expand the menu') : msg('Fold the menu')}">
+      <sl-tooltip content="${this.collapsed ? msg('Expand sidebar') : msg('Fold sidebar')}">
         <button
           class="menu-fold-toggle"
           @click=${() => {
@@ -791,12 +951,14 @@ export class GroupAppletsSidebar extends LitElement {
       .online-list {
         padding: 4px;
         position: absolute;
-        top: 52px;
-        left: 2px;
-        width: 158px;
+        top: 4px;
+        left: 190px;
+        width: 200px;
         background-color: white;
         border-radius: var(--border-radius, 8px);
         z-index: 10;
+        min-height: 100px;
+        border: solid 1px rgba(0, 0, 0, 0.2);
       }
 
       .unjoined-tools-indicator {
