@@ -62,15 +62,9 @@ import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
-import {
-  UTCOffsetStringFromOffsetMinutes,
-  localTimeFromUtcOffset,
-  markdownParseSafe,
-  relativeTzOffsetString,
-} from '../../utils.js';
+import { markdownParseSafe } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { closeIcon } from '../../elements/_new_design/icons.js';
 
@@ -110,9 +104,6 @@ export class GroupHome extends LitElement {
     () => this._groupStore.ignoredApplets(),
     () => [this._groupStore],
   );
-
-  @query('#member-profile')
-  _memberProfileDialog!: SlDialog;
 
   @query('#group-settings-dialog')
   groupSettingsDialog: SlDialog | undefined;
@@ -199,9 +190,6 @@ export class GroupHome extends LitElement {
   _joiningNewApplet: string | undefined;
 
   _peerStatusInterval: number | null | undefined;
-
-  @state()
-  _selectedAgent: AgentAndTzOffset | undefined;
 
   groupProfile = new StoreSubscriber(
     this,
@@ -622,42 +610,6 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderMemberProfile() {
-    return html`
-      <div class="column" style="margin-bottom: 40px;">
-        <moss-profile-detail
-          no-additional-fields
-          .agentPubKey=${this._selectedAgent?.agent}
-          style="margin-top: 40px;"
-        ></moss-profile-detail>
-        <div class="column items-center" style="margin-top: 9px;">
-          <copy-hash
-            .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
-            .tooltipText=${msg('click to copy public key')}
-            shortened
-          ></copy-hash>
-        </div>
-        <div class="row" style="align-items: center; margin-top: 20px;">
-          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
-          <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
-        </div>
-        <div class="row" style="align-items: center; margin-top: 15px;">
-          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
-          ${this._selectedAgent?.tzUtcOffset
-            ? html`<span
-                >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
-                (${relativeTzOffsetString(
-                  this.mossStore.tzUtcOffset(),
-                  this._selectedAgent.tzUtcOffset,
-                )},
-                ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
-              >`
-            : html`<span>unknown</span>`}
-        </div>
-      </div>
-    `;
-  }
-
   renderMain(groupProfile: GroupProfile) {
     return html`
       <sl-dialog class="moss-dialog" id="group-settings-dialog" no-header style="--width: 1024px;">
@@ -825,25 +777,6 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <sl-dialog
-            class="moss-dialog profile-detail-popup"
-            no-header
-            id="member-profile"
-            style="position: relative;"
-          >
-            <div class="column center-content" style="position: relative;">
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -12px; right: -12px;"
-                @click=${() => {
-                  this._memberProfileDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-              ${this._selectedAgent ? this.renderMemberProfile() : ``}
-            </div>
-          </sl-dialog>
           <moss-profile-prompt>
             ${this.renderContentInner(groupProfile, modifiers)}
           </moss-profile-prompt>
@@ -857,28 +790,7 @@ export class GroupHome extends LitElement {
   }
 
   render() {
-    return html`
-      <sl-dialog
-        class="moss-dialog profile-detail-popup"
-        no-header
-        id="member-profile"
-        style="position: relative;"
-      >
-        <div class="column center-content" style="position: relative;">
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -12px; right: -12px;"
-            @click=${() => {
-              this._memberProfileDialog?.hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-          ${this._selectedAgent ? this.renderMemberProfile() : ``}
-        </div>
-      </sl-dialog>
-      ${this.renderContent()}
-    `;
+    return html` ${this.renderContent()} `;
   }
 
   static styles = [
