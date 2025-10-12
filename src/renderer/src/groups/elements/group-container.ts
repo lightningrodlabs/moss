@@ -154,7 +154,9 @@ export class GroupContainer extends LitElement {
     css`
       :host {
       }
-
+      #my-profile-dialog::part(panel) {
+        background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
+      }
       .group-home {
         display: flex;
         padding: 8px;

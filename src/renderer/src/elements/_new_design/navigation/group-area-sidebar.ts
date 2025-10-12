@@ -40,6 +40,7 @@ import {
   plusIcon,
   closeIcon,
   personPlusIcon,
+  questionMarkInfoIcon,
 } from '../icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
@@ -647,12 +648,21 @@ export class GroupAppletsSidebar extends LitElement {
           .agentPubKey=${this._selectedAgent?.agent}
           style="margin-top: 40px;"
         ></moss-profile-detail>
-        <div class="column items-center" style="margin-top: 9px;">
+        <div class="row items-center justify-center" style="margin-top: 9px;">
           <copy-hash
             .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
             .tooltipText=${msg('click to copy public key')}
             shortened
           ></copy-hash>
+          <sl-tooltip
+            .content=${msg(
+              "This is peer's public key. Use it to confirm the identity of the profile.",
+            )}
+          >
+            <span style="margin-left:5px; opacity: 0.5;"
+              >${questionMarkInfoIcon(20)}</span
+            ></sl-tooltip
+          >
         </div>
         <div class="row" style="align-items: center; margin-top: 20px;">
           <span style="font-weight: bold; margin-right: 10px;">Role:</span>
@@ -1024,6 +1034,13 @@ export class GroupAppletsSidebar extends LitElement {
 
       .dropzone-indicator-wide {
         width: 168px;
+      }
+      profile-detail-popup {
+        --width: 400px;
+        --height: 446px;
+      }
+      .profile-detail-popup::part(panel) {
+        background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
       }
     `,
   ];

@@ -962,10 +962,6 @@ export class GroupHome extends LitElement {
         left: 74px;
       } */
 
-      .profile-detail-popup::part(panel) {
-        width: 360px;
-      }
-
       .group-description a {
         color: var(--moss-purple);
       }
