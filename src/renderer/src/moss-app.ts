@@ -291,7 +291,7 @@ export class MossApp extends LitElement {
               @input=${() => {
                 const groupNameInput = this.shadowRoot?.getElementById(
                   'group-name-input',
-                ) as SlInput;
+                ) as unknown as SlInput;
                 this.groupName = groupNameInput.value;
               }}
             >

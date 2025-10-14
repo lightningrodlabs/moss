@@ -78,7 +78,7 @@ import {
 import { AppletStore } from './applets/applet-store.js';
 import {
   AppHashes,
-  DeveloperCollecive,
+  DeveloperCollective,
   DeveloperCollectiveToolList,
   DistributionInfo,
   ResourceLocation,
@@ -142,7 +142,7 @@ export type WalInPocket = {
 
 export type DevModeToolLibrary = {
   tools: ToolAndCurationInfo[];
-  devCollective: DeveloperCollecive;
+  devCollective: DeveloperCollective;
 };
 
 export class MossStore {
