@@ -76,7 +76,7 @@ export class InstallableToolsWeb2 extends LitElement {
               </div>
             </sl-tooltip>
           </div>
-          <div class="column tool-info-area">
+          <div id="xxx" class="column tool-info-area">
             <div class="tool-title" title="${tool.toolInfoAndVersions.subtitle}">
               ${tool.toolInfoAndVersions.title} ${tool.toolInfoAndVersions.versions[0].version}
             </div>
@@ -101,6 +101,7 @@ export class InstallableToolsWeb2 extends LitElement {
           </div>
         </div>
         <select-group
+          class="show-on-hover"
           @group-selected=${async (e: CustomEvent) => {
             this.dispatchEvent(
               new CustomEvent('install-tool-to-group', {
@@ -113,33 +114,6 @@ export class InstallableToolsWeb2 extends LitElement {
           style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:20px;left: -22px; right: 0px;"
           id="select-group"
         ></select-group>
-        <button
-          class="install-button moss-button "
-          style="display:none; margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:0px;left: 0px; right: 0px;"
-          @click=${async (e: MouseEvent) => {
-            this.dispatchEvent(
-              new CustomEvent('open-tool-detail-web2', {
-                detail: { tool, origElement: e.target },
-                composed: true,
-              }),
-            );
-          }}
-          @keypress=${async (e: KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              this.dispatchEvent(
-                new CustomEvent('open-tool-detail-web2', {
-                  detail: { tool, origElement: e.target },
-                  composed: true,
-                }),
-              );
-            }
-          }}
-        >
-          <div class="row center-content">
-            ${installToolIcon(20)}
-            <div style="margin-left: 10px;">${msg('Install to a group space')}</div>
-          </div>
-        </button>
       </div>
     `;
   }
@@ -163,7 +137,7 @@ export class InstallableToolsWeb2 extends LitElement {
       });
     return html`
       <div
-        style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;"
+        style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;justify-content: center;"
       >
         ${nonDeprecatedTools.length === 0
           ? html`
