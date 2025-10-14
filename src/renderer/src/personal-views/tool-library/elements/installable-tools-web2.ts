@@ -62,8 +62,8 @@ export class InstallableToolsWeb2 extends LitElement {
               : html``}
             <sl-tooltip
               content="${tool.curationInfos[0].info.visiblity === 'low'
-                ? 'experimental app'
-                : 'stable app'}"
+                ? 'experimental tool'
+                : 'stable tool'}"
             >
               <div class="row items-center tool-classification">
                 ${tool.curationInfos[0].info.visiblity === 'low'
@@ -76,14 +76,14 @@ export class InstallableToolsWeb2 extends LitElement {
               </div>
             </sl-tooltip>
           </div>
-          <div id="xxx" class="column" style="margin-top:19px; ">
+          <div class="column tool-info-area">
             <div class="tool-title" title="${tool.toolInfoAndVersions.subtitle}">
-              ${tool.toolInfoAndVersions.title}
+              ${tool.toolInfoAndVersions.title} ${tool.toolInfoAndVersions.versions[0].version}
             </div>
             <div class="tool-description">${tool.toolInfoAndVersions.description}</div>
             ${tool.toolInfoAndVersions.tags.length > 0
               ? html`
-                  <div class="row" style="margin-top:6px">
+                  <div class="row tool-tag-list" style="margin-top:6px">
                     ${tool.toolInfoAndVersions.tags.map(
                       (tag) => html`<div class="tool-tag">${tag}</div>`,
                     )}
@@ -193,7 +193,12 @@ export class InstallableToolsWeb2 extends LitElement {
       .tool:hover {
         background-color: #ffffff;
       }
-
+      .tool-info-area {
+        margin-top: 19px;
+        overflow: auto;
+        scrollbar-width: thin;
+        max-height: 230px;
+      }
       .tool-title {
         font-family: 'Inter Variable';
         font-size: 16px;
@@ -208,12 +213,14 @@ export class InstallableToolsWeb2 extends LitElement {
         font-weight: 500;
         line-height: 16px; /* 133.333% */
         opacity: 0.6;
-        max-height: 100px;
-        overflow-x: auto;
+      }
+      .tool-tag-list {
+        flex-wrap: wrap;
       }
       .tool-tag {
         margin-right: 4px;
-        padding: 2px;
+        margin-top: 4px;
+        padding: 2px 8px;
         border-radius: 4px;
         background: rgba(137, 214, 188, 0.3);
 
@@ -248,7 +255,6 @@ export class InstallableToolsWeb2 extends LitElement {
 
       .tool-classification {
         border-radius: 4px;
-        background: rgba(0, 0, 0, 0.3);
 
         width: 24px;
         height: 24px;
@@ -258,7 +264,7 @@ export class InstallableToolsWeb2 extends LitElement {
       }
       .tool-experimental {
         color: var(--moss-purple);
-        background: rgba(116, 97, 235, 0.3);
+        //        background: rgba(116, 97, 235, 0.3);
       }
       .tool-classification-image {
         margin-top: 10px;

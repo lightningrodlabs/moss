@@ -39,6 +39,20 @@ export class GroupSidebarButton extends LitElement {
     () => [this._groupStore],
   );
 
+  private _groupMemberWithProfiles = new StoreSubscriber(
+    this,
+    () => this._groupStore?.allProfiles,
+    () => [this._groupStore],
+  );
+  totalMembers() {
+    switch (this._groupMemberWithProfiles.value?.status) {
+      case 'complete':
+        return this._groupMemberWithProfiles.value.value.size;
+      default:
+        return 1; // self
+    }
+  }
+
   _unsubscribe: Unsubscriber | undefined;
 
   disconnectedCallback(): void {
@@ -99,11 +113,7 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
-    console.log('this._peerStatuses.value: ', this._peerStatuses.value);
-    const totalAgentCount =
-      this._peerStatuses.value || this._peerStatuses.value === 0
-        ? Object.keys(this._peerStatuses.value).length - 1
-        : undefined;
+    const totalPeers = this.totalMembers() - 1;
     const onlineAgentCount =
       this._peerStatuses.value || this._peerStatuses.value === 0
         ? Object.entries(this._peerStatuses.value).filter(
@@ -122,14 +132,14 @@ export class GroupSidebarButton extends LitElement {
           : 'gray'}"
         title="${this._loadingPeerCount
           ? msg('Loading number of online members')
-          : `${onlineAgentCount}/${totalAgentCount} ${msg('member(s) online')}`}"
+          : `${onlineAgentCount}/${totalPeers} ${msg('peers online')}`}"
       >
         ${onlineAgentCount === undefined
           ? html`<sl-spinner
               style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
             ></sl-spinner>`
           : html` <span>${onlineAgentCount}</span
-              ><span class="gray" style="font-weight:400">/${onlineAgentCount}</span>`}
+              ><span class="gray" style="font-weight:400">/${totalPeers}</span>`}
       </div>
     `;
   }

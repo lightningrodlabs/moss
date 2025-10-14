@@ -277,7 +277,7 @@ export class ToolLibraryWeb2 extends LitElement {
           </div>
         </div>
         <installable-tools-web2
-          style="display: flex; flex: 1; overflow-y: auto;"
+          style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
           .installableTools=${availableTools}
           @install-tool-to-group=${(e) => {
@@ -442,6 +442,7 @@ export class ToolLibraryWeb2 extends LitElement {
 
   render() {
     return html`
+      ${this.renderPublishDialog()}
       ${this._selectedGroupDnaHash
         ? html`
             <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
@@ -485,12 +486,12 @@ export class ToolLibraryWeb2 extends LitElement {
           </div>
           <button
             class="moss-button"
-            style="position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
+            style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
             @click=${() => this._publishDialog.show()}
           >
             <div class="row items-center">
               <sl-icon .src=${wrapPathInSvg(mdiPublish)} style="font-size: 20px;"></sl-icon>
-              <span style="margin-left: 5px;">${msg('Publish')}</span>
+              <span style="margin-left: 5px;font-size: 12px; ">${msg('Publish a tool')}</span>
             </div>
           </button>
         </div>

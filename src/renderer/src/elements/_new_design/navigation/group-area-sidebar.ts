@@ -133,6 +133,19 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore, this._mossStore],
   );
 
+  private _groupMemberWithProfiles = new StoreSubscriber(
+    this,
+    () => this._groupStore?.allProfiles,
+    () => [this._groupStore],
+  );
+  totalMembers() {
+    switch (this._groupMemberWithProfiles.value?.status) {
+      case 'complete':
+        return this._groupMemberWithProfiles.value.value.size;
+      default:
+        return 1; // self
+    }
+  }
   private _peerStatuses = new StoreSubscriber(
     this,
     () => this._groupStore.peerStatuses(),
@@ -486,8 +499,8 @@ export class GroupAppletsSidebar extends LitElement {
 
   renderPeersOnline() {
     if (!this._peerStatuses.value) return html`??<span style="opacity: 0.3;">/??</span>`;
-    const totalPeers = Object.keys(this._peerStatuses.value).length;
-    return html`${this.numPeersOnline()}<span style="opacity: 0.3;">/${totalPeers - 1}</span>`; // We don't count ourselves to the totl number of peers
+    const totalPeers = this.totalMembers() - 1; //Object.keys(this._peerStatuses.value).length;
+    return html`${this.numPeersOnline()}<span style="opacity: 0.3;">/${totalPeers}</span>`; // We don't count ourselves to the totl number of peers
   }
 
   numUnjoinedTools(): number | undefined {
