@@ -1903,11 +1903,11 @@ export class MainDashboard extends LitElement {
 
         .indicator {
           position: absolute;
-          right: -4px;
-          top: 142px;
-          height: 30px;
+          right: 0px;
+          top: 146px;
+          height: 20px;
           border-radius: 2px;
-          width: 20px;
+          width: 12px;
           background-image: url(indicator.svg);
         }
         .moss-sidebar-items {

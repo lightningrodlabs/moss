@@ -114,10 +114,10 @@ export class SidebarButton extends LitElement {
       } */
         .indicator {
           position: absolute;
-          right: -20px;
-          height: 30px;
+          right: -16px;
+          height: 20px;
           border-radius: 2px;
-          width: 20px;
+          width: 12px;
           background-image: url(indicator.svg);
         }
 

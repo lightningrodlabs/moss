@@ -20,11 +20,7 @@ import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { DeveloperCollective, Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { ToolAndCurationInfo } from '../../../types.js';
-import {
-  experimentalToolIcon,
-  installToolIcon,
-  stableToolIcon,
-} from '../../../elements/_new_design/icons.js';
+import { experimentalToolIcon, stableToolIcon } from '../../../elements/_new_design/icons.js';
 
 @localized()
 @customElement('installable-tools-web2')
