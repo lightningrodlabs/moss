@@ -111,7 +111,7 @@ export class ViewFrame extends LitElement {
         this.renderView.view.type === 'main' &&
         this.iframeKind.type === 'applet'
           ? encodeHashToBase64(this.iframeKind.appletHash)
-          : undefined}
+          : this.renderView.type}
         src="${iframeOrigin(this.iframeKind)}?${renderViewToQueryString(this.renderView)}"
         style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
         allow="camera *; microphone *; clipboard-write *;"
@@ -140,7 +140,7 @@ export class ViewFrame extends LitElement {
             this.renderView.view.type === 'main' &&
             this.iframeKind.type === 'applet'
               ? encodeHashToBase64(this.iframeKind.appletHash)
-              : undefined}
+              : this.renderView.type}
             src="${iframeSrc}"
             style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
             allow="camera *; microphone *; clipboard-write *;"

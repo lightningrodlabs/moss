@@ -611,24 +611,21 @@ function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
  */
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
-
   // Recursive function to traverse the DOM tree
   function traverse(node) {
-    // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
       result.push(node);
     }
 
     // Get the shadow root of the node if available
+    // and traverse
     const shadowRoot = node.shadowRoot;
-
-    // Traverse child nodes if any
     if (shadowRoot) {
       shadowRoot.childNodes.forEach(traverse);
-    } else {
-      node.childNodes.forEach(traverse);
     }
+    // also traverse child nodes
+    node.childNodes.forEach(traverse);
   }
 
   // Start traversing from the main document's body
