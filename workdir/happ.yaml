@@ -1,5 +1,5 @@
 ---
-manifest_version: '1'
+manifest_version: '0'
 name: group
 description: ~
 roles:
@@ -8,7 +8,7 @@ roles:
       strategy: create
       deferred: false
     dna:
-      bundled: '../dnas/group/workdir/group.dna'
+      path: '../dnas/group/workdir/group.dna'
       properties: ~
       network_seed: ~
       version: ~
@@ -18,7 +18,7 @@ roles:
       strategy: create
       deferred: false
     dna:
-      bundled: '../dnas/foyer/workdir/foyer.dna'
+      path: '../dnas/foyer/workdir/foyer.dna'
       properties: ~
       network_seed: ~
       version: ~
@@ -28,7 +28,7 @@ roles:
       strategy: create
       deferred: false
     dna:
-      bundled: '../dnas/assets/workdir/assets.dna'
+      path: '../dnas/assets/workdir/assets.dna'
       properties: ~
       network_seed: ~
       version: ~
