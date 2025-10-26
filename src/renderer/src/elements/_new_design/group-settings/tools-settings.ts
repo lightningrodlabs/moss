@@ -18,6 +18,12 @@ import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 
+enum TabsState {
+  Active,
+  ToActivate,
+  Abandoned,
+}
+
 @localized()
 @customElement('tools-settings')
 export class ToolsSettings extends LitElement {
@@ -44,6 +50,9 @@ export class ToolsSettings extends LitElement {
       ),
     () => [this._groupStore],
   );
+
+  @state()
+  tabsState: TabsState = TabsState.Active;
 
   @state(hashState())
   appletToUnarchive: EntryHash | undefined;
@@ -117,6 +126,31 @@ export class ToolsSettings extends LitElement {
     }
   }
 
+  renderAppletsToActivate() {
+    return html` TO-DO`;
+  }
+
+  renderToolsToActivate() {
+    return html`${this.renderAppletsToActivate()}`;
+  }
+  renderToolsActive() {
+    return html`${this.renderInstalledApplets()}`;
+  }
+  renderToolsAbandoned() {
+    return html`${this.renderAbandonedApplets()}`;
+  }
+
+  renderContent() {
+    switch (this.tabsState) {
+      case TabsState.ToActivate:
+        return this.renderToolsToActivate();
+      case TabsState.Active:
+        return this.renderToolsActive();
+      case TabsState.Abandoned:
+        return this.renderToolsAbandoned();
+    }
+  }
+
   renderAbandonedApplets() {
     const isError =
       this._groupApplets.value.status === 'error' ||
@@ -179,19 +213,35 @@ export class ToolsSettings extends LitElement {
         class="column flex-1"
         style="overflow: auto; --sl-border-radius-medium: 20px; max-height: 500px; padding: 2px;"
       >
-        <div class="row" style="position: relative">
-          <div style="margin-top: 30px; margin-bottom: 10px; font-size: 20px;">
-            ${msg('Joined Tools')}
-          </div>
+        <div class="row items-center tab-bar flex-1">
+          <button
+            class="tab ${this.tabsState === TabsState.Active ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.Active;
+            }}
+          >
+            ${msg('Active')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.ToActivate ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.ToActivate;
+            }}
+          >
+            ${msg('To-activate')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Abandoned ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.Abandoned;
+            }}
+          >
+            ${msg('Abandoned')}
+          </button>
         </div>
-        ${this.renderInstalledApplets()}
-
-        <div class="row" style="position: relative">
-          <div style="margin-top: 30px; margin-bottom: 10px; font-size: 20px;">
-            ${msg('Abandoned Tools')}
-          </div>
+        <div class="column" style="margin-top: 10px; overflow-y: auto;">
+          ${this.renderContent()}
         </div>
-        ${this.renderAbandonedApplets()}
       </div>
     `;
   }
