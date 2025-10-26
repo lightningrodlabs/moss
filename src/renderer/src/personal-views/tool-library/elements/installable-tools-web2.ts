@@ -66,9 +66,7 @@ export class InstallableToolsWeb2 extends LitElement {
                   ? html`<div class="tool-classification-image tool-experimental">
                       ${experimentalToolIcon(24)}
                     </div>`
-                  : html`<div class="tool-classification-image tool-stable">
-                      ${stableToolIcon(24)}
-                    </div>`}
+                  : ''}
               </div>
             </sl-tooltip>
           </div>
