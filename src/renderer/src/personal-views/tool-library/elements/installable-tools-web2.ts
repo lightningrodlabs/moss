@@ -18,13 +18,13 @@ import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
 import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
-import { DeveloperCollective, Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { ToolAndCurationInfo } from '../../../types.js';
 import { closeIcon, experimentalToolIcon } from '../../../elements/_new_design/icons.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
 import { libraryStyles } from '../libraryStyles.js';
+import { DeveloperCollective } from '@theweave/moss-types';
 
 @localized()
 @customElement('installable-tools-web2')
@@ -40,9 +40,6 @@ export class InstallableToolsWeb2 extends LitElement {
 
   @state()
   _selectedGroupDnaHash: DnaHashB64 | undefined;
-
-  @state()
-  _selectedToolEntity: UpdateableEntity<Tool> | undefined;
 
   @query('#library-tool-details-dialog')
   toolDetailsDialog: SlDialog | undefined;
@@ -108,7 +105,7 @@ export class InstallableToolsWeb2 extends LitElement {
             <sl-tooltip content="visit developer’s website">
               <div class="tool-developer">
                 <span>by</span>
-                <a href="${this.devCollectives[tool.toolListUrl].website}"
+                <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
                   >${this.devCollectives[tool.toolListUrl].name}</a
                 >
               </div>
