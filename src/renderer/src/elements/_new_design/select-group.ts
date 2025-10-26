@@ -73,6 +73,7 @@ export class SelectGroup extends LitElement {
             .placeholder=${msg('Select Group')}
             name="groupDnaHash"
             style="margin-top: 16px; margin-bottom: 20px;width:263px"
+            @click=${(e) => e.stopPropagation()}
             @sl-select=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail.item.value;
               this.dispatchEvent(

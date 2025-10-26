@@ -27,7 +27,7 @@ enum TabsState {
 }
 
 /**
- * @element create-group-dialog
+ * @element group-settings
  */
 @localized()
 @customElement('group-settings')

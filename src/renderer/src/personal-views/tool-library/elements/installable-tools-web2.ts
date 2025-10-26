@@ -1,6 +1,6 @@
 import { html, LitElement, css } from 'lit';
 import { consume } from '@lit/context';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { DnaHashB64 } from '@holochain/client';
 
@@ -20,7 +20,11 @@ import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { DeveloperCollective, Tool, UpdateableEntity } from '@theweave/tool-library-client';
 import { ToolAndCurationInfo } from '../../../types.js';
-import { experimentalToolIcon, stableToolIcon } from '../../../elements/_new_design/icons.js';
+import { closeIcon, experimentalToolIcon } from '../../../elements/_new_design/icons.js';
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import './library-tool-details.js';
+import { LibraryToolDetails } from './library-tool-details.js';
+import { libraryStyles } from '../libraryStyles.js';
 
 @localized()
 @customElement('installable-tools-web2')
@@ -40,13 +44,30 @@ export class InstallableToolsWeb2 extends LitElement {
   @state()
   _selectedToolEntity: UpdateableEntity<Tool> | undefined;
 
+  @query('#library-tool-details-dialog')
+  toolDetailsDialog: SlDialog | undefined;
+
+  @query('#tool-details')
+  toolDetails: LibraryToolDetails | undefined;
+
   async firstUpdated() {}
 
   timeAgo = new TimeAgo('en-US');
 
+  @state()
+  selectedTool: ToolAndCurationInfo | undefined;
+
   renderInstallableTool(tool: ToolAndCurationInfo) {
     return html`
-      <div id="tool" class="tool" tabindex="0">
+      <div
+        id="tool"
+        class="tool"
+        tabindex="0"
+        @click=${() => {
+          this.selectedTool = tool;
+          this.toolDetailsDialog?.show();
+        }}
+      >
         <div class="column">
           <div class="row">
             ${tool.toolInfoAndVersions.icon
@@ -130,6 +151,29 @@ export class InstallableToolsWeb2 extends LitElement {
         return 0;
       });
     return html`
+      <sl-dialog
+        class="moss-dialog"
+        id="library-tool-details-dialog"
+        no-header
+        style="--width: 1024px;"
+      >
+        <div class="column" style="position: relative">
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -12px; right: -12px;"
+            @click=${() => {
+              this.toolDetailsDialog?.hide();
+            }}
+          >
+            ${closeIcon(24)}
+          </button>
+          <library-tool-details
+            id="tool-details"
+            .devCollectives=${this.devCollectives}
+            .tool=${this.selectedTool}
+          ></library-tool-details>
+        </div>
+      </sl-dialog>
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;justify-content: center;"
       >
@@ -144,6 +188,7 @@ export class InstallableToolsWeb2 extends LitElement {
     `;
   }
   static styles = [
+    libraryStyles,
     css`
       .tool {
         width: 303px;
@@ -156,6 +201,7 @@ export class InstallableToolsWeb2 extends LitElement {
         border: none;
         background-color: rgba(255, 255, 255, 0.7);
         position: relative;
+        cursor: pointer;
       }
 
       .tool:hover {
@@ -174,39 +220,9 @@ export class InstallableToolsWeb2 extends LitElement {
         font-weight: 600;
         line-height: 24px;
       }
-      .tool-description {
-        font-family: 'Inter Variable';
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px; /* 133.333% */
-        opacity: 0.6;
-      }
-      .tool-tag-list {
-        flex-wrap: wrap;
-      }
-      .tool-tag {
-        margin-right: 4px;
-        margin-top: 4px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: rgba(137, 214, 188, 0.3);
 
-        font-family: 'Inter Variable';
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px; /* 133.333% */
-      }
       .tool-developer {
         margin-top: 25px;
-      }
-      .tool-developer a {
-        color: #324d47;
-        text-decoration: none;
-      }
-      .tool-developer a:hover {
-        text-decoration: underline;
       }
 
       .show-on-hover {
