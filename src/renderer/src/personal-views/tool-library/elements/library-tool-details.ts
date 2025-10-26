@@ -5,6 +5,13 @@ import { ToolAndCurationInfo } from '../../../types';
 import { mossStyles } from '../../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
+import TimeAgo from 'javascript-time-ago';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+
+enum TabsState {
+  Overview,
+  Versions,
+}
 
 /**
  * @element library-tool-details
@@ -12,18 +19,53 @@ import { libraryStyles } from '../libraryStyles';
 @localized()
 @customElement('library-tool-details')
 export class LibraryToolDetails extends LitElement {
-  // REQUIRED. The current Post record that should be updated
+  timeAgo = new TimeAgo('en-US');
+
   @property()
   tool: ToolAndCurationInfo | undefined;
 
   @property()
   devCollectives: Record<string, DeveloperCollective> = {};
 
+  @state()
+  tabsState: TabsState = TabsState.Overview;
+
+  renderOverview() {
+    return html`
+      <div class="tool-description" style="margin-top:25px;">
+        ${this.tool?.toolInfoAndVersions.description}
+      </div>
+    `;
+  }
+
   renderVersion(version) {
-    return html`<div class="column">
+    return html`<div class="column" style="margin-top: 10px;">
       <div class="version">v${version.version}</div>
+      <div>
+        Released:
+        <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
+          <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
+        >
+      </div>
       <div>Change Log: ${version.changelog}</div>
     </div>`;
+  }
+
+  renderVersions() {
+    return html`
+      <div class="version-list">
+        ${this.tool?.toolInfoAndVersions.versions.map((version) => this.renderVersion(version))}
+      </div>
+    `;
+  }
+
+  renderContent() {
+    switch (this.tabsState) {
+      case TabsState.Overview:
+        return this.renderOverview();
+      case TabsState.Versions:
+        return this.renderVersions();
+    }
   }
 
   render() {
@@ -63,11 +105,26 @@ export class LibraryToolDetails extends LitElement {
               : ''}
           </div>
         </div>
-        <div class="tool-description" style="margin-top:25px;">
-          ${this.tool.toolInfoAndVersions.description}
+        <div class="row items-center tab-bar flex-1" style="margin-top:30px">
+          <button
+            class="tab ${this.tabsState === TabsState.Overview ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.Overview;
+            }}
+          >
+            ${msg('Overview')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Versions ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.Versions;
+            }}
+          >
+            ${msg('Versions')}
+          </button>
         </div>
-        <div class="version-list">
-          ${this.tool?.toolInfoAndVersions.versions.map((version) => this.renderVersion(version))}
+        <div class="column" style="min-height: 380px; overflow-y: auto;">
+          ${this.renderContent()}
         </div>
       </div>
     </div>`;

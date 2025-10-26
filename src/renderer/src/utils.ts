@@ -934,7 +934,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     id: '###DEVCONFIG###',
     name: 'This Tool is listed in the dev config file.',
     description: 'Moss dev mode test dev collective',
-    contact: {},
+    contact: { website: 'https://lightningrodlabs.org/' },
     icon: 'garbl',
   };
 
@@ -994,10 +994,21 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             : toolConfig.icon.url,
         versions: [
           {
+            version: '0.1.1',
+            url: toolUrl,
+            changelog: 'New thing. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
+          {
             version: '0.1.0',
             url: toolUrl,
-            changelog: 'Same same. Just an example changelog.',
-            releasedAt: Date.now(),
+            changelog: 'First release. Just an example changelog.',
+            releasedAt: Date.now() - 10000000,
             hashes: {
               webhappSha256: '###DEVCONFIG###',
               happSha256: '###DEVCONFIG###',

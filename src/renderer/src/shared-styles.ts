@@ -342,6 +342,37 @@ export const mossStyles = [
       background: var(--moss-dark-button);
     }
 
+    .tab-bar {
+      border-bottom: 2px solid var(--moss-grey-light);
+      /* margin-bottom: -2px; */
+    }
+
+    .tab {
+      all: unset;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      height: 40px;
+      padding: 0 20px;
+      cursor: pointer;
+      margin-bottom: -2px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab:focus-visible {
+      background: var(--moss-purple-semi-transparent);
+    }
+
+    .tab:hover {
+      color: var(--moss-purple);
+      border-bottom: 2px solid var(--moss-purple);
+    }
+
+    .tab-selected {
+      border-bottom: 2px solid var(--moss-purple);
+      color: var(--moss-purple);
+    }
+
     /* Loading dots for buttons */
     /* https://codepen.io/nzbin/pen/GGrXbp */
 

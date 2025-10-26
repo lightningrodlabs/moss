@@ -85,7 +85,7 @@ export class GroupSettings extends LitElement {
         </div>
         <div class="row items-center tab-bar flex-1">
           <button
-            class="tab ${this.tabsState === TabsState.General ? 'selected' : ''}"
+            class="tab ${this.tabsState === TabsState.General ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.General;
             }}
@@ -93,7 +93,7 @@ export class GroupSettings extends LitElement {
             ${msg('General')}
           </button>
           <button
-            class="tab ${this.tabsState === TabsState.Tools ? 'selected' : ''}"
+            class="tab ${this.tabsState === TabsState.Tools ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.Tools;
             }}
@@ -101,7 +101,7 @@ export class GroupSettings extends LitElement {
             ${msg('Group Tools')}
           </button>
           <button
-            class="tab ${this.tabsState === TabsState.Members ? 'selected' : ''}"
+            class="tab ${this.tabsState === TabsState.Members ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.Members;
             }}
@@ -109,7 +109,7 @@ export class GroupSettings extends LitElement {
             ${msg('Members')}
           </button>
           <button
-            class="tab ${this.tabsState === TabsState.MyProfile ? 'selected' : ''}"
+            class="tab ${this.tabsState === TabsState.MyProfile ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.MyProfile;
             }}
@@ -117,7 +117,7 @@ export class GroupSettings extends LitElement {
             ${msg('My Profile')}
           </button>
           <button
-            class="tab ${this.tabsState === TabsState.DangerZone ? 'selected' : ''}"
+            class="tab ${this.tabsState === TabsState.DangerZone ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.DangerZone;
             }}
@@ -132,40 +132,5 @@ export class GroupSettings extends LitElement {
     `;
   }
 
-  static styles = [
-    mossStyles,
-    css`
-      .tab-bar {
-        max-width: 784px;
-        border-bottom: 2px solid var(--moss-grey-light);
-        margin-bottom: -2px;
-      }
-
-      .tab {
-        all: unset;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 40px;
-        padding: 0 20px;
-        cursor: pointer;
-        margin-bottom: -2px;
-        border-bottom: 2px solid transparent;
-      }
-
-      .tab:focus-visible {
-        background: var(--moss-purple-semi-transparent);
-      }
-
-      .tab:hover {
-        color: var(--moss-purple);
-        border-bottom: 2px solid var(--moss-purple);
-      }
-
-      .selected {
-        border-bottom: 2px solid var(--moss-purple);
-        color: var(--moss-purple);
-      }
-    `,
-  ];
+  static styles = [mossStyles, css``];
 }

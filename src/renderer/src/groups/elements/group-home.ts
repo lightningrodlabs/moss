@@ -677,10 +677,10 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
-          <div class="row tab-section">
+          <div class="row tab-bar ">
             <div
               tabindex="0"
-              class="row tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"
+              class="tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"
               @click=${() => {
                 this._selectedTab = 'home';
               }}
@@ -854,37 +854,6 @@ export class GroupHome extends LitElement {
         --sl-panel-background-color: #fbffe7;
       }
 
-      .tab-section {
-        height: 50px;
-        align-items: center;
-      }
-
-      .tab {
-        font-size: 1.25rem;
-        align-items: center;
-        justify-content: center;
-        color: #383838;
-        height: 50px;
-        width: 180px;
-        box-shadow: 0px 0px 6px 0px var(--moss-fishy-green);
-        border-radius: 5px 5px 0 0;
-        background: #d4dfcf;
-        cursor: pointer;
-        clip-path: inset(-20px -20px 0 -20px);
-      }
-
-      .tab:hover {
-        background: var(--moss-fishy-green);
-        z-index: 2;
-      }
-
-      .tab-selected {
-        background: var(--moss-fishy-green);
-        color: black;
-        box-shadow: 0px 0px 6px 0px #606f54;
-        z-index: 2;
-      }
-
       .main-panel {
         flex: 1;
         /* background: var(--moss-fishy-green); */
@@ -892,7 +861,6 @@ export class GroupHome extends LitElement {
         color: black;
         border-radius: 0 5px 5px 5px;
         /* box-shadow: 1px 1px 6px 0px var(--moss-fishy-green); */
-        box-shadow: 0px 0px 6px 0px #606f54;
         overflow-y: auto;
         z-index: 1;
       }
