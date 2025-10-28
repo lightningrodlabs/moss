@@ -66,9 +66,8 @@ fn join_applet(input: JoinAppletInput) -> ExternResult<EntryHash> {
 #[hdk_extern]
 fn abandon_applet(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
     let joined_agents_links = get_links(
-        GetLinksInputBuilder::try_new(applet_hash.input.clone(), LinkTypes::AppletToJoinedAgent)?
-            .get_options(applet_hash.clone().into())
-            .build(),
+        LinkQuery::try_new(applet_hash.input.clone(), LinkTypes::AppletToJoinedAgent)?
+            , applet_hash.clone().into()
     )?;
 
     let my_pubkey = agent_info()?.agent_initial_pubkey;
@@ -78,7 +77,7 @@ fn abandon_applet(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
             // delete link and create abandoned link
             // TODO reconsider whether this link should really be deleted as it contains information
             // to resolve the public keys of other people in the group
-            delete_link(link.create_link_hash)?;
+            delete_link(link.create_link_hash, GetOptions::default())?;
             create_link(
                 applet_hash.input.clone(),
                 my_pubkey.clone(),
@@ -99,15 +98,14 @@ fn archive_applet(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
     let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
-            .get_options(applet_hash.get_strategy())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
+            , applet_hash.get_strategy()
     )?;
 
     for link in links {
         if let Some(target_applet_hash) = link.target.into_entry_hash() {
             if target_applet_hash.eq(&applet_hash.input) {
-                delete_link(link.create_link_hash)?;
+                delete_link(link.create_link_hash, GetOptions::default())?;
             }
         }
     }
@@ -192,9 +190,8 @@ fn get_group_applets(input: ZomeFnInput<()>) -> ExternResult<Vec<EntryHash>> {
     let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
-            .get_options(input.into())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
+        , input.into()
     )?;
 
     let entry_hashes = links
@@ -221,9 +218,8 @@ fn get_unjoined_applets(
     let path = Path::from(ALL_APPLETS_ANCHOR);
 
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
-            .get_options(input.into())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllApplets)?
+          , input.into()
     )?;
 
     let applet_infos: Vec<(EntryHash, AgentPubKey, Timestamp)> = links
@@ -269,10 +265,8 @@ fn get_unjoined_archived_applets(input: ZomeFnInput<()>) -> ExternResult<Vec<Ent
 fn get_archived_applets(input: ZomeFnInput<()>) -> ExternResult<Vec<EntryHash>> {
     let path = Path::from(ALL_APPLETS_ANCHOR);
 
-    let links_details = get_link_details(
-        path.path_entry_hash()?,
-        LinkTypes::AllApplets,
-        None,
+    let links_details = get_links_details(
+        LinkQuery::new(path.path_entry_hash()?, LinkTypes::AllApplets.try_into_filter().unwrap()),
         input.into(),
     )?;
 
@@ -315,9 +309,8 @@ struct AppletAgent {
 #[hdk_extern]
 fn get_joined_applet_agents(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<Vec<AppletAgent>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(applet_hash.input.clone(), LinkTypes::AppletToJoinedAgent)?
-            .get_options(applet_hash.into())
-            .build(),
+        LinkQuery::try_new(applet_hash.input.clone(), LinkTypes::AppletToJoinedAgent)?
+          , applet_hash.into()
     )?;
 
     let mut applet_agents = Vec::new();
@@ -343,12 +336,11 @@ fn get_abandoned_applet_agents(
     applet_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<Vec<AppletAgent>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             applet_hash.input.clone(),
             LinkTypes::AppletToAbandonedAgent,
         )?
-        .get_options(applet_hash.into())
-        .build(),
+       , applet_hash.into()
     )?;
 
     let mut applet_agents = Vec::new();

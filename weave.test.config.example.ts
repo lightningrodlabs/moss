@@ -50,6 +50,12 @@ export default defineConfig({
           registeringAgent: 1,
           joiningAgents: [2],
         },
+        {
+          name: 'notebooks',
+          instanceName: 'notebooks',
+          registeringAgent: 1,
+          joiningAgents: [2],
+        },
       ],
     },
   ],
@@ -79,6 +85,19 @@ export default defineConfig({
         type: 'localhost',
         happPath: './example/workdir/example-applet.happ',
         uiPort: 8888,
+      },
+    },
+    {
+      name: 'notebooks',
+      subtitle: 'Collaborative note taking',
+      description: 'Real-time notetaking based on syn',
+      icon: {
+        type: 'https',
+        url: 'https://lightningrodlabs.org/projects/notebooks.png',
+      },
+      source: {
+        type: 'https',
+        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.5.0-rc.0/notebooks.webhapp',
       },
     },
   ],

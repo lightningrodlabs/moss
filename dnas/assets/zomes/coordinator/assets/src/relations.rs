@@ -199,14 +199,11 @@ pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternRes
     // 1. remove all links from the ALL_ASSETS_RELATIONS_ANCHOR
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
-            .get_options(relation_hash.get_strategy())
-            .build(),
-    )?;
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?, relation_hash.get_strategy())?;
     for link in links {
         if let Some(target) = link.target.into_entry_hash() {
             if target.eq(&relation_hash.input) {
-                delete_link(link.create_link_hash)?;
+                delete_link(link.create_link_hash, GetOptions::default())?;
             }
         }
     }
@@ -217,26 +214,20 @@ pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternRes
     // 3. Remove all links from the source WAL
     let src_wal_entry_hash = hash_entry(asset_relation.src_wal.clone())?;
     let src_wal_links = get_links(
-        GetLinksInputBuilder::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?
-            .get_options(relation_hash.get_strategy())
-            .build(),
-    )?;
+        LinkQuery::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?, relation_hash.get_strategy())?;
     for link in src_wal_links {
         if link.target.clone().into_hash() == relation_hash.input.clone().into() {
-            delete_link(link.create_link_hash)?;
+            delete_link(link.create_link_hash, GetOptions::default())?;
         }
     }
 
     // 4. Remove all links from the destination WAL
     let dst_wal_entry_hash = hash_entry(asset_relation.dst_wal.clone())?;
     let dst_wal_links = get_links(
-        GetLinksInputBuilder::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?
-            .get_options(relation_hash.get_strategy())
-            .build(),
-    )?;
+        LinkQuery::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?, relation_hash.get_strategy())?;
     for link in dst_wal_links {
         if link.target.clone().into_hash() == relation_hash.input.clone().into() {
-            delete_link(link.create_link_hash)?;
+            delete_link(link.create_link_hash, GetOptions::default())?;
         }
     }
 
@@ -256,12 +247,10 @@ pub fn remove_all_tags_from_asset_relation(
     relation_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<()> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             relation_hash.input.clone(),
             LinkTypes::AssetRelationToRelationshipTags,
-        )?
-        .get_options(relation_hash.get_strategy())
-        .build(),
+        )?, relation_hash.get_strategy()
     )?;
     for link in links {
         let link_tag_content = ExternIO::from(link.tag.0)
@@ -271,8 +260,8 @@ pub fn remove_all_tags_from_asset_relation(
                     "Failed to decode link tag content: {e}"
                 )))
             })?;
-        delete_link(link.create_link_hash)?;
-        delete_link(link_tag_content.backlink_action_hash)?;
+        delete_link(link.create_link_hash, GetOptions::default())?;
+        delete_link(link_tag_content.backlink_action_hash, GetOptions::default())?;
     }
     Ok(())
 }
@@ -308,12 +297,10 @@ pub fn remove_tags_from_asset_relation(
         )))?;
 
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             input.input.relation_hash.clone(),
             LinkTypes::AssetRelationToRelationshipTags,
-        )?
-        .get_options(input.get_strategy())
-        .build(),
+        )?, input.get_strategy()
     )?;
     for link in links {
         match ExternIO::from(link.tag.0)
@@ -325,8 +312,8 @@ pub fn remove_tags_from_asset_relation(
             }) {
             Ok(link_tag_content) => {
                 if input.input.tags.contains(&link_tag_content.tag) {
-                    delete_link(link.create_link_hash)?;
-                    delete_link(link_tag_content.backlink_action_hash)?;
+                    delete_link(link.create_link_hash, GetOptions::default())?;
+                    delete_link(link_tag_content.backlink_action_hash, GetOptions::default())?;
                 }
             }
             Err(e) => {
@@ -357,9 +344,8 @@ pub fn get_asset_relation_by_hash(
 pub fn get_all_asset_relation_hashes(input: ZomeFnInput<()>) -> ExternResult<Vec<EntryHash>> {
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
-            .get_options(input.get_strategy())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?,
+        input.get_strategy(),
     )?;
     Ok(links
         .into_iter()
@@ -371,9 +357,8 @@ pub fn get_all_asset_relation_hashes(input: ZomeFnInput<()>) -> ExternResult<Vec
 pub fn get_all_asset_relations(input: ZomeFnInput<()>) -> ExternResult<Vec<AssetRelationAndHash>> {
     let path = Path::from(ALL_ASSET_RELATIONS_ANCHOR);
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
-            .get_options(input.get_strategy())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssetRelations)?
+            , input.get_strategy()
     )?;
 
     let get_input: Vec<GetInput> = links
@@ -416,12 +401,10 @@ pub fn get_all_asset_relations_with_tags(
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
-            GetLinksInputBuilder::try_new(
+            LinkQuery::try_new(
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
-            )?
-            .get_options(input.get_strategy())
-            .build(),
+            )?, input.get_strategy()
         )?;
         let tags = links
             .iter()
@@ -452,12 +435,10 @@ pub fn get_outgoing_asset_relations_with_tags(
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
-            GetLinksInputBuilder::try_new(
+            LinkQuery::try_new(
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
-            )?
-            .get_options(src_wal.get_strategy())
-            .build(),
+            )?, src_wal.get_strategy()
         )?;
         let tags = links
             .iter()
@@ -486,9 +467,8 @@ pub fn get_outgoing_asset_relations(
 ) -> ExternResult<Vec<AssetRelationAndHash>> {
     let src_wal_entry_hash = hash_entry(&src_wal.input)?;
     let src_wal_links = get_links(
-        GetLinksInputBuilder::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?
-            .get_options(src_wal.get_strategy())
-            .build(),
+        LinkQuery::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?
+        , src_wal.get_strategy()
     )?;
     let get_input: Vec<GetInput> = src_wal_links
         .into_iter()
@@ -537,12 +517,10 @@ pub fn get_incoming_asset_relations_with_tags(
     let mut asset_relations_with_tags: Vec<AssetRelationWithTags> = Vec::new();
     for asset_relation in asset_relations {
         let links = get_links(
-            GetLinksInputBuilder::try_new(
+            LinkQuery::try_new(
                 asset_relation.relation_hash.clone(),
                 LinkTypes::AssetRelationToRelationshipTags,
-            )?
-            .get_options(dst_wal.get_strategy())
-            .build(),
+            )?, dst_wal.get_strategy()
         )?;
         let tags = links
             .iter()
@@ -571,9 +549,8 @@ pub fn get_incoming_asset_relations(
 ) -> ExternResult<Vec<AssetRelationAndHash>> {
     let dst_wal_entry_hash = hash_entry(&dst_wal.input)?;
     let dst_wal_links = get_links(
-        GetLinksInputBuilder::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?
-            .get_options(dst_wal.get_strategy())
-            .build(),
+        LinkQuery::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?
+        , dst_wal.get_strategy()
     )?;
     let get_input: Vec<GetInput> = dst_wal_links
         .into_iter()
@@ -620,9 +597,8 @@ pub fn get_asset_relations_for_relationship_tag(
 ) -> ExternResult<Vec<AssetRelationAndHash>> {
     let rt_entry_hash = relationship_tag_entry_hash(&tag.input)?;
     let links = get_links(
-        GetLinksInputBuilder::try_new(rt_entry_hash, LinkTypes::RelationshipTagToAssetRelation)?
-            .get_options(tag.get_strategy())
-            .build(),
+        LinkQuery::try_new(rt_entry_hash, LinkTypes::RelationshipTagToAssetRelation)?
+            , tag.get_strategy()
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

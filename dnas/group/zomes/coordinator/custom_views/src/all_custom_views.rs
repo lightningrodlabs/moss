@@ -5,9 +5,8 @@ use moss_helpers::ZomeFnInput;
 pub fn get_all_custom_views(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_custom_views");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllCustomViews)?
-            .get_options(input.into())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllCustomViews)?
+           , input.into()
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

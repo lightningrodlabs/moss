@@ -109,24 +109,24 @@ export function findAppForDnaHash(
 
 export function getStatus(app: AppInfo): string {
   if (isAppRunning(app)) {
-    return 'RUNNING';
+    return 'ENABLED';
   } else if (isAppDisabled(app)) {
     return 'DISABLED';
-  } else if (isAppPaused(app)) {
-    return 'PAUSED';
+  } else if (isAppAwaitingMemProofs(app)) {
+    return 'AWAITING_MEMPROOFS';
   } else {
     return 'UNKNOWN';
   }
 }
 
 export function isAppRunning(app: AppInfo): boolean {
-  return app.status.type === 'running';
+  return app.status.type === 'enabled';
 }
 export function isAppDisabled(app: AppInfo): boolean {
   return app.status.type === 'disabled';
 }
-export function isAppPaused(app: AppInfo): boolean {
-  return app.status.type === 'paused';
+export function isAppAwaitingMemProofs(app: AppInfo): boolean {
+  return app.status.type === 'awaiting_memproofs';
 }
 
 export function getCellId(cellInfo: CellInfo): CellId | undefined {

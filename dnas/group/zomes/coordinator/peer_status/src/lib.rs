@@ -22,7 +22,7 @@ pub enum SignalPayload {
 
 #[hdk_extern]
 pub fn init(_: ()) -> ExternResult<InitCallbackResult> {
-    let mut functions = BTreeSet::new();
+    let mut functions = HashSet::new();
     functions.insert((zome_info()?.name, FunctionName("recv_remote_signal".into())));
     let cap_grant_entry: CapGrantEntry = CapGrantEntry::new(
         String::from("ping pong signals"), // A string by which to later query for saved grants.

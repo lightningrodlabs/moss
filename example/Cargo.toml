@@ -12,6 +12,7 @@ resolver = "2"
 hdi = "0.7.0-dev.18"
 hdk = "0.6.0-dev.21"
 serde = "1"
+holochain_serialized_bytes = "0.0.56"
 
 [workspace.dependencies.posts]
 path = "dnas/forum/zomes/coordinator/posts"

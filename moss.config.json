@@ -1,12 +1,12 @@
 {
   "holochain": {
-    "version": "0.5.5",
+    "version": "0.6.0-dev.28",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "8c1e0c6e72fb5dde157973ee280ee494bbbad1926820829339dc67b84bc86b6e",
-      "aarch64-unknown-linux-gnu": "0780ad5db60f7948da041e09c4e9679977a60659b585017f42ee47b8f341143a",
-      "x86_64-pc-windows-msvc.exe": "cb62f336c1be9fbf8c4a823b4e6b0248903f8e07c881497c8590e923142bbdaf",
-      "x86_64-apple-darwin": "430bc76fa9561461cf038f9ce4939171712ba02ce6eefc4a0aa43ac3496e498c",
-      "aarch64-apple-darwin": "c7535f3ce81cb6a72397d5942da6bb4a16d9eb9afc78af7ce0b861ca237d51f7"
+      "x86_64-unknown-linux-gnu": "15971cec67d7b615c4bc83fd5b07ab62d65cf36715efe7c98007ba73942e2030",
+      "aarch64-unknown-linux-gnu": "578aa65b0a2ec1dd07981a7c2c91a43944432d2bf7d674ac5162c8683f1617d0",
+      "x86_64-pc-windows-msvc.exe": "8fbdd21adf59f25f0e2e91cafbe23e9a3d2633a8b0ed77df21f083012c82fc4f",
+      "x86_64-apple-darwin": "7896ddaa97149da1ae5efa09b78dbbffdb3d869382893b7059a835514d101c27",
+      "aarch64-apple-darwin": "56fadcb8bd6cb20ef05ddf093d8f2912c9d07eb7edafbf5d0a8fc939bce83758"
     }
   },
   "bootstrap": {
@@ -20,13 +20,13 @@
     }
   },
   "lair": {
-    "version": "0.6.2",
+    "version": "0.6.3",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "3c9ea3dbfc0853743dad3874856fdcfe391dca1769a6a81fc91b7578c73e92a7",
-      "aarch64-unknown-linux-gnu": "2718e7242e3c78ae41afd0fa21bd82dfcfcbfaa72cb421a5067078140fce5142",
-      "x86_64-pc-windows-msvc.exe": "6392ce85e985483d43fa01709bfd518f8f67aed8ddfa5950591b4ed51d226b8e",
-      "x86_64-apple-darwin": "746403e5d1655ecf14d95bccaeef11ad1abfc923e428c2f3d87c683edb6fdcdc",
-      "aarch64-apple-darwin": "05c7270749bb1a5cf61b0eb344a7d7a562da34090d5ea81b4c5b6cf040dd32e8"
+      "aarch64-apple-darwin": "cb26b8065f52f7e3ff2d24a09100f60f61a3214e25e170ac2ef607dd040800d7",
+      "aarch64-unknown-linux-gnu": "2fcaf1482b70e3df614c631255b2c5af7f01c7927c95b00281a4a1404e2254b0",
+      "x86_64-apple-darwin": "d7521a0299ea425700091b78e02672b05ad4c97c2ca82643ea9ba2349b0e1e69",
+      "x86_64-pc-windows-msvc.exe": "504e7e3d1afc4426990a4aee190f1137bb474ccb072f7049c23f43fc01c07009",
+      "x86_64-unknown-linux-gnu": "56beb19ca4abf39c8e2b90401a9ade10e5c395f6b95cd1853aac05643dce5a11"
     }
   },
   "groupHapp": {
