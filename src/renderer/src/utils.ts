@@ -649,7 +649,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.14://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.15://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {

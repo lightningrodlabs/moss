@@ -1,5 +1,5 @@
-appId: org.lightningrodlabs.moss-0.14
-productName: Moss (0.14)
+appId: org.lightningrodlabs.moss-0.15
+productName: Moss (0.15)
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ afterSign: scripts/notarize.js
 protocols:
   - name: Weave URL
     schemes:
-      - weave-0.14
+      - weave-0.15
 win:
   executableName: moss
 nsis:

@@ -100,7 +100,7 @@ export class MossApp extends LitElement {
 
   async firstUpdated() {
     this.loadingText = 'loading...';
-    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.14';
+    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
     );
@@ -597,7 +597,7 @@ export class MossApp extends LitElement {
               'If you want to support us in finding the problem, please export the logs and send them to ',
             )}</span
           >
-          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
+          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
         <div class="row items-center">
           <button

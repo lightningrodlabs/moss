@@ -1,8 +1,8 @@
 {
-  "name": "org.lightningrodlabs.moss-0.14",
-  "version": "0.14.4",
+  "name": "org.lightningrodlabs.moss-0.15",
+  "version": "0.15.0",
   "private": true,
-  "description": "Moss (0.14)",
+  "description": "Moss (0.15)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
@@ -102,7 +102,7 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron/notarize": "^2.1.0",
     "@holochain-playground/cli": "^0.1.1",
-    "@theweave/cli": "0.14.0-rc.5",
+    "@theweave/cli": "0.15.0",
     "@microsoft/api-extractor": "7.47.7",
     "@microsoft/api-documenter": "7.25.12",
     "@types/adm-zip": "0.5.5",

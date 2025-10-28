@@ -695,8 +695,8 @@ export class MainDashboard extends LitElement {
         'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
       );
       const updateFeed = await response.json();
-      if (updateFeed['0.14.x']) {
-        this._updateFeed = updateFeed['0.14.x'];
+      if (updateFeed['0.15.x']) {
+        this._updateFeed = updateFeed['0.15.x'];
       }
     } catch (e) {
       console.warn('Failed to fetch update feed: ', e);

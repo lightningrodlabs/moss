@@ -38,7 +38,7 @@ import { SlDialog, SlSwitch } from '@shoelace-style/shoelace';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.14/curations-0.14.json',
+    url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
     useLists: ['default'],
   },
 ];
@@ -382,7 +382,7 @@ export class ToolLibraryWeb2 extends LitElement {
           repository of Lightningrod Labs
           <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>. <br /><br />
           If you would like to publish a Tool, please contact us at
-          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
+          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
           or
           <a href="https://github.com/lightningrodlabs/moss/issues/new"
             >create an issue on Github</a

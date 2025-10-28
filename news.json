@@ -1,4 +1,11 @@
 {
+  "0.15.x": [
+    {
+      "type": "Release",
+      "timestamp": 1751947831452,
+      "message": "## Moss 0.15.0 is released 🎉\n\nThis release is using Holochain 0.6.0 which comes with lots of improvements in the networking protocol."
+    }
+  ],
   "0.14.x": [
     {
       "type": "Release",

@@ -48,8 +48,8 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   try {
     const split = inviteLink.trim().split('://');
     const split2 = inviteLink.startsWith('https')
-      ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.14://invite/aljsfkajsf
-      : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.14://invite/aljsfkajsf
+      ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.15://invite/aljsfkajsf
+      : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.15://invite/aljsfkajsf
     if (split2[0] === 'invite') {
       return invitePropsToPartialModifiers(split2[1]);
     } else {
