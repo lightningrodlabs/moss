@@ -1,8 +1,6 @@
 name: 'release-happ'
 on:
-  push:
-    branches:
-      - release-happ
+  workflow_dispatch:
 
 jobs:
   publish-happ:
@@ -12,9 +10,8 @@ jobs:
     outputs:
       releaseId: ${{ steps.create-release.outputs.id }}
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      # Checks out a copy of your repository on the ubuntu-latest machine
-      - uses: actions/checkout@v3
+      # Checkout the specific branch provided by the user input
+      - uses: actions/checkout@v4
 
       - name: Extend space
         uses: ./.github/actions/extend-space
