@@ -52,7 +52,7 @@ const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
       pm.last_gossip_timestamp = peerMeta.last_gossip_timestamp
         ? new Date(peerMeta.last_gossip_timestamp / 1000)
         : undefined;
-      pm.storage_arc = `${pm.storage_arc[0]}..${pm.storage_arc[1]}`;
+      pm.storage_arc = pm.storage ? `${pm.storage_arc[0]}..${pm.storage_arc[1]}` : null;
       peerMetaList.push({
         peer_url: peerUrl,
         meta: pm,
