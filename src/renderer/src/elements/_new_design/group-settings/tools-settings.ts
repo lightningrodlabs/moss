@@ -221,7 +221,7 @@ export class ToolsSettings extends LitElement {
               this.tabsState = TabsState.Inactive;
             }}
           >
-            ${msg('Inactive')}
+            ${msg('To Activate')}
           </button>
           <button
             class="tab ${this.tabsState === TabsState.Active ? 'tab-selected' : ''}"

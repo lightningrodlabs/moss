@@ -172,7 +172,7 @@ export class InactiveTools extends LitElement {
         return html` ${filteredApplets.length === 0
           ? html`
               <div class="column" style="flex: 1; align-items: center; margin-top: 50px;">
-                ${msg('No inactive tools.')}
+                ${msg('No new tools to activate.')}
               </div>
             `
           : html`
@@ -198,7 +198,7 @@ export class InactiveTools extends LitElement {
                               ? html`<img
                                   src=${info.toolInfoAndVersions.icon}
                                   alt="Applet logo"
-                                  style="height: 64px; width:64px; margin-right: 10px; border-radius:20px;"
+                                  style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                                 />`
                               : html``}
                           </sl-tooltip>
@@ -235,6 +235,7 @@ export class InactiveTools extends LitElement {
                                   @click=${(e) => {
                                     e.stopPropagation();
                                     this._groupStore.ignoreApplet(info.appletHash);
+                                    this.requestUpdate();
                                   }}
                                 >
                                   ${ignoreToolIcon(20)}<span style="margin-left: 5px;"

@@ -289,9 +289,12 @@ export class AbandonedAppletSettingsCard extends LitElement {
           >
             <applet-logo
               .appletHash=${this.appletHash}
-              style="margin-right: 16px; --size: 50px;"
+              style="margin-right: 16px; --size: 64px;"
             ></applet-logo>
-            <span style="font-size: 16px; font-weight: 600;">${this.applet.custom_name}</span>
+            <div class="column">
+              <div class="tool-name">${this.applet.custom_name}</div>
+            </div>
+
             <span class="flex-1"></span>
             <div>${this.showDetails ? chevronSingleDownIcon(18) : chevronSingleUpIcon(18)}</div>
           </div>
