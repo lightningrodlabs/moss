@@ -2,7 +2,7 @@
 
 CLI to run Moss Tools in development mode.
 
-This version is compatible with `@theweave/api@0.4.0-alpha.3`.
+This version is compatible with `@theweave/api@0.6.0`.
 
 ```
 Usage: @theweave/cli [options]

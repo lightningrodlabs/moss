@@ -29,3 +29,17 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 4. Run `yarn fetch:binaries` locally to fetch the new binaries.
 
 5. Follow the release process from the [Release](#release) section above.
+
+
+## Releasing NPM packages
+
+Publish in this order:
+
+1. @theweave/api
+1. @theweave/tool-library-client
+1. @theweave/group-client 
+1. @theweave/elements
+1. @theweave/moss-types
+1. @theweave/utils
+2. @theweave/cli
+3. @theweave/wdocker
