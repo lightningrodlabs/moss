@@ -27,6 +27,7 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
+import { toolSettingsStyles } from './tool-settings-styles.js';
 import {
   dnaHashForCell,
   getCellNetworkSeed,
@@ -34,6 +35,7 @@ import {
   isAppRunning,
 } from '../../../utils.js';
 import { chevronSingleDownIcon, chevronSingleUpIcon, deprecateIcon } from '../icons.js';
+import { deprecateTool, undeprecateTool } from './tool-settings-utils';
 
 @localized()
 @customElement('applet-settings-card')
@@ -172,28 +174,6 @@ export class AppletSettingsCard extends LitElement {
     );
   }
 
-  async archiveApplet() {
-    try {
-      await this.groupStore.groupClient.archiveApplet(this.appletHash);
-      await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool archived.'));
-    } catch (e) {
-      notifyError(msg('Failed to archive Tool (see console for details)'));
-      console.error(e);
-    }
-  }
-
-  async unArchiveApplet() {
-    try {
-      await this.groupStore.groupClient.unarchiveApplet(this.appletHash);
-      await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool unarchived.'));
-    } catch (e) {
-      notifyError(msg('Failed to unarchive Tool (see console for details)'));
-      console.error(e);
-    }
-  }
-
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
     console.log('amISteward: ', this.amISteward());
@@ -246,7 +226,7 @@ export class AppletSettingsCard extends LitElement {
     switch (this._joinedMembers.value.status) {
       case 'error':
         console.error(
-          'Failed to get members that joined the applet: ',
+          'Failed to get members that activated this tool: ',
           this._joinedMembers.value.error,
         );
         return html`ERROR: See console for details.`;
@@ -270,7 +250,7 @@ export class AppletSettingsCard extends LitElement {
     switch (this._abandonedMembers.value.status) {
       case 'error':
         console.error(
-          'Failed to get members that abandoned the applet: ',
+          'Failed to get members that abandoned the tool: ',
           this._abandonedMembers.value.error,
         );
         return html`ERROR: See console for details.`;
@@ -279,8 +259,8 @@ export class AppletSettingsCard extends LitElement {
       case 'complete':
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
-          <div class="row" style="align-items: center; margin-top: 4px;">
-            <span><b>abandoned by:&nbsp;</b></span>
+          <div class="row items-center" style="margin-top: 4px;">
+            <span>Abandoned by: </span>
             ${this._abandonedMembers.value.value.map(
               (appletAgent) => html`
                 <agent-avatar
@@ -331,10 +311,10 @@ export class AppletSettingsCard extends LitElement {
               variant="secondary"
               color="#C35C1D"
               style="margin-right: 5px;"
-              @click=${() => this.archiveApplet()}
+              @click=${() => deprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.archiveApplet();
+                  deprecateTool(this.groupStore, this.appletHash);
                 }
               }}
             >
@@ -351,10 +331,10 @@ export class AppletSettingsCard extends LitElement {
             <moss-mini-button
               variant="secondary"
               style="margin-right: 5px;"
-              @click=${() => this.unArchiveApplet()}
+              @click=${() => undeprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.unArchiveApplet();
+                  undeprecateTool(this.groupStore, this.appletHash);
                 }
               }}
             >
@@ -388,10 +368,8 @@ export class AppletSettingsCard extends LitElement {
         }}
       >
         ${this.archiveState() === 'archived'
-          ? html`<span
-              class="font-bold"
-              style="position: absolute; top: 2px; right: 2px; font-size: 11px;"
-              >${msg('ARCHIVED')}</span
+          ? html`<span class="tool-deprecated" style="position: absolute; top: 2px; right: 2px;"
+              >${msg('Deprecated')}</span
             > `
           : html``}
 
@@ -554,25 +532,8 @@ export class AppletSettingsCard extends LitElement {
 
   static styles = [
     mossStyles,
+    toolSettingsStyles,
     css`
-      .tool {
-        border-radius: 20px;
-        background: #fff;
-        padding: 8px;
-      }
-
-      .tool:hover {
-        background-color: var(--moss-field-grey);
-      }
-      .tool-expanded {
-        border: 1px solid var(--moss-grey-light);
-      }
-
-      .installer,
-      .participants {
-        align-items: center;
-      }
-
       .cell-card {
         border-radius: 10px;
         padding: 8px 12px;
@@ -586,15 +547,6 @@ export class AppletSettingsCard extends LitElement {
         margin: 15px 0 10px 0;
       }
 
-      .details-container {
-        width: 680px;
-        border-top: 1px solid var(--moss-grey-light);
-        margin-top: 12px;
-        padding-top: 12px;
-        margin-left: 74px;
-        margin-right: auto;
-      }
-
       .title-bar {
         background-clip: border-box;
         padding: 6px;
@@ -602,22 +554,6 @@ export class AppletSettingsCard extends LitElement {
 
       .title-bar:hover {
         background: #f5f5f5;
-      }
-
-      .tool-name {
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 24px;
-      }
-      .tool-version {
-        opacity: 0.5;
-      }
-      .tool-short-description {
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        opacity: 0.6;
       }
     `,
   ];

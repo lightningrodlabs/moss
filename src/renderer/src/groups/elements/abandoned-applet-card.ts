@@ -144,9 +144,9 @@ export class AbandonedAppletCard extends LitElement {
     try {
       await this.groupStore.groupClient.unarchiveApplet(this.appletHash);
       await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool unarchived.'));
+      notify(msg('Tool undeprecated.'));
     } catch (e) {
-      notifyError(msg('Failed to unarchive Tool (see console for details)'));
+      notifyError(msg('Failed to undeprecate Tool (see console for details)'));
       console.error(e);
     }
   }

@@ -22,6 +22,7 @@ import {
   ignoreToolIcon,
 } from '../icons';
 import '../moss-mini-button.js';
+import { toolSettingsStyles } from './tool-settings-styles.js';
 
 @localized()
 @customElement('inactive-tools')
@@ -182,7 +183,7 @@ export class InactiveTools extends LitElement {
                       class="column tool ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
                         ? 'tool-expanded'
                         : ''}"
-                      style="flex: 1;"
+                      style="flex: 1;margin-bottom: 20px;"
                       @click=${() => {
                         this.toggleExpandedApplets(encodeHashToBase64(info.appletHash));
                       }}
@@ -250,7 +251,7 @@ export class InactiveTools extends LitElement {
                       </div>
                       ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
                         ? html`
-                      <div class="instance-details column">
+                      <div class="details-container column">
                         <div class="installer row">
                           <agent-avatar
                             .size=${24}
@@ -306,52 +307,14 @@ export class InactiveTools extends LitElement {
   }
   static styles = [
     mossStyles,
+    toolSettingsStyles,
     css`
       :host {
         display: flex;
       }
-      .tool {
-        border-radius: 20px;
-        background: #fff;
-        padding: 8px;
-        margin-bottom: 20px;
-      }
-      .tool:hover {
-        background-color: var(--moss-field-grey);
-      }
-      .tool-expanded {
-        border: 1px solid var(--moss-grey-light);
-      }
-
-      .instance-details {
-        width: 680px;
-        border-top: 1px solid var(--moss-grey-light);
-        margin-top: 12px;
-        padding-top: 12px;
-        margin-left: 74px;
-        margin-right: auto;
-      }
 
       .buttons {
         margin-right: 10px;
-      }
-
-      .tool-name {
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 24px;
-      }
-      .tool-short-description {
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        opacity: 0.6;
-      }
-
-      .installer,
-      .participants {
-        align-items: center;
       }
     `,
   ];

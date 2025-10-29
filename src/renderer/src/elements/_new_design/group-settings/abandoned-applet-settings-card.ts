@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { mdiArchiveArrowDownOutline, mdiArchiveArrowUpOutline } from '@mdi/js';
+import { mdiArchiveArrowUpOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -24,7 +24,10 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
-import { threeDots, threeDotsVertical } from '../icons';
+import { chevronSingleDownIcon, chevronSingleUpIcon, deprecateIcon } from '../icons';
+import '../moss-mini-button.js';
+import { toolSettingsStyles } from './tool-settings-styles';
+import { deprecateTool, undeprecateTool } from './tool-settings-utils';
 
 @localized()
 @customElement('abandoned-applet-settings-card')
@@ -137,33 +140,11 @@ export class AbandonedAppletSettingsCard extends LitElement {
     }
   }
 
-  async archiveApplet() {
-    try {
-      await this.groupStore.groupClient.archiveApplet(this.appletHash);
-      await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool archived.'));
-    } catch (e) {
-      notifyError(msg('Failed to archive Tool (see console for details)'));
-      console.error(e);
-    }
-  }
-
-  async unArchiveApplet() {
-    try {
-      await this.groupStore.groupClient.unarchiveApplet(this.appletHash);
-      await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool unarchived.'));
-    } catch (e) {
-      notifyError(msg('Failed to unarchive Tool (see console for details)'));
-      console.error(e);
-    }
-  }
-
   renderJoinedMembers() {
     switch (this._joinedMembers.value.status) {
       case 'error':
         console.error(
-          'Failed to get members that joined the applet: ',
+          'Failed to get members that activated this tool: ',
           this._joinedMembers.value.error,
         );
         return html`ERROR: See console for details.`;
@@ -171,10 +152,10 @@ export class AbandonedAppletSettingsCard extends LitElement {
         return html`<sl-spinner></sl-spinner>`;
       case 'complete':
         return html`
-          <div class="row items-center" style="font-size: 14px; margin-top: 4px;">
-            <span><b>joined by:&nbsp;</b></span>
+          <div class="participants row">
+            <span>In use by: </span>
             ${this._joinedMembers.value.value.length === 0
-              ? html`<span>Nobody joined this Tool or everyone abandoned it.</span>`
+              ? html`<span>Nobody activated this tool or everyone abandoned it.</span>`
               : this._joinedMembers.value.value.map(
                   (appletAgent) => html`
                     <agent-avatar
@@ -192,7 +173,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
     switch (this._abandonedMembers.value.status) {
       case 'error':
         console.error(
-          'Failed to get members that abandoned the applet: ',
+          'Failed to get members that abandoned the tool: ',
           this._abandonedMembers.value.error,
         );
         return html`ERROR: See console for details.`;
@@ -201,8 +182,8 @@ export class AbandonedAppletSettingsCard extends LitElement {
       case 'complete':
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
-          <div class="row items-center" style="font-size: 14px; margin-top: 4px;">
-            <span><b>abandoned by:&nbsp;</b></span>
+          <div class="row items-center" style="margin-top: 4px;">
+            <span>Abandoned by: </span>
             ${this._abandonedMembers.value.value.map(
               (appletAgent) => html`
                 <agent-avatar
@@ -226,40 +207,34 @@ export class AbandonedAppletSettingsCard extends LitElement {
               'Archiving will make it not show up anymore for new members in the "Unjoined Tools" section',
             )}
           >
-            <sl-button
-              variant="warning"
+            <moss-mini-button
+              variant="secondary"
+              color="#C35C1D"
               style="margin-right: 5px;"
-              @click=${() => this.archiveApplet()}
+              @click=${() => deprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.archiveApplet();
+                  deprecateTool(this.groupStore, this.appletHash);
                 }
               }}
             >
               <div class="row center-content">
-                <sl-icon
-                  style="height: 20px; width: 20px;"
-                  .src=${wrapPathInSvg(mdiArchiveArrowDownOutline)}
-                ></sl-icon
-                ><span style="margin-left: 5px;">${msg('Archive')}</span>
+                ${deprecateIcon(18)}
+                <span style="margin-left: 5px;">${msg('Deprecate for Group')}</span>
               </div>
-            </sl-button>
+            </moss-mini-button>
           </sl-tooltip>
         `;
       case 'archived':
         return html`
-          <sl-tooltip
-            content=${msg(
-              'Unarchive this Tool for it to show up again for new membersin the "Unjoined Tools" section',
-            )}
-          >
-            <sl-button
-              variant="neutral"
+          <sl-tooltip content=${msg('Remove deprecation tag for this tool.')}>
+            <moss-mini-button
+              variant="secondary"
               style="margin-right: 5px;"
-              @click=${() => this.unArchiveApplet()}
+              @click=${() => undeprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
-                  this.unArchiveApplet();
+                  undeprecateTool(this.groupStore, this.appletHash);
                 }
               }}
             >
@@ -268,9 +243,9 @@ export class AbandonedAppletSettingsCard extends LitElement {
                   style="height: 20px; width: 20px;"
                   .src=${wrapPathInSvg(mdiArchiveArrowUpOutline)}
                 ></sl-icon
-                ><span style="margin-left: 5px;">${msg('Unarchive')}</span>
+                ><span style="margin-left: 5px;">${msg('Undeprecate')}</span>
               </div>
-            </sl-button>
+            </moss-mini-button>
           </sl-tooltip>
         `;
       default:
@@ -281,14 +256,19 @@ export class AbandonedAppletSettingsCard extends LitElement {
   render() {
     return html`
       <div
-        class="column container flex-1 ${this.showDetails ? 'bg-gray' : ''}"
+        class="column tool flex-1 ${this.showDetails ? 'tool-expanded' : ''}"
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
+        @click=${(e) => {
+          e.stopPropagation();
+          this.showDetails = !this.showDetails;
+        }}
+        @keypress=${(e) => {
+          e.stopPropagation();
+        }}
       >
         ${this.archiveState() === 'archived'
-          ? html`<span
-              class="font-bold"
-              style="position: absolute; top: 2px; right: 2px; font-size: 11px;"
-              >${msg('ARCHIVED')}</span
+          ? html`<span class="tool-deprecated" style="position: absolute; top: 2px; right: 2px;"
+              >${msg('Deprecated')}</span
             > `
           : html``}
 
@@ -296,11 +276,13 @@ export class AbandonedAppletSettingsCard extends LitElement {
           <div
             class="row title-bar flex-1 items-center"
             tabindex="0"
-            @click=${() => {
+            @click=${(e) => {
+              e.stopPropagation();
               this.showDetails = !this.showDetails;
             }}
             @keypress=${(e: KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
                 this.showDetails = !this.showDetails;
               }
             }}
@@ -311,31 +293,17 @@ export class AbandonedAppletSettingsCard extends LitElement {
             ></applet-logo>
             <span style="font-size: 16px; font-weight: 600;">${this.applet.custom_name}</span>
             <span class="flex-1"></span>
-            <button
-              class="triple-dot-btn"
-              @click=${(e) => {
-                e.stopPropagation();
-                this.showDetails = !this.showDetails;
-              }}
-              @keypress=${(e) => {
-                e.stopPropagation();
-              }}
-            >
-              ${this.showDetails ? threeDotsVertical(28) : threeDots(28)}
-            </button>
+            <div>${this.showDetails ? chevronSingleDownIcon(18) : chevronSingleUpIcon(18)}</div>
           </div>
           <div class="column details-container" style="${this.showDetails ? '' : 'display: none;'}">
-            <div class="row" style="margin-top: 15px; align-items: center;">
-              <span style="flex: 1;"></span>
-              <div class="row" style="align-items: center;">
-                <span style="font-size: 14px;"><b>${msg('added by')}&nbsp;</b></span>
-                ${this.addedBy
-                  ? html`<agent-avatar
-                      style="margin-left: 5px;"
-                      .agentPubKey=${this.addedBy}
-                    ></agent-avatar>`
-                  : html`${msg('unknown')}`}
-              </div>
+            <div class="installer row">
+              ${this.addedBy
+                ? html`<agent-avatar
+                    style="margin-left: 5px;"
+                    .agentPubKey=${this.addedBy}
+                  ></agent-avatar>`
+                : html`${msg('unknown')}`}
+              <span>${msg('installed this tool to the group space ')}</span>
             </div>
 
             ${this.renderJoinedMembers()} ${this.renderAbandonedMembers()}
@@ -357,21 +325,9 @@ export class AbandonedAppletSettingsCard extends LitElement {
 
   static styles = [
     mossStyles,
+    toolSettingsStyles,
+
     css`
-      .container {
-        border-top: 1px solid var(--moss-grey-light);
-        border-bottom: 1px solid var(--moss-grey-light);
-        margin-bottom: -1px;
-      }
-
-      .bg-gray {
-        background: #f5f5f5;
-      }
-
-      .details-container {
-        padding: 10px;
-      }
-
       .title-bar {
         background-clip: border-box;
         padding: 6px;
@@ -379,15 +335,6 @@ export class AbandonedAppletSettingsCard extends LitElement {
 
       .title-bar:hover {
         background: #f5f5f5;
-      }
-
-      .triple-dot-btn {
-        all: unset;
-        cursor: pointer;
-      }
-
-      .triple-dot-btn:focus-visible {
-        outline: 2px solid var(--moss-medium-green);
       }
     `,
   ];
