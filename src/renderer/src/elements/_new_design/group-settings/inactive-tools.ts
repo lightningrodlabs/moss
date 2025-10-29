@@ -45,11 +45,11 @@ export class InactiveTools extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Tool installed.');
+      notify('Tool activated.');
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
-      this._showIgnoredApplets = false;
+      //this._showIgnoredApplets = false;
     } catch (e) {
-      notifyError(`Failed to join Tool (See console for details).`);
+      notifyError(`Failed to activate tool (See console for details).`);
       console.error(e);
     }
     this._joiningNewApplet = undefined;
@@ -211,13 +211,6 @@ export class InactiveTools extends LitElement {
                           </div>
                         </div>
                         <div class="buttons row" style="align-items:center">
-                          <moss-mini-button
-                            variant="primary"
-                            ?loading=${this.expandedApplets[encodeHashToBase64(info.appletHash)]}
-                            >${ignoreToolIcon(20)}<span style="margin-left: 5px;"
-                              >${msg('Ignore')}</span
-                            ></moss-mini-button
-                          >
                           <moss-mini-button
                             style="margin-left: 20px;"
                             .loading=${this._joiningNewApplet ===
