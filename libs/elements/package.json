@@ -23,7 +23,7 @@
   "type": "module",
   "dependencies": {
     "@holochain-open-dev/elements": "^0.600.0-dev.0",
-    "@holochain-open-dev/profiles": "^0.600.0-dev.0",
+    "@holochain-open-dev/profiles": "^0.600.0-dev.2",
     "@holochain-open-dev/stores": "^0.600.0-dev.0",
     "@holochain-open-dev/utils": "^0.600.0-dev.0",
     "@holochain/client": "^0.20.0-dev.2",
