@@ -9,6 +9,16 @@
       "aarch64-apple-darwin": "56fadcb8bd6cb20ef05ddf093d8f2912c9d07eb7edafbf5d0a8fc939bce83758"
     }
   },
+  "hc": {
+    "version": "0.6.0-dev.28",
+    "sha256": {
+      "aarch64-apple-darwin": "28854576510b84edefe1c954f2b05932c1f0ebeb8e448b70fc72507d445d3377",
+      "aarch64-unknown-linux-gnu": "69a61a18229c354c216b521e340a58f11048158afc473f8c6ca9ab90699d2518",
+      "x86_64-apple-darwin": "076fcf940c40d4d87bb570e8acaeac7f8d8de2671d6dd9abecd46b4e18e84165",
+      "x86_64-pc-windows-msvc.exe": "c01f5ab220590d2c1c57bf0436f4dce4edb31cb2f1fafc20e148ad7ee2969d5c",
+      "x86_64-unknown-linux-gnu": "09ae12bc52cb1e67d30cddbdff6e45aeeb9c0f315c6b1cfffd605be1004fac10"
+    }
+  },
   "bootstrap": {
     "version": "0.1.5",
     "sha256": {

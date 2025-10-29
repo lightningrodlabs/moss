@@ -84,6 +84,21 @@ function downloadHolochainBinary() {
   );
 }
 
+function downloadHcBinary() {
+  const hcBinaryFilename = `hc-v${mossConfig.hc.version}-${mossConfig.binariesAppendix}${
+    process.platform === 'win32' ? '.exe' : ''
+  }`;
+  const destinationPath = path.join(binariesDir, hcBinaryFilename);
+  const hcBinaryRemoteFilename = `hc-v${mossConfig.hc.version}-${targetEnding}`;
+  const hcBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/hc-binaries-${mossConfig.hc.version}/${hcBinaryRemoteFilename}`;
+  downloadFile(
+    hcBinaryUrl,
+    destinationPath,
+    mossConfig.hc.sha256[targetEnding],
+    true,
+  );
+}
+
 function downloadLairBinary() {
   const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConfig.binariesAppendix}${
     process.platform === 'win32' ? '.exe' : ''
@@ -105,5 +120,6 @@ function downloadBootstrapBinary() {
 }
 
 downloadHolochainBinary();
+downloadHcBinary();
 downloadLairBinary();
 downloadBootstrapBinary();
