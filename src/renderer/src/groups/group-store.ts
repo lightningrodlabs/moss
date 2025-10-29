@@ -964,6 +964,7 @@ export class GroupStore {
       permission_hash: permissionHash,
       custom_name: customName,
       description: tool.toolInfoAndVersions.description,
+      subtitle: tool.toolInfoAndVersions.subtitle,
       sha256_happ: latestVersion.hashes.happSha256,
       sha256_ui: latestVersion.hashes.uiSha256,
       sha256_webhapp: latestVersion.hashes.webhappSha256,

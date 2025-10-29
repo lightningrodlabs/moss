@@ -1,5 +1,5 @@
 import { css, html, LitElement } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
@@ -17,6 +17,7 @@ import './group-settings/danger-zone.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { consume } from '@lit/context';
+import { ToolsSettings } from './group-settings/tools-settings.js';
 
 enum TabsState {
   General,
@@ -37,6 +38,15 @@ export class GroupSettings extends LitElement {
 
   @state()
   tabsState: TabsState = TabsState.General;
+  @query('#tools-settings')
+  toolsSettings: ToolsSettings | undefined;
+
+  public showInactiveTools() {
+    this.tabsState = TabsState.Tools;
+    setTimeout(() => {
+      this.toolsSettings?.showInactiveTools();
+    }, 100);
+  }
 
   firstUpated() {
     // this._dialog.show();
@@ -51,7 +61,7 @@ export class GroupSettings extends LitElement {
   }
 
   renderTools() {
-    return html` <tools-settings></tools-settings> `;
+    return html` <tools-settings id="tools-settings"></tools-settings> `;
   }
 
   renderMyProfile() {

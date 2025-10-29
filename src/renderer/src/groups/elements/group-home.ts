@@ -67,6 +67,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { closeIcon } from '../../elements/_new_design/icons.js';
+import { GroupSettings } from '../../elements/_new_design/group-settings.js';
 
 type View =
   | {
@@ -107,6 +108,9 @@ export class GroupHome extends LitElement {
 
   @query('#group-settings-dialog')
   groupSettingsDialog: SlDialog | undefined;
+
+  @query('#group-settings')
+  groupSettings: GroupSettings | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -215,6 +219,11 @@ export class GroupHome extends LitElement {
 
   public selectTab(tab: 'home' | 'unjoined tools'): void {
     this._selectedTab = tab;
+  }
+
+  public openInactiveTools() {
+    this.groupSettingsDialog?.show();
+    this.groupSettings?.showInactiveTools();
   }
 
   hasStewardPermission(): boolean {
@@ -624,6 +633,7 @@ export class GroupHome extends LitElement {
             ${closeIcon(24)}
           </button>
           <group-settings
+            id="group-settings"
             @uninstall-applet=${async (e) => this.uninstallApplet(e)}
           ></group-settings>
         </div>

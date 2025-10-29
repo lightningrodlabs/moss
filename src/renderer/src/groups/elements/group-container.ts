@@ -118,14 +118,17 @@ export class GroupContainer extends LitElement {
               .selectedAppletHash=${this.selectedAppletHash()}
               @unjoined-tools-clicked=${() => {
                 console.log('unjoined tools clicked');
+
                 if (this._groupHome) {
-                  this.dispatchEvent(
-                    new CustomEvent('group-selected', {
-                      detail: { groupDnaHash: this.groupDnaHash },
-                      composed: true,
-                    }),
-                  );
-                  this._groupHome.selectTab('unjoined tools');
+                  this._groupHome.openInactiveTools();
+                  // this.dispatchEvent(
+                  //   new CustomEvent('group-selected', {
+                  //     detail: { groupDnaHash: this.groupDnaHash },
+                  //     composed: true,
+                  //   }),
+                  // );
+
+                  // this._groupHome.selectTab('unjoined tools');
                 }
               }}
               @my-profile-clicked=${() => {

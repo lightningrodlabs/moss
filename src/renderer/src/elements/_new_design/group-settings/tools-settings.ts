@@ -10,6 +10,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import './applet-settings-card.js';
 import './abandoned-applet-settings-card.js';
+import './inactive-tools.js';
 
 import { repeat } from 'lit/directives/repeat.js';
 import { mossStoreContext } from '../../../context.js';
@@ -19,8 +20,8 @@ import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 
 enum TabsState {
+  Inactive,
   Active,
-  ToActivate,
   Abandoned,
 }
 
@@ -50,6 +51,10 @@ export class ToolsSettings extends LitElement {
       ),
     () => [this._groupStore],
   );
+
+  public showInactiveTools() {
+    this.tabsState = TabsState.Inactive;
+  }
 
   @state()
   tabsState: TabsState = TabsState.Active;
@@ -126,12 +131,8 @@ export class ToolsSettings extends LitElement {
     }
   }
 
-  renderAppletsToActivate() {
-    return html` TO-DO`;
-  }
-
-  renderToolsToActivate() {
-    return html`${this.renderAppletsToActivate()}`;
+  renderToolsInactivate() {
+    return html`<inactive-tools></inactive-tools>`;
   }
   renderToolsActive() {
     return html`${this.renderInstalledApplets()}`;
@@ -142,8 +143,8 @@ export class ToolsSettings extends LitElement {
 
   renderContent() {
     switch (this.tabsState) {
-      case TabsState.ToActivate:
-        return this.renderToolsToActivate();
+      case TabsState.Inactive:
+        return this.renderToolsInactivate();
       case TabsState.Active:
         return this.renderToolsActive();
       case TabsState.Abandoned:
@@ -215,20 +216,20 @@ export class ToolsSettings extends LitElement {
       >
         <div class="row items-center tab-bar flex-1">
           <button
+            class="tab ${this.tabsState === TabsState.Inactive ? 'tab-selected' : ''}"
+            @click=${() => {
+              this.tabsState = TabsState.Inactive;
+            }}
+          >
+            ${msg('Inactive')}
+          </button>
+          <button
             class="tab ${this.tabsState === TabsState.Active ? 'tab-selected' : ''}"
             @click=${() => {
               this.tabsState = TabsState.Active;
             }}
           >
             ${msg('Active')}
-          </button>
-          <button
-            class="tab ${this.tabsState === TabsState.ToActivate ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.ToActivate;
-            }}
-          >
-            ${msg('To-activate')}
           </button>
           <button
             class="tab ${this.tabsState === TabsState.Abandoned ? 'tab-selected' : ''}"
@@ -239,7 +240,10 @@ export class ToolsSettings extends LitElement {
             ${msg('Abandoned')}
           </button>
         </div>
-        <div class="column" style="margin-top: 10px; overflow-y: auto;">
+        <div
+          class="column"
+          style="margin-top: 10px; overflow-y: auto; scrollbar-gutter: stable; scrollbar-width: thin;margin-right:-2px;"
+        >
           ${this.renderContent()}
         </div>
       </div>

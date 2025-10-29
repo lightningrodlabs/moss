@@ -342,6 +342,68 @@ export const mossStyles = [
       background: var(--moss-dark-button);
     }
 
+    .install-button {
+      display: flex;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: solid 2px;
+      border-color: black;
+      color: black;
+      background-color: white;
+      font-style: normal;
+      font-size: 14px;
+      line-height: 16px;
+      padding: 8px 10px;
+    }
+
+    .install-button:hover {
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-primary,
+    .moss-mini-button-secondary {
+      display: flex;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: solid 2px;
+      font-style: normal;
+      font-size: 14px;
+      line-height: 16px;
+      padding: 8px 10px;
+    }
+
+    .moss-mini-button-secondary {
+      border-color: black;
+      color: black;
+      background-color: white;
+    }
+
+    .moss-mini-button-secondary:hover {
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-primary:hover {
+      color: black;
+      background-color: white;
+    }
+
+    .moss-mini-button-primary {
+      border-color: black;
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
     .tab-bar {
       border-bottom: 2px solid var(--moss-grey-light);
       /* margin-bottom: -2px; */

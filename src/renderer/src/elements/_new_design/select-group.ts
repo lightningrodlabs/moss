@@ -88,7 +88,7 @@ export class SelectGroup extends LitElement {
             hoist
             required
           >
-            <button slot="trigger" class="install-button moss-button">
+            <button slot="trigger" class="install-button moss-button" style="width:100%">
               <div class="row center-content">
                 ${installToolIcon(20)}
                 <div style="margin-left: 10px;">${msg('Install to a group space')}</div>
@@ -128,23 +128,6 @@ export class SelectGroup extends LitElement {
   static styles = [
     mossStyles,
     css`
-      .install-button {
-        width: 100%;
-        border-radius: 8px;
-        border: solid 2px;
-        border-color: black;
-        color: black;
-        background-color: white;
-        font-style: normal;
-        font-size: 14px;
-        line-height: 16px;
-        padding: 8px 10px;
-      }
-
-      .install-button:hover {
-        color: white;
-        background-color: black;
-      }
       sl-menu {
         width: 286px;
         background: var(--moss-dark-button);

@@ -33,7 +33,7 @@ import {
   getProvisionedCells,
   isAppRunning,
 } from '../../../utils.js';
-import { threeDots, threeDotsVertical } from '../icons.js';
+import { chevronSingleDownIcon, chevronSingleUpIcon, deprecateIcon } from '../icons.js';
 
 @localized()
 @customElement('applet-settings-card')
@@ -233,10 +233,7 @@ export class AppletSettingsCard extends LitElement {
   toolVersion() {
     switch (this._toolVersion.value.status) {
       case 'error':
-        console.error(
-          'Failed to get members that joined the applet: ',
-          this._toolVersion.value.error,
-        );
+        console.error("Failed to get tool's version: ", this._toolVersion.value.error);
         return 'unknown';
       case 'pending':
         return 'unknown';
@@ -327,11 +324,12 @@ export class AppletSettingsCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-              'Archiving will make it not show up anymore for new members in the "Unjoined Tools" section',
+              'Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.',
             )}
           >
-            <sl-button
-              variant="warning"
+            <moss-mini-button
+              variant="secondary"
+              color="#C35C1D"
               style="margin-right: 5px;"
               @click=${() => this.archiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
@@ -341,24 +339,17 @@ export class AppletSettingsCard extends LitElement {
               }}
             >
               <div class="row center-content">
-                <sl-icon
-                  style="height: 20px; width: 20px;"
-                  .src=${wrapPathInSvg(mdiArchiveArrowDownOutline)}
-                ></sl-icon
-                ><span style="margin-left: 5px;">${msg('Archive')}</span>
+                ${deprecateIcon(18)}
+                <span style="margin-left: 5px;">${msg('Deprecate for Group')}</span>
               </div>
-            </sl-button>
+            </moss-mini-button>
           </sl-tooltip>
         `;
       case 'archived':
         return html`
-          <sl-tooltip
-            content=${msg(
-              'Unarchive this Tool for it to show up again for new membersin the "Unjoined Tools" section',
-            )}
-          >
-            <sl-button
-              variant="neutral"
+          <sl-tooltip content=${msg('Remove deprecation tag for this tool.')}>
+            <moss-mini-button
+              variant="secondary"
               style="margin-right: 5px;"
               @click=${() => this.unArchiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
@@ -372,9 +363,9 @@ export class AppletSettingsCard extends LitElement {
                   style="height: 20px; width: 20px;"
                   .src=${wrapPathInSvg(mdiArchiveArrowUpOutline)}
                 ></sl-icon
-                ><span style="margin-left: 5px;">${msg('Unarchive')}</span>
+                ><span style="margin-left: 5px;">${msg('Undeprecate')}</span>
               </div>
-            </sl-button>
+            </moss-mini-button>
           </sl-tooltip>
         `;
       default:
@@ -386,8 +377,15 @@ export class AppletSettingsCard extends LitElement {
     if (!this.appInfo) return html``;
     return html`
       <div
-        class="column container flex-1 ${this.showDetails ? 'bg-gray' : ''}"
+        class="column tool flex-1 ${this.showDetails ? 'tool-expanded' : ''}"
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
+        @click=${(e) => {
+          e.stopPropagation();
+          this.showDetails = !this.showDetails;
+        }}
+        @keypress=${(e) => {
+          e.stopPropagation();
+        }}
       >
         ${this.archiveState() === 'archived'
           ? html`<span
@@ -401,23 +399,26 @@ export class AppletSettingsCard extends LitElement {
           <div
             class="row title-bar flex-1 items-center"
             tabindex="0"
-            @click=${() => {
+            @click=${(e) => {
+              e.stopPropagation();
               this.showDetails = !this.showDetails;
             }}
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                this.showDetails = !this.showDetails;
-              }
+            @keypress=${(e) => {
+              e.stopPropagation();
+              this.showDetails = !this.showDetails;
             }}
           >
             <applet-logo
               .appletHash=${this.appletHash}
-              style="margin-right: 16px; --size: 50px;"
+              style="margin-right: 16px; --size: 64px;"
             ></applet-logo>
-            <span style="font-size: 16px; font-weight: 600;">${this.applet.custom_name}</span>
-            <span style="font-size: 14px; opacity: 0.7; margin-left: 10px; margin-bottom: -2px;"
-              >${this.toolVersion()}</span
-            >
+            <div class="column">
+              <div class="tool-name">
+                ${this.applet.custom_name} <span class="tool-version"> v${this.toolVersion()}</span>
+              </div>
+              <div class="tool-short-description">${this.applet.subtitle}</div>
+            </div>
+
             <span style="flex: 1;"></span>
             <span style="margin-right: 5px; font-size: 14px;">
               ${this.appInfo && isAppRunning(this.appInfo) ? msg('enabled') : msg('disabled')}
@@ -451,34 +452,22 @@ export class AppletSettingsCard extends LitElement {
               >
               </sl-switch>
             </sl-tooltip>
-            <button
-              class="triple-dot-btn"
-              @click=${(e) => {
-                e.stopPropagation();
-                this.showDetails = !this.showDetails;
-              }}
-              @keypress=${(e) => {
-                e.stopPropagation();
-              }}
-            >
-              ${this.showDetails ? threeDotsVertical(28) : threeDots(28)}
-            </button>
+            <div style="margin-left:24px">
+              ${this.showDetails ? chevronSingleDownIcon(18) : chevronSingleUpIcon(18)}
+            </div>
           </div>
           <div class="column details-container" style="${this.showDetails ? '' : 'display: none;'}">
-            <div class="row" style="margin-top: 15px; align-items: center;">
-              <span class="flex flex-1"></span>
-              <div class="row" style="align-items: center;">
-                <span style="font-size: 14px;"><b>${msg('added by')}&nbsp;</b></span>
-                ${this.addedBy
-                  ? html`<agent-avatar
-                      style="margin-left: 5px;"
-                      .agentPubKey=${this.addedBy}
-                    ></agent-avatar>`
-                  : html`${msg('unknown')}`}
-              </div>
+            <div class="installer row">
+              ${this.addedBy
+                ? html`<agent-avatar
+                    style="margin-right: 5px;"
+                    .agentPubKey=${this.addedBy}
+                  ></agent-avatar>`
+                : html`${msg('unknown')}`}
+              <span>${msg('installed this tool to the group space ')}</span>
             </div>
-            <div class="row" style="align-items: center; margin-top: 4px;">
-              <span style="font-size: 14px;"><b>joined by:&nbsp;</b></span>
+            <div class="participants row">
+              <span style="margin-right: 5px;">${msg('In use by: ')}</span>
               ${this.renderJoinedMembers()}
             </div>
 
@@ -491,7 +480,8 @@ export class AppletSettingsCard extends LitElement {
             <div class="row" style="margin-top: 10px; align-items: flex-end;">
               <div class="row">
                 <button
-                  @click=${() => {
+                  @click=${(e) => {
+                    e.stopPropagation();
                     this.showAdvanced = !this.showAdvanced;
                   }}
                   style="all: unset; cursor: pointer;"
@@ -502,11 +492,12 @@ export class AppletSettingsCard extends LitElement {
                 </button>
               </div>
               <span class="flex flex-1"></span>
-              ${this.renderArchiveButton()}
 
               <sl-tooltip content=${msg('Uninstall this Tool for yourself (irreversible)')}>
-                <sl-button
-                  variant="danger"
+                <moss-mini-button
+                  variant="secondary"
+                  color="#7D7438"
+                  style=" margin-right:8px;"
                   @click=${() => this.uninstallApplet()}
                   @keypress=${(e: KeyboardEvent) => {
                     if (e.key === 'Enter') {
@@ -519,10 +510,12 @@ export class AppletSettingsCard extends LitElement {
                       style="height: 20px; width: 20px;"
                       .src=${wrapPathInSvg(mdiTrashCanOutline)}
                     ></sl-icon
-                    ><span style="margin-left: 5px;">${msg('Uninstall')}</span>
+                    ><span style="margin-left: 5px;">${msg('Uninstall for me')}</span>
                   </div>
-                </sl-button>
+                </moss-mini-button>
               </sl-tooltip>
+
+              ${this.renderArchiveButton()}
             </div>
 
             ${this.showAdvanced
@@ -562,14 +555,22 @@ export class AppletSettingsCard extends LitElement {
   static styles = [
     mossStyles,
     css`
-      .container {
-        border-top: 1px solid var(--moss-grey-light);
-        border-bottom: 1px solid var(--moss-grey-light);
-        margin-bottom: -1px;
+      .tool {
+        border-radius: 20px;
+        background: #fff;
+        padding: 8px;
       }
 
-      .bg-gray {
-        background: #f5f5f5;
+      .tool:hover {
+        background-color: var(--moss-field-grey);
+      }
+      .tool-expanded {
+        border: 1px solid var(--moss-grey-light);
+      }
+
+      .installer,
+      .participants {
+        align-items: center;
       }
 
       .cell-card {
@@ -586,7 +587,12 @@ export class AppletSettingsCard extends LitElement {
       }
 
       .details-container {
-        padding: 10px;
+        width: 680px;
+        border-top: 1px solid var(--moss-grey-light);
+        margin-top: 12px;
+        padding-top: 12px;
+        margin-left: 74px;
+        margin-right: auto;
       }
 
       .title-bar {
@@ -598,13 +604,20 @@ export class AppletSettingsCard extends LitElement {
         background: #f5f5f5;
       }
 
-      .triple-dot-btn {
-        all: unset;
-        cursor: pointer;
+      .tool-name {
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 24px;
       }
-
-      .triple-dot-btn:focus-visible {
-        outline: 2px solid var(--moss-medium-green);
+      .tool-version {
+        opacity: 0.5;
+      }
+      .tool-short-description {
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+        opacity: 0.6;
       }
     `,
   ];
