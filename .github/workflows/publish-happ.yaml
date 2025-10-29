@@ -12,22 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extend space
-        uses: ./.github/actions/extend-space
-
-      - name: Install nix
-        uses: cachix/install-nix-action@v20
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.23.0/install
-
-      - uses: cachix/cachix-action@v15
-        with:
-          name: holochain-ci
-
-      - name: Install and build
+      - name: Download HC
         run: |
-          nix-store --gc
-          nix develop --command bash -c "holochain --version && yarn && yarn build:group-happ && yarn test"
+          node ./scripts/fetch-hc.mjs
+
+      - name: Install rust wasm32-unknown-unknown
+        run: |
+          rustup target install wasm32-unknown-unknown
+
+      - name: Build
+        run: |
+          RUSTFLAGS='--cfg getrandom_backend="'"custom"'"' cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace
+
+      - name: Pack
+        run: |
+          ./resources/bins/hc app pack ./workdir --recursive
 
       - name: Retrieve version
         run: |
@@ -35,13 +34,13 @@ jobs:
           echo "HOLOCHAIN_VERSION=$(node ./scripts/read-holochain-version.mjs)" >> $GITHUB_OUTPUT
         id: version
 
-      - id: create-release
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: 'workdir/group.happ'
-          body: 'See assets below to download and install this version.'
-          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-${{ steps.version.outputs.HOLOCHAIN_VERSION }}
-          tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
-          prerelease: true
-          draft: true
+#      - id: create-release
+#        uses: ncipollo/release-action@v1
+#        with:
+#          allowUpdates: true
+#          artifacts: 'workdir/group.happ'
+#          body: 'See assets below to download and install this version.'
+#          name: Group happ v${{ steps.version.outputs.APP_VERSION }}-${{ steps.version.outputs.HOLOCHAIN_VERSION }}
+#          tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
+#          prerelease: true
+#          draft: true
