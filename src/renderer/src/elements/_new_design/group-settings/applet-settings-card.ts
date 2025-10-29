@@ -1,5 +1,5 @@
 import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64 } from '@holochain/client';
-import { hashProperty, notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { hashProperty, notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
