@@ -1939,9 +1939,10 @@ export class MainDashboard extends LitElement {
         }
 
         .drawer-separator {
-          width: 2px;
+          width: 4px;
           background: var(--sl-color-tertiary-200);
           cursor: col-resize;
+          z-index: 1000;
         }
 
         .side-drawer {

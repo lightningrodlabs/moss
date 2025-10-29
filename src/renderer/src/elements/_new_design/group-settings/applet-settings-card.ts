@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { mdiArchiveArrowDownOutline, mdiArchiveArrowUpOutline, mdiTrashCanOutline } from '@mdi/js';
+import { mdiArchiveArrowUpOutline, mdiTrashCanOutline } from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
