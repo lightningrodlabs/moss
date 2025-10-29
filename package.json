@@ -43,7 +43,6 @@
     "build:api": "yarn workspace @theweave/api build",
     "build:elements": "yarn workspace @theweave/elements build",
     "build:grapes": "yarn workspace grapes-editor build",
-    "publish:applets": "run-singleton \"node scripts/publish-applets.mjs\"",
     "prepare:default-apps": "yarn fetch:group-happ",
     "fetch:default-apps": "node ./scripts/fetch-default-apps.mjs",
     "fetch:group-happ": "node ./scripts/fetch-group-app.mjs",
