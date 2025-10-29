@@ -52,6 +52,7 @@
     "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "postinstall": "electron-builder install-app-deps",
+    "fetch:hc": "node ./scripts/fetch-hc.mjs",
     "fetch:binaries": "node ./scripts/fetch-binaries.mjs",
     "check:binaries": "node ./scripts/check-binaries.mjs",
     "build:win": "yarn check:binaries && yarn build && electron-builder --win --config",

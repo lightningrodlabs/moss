@@ -10,7 +10,6 @@ jobs:
     outputs:
       releaseId: ${{ steps.create-release.outputs.id }}
     steps:
-      # Checkout the specific branch provided by the user input
       - uses: actions/checkout@v4
 
       - name: Extend space
