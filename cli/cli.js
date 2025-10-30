@@ -8,8 +8,8 @@ let electronBinary = process.env.ELECTRON_BINARY;
 if (!electronBinary) {
   let pathStr =
     process.platform === 'win32'
-      ? '../node_modules/electron/dist/electron.exe'
-      : '../node_modules/.bin/electron';
+      ? 'node_modules/electron/dist/electron.exe'
+      : 'node_modules/.bin/electron';
   // recursively look for electron binary in node_modules folder
   for (let i = 0; i < 7; i++) {
     const maybeElectronBinary = path.resolve(__dirname, pathStr);
@@ -23,7 +23,7 @@ if (!electronBinary) {
 }
 
 if (!electronBinary) {
-  throw new Error('Failed to locate electron binary. __dirname: ', __dirname);
+  throw new Error('Failed to locate electron binary. __dirname: ' + __dirname);
 }
 
 const child = spawn(
