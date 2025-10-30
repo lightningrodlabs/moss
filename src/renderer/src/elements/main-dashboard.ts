@@ -21,7 +21,7 @@ import {
   OpenAssetMode,
   WeaveLocation,
   weaveUrlToLocation,
-  weaveUrlFromWal,
+  weaveUrlFromWal, decodeContext
 } from '@theweave/api';
 import { invitePropsToPartialModifiers } from '@theweave/utils';
 
@@ -70,7 +70,6 @@ import { appletMessageHandler, handleAppletIframeMessage } from '../applets/appl
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import {
-  decodeContext,
   getAllIframes,
   postMessageToIframe,
   progenitorFromProperties,

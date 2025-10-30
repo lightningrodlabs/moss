@@ -11,12 +11,11 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { encodeHashToBase64 } from '@holochain/client';
 
-import { WAL, weaveUrlFromWal } from '@theweave/api';
+import { encodeContext, WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { encodeContext } from '../../utils.js';
 import { mdiShareVariantOutline } from '@mdi/js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { stringifyWal } from '@theweave/api';

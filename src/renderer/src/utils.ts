@@ -406,13 +406,6 @@ export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
-export function encodeContext(context: any) {
-  return fromUint8Array(encode(context), true);
-}
-
-export function decodeContext(contextStringified: string): any {
-  return decode(toUint8Array(contextStringified));
-}
 
 /**
  * Fetches an image, crops it to 300x300px, compresses it to max 200KB and
