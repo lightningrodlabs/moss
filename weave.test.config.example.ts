@@ -51,8 +51,8 @@ export default defineConfig({
           joiningAgents: [2],
         },
         {
-          name: 'notebooks',
-          instanceName: 'notebooks',
+          name: 'vines',
+          instanceName: 'vines',
           registeringAgent: 1,
           joiningAgents: [2],
         },
@@ -88,16 +88,16 @@ export default defineConfig({
       },
     },
     {
-      name: 'notebooks',
-      subtitle: 'Collaborative note taking',
-      description: 'Real-time notetaking based on syn',
+      name: 'vines',
+      subtitle: 'Chat',
+      description: 'Real-time chat',
       icon: {
         type: 'https',
-        url: 'https://lightningrodlabs.org/projects/notebooks.png',
+        url: 'https://github.com/lightningrodlabs/vines/releases/download/we-applet-rc/icon.png',
       },
       source: {
         type: 'https',
-        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.5.0-rc.0/notebooks.webhapp',
+        url: 'https://github.com/lightningrodlabs/vines/releases/download/we-applet-rc/vines-we_applet-1.19.0.webhapp',
       },
     },
   ],
