@@ -95,36 +95,35 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                     app_entry: app_entry.clone(),
                 })?;
 
-                if let EntryTypes::Post(post) = app_entry {
-                    let signal = Signal::NewPost {
-                        post,
-                        timestamp: create.timestamp,
-                    };
-                    let peers_anchor = anchor(
-                        LinkTypes::PeerSubscription,
-                        String::from("PEER_SUBSCRIPTION"),
-                        String::from("PEER_SUBSCRIPTION"),
-                    )?;
-                    let peer_links = get_links(
-                        LinkQuery::new(
-                            peers_anchor,
-                            LinkTypes::PeerSubscription.try_into_filter().unwrap(),
-                        ), GetStrategy::default()
-                    )?;
-                    let peers = peer_links
-                        .iter()
-                        .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
-                        .collect::<Vec<AgentPubKey>>();
-                    send_remote_signal(
-                        ExternIO::encode(signal).map_err(|e| {
-                            wasm_error!(WasmErrorInner::Guest(format!(
-                                "Failed to encode remote signal payload: {}",
-                                e
-                            )))
-                        })?,
-                        peers,
-                    )?;
-                }
+                let EntryTypes::Post(post) = app_entry;
+                let signal = Signal::NewPost {
+                    post,
+                    timestamp: create.timestamp,
+                };
+                let peers_anchor = anchor(
+                    LinkTypes::PeerSubscription,
+                    String::from("PEER_SUBSCRIPTION"),
+                    String::from("PEER_SUBSCRIPTION"),
+                )?;
+                let peer_links = get_links(
+                    LinkQuery::new(
+                        peers_anchor,
+                        LinkTypes::PeerSubscription.try_into_filter().unwrap(),
+                    ), GetStrategy::default()
+                )?;
+                let peers = peer_links
+                    .iter()
+                    .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
+                    .collect::<Vec<AgentPubKey>>();
+                send_remote_signal(
+                    ExternIO::encode(signal).map_err(|e| {
+                        wasm_error!(WasmErrorInner::Guest(format!(
+                            "Failed to encode remote signal payload: {}",
+                            e
+                        )))
+                    })?,
+                    peers,
+                )?;
             }
             Ok(())
         },
