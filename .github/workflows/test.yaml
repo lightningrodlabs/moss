@@ -55,7 +55,19 @@ jobs:
         run: |
           mkdir resources/default-apps
           mkdir resources/bins
-          yarn setup
+          yarn install
+
+      - name: Build environment 1/2
+        run: |          
+          yarn build:libs
+          yarn build:iframes
+          yarn prepare:default-apps
+
+      - name: Build environment 2/2
+        run: |
+          yarn fetch:binaries
+          yarn check:binaries
+          yarn install --check-files
 
       - name: Build zomes
         run: |
