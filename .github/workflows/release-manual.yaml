@@ -1,8 +1,6 @@
 name: 'publish-manual'
 on:
-  push:
-    branches:
-      - release
+  workflow_dispatch:
 
 jobs:
   publish:
