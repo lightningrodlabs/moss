@@ -12,7 +12,7 @@ jobs:
       matrix:
         # platform: [windows-2022]
         # platform: [ubuntu-22.04]
-        platform: [windows-2022, macos-13, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+        platform: [ windows-2022, macos-13, macos-latest, ubuntu-22.04, ubuntu-22.04-arm ]
         # platform: [ubuntu-22.04-arm]
         # platform: [windows-2022, ubuntu-22.04]
     env:
@@ -30,7 +30,7 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
-          
+
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
@@ -43,8 +43,8 @@ jobs:
         id: version
         shell: bash
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@1.83.0
+      #- name: Install Rust
+      #  uses: dtolnay/rust-toolchain@1.83.0
 
       - name: Install Go stable
         uses: actions/setup-go@v4
