@@ -69,8 +69,6 @@ import {
   devModeToolLibraryFromDevConfig,
   encodeAndStringify,
   findAppForDnaHash,
-  isAppDisabled,
-  isAppRunning,
   validateWal,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
@@ -91,9 +89,9 @@ import {
   appletHashFromAppId,
   appletIdFromAppId,
   deriveToolCompatibilityId,
-  getLatestVersionFromToolInfo,
+  getLatestVersionFromToolInfo, isAppDisabled, isAppRunning,
   toolCompatibilityIdFromDistInfo,
-  toolCompatibilityIdFromDistInfoString,
+  toolCompatibilityIdFromDistInfoString
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
 import {

@@ -10,9 +10,6 @@ import {
   AppWebsocket,
   CallZomeRequest,
   CallZomeTransform,
-  CellId,
-  CellInfo,
-  CellType,
   DnaHashB64,
   encodeHashToBase64,
   InstalledAppId,
@@ -206,34 +203,4 @@ export function cleanTable() {
   });
 }
 
-export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if (cellInfo.type === CellType.Provisioned) {
-    return cellInfo.value.cell_id;
-  }
-  if (cellInfo.type === CellType.Cloned) {
-    return cellInfo.value.cell_id;
-  }
-  return undefined;
-}
 
-export function getStatus(app: AppInfo): string {
-  if (isAppRunning(app)) {
-    return 'running';
-  } else if (isAppDisabled(app)) {
-    return 'disabled';
-  } else if (isAppPaused(app)) {
-    return 'paused';
-  } else {
-    return 'unknown status';
-  }
-}
-
-export function isAppRunning(app: AppInfo): boolean {
-  return app.status.type === 'running';
-}
-export function isAppDisabled(app: AppInfo): boolean {
-  return app.status.type === 'disabled';
-}
-export function isAppPaused(app: AppInfo): boolean {
-  return app.status.type === 'paused';
-}

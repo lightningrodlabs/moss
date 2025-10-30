@@ -23,12 +23,11 @@ import {
   dnaHashForCell,
   getCellNetworkSeed,
   getProvisionedCells,
-  isAppRunning,
 } from '../../utils.js';
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
 
 @localized()
 @customElement('applet-detail-card')

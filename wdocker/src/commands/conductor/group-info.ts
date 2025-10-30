@@ -2,12 +2,12 @@ import { DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import {
   getAdminWsAndAppPort,
   getAppWs,
-  getCellId,
   getPassword,
   getWeRustHandler,
 } from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
 import { GroupClient } from '@theweave/group-client';
+import { getCellId } from '@theweave/utils';
 
 export async function groupInfo(
   conductorId: string,
@@ -35,7 +35,7 @@ export async function groupInfo(
   });
   if (!groupAppInfo) {
     console.log('No group found with this dna hash.');
-    adminWs.client.close();
+    /*await*/ adminWs.client.close();
     return;
   }
 
@@ -53,6 +53,6 @@ export async function groupInfo(
   });
   const unjoinedTools = await groupClient.getUnjoinedApplets();
   console.log(`\n${unjoinedTools.length} Unjoined Tools.`);
-  adminWs.client.close();
-  groupAppWs.client.close();
+  /*await*/ adminWs.client.close();
+  /*await*/ groupAppWs.client.close();
 }

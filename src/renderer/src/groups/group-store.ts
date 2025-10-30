@@ -51,8 +51,6 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
   dedupStringArray,
-  isAppDisabled,
-  isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
 } from '../utils.js';
@@ -67,7 +65,13 @@ import {
   walDecodeContext,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
-import { appIdFromAppletHash, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
+import {
+  appIdFromAppletHash,
+  deriveToolCompatibilityId,
+  isAppDisabled,
+  isAppRunning,
+  toLowerCaseB64
+} from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,

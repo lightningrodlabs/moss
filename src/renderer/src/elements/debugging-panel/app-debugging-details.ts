@@ -15,7 +15,8 @@ import { mossStyles } from '../../shared-styles.js';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { getCellId, getCellName } from '../../utils.js';
+import { getCellName } from '../../utils.js';
+import { getCellId } from '@theweave/utils';
 
 @localized()
 @customElement('app-debugging-details')

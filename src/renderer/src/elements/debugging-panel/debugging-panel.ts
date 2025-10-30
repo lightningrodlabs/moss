@@ -34,10 +34,10 @@ import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
+import { getCellName, groupModifiersToAppId } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { appIdFromAppletHash, getCellId } from '@theweave/utils';
 
 @localized()
 @customElement('debugging-panel')

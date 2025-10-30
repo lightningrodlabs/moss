@@ -18,7 +18,6 @@ import {
   getAdminWsAndAppPort,
   getAppWs,
   getWeRustHandler,
-  isAppRunning,
 } from '../helpers/helpers.js';
 import {
   ALWAYS_ONLINE_TAG,
@@ -41,7 +40,7 @@ import {
   TDistributionInfo,
   WebHappSource,
 } from '@theweave/moss-types';
-import { appIdFromAppletHash, getLatestVersionFromToolInfo } from '@theweave/utils';
+import { appIdFromAppletHash, getLatestVersionFromToolInfo, isAppRunning } from '@theweave/utils';
 import rustUtils, { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { nanoid } from 'nanoid';
 import { Value } from '@sinclair/typebox/value';

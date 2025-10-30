@@ -21,7 +21,7 @@ import '../../../applets/elements/applet-logo';
 import { ALWAYS_ONLINE_TAG, Applet, GroupAppletsMetaData } from '@theweave/group-client';
 
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
@@ -31,7 +31,6 @@ import {
   dnaHashForCell,
   getCellNetworkSeed,
   getProvisionedCells,
-  isAppRunning,
 } from '../../../utils.js';
 import { threeDots, threeDotsVertical } from '../icons.js';
 
