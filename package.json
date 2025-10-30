@@ -48,7 +48,7 @@
     "fetch:group-happ": "node ./scripts/fetch-group-app.mjs",
     "prepare:group-happ": "yarn build:group-happ && cp ./workdir/group.happ resources/default-apps/",
     "build:group-happ": "yarn build:zomes && resources/bins/hc app pack ./workdir --recursive && cp ./workdir/group.happ ./resources/default-apps",
-    "build:zomes": "cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
+    "build:zomes": "RUSTFLAGS='--cfg getrandom_backend=\"custom\"' cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
     "build:example-applet": "yarn build:libs && yarn build:zomes && yarn workspace example-applet package",
     "postinstall": "electron-builder install-app-deps",
     "fetch:hc": "node ./scripts/fetch-hc.mjs",
