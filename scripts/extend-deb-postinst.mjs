@@ -125,3 +125,4 @@ fs.writeFileSync(
   yaml.dump(latestYaml, { lineWidth: -1 }),
   'utf-8',
 );
+console.log('\nDONE\n\n');
