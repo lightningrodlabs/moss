@@ -19,12 +19,13 @@ import { mossStoreContext } from '../../../context.js';
 import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { ToolAndCurationInfo } from '../../../types.js';
-import { closeIcon, experimentalToolIcon } from '../../../elements/_new_design/icons.js';
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import { experimentalToolIcon } from '../../../elements/_new_design/icons.js';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
 import { libraryStyles } from '../libraryStyles.js';
 import { DeveloperCollective } from '@theweave/moss-types';
+import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
+import '../../../elements/_new_design/moss-dialog.js';
 
 @localized()
 @customElement('installable-tools-web2')
@@ -42,12 +43,12 @@ export class InstallableToolsWeb2 extends LitElement {
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
   @query('#library-tool-details-dialog')
-  toolDetailsDialog: SlDialog | undefined;
+  toolDetailsDialog: MossDialog | undefined;
 
   @query('#tool-details')
   toolDetails: LibraryToolDetails | undefined;
 
-  async firstUpdated() {}
+  async firstUpdated() { }
 
   timeAgo = new TimeAgo('en-US');
 
@@ -61,30 +62,30 @@ export class InstallableToolsWeb2 extends LitElement {
         class="tool"
         tabindex="0"
         @click=${() => {
-          this.selectedTool = tool;
-          this.toolDetailsDialog?.show();
-        }}
+        this.selectedTool = tool;
+        this.toolDetailsDialog?.show();
+      }}
       >
         <div class="column">
           <div class="row">
             ${tool.toolInfoAndVersions.icon
-              ? html`<img
+        ? html`<img
                   src=${tool.toolInfoAndVersions.icon}
                   alt="${tool.toolInfoAndVersions.title} tool icon"
                   style="height: 64px; width: 64px; border-radius: 16px; margin-right: 15px;"
                 />`
-              : html``}
+        : html``}
             <sl-tooltip
               content="${tool.curationInfos[0].info.visiblity === 'low'
-                ? 'experimental tool'
-                : 'stable tool'}"
+        ? 'experimental tool'
+        : 'stable tool'}"
             >
               <div class="row items-center tool-classification">
                 ${tool.curationInfos[0].info.visiblity === 'low'
-                  ? html`<div class="tool-classification-image tool-experimental">
+        ? html`<div class="tool-classification-image tool-experimental">
                       ${experimentalToolIcon(24)}
                     </div>`
-                  : ''}
+        : ''}
               </div>
             </sl-tooltip>
           </div>
@@ -94,17 +95,17 @@ export class InstallableToolsWeb2 extends LitElement {
             </div>
             <div class="tool-description">${tool.toolInfoAndVersions.description}</div>
             ${tool.toolInfoAndVersions.tags.length > 0
-              ? html`
+        ? html`
                   <div class="row tool-tag-list" style="margin-top:6px">
                     ${tool.toolInfoAndVersions.tags.map(
-                      (tag) => html`<div class="tool-tag">${tag}</div>`,
-                    )}
+          (tag) => html`<div class="tool-tag">${tag}</div>`,
+        )}
                   </div>
                 `
-              : ''}
+        : ''}
             <sl-tooltip content="visit developer’s website">
               <div class="tool-developer">
-                <span>by</span>
+                <span  style="opacity:.4">by</span>
                 <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
                   >${this.devCollectives[tool.toolListUrl].name}</a
                 >
@@ -115,13 +116,13 @@ export class InstallableToolsWeb2 extends LitElement {
         <select-group
           class="show-on-hover"
           @group-selected=${async (e: CustomEvent) => {
-            this.dispatchEvent(
-              new CustomEvent('install-tool-to-group', {
-                detail: { tool, groupDnaHash: e.detail },
-                composed: true,
-              }),
-            );
-          }}
+        this.dispatchEvent(
+          new CustomEvent('install-tool-to-group', {
+            detail: { tool, groupDnaHash: e.detail },
+            composed: true,
+          }),
+        );
+      }}
           class=""
           style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:20px;left: -22px; right: 0px;"
           id="select-group"
@@ -148,39 +149,39 @@ export class InstallableToolsWeb2 extends LitElement {
         return 0;
       });
     return html`
-      <sl-dialog
-        class="moss-dialog"
+      <moss-dialog
         id="library-tool-details-dialog"
-        no-header
-        style="--width: 1024px;"
       >
-        <div class="column" style="position: relative">
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -12px; right: -12px;"
-            @click=${() => {
-              this.toolDetailsDialog?.hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-          <library-tool-details
+      <div slot="header">
+        ${this.selectedTool ? html`
+        ${this.selectedTool.toolInfoAndVersions.title}
+
+          <sl-tooltip content="visit developer’s website">
+        <div class="tool-developer">
+          <span style="opacity:.4">by</span>
+            <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}"
+              >${this.devCollectives[this.selectedTool.toolListUrl].name}</a
+            >
+        </div>          </sl-tooltip>
+      `: 'Unknown Tool'}
+      </div>
+      
+          <library-tool-details slot="content"
             id="tool-details"
             .devCollectives=${this.devCollectives}
             .tool=${this.selectedTool}
           ></library-tool-details>
-        </div>
-      </sl-dialog>
+      </moss-dialog>
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;justify-content: center;"
       >
         ${nonDeprecatedTools.length === 0
-          ? html`
+        ? html`
               <div class="column center-content" style="flex: 1; margin-top: 50px;">
                 <span class="placeholder">${msg('No Tools available yet...')}</span>
               </div>
             `
-          : nonDeprecatedTools.map((tool) => this.renderInstallableTool(tool))}
+        : nonDeprecatedTools.map((tool) => this.renderInstallableTool(tool))}
       </div>
     `;
   }
@@ -216,10 +217,6 @@ export class InstallableToolsWeb2 extends LitElement {
         font-style: normal;
         font-weight: 600;
         line-height: 24px;
-      }
-
-      .tool-developer {
-        margin-top: 25px;
       }
 
       .show-on-hover {

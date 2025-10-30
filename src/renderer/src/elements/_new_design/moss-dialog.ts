@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
-import { query, customElement } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { query, customElement, property } from 'lit/decorators.js';
+import { localized } from '@lit/localize';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
@@ -12,21 +12,35 @@ import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { mossStyles } from '../../shared-styles.js';
+import { closeIcon } from './icons.js';
 
-import './moss-input.js';
-import './moss-select-avatar.js';
-import { arrowLeftShortIcon } from './icons.js';
-import { defaultIcons } from './defaultIcons.js';
 
 /**
- * @element create-group-dialog
+ * @element moss-dialog
  */
 @localized()
 @customElement('moss-dialog')
 export class MossDialog extends LitElement {
-  async open() {
+  async show() {
     this._dialog.show();
   }
+  async hide() {
+    this._dialog.hide();
+  }
+  @property()
+  width = ""
+
+  @property()
+  class = ""
+
+  @property()
+  styles = ""
+
+  @property()
+  noHeader = false
+
+  @property()
+  headerAlign = "left"
 
   /** Private properties */
   @query('#dialog')
@@ -38,58 +52,38 @@ export class MossDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog id="dialog" no-header class="moss-dialog" style="--width: 670px;">
-        <button class="moss-hover-icon-button" style="margin-left: -8px; margin-top: -8px;">
-          <div class="row items-center">
-            <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
-              ${arrowLeftShortIcon(24)}
-            </div>
-            <div class="moss-hover-icon-button-text">${msg('back')}</div>
-          </div>
-        </button>
-        <div class="column items-center">
-          <span
-            style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-            >My group is called</span
-          >
-
-          <sl-input
-            class="moss-input"
-            placeholder=${msg('group name')}
-            label=${msg('group name')}
-            size="medium"
-            style="margin-bottom: 20px; width: 350px;"
-          >
-          </sl-input>
-
-          <moss-select-avatar
-            label=""
-            .defaultImgs=${defaultIcons}
-            style="margin-bottom: 56px;"
-          ></moss-select-avatar>
-
-          <!-- <sl-input
-            class="moss-input"
-            type="password"
-            placeholder=${msg('your password')}
-            label=${msg('your password')}
-            size="medium"
-            style="margin-bottom: 20px;"
-            password-toggle
-          ></sl-input> -->
-
-          <button class="moss-button" disabled style="width: 310px; margin-bottom: 56px;">
-            Next
+      <sl-dialog class="defaults moss-dialog ${this.class}" id="dialog" no-header style="${this.styles ? `${this.styles};` : ``}${this.width ? ` --width: ${this.width};` : ''}">
+        <div class="column" style="position: relative">
+          <button
+            class="moss-dialog-close-button"
+            style="position: absolute; top: -12px; right: -12px;"
+            @click=${() => {
+        this._dialog?.hide();
+      }}
+               >
+            ${closeIcon(24)}
           </button>
-
-          <div class="row">
-            <div class="dialog-dot" style="margin-right: 20px;"></div>
-            <div class="dialog-dot bg-black"></div>
-          </div>
+        </div>
+        <div class="column flex-1" style="padding: 40px 100px;">
+                ${this.noHeader ? '' :
+        html`<div class="dialog-title" style="text-align: ${this.headerAlign}; margin-bottom: 20px;"><slot name="header"><slot></div>`
+      }
+          <slot name="content"></slot>
         </div>
       </sl-dialog>
     `;
   }
 
-  static styles = [mossStyles, css``];
+  static styles = [mossStyles, css` 
+    .defaults {
+      --width: 1024px;
+    }    
+    .profile-detail-popup {
+      --width: 400px;
+      --height: 446px;
+    }
+    .gradient::part(panel) {
+      background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
+    }
+`];
 }

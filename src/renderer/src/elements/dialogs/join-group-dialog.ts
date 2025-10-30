@@ -7,7 +7,6 @@ import { ProvisionedCell } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -19,7 +18,8 @@ import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PartialModifiers } from '@theweave/moss-types';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
-import { closeIcon } from '../_new_design/icons.js';
+import { MossDialog } from '../_new_design/moss-dialog.js';
+import '../_new_design/moss-dialog.js';
 
 /**
  * @element join-group-dialog
@@ -42,7 +42,7 @@ export class JoinGroupDialog extends LitElement {
 
   /** Private properties */
   @query('#dialog')
-  _dialog!: SlDialog;
+  _dialog!: MossDialog;
 
   @query('#invite-link-field')
   _inviteLinkField: SlInput | undefined;
@@ -112,37 +112,26 @@ export class JoinGroupDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="dialog"
-        class="moss-dialog"
-        .label=${msg('Join Group')}
-        no-header
+        width="670px"
+        headerAlign="center"
+        @sl-initial-focus=${(e: { preventDefault: () => void }) => {
+        e.preventDefault();
+        this._inviteLinkField?.focus();
+      }}
+
         @sl-request-close=${(e) => {
-          if (this.joining) {
-            e.preventDefault();
-          }
-        }}
+        if (this.joining) {
+          e.preventDefault();
+        }
+      }}
       >
-        <div
-          class="column center-content dialog-title"
-          style="margin: 10px 0 40px 0; position: relative;"
-        >
-          <span>${msg('Join Group')}</span>
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -23px; right: -12px;"
-            @click=${() => {
-              (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-        </div>
-        <form ${onSubmit((f) => this.joinGroup(f))}>
+        <span slot="header">${msg('Join Group')}</span>
+        <form slot="content" ${onSubmit((f) => this.joinGroup(f))}>
           <div class="column items-center">
-          ${
-            this._joinByPaste
-              ? html`
+          ${this._joinByPaste
+        ? html`
                   <sl-input
                     name="link"
                     id="invite-link-field"
@@ -153,8 +142,8 @@ export class JoinGroupDialog extends LitElement {
                     required
                   ></sl-input>
                 `
-              : html`<span>${msg('You have been invited to join a group.')}</span>`
-          }
+        : html`<span>${msg('You have been invited to join a group.')}</span>`
+      }
 
           <button
             class="moss-button"
@@ -162,17 +151,16 @@ export class JoinGroupDialog extends LitElement {
             type="submit"
             .loading=${this.joining}
           >
-            ${
-              this.joining
-                ? html`<div class="column center-content">
+            ${this.joining
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Join Group')}`
-            }
+        : html`${msg('Join Group')}`
+      }
           </button>
           <div>
         </form>
-      </sl-dialog>
+      </moss-dialog>
     `;
   }
 

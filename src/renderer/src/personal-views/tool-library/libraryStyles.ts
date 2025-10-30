@@ -25,6 +25,13 @@ export const libraryStyles = [
       font-weight: 500;
       line-height: 16px; /* 133.333% */
     }
+
+    .tool-developer {
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+    }
+
     .tool-developer a {
       color: #324d47;
       text-decoration: none;

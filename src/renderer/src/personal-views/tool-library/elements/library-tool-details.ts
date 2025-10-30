@@ -72,19 +72,8 @@ export class LibraryToolDetails extends LitElement {
     if (this.tool === undefined) {
       return 'NOTHING';
     }
-    return html` <div class="column flex-1" style="padding: 40px 100px;">
-      <div class="dialog-title" style="text-align: left; margin-bottom: 20px;">
-        ${this.tool.toolInfoAndVersions.title}
-
-        <div class="tool-developer">
-          <span style="opacity:.4">by</span>
-          <sl-tooltip content="visit developer’s website">
-            <a href="${this.devCollectives[this.tool.toolListUrl].contact.website}"
-              >${this.devCollectives[this.tool.toolListUrl].name}</a
-            >
-          </sl-tooltip>
-        </div>
-      </div>
+    return html` 
+      
       <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
         <div class="row">
           <img
@@ -95,30 +84,30 @@ export class LibraryToolDetails extends LitElement {
           <div class="column">
             ${this.tool.toolInfoAndVersions.subtitle}
             ${this.tool.toolInfoAndVersions.tags.length > 0
-              ? html`
+        ? html`
                   <div class="row tool-tag-list" style="margin-top:6px">
                     ${this.tool.toolInfoAndVersions.tags.map(
-                      (tag) => html`<div class="tool-tag">${tag}</div>`,
-                    )}
+          (tag) => html`<div class="tool-tag">${tag}</div>`,
+        )}
                   </div>
                 `
-              : ''}
+        : ''}
           </div>
         </div>
         <div class="row items-center tab-bar flex-1" style="margin-top:30px">
           <button
             class="tab ${this.tabsState === TabsState.Overview ? 'tab-selected' : ''}"
             @click=${() => {
-              this.tabsState = TabsState.Overview;
-            }}
+        this.tabsState = TabsState.Overview;
+      }}
           >
             ${msg('Overview')}
           </button>
           <button
             class="tab ${this.tabsState === TabsState.Versions ? 'tab-selected' : ''}"
             @click=${() => {
-              this.tabsState = TabsState.Versions;
-            }}
+        this.tabsState = TabsState.Versions;
+      }}
           >
             ${msg('Versions')}
           </button>
@@ -127,7 +116,7 @@ export class LibraryToolDetails extends LitElement {
           ${this.renderContent()}
         </div>
       </div>
-    </div>`;
+    `;
   }
   static styles = [
     mossStyles,
@@ -135,9 +124,6 @@ export class LibraryToolDetails extends LitElement {
     css`
       .version-list {
         margin-top: 25px;
-      }
-      .tool-developer {
-        font-size: 16px;
       }
     `,
   ];

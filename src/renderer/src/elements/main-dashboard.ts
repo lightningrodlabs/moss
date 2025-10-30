@@ -33,7 +33,6 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@theweave/elements/dist/elements/weave-client-context.js';
 import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
@@ -84,25 +83,26 @@ import {
   turingBlobIcon,
   turingBlobIconHover,
 } from './_new_design/icons.js';
+import { MossDialog } from './_new_design/moss-dialog.js';
 
 TimeAgo.addDefaultLocale(en);
 
 type OpenTab =
   | {
-      type: 'wal';
-      wal: WAL;
-      groupHashesB64: DnaHashB64[];
-      appletIds: AppletId[];
-    }
+    type: 'wal';
+    wal: WAL;
+    groupHashesB64: DnaHashB64[];
+    appletIds: AppletId[];
+  }
   | {
-      type: 'html';
-      template: TemplateResult;
-      title: string;
-      icon?: string;
-    }
+    type: 'html';
+    template: TemplateResult;
+    title: string;
+    icon?: string;
+  }
   | {
-      type: 'not found';
-    };
+    type: 'not found';
+  };
 
 export type TabInfo = {
   id: string;
@@ -111,19 +111,19 @@ export type TabInfo = {
 
 export type PersonalViewState =
   | {
-      type: 'moss';
-      name: string;
-    }
+    type: 'moss';
+    name: string;
+  }
   | {
-      type: 'tool';
-      toolCompatibilityId: ToolCompatibilityId;
-    };
+    type: 'tool';
+    toolCompatibilityId: ToolCompatibilityId;
+  };
 
 export type DashboardState =
   | {
-      viewType: 'personal';
-      viewState: PersonalViewState;
-    }
+    viewType: 'personal';
+    viewState: PersonalViewState;
+  }
   | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
 
 export type AssetViewerState = {
@@ -144,10 +144,10 @@ export class MainDashboard extends LitElement {
   createGroupDialog!: CreateGroupDialog;
 
   @query('#add-group-dialog')
-  addGroupDialog!: SlDialog;
+  addGroupDialog!: MossDialog;
 
   @query('#settings-dialog')
-  settingsDialog!: SlDialog;
+  settingsDialog!: MossDialog;
 
   @query('#tag-selection-dialog')
   _tagSelectionDialog!: TagSelectionDialog;
@@ -868,8 +868,8 @@ export class MainDashboard extends LitElement {
             <cross-group-main
               .toolCompatibilityId=${toolCompatibilityId}
               style="flex: 1; ${this.displayCrossGroupTool(toolCompatibilityId)
-                ? ''
-                : 'display: none;'}
+              ? ''
+              : 'display: none;'}
                 ${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}
                 overflow-x: auto;"
             ></cross-group-main>
@@ -886,65 +886,65 @@ export class MainDashboard extends LitElement {
         id="welcome-view"
         .updateFeed=${this._updateFeed}
         style="${this.displayMossView('welcome')
-          ? 'display: flex; flex: 1;'
-          : 'display: none;'}${this._drawerResizing
+        ? 'display: flex; flex: 1;'
+        : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
           : ''} overflow-x: hidden;"
         @request-create-group=${() => this.createGroupDialog.open()}
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
         @applet-selected=${(e: CustomEvent) => {
-          this.openViews.openAppletMain(e.detail.appletHash);
-        }}
+        this.openViews.openAppletMain(e.detail.appletHash);
+      }}
       ></welcome-view>
 
       <assets-graph
         id="assets-graph"
         style="${this.displayMossView('assets-graph')
-          ? 'display: flex; flex: 1;'
-          : 'display: none;'}${this._drawerResizing
+        ? 'display: flex; flex: 1;'
+        : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
           : ''} overflow-x: hidden;"
       ></assets-graph>
 
       <activity-view
         @open-wal=${async (e) => {
-          await this.handleOpenWal(e.detail);
-        }}
+        await this.handleOpenWal(e.detail);
+      }}
         @open-applet-main=${(e: CustomEvent) => {
-          this.openViews.openAppletMain(e.detail);
-        }}
+        this.openViews.openAppletMain(e.detail);
+      }}
         style="${this.displayMossView('activity-view')
-          ? 'display: flex; flex: 1;'
-          : 'display: none;'}${this._drawerResizing
+        ? 'display: flex; flex: 1;'
+        : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
           : ''} overflow-x: hidden; overflow-y: auto;"
       ></activity-view>
 
       <tool-library-web2
         style="${this.displayMossView('tool-library')
-          ? 'display: flex; flex: 1;'
-          : 'display: none;'}${this._drawerResizing
+        ? 'display: flex; flex: 1;'
+        : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
           : ''} position: relative; overflow-x: auto;"
         @applet-installed=${(e: {
-          detail: {
-            appletEntryHash: AppletHash;
-            groupDnaHash: DnaHash;
-          };
-        }) => {
-          if (
-            !this._openApplets
-              .map((appletHash) => appletHash.toString())
-              .includes(e.detail.appletEntryHash.toString())
-          ) {
-            this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
-          }
-          this._mossStore.setDashboardState({
-            viewType: 'group',
-            groupHash: e.detail.groupDnaHash,
-            appletHash: e.detail.appletEntryHash,
-          });
-        }}
+            detail: {
+              appletEntryHash: AppletHash;
+              groupDnaHash: DnaHash;
+            };
+          }) => {
+        if (
+          !this._openApplets
+            .map((appletHash) => appletHash.toString())
+            .includes(e.detail.appletEntryHash.toString())
+        ) {
+          this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+        }
+        this._mossStore.setDashboardState({
+          viewType: 'group',
+          groupHash: e.detail.groupDnaHash,
+          appletHash: e.detail.appletEntryHash,
+        });
+      }}
       ></tool-library-web2>
     `;
   }
@@ -958,109 +958,109 @@ export class MainDashboard extends LitElement {
       case 'complete':
         return html`
           ${repeat(
-            this._allGroupHashes.value.value,
-            (group) => encodeHashToBase64(group),
-            (groupHash) => html`
+          this._allGroupHashes.value.value,
+          (group) => encodeHashToBase64(group),
+          (groupHash) => html`
               <group-context .groupDnaHash=${groupHash}>
                 <group-container
                   class="group-container"
                   .groupDnaHash=${groupHash}
                   style="flex: 1; position: relative; ${this.displayGroupContainer(groupHash)
-                    ? ''
-                    : 'display: none'}"
+              ? ''
+              : 'display: none'}"
                   @group-left=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: { type: 'moss', name: 'welcome' },
-                    });
-                  }}
+              this._mossStore.setDashboardState({
+                viewType: 'personal',
+                viewState: { type: 'moss', name: 'welcome' },
+              });
+            }}
                   @group-selected=${(e: CustomEvent) => {
-                    this.openGroup(e.detail.groupDnaHash);
-                  }}
+              this.openGroup(e.detail.groupDnaHash);
+            }}
                   @disable-group=${async (e: CustomEvent) => {
-                    const confirmation = await dialogMessagebox({
-                      message:
-                        'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
-                      type: 'warning',
-                      buttons: ['Cancel', 'Continue'],
-                    });
-                    if (confirmation.response === 0) return;
-                    try {
-                      await this._mossStore.disableGroup(e.detail);
-                      window.location.reload();
-                    } catch (e) {
-                      console.error(`Failed to disable Group: ${e}`);
-                      notifyError(msg('Failed to disable Group.'));
-                    }
-                  }}
+              const confirmation = await dialogMessagebox({
+                message:
+                  'WARNING: Disabling a group will refresh Moss. Save any unsaved content in Tools of other groups before you proceed.',
+                type: 'warning',
+                buttons: ['Cancel', 'Continue'],
+              });
+              if (confirmation.response === 0) return;
+              try {
+                await this._mossStore.disableGroup(e.detail);
+                window.location.reload();
+              } catch (e) {
+                console.error(`Failed to disable Group: ${e}`);
+                notifyError(msg('Failed to disable Group.'));
+              }
+            }}
                   @applet-installed=${(e: {
-                    detail: {
-                      appletEntryHash: AppletHash;
-                      groupDnaHash: DnaHash;
-                    };
-                  }) => {
-                    if (
-                      !this._openApplets
-                        .map((appletHash) => appletHash.toString())
-                        .includes(e.detail.appletEntryHash.toString())
-                    ) {
-                      this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
-                    }
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletEntryHash,
-                    });
-                  }}
+              detail: {
+                appletEntryHash: AppletHash;
+                groupDnaHash: DnaHash;
+              };
+            }) => {
+              if (
+                !this._openApplets
+                  .map((appletHash) => appletHash.toString())
+                  .includes(e.detail.appletEntryHash.toString())
+              ) {
+                this._openApplets = [...this._openApplets, e.detail.appletEntryHash];
+              }
+              this._mossStore.setDashboardState({
+                viewType: 'group',
+                groupHash: e.detail.groupDnaHash,
+                appletHash: e.detail.appletEntryHash,
+              });
+            }}
                   @applets-disabled=${(e: { detail: Array<AppletHash> }) => {
-                    // Make sure applet iframes get removed in the background
-                    const disabledApplets = e.detail.map((appletHash) => appletHash.toString());
-                    this._openApplets = this._openApplets.filter(
-                      (appletHash) => !disabledApplets.includes(appletHash.toString()),
-                    );
-                  }}
+              // Make sure applet iframes get removed in the background
+              const disabledApplets = e.detail.map((appletHash) => appletHash.toString());
+              this._openApplets = this._openApplets.filter(
+                (appletHash) => !disabledApplets.includes(appletHash.toString()),
+              );
+            }}
                   @group-home-selected=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: (this._dashboardState.value as any).groupHash,
-                    });
-                  }}
+              this._mossStore.setDashboardState({
+                viewType: 'group',
+                groupHash: (this._dashboardState.value as any).groupHash,
+              });
+            }}
                   @applet-selected=${(e: {
-                    detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-                  }) => {
-                    if (
-                      !this._openApplets
-                        .map((appletHash) => appletHash.toString())
-                        .includes(e.detail.appletHash.toString())
-                    ) {
-                      this._openApplets = [...this._openApplets, e.detail.appletHash];
-                    }
-                    this._mossStore.setDashboardState({
-                      viewType: 'group',
-                      groupHash: e.detail.groupDnaHash,
-                      appletHash: e.detail.appletHash,
-                    });
-                    this.openViews.openAppletMain(e.detail.appletHash);
-                  }}
+              detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
+            }) => {
+              if (
+                !this._openApplets
+                  .map((appletHash) => appletHash.toString())
+                  .includes(e.detail.appletHash.toString())
+              ) {
+                this._openApplets = [...this._openApplets, e.detail.appletHash];
+              }
+              this._mossStore.setDashboardState({
+                viewType: 'group',
+                groupHash: e.detail.groupDnaHash,
+                appletHash: e.detail.appletHash,
+              });
+              this.openViews.openAppletMain(e.detail.appletHash);
+            }}
                   @add-tool-requested=${() => {
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: {
-                        type: 'moss',
-                        name: 'tool-library',
-                      },
-                    });
-                  }}
+              this._mossStore.setDashboardState({
+                viewType: 'personal',
+                viewState: {
+                  type: 'moss',
+                  name: 'tool-library',
+                },
+              });
+            }}
                   @custom-view-selected=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
+              throw new Error('Displaying custom views is currently not implemented.');
+            }}
                   @custom-view-created=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
+              throw new Error('Displaying custom views is currently not implemented.');
+            }}
                 ></group-container>
               </group-context>
             `,
-          )}
+        )}
         `;
     }
   }
@@ -1087,8 +1087,8 @@ export class MainDashboard extends LitElement {
             class="column"
             style="overflow: auto; display: flex; flex: 1; ${this._selectedTab &&
             this._selectedTab.id === tab.id
-              ? ''
-              : 'display: none;'}"
+            ? ''
+            : 'display: none;'}"
           >
             ${this.renderTabContent(tab)}
           </div>
@@ -1127,6 +1127,25 @@ export class MainDashboard extends LitElement {
         class="close-tab-button"
         tabindex="0"
         @click=${async (e) => {
+        e.stopPropagation();
+        const openTabs = Object.values(this._openTabs);
+        const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
+        delete this._openTabs[tabId];
+        if (nextOpenTab) {
+          this._selectedTab = nextOpenTab;
+          this._mossStore.setAssetViewerState({
+            position: this._assetViewerState.value.position,
+            visible: true,
+          });
+        } else {
+          this._mossStore.setAssetViewerState({
+            position: this._assetViewerState.value.position,
+            visible: false,
+          });
+        }
+      }}
+        @keypress=${async (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
           e.stopPropagation();
           const openTabs = Object.values(this._openTabs);
           const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
@@ -1143,27 +1162,8 @@ export class MainDashboard extends LitElement {
               visible: false,
             });
           }
-        }}
-        @keypress=${async (e: KeyboardEvent) => {
-          if (e.key === 'Enter') {
-            e.stopPropagation();
-            const openTabs = Object.values(this._openTabs);
-            const nextOpenTab = openTabs.length > 1 ? openTabs[openTabs.length - 2] : undefined;
-            delete this._openTabs[tabId];
-            if (nextOpenTab) {
-              this._selectedTab = nextOpenTab;
-              this._mossStore.setAssetViewerState({
-                position: this._assetViewerState.value.position,
-                visible: true,
-              });
-            } else {
-              this._mossStore.setAssetViewerState({
-                position: this._assetViewerState.value.position,
-                visible: false,
-              });
-            }
-          }
-        }}
+        }
+      }}
       >
         ${closeIcon(36)}
       </div>
@@ -1181,28 +1181,28 @@ export class MainDashboard extends LitElement {
           return html`
             <div
               class="entry-tab row ${this._selectedTab && this._selectedTab.id === tabInfo.id
-                ? 'tab-selected'
-                : ''}"
+              ? 'tab-selected'
+              : ''}"
               style="align-items: center; padding-left: 8px;"
               tabindex="0"
               @click=${async (e) => {
+              e.stopPropagation();
+              this._selectedTab = tabInfo;
+              this._mossStore.setAssetViewerState({
+                position: this._assetViewerState.value.position,
+                visible: true,
+              });
+            }}
+              @keypress=${async (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
                 e.stopPropagation();
                 this._selectedTab = tabInfo;
                 this._mossStore.setAssetViewerState({
                   position: this._assetViewerState.value.position,
                   visible: true,
                 });
-              }}
-              @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation();
-                  this._selectedTab = tabInfo;
-                  this._mossStore.setAssetViewerState({
-                    position: this._assetViewerState.value.position,
-                    visible: true,
-                  });
-                }
-              }}
+              }
+            }}
             >
               ${this.renderCloseTab(tabInfo.id)}
               <entry-title .wal=${tabInfo.tab.wal}></entry-title>
@@ -1212,20 +1212,20 @@ export class MainDashboard extends LitElement {
           return html`
             <div
               class="entry-tab row ${this._selectedTab && this._selectedTab.id === tabInfo.id
-                ? 'tab-selected'
-                : ''}"
+              ? 'tab-selected'
+              : ''}"
               style="align-items: center; padding-left: 8px;"
               tabindex="0"
               @click=${async (e) => {
+              e.stopPropagation();
+              this._selectedTab = tabInfo;
+            }}
+              @keypress=${async (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
                 e.stopPropagation();
                 this._selectedTab = tabInfo;
-              }}
-              @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation();
-                  this._selectedTab = tabInfo;
-                }
-              }}
+              }
+            }}
             >
               ${this.renderCloseTab(tabInfo.id)}
               <span>${tabInfo.tab.title}</span>
@@ -1258,31 +1258,19 @@ export class MainDashboard extends LitElement {
 
   renderAddGroupDialog() {
     return html`
-      <sl-dialog id="add-group-dialog" class="moss-dialog" no-header label="${msg('Add Group')}">
-        <div
-          class="column center-content dialog-title"
-          style="margin: 10px 0 40px 0; position: relative;"
-        >
-          <span>${msg('Add Group')}</span>
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -23px; right: -12px;"
-            @click=${() => {
-              (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-        </div>
-        <div class="row center-content moss-title" style="margin-bottom: 30px;">
+      <moss-dialog headerAlign="center" id="add-group-dialog" width="670px">
+        
+          <span slot="header">${msg('Add Group')}</span>
+          
+        <div class="row" slot="content" style="justify-content:space-between">
           <button
             class="moss-button"
             style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${(_e) => {
-              this.joinGroupDialog.open();
-              this.addGroupDialog.hide();
-            }}
+        this.joinGroupDialog.open();
+        this.addGroupDialog.hide();
+      }}
           >
             <div class="row center-content" style="margin: 8px;">
               <sl-icon
@@ -1297,9 +1285,9 @@ export class MainDashboard extends LitElement {
             style="margin: 0 5px; padding: 5px 10px;"
             variant="primary"
             @click=${() => {
-              this.createGroupDialog.open();
-              this.addGroupDialog.hide();
-            }}
+        this.createGroupDialog.open();
+        this.addGroupDialog.hide();
+      }}
           >
             <div class="row center-content" style="margin: 8px;">
               <sl-icon
@@ -1310,7 +1298,7 @@ export class MainDashboard extends LitElement {
             </div>
           </button>
         </div>
-      </sl-dialog>
+      </moss-dialog>
     `;
   }
   isLibrarySelected(): boolean {
@@ -1350,23 +1338,23 @@ export class MainDashboard extends LitElement {
       <tag-selection-dialog
         id="tag-selection-dialog"
         @asset-relation-tag-selected=${(e) => {
-          this.dispatchEvent(
-            new CustomEvent('asset-relation-tag-selected', {
-              detail: e.detail,
-              bubbles: false,
-              composed: false,
-            }),
-          );
-        }}
+        this.dispatchEvent(
+          new CustomEvent('asset-relation-tag-selected', {
+            detail: e.detail,
+            bubbles: false,
+            composed: false,
+          }),
+        );
+      }}
         @sl-hide=${(_e) => {
-          this.dispatchEvent(
-            new CustomEvent('cancel-select-asset-relation-tag', {
-              bubbles: false,
-              composed: false,
-            }),
-          );
-          this.showClipboard = false;
-        }}
+        this.dispatchEvent(
+          new CustomEvent('cancel-select-asset-relation-tag', {
+            bubbles: false,
+            composed: false,
+          }),
+        );
+        this.showClipboard = false;
+      }}
       ></tag-selection-dialog>
       <moss-pocket
         id="pocket"
@@ -1375,37 +1363,37 @@ export class MainDashboard extends LitElement {
         @open-wurl=${async (e) => await this.handleOpenWurl(e.detail.wurl)}
         @open-creatable-palette=${() => this._creatablePalette.show(this.selectedGroupDnaHash())}
         @wal-selected=${(e) => {
-          this.dispatchEvent(
-            new CustomEvent('wal-selected', {
-              detail: e.detail,
-              bubbles: false,
-              composed: false,
-            }),
-          );
-        }}
+        this.dispatchEvent(
+          new CustomEvent('wal-selected', {
+            detail: e.detail,
+            bubbles: false,
+            composed: false,
+          }),
+        );
+      }}
         @sl-hide=${(_e) => {
-          this.dispatchEvent(
-            new CustomEvent('cancel-select-wal', {
-              bubbles: false,
-              composed: false,
-            }),
-          );
-          this.showClipboard = false;
-        }}
+        this.dispatchEvent(
+          new CustomEvent('cancel-select-wal', {
+            bubbles: false,
+            composed: false,
+          }),
+        );
+        this.showClipboard = false;
+      }}
       ></moss-pocket>
       <creatable-palette
         id="creatable-palette"
         @click=${(e) => e.stopPropagation()}
         @open-wal=${async (e) => await this.handleOpenWal(e.detail.wal)}
         @wal-selected=${(e) => {
-          this.dispatchEvent(
-            new CustomEvent('wal-selected', {
-              detail: e.detail,
-              bubbles: false,
-              composed: false,
-            }),
-          );
-        }}
+        this.dispatchEvent(
+          new CustomEvent('wal-selected', {
+            detail: e.detail,
+            bubbles: false,
+            composed: false,
+          }),
+        );
+      }}
       ></creatable-palette>
 
       ${this.renderAddGroupDialog()}
@@ -1418,33 +1406,33 @@ export class MainDashboard extends LitElement {
       <create-group-dialog
         id="create-group-dialog"
         @group-created=${(e: CustomEvent) => {
-          this.openGroup(e.detail.groupDnaHash);
-        }}
+        this.openGroup(e.detail.groupDnaHash);
+      }}
       ></create-group-dialog>
 
       <div
         class="group-viewer invisible-scrollbars column ${this._dashboardState.value.viewType ===
         'group'
-          ? 'top-8'
-          : 'personal-view'}"
+        ? 'top-8'
+        : 'personal-view'}"
       >
         <div
           class="library-viewer invisible-scrollbars column ${this._dashboardState.value
-            .viewType === 'personal' &&
-          this._dashboardState.value.viewState.type == 'moss' &&
-          this._dashboardState.value.viewState.name === 'tool-library'
-            ? 'top-80'
-            : 'personal-view'}"
+        .viewType === 'personal' &&
+        this._dashboardState.value.viewState.type == 'moss' &&
+        this._dashboardState.value.viewState.name === 'tool-library'
+        ? 'top-80'
+        : 'personal-view'}"
         ></div>
         <div
           class="row"
           style="flex: 1; ${this._assetViewerState.value.visible &&
-          this._dashboardState.value.viewType === 'personal'
-            ? 'max-height: calc(100vh - 124px);'
-            : ''} ${this._assetViewerState.value.visible &&
+        this._dashboardState.value.viewType === 'personal'
+        ? 'max-height: calc(100vh - 124px);'
+        : ''} ${this._assetViewerState.value.visible &&
           this._dashboardState.value.viewType === 'group'
-            ? 'max-height: calc(100vh - 66px)'
-            : ''}"
+          ? 'max-height: calc(100vh - 66px)'
+          : ''}"
         >
           <!-- PERSONAL VIEW -->
           ${this.renderToolCrossGroupViews()} ${this.renderMossViews()}
@@ -1452,13 +1440,13 @@ export class MainDashboard extends LitElement {
           <!-- GROUP VIEW -->
           <div
             id="group-view-area ${this._dashboardState.value.viewType === 'personal'
-              ? 'height-constrained'
-              : ''}"
+        ? 'height-constrained'
+        : ''}"
             style="${this._dashboardState.value.viewType === 'group'
-              ? 'display: flex; flex: 1;'
-              : 'display: none;'}${this._drawerResizing
-              ? 'pointer-events: none; user-select: none;'
-              : ''} overflow-x: auto;"
+        ? 'display: flex; flex: 1;'
+        : 'display: none;'}${this._drawerResizing
+          ? 'pointer-events: none; user-select: none;'
+          : ''} overflow-x: auto;"
           >
             ${this.renderGroupArea()}
           </div>
@@ -1466,30 +1454,29 @@ export class MainDashboard extends LitElement {
             class="drawer-separator"
             style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
             @mousedown=${(e) => {
-              this.resizeMouseDownHandler(e);
-            }}
+        this.resizeMouseDownHandler(e);
+      }}
           ></div>
 
           <div
             id="asset-viewer"
             class="${classMap({
-              'side-drawer': this._assetViewerState.value.position === 'side',
-              hidden:
-                !this._assetViewerState.value.visible &&
-                this._assetViewerState.value.position === 'side',
-              'drawer-height-constrained': this._dashboardState.value.viewType === 'personal',
-            })}"
+        'side-drawer': this._assetViewerState.value.position === 'side',
+        hidden:
+          !this._assetViewerState.value.visible &&
+          this._assetViewerState.value.position === 'side',
+        'drawer-height-constrained': this._dashboardState.value.viewType === 'personal',
+      })}"
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
-              ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
-              ? `width: ${
-                  this._drawerWidth > 200 ? this._drawerWidth : 200
-                }px; display: flex; flex-grow: 0; flex-shrink: 0;`
-              : ''}"
+        ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
+        ? `width: ${this._drawerWidth > 200 ? this._drawerWidth : 200
+        }px; display: flex; flex-grow: 0; flex-shrink: 0;`
+        : ''}"
             @click=${(e) => {
-              // Prevent propagation such hat only clicks outside of this container bubble up and we
-              // can close the asset-view-container on side-click
-              e.stopPropagation();
-            }}
+        // Prevent propagation such hat only clicks outside of this container bubble up and we
+        // can close the asset-view-container on side-click
+        e.stopPropagation();
+      }}
           >
             ${this.renderOpenTabs()}
           </div>
@@ -1500,10 +1487,10 @@ export class MainDashboard extends LitElement {
           class="asset-view-bar"
           style="${this._assetViewerState.value.visible ? '' : 'display: none;'}"
           @click=${(e) => {
-            // Prevent propagation such hat only clicks outside of this container bubble up and we
-            // can close the asset-view-container on side-click
-            e.stopPropagation();
-          }}
+        // Prevent propagation such hat only clicks outside of this container bubble up and we
+        // can close the asset-view-container on side-click
+        e.stopPropagation();
+      }}
         >
           ${this.renderEntryTabBar()}
         </div>
@@ -1512,40 +1499,40 @@ export class MainDashboard extends LitElement {
       <!-- LEFT SIDEBAR -->
       <div
         @dragover=${(e: DragEvent) => {
-          e.preventDefault();
-        }}
+        e.preventDefault();
+      }}
         @drop=${(e: any) => {
-          console.log('GOT DROP EVENT: ', e);
-        }}
+        console.log('GOT DROP EVENT: ', e);
+      }}
         class="column left-sidebar items-center"
       >
         <div class="column items-center sidebar-items">
           <button
             class="home-button ${this._dashboardState.value.viewType === 'personal'
-              ? 'selected'
-              : ''}"
+        ? 'selected'
+        : ''}"
             style="margin-top: 25px;"
             .selected=${false}
             .tooltipText=${msg('Home')}
             placement="bottom"
             @click=${() => {
-              this._mossStore.setDashboardState({
-                viewType: 'personal',
-                viewState: { type: 'moss', name: 'welcome' },
-              });
-            }}
+        this._mossStore.setDashboardState({
+          viewType: 'personal',
+          viewState: { type: 'moss', name: 'welcome' },
+        });
+      }}
             @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this._mossStore.setDashboardState({
-                  viewType: 'personal',
-                  viewState: { type: 'moss', name: 'welcome' },
-                });
-                this._mossStore.setAssetViewerState({
-                  position: this._assetViewerState.value.position,
-                  visible: false,
-                });
-              }
-            }}
+        if (e.key === 'Enter') {
+          this._mossStore.setDashboardState({
+            viewType: 'personal',
+            viewState: { type: 'moss', name: 'welcome' },
+          });
+          this._mossStore.setAssetViewerState({
+            position: this._assetViewerState.value.position,
+            visible: false,
+          });
+        }
+      }}
           >
             <div class="column center-content">
               <img src="moss-m-white.svg" style="width: 38px; height: 38px;" />
@@ -1557,10 +1544,10 @@ export class MainDashboard extends LitElement {
             style="margin-top: 8px;"
             @click=${() => this.openClipboard()}
             @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this.openClipboard();
-              }
-            }}
+        if (e.key === 'Enter') {
+          this.openClipboard();
+        }
+      }}
           >
             <div class="column center-content">${magnifyingGlassIcon(20)}</div>
           </button>
@@ -1569,14 +1556,14 @@ export class MainDashboard extends LitElement {
               class="moss-sidebar-button ${this.isLibrarySelected() ? 'library-selected' : ''}"
               style="position: relative;"
               @click=${() => {
-                this._mossStore.setDashboardState({
-                  viewType: 'personal',
-                  viewState: {
-                    type: 'moss',
-                    name: 'tool-library',
-                  },
-                });
-              }}
+        this._mossStore.setDashboardState({
+          viewType: 'personal',
+          viewState: {
+            type: 'moss',
+            name: 'tool-library',
+          },
+        });
+      }}
             >
               <div class="column center-content">${appStoreIcon(30)}</div>
             </button>
@@ -1589,22 +1576,22 @@ export class MainDashboard extends LitElement {
         <groups-sidebar
           class="left-group-sidebar"
           .selectedGroupDnaHash=${this._dashboardState.value.viewType === 'group'
-            ? this._dashboardState.value.groupHash
-            : undefined}
+        ? this._dashboardState.value.groupHash
+        : undefined}
           .indicatedGroupDnaHashes=${this._assetViewerState.value.visible &&
-          this._selectedTab &&
-          this._selectedTab.tab.type === 'wal'
-            ? this._selectedTab.tab.groupHashesB64
-            : []}
+        this._selectedTab &&
+        this._selectedTab.tab.type === 'wal'
+        ? this._selectedTab.tab.groupHashesB64
+        : []}
           @group-selected=${(e: CustomEvent) => {
-            this.openGroup(e.detail.groupDnaHash);
-          }}
+        this.openGroup(e.detail.groupDnaHash);
+      }}
           @request-add-group=${() =>
-            (this.shadowRoot?.getElementById('add-group-dialog') as SlDialog).show()}
+        (this.shadowRoot?.getElementById('add-group-dialog') as MossDialog).show()}
           @agents-online=${async (e: CustomEvent) => {
-            /// Only start applet iframes for groups where agents are actually online
-            await this.activateAppletsForGroup(e.detail);
-          }}
+        /// Only start applet iframes for groups where agents are actually online
+        await this.activateAppletsForGroup(e.detail);
+      }}
         ></groups-sidebar>
 
         <span style="display: flex; flex: 1;"></span>
@@ -1618,10 +1605,10 @@ export class MainDashboard extends LitElement {
               style="all: unset; cursor: pointer;"
               @click=${() => this.openCreatablePanel()}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.openCreatablePanel();
-                }
-              }}
+        if (e.key === 'Enter') {
+          this.openCreatablePanel();
+        }
+      }}
             >
               <div class="column center-content default-image">${turingBlobIcon()}</div>
               <div class="column center-content hover-image">${turingBlobIconHover()}</div>
@@ -1648,48 +1635,48 @@ export class MainDashboard extends LitElement {
               class="top-bar row personal-top-bar"
               style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
               @mouseenter=${() => {
-                this.hoverTopBar = true;
-              }}
+            this.hoverTopBar = true;
+          }}
               @mouseleave=${() => {
-                this.hoverTopBar = false;
-                setTimeout(() => {
-                  if (!this.hoverMossButton) {
-                    this.hoverPersonalView = false;
-                  }
-                }, 50);
-              }}
+            this.hoverTopBar = false;
+            setTimeout(() => {
+              if (!this.hoverMossButton) {
+                this.hoverPersonalView = false;
+              }
+            }, 50);
+          }}
             >
               <div
                 id="top-bar-scroller"
                 class="row invisible-scrollbars"
                 style="overflow-x: auto; padding-right: 40px; height: 80px;"
                 @wheel=${(e) => {
-                  const el = this.shadowRoot!.getElementById('top-bar-scroller');
-                  if (el)
-                    el.scrollBy({
-                      left: e.deltaY < 0 ? -30 : 30,
-                    });
-                }}
+            const el = this.shadowRoot!.getElementById('top-bar-scroller');
+            if (el)
+              el.scrollBy({
+                left: e.deltaY < 0 ? -30 : 30,
+              });
+          }}
               >
                 <personal-view-sidebar
                   style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px;"
                   .selectedView=${this._dashboardState.value.viewState}
                   @personal-view-selected=${async (e) => {
-                    console.log('@personal-view-selected: ', e);
-                    this._mossStore.setDashboardState({
-                      viewType: 'personal',
-                      viewState: e.detail,
-                    });
-                    if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
-                      const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
-                        | AssetsGraph
-                        | null
-                        | undefined;
-                      if (assetsGraphEl) {
-                        await assetsGraphEl.load();
-                      }
-                    }
-                  }}
+            console.log('@personal-view-selected: ', e);
+            this._mossStore.setDashboardState({
+              viewType: 'personal',
+              viewState: e.detail,
+            });
+            if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
+              const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
+                | AssetsGraph
+                | null
+                | undefined;
+              if (assetsGraphEl) {
+                await assetsGraphEl.load();
+              }
+            }
+          }}
                 ></personal-view-sidebar>
               </div>
               <div style="display: flex; flex: 1;"></div>
@@ -1702,45 +1689,45 @@ export class MainDashboard extends LitElement {
       <div class="row" style="position: fixed; top: 0; right: 0;">
         <sl-tooltip
           content="${this._assetViewerState.value.visible
-            ? 'Hide Asset Viewer'
-            : 'Show Asset Viewer'}"
+        ? 'Hide Asset Viewer'
+        : 'Show Asset Viewer'}"
           placement="left"
           hoist
         >
           <button
             id="tab-bar-button"
             class="asset-viever-toggle-btn ${this._assetViewerState.value.visible &&
-            this._assetViewerState.value.position === 'side'
-              ? 'btn-selected'
-              : ''}"
+        this._assetViewerState.value.position === 'side'
+        ? 'btn-selected'
+        : ''}"
             tabindex="0"
             @click="${(_e) => {
-              if (
-                this._assetViewerState.value.visible &&
-                this._assetViewerState.value.position === 'side'
-              ) {
-                this._mossStore.setAssetViewerState({ position: 'side', visible: false });
-                return;
-              }
-              this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-            }}"
+        if (
+          this._assetViewerState.value.visible &&
+          this._assetViewerState.value.position === 'side'
+        ) {
+          this._mossStore.setAssetViewerState({ position: 'side', visible: false });
+          return;
+        }
+        this._mossStore.setAssetViewerState({ position: 'side', visible: true });
+      }}"
             @keypress="${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                if (
-                  this._assetViewerState.value.visible &&
-                  this._assetViewerState.value.position === 'side'
-                ) {
-                  this._mossStore.setAssetViewerState({ position: 'side', visible: false });
-                  return;
-                }
-                this._mossStore.setAssetViewerState({ position: 'side', visible: true });
-              }
-            }}"
+        if (e.key === 'Enter') {
+          if (
+            this._assetViewerState.value.visible &&
+            this._assetViewerState.value.position === 'side'
+          ) {
+            this._mossStore.setAssetViewerState({ position: 'side', visible: false });
+            return;
+          }
+          this._mossStore.setAssetViewerState({ position: 'side', visible: true });
+        }
+      }}"
           >
             <div class="column center-content">
               ${this._assetViewerState.value.visible
-                ? chevronDoubleRightIcon(28)
-                : chevronDoubleLeftIcon(28)}
+        ? chevronDoubleRightIcon(28)
+        : chevronDoubleLeftIcon(28)}
             </div>
           </button>
         </sl-tooltip>
@@ -1756,7 +1743,7 @@ export class MainDashboard extends LitElement {
           ${this.reloading ? msg('reloading...') : msg('loading...')}
         </div>
         ${this.slowLoading
-          ? html`
+        ? html`
               <div class="column items-center" style="margin-top: 50px; max-width: 600px;">
                 <div>
                   One or more Tools take unusually long to unload. Do you want to force reload?
@@ -1774,7 +1761,7 @@ export class MainDashboard extends LitElement {
                 </button>
               </div>
             `
-          : html``}
+        : html``}
       </div>
 
       <!-- Added to pocket indicator -->
