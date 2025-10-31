@@ -382,6 +382,7 @@ export class GroupAppletsSidebar extends LitElement {
                 @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('add-tool-requested', {
+                  detail: { groupHash: this._groupStore.groupDnaHash },
                   bubbles: false,
                   composed: true,
                 }),
@@ -811,6 +812,7 @@ export class GroupAppletsSidebar extends LitElement {
                 @click=${() => {
             this.dispatchEvent(
               new CustomEvent('add-tool-requested', {
+                detail: { groupHash: this._groupStore.groupDnaHash },
                 bubbles: false,
                 composed: true,
               }),

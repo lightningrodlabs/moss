@@ -262,8 +262,8 @@ export class MossApp extends LitElement {
             class="moss-hover-icon-button"
             style="margin-left: -8px; margin-top: -8px;"
             @click=${() => {
-              this.state = MossAppState.InitialSetup;
-            }}
+        this.state = MossAppState.InitialSetup;
+      }}
           >
             <div class="row items-center">
               <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
@@ -289,11 +289,11 @@ export class MossApp extends LitElement {
               required
               autofocus
               @input=${() => {
-                const groupNameInput = this.shadowRoot?.getElementById(
-                  'group-name-input',
-                ) as unknown as SlInput;
-                this.groupName = groupNameInput.value;
-              }}
+        const groupNameInput = this.shadowRoot?.getElementById(
+          'group-name-input',
+        ) as unknown as SlInput;
+        this.groupName = groupNameInput.value;
+      }}
             >
             </sl-input>
 
@@ -303,8 +303,8 @@ export class MossApp extends LitElement {
               label=""
               .required=${true}
               @avatar-selected=${(e) => {
-                this.groupIcon = e.detail.avatar;
-              }}
+        this.groupIcon = e.detail.avatar;
+      }}
             ></moss-select-avatar-fancy>
 
             <button
@@ -312,14 +312,14 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 56px;"
               ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
               @click=${() => {
-                this.state = MossAppState.CreateGroupStep2;
-              }}
+        this.state = MossAppState.CreateGroupStep2;
+      }}
             >
               ${this.creatingGroup
-                ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create group space')}`}
+        : html`${msg('Create group space')}`}
             </button>
 
             <div class="row">
@@ -343,8 +343,8 @@ export class MossApp extends LitElement {
             class="moss-hover-icon-button"
             style="margin-left: -8px; margin-top: -8px;"
             @click=${() => {
-              this.state = MossAppState.CreateGroupStep1;
-            }}
+        this.state = MossAppState.CreateGroupStep1;
+      }}
           >
             <div class="row items-center">
               <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
@@ -385,18 +385,18 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 56px;"
               ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
               @click=${() => {
-                const groupTypeRadio = this.shadowRoot?.getElementById(
-                  'group-type-radio',
-                ) as SlRadioGroup;
-                this.useProgenitor = groupTypeRadio.value === '1' ? true : false;
-                this.createGroupAndHeadToMain();
-              }}
+        const groupTypeRadio = this.shadowRoot?.getElementById(
+          'group-type-radio',
+        ) as SlRadioGroup;
+        this.useProgenitor = groupTypeRadio.value === '1' ? true : false;
+        this.createGroupAndHeadToMain();
+      }}
             >
               ${this.creatingGroup
-                ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create group space')}`}
+        : html`${msg('Create group space')}`}
             </button>
 
             <div class="row">
@@ -528,11 +528,11 @@ export class MossApp extends LitElement {
                 label=${msg('invite link')}
                 style="margin-right: 12px; width: 258px;"
                 @input=${() => {
-                  const inviteLinkInput = this.shadowRoot?.getElementById(
-                    'invite-link-input',
-                  ) as HTMLInputElement;
-                  this.inviteLink = inviteLinkInput.value;
-                }}
+        const inviteLinkInput = this.shadowRoot?.getElementById(
+          'invite-link-input',
+        ) as HTMLInputElement;
+        this.inviteLink = inviteLinkInput.value;
+      }}
               ></sl-input>
               <button
                 id="join-group-btn"
@@ -542,10 +542,10 @@ export class MossApp extends LitElement {
                 style="width: 40px;"
               >
                 ${this.creatingGroup
-                  ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                       <div class="dot-carousel" style="margin: 5px 0;"></div>
                     </div>`
-                  : html`${msg('Join')}`}
+        : html`${msg('Activate')}`}
               </button>
             </div>
           </div>
@@ -560,8 +560,8 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 28px;"
               ?disabled=${this.creatingGroup}
               @click=${() => {
-                this.state = MossAppState.CreateGroupStep1;
-              }}
+        this.state = MossAppState.CreateGroupStep1;
+      }}
             >
               <div class="row center-content">
                 ${plusCircleIcon(20)}
@@ -573,9 +573,9 @@ export class MossApp extends LitElement {
 
         <button
           @click=${() => {
-            window.localStorage.removeItem('isFirstLaunch');
-            this.state = MossAppState.Running;
-          }}
+        window.localStorage.removeItem('isFirstLaunch');
+        this.state = MossAppState.Running;
+      }}
           class="skip-button"
           style="position: absolute; bottom: 10px;"
         >
@@ -594,8 +594,8 @@ export class MossApp extends LitElement {
         <div style="max-width: 600px; text-align: center; margin-bottom: 40px;">
           <span
             >${msg(
-              'If you want to support us in finding the problem, please export the logs and send them to ',
-            )}</span
+      'If you want to support us in finding the problem, please export the logs and send them to ',
+    )}</span
           >
           <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
         </div>

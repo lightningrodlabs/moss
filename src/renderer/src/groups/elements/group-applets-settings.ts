@@ -86,35 +86,35 @@ export class GroupAppletsSettings extends LitElement {
                 class="placeholder"
                 style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
                 >${msg(
-                  "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
-                )}
+            "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
+          )}
               </span>
             </div>
           `;
         return html`
           <div class="column" style="flex: 1;">
             ${repeat(
-              Array.from(applets.entries()).sort(([_, a], [__, b]) =>
-                a.custom_name.localeCompare(b.custom_name),
-              ),
-              ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-              ([appletHash, applet]) => html`
+          Array.from(applets.entries()).sort(([_, a], [__, b]) =>
+            a.custom_name.localeCompare(b.custom_name),
+          ),
+          ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+          ([appletHash, applet]) => html`
                 <applet-detail-card
                   style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                   @applets-disabled=${(e) => {
-                    this.dispatchEvent(
-                      new CustomEvent('applets-disabled', {
-                        detail: e.detail,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+              this.dispatchEvent(
+                new CustomEvent('applets-disabled', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                   .appletHash=${appletHash}
                   .applet=${applet}
                 ></applet-detail-card>
               `,
-            )}
+        )}
           </div>
         `;
     }
@@ -160,16 +160,16 @@ export class GroupAppletsSettings extends LitElement {
       return html`
         <div class="column" style="flex: 1;">
           ${repeat(
-            abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
-            ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-            ([appletHash, applet]) => html`
+        abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
+        ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+        ([appletHash, applet]) => html`
               <abandoned-applet-card
                 style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                 .appletHash=${appletHash}
                 .applet=${applet}
               ></abandoned-applet-card>
             `,
-          )}
+      )}
         </div>
       `;
     }
@@ -184,7 +184,7 @@ export class GroupAppletsSettings extends LitElement {
       >
         <div class="row" style="position: relative">
           <div class="title" style="margin-bottom: 30px; font-size: 28px;">
-            ${msg('Joined Tools')}
+            ${msg('Activated Tools')}
           </div>
         </div>
         ${this.renderInstalledApplets()}

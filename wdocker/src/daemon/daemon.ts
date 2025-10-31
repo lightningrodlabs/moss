@@ -242,9 +242,9 @@ async function checkForNewGroupsAndApplets(
         try {
           await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
         } catch (e) {
-          console.error('Failed to join Tool: ', e);
+          console.error('Failed to activate Tool: ', e);
         }
-        console.log('Tool Joined.');
+        console.log('Tool Activated.');
       }
 
       // Check for unjoined cloned cells
@@ -308,10 +308,10 @@ async function checkForUnjoinedAppletsToJoin(groupClient: GroupClient): Promise<
     appletsToJoinByAlwaysOnlinNodes.includes(appletId),
   );
   if (unjoinedAppletsToJoin.length === 0) {
-    console.log('No unjoined default Tools found.');
+    console.log('No unactivated default Tools found.');
     return [];
   }
-  console.log('Found unjoined Tools to join by always-online nodes: ', unjoinedAppletsToJoin);
+  console.log('Found unactivated Tools to join by always-online nodes: ', unjoinedAppletsToJoin);
   return unjoinedAppletsToJoin;
 }
 
@@ -322,10 +322,10 @@ async function tryJoinApplet(
 ): Promise<void> {
   // 1. Get Applet entry from group DHT
   const applet = await groupClient.getApplet(appletHash);
-  if (!applet) throw new Error('Applet entry not found. Cannot join Tool.');
+  if (!applet) throw new Error('Applet entry not found. Cannot activate Tool.');
   if (!applet.network_seed)
     throw new Error(
-      'Network Seed not defined. Undefined network seed is currently not supported. Joining Tool aborted.',
+      'Network Seed not defined. Undefined network seed is currently not supported. Activating Tool aborted.',
     );
 
   // 2. Fetch from the web2 Tool list
@@ -456,7 +456,7 @@ async function fetchAndStoreHappIfNecessary(
   await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, undefined);
   try {
     fs.rmSync(tmpDir, { recursive: true });
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function needsPinging(agent: AgentPubKey, myPubkeySum: number): boolean {

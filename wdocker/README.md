@@ -27,7 +27,7 @@ This will prompt you to enter a password which that you will have to enter for a
 wdocker join-group [conductor name from above] "[group invite link]"
 ```
 
-3. That's it. The running conductor will now check for new unjoined tools in the group every 5 minutes and install them if needed. If you stop the conductor you can start it going forward with
+3. That's it. The running conductor will now check for new unactivated tools in the group every 5 minutes and install them if needed. If you stop the conductor you can start it going forward with
 
 ```
 wdocker start [conductor name]

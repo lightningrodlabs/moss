@@ -276,7 +276,7 @@ export class GroupHome extends LitElement {
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       this._showIgnoredApplets = false;
     } catch (e) {
-      notifyError(`Failed to join Tool (See console for details).`);
+      notifyError(`Failed to activate Tool (See console for details).`);
       console.error(e);
     }
     this._joiningNewApplet = undefined;
@@ -373,7 +373,7 @@ export class GroupHome extends LitElement {
           ${filteredApplets.length === 0
             ? html`
                 <div class="column" style="flex: 1; align-items: center; margin-top: 50px;">
-                  ${msg('No new Tools to install.')}
+                  ${msg('No new Tools to activate.')}
                 </div>
               `
             : html`
@@ -441,7 +441,7 @@ export class GroupHome extends LitElement {
                               .disabled=${!!this._joiningNewApplet}
                               variant="success"
                               @click=${() => this.joinNewApplet(info.appletHash)}
-                              >${msg('Join')}</sl-button
+                              >${msg('Activate')}</sl-button
                             >
                             ${info.isIgnored
                   ? html``
@@ -716,7 +716,7 @@ export class GroupHome extends LitElement {
                     ${this.newAppletsAvailable()}
                   </div>`
         : html``}
-              ${msg('Unjoined Tools')}
+              ${msg('Unactivated Tools')}
             </div>
           </div>
           <div class="column main-panel">${this.renderMainPanelContent()}</div>

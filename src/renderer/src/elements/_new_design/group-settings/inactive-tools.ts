@@ -91,13 +91,13 @@ export class InactiveTools extends LitElement {
                 timestamp,
                 joinedMembers,
               ] as [
-                AppletHash,
-                Applet | undefined,
-                ToolInfoAndVersions | undefined,
-                AgentPubKey,
-                number,
-                AppletAgent[],
-              ];
+                  AppletHash,
+                  Applet | undefined,
+                  ToolInfoAndVersions | undefined,
+                  AgentPubKey,
+                  number,
+                  AppletAgent[],
+                ];
             },
           ),
         ),
@@ -132,7 +132,7 @@ export class InactiveTools extends LitElement {
           <sl-spinner style="font-size: 30px;"></sl-spinner>
         </div>`;
       case 'error':
-        console.error('Failed to get unjoined applets: ', this._unjoinedApplets.value.error);
+        console.error('Failed to get unactivated applets: ', this._unjoinedApplets.value.error);
         return html`<div class="column center-content">
           <h3>Error: Failed to fetch unjoined Applets</h3>
           <span>${this._unjoinedApplets.value.error}</span>
@@ -178,15 +178,15 @@ export class InactiveTools extends LitElement {
           : html`
               <div class="column">
                 ${filteredApplets.map(
-                  (info) => html`
+            (info) => html`
                     <div
                       class="column tool ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                        ? 'tool-expanded'
-                        : ''}"
+                ? 'tool-expanded'
+                : ''}"
                       style="flex: 1;margin-bottom: 20px;"
                       @click=${() => {
-                        this.toggleExpandedApplets(encodeHashToBase64(info.appletHash));
-                      }}
+                this.toggleExpandedApplets(encodeHashToBase64(info.appletHash));
+              }}
                     >
                       <div class="row" style="justify-content: space-between">
                         <div class="row">
@@ -195,12 +195,12 @@ export class InactiveTools extends LitElement {
                             content="${info.toolInfoAndVersions?.description}"
                           >
                             ${info.toolInfoAndVersions?.icon
-                              ? html`<img
+                ? html`<img
                                   src=${info.toolInfoAndVersions.icon}
                                   alt="Applet logo"
                                   style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                                 />`
-                              : html``}
+                : html``}
                           </sl-tooltip>
                           <div class="column">
                             <span class="tool-name"
@@ -215,28 +215,28 @@ export class InactiveTools extends LitElement {
                           <moss-mini-button
                             style="margin-left: 20px;"
                             .loading=${this._joiningNewApplet ===
-                            encodeHashToBase64(info.appletHash)}
+              encodeHashToBase64(info.appletHash)}
                             .disabled=${!!this._joiningNewApplet}
                             @click=${(e) => {
-                              e.stopPropagation();
-                              this.joinNewApplet(info.appletHash);
-                            }}
+                e.stopPropagation();
+                this.joinNewApplet(info.appletHash);
+              }}
                           >
                             ${activateToolIcon(20)}<span style="margin-left: 5px;"
                               >${msg('Activate')}</span
                             >
                           </moss-mini-button>
                           ${info.isIgnored
-                            ? html``
-                            : html`
+                ? html``
+                : html`
                                 <moss-mini-button
                                   variant="secondary"
                                   style="margin-left: 8px;"
                                   @click=${(e) => {
-                                    e.stopPropagation();
-                                    this._groupStore.ignoreApplet(info.appletHash);
-                                    this.requestUpdate();
-                                  }}
+                    e.stopPropagation();
+                    this._groupStore.ignoreApplet(info.appletHash);
+                    this.requestUpdate();
+                  }}
                                 >
                                   ${ignoreToolIcon(20)}<span style="margin-left: 5px;"
                                     >${msg('Ignore')}</span
@@ -245,13 +245,13 @@ export class InactiveTools extends LitElement {
                               `}
                           <div style="margin-left: 24px">
                             ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                              ? html`${chevronSingleDownIcon(18)}`
-                              : html`${chevronSingleUpIcon(18)}`}
+                ? html`${chevronSingleDownIcon(18)}`
+                : html`${chevronSingleUpIcon(18)}`}
                           </div>
                         </div>
                       </div>
                       ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                        ? html`
+                ? html`
                       <div class="details-container column">
                         <div class="installer row">
                           <agent-avatar
@@ -269,22 +269,22 @@ export class InactiveTools extends LitElement {
                         <div class="participants row">
                           <span style="margin-right: 5px;">${msg('In use by: ')}</span>
                           ${info.joinedMembers.map(
-                            (appletAgent) => html`
+                  (appletAgent) => html`
                               <agent-avatar
                                 style="margin-left: 5px;"
                                 .size=${24}
                                 .agentPubKey=${appletAgent.group_pubkey}
                               ></agent-avatar>
                             `,
-                          )}
+                )}
                         </div>
                        
                       </div>
                     </div> `
-                        : ''}
+                : ''}
                     </div>
                   `,
-                )}
+          )}
               </div>
             `}`;
       default:

@@ -88,12 +88,12 @@ const ASSET_RELATION_POLLING_PERIOD = 10000;
 
 export type MaybeProfile =
   | {
-      type: 'unknown';
-    }
+    type: 'unknown';
+  }
   | {
-      type: 'profile';
-      profile: EntryRecord<Profile>;
-    };
+    type: 'profile';
+    profile: EntryRecord<Profile>;
+  };
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -1049,8 +1049,8 @@ export class GroupStore {
 
     const appletsToEnable = previouslyDisabled
       ? installedApplets.filter(
-          (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
-        )
+        (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
+      )
       : installedApplets;
 
     for (const appletHash of appletsToEnable) {
@@ -1168,7 +1168,7 @@ export class GroupStore {
         }),
       );
     } catch (e) {
-      console.warn('Failed to get joined members for unjoined applets: ', e);
+      console.warn('Failed to get members for unactivated applets: ', e);
       const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
         [AgentPubKey, number, AppletAgent[]]
       > = new EntryHashMap();

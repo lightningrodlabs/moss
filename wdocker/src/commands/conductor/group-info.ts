@@ -52,7 +52,7 @@ export async function groupInfo(
     }
   });
   const unjoinedTools = await groupClient.getUnjoinedApplets();
-  console.log(`\n${unjoinedTools.length} Unjoined Tools.`);
+  console.log(`\n${unjoinedTools.length} Unactivated Tools.`);
   adminWs.client.close();
   groupAppWs.client.close();
 }
