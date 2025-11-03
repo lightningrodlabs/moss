@@ -571,24 +571,21 @@ function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
  */
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
-
   // Recursive function to traverse the DOM tree
   function traverse(node) {
-    // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
       result.push(node);
     }
 
     // Get the shadow root of the node if available
+    // and traverse
     const shadowRoot = node.shadowRoot;
-
-    // Traverse child nodes if any
     if (shadowRoot) {
       shadowRoot.childNodes.forEach(traverse);
-    } else {
-      node.childNodes.forEach(traverse);
     }
+    // also traverse child nodes
+    node.childNodes.forEach(traverse);
   }
 
   // Start traversing from the main document's body
@@ -847,15 +844,20 @@ export function relativeTzOffsetString(offsetMinutes1: number, offsetMinutes2: n
   return 'same timezone';
 }
 
-export function localTimeFromUtcOffset(offsetMinues: number): string {
+export function localTimeFromUtcOffset(offsetMinutes: number, ampm: boolean = true): string {
   const utcNow = Date.now();
-  const localNow = utcNow - offsetMinues * 60 * 1000;
+  const localNow = utcNow - offsetMinutes * 60 * 1000;
   const localDate = new Date(localNow);
-  const hours = localDate.getUTCHours();
+  let hours = localDate.getUTCHours();
   const minutes = localDate.getUTCMinutes();
+  let pm = hours >= 12;
+
+  if (ampm && hours > 12) {
+    hours -= 12;
+  }
 
   // Format the time in HH:MM format
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${ampm ? (pm ? ' p.m.' : ' a.m.') : ''}`;
 }
 
 export async function postMessageToIframe<T>(
@@ -892,7 +894,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     id: '###DEVCONFIG###',
     name: 'This Tool is listed in the dev config file.',
     description: 'Moss dev mode test dev collective',
-    contact: {},
+    contact: { website: 'https://lightningrodlabs.org/' },
     icon: 'garbl',
   };
 
@@ -944,7 +946,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         title: toolConfig.name,
         subtitle: toolConfig.subtitle,
         description: toolConfig.description,
-        tags: [],
+        tags: toolConfig.tags ? toolConfig.tags : [],
         versionBranch: '###DEVCONFIG###',
         icon:
           toolConfig.icon.type === 'filesystem'
@@ -952,10 +954,21 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             : toolConfig.icon.url,
         versions: [
           {
+            version: '0.1.1',
+            url: toolUrl,
+            changelog: 'New thing. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
+          {
             version: '0.1.0',
             url: toolUrl,
-            changelog: 'Same same. Just an example changelog.',
-            releasedAt: Date.now(),
+            changelog: 'First release. Just an example changelog.',
+            releasedAt: Date.now() - 10000000,
             hashes: {
               webhappSha256: '###DEVCONFIG###',
               happSha256: '###DEVCONFIG###',

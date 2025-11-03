@@ -52,7 +52,13 @@ export async function groupInfo(
     }
   });
   const unjoinedTools = await groupClient.getUnjoinedApplets();
+<<<<<<< HEAD
   console.log(`\n${unjoinedTools.length} Unjoined Tools.`);
   /*await*/ adminWs.client.close();
   /*await*/ groupAppWs.client.close();
+=======
+  console.log(`\n${unjoinedTools.length} Unactivated Tools.`);
+  adminWs.client.close();
+  groupAppWs.client.close();
+>>>>>>> feat/tools-deux
 }

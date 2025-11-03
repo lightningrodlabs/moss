@@ -8,6 +8,7 @@ import { customElement, property } from 'lit/decorators.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { groupStoreContext } from '../context.js';
 import { mossStyles } from '../../shared-styles.js';
@@ -16,6 +17,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 
 import '../../elements/reusable/profile-detail.js';
+import { localTimeFromUtcOffset } from '../../utils.js';
 
 export type AgentAndTzOffset = {
   agent: AgentPubKey;
@@ -45,6 +47,20 @@ export class GroupPeersStatus extends LitElement {
     () => this._groupStore.peerStatuses(),
     () => [this._groupStore],
   );
+
+  renderAgentInfo(agentPubKey, isOnline, tzUtcOffset?, isMe?) {
+    return html` <profile-detail-moss
+      style="color: black; ${isOnline ? '' : 'opacity: 0.5'}"
+      no-additional-fields
+      .agentPubKey=${agentPubKey}
+      >${tzUtcOffset
+        ? html`<sl-tooltip slot="extra" .content=${msg('Local Time')}
+            ><div style="opacity: 0.5;">${localTimeFromUtcOffset(tzUtcOffset)}</div></sl-tooltip
+          >`
+        : ''}
+      ${isMe ? html`<div slot="action">&nbsp;(me)</div>` : ''}
+    </profile-detail-moss>`;
+  }
 
   renderPeersStatus(members: ReadonlyMap<Uint8Array, MaybeProfile>) {
     const headlessNodes = Array.from(members.entries()).filter(
@@ -102,7 +118,7 @@ export class GroupPeersStatus extends LitElement {
 
     return html`
       <div class="column agents-list">
-        <div style="margin-bottom: 5px;">${msg('Online')}</div>
+        <div class="status-text">${msg('Online')}</div>
         <div class="column">
           <div
             class="row profile"
@@ -135,11 +151,7 @@ export class GroupPeersStatus extends LitElement {
               }
             }}
           >
-            <profile-detail-moss
-              style="color: black"
-              no-additional-fields
-              .agentPubKey=${myPubKey}
-            ></profile-detail-moss>
+            ${this.renderAgentInfo(myPubKey, true, undefined, true)}
             <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
             <div
               class="inactive-indicator"
@@ -174,11 +186,7 @@ export class GroupPeersStatus extends LitElement {
                   }
                 }}
               >
-                <profile-detail-moss
-                  style="color: black"
-                  no-additional-fields
-                  .agentPubKey=${agentInfo.agent}
-                ></profile-detail-moss>
+                ${this.renderAgentInfo(agentInfo.agent, true, agentInfo.tzUtcOffset)}
                 <div
                   class="status-indicator ${agentInfo.status === 'inactive' ? 'inactive' : ''}"
                 ></div>
@@ -191,7 +199,7 @@ export class GroupPeersStatus extends LitElement {
           })}
         </div>
         ${offlineAgents.length > 0
-          ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Offline')}</div>
+          ? html` <div style="margin-top:24px;" class="status-text">${msg('Offline')}</div>
               <div class="column">
                 ${offlineAgents.map(
                   (agentInfo) => html`
@@ -219,11 +227,7 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail-moss
-                        style="opacity: 0.5; color: black;"
-                        no-additional-fields
-                        .agentPubKey=${agentInfo.agent}
-                      ></profile-detail-moss>
+                      ${this.renderAgentInfo(agentInfo.agent, false, agentInfo.tzUtcOffset)}
                     </div>
                   `,
                 )}
@@ -258,11 +262,11 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail-moss
-                        style="color: black; ${agentInfo.status ? '' : 'opacity: 0.5'}"
-                        no-additional-fields
-                        .agentPubKey=${agentInfo.agent}
-                      ></profile-detail-moss>
+                      ${this.renderAgentInfo(
+                        agentInfo.agent,
+                        agentInfo.status,
+                        agentInfo.tzUtcOffset,
+                      )}
                       ${agentInfo.status ? html`<div class="status-indicator"></div>` : html``}
                     </div>
                   `,
@@ -307,11 +311,11 @@ export class GroupPeersStatus extends LitElement {
       }
 
       .profile {
-        border-radius: 5px;
+        border-radius: 8px;
       }
 
       .profile:hover {
-        background: #ffffff1f;
+        background: #eff7ea;
         cursor: pointer;
       }
 
@@ -338,6 +342,16 @@ export class GroupPeersStatus extends LitElement {
         width: 9px;
         border-radius: 50%;
         background: var(--moss-fishy-green);
+      }
+
+      .status-text {
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 8px;
+        opacity: 0.6;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
       }
     `,
   ];

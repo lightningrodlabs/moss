@@ -52,6 +52,9 @@ export const mossStyles = [
 
       /* shoelace dialog overlay background */
       --sl-overlay-background-color: #324d4781;
+
+      /* tooltip border radius */
+      --sl-tooltip-border-radius: 8px;
     }
 
     .items-center {
@@ -80,6 +83,17 @@ export const mossStyles = [
 
     .font-bold {
       font-weight: bold;
+    }
+
+    /* Invisible scrollbars */
+
+    .invisible-scrollbars {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .invisible-scrollbars::-webkit-scrollbar {
+      display: none;
     }
 
     /* Shoelace element styling */
@@ -326,6 +340,99 @@ export const mossStyles = [
     .moss-sidebar-button:focus-visible {
       outline: 2px solid var(--moss-purple);
       background: var(--moss-dark-button);
+    }
+
+    .install-button {
+      display: flex;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: solid 2px;
+      border-color: black;
+      color: black;
+      background-color: white;
+      font-style: normal;
+      font-size: 14px;
+      line-height: 16px;
+      padding: 8px 10px;
+    }
+
+    .install-button:hover {
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-primary,
+    .moss-mini-button-secondary {
+      display: flex;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: solid 2px;
+      font-style: normal;
+      font-size: 14px;
+      line-height: 16px;
+      padding: 8px 10px;
+    }
+
+    .moss-mini-button-secondary {
+      border-color: black;
+      color: black;
+      background-color: white;
+    }
+
+    .moss-mini-button-secondary:hover {
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-primary:hover {
+      color: black;
+      background-color: white;
+    }
+
+    .moss-mini-button-primary {
+      border-color: black;
+      color: white;
+      background-color: black;
+    }
+
+    .moss-mini-button-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .tab-bar {
+      border-bottom: 2px solid var(--moss-grey-light);
+      /* margin-bottom: -2px; */
+    }
+
+    .tab {
+      all: unset;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      height: 40px;
+      padding: 0 20px;
+      cursor: pointer;
+      margin-bottom: -2px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab:focus-visible {
+      background: var(--moss-purple-semi-transparent);
+    }
+
+    .tab:hover {
+      color: var(--moss-purple);
+      border-bottom: 2px solid var(--moss-purple);
+    }
+
+    .tab-selected {
+      border-bottom: 2px solid var(--moss-purple);
+      color: var(--moss-purple);
     }
 
     /* Loading dots for buttons */

@@ -21,6 +21,8 @@ import { GroupStore } from '../../../groups/group-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { ToolAndCurationInfo } from '../../../types.js';
+import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
+import '../../../elements/_new_design/moss-dialog.js';
 
 @localized()
 @customElement('install-tool-dialog-web2')
@@ -41,7 +43,7 @@ export class InstallToolDialogWeb2 extends LitElement {
   );
 
   @query('#applet-dialog')
-  _appletDialog!: any;
+  _appletDialog!: MossDialog;
 
   @query('form')
   form!: HTMLFormElement;
@@ -70,6 +72,11 @@ export class InstallToolDialogWeb2 extends LitElement {
   @state()
   _showAdvanced: boolean = false;
 
+  groupProfile = new StoreSubscriber(
+    this,
+    () => this.groupStore.groupProfile,
+    () => [this.groupStore],
+  );
   // _unlisten: UnlistenFn | undefined;
 
   async open(tool: ToolAndCurationInfo) {
@@ -169,57 +176,68 @@ export class InstallToolDialogWeb2 extends LitElement {
           (applet) => applet?.custom_name,
         );
         return html`
-          <sl-input
-            name="custom_name"
-            id="custom-name-field"
-            .label=${msg('Custom Name')}
-            style="margin-bottom: 16px"
-            required
-            ${ref((input) => {
-              if (!input) return;
-              setTimeout(() => {
-                if (this._tool && allAppletsNames.includes(this._tool.toolInfoAndVersions.title)) {
-                  (input as HTMLInputElement).setCustomValidity('Name already exists');
-                } else {
-                  (input as HTMLInputElement).setCustomValidity('');
-                }
-              });
-            })}
-            @input=${(e) => {
-              if (allAppletsNames.includes(e.target.value)) {
-                e.target.setCustomValidity('Name already exists');
-              } else if (e.target.value === '') {
-                e.target.setCustomValidity('You need to choose a name for the Tool instance.');
-              } else {
-                e.target.setCustomValidity('');
-              }
-            }}
-            .defaultValue=${this._tool.toolInfoAndVersions.title}
-          ></sl-input>
+          <div class="column install-form">
+            <sl-input
+              name="custom_name"
+              class="moss-input"
+              id="custom-name-field"
+              .label=${msg('Custom Name')}
+              style="margin-bottom: 16px"
+              required
+              ${ref((input) => {
+          if (!input) return;
+          setTimeout(() => {
+            if (
+              this._tool &&
+              allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
+            ) {
+              (input as HTMLInputElement).setCustomValidity('Name already exists');
+            } else {
+              (input as HTMLInputElement).setCustomValidity('');
+            }
+          });
+        })}
+              @input=${(e) => {
+            if (allAppletsNames.includes(e.target.value)) {
+              e.target.setCustomValidity('Name already exists');
+            } else if (e.target.value === '') {
+              e.target.setCustomValidity('You need to choose a name for the Tool instance.');
+            } else {
+              e.target.setCustomValidity('');
+            }
+          }}
+              .defaultValue=${this._tool.toolInfoAndVersions.title}
+            ></sl-input>
 
-          <span
-            style="text-decoration: underline; cursor: pointer; margin-bottom: 3px;"
-            @click=${() => {
-              this._showAdvanced = !this._showAdvanced;
-            }}
-            >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
-          </span>
+            <span
+              style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
+              @click=${() => {
+            this._showAdvanced = !this._showAdvanced;
+          }}
+              >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
+            </span>
 
-          ${this._showAdvanced
+            ${this._showAdvanced
             ? html`
-                <sl-input
-                  name="network_seed"
-                  id="network-seed-field"
-                  .label=${msg('Custom Network Seed')}
-                  style="margin-bottom: 16px"
-                ></sl-input>
-              `
+                  <sl-input
+                    name="network_seed"
+                    id="network-seed-field"
+                    .label=${msg('Custom Network Seed')}
+                    style="margin-bottom: 16px"
+                  ></sl-input>
+                `
             : html``}
 
-          <sl-button variant="primary" type="submit" .loading=${this._installing}>
-            ${msg('Add to Group')}
-          </sl-button>
-          <div>${this._installationProgress}</div>
+            <div
+              style="margin:0 20px 20px -120px; width: 673px; height:1px; flex-shrink: 0;background-color: var(--moss-grey-light)"
+            >
+              &nbsp;
+            </div>
+            <button class="moss-button ${this._installing ? 'loading' : ''}" type="submit">
+              ${msg('Add to Group')}
+            </button>
+            <div>${this._installationProgress}</div>
+          </div>
         `;
 
       case 'error':
@@ -230,43 +248,74 @@ export class InstallToolDialogWeb2 extends LitElement {
     }
   }
 
+  renderGroup() {
+    switch (this.groupProfile.value.status) {
+      case 'pending':
+        return html`loading...`;
+      case 'error':
+        console.error('Error fetching the profile: ', this.groupProfile.value.error);
+        return html`Error fetching the profile.`;
+      case 'complete':
+        const groupProfile = this.groupProfile.value.value;
+        return html`
+          &nbsp;<img
+            .src=${groupProfile?.icon_src}
+            alt="${groupProfile?.name}"
+            style="height: 28px; width: 28px"
+          />&nbsp;${groupProfile?.name}
+        `;
+    }
+  }
+
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="applet-dialog"
-        class="moss-dialog"
-        .label=${msg('Add New Tool to Group')}
+        width="674px"
         @sl-request-close=${(e) => {
-          if (this._installing) {
-            e.preventDefault();
-          } else {
-            this.dispatchEvent(
-              new CustomEvent('install-tool-dialog-closed', {
-                composed: true,
-                bubbles: true,
-              }),
-            );
-          }
-        }}
+        if (this._installing) {
+          e.preventDefault();
+        } else {
+          this.dispatchEvent(
+            new CustomEvent('install-tool-dialog-closed', {
+              composed: true,
+              bubbles: true,
+            }),
+          );
+        }
+      }}
       >
-        <div style="margin-top: -20px; margin-bottom: 30px;">
-          <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span>${msg(
-            'Adding a new Tool to a group ',
-          )}<b>${msg('creates a new unique instance ')}</b>${msg(
-            "of that Tool which other group members may join directly from the group's main page.",
-          )}
-          <sl-tooltip
-            content=${msg(
-              `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
-            )}
-          >
-            <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
-              >${msg('Details')}</span
-            ></sl-tooltip
-          >
-        </div>
-        <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
-      </sl-dialog>
+        
+      <div slot="header">
+        <span style="display:flex;align-items:center;"
+          >${msg('Installing to:')} ${this.renderGroup()}</span
+        >
+
+        <span>${msg('Heads-up!')}</span>
+        <span>${msg('Give this app a custom name.')}</span>
+      </div>
+           
+        <div slot="content">
+          <div class="form-text" style="margin-top: -20px; margin-bottom: 30px;">
+            <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span
+            >${msg('Adding a new Tool to a group ')}<b>${msg(
+        'creates a new unique instance ',
+      )}</b>${msg(
+        "of that Tool which other group members may join directly from the group's main page.",
+      )}
+            <sl-tooltip
+              content=${msg(
+        `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
+      )}
+            >
+              <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
+                >${msg('Details')}</span
+              ></sl-tooltip
+            >
+          </div>
+          <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
+        <div>
+        </moss-dialog>
     `;
   }
 
@@ -287,6 +336,23 @@ export class InstallToolDialogWeb2 extends LitElement {
       .offline {
         background-color: #bfbfbf;
       }
+
+      .loading {
+        display: none;
+      }
+
+      .form-text {
+        color: rgba(0, 0, 0, 0.6);
+
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px; /* 150% */
+      }
+      .install-form {
+        margin-bottom: 10px;
+      }
+
     `,
   ];
 }

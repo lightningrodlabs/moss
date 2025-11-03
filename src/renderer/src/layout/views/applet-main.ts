@@ -20,7 +20,6 @@ export class AppletMain extends LitElement {
       .view=${{ type: 'main' }}
       .appletHash=${this.appletHash}
       .reloading=${this.reloading}
-      .hostColor=${'var(--moss-main-green)'}
       style="flex: 1"
     ></applet-view>`;
   }

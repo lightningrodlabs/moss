@@ -92,12 +92,12 @@ const ASSET_RELATION_POLLING_PERIOD = 10000;
 
 export type MaybeProfile =
   | {
-      type: 'unknown';
-    }
+    type: 'unknown';
+  }
   | {
-      type: 'profile';
-      profile: EntryRecord<Profile>;
-    };
+    type: 'profile';
+    profile: EntryRecord<Profile>;
+  };
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -112,6 +112,8 @@ export class GroupStore {
   allProfiles: AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>>;
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
+
+  private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
   foyerStore!: FoyerStore;
 
@@ -175,6 +177,10 @@ export class GroupStore {
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
       return this.agentsProfiles(agents);
     });
+
+    this._ignoredApplets.set(
+      this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
+    );
 
     setTimeout(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
@@ -269,6 +275,20 @@ export class GroupStore {
     this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
 
     this.constructed = true;
+  }
+
+  ignoredApplets(): Readable<AppletId[]> {
+    return derived(this._ignoredApplets, (a) => a);
+  }
+
+  ignoreApplet(appletHash: AppletHash) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
+    ignoredApplets.push(encodeHashToBase64(appletHash));
+    // deduplicate ignored applets
+    ignoredApplets = Array.from(new Set(ignoredApplets));
+    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
+    this._ignoredApplets.set(ignoredApplets);
   }
 
   async assetSignalHandler(signal: SignalPayloadAssets, sendRemote: boolean): Promise<void> {
@@ -948,6 +968,7 @@ export class GroupStore {
       permission_hash: permissionHash,
       custom_name: customName,
       description: tool.toolInfoAndVersions.description,
+      subtitle: tool.toolInfoAndVersions.subtitle,
       sha256_happ: latestVersion.hashes.happSha256,
       sha256_ui: latestVersion.hashes.uiSha256,
       sha256_webhapp: latestVersion.hashes.webhappSha256,
@@ -1032,8 +1053,8 @@ export class GroupStore {
 
     const appletsToEnable = previouslyDisabled
       ? installedApplets.filter(
-          (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
-        )
+        (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
+      )
       : installedApplets;
 
     for (const appletHash of appletsToEnable) {
@@ -1105,7 +1126,10 @@ export class GroupStore {
     const output = allMyApplets.filter((appletHash) =>
       runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
-    // console.log('Got allMyRunningApplets: ', output);
+    // console.log(
+    //   'Got allMyRunningApplets: ',
+    //   output.map((h) => encodeHashToBase64(h)),
+    // );
     return output;
   });
 
@@ -1148,7 +1172,7 @@ export class GroupStore {
         }),
       );
     } catch (e) {
-      console.warn('Failed to get joined members for unjoined applets: ', e);
+      console.warn('Failed to get members for unactivated applets: ', e);
       const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
         [AgentPubKey, number, AppletAgent[]]
       > = new EntryHashMap();

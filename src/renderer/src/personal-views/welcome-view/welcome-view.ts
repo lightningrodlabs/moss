@@ -6,7 +6,6 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
@@ -27,24 +26,26 @@ import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
+import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
+import '../../elements/_new_design/moss-dialog.js';
 
 type UpdateFeedMessageGeneric =
   | {
-      type: 'Moss';
+    type: 'Moss';
+    timestamp: number;
+    content: {
+      type: string;
       timestamp: number;
-      content: {
-        type: string;
-        timestamp: number;
-        message: string;
-      };
-    }
-  | {
-      type: 'Tool';
-      timestamp: number;
-      content: {
-        tool: ToolInfoAndLatestVersion;
-      };
+      message: string;
     };
+  }
+  | {
+    type: 'Tool';
+    timestamp: number;
+    content: {
+      tool: ToolInfoAndLatestVersion;
+    };
+  };
 
 enum WelcomePageView {
   Main,
@@ -60,7 +61,7 @@ export class WelcomeView extends LitElement {
   view: WelcomePageView = WelcomePageView.Main;
 
   @query('#feedback-dialog')
-  _feedbackDialog!: SlDialog;
+  _feedbackDialog!: MossDialog;
 
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
@@ -152,22 +153,18 @@ export class WelcomeView extends LitElement {
   }
 
   renderFeedbackDialog() {
-    return html` <sl-dialog
+    return html` <moss-dialog
       id="feedback-dialog"
-      class="moss-dialog"
-      no-header
-      style="--width: 900px; --sl-panel-background-color: #fff4f4;"
-      no-header
+      class="gradient"
+      width="900px"
     >
-      <div class="feedback">
         <div
-          class="row"
-          style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
+          class="row" slot="header"
         >
           ${commentHeartIconFilled(28)}
           <span style="margin-left: 5px;">Feedback</span>
         </div>
-        <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
+        <div slot="content">
           Moss development is in alpha stage. We highly appreciate active feedback.<br /><br />
 
           If you are encountering a problem and are familiar with Github, you can<br /><br />
@@ -183,7 +180,7 @@ export class WelcomeView extends LitElement {
           <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
       </div>
-    </sl-dialog>`;
+    </moss-dialog>`;
   }
 
   renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
@@ -209,8 +206,8 @@ export class WelcomeView extends LitElement {
           >
         </div>
         ${toolInfo.latestVersion.changelog
-          ? html`<div>${unsafeHTML(markdownParseSafe(toolInfo.latestVersion.changelog))}</div>`
-          : html``}
+        ? html`<div>${unsafeHTML(markdownParseSafe(toolInfo.latestVersion.changelog))}</div>`
+        : html``}
       </div>
     `;
   }
@@ -220,8 +217,8 @@ export class WelcomeView extends LitElement {
       <div class="update-feed-el bg-highlighted">
         <div class="update-date">
           ${this.availableMossUpdate?.releaseDate
-            ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
-            : ''}
+        ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
+        : ''}
         </div>
         <div class="update-type"></div>
         <div class="column">
@@ -237,12 +234,12 @@ export class WelcomeView extends LitElement {
           </div>
           <div>
             ${this.availableMossUpdate?.releaseNotes
-              ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
-              : ''}
+        ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+        : ''}
           </div>
           <div class="row center-content" style="margin-top: 15px;">
             ${this.mossUpdatePrecentage
-              ? html`<span class="flex flex-1"></span>
+        ? html`<span class="flex flex-1"></span>
                   <div class="column">
                     <div>Installing...</div>
                     <sl-progress-bar
@@ -250,7 +247,7 @@ export class WelcomeView extends LitElement {
                       style="width: 200px; --height: 15px;"
                     ></sl-progress-bar>
                   </div> `
-              : html`
+        : html`
                   <span class="flex flex-1"></span>
                   <sl-button
                     variant="danger"
@@ -300,20 +297,20 @@ export class WelcomeView extends LitElement {
         >
         ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
         ${composedFeed.length === 0
-          ? html`No big waves lately...`
-          : composedFeed.map(
-              (message) => html`
+        ? html`No big waves lately...`
+        : composedFeed.map(
+          (message) => html`
                 <div class="update-feed-el">
                   <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
                   <div class="update-type">
                     ${message.type === 'Moss' ? message.content.type : 'Tool Update'}
                   </div>
                   ${message.type === 'Moss'
-                    ? unsafeHTML(markdownParseSafe(message.content.message))
-                    : this.renderToolUpdate(message.content.tool)}
+              ? unsafeHTML(markdownParseSafe(message.content.message))
+              : this.renderToolUpdate(message.content.tool)}
                 </div>
               `,
-            )}
+        )}
       </div>
     `;
   }
@@ -402,13 +399,6 @@ export class WelcomeView extends LitElement {
 
       li {
         margin-top: 12px;
-      }
-
-      .feedback {
-        color: #002a00;
-        padding: 20px;
-        border-radius: 20px;
-        line-height: 1.2;
       }
 
       .feedback-btn {

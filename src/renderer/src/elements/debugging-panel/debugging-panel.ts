@@ -39,6 +39,54 @@ import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
 
+const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
+  if (!metrics) {
+    return {};
+  }
+
+  let out = {} as Record<DnaHashB64, object>;
+  for (const [key, value] of Object.entries(metrics)) {
+    const peerMetaList: any = [];
+    for (const [peerUrl, peerMeta] of Object.entries(value.gossip_state_summary.peer_meta)) {
+      const pm: any = peerMeta;
+      pm.last_gossip_timestamp = peerMeta.last_gossip_timestamp
+        ? new Date(peerMeta.last_gossip_timestamp / 1000)
+        : undefined;
+      pm.storage_arc = pm.storage ? `${pm.storage_arc[0]}..${pm.storage_arc[1]}` : null;
+      peerMetaList.push({
+        peer_url: peerUrl,
+        meta: pm,
+      });
+    }
+    peerMetaList.sort((a, b) => a.peer_url.localeCompare(b.peer_url));
+    const dht_summary: any = value.gossip_state_summary.dht_summary;
+    if (dht_summary['0..4294967295']) {
+      dht_summary['0..4294967295'].ring_top_hashes = dht_summary[
+        '0..4294967295'
+      ].ring_top_hashes.map((h) => `${h.length > 0 ? encodeHashToBase64(h) : ''}`);
+    }
+
+    out[key] = {
+      fetch_state_summary: value.fetch_state_summary,
+      gossip_state_summary: {
+        initiated_round: value.gossip_state_summary.initiated_round,
+        accepted_rounds: value.gossip_state_summary.accepted_rounds,
+        dht_summary,
+        peer_meta: peerMetaList,
+      },
+      local_agents: value.local_agents.map((a) => {
+        return {
+          agent: encodeHashToBase64(a.agent),
+          storage_arc: a.storage_arc ? `${a.storage_arc[0]}..${a.storage_arc[1]}` : null,
+          target_arc: a.target_arc ? `${a.target_arc[0]}..${a.target_arc[1]}` : null,
+        };
+      }),
+    };
+  }
+
+  return out;
+};
+
 @localized()
 @customElement('debugging-panel')
 export class DebuggingPanel extends LitElement {
@@ -218,90 +266,9 @@ export class DebuggingPanel extends LitElement {
         )}
 
         <h4>Metrics:</h4>
-        ${Object.keys(networkMetrics)
-          .sort()
-          .map((key) => {
-            const metrics = networkMetrics[key];
-            return html`
-              <h4>${key}</h4>
-              <div class="stats-item">
-                <h5>fetch_state_summary</h5>
-                <div class="indent">
-                  <div>
-                    pending requests:
-                    ${JSON.stringify(metrics.fetch_state_summary.pending_requests)}
-                  </div>
-                  <div>
-                    backoff peers: ${JSON.stringify(metrics.fetch_state_summary.peers_on_backoff)}
-                  </div>
-                </div>
-
-                <h5>gossip_state_summary</h5>
-                <div class="indent">
-                  <div>
-                    initiated round: ${JSON.stringify(metrics.gossip_state_summary.initiated_round)}
-                  </div>
-
-                  <h6>dht</h6>
-                  ${Object.keys(metrics.gossip_state_summary.dht_summary)
-                    .sort()
-                    .map((arcKey) => {
-                      const arc = metrics.gossip_state_summary.dht_summary[arcKey];
-                      return html`
-                        <div class="indent">
-                          <h7>${arcKey}</h7>
-                          <div>disc_top_hash: ${encodeHashToBase64(arc.disc_top_hash)}</div>
-                          <div>disc_boundary: ${JSON.stringify(arc.disc_boundary)}</div>
-                          <div>
-                            top_hashes:
-                            ${arc.ring_top_hashes.map((hash) => encodeHashToBase64(hash))}
-                          </div>
-                        </div>
-                      `;
-                    })}
-
-                  <h6>peer meta</h6>
-                  ${Object.keys(metrics.gossip_state_summary.peer_meta)
-                    .sort()
-                    .map((peerKey) => {
-                      const peer = metrics.gossip_state_summary.peer_meta[peerKey];
-                      return html`
-                        <h7>${peerKey}</h7>
-                        <div class="indent">
-                          <div>
-                            last_gossip_timestamp:
-                            ${peer.last_gossip_timestamp
-                              ? new Date(peer.last_gossip_timestamp / 1000)
-                              : undefined}
-                          </div>
-                          <div>new_ops_bookmark: ${JSON.stringify(peer.new_ops_bookmark)}</div>
-                          <div>
-                            behavior_errors: ${JSON.stringify(peer.peer_behavior_errors)}; busy:
-                            ${JSON.stringify(peer.peer_busy)}; terminated:
-                            ${JSON.stringify(peer.peer_terminated)}; completed_rounds:
-                            ${JSON.stringify(peer.completed_rounds)}; timeouts:
-                            ${JSON.stringify(peer.peer_timeouts)}
-                          </div>
-                        </div>
-                      `;
-                    })}
-                </div>
-                <h5>local agents</h5>
-                ${metrics.local_agents.map(
-                  (agent) => html`
-                    <div class="indent">
-                      <b
-                        >${agent.agent
-                          ? encodeHashToBase64(agent.agent)
-                          : 'undefined agent hash'}</b
-                      >
-                      storage_arc: ${agent.storage_arc}; target_arc: ${agent.target_arc}
-                    </div>
-                  `,
-                )}
-              </div>
-            `;
-          })}
+        <div class="stats-item">
+          <pre>${JSON.stringify(transformMetrics(networkMetrics), null, 4)}</pre>
+        </div>
       </div>
     `;
   }

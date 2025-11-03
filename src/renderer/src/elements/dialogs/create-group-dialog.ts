@@ -6,8 +6,6 @@ import { ProvisionedCell } from '@holochain/client';
 import { notifyError, onSubmit } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
@@ -17,7 +15,10 @@ import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { defaultIcons } from '../_new_design/defaultIcons.js';
-import { closeIcon } from '../_new_design/icons.js';
+import '../_new_design/moss-dialog.js';
+import { MossDialog } from '../_new_design/moss-dialog.js';
+import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+
 
 /**
  * @element create-group-dialog
@@ -33,9 +34,12 @@ export class CreateGroupDialog extends LitElement {
     this._dialog.show();
   }
 
+  @query('#group-name')
+  _groupNameField!: SlInput;
+
   /** Private properties */
   @query('#dialog')
-  _dialog!: SlDialog;
+  _dialog!: MossDialog;
 
   @query('form')
   form!: HTMLFormElement;
@@ -87,39 +91,29 @@ export class CreateGroupDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="dialog"
-        class="moss-dialog"
-        .label=${msg('Create New Group')}
-        no-header
+        width="700px"
+        headerAlign="center"
+        @sl-initial-focus=${(e: { preventDefault: () => void }) => {
+        e.preventDefault();
+        this._groupNameField.focus();
+      }}
         @sl-request-close=${(e) => {
-          if (this.committing) {
-            e.preventDefault();
-          }
-        }}
+        if (this.committing) {
+          e.preventDefault();
+        }
+      }}
       >
-        <div
-          class="column center-content dialog-title"
-          style="margin: 10px 0 40px 0; position: relative;"
-        >
-          <span>${msg('Create New Group')}</span>
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -22px; right: -11px;"
-            @click=${() => {
-              if (!this.committing) (this.shadowRoot?.getElementById('dialog') as SlDialog).hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-        </div>
-        <form class="column" ${onSubmit((f) => this.createGroup(f))}>
+        <span slot="header">${msg('Create New Group')}</span>
+        <form slot="content" class="column" ${onSubmit((f) => this.createGroup(f))}>
           <div class="column items-center">
             <div class="column" style="justify-content: center">
               <sl-input
+                id="group-name"
                 name="name"
                 class="moss-input"
-                style="margin-left: 16px; width: 350px; margin-bottom: 20px;"
+                style="width: 400px; margin-bottom: 20px;"
                 .label=${msg('Group name')}
                 required
                 ?disabled=${this.committing}
@@ -133,7 +127,7 @@ export class CreateGroupDialog extends LitElement {
               ></moss-select-avatar-fancy>
             </div>
 
-            <sl-radio-group style="margin-left: 50px;" label="🔑${msg(' Group Type:')}" value="1">
+            <sl-radio-group label="🔑${msg(' Group Type:')}" value="1">
               <sl-radio style="margin-top: 5px;" value="1"
                 ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
                   >The group creator is the initial Steward. Only Stewards can edit the group
@@ -154,14 +148,14 @@ export class CreateGroupDialog extends LitElement {
               type="submit"
             >
               ${this.committing
-                ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create Group')}`}
+        : html`${msg('Create Group')}`}
             </button>
           </div>
         </form>
-      </sl-dialog>
+      </moss-dialog>
     `;
   }
 
