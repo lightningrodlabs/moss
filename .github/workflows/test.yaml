@@ -74,6 +74,21 @@ jobs:
           rustup target add wasm32-unknown-unknown
           yarn build:zomes
 
+      - name: Build example-applet
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn workspace example-applet package     
+
+      - name: Build cli
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn build:cli
+
+      - name: Build always-online-node
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn workspace @theweave/wdocker build
+
       - name: Build app (macOS arm64)
         if: matrix.platform == 'macos-latest'
         env:
