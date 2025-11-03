@@ -11,7 +11,7 @@
     "lint": "eslint --ext .ts,.html . && prettier \"**/*.ts\" --check",
     "format": "eslint --ext .ts,.html . --fix && prettier \"**/*.ts\" --write",
     "package:ui": "yarn build && cd dist && bestzip ../dist.zip *",
-    "package": "yarn package:ui && cd .. && cross-env RUSTFLAGS=\"--cfg getrandom_backend=\\\"custom\\\"\" cargo build --release --target-dir target --target wasm32-unknown-unknown && hc web-app pack workdir --recursive"
+    "package": "yarn package:ui && cd .. && cross-env RUSTFLAGS=\"--cfg getrandom_backend=\\\"custom\\\"\" cargo build --release --target-dir target --target wasm32-unknown-unknown && ../resources/bins/hc web-app pack workdir --recursive"
   },
   "dependencies": {
     "@holochain-open-dev/elements": "^0.600.0-dev.0",
