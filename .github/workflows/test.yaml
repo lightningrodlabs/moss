@@ -82,7 +82,7 @@ jobs:
       - name: Build cli
         if: matrix.platform == 'ubuntu-22.04'
         run: |
-          yarn build:cli
+          yarn build
 
       - name: Build always-online-node
         if: matrix.platform == 'ubuntu-22.04'
