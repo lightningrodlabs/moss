@@ -89,31 +89,32 @@ jobs:
         run: |
           yarn workspace @theweave/wdocker build
 
-      - name: Build app (macOS arm64)
-        if: matrix.platform == 'macos-latest'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DEBUG: electron-osx-sign*,electron-notarize*
-        run: |
-          yarn build:mac-arm64
-          ls dist
-
-      - name: Build app (macOS x86)
-        if: matrix.platform == 'macos-13'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DEBUG: electron-osx-sign*,electron-notarize*
-        run: |
-          yarn build:mac-x64
-          ls dist
+# Skip Mac because it will try to notarize and fail with error "already exists on GitHub"
+#      - name: Build app (macOS arm64)
+#        if: matrix.platform == 'macos-latest'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+#          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+#          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#          DEBUG: electron-osx-sign*,electron-notarize*
+#        run: |
+#          yarn build:mac-arm64
+#          ls dist
+#
+#      - name: Build app (macOS x86)
+#        if: matrix.platform == 'macos-13'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+#          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+#          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#          DEBUG: electron-osx-sign*,electron-notarize*
+#        run: |
+#          yarn build:mac-x64
+#          ls dist
 
       - name: Build app (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
