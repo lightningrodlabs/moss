@@ -545,7 +545,7 @@ export class MossApp extends LitElement {
         ? html`<div class="column center-content">
                       <div class="dot-carousel" style="margin: 5px 0;"></div>
                     </div>`
-        : html`${msg('Activate')}`}
+        : html`${msg('Join')}`}
               </button>
             </div>
           </div>
