@@ -481,7 +481,7 @@ async function joinGroup(
     fn_name: 'create_profile',
     payload: {
       nickname: agentProfile.nickname,
-      fields: avatarSrc ? { avatar: avatarSrc } : undefined,
+      fields: avatarSrc ? { avatar: avatarSrc } : {},
     },
   });
   console.log('profile created.');

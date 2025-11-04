@@ -18,11 +18,7 @@ export default defineConfig({
       creatingAgent: {
         agentIdx: 1,
         agentProfile: {
-          nickname: 'Gaston',
-          avatar: {
-            type: 'filesystem',
-            path: './example/ui/gaston.jpeg',
-          },
+          nickname: 'Gaston'
         },
       },
       joiningAgents: [
