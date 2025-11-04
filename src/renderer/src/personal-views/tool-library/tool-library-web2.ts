@@ -36,6 +36,7 @@ import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
 import {
   appStoreIcon,
+  devIcon,
   experimentalToolIcon,
   stableToolIcon,
 } from '../../elements/_new_design/icons.js';
@@ -485,7 +486,7 @@ export class ToolLibraryWeb2 extends LitElement {
             @click=${() => this._publishDialog.show()}
           >
             <div class="row items-center">
-              <sl-icon .src=${wrapPathInSvg(mdiPublish)} style="font-size: 20px;"></sl-icon>
+              ${devIcon(16)}
               <span style="margin-left: 5px;font-size: 12px; ">${msg('Publish a tool')}</span>
             </div>
           </button>
