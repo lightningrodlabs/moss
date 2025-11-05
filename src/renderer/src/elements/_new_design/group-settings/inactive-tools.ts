@@ -2,7 +2,7 @@ import { Applet, AppletAgent } from '@theweave/group-client/dist/types.js';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { AppletHash, AppletId } from '@theweave/api';
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
@@ -32,6 +32,9 @@ export class InactiveTools extends LitElement {
 
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
+
+  @property({ type: Boolean })
+  showIgnoredOnly = false;
   async joinNewApplet(appletHash: AppletHash) {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
@@ -91,28 +94,19 @@ export class InactiveTools extends LitElement {
                 timestamp,
                 joinedMembers,
               ] as [
-                  AppletHash,
-                  Applet | undefined,
-                  ToolInfoAndVersions | undefined,
-                  AgentPubKey,
-                  number,
-                  AppletAgent[],
-                ];
+                AppletHash,
+                Applet | undefined,
+                ToolInfoAndVersions | undefined,
+                AgentPubKey,
+                number,
+                AppletAgent[],
+              ];
             },
           ),
         ),
       ),
     () => [this._groupStore, this._mossStore],
   );
-  @state()
-  _showIgnoredApplets = false;
-  toggleIgnoredApplets() {
-    const checkbox = this.shadowRoot!.getElementById(
-      'show-ignored-applets-checkbox',
-    ) as HTMLInputElement;
-    this._showIgnoredApplets = checkbox.checked;
-    this.requestUpdate();
-  }
   @state()
   _recentlyJoined: Array<AppletId> = [];
   @state()
@@ -166,13 +160,25 @@ export class InactiveTools extends LitElement {
                 !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
             }),
           )
-          .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
+          .filter((info) => {
+            if (this.showIgnoredOnly) {
+              return info.isIgnored;
+            } else {
+              return !info.isIgnored;
+            }
+          })
           .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
         return html` ${filteredApplets.length === 0
           ? html`
-              <div class="column" style="flex: 1; align-items: center; margin-top: 50px;">
-                ${msg('No new tools to activate.')}
+              <div class="row center-content" style="flex: 1">
+                <span
+                  class="placeholder"
+                  style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
+                  >${this.showIgnoredOnly
+                    ? msg('No ignored tools.')
+                    : msg('No new tools to activate.')}
+                </span>
               </div>
             `
           : html`
@@ -293,16 +299,6 @@ export class InactiveTools extends LitElement {
   }
   render() {
     return html` <div class="column flex-1">
-      <div class="row" style="align-items: center; justify-content: flex-end; ">
-        <input
-          @input=${() => this.toggleIgnoredApplets()}
-          id="show-ignored-applets-checkbox"
-          type="checkbox"
-          .checked=${this._showIgnoredApplets}
-        />
-        <span>${msg('Show ignored Tools')}</span>
-      </div>
-
       ${this.renderInactiveTools()}
     </div>`;
   }

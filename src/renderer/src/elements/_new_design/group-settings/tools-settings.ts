@@ -23,6 +23,7 @@ enum TabsState {
   Inactive,
   Active,
   Abandoned,
+  Ignored,
 }
 
 @localized()
@@ -140,6 +141,9 @@ export class ToolsSettings extends LitElement {
   renderToolsAbandoned() {
     return html`${this.renderAbandonedApplets()}`;
   }
+  renderToolsIgnored() {
+    return html`<inactive-tools .showIgnoredOnly=${true}></inactive-tools>`;
+  }
 
   renderContent() {
     switch (this.tabsState) {
@@ -149,6 +153,8 @@ export class ToolsSettings extends LitElement {
         return this.renderToolsActive();
       case TabsState.Abandoned:
         return this.renderToolsAbandoned();
+      case TabsState.Ignored:
+        return this.renderToolsIgnored();
     }
   }
 
@@ -182,7 +188,7 @@ export class ToolsSettings extends LitElement {
             <span
               class="placeholder"
               style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
-              >${msg('No Uninstalled Tools.')}
+              >${msg('No uninstalled tools.')}
             </span>
           </div>
         `;
@@ -238,6 +244,14 @@ export class ToolsSettings extends LitElement {
       }}
           >
             ${msg('Uninstalled')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Ignored ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Ignored;
+      }}
+          >
+            ${msg('Ignored')}
           </button>
         </div>
         <div
