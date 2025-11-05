@@ -183,7 +183,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
           <div class="row items-center" style="margin-top: 4px;">
-            <span>Abandoned by: </span>
+            <span>Uninstalled by: </span>
             ${this._abandonedMembers.value.value.map(
           (appletAgent) => html`
                 <agent-avatar
@@ -204,7 +204,7 @@ export class AbandonedAppletSettingsCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-          'Deprecating will make it not show up anymore for new members',
+          'Deprecating will make tool not show up anymore for new members',
         )}
           >
             <moss-mini-button
@@ -311,12 +311,12 @@ export class AbandonedAppletSettingsCard extends LitElement {
 
             ${this.renderJoinedMembers()} ${this.renderAbandonedMembers()}
 
-            <span style="margin-bottom: 4px; margin-top: 4px;">${msg('applet hash')}:</span>
             <div class="row">
+              <span style="margin-bottom: 4px; margin-top: 4px;">${msg('applet hash')}:</span>
               <copy-hash .hash=${encodeHashToBase64(this.appletHash)}></copy-hash>
             </div>
 
-            <div class="row" style="margin-top: 10px; align-items: flex-end;">
+            <div class="row" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--moss-grey-light);align-items: flex-end;">
               <span class="flex flex-1"></span>
               ${this.renderArchiveButton()}
             </div>

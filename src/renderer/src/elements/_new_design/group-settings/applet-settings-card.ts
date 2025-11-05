@@ -259,7 +259,7 @@ export class AppletSettingsCard extends LitElement {
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
           <div class="row items-center" style="margin-top: 4px;">
-            <span>Abandoned by: </span>
+            <span>Uninstalled by: </span>
             ${this._abandonedMembers.value.value.map(
           (appletAgent) => html`
                 <agent-avatar
@@ -318,7 +318,7 @@ export class AppletSettingsCard extends LitElement {
 
           <div class="row items-center">
             <sl-switch
-              style="--sl-color-primary-600: #e5d825; margin-bottom: 5px;"
+              style="--sl-color-primary-600: #89D6AA; margin-bottom: 5px;"
               size="large"
               ?checked=${this.alwaysOnlineNodesShouldInstall(this.groupAppletsMetaData.value.value)}
               @sl-change=${async () => this.toggleAlwaysOnlineNodesSetting()}

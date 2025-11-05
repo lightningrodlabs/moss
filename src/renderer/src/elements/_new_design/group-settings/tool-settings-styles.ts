@@ -20,12 +20,11 @@ export const toolSettingsStyles = [
     }
 
     .details-container {
-      width: 680px;
       border-top: 1px solid var(--moss-grey-light);
       margin-top: 12px;
       padding-top: 12px;
       margin-left: 74px;
-      margin-right: auto;
+      
     }
 
     .tool-name {

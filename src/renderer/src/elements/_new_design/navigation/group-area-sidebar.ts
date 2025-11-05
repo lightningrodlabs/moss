@@ -609,8 +609,14 @@ export class GroupAppletsSidebar extends LitElement {
       hoist
     >
       <button
-        class="btn"
+        class="btn activate-tools-button"
         @click=${() => {
+        this.dispatchEvent(
+          new CustomEvent('group-home-selected', {
+            bubbles: false,
+            composed: true,
+          }),
+        );
         this.dispatchEvent(
           new CustomEvent('unjoined-tools-clicked', {
             composed: true,
@@ -620,8 +626,8 @@ export class GroupAppletsSidebar extends LitElement {
       >
         ${this.collapsed
         ? html`<div
-              class="column center-content"
-              style="height: 35px; width: 35px; background: var(--moss-light-green); border-radius: 8px; position: relative;"
+              class="column center-content "
+              style="height: 35px; width: 35px; position: relative;"
             >
               <div class="column center-content unjoined-tools-indicator">
                 ${this.numUnjoinedTools()}
@@ -630,7 +636,7 @@ export class GroupAppletsSidebar extends LitElement {
             </div>`
         : html`<div
               class="column center-content"
-              style="height: 36px; background: var(--moss-light-green); border-radius: 8px; opacity: 0.7; font-size: 13px;"
+              style="height: 36px; opacity: 0.7; font-size: 13px;"
             >
               + ${this.numUnjoinedTools()} ${msg('more used by peers')}
             </div>`}
@@ -734,7 +740,7 @@ export class GroupAppletsSidebar extends LitElement {
         class="column flex-1 container invisible-scrollbars ${this.collapsed
         ? 'container-collapsed items-center'
         : ''}"
-        style="margin-top: 2px;"
+        style="margin-left: 2px;"
       >
         <!-- group home button -->
         <sl-tooltip content="${this.groupName()}" placement="right" hoist>
@@ -810,6 +816,7 @@ export class GroupAppletsSidebar extends LitElement {
               <button
                 class="${this.collapsed ? 'purple-btn-large' : 'purple-btn'}"
                 @click=${() => {
+            renderUnjoin
             this.dispatchEvent(
               new CustomEvent('add-tool-requested', {
                 detail: { groupHash: this._groupStore.groupDnaHash },
@@ -933,6 +940,14 @@ export class GroupAppletsSidebar extends LitElement {
 
       .purple-btn-large:hover {
         background: #7461eb33;
+      }
+
+      .activate-tools-button {
+        background: var(--moss-light-green); border-radius: 12px;
+        border: solid 1px transparent;
+      }
+      .activate-tools-button:hover {
+        border: solid 1px #89D6AA;
       }
 
       .icon {

@@ -318,7 +318,7 @@ export class AppletDetailCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-          'Deprecating will make it not show up anymore for new members',
+          'Deprecating will hide tool for activation by new members',
         )}
           >
             <sl-button
