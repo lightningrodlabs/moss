@@ -158,8 +158,8 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
                   <span style="margin-right: 5px;">${alwaysOnlineEnabled ? msg('Enabled') : msg('Disabled')}:</span>
                   <span>${msg('Allways-online nodes should install this tool by default')}</span>
                 `}
-          <div>
-        </div>
+          </div>
+      </div>
     `;
   }
 
