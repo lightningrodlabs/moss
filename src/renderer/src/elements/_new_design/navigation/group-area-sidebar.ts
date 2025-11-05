@@ -816,7 +816,6 @@ export class GroupAppletsSidebar extends LitElement {
               <button
                 class="${this.collapsed ? 'purple-btn-large' : 'purple-btn'}"
                 @click=${() => {
-            renderUnjoin
             this.dispatchEvent(
               new CustomEvent('add-tool-requested', {
                 detail: { groupHash: this._groupStore.groupDnaHash },
