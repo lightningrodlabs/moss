@@ -151,6 +151,7 @@ export class InstallableToolsWeb2 extends LitElement {
     return html`
       <moss-dialog
         id="library-tool-details-dialog"
+        class="library-tool-details-dialog"
       >
       <div slot="header">
         ${this.selectedTool ? html`
