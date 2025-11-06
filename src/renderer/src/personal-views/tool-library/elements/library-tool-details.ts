@@ -7,6 +7,7 @@ import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
 import TimeAgo from 'javascript-time-ago';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '../../../elements/_new_design/select-group.js';
 
 enum TabsState {
   Overview,
@@ -75,24 +76,44 @@ export class LibraryToolDetails extends LitElement {
     return html` 
       
       <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
-        <div class="row">
-          <img
-            src=${this.tool.toolInfoAndVersions.icon}
-            alt="${this.tool.toolInfoAndVersions.title} tool icon"
-            style="height: 64px; width: 64px; border-radius: 16px; margin-right: 15px;"
-          />
-          <div class="column">
-            ${this.tool.toolInfoAndVersions.subtitle}
-            ${this.tool.toolInfoAndVersions.tags.length > 0
-        ? html`
-                  <div class="row tool-tag-list" style="margin-top:6px">
-                    ${this.tool.toolInfoAndVersions.tags.map(
-          (tag) => html`<div class="tool-tag">${tag}</div>`,
-        )}
-                  </div>
-                `
-        : ''}
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <div class="row">
+            <img
+              src=${this.tool.toolInfoAndVersions.icon}
+              alt="${this.tool.toolInfoAndVersions.title} tool icon"
+              style="height: 64px; width: 64px; border-radius: 16px; margin-right: 15px;"
+            />
+            <div class="column">
+              ${this.tool.toolInfoAndVersions.subtitle}
+              ${this.tool.toolInfoAndVersions.tags.length > 0
+          ? html`
+                    <div class="row tool-tag-list" style="margin-top:6px">
+                      ${this.tool.toolInfoAndVersions.tags.map(
+            (tag) => html`<div class="tool-tag">${tag}</div>`,
+          )}
+                    </div>
+                  `
+          : ''}
+            </div>
           </div>
+          <select-group
+            .buttonWidth=${'auto'}
+            .buttonText=${(() => {
+              if (this.tool?.toolInfoAndVersions.versions && this.tool.toolInfoAndVersions.versions.length > 0) {
+                const version = this.tool.toolInfoAndVersions.versions[0].version;
+                return msg(`Install v${version} to a group space`);
+              }
+              return undefined;
+            })()}
+            @group-selected=${async (e: CustomEvent) => {
+              this.dispatchEvent(
+                new CustomEvent('install-tool-to-group', {
+                  detail: { tool: this.tool, groupDnaHash: e.detail },
+                  composed: true,
+                }),
+              );
+            }}
+          ></select-group>
         </div>
         <div class="row items-center tab-bar flex-1" style="margin-top:30px">
           <button

@@ -170,6 +170,9 @@ export class InstallableToolsWeb2 extends LitElement {
             id="tool-details"
             .devCollectives=${this.devCollectives}
             .tool=${this.selectedTool}
+            @install-tool-to-group=${() => {
+              this.toolDetailsDialog?.hide();
+            }}
           ></library-tool-details>
       </moss-dialog>
       <div
