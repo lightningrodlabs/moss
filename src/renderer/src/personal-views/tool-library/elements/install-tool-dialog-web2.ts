@@ -39,7 +39,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
         joinAsyncMap(slice(this.groupStore.applets, allAppletsHashes)),
       ),
-    () => [],
+    () => [this.groupStore],
   );
 
   @query('#applet-dialog')
