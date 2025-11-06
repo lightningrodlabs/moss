@@ -132,7 +132,7 @@ export class GroupSettings extends LitElement {
         ${msg('Danger Zone')}
       </button>
     </div>
-    <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
+    <div class="column" style="margin-top: 0px; min-height: 380px; overflow-y: auto;">
       ${this.renderContent()}
     </div>
     `;
