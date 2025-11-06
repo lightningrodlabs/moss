@@ -141,7 +141,7 @@ export class GroupGeneralSettings extends LitElement {
       case 'complete':
         return html`
           <form ${onSubmit((f) => this.updateProfile(f))}>
-            <div class="column">
+            <div class="column items-center">
               <div class="row items-center">
                 ${this.amISteward()
                   ? html` <moss-select-avatar
