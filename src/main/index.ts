@@ -211,7 +211,7 @@ program
   .addOption(
     new Option(
       '--sync-time <number>',
-      'May be provided when running with the --dev-config option. Specifies the amount of time to wait for new tools to gossip after having installed a new group before checking for unjoined tools.',
+      'May be provided when running with the --dev-config option. Specifies the amount of time to wait for new tools to gossip after having installed a new group before checking for unactivated tools.',
     ).argParser(parseInt),
   )
   .addCommand(hashWebhapp);
@@ -402,10 +402,10 @@ if (!RUNNING_WITH_COMMAND) {
   > = {};
   let UPDATE_AVAILABLE:
     | {
-        version: string;
-        releaseDate: string;
-        releaseNotes: string | undefined;
-      }
+      version: string;
+      releaseDate: string;
+      releaseNotes: string | undefined;
+    }
     | undefined;
 
   // icons
@@ -734,11 +734,10 @@ if (!RUNNING_WITH_COMMAND) {
             }
           }
 
-          let messageContent = `A Tool wants to access the following:${
-            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
-              ? '\n* camera'
-              : ''
-          }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
+          let messageContent = `A Tool wants to access the following:${(details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
+            ? '\n* camera'
+            : ''
+            }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
           if (unknownRequested) {
             messageContent =
               'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
@@ -1234,11 +1233,11 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('get-conductor-info', (): ConductorInfo | undefined => {
       return HOLOCHAIN_MANAGER
         ? {
-            app_port: HOLOCHAIN_MANAGER.appPort,
-            admin_port: HOLOCHAIN_MANAGER.adminPort,
-            moss_version: app.getVersion(),
-            weave_protocol_version: '0.15',
-          }
+          app_port: HOLOCHAIN_MANAGER.appPort,
+          admin_port: HOLOCHAIN_MANAGER.adminPort,
+          moss_version: app.getVersion(),
+          weave_protocol_version: '0.15',
+        }
         : undefined;
     });
     ipcMain.handle(
@@ -1488,7 +1487,7 @@ if (!RUNNING_WITH_COMMAND) {
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) {}
+          } catch (e) { }
         } else {
           console.log(
             '@batch-update-applet-uis: UI already on the filesystem. Skipping download from remote source.',
@@ -1583,7 +1582,7 @@ if (!RUNNING_WITH_COMMAND) {
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) {}
+          } catch (e) { }
         } else {
           console.log(
             '@update-applet-ui: UI already on the filesystem. Skipping download from remote source.',
@@ -1801,7 +1800,7 @@ if (!RUNNING_WITH_COMMAND) {
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) {}
+          } catch (e) { }
         } else {
           console.log(
             '@install-applet-bundle: happ and UI already on the filesystem. Skipping download from remote source.',

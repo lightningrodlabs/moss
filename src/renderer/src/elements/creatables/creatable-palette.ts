@@ -30,6 +30,8 @@ import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStyles } from '../../shared-styles.js';
+import { MossDialog } from '../_new_design/moss-dialog.js';
+import '../_new_design/moss-dialog.js';
 
 export type CreatableInfo = {
   appletHash: AppletHash;
@@ -49,7 +51,7 @@ export class CreatablePalette extends LitElement {
   _mossStore!: MossStore;
 
   @query('#creatable-dialog')
-  _dialog!: SlDialog;
+  _dialog!: MossDialog;
 
   @query('#creatable-view-dialog')
   _creatableViewDialog!: SlDialog | null;
@@ -166,8 +168,8 @@ export class CreatablePalette extends LitElement {
       >
         <group-applets-creatables
           @creatable-selected=${(e: { detail: CreatableInfo }) => {
-            this.handleCreatableSelected(e.detail);
-          }}
+        this.handleCreatableSelected(e.detail);
+      }}
         ></group-applets-creatables>
       </group-context>
     `;
@@ -175,13 +177,12 @@ export class CreatablePalette extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="creatable-dialog"
-        class="moss-dialog"
-        style="--width: 800px;"
-        no-header
+        width="890px"
+        headerAlign="center"
       >
-          <div class="row center-content" style="font-size: 25px; margin-top: 30px;">
+          <div slot="header">
             <img
               class="magic-wand"
               src="magic-wand.svg"
@@ -189,26 +190,25 @@ export class CreatablePalette extends LitElement {
               />
             <span>${msg('Create New Asset')}</span>
           </div>
-        <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
+        <div slot="content" class="column" style="align-items: center; position: relative;">
           <div class="row flex-1 items-center" style="width: 650px;">
             <span style="display: flex; flex: 1;"></span>
             <group-selector .groupDnaHashB64=${this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash) : undefined}
               @group-selected=${(e) => {
-                this.groupDnaHash = decodeHashFromBase64(e.detail);
-              }}
+        this.groupDnaHash = decodeHashFromBase64(e.detail);
+      }}
             ></group-selector>
           </div>
           ${this.renderCreatables()}
-          ${
-            this._showCreatableView
-              ? html`
+          ${this._showCreatableView
+        ? html`
                   <sl-dialog
                     id="creatable-view-dialog"
                     style="${this.creatableWidth(this._showCreatableView.creatable.width)}"
                     label="${msg('Create New')} ${this._showCreatableView.creatable.label}"
                     @sl-hide=${() => {
-                      this._showCreatableView = undefined;
-                    }}
+            this._showCreatableView = undefined;
+          }}
                   >
                     <creatable-view
                       style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
@@ -218,17 +218,16 @@ export class CreatablePalette extends LitElement {
                     ></creatable-view>
                   </sl-dialog>
                 `
-              : html``
-          }
-          ${
-            this._showCreatablesSelection
-              ? html`
+        : html``
+      }
+          ${this._showCreatablesSelection
+        ? html`
                   <sl-dialog
                     id="creatable-selection-dialog"
                     label="${msg('What do you want to create?')}"
                     @sl-hide=${() => {
-                      this._showCreatablesSelection = undefined;
-                    }}
+            this._showCreatablesSelection = undefined;
+          }}
                   >
                     <div class="row" style="justify-content: flex-end; margin-top: -20px;">
                       <applet-title
@@ -237,9 +236,9 @@ export class CreatablePalette extends LitElement {
                     </div>
                   </sl-dialog>
                 `
-              : html``
-          }
-      </sl-dialog>
+        : html``
+      }
+      </moss-dialog>
     `;
   }
 

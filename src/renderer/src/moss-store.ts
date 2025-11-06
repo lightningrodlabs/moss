@@ -13,6 +13,8 @@ import {
   manualReloadStore,
   asyncReadable,
   Unsubscriber,
+  readable,
+  get,
 } from '@holochain-open-dev/stores';
 import {
   DnaHashMap,
@@ -310,6 +312,21 @@ export class MossStore {
 
   setAssetViewerState(state: AssetViewerState) {
     this._assetViewerState.set(state);
+  }
+
+  private _appletSidebarCollapsed: Writable<boolean | null> = writable(null);
+
+  appletSidebarCollapsed: Readable<boolean | null> = readable<boolean | null>(false, (set) => {
+    if (get(this._appletSidebarCollapsed) === null) {
+      this._appletSidebarCollapsed.set(this.persistedStore.appletSidebarCollapsed.value());
+    }
+    const unsubscribe = this._appletSidebarCollapsed.subscribe(set);
+    return unsubscribe;
+  });
+
+  setAppletSidebarCollapsed(value: boolean): void {
+    this.persistedStore.appletSidebarCollapsed.set(value);
+    this._appletSidebarCollapsed.set(value);
   }
 
   /**

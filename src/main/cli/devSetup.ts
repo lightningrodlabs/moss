@@ -334,6 +334,7 @@ export async function devSetup(
           const applet: Applet = {
             custom_name: appletInstallConfig.instanceName,
             description: appletConfig.description,
+            subtitle: appletConfig.subtitle,
             sha256_happ: happHash,
             sha256_ui: maybeUiHash,
             sha256_webhapp: maybeWebHappHash,
@@ -818,6 +819,7 @@ export type Applet = {
    */
   custom_name: string;
   description: string;
+  subtitle: string;
   sha256_happ: string;
   sha256_ui: string | undefined;
   sha256_webhapp: string | undefined;

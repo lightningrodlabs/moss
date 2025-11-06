@@ -89,6 +89,7 @@ export type Applet = {
    */
   custom_name: string;
   description: string;
+  subtitle: string;
   sha256_happ: string;
   sha256_ui: string | undefined;
   sha256_webhapp: string | undefined;
