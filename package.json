@@ -46,7 +46,7 @@
     "build:grapes": "yarn workspace grapes-editor build",
     "prepare:default-apps": "yarn fetch:group-happ",
     "fetch:default-apps": "node ./scripts/fetch-default-apps.mjs",
-    "fetch:group-happ": "node ./scripts/fetch-group-app.mjs",
+    "fetch:group-happ": "node ./scripts/fetch-group-happ.mjs",
     "prepare:group-happ": "yarn build:group-happ && cp ./workdir/group.happ resources/default-apps/",
     "build:group-happ": "yarn build:zomes && resources/bins/hc app pack ./workdir --recursive && cp ./workdir/group.happ ./resources/default-apps",
     "build:zomes": "cross-env RUSTFLAGS=\"--cfg getrandom_backend=\\\"custom\\\"\" cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace",
