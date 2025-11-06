@@ -10,7 +10,7 @@
     }
   },
   "hc": {
-    "version": "0.6.0-dev.28",
+    "version": "0.6.0-rc.0",
     "sha256": {
       "aarch64-apple-darwin": "782115bfc72896ec2b8cd86b7dac2cc4fe626d8992a9a7589a3c71f06c849e16",
       "aarch64-unknown-linux-gnu": "2bf2f5275fe7229fc16dc682ba57477c81ebe41bf656895dd19e61570db2e4c1",
