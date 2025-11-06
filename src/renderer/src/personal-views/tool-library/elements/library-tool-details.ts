@@ -75,7 +75,7 @@ export class LibraryToolDetails extends LitElement {
     }
     return html` 
       
-      <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
+      <div class="column" style="margin-top: 10px;">
         <div class="row" style="justify-content: space-between; align-items: center;">
           <div class="row">
             <img
@@ -133,7 +133,7 @@ export class LibraryToolDetails extends LitElement {
             ${msg('Versions')}
           </button>
         </div>
-        <div class="column" style="min-height: 380px; overflow-y: auto;">
+        <div class="column">
           ${this.renderContent()}
         </div>
       </div>

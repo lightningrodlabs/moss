@@ -64,7 +64,7 @@ export class MossDialog extends LitElement {
             ${closeIcon(24)}
           </button>
         </div>
-        <div class="column flex-1" style="padding: 40px 100px;">
+        <div class="column flex-1 dialog-content" style="padding: 40px 100px;">
                 ${this.noHeader ? '' :
         html`<div class="dialog-title" style="text-align: ${this.headerAlign}; margin-bottom: 20px;"><slot name="header"><slot></div>`
       }
@@ -84,6 +84,18 @@ export class MossDialog extends LitElement {
     }
     .gradient::part(panel) {
       background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
+    }
+    ::part(panel) {
+      margin-top: 130px;
+      max-height: calc(100vh - 158px);
+      display: flex;
+      flex-direction: column;
+    }
+    .dialog-content {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
     }
 `];
 }
