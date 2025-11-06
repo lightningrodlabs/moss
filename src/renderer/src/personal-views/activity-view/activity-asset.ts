@@ -97,10 +97,10 @@ export class ActivityAsset extends LitElement {
       case 'complete':
         return this.renderLogo(this.appletLogo.value.value);
       case 'error':
-        console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
+        console.error('Failed to fetch tool icon: ', this.appletLogo.value.error);
         return html`<display-error
           tooltip
-          .headline=${msg('Error fetching the applet logo')}
+          .headline=${msg('Error fetching the tool logo')}
           .error=${this.appletLogo.value.error}
         ></display-error>`;
     }
@@ -150,29 +150,28 @@ export class ActivityAsset extends LitElement {
               <div class="activity-asset-outer">
                 <div
                   @click=${() => {
-                    console.log('Clicked on asset', this.wal);
-                    this.dispatchEvent(
-                      new CustomEvent('open-wal', {
-                        detail: deStringifyWal(this.wal),
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+            console.log('Clicked on asset', this.wal);
+            this.dispatchEvent(
+              new CustomEvent('open-wal', {
+                detail: deStringifyWal(this.wal),
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
                   class="activity-asset">
                   <div
                     style="display: flex; align-items: center; margin-right: 10px;"
                   >
-                  ${
-                    this.assetInfo.value.value
-                      ? html`
+                  ${this.assetInfo.value.value
+            ? html`
                           <sl-icon
                             .src=${this.assetInfo.value.value.icon_src}
                             style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 50px;"
                           ></sl-icon>
                         `
-                      : html` <div style="width: 50px; height: 50px;"></div> `
-                  }
+            : html` <div style="width: 50px; height: 50px;"></div> `
+          }
 
                   </div>
                   <div style="display: flex; flex-direction: column; margin-right: 10px;">
@@ -190,72 +189,69 @@ export class ActivityAsset extends LitElement {
                       <div
                         style="margin-left: 10px; flex: 0 0 auto;"
                       >
-                        ${
-                          new Set(
-                            this.notifications
-                              .filter((notification) => notification.notification.fromAgent)
-                              .map((notification) =>
-                                encodeAndStringify(notification.notification.fromAgent),
-                              ),
-                          ).size
-                        } people
+                        ${new Set(
+            this.notifications
+              .filter((notification) => notification.notification.fromAgent)
+              .map((notification) =>
+                encodeAndStringify(notification.notification.fromAgent),
+              ),
+          ).size
+          } people
                       </div>
                       <div
                         style="margin-left: 10px; flex: 0 0 auto;"
                       >
                         ${formatDistanceToNow(
-                          new Date(
-                            this.notifications.reduce((latest, current) => {
-                              return current.notification.timestamp > latest.notification.timestamp
-                                ? current
-                                : latest;
-                            }).notification.timestamp,
-                          ),
-                          { addSuffix: true },
-                        )}
+            new Date(
+              this.notifications.reduce((latest, current) => {
+                return current.notification.timestamp > latest.notification.timestamp
+                  ? current
+                  : latest;
+              }).notification.timestamp,
+            ),
+            { addSuffix: true },
+          )}
                       </div>
                     </div>
                   </div>
                 </div>
-                ${
-                  this.showNotifications
-                    ? html`
+                ${this.showNotifications
+            ? html`
                         <button
                           @click=${() => {
-                            this.showNotifications = false;
-                          }}
+                this.showNotifications = false;
+              }}
                           class="hide-notifications-button"
                         >
                           ⌃
                         </button>
                       `
-                    : html`
+            : html`
                         <button
                           @click=${() => {
-                            this.showNotifications = true;
-                          }}
+                this.showNotifications = true;
+              }}
                           class="show-notifications-button"
                         >
                           ⌄
                         </button>
                       `
-                }
+          }
               </div>
               </div>
               <div class="displayed-notifications-list">
-                ${
-                  this.showNotifications
-                    ? html`
+                ${this.showNotifications
+            ? html`
                         ${this.notifications.map((notification: any) => {
-                          return html`
+              return html`
                             <div style="padding: 4px 4px 0 4px">
                               ${notification.notification.title}
                             </div>
                           `;
-                        })}
+            })}
                       `
-                    : ''
-                }
+            : ''
+          }
               </div>
             </div>
         `;

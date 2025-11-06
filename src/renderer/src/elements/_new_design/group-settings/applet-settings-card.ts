@@ -210,10 +210,10 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
               composed: true,
             }),
           );
-          notify(msg('Applet disabled.'));
+          notify(msg('Tool disabled.'));
         } else if (this.appInfo && !isAppRunning(this.appInfo)) {
           await this.mossStore.enableApplet(this.appletHash);
-          notify(msg('Applet enabled.'));
+          notify(msg('Tool enabled.'));
         }
       }}
         >

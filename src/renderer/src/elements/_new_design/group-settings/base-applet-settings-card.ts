@@ -427,7 +427,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         <div style="color:#89D6AA">${devIcon(16)} ${msg('Advanced Settings')}</div>
         <div class="row items-center">
           <div class="row items-center">
-            <span style="margin-left:8px; margin-bottom: 4px; margin-top: 4px;">${msg('applet hash')}:</span>
+            <span style="margin-left:8px; margin-bottom: 4px; margin-top: 4px;">${msg('tool hash')}:</span>
             <div class="row">
               <copy-hash styles="color:#E7EEC4" .hash=${encodeHashToBase64(this.appletHash)}></copy-hash>
             </div>

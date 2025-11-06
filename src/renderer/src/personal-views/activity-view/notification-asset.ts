@@ -91,7 +91,7 @@ export class NotificationAsset extends LitElement {
         console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
         return html`<display-error
           tooltip
-          .headline=${msg('Error fetching the applet logo')}
+          .headline=${msg('Error fetching the tool logo')}
           .error=${this.appletLogo.value.error}
         ></display-error>`;
     }
@@ -156,8 +156,8 @@ export class NotificationAsset extends LitElement {
           <div>${this.notification?.body}</div>
           <div class="notification-date">
             ${this.notification
-              ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
-              : 'unknown date'}
+            ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
+            : 'unknown date'}
           </div>
         </div>`;
 

@@ -253,8 +253,8 @@ export class GroupHome extends LitElement {
       );
       await this.mossStore.reloadManualStores();
     } catch (e) {
-      console.error(`Failed to uninstall Applet instance: ${e}`);
-      notifyError(msg('Failed to uninstall Applet instance.'));
+      console.error(`Failed to uninstall tool instance: ${e}`);
+      notifyError(msg('Failed to uninstall tool instance.'));
     }
   }
 
