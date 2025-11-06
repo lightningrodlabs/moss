@@ -605,7 +605,7 @@ export class GroupAppletsSidebar extends LitElement {
     if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
     return html`<sl-tooltip
       content="${msg('Activate tools peers already use')}"
-      placement="bottom"
+      placement="right"
       hoist
     >
       <button
