@@ -31,6 +31,12 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 5. Follow the release process from the [Release](#release) section above.
 
 
+## Update to a new version of group happ (WIP)
+
+Create draft release for group-happ.
+Use publish-happ workflow.
+
+
 ## Releasing NPM packages
 
 Publish in this order:

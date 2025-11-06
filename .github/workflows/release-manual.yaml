@@ -102,6 +102,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ls dist
+          echo "v${{ steps.version.outputs.APP_VERSION }}" 
           # Modify the postinst script of the .deb file
           node ./scripts/extend-deb-postinst.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux.yml" --clobber
