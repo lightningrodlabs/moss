@@ -1,22 +1,22 @@
 {
   "holochain": {
-    "version": "0.6.0-rc.0",
+    "version": "0.6.0-rc.1",
     "sha256": {
-      "aarch64-apple-darwin": "8f56ff9ff61a384512662e13ef5531d2402cd9af25a97c9e2294612e5737ddd3",
-      "aarch64-unknown-linux-gnu": "29e293d32b606cfcc2e48589de85347e38e3af25ea740e545f7f9e35221e0942",
-      "x86_64-apple-darwin": "6ff66bcd18dcfc1392653e8e9d71f3a376e1adb2cd36c5fa8066e804b7fb4551",
-      "x86_64-pc-windows-msvc.exe": "42d7febb2c332cdb9a562cd790be53667d15979a1f08405d02bb9c863222f493",
-      "x86_64-unknown-linux-gnu": "a0aca0bb811cae2dd0a4ba49ae50efc87557bb105dadd90765ef0b8664482a7f"
+      "aarch64-apple-darwin": "68b199575b55e528dae5fd5073273f0b6b23b0d454121eee0809f2a501afe3d1",
+      "aarch64-unknown-linux-gnu": "188a7c6404e1fd1708f5b1b41826cf8c94a26274bbb8540096d0dec21382a1c3",
+      "x86_64-apple-darwin": "b954e8f969677897055647ab5df0e4da9a7044a4648f71959874a16cd9cd4329",
+      "x86_64-pc-windows-msvc.exe": "af0c2c7391c7547d6fa6203278419755e933ec83c41fb4d112a40b65cf7b6c44",
+      "x86_64-unknown-linux-gnu": "91a200205768754fa8841f3f71ba637c3e228e1b6a415eeb254ee8c43b75fae5"
     }
   },
   "hc": {
-    "version": "0.6.0-rc.0",
+    "version": "0.6.0-rc.1",
     "sha256": {
-      "aarch64-apple-darwin": "782115bfc72896ec2b8cd86b7dac2cc4fe626d8992a9a7589a3c71f06c849e16",
-      "aarch64-unknown-linux-gnu": "2bf2f5275fe7229fc16dc682ba57477c81ebe41bf656895dd19e61570db2e4c1",
-      "x86_64-apple-darwin": "906abe2a4f566d38ae323a0305069ce088070ccb0d667f2dc71d0e83b3da22ee",
-      "x86_64-pc-windows-msvc.exe": "524c35500cb8a6c943446a5b196868a6638790308c2df3d839a736cd9f8b636d",
-      "x86_64-unknown-linux-gnu": "71f41490213ac887b0f6ab6ee5fe81cbe4140f837cb507d1273fa4fef401d2b4"
+      "aarch64-apple-darwin": "f9dc88223cad7cf6cc178cc52bd133641f37ec8f8649363ed84c3dac86d5fed8",
+      "aarch64-unknown-linux-gnu": "ad83aa0ef8d04702e4e3b46dd43cd9a4341da2143e2cef30b477ae3139c3322b",
+      "x86_64-apple-darwin": "53d1a156c1b4a5cbc93f01f135b4bfaac19773d3051fc1d96db6acc23f3888be",
+      "x86_64-pc-windows-msvc.exe": "ca09fa22ac693ddbf3718be70c5d9520116e10abd2d1b0bfb52f3618654a42ee",
+      "x86_64-unknown-linux-gnu": "d17305157cc0288be639b6b534f0768a1ff3af37879f2c81bc5365056a05b6d6"
     }
   },
   "bootstrap": {

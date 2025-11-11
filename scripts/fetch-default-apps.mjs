@@ -24,7 +24,7 @@ function downloadFile(url, targetDir, fileName, expectedSha256Hex) {
       const hasher = crypto.createHash('sha256');
       hasher.update(fileBytes);
       const sha256Hex = hasher.digest('hex');
-      if (sha256Hex !== expectedSha256Hex)
+      if (expectedSha256Hex && sha256Hex !== expectedSha256Hex)
         throw new Error(
           `sha256 does not match the expected sha256. Got ${sha256Hex} but expected ${expectedSha256Hex}`,
         );
