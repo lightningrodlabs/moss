@@ -1540,9 +1540,9 @@ export class MossStore {
         app = findAppForDnaHash(installedAppsRecent, dnaHash);
         if (!app) throw new Error('The given dna is not installed');
       }
-      if (!app.appInfo.installed_app_id.startsWith('applet#'))
+      if (!app.appInfo.installed_app_id.startsWith('applet#')) {
         throw new Error("The given dna is part of an app that's not an applet.");
-
+      }
       return {
         appletHash: appletHashFromAppId(app.appInfo.installed_app_id),
         appInfo: app.appInfo,

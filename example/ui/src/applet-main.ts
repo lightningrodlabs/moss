@@ -369,10 +369,10 @@ export class AppletMain extends LitElement {
               >${this.walLink ? this.walLink : 'Paste WAL in field above to update me'}</a
             >
             <a href="${this.walLink}" target="_blank"
-              >${this.walLink ? this.walLink : 'Paste WAL in field above to update me'}</a
+              >${this.walLink ? this.walLink : 'Paste WAL in field above to update me (blank)'}</a
             >
             <a href="https://duckduckgo.com">duckduckgo.com</a>
-            <a href="https://duckduckgo.com" traget="_blank">duckduckgo.com</a>
+            <a href="https://duckduckgo.com" target="_blank">duckduckgo.com (blank)</a>
 
             <h2>Clipboard</h2>
 

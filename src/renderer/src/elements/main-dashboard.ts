@@ -385,21 +385,24 @@ export class MainDashboard extends LitElement {
   }
 
   async getRelatedGroupsAndApplets(hrl: Hrl): Promise<[DnaHashB64[], AppletId[]]> {
-    const location = await toPromise(this._mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
-    if (location) {
-      const appletContextHashes = [encodeHashToBase64(location.dnaLocation.appletHash)];
-      const groupsForApplet = await toPromise(
-        this._mossStore.groupsForApplet.get(location.dnaLocation.appletHash),
-      );
-      const groupDnaHashes = Array.from(groupsForApplet.keys());
-      const groupContextHashesB64 = groupDnaHashes.map((hash) => encodeHashToBase64(hash));
-      return [groupContextHashesB64, appletContextHashes];
-    } else {
+    console.debug('getRelatedGroupsAndApplets', hrl);
+    const first = this._mossStore.hrlLocations.get(hrl[0]);
+    console.debug('getRelatedGroupsAndApplets first', first);
+    const location = await toPromise(first.get(hrl[1]));
+    if (!location) {
       return [[], []];
     }
+    const appletContextHashes = [encodeHashToBase64(location.dnaLocation.appletHash)];
+    const groupsForApplet = await toPromise(
+      this._mossStore.groupsForApplet.get(location.dnaLocation.appletHash),
+    );
+    const groupDnaHashes = Array.from(groupsForApplet.keys());
+    const groupContextHashesB64 = groupDnaHashes.map((hash) => encodeHashToBase64(hash));
+    return [groupContextHashesB64, appletContextHashes];
   }
 
   async openTab(tabInfo: TabInfo, mode?: OpenAssetMode) {
+    console.debug('openTab', tabInfo, mode);
     if (mode === 'window') throw Error("Mode 'window' cannot be opened in a tab");
     const alreadyOpen = Object.values(this._openTabs).find(
       (tabInfoExisting) => tabInfo.id === tabInfoExisting.id,

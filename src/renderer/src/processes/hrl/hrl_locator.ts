@@ -13,7 +13,7 @@ export async function hrlLocatorZome(): Promise<CoordinatorSource> {
       manifest: {
         zomes: [
           {
-            bundled: 'hrl_locator',
+            path: 'hrl_locator',
             name: HRL_LOCATOR_COORDINATOR_ZOME,
             dependencies: [],
           },
