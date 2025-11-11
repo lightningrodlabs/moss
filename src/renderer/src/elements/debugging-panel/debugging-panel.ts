@@ -245,7 +245,7 @@ export class DebuggingPanel extends LitElement {
         ${networkStats.peer_urls.map((url) => html` <li>${url}</li> `)}
         <h4>Connections: ${networkStats.connections.length}</h4>
         ${networkStats.connections.map(
-          (connection) => html`
+      (connection) => html`
             <div class="stats-item">
               <div>webrtc: ${connection.is_webrtc}</div>
               <div>pub_key: ${connection.pub_key}</div>
@@ -263,7 +263,7 @@ export class DebuggingPanel extends LitElement {
               </div>
             </div>
           `,
-        )}
+    )}
 
         <h4>Metrics:</h4>
         <div class="stats-item">
@@ -277,79 +277,92 @@ export class DebuggingPanel extends LitElement {
     return Object.keys(zomeCallCount.functionCalls).map(
       (fn_name) => html`
         <div class="row" style="align-items: center; margin-top: 5px; margin-bottom: 10px;">
-          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+          <div class="item-title item-title-sub">
             <div>${fn_name}</div>
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount ? zomeCallCount.functionCalls[fn_name].length : ''}
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount
-              ? Math.round(
-                  zomeCallCount.functionCalls[fn_name].length /
-                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                )
-              : ''}
+          ? Math.round(
+            zomeCallCount.functionCalls[fn_name].length /
+            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+          )
+          : ''}
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name][zomeCallCount.functionCalls[fn_name].length - 1]
-              .durationMs}ms
+          .durationMs}ms
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name].length
-              ? Math.round(
-                  zomeCallCount.functionCalls[fn_name].reduce(
-                    (sum, item) => sum + item.durationMs,
-                    0,
-                  ) / zomeCallCount.functionCalls[fn_name].length,
-                )
-              : 'NaN'}ms
+          ? Math.round(
+            zomeCallCount.functionCalls[fn_name].reduce(
+              (sum, item) => sum + item.durationMs,
+              0,
+            ) / zomeCallCount.functionCalls[fn_name].length,
+          )
+          : 'NaN'}ms
           </div>
         </div>
       `,
     );
   }
 
+  renderCountsHeader() {
+    return html`
+    <div class="row item-row" style="">
+          <div class="item-title">&nbsp;</div>
+          <div class="item-count-title">total zome calls</div>
+          <div class="item-count-title">
+            avg. zome calls per minute
+          </div>
+          <div class="item-count-title">
+            duration of last zome call (ms)
+          </div>
+          <div class="item-count-title">
+            avg. zome call duration
+          </div>
+          <div class="item-extra"></div>
+        </div>
+    `
+  }
+
   renderGroups(groups: DnaHash[]) {
     return html`
       <div class="column" style="align-items: flex-start;">
-        <div class="row" style="align-items: center;">
-          <div style="align-items: center; width: 300px;"></div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            duration of last zome call (ms)
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome call duration
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
-        </div>
+        ${this.renderCountsHeader()}
         ${groups
-          .sort((hash_a, hash_b) => {
-            const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
-            const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
-            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-            if (zomeCallCount_a && !zomeCallCount_b) return -1;
-            if (!zomeCallCount_a && zomeCallCount_b) return 1;
-            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-            return 0;
-          })
-          .map((groupDnaHash) => {
-            const groupId = encodeHashToBase64(groupDnaHash);
-            const appId = this._groupAppIds[groupId];
-            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-            const showDetails = this._groupsWithDetails.includes(groupId);
-            const groupAppId = this._groupAppIds[groupId];
-            const showDebug = this._appsWithDebug.includes(groupAppId);
-            const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
-            return html`
+        .sort((hash_a, hash_b) => {
+          const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
+          const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
+          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+          if (zomeCallCount_a && !zomeCallCount_b) return -1;
+          if (!zomeCallCount_a && zomeCallCount_b) return 1;
+          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+          return 0;
+        })
+        .map((groupDnaHash) => {
+          const groupId = encodeHashToBase64(groupDnaHash);
+          const appId = this._groupAppIds[groupId];
+          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+          const showDetails = this._groupsWithDetails.includes(groupId);
+          const groupAppId = this._groupAppIds[groupId];
+          const showDebug = this._appsWithDebug.includes(groupAppId);
+          const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
+          return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row" style="align-items: center; width: 300px;">
+                  <div class="row item-title" >
+                    <sl-icon-button
+                      @click=${async () => {
+              this.toggleDebug(groupAppId);
+            }}
+                      .src=${wrapPathInSvg(mdiBug)}
+                    >
+                    </sl-icon-button>
                     <group-context .groupDnaHash=${groupDnaHash}>
                       <group-logo
                         .groupDnaHash=${groupDnaHash}
@@ -358,66 +371,60 @@ export class DebuggingPanel extends LitElement {
                     ></group-context>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount ? zomeCallCount.totalCounts : ''}
                   </div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                        )
-                      : ''}
+              ? Math.round(
+                zomeCallCount.totalCounts /
+                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+              )
+              : ''}
                   </div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
-                  ${window.__ZOME_CALL_LOGGING_ENABLED__
-                    ? html`<span
-                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                        @click=${() => this.toggleGroupDetails(groupId)}
-                        >${showDetails ? 'Hide' : 'Details'}</span
-                      >`
-                    : html`<span style="min-width: 60px;"></span>`}
-
-                  <sl-icon-button
-                    @click=${async () => {
-                      this.toggleDebug(groupAppId);
-                    }}
-                    .src=${wrapPathInSvg(mdiBug)}
-                  >
-                  </sl-icon-button>
+                  <div class="item-extra">
+                    ${window.__ZOME_CALL_LOGGING_ENABLED__
+              ? html`<span
+                          style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                          @click=${() => this.toggleGroupDetails(groupId)}
+                          >${showDetails ? 'Hide' : 'Details'}</span
+                        >`
+              : html`<span style="min-width: 60px;"></span>`}
+                  </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
               ${showDebug
-                ? html`
+              ? html`
                     <div class="column">
                       <app-debugging-details .appId=${groupAppId}></app-debugging-details>
                       <sl-button
                         @click=${() => {
-                          if (this._appsToPollNetworkStats.includes(groupAppId)) {
-                            this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                              (appId) => appId !== groupAppId,
-                            );
-                          } else {
-                            this._appsToPollNetworkStats = [
-                              ...this._appsToPollNetworkStats,
-                              groupAppId,
-                            ];
-                          }
-                        }}
+                  if (this._appsToPollNetworkStats.includes(groupAppId)) {
+                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                      (appId) => appId !== groupAppId,
+                    );
+                  } else {
+                    this._appsToPollNetworkStats = [
+                      ...this._appsToPollNetworkStats,
+                      groupAppId,
+                    ];
+                  }
+                }}
                         >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
                       >
                       ${hasStats ? this.renderAppNetworkStats(groupAppId) : html``}
                     </div>
                   `
-                : html``}
+              : html``}
             `;
-          })}
+        })}
       </div>
     `;
   }
@@ -425,44 +432,38 @@ export class DebuggingPanel extends LitElement {
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
       <div class="column" style="align-items: flex-start;">
-        <div class="row" style="align-items: center;">
-          <div style="align-items: center; width: 300px;"></div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            duration of last zome call (ms)
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome call duration
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
-          <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
-        </div>
+        ${this.renderCountsHeader()}
+
         ${Array.from(applets.entries())
-          .sort(([hash_a, _a], [hash_b, _b]) => {
-            const id_a = appIdFromAppletHash(hash_a);
-            const id_b = appIdFromAppletHash(hash_b);
-            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-            if (zomeCallCount_a && !zomeCallCount_b) return -1;
-            if (!zomeCallCount_a && zomeCallCount_b) return 1;
-            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-            return 0;
-          })
-          .map(([appletHash, appletStore]) => {
-            const appletId = encodeHashToBase64(appletHash);
-            const appId = appIdFromAppletHash(appletHash);
-            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-            const showDetails = this._appletsWithDetails.includes(appletId);
-            const showDebug = this._appsWithDebug.includes(appId);
-            const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
-            const hasStats = this._appsToPollNetworkStats.includes(appId);
-            return html`
+        .sort(([hash_a, _a], [hash_b, _b]) => {
+          const id_a = appIdFromAppletHash(hash_a);
+          const id_b = appIdFromAppletHash(hash_b);
+          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+          if (zomeCallCount_a && !zomeCallCount_b) return -1;
+          if (!zomeCallCount_a && zomeCallCount_b) return 1;
+          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+          return 0;
+        })
+        .map(([appletHash, appletStore]) => {
+          const appletId = encodeHashToBase64(appletHash);
+          const appId = appIdFromAppletHash(appletHash);
+          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+          const showDetails = this._appletsWithDetails.includes(appletId);
+          const showDebug = this._appsWithDebug.includes(appId);
+          const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
+          const hasStats = this._appsToPollNetworkStats.includes(appId);
+          return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row" style="align-items: center; width: 300px;">
+                  <div class="row item-title">
+                    <sl-icon-button
+                      @click=${async () => {
+              this.toggleDebug(appId);
+            }}
+                      .src=${wrapPathInSvg(mdiBug)}
+                    >
+                    </sl-icon-button>
                     <applet-logo
                       .appletHash=${appletHash}
                       style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"
@@ -474,74 +475,69 @@ export class DebuggingPanel extends LitElement {
                       <div>
                         <b>iframes:</b>
                         ${iframeCounts
-                          ? Object.entries(iframeCounts).map(
-                              ([viewType, count]) => html`${viewType} (${count}) `,
-                            )
-                          : html``}
+              ? Object.entries(iframeCounts).map(
+                ([viewType, count]) => html`${viewType} (${count}) `,
+              )
+              : html``}
                       </div>
                     </div>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount ? zomeCallCount.totalCounts : ''}
                   </div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                        )
-                      : ''}
+              ? Math.round(
+                zomeCallCount.totalCounts /
+                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+              )
+              : ''}
                   </div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
-                  ${window.__ZOME_CALL_LOGGING_ENABLED__
-                    ? html` <span
-                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                        @click=${() => this.toggleAppletDetails(appletId)}
-                        >${showDetails ? 'Hide' : 'Details'}</span
-                      >`
-                    : html`<span style="min-width: 60px;"></span>`}
-                  <sl-icon-button
-                    @click=${async () => {
-                      this.toggleDebug(appId);
-                    }}
-                    .src=${wrapPathInSvg(mdiBug)}
-                  >
-                  </sl-icon-button>
-                  <groups-for-applet
-                    style="margin-left: 10px;"
-                    .appletHash=${appletHash}
-                  ></groups-for-applet>
+                  <div class="item-extra">
+                    ${window.__ZOME_CALL_LOGGING_ENABLED__
+              ? html` <span
+                          style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                          @click=${() => this.toggleAppletDetails(appletId)}
+                          >${showDetails ? 'Hide' : 'Details'}</span
+                        >`
+              : html`<span style="min-width: 60px;"></span>`}
+                    <groups-for-applet
+                      style="margin-left: 10px;"
+                      .appletHash=${appletHash}
+                    ></groups-for-applet>
+                  </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
               </div>
               ${showDebug
-                ? html`
+              ? html`
                     <div class="column">
                       <app-debugging-details .appId=${appId}></app-debugging-details>
                       <sl-button
                         @click=${() => {
-                          if (this._appsToPollNetworkStats.includes(appId)) {
-                            this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                              (appId) => appId !== appId,
-                            );
-                          } else {
-                            this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
-                          }
-                        }}
+                  if (this._appsToPollNetworkStats.includes(appId)) {
+                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                      (appId) => appId !== appId,
+                    );
+                  } else {
+                    this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
+                  }
+                }}
                         >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
                       >
                       ${hasStats ? this.renderAppNetworkStats(appId) : html``}
                     </div>
                   `
-                : html``}
+              : html``}
             `;
-          })}
+        })}
       </div>
     `;
   }
@@ -587,20 +583,20 @@ export class DebuggingPanel extends LitElement {
           <div class="row items-center">
             <div>
               ${window.__ZOME_CALL_LOGGING_ENABLED__
-                ? 'Disable zome call logging (will reload Moss)'
-                : 'Enable zome call logging (will reload Moss)'}
+        ? 'Disable zome call logging (will reload Moss)'
+        : 'Enable zome call logging (will reload Moss)'}
             </div>
             <sl-switch
               style="margin-bottom: 5px; margin-left: 12px;"
               .checked=${window.__ZOME_CALL_LOGGING_ENABLED__}
               @sl-change=${() => {
-                if (window.__ZOME_CALL_LOGGING_ENABLED__) {
-                  window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
-                } else {
-                  window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
-                }
-                window.location.reload();
-              }}
+        if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+          window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
+        } else {
+          window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
+        }
+        window.location.reload();
+      }}
             ></sl-switch>
           </div>
         </div>
@@ -618,9 +614,9 @@ export class DebuggingPanel extends LitElement {
         <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
           @click=${async () => {
-            await window.electronAPI.dumpNetworkStats();
-            notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
-          }}
+        await window.electronAPI.dumpNetworkStats();
+        notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
+      }}
           style="margin-top: 20px;"
         >
           Dump Network Stats
@@ -660,6 +656,30 @@ export class DebuggingPanel extends LitElement {
         background-color: white;
         width: fit-content;
       }
+
+      .item-row {
+        align-items: center;
+      }
+      .item-title {
+        width:300px;
+        align-items: center;
+      }
+      .item-title-sub {
+        font-weight: bold; width: 260px; padding-left: 40px;
+      }
+      .item-count-title {
+        font-weight: bold; text-align: right; width: 80px;
+      }
+      .item-count {
+        font-weight: bold; text-align: right; width: 80px; font-size: 18px;
+      }
+      .item-count-detail {
+        color: blue;
+      }
+      .item-extra {
+        width: 90px;
+      }
+
     `,
   ];
 }
