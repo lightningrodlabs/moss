@@ -39,7 +39,9 @@ Use publish-happ workflow.
 
 ## Releasing NPM packages
 
-Publish in this order:
+For the CLI, make sure the updated holochain binaries have been fetched (`cd cli & npm run postinstall`)
+
+When updating all packages, publish in this order:
 
 1. @theweave/api
 1. @theweave/tool-library-client
