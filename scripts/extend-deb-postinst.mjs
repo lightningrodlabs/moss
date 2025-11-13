@@ -31,7 +31,7 @@ const fileBytesBefore = fs.readFileSync(debFilePath);
 const hasher1 = crypto.createHash('sha512');
 hasher1.update(fileBytesBefore);
 const sha512_before = hasher1.digest('base64');
-console.log('sha512 before modification: ', sha512_before);
+console.log('  sha512 before modification: ', sha512_before);
 console.log('fileSize before modification: ', fileBytesBefore.length);
 
 const unpackDirectory = `dist/modified-deb`;
@@ -96,7 +96,7 @@ console.log('Re-packaging modified deb file...');
 const stdout2 = child_process.execSync(`dpkg-deb -b ${unpackDirectory} ${debFilePath}`);
 console.log('Modified deb file packaged.');
 
-// Modify  sha512 hashes of latest-linux.yaml
+// Modify sha512 hashes of latest-linux.yaml
 const fileBytes = fs.readFileSync(debFilePath);
 const hasher = crypto.createHash('sha512');
 hasher.update(fileBytes);
@@ -125,4 +125,4 @@ fs.writeFileSync(
   yaml.dump(latestYaml, { lineWidth: -1 }),
   'utf-8',
 );
-console.log('\nDONE\n\n');
+console.log('\ndeb postinst script DONE\n\n');
