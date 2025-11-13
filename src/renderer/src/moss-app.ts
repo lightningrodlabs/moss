@@ -517,7 +517,7 @@ export class MossApp extends LitElement {
 
             <div class="column center-content hint" style="margin-bottom: 12px;">
               <div style="margin-bottom: 3px;">${msg('An invite link looks like:')}</div>
-              <div class="">https://theweave.social/wal?weave-0.13://invite...</div>
+              <div class="">https://theweave.social/wal?weave-0.15://invite...</div>
             </div>
 
             <div class="row items-center justify-center" style="margin-bottom: 28px;">
