@@ -51,12 +51,12 @@ fs.writeFileSync(posinstPath, postinstScriptModified);
 console.log('Wrote modified AppRun script:\n', postinstScriptModified);
 
 // Package modified .AppImage file
-if (!fs.existsSync("appimagetool-x86_64.AppImage")) {
-  const stdout42 = child_process.execSync(`wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage`);
+if (!fs.existsSync(`appimagetool-${arch}.AppImage`)) {
+  const stdout42 = child_process.execSync(`wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${arch}.AppImage`);
 }
-const stdout43 = child_process.execSync(`chmod +x appimagetool-x86_64.AppImage`)
+const stdout43 = child_process.execSync(`chmod +x appimagetool-${arch}.AppImage`)
 console.log('Re-packaging modified AppRun file...');
-const stdout2 = child_process.execSync(`./appimagetool-x86_64.AppImage ${unpackDirectory} ${imageFilePath}`);
+const stdout2 = child_process.execSync(`./appimagetool-${arch}.AppImage ${unpackDirectory} ${imageFilePath}`);
 console.log('Modified appImage file packaged.', stdout2.toString());
 
 // Modify sha512 hashes of latest-linux.yaml
