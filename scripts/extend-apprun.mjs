@@ -14,12 +14,15 @@ const productName = electronBuilderYaml.productName;
 const appVersion = packageJson.version;
 
 let arch;
+let arch_linux;
 switch (process.arch) {
   case 'arm64':
     arch = 'arm64';
+    arch_linux = 'aarch64';
     break;
   case 'x64':
     arch = 'x86_64';
+    arch_linux = 'x86_64';
     break;
 }
 
@@ -51,12 +54,12 @@ fs.writeFileSync(posinstPath, postinstScriptModified);
 console.log('Wrote modified AppRun script:\n', postinstScriptModified);
 
 // Package modified .AppImage file
-if (!fs.existsSync(`appimagetool-${arch}.AppImage`)) {
-  const stdout42 = child_process.execSync(`wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${arch}.AppImage`);
+if (!fs.existsSync(`appimagetool-${arch_linux}.AppImage`)) {
+  const stdout42 = child_process.execSync(`wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${arch_linux}.AppImage`);
 }
-const stdout43 = child_process.execSync(`chmod +x appimagetool-${arch}.AppImage`)
+const stdout43 = child_process.execSync(`chmod +x appimagetool-${arch_linux}.AppImage`)
 console.log('Re-packaging modified AppRun file...');
-const stdout2 = child_process.execSync(`./appimagetool-${arch}.AppImage ${unpackDirectory} ${imageFilePath}`);
+const stdout2 = child_process.execSync(`./appimagetool-${arch_linux}.AppImage ${unpackDirectory} ${imageFilePath}`);
 console.log('Modified appImage file packaged.', stdout2.toString());
 
 // Modify sha512 hashes of latest-linux.yaml
