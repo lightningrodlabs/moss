@@ -94,8 +94,10 @@ jobs:
 
           # Modify the postinst script of the .deb file
           node ./scripts/extend-deb-postinst.mjs
+          node ./scripts/extend-apprun.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux.yml" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-amd64.deb" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-x86_64.AppImage" --clobber
 
       - name: build and upload the app (Ubuntu 22.04 aarch64)
         if: matrix.platform == 'ubuntu-22.04-arm'
@@ -112,8 +114,10 @@ jobs:
 
           # Modify the postinst script of the .deb file
           node ./scripts/extend-deb-postinst.mjs
+          node ./scripts/extend-apprun.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux-arm64.yml" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-arm64.deb" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-arm64.AppImage" --clobber
 
       - name: build, sign and upload the app (Windows)
         shell: bash
