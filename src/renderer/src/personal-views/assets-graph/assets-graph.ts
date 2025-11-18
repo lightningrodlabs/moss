@@ -9,8 +9,7 @@ import { MossStore } from '../../moss-store';
 import { toPromise } from '@holochain-open-dev/stores';
 import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
-import { appIdFromAppletHash } from '@theweave/utils';
-import { getCellId } from '../../utils';
+import { appIdFromAppletHash, getCellId } from '@theweave/utils';
 import { mossStyles } from '../../shared-styles';
 
 @customElement('assets-graph')

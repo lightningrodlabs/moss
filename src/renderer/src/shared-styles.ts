@@ -414,7 +414,7 @@ export const mossStyles = [
       display: flex;
       flex-direction: row;
       align-items: center;
-      height: 40px;
+      height: 38px;
       padding: 0 20px;
       cursor: pointer;
       margin-bottom: -2px;

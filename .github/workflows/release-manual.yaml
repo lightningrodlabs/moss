@@ -1,8 +1,6 @@
-name: 'publish'
+name: 'publish-manual'
 on:
-  push:
-    branches:
-      - release
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -40,6 +38,13 @@ jobs:
           echo "Retrieved App version: $(node -p -e "require('./package.json').version")"
           echo "APP_VERSION=$(node -p -e "require('./package.json').version")" >> $GITHUB_OUTPUT
         id: version
+        shell: bash
+
+      - name: Retrieve name
+        run: |
+          echo "Retrieved App name: $(node -p -e "require('./package.json').name")"
+          echo "APP_NAME=$(node -p -e "require('./package.json').name")" >> $GITHUB_OUTPUT
+        id: name
         shell: bash
 
       - name: install Go stable
@@ -84,19 +89,31 @@ jobs:
           yarn build:mac-x64
           ls dist
 
-      - name: build and upload the app (Ubuntu 22.04)
+      - name: build (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn build:linux
-          ls dist
 
+      - name: Install FUSE
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2
+
+      - name: upload the app (Ubuntu 22.04)
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls dist
+          echo "v${{ steps.version.outputs.APP_VERSION }}" 
           # Modify the postinst script of the .deb file
           node ./scripts/extend-deb-postinst.mjs
           node ./scripts/extend-apprun.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux.yml" --clobber
-          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-amd64.deb" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-amd64.deb" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-x86_64.AppImage" --clobber
 
       - name: build and upload the app (Ubuntu 22.04 aarch64)
@@ -116,10 +133,10 @@ jobs:
           node ./scripts/extend-deb-postinst.mjs
           node ./scripts/extend-apprun.mjs
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux-arm64.yml" --clobber
-          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-arm64.deb" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-arm64.deb" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-arm64.AppImage" --clobber
 
-      - name: build, sign and upload the app (Windows)
+      - name: build (Windows)
         shell: bash
         if: matrix.platform == 'windows-2022'
         env:
@@ -127,23 +144,30 @@ jobs:
         run: |
           # Retry 5 times on Windows due to weird flaky issue
           yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
+
+      - name: sign and upload the app (Windows)
+        shell: bash
+        if: matrix.platform == 'windows-2022'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |          
           ls dist
 
           # Sign the .exe file
           dotnet tool install --global --version 4.0.1 AzureSignTool
           echo "sha512 before code signing"
-          CertUtil -hashfile "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
-          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
+          CertUtil -hashfile "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
           echo "sha512 after code signing"
-          CertUtil -hashfile "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
+          CertUtil -hashfile "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
           # Overwrite the latest.yml one with one containing the sha512 of the code signed .exe file
           node ./scripts/latest-yaml.js
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest.yml" --clobber
-          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/org.lightningrodlabs.moss-0.14-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
+          gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
 
       - name: Merge latest-mac.yml mac release files
-        if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-15'
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'macos-15-intel'
         run: |
           node ./scripts/merge-mac-yamls.mjs
         env:

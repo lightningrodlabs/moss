@@ -23,9 +23,8 @@ pub fn set_group_profile(group_profile: GroupProfile) -> ExternResult<Record> {
 pub fn get_group_profile(input: ZomeFnInput<()>) -> ExternResult<Option<Record>> {
     let path = Path::from("all_group_profiles");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllGroupProfiles)?
-            .get_options(input.clone().into())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllGroupProfiles)?
+        , input.clone().into()
     )?;
     get_latest_record_from_links(links, input.into())
 }

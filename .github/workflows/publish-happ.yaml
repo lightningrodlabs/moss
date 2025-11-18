@@ -1,8 +1,6 @@
 name: 'release-happ'
 on:
-  push:
-    branches:
-      - release-happ
+  workflow_dispatch:
 
 jobs:
   publish-happ:
@@ -12,26 +10,23 @@ jobs:
     outputs:
       releaseId: ${{ steps.create-release.outputs.id }}
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      # Checks out a copy of your repository on the ubuntu-latest machine
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Extend space
-        uses: ./.github/actions/extend-space
-
-      - name: Install nix
-        uses: cachix/install-nix-action@v20
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.23.0/install
-
-      - uses: cachix/cachix-action@v15
-        with:
-          name: holochain-ci
-
-      - name: Install and build
+      - name: Download HC
         run: |
-          nix-store --gc
-          nix develop --command bash -c "holochain --version && yarn && yarn build:group-happ && yarn test"
+          node ./scripts/fetch-hc.mjs
+
+      - name: Install rust wasm32-unknown-unknown
+        run: |
+          rustup target install wasm32-unknown-unknown
+
+      - name: Build
+        run: |
+          RUSTFLAGS='--cfg getrandom_backend="'"custom"'"' cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace
+
+      - name: Pack
+        run: |
+          ./resources/bins/hc app pack ./workdir --recursive
 
       - name: Retrieve version
         run: |

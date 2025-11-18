@@ -9,10 +9,11 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
-import { closeIcon, doorIcon } from '../icons.js';
+import { doorIcon } from '../icons.js';
 import { mdiPowerPlugOffOutline } from '@mdi/js';
 import { dialogMessagebox } from '../../../electron-api.js';
-import { SlDialog } from '@shoelace-style/shoelace';
+import { MossDialog } from '../moss-dialog.js';
+import '../moss-dialog.js';
 
 @localized()
 @customElement('danger-zone')
@@ -26,8 +27,8 @@ export class DangerTone extends LitElement {
   @state()
   leaving = false;
 
-  get dialog(): SlDialog {
-    return this.shadowRoot?.getElementById('leave-group-dialog') as SlDialog;
+  get dialog(): MossDialog {
+    return this.shadowRoot?.getElementById('leave-group-dialog') as MossDialog;
   }
 
   async leaveGroup() {
@@ -53,10 +54,10 @@ export class DangerTone extends LitElement {
   }
 
   renderLeaveGroupDialog() {
-    return html`<sl-dialog
+    return html`<moss-dialog
       id="leave-group-dialog"
-      class="moss-dialog"
-      no-header
+      width="674px"
+      headerAlign="center"
       .label=${msg('Leave Group')}
       @sl-request-close=${(e) => {
         if (this.leaving) {
@@ -64,22 +65,8 @@ export class DangerTone extends LitElement {
         }
       }}
     >
-      <div
-        class="column center-content dialog-title"
-        style="margin: 10px 0 40px 0; position: relative;"
-      >
-        <span>${msg('Leave Group')}</span>
-        <button
-          class="moss-dialog-close-button"
-          style="position: absolute; top: -23px; right: -12px;"
-          @click=${() => {
-            this.dialog.hide();
-          }}
-        >
-          ${closeIcon(24)}
-        </button>
-      </div>
-      <div class="column">
+      <span slot="header">${msg('Leave Group')}</span>
+      <div slot="content">
         <div>${msg('Are you sure you want to leave this group?')}</div>
         <br />
         <div class="row items-center">
@@ -87,26 +74,28 @@ export class DangerTone extends LitElement {
           <div>
             <b
               >${msg(
-                'This will delete all your data related to this group and the Tools you joined therein from your computer.',
-              )}</b
+        'This will delete all your data related to this group and the Tools you joined therein from your computer.',
+      )}</b
             >
             <span
               >${msg(
-                'Other members of the group can keep using the group and any Tools they joined themselves.',
-              )}</span
+        'Other members of the group can keep using the group and any Tools they joined themselves.',
+      )}</span
             >
           </div>
         </div>
+        <div class="row" style="margin-top:10px; justify-content: end">
+          <sl-button @click=${() => this.dialog.hide()}>${msg('Cancel')}</sl-button>
+          <sl-button
+            style="margin-left:8px"
+            variant="danger"
+            .loading=${this.leaving}
+            @click=${() => this.leaveGroup()}
+            >${msg('Leave')}</sl-button
+          >
+        </div>
       </div>
-      <sl-button slot="footer" @click=${() => this.dialog.hide()}>${msg('Cancel')}</sl-button>
-      <sl-button
-        slot="footer"
-        variant="danger"
-        .loading=${this.leaving}
-        @click=${() => this.leaveGroup()}
-        >${msg('Leave')}</sl-button
-      >
-    </sl-dialog>`;
+    </moss-dialog>`;
   }
 
   render() {
@@ -118,14 +107,14 @@ export class DangerTone extends LitElement {
             class="moss-button"
             style="height: 22px; min-width: 160px;"
             @click=${async () => {
-              this.dispatchEvent(
-                new CustomEvent('disable-group', {
-                  detail: this._groupStore.groupDnaHash,
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }}
+        this.dispatchEvent(
+          new CustomEvent('disable-group', {
+            detail: this._groupStore.groupDnaHash,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }}
           >
             <div class="row center-content">
               <sl-icon
@@ -137,8 +126,8 @@ export class DangerTone extends LitElement {
           </button>
           <div style="margin-left: 40px;">
             ${msg(
-              'Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.',
-            )}
+        'Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.',
+      )}
           </div>
         </div>
         <div class="row items-center">
@@ -154,8 +143,8 @@ export class DangerTone extends LitElement {
           </button>
           <div style="margin-left: 40px;">
             ${msg(
-              'Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.',
-            )}
+        'Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.',
+      )}
           </div>
         </div>
       </div>

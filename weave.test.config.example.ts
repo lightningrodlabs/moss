@@ -18,7 +18,11 @@ export default defineConfig({
       creatingAgent: {
         agentIdx: 1,
         agentProfile: {
-          nickname: 'Gaston'
+          nickname: 'Gaston',
+          avatar: {
+            type: 'filesystem',
+            path: './example/ui/gaston.jpeg',
+          },
         },
       },
       joiningAgents: [
@@ -43,6 +47,12 @@ export default defineConfig({
         {
           name: 'Example Applet Hot Reload',
           instanceName: 'Example Applet Hot Reload',
+          registeringAgent: 1,
+          joiningAgents: [2],
+        },
+        {
+          name: 'vines',
+          instanceName: 'vines',
           registeringAgent: 1,
           joiningAgents: [2],
         },
@@ -75,6 +85,19 @@ export default defineConfig({
         type: 'localhost',
         happPath: './example/workdir/example-applet.happ',
         uiPort: 8888,
+      },
+    },
+    {
+      name: 'vines',
+      subtitle: 'Chat',
+      description: 'Real-time chat',
+      icon: {
+        type: 'https',
+        url: 'https://github.com/lightningrodlabs/vines/releases/download/we-applet-rc/icon.png',
+      },
+      source: {
+        type: 'https',
+        url: 'https://github.com/lightningrodlabs/vines/releases/download/we-applet-rc/vines-we_applet-1.19.0.webhapp',
       },
     },
   ],

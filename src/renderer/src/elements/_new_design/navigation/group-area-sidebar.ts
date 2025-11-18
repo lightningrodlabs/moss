@@ -45,7 +45,6 @@ import {
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
-import { SlDialog } from '@shoelace-style/shoelace';
 import {
   localTimeFromUtcOffset,
   modifiersToInviteUrl,
@@ -53,6 +52,7 @@ import {
   UTCOffsetStringFromOffsetMinutes,
 } from '../../../utils.js';
 import { notify } from '@holochain-open-dev/elements/dist/notify.js';
+import { MossDialog } from '../moss-dialog.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -109,10 +109,10 @@ export class GroupAppletsSidebar extends LitElement {
   );
 
   @query('#member-profile')
-  _memberProfileDialog!: SlDialog;
+  _memberProfileDialog!: MossDialog;
 
   @query('#invite-member-dialog')
-  inviteMemberDialog: SlDialog | undefined;
+  inviteMemberDialog: MossDialog | undefined;
 
   private _permissionType = new StoreSubscriber(
     this,
@@ -165,8 +165,8 @@ export class GroupAppletsSidebar extends LitElement {
     () =>
       this._groupStore
         ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-            sliceAndJoin(this._mossStore.appletStores, myRunningApplets),
-          ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
+          sliceAndJoin(this._mossStore.appletStores, myRunningApplets),
+        ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],
   );
@@ -228,31 +228,31 @@ export class GroupAppletsSidebar extends LitElement {
           class="row center-content dropzone dropzone-top ${this.collapsed ? '' : 'dropzone-wide'}"
           style="position: absolute;"
           @dragenter=${(e: DragEvent) => {
-            (e.target as HTMLElement).classList.add('active');
-          }}
+        (e.target as HTMLElement).classList.add('active');
+      }}
           @dragleave=${(e: DragEvent) => {
-            (e.target as HTMLElement).classList.remove('active');
-          }}
+        (e.target as HTMLElement).classList.remove('active');
+      }}
           @dragover=${(e: DragEvent) => {
-            e.preventDefault();
-          }}
+        e.preventDefault();
+      }}
           @drop=${(e: DragEvent) => {
-            e.preventDefault();
-            const dropAppletId = undefined;
-            storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
-            this.requestUpdate();
-          }}
+        e.preventDefault();
+        const dropAppletId = undefined;
+        storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
+        this.requestUpdate();
+      }}
         >
           <div class="dropzone-indicator ${this.collapsed ? '' : 'dropzone-indicator-wide'}"></div>
         </div>
         ${repeat(
-          Array.from(applets.entries()).sort(
-            ([a_hash, _a], [b_hash, _b]) =>
-              customAppletOrder!.indexOf(encodeHashToBase64(a_hash)) -
-              customAppletOrder!.indexOf(encodeHashToBase64(b_hash)),
-          ),
-          ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
-          ([appletHash, appletStore]) => html`
+        Array.from(applets.entries()).sort(
+          ([a_hash, _a], [b_hash, _b]) =>
+            customAppletOrder!.indexOf(encodeHashToBase64(a_hash)) -
+            customAppletOrder!.indexOf(encodeHashToBase64(b_hash)),
+        ),
+        ([appletHash, _appletStore]) => encodeHashToBase64(appletHash),
+        ([appletHash, appletStore]) => html`
             <div style="position: relative;">
               <sl-tooltip
                 content="${appletStore.applet.custom_name}"
@@ -263,43 +263,43 @@ export class GroupAppletsSidebar extends LitElement {
                 <applet-sidebar-button
                   .appletStore=${appletStore}
                   .selected=${this.selectedAppletHash &&
-                  this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
+          this.selectedAppletHash.toString() === appletStore.appletHash.toString()}
                   ?collapsed=${this.collapsed}
                   .indicated=${this.indicatedAppletHashes.includes(
-                    encodeHashToBase64(appletStore.appletHash),
-                  )}
+            encodeHashToBase64(appletStore.appletHash),
+          )}
                   placement="bottom"
                   @click=${() => {
-                    this.dispatchEvent(
-                      new CustomEvent('applet-selected', {
-                        detail: {
-                          groupDnaHash: this._groupStore!.groupDnaHash,
-                          appletHash: appletStore.appletHash,
-                        },
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                    appletStore.clearNotificationStatus();
-                  }}
+            this.dispatchEvent(
+              new CustomEvent('applet-selected', {
+                detail: {
+                  groupDnaHash: this._groupStore!.groupDnaHash,
+                  appletHash: appletStore.appletHash,
+                },
+                bubbles: true,
+                composed: true,
+              }),
+            );
+            appletStore.clearNotificationStatus();
+          }}
                   draggable="true"
                   @dragstart=${(e: DragEvent) => {
-                    (e.target as HTMLElement).classList.add('dragging');
-                    this.dragged = encodeHashToBase64(appletHash);
-                  }}
+            (e.target as HTMLElement).classList.add('dragging');
+            this.dragged = encodeHashToBase64(appletHash);
+          }}
                   @dragend=${(e: DragEvent) => {
-                    (e.target as HTMLElement).classList.remove('dragging');
-                    Array.from(
-                      (
-                        e.target as HTMLElement
-                      ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
-                        'dropzone',
-                      ),
-                    ).forEach((el) => {
-                      el.classList.remove('active');
-                    });
-                    this.dragged = null;
-                  }}
+            (e.target as HTMLElement).classList.remove('dragging');
+            Array.from(
+              (
+                e.target as HTMLElement
+              ).parentElement!.parentElement!.parentElement!.getElementsByClassName(
+                'dropzone',
+              ),
+            ).forEach((el) => {
+              el.classList.remove('active');
+            });
+            this.dragged = null;
+          }}
                 >
                 </applet-sidebar-button>
               </sl-tooltip>
@@ -307,22 +307,22 @@ export class GroupAppletsSidebar extends LitElement {
                 class="row center-content dropzone ${this.collapsed ? '' : 'dropzone-wide'}"
                 style="position: absolute;"
                 @dragenter=${(e: DragEvent) => {
-                  (e.target as HTMLElement).classList.add('active');
-                }}
+            (e.target as HTMLElement).classList.add('active');
+          }}
                 @dragleave=${(e: DragEvent) => {
-                  (e.target as HTMLElement).classList.remove('active');
-                }}
+            (e.target as HTMLElement).classList.remove('active');
+          }}
                 @dragover=${(e: DragEvent) => {
-                  e.preventDefault();
-                }}
+            e.preventDefault();
+          }}
                 @drop=${(e: DragEvent) => {
-                  e.preventDefault();
-                  const dropAppletId = (e.target as HTMLElement).previousElementSibling!.id.slice(
-                    16,
-                  );
-                  storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
-                  this.requestUpdate();
-                }}
+            e.preventDefault();
+            const dropAppletId = (e.target as HTMLElement).previousElementSibling!.id.slice(
+              16,
+            );
+            storeNewAppletOrder(this.dragged!, dropAppletId, groupId);
+            this.requestUpdate();
+          }}
               >
                 <div
                   class="dropzone-indicator ${this.collapsed ? '' : 'dropzone-indicator-wide'}"
@@ -330,7 +330,7 @@ export class GroupAppletsSidebar extends LitElement {
               </div>
             </div>
           `,
-        )}
+      )}
       </div>
     `;
   }
@@ -341,23 +341,23 @@ export class GroupAppletsSidebar extends LitElement {
       case 'pending':
         return html`<sl-skeleton
             style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
-              .collapsed
-              ? '35px'
-              : '170px'}; margin: 3px 0; --border-radius: 12px;"
+            .collapsed
+            ? '35px'
+            : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
             style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
-              .collapsed
-              ? '35px'
-              : '170px'}; margin: 3px 0; --border-radius: 12px;"
+            .collapsed
+            ? '35px'
+            : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton>
           <sl-skeleton
             style="--color: #9d90f7; height: ${this.collapsed ? '35px' : '32px'}; width: ${this
-              .collapsed
-              ? '35px'
-              : '170px'}; margin: 3px 0; --border-radius: 12px;"
+            .collapsed
+            ? '35px'
+            : '170px'}; margin: 3px 0; --border-radius: 12px;"
             effect="pulse"
           ></sl-skeleton> `;
       case 'error':
@@ -380,13 +380,14 @@ export class GroupAppletsSidebar extends LitElement {
                 class="moss-button flex flex-1"
                 style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
                 @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('add-tool-requested', {
-                      bubbles: false,
-                      composed: true,
-                    }),
-                  );
-                }}
+              this.dispatchEvent(
+                new CustomEvent('add-tool-requested', {
+                  detail: { groupHash: this._groupStore.groupDnaHash },
+                  bubbles: false,
+                  composed: true,
+                }),
+              );
+            }}
               >
                 <div class="flex- flex-1">+ ${msg('add a tool')}</div>
               </button>
@@ -525,29 +526,13 @@ export class GroupAppletsSidebar extends LitElement {
         const invitationUrl = modifiersToInviteUrl(modifiers);
 
         return html`
-          <sl-dialog
+          <moss-dialog
             id="invite-member-dialog"
-            class="moss-dialog invite-dialog"
-            .label=${msg('Invite People')}
-            no-header
+            headerAlign="center"
+            width="674px"
           >
-            <div
-              class="column center-content dialog-title"
-              style="margin: 10px 0 15px 0; position: relative;"
-            >
-              <span>${msg('Invite People')}</span>
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -22px; right: -11px;"
-                @click=${() => {
-                  this.inviteMemberDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-            </div>
-
-            <div class="column items-center">
+            <span slot="header">${msg('Invite People')}</span>
+            <div slot="content">
               <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
                 <img
                   .src=${groupProfile.icon_src}
@@ -557,7 +542,7 @@ export class GroupAppletsSidebar extends LitElement {
                 <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
               </div>
               <div class="column" style="max-width: 440px;">
-                <span style="opacity: 0.6; font-size: 16px;"
+                <span style="opacity: 0.7; font-size: 16px;"
                   >${msg('Copy and send the link below to invite people:')}</span
                 >
                 <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
@@ -567,19 +552,19 @@ export class GroupAppletsSidebar extends LitElement {
                     class="moss-input copy-link-input"
                     style="margin-right: 8px; cursor: pointer; flex: 1;"
                     @click=${async () => {
-                      console.log('CLIKED');
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
+            console.log('CLIKED');
+            await navigator.clipboard.writeText(invitationUrl);
+            notify(msg('Invite link copied to clipboard.'));
+          }}
                   >
                   </sl-input>
                   <button
                     variant="primary"
                     class="moss-button"
                     @click=${async () => {
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
+            await navigator.clipboard.writeText(invitationUrl);
+            notify(msg('Invite link copied to clipboard.'));
+          }}
                   >
                     ${msg('Copy')}
                   </button>
@@ -588,22 +573,22 @@ export class GroupAppletsSidebar extends LitElement {
                 <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
                   ${msg('About invite links:')}
                 </div>
-                <div style="font-size: 12px; opacity: 0.6;">
+                <div style="font-size: 12px; opacity: 0.7;">
                   ${msg(
-                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
-                  )}
+            'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+          )}
                 </div>
               </div>
             </div>
-          </sl-dialog>
+          </moss-dialog>
 
           <button
             class="moss-button"
             style="padding: 10px 0; margin: 40px 6px 6px 6px;"
             variant="primary"
             @click=${() => {
-              this.inviteMemberDialog?.show();
-            }}
+            this.inviteMemberDialog?.show();
+          }}
           >
             <div class="row center-content items-center;">
               <div class="column" style="color: white;">${personPlusIcon(25)}</div>
@@ -620,32 +605,38 @@ export class GroupAppletsSidebar extends LitElement {
     if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
     return html`<sl-tooltip
       content="${msg('Activate tools peers already use')}"
-      placement="bottom"
+      placement="right"
       hoist
     >
       <button
-        class="btn"
+        class="btn activate-tools-button"
         @click=${() => {
-          this.dispatchEvent(
-            new CustomEvent('unjoined-tools-clicked', {
-              composed: true,
-            }),
-          );
-        }}
+        this.dispatchEvent(
+          new CustomEvent('group-home-selected', {
+            bubbles: false,
+            composed: true,
+          }),
+        );
+        this.dispatchEvent(
+          new CustomEvent('unjoined-tools-clicked', {
+            composed: true,
+          }),
+        );
+      }}
       >
         ${this.collapsed
-          ? html`<div
-              class="column center-content"
-              style="height: 35px; width: 35px; background: var(--moss-light-green); border-radius: 8px; position: relative;"
+        ? html`<div
+              class="column center-content "
+              style="height: 35px; width: 35px; position: relative;"
             >
               <div class="column center-content unjoined-tools-indicator">
                 ${this.numUnjoinedTools()}
               </div>
               ${downloadIcon()}
             </div>`
-          : html`<div
+        : html`<div
               class="column center-content"
-              style="height: 36px; background: var(--moss-light-green); border-radius: 8px; opacity: 0.7; font-size: 13px;"
+              style="height: 36px; opacity: 0.7; font-size: 13px;"
             >
               + ${this.numUnjoinedTools()} ${msg('more used by peers')}
             </div>`}
@@ -669,8 +660,8 @@ export class GroupAppletsSidebar extends LitElement {
           ></copy-hash>
           <sl-tooltip
             .content=${msg(
-              "This is peer's public key. Use it to confirm the identity of the profile.",
-            )}
+      "This is peer's public key. Use it to confirm the identity of the profile.",
+    )}
           >
             <span style="margin-left:5px; opacity: 0.5;"
               >${questionMarkInfoIcon(20)}</span
@@ -684,15 +675,15 @@ export class GroupAppletsSidebar extends LitElement {
         <div class="row" style="align-items: center; margin-top: 15px;">
           <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
           ${this._selectedAgent?.tzUtcOffset
-            ? html`<span
+        ? html`<span
                 >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
                 (${relativeTzOffsetString(
-                  this._mossStore.tzUtcOffset(),
-                  this._selectedAgent.tzUtcOffset,
-                )},
+          this._mossStore.tzUtcOffset(),
+          this._selectedAgent.tzUtcOffset,
+        )},
                 ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
               >`
-            : html`<span>unknown</span>`}
+        : html`<span>unknown</span>`}
         </div>
       </div>
     `;
@@ -703,25 +694,18 @@ export class GroupAppletsSidebar extends LitElement {
       ${!this.onlinePeersCollapsed
         ? ''
         : html`
-            <sl-dialog
-              class="moss-dialog profile-detail-popup"
-              no-header
+            <moss-dialog
+              width="670px"
+              class="gradient"
+              headerAlign="center"
               id="member-profile"
+              noHeader=true
               style="position: relative;"
             >
-              <div class="column center-content" style="position: relative;">
-                <button
-                  class="moss-dialog-close-button"
-                  style="position: absolute; top: -12px; right: -12px;"
-                  @click=${() => {
-                    this._memberProfileDialog?.hide();
-                  }}
-                >
-                  ${closeIcon(24)}
-                </button>
+              <div slot="content">
                 ${this._selectedAgent ? this.renderMemberProfile() : ``}
               </div>
-            </sl-dialog>
+            </moss-dialog>
             <div class="column online-list" style="${this.collapsed ? 'left:60px' : ''}">
               <div class="row" style="position: absolute;right: 3px;">
                 <button
@@ -734,48 +718,48 @@ export class GroupAppletsSidebar extends LitElement {
               </div>
               <group-peers-status
                 @profile-selected=${(e) => {
-                  if (
-                    encodeHashToBase64(this._groupStore.groupClient.myPubKey) ===
-                    encodeHashToBase64(e.detail.agent)
-                  ) {
-                    this.dispatchEvent(
-                      new CustomEvent('my-profile-clicked', {
-                        composed: true,
-                      }),
-                    );
-                  } else {
-                    this._selectedAgent = e.detail;
-                    this._memberProfileDialog.show();
-                  }
-                }}
+            if (
+              encodeHashToBase64(this._groupStore.groupClient.myPubKey) ===
+              encodeHashToBase64(e.detail.agent)
+            ) {
+              this.dispatchEvent(
+                new CustomEvent('my-profile-clicked', {
+                  composed: true,
+                }),
+              );
+            } else {
+              this._selectedAgent = e.detail;
+              this._memberProfileDialog.show();
+            }
+          }}
               ></group-peers-status>
               ${this.renderInviteSection()}
             </div>
           `}
       <div
         class="column flex-1 container invisible-scrollbars ${this.collapsed
-          ? 'container-collapsed items-center'
-          : ''}"
-        style="margin-top: 2px;"
+        ? 'container-collapsed items-center'
+        : ''}"
+        style="margin-left: 2px;"
       >
         <!-- group home button -->
         <sl-tooltip content="${this.groupName()}" placement="right" hoist>
           <button
             class="btn ${!this.selectedAppletHash ? 'selected' : ''}"
             @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent('group-home-selected', {
-                  bubbles: false,
-                  composed: true,
-                }),
-              );
-            }}
+        this.dispatchEvent(
+          new CustomEvent('group-home-selected', {
+            bubbles: false,
+            composed: true,
+          }),
+        );
+      }}
           >
             <div class="row items-center">
               <div class="row items-center">${this.renderGroupLogo()}</div>
               ${this.collapsed
-                ? html``
-                : html`<div class="row items-center" style="margin-left: 4px;">
+        ? html``
+        : html`<div class="row items-center" style="margin-left: 4px;">
                     ${this.groupName()}
                   </div>`}
             </div>
@@ -785,8 +769,8 @@ export class GroupAppletsSidebar extends LitElement {
         <!-- Online Peers indicator -->
         <sl-tooltip
           content="${msg('Your Peers')}${this._peerStatuses.value
-            ? ` (${this.numPeersOnline()} online)`
-            : ''}"
+        ? ` (${this.numPeersOnline()} online)`
+        : ''}"
           placement="right"
           hoist
         >
@@ -795,18 +779,18 @@ export class GroupAppletsSidebar extends LitElement {
             @click=${() => (this.onlinePeersCollapsed = !this.onlinePeersCollapsed)}
           >
             ${this.collapsed
-              ? html`<div class="column center-content" style="width: 35px;">
+        ? html`<div class="column center-content" style="width: 35px;">
                   <div>${circleHalfIcon(12)}</div>
                   <div style="font-size: 16px;">${this.renderPeersOnline()}</div>
                 </div>`
-              : html`<div class="column" style="height: 35px;">
+        : html`<div class="column" style="height: 35px;">
                   <div class="row items-center">
                     <div style="margin-right: 10px;">${circleHalfIcon(12)}</div>
                     ${this.renderPeersOnline()}&nbsp;${msg('online')}
                     <div style="margin-left: auto">
                       ${this.onlinePeersCollapsed
-                        ? html`${chevronSingleUpIcon(18)}`
-                        : html`${chevronSingleDownIcon(18)}`}
+            ? html`${chevronSingleUpIcon(18)}`
+            : html`${chevronSingleDownIcon(18)}`}
                     </div>
                   </div>
                 </div>`}
@@ -824,21 +808,22 @@ export class GroupAppletsSidebar extends LitElement {
 
         <!-- Add Tool Button - Hidden if no Tools are installed yet and the sidebar is expanded -->
         ${(this._groupApplets.value.status === 'complete' &&
-          this._groupApplets.value.value.size === 0 &&
-          !this.collapsed) ||
+        this._groupApplets.value.value.size === 0 &&
+        !this.collapsed) ||
         !this.amISteward()
-          ? html``
-          : html`<sl-tooltip hoist content="${msg('Add a tool')}" placement="bottom">
+        ? html``
+        : html`<sl-tooltip hoist content="${msg('Add a tool')}" placement="bottom">
               <button
                 class="${this.collapsed ? 'purple-btn-large' : 'purple-btn'}"
                 @click=${() => {
-                  this.dispatchEvent(
-                    new CustomEvent('add-tool-requested', {
-                      bubbles: false,
-                      composed: true,
-                    }),
-                  );
-                }}
+            this.dispatchEvent(
+              new CustomEvent('add-tool-requested', {
+                detail: { groupHash: this._groupStore.groupDnaHash },
+                bubbles: false,
+                composed: true,
+              }),
+            );
+          }}
               >
                 <div class="column center-content">${plusIcon()}</div>
               </button>
@@ -849,8 +834,8 @@ export class GroupAppletsSidebar extends LitElement {
         <button
           class="menu-fold-toggle"
           @click=${() => {
-            this._mossStore.setAppletSidebarCollapsed(!this.collapsed);
-          }}
+        this._mossStore.setAppletSidebarCollapsed(!this.collapsed);
+      }}
         >
           ${this.collapsed ? chevronDoubleRightIcon(18) : chevronDoubleLeftIcon(18)}
         </button>
@@ -895,7 +880,7 @@ export class GroupAppletsSidebar extends LitElement {
       .section-title {
         font-size: 12px;
         color: var(--moss-dark-button);
-        opacity: 0.6;
+        opacity: 0.7;
       }
 
       .btn {
@@ -954,6 +939,14 @@ export class GroupAppletsSidebar extends LitElement {
 
       .purple-btn-large:hover {
         background: #7461eb33;
+      }
+
+      .activate-tools-button {
+        background: var(--moss-light-green); border-radius: 12px;
+        border: solid 1px transparent;
+      }
+      .activate-tools-button:hover {
+        border: solid 1px #89D6AA;
       }
 
       .icon {
@@ -1047,13 +1040,6 @@ export class GroupAppletsSidebar extends LitElement {
 
       .dropzone-indicator-wide {
         width: 168px;
-      }
-      profile-detail-popup {
-        --width: 400px;
-        --height: 446px;
-      }
-      .profile-detail-popup::part(panel) {
-        background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
       }
     `,
   ];

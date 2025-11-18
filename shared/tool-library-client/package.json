@@ -1,6 +1,6 @@
 {
   "name": "@theweave/tool-library-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -17,8 +17,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "^0.19.1",
-    "@holochain-open-dev/utils": "^0.500.2"
+    "@holochain/client": "^0.20.0-dev.2",
+    "@holochain-open-dev/utils": "^0.600.0-dev.0"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

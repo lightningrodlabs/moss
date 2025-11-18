@@ -2,7 +2,7 @@
 
 CLI to run Moss Tools in development mode.
 
-This version is compatible with `@theweave/api@0.4.0-alpha.3`.
+This version is compatible with `@theweave/api@0.6.0`.
 
 ```
 Usage: @theweave/cli [options]
@@ -34,7 +34,7 @@ Options:
   --agent-idx <number>           To be provided when running with the --dev-config option. Specifies which agent (as defined in the
                                  config file) to run We for. The agent with agentIdx 1 always needs to be run first.
   --sync-time <number>           May be provided when running with the --dev-config option. Specifies the amount of time to wait for
-                                 new tools to gossip after having installed a new group before checking for unjoined tools.
+                                 new tools to gossip after having installed a new group before checking for activating tools.
   -h, --help                     display help for command
 ```
 

@@ -23,9 +23,8 @@ pub fn set_group_meta_data(group_meta_data: GroupMetaData) -> ExternResult<Recor
 pub fn get_group_meta_data(input: ZomeFnInput<String>) -> ExternResult<Option<Record>> {
     let path = Path::from(input.input.as_str());
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::GroupMetaDataToAnchor)?
-            .get_options(input.clone().into())
-            .build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::GroupMetaDataToAnchor)?
+         , input.clone().into()
     )?;
     get_latest_record_from_links(links, input.into())
 }

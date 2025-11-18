@@ -32,7 +32,7 @@ export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 export type OpenAssetMode = 'front' | 'side' | 'window';
 
 /**
- * String of the format weave-0.14://
+ * String of the format weave-0.15://
  */
 export type WeaveUrl = string;
 

@@ -40,12 +40,11 @@ fn get_all_cloned_cell_entry_hashes_for_applet(
     applet_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<Vec<EntryHash>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             applet_hash.input.clone(),
             LinkTypes::AppletToAppletClonedCell,
         )?
-        .get_options(applet_hash.into())
-        .build(),
+        , applet_hash.into()
     )?;
     Ok(links
         .into_iter()
@@ -59,12 +58,11 @@ fn get_all_cloned_cells_for_applet(
     applet_hash: ZomeFnInput<EntryHash>,
 ) -> ExternResult<Vec<AppletClonedCell>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             applet_hash.input.clone(),
             LinkTypes::AppletToAppletClonedCell,
         )?
-        .get_options(applet_hash.clone().into())
-        .build(),
+        , applet_hash.clone().into()
     )?;
 
     let get_input: Vec<GetInput> = links

@@ -51,9 +51,8 @@ pub fn get_steward_permissions_for_agent(
     agent: ZomeFnInput<AgentPubKey>,
 ) -> ExternResult<Vec<Link>> {
     get_links(
-        GetLinksInputBuilder::try_new(agent.input.clone(), LinkTypes::AgentToStewardPermissions)?
-            .get_options(agent.into())
-            .build(),
+        LinkQuery::try_new(agent.input.clone(), LinkTypes::AgentToStewardPermissions)?
+            , agent.into()
     )
 }
 

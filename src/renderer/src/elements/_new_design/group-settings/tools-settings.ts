@@ -23,6 +23,7 @@ enum TabsState {
   Inactive,
   Active,
   Abandoned,
+  Ignored,
 }
 
 @localized()
@@ -96,36 +97,36 @@ export class ToolsSettings extends LitElement {
                 class="placeholder"
                 style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
                 >${msg(
-                  "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
-                )}
+            "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
+          )}
               </span>
             </div>
           `;
         return html`
           <div class="column" style="flex: 1;">
             ${repeat(
-              Array.from(applets.entries()).sort(([_, a], [__, b]) =>
-                a.custom_name.localeCompare(b.custom_name),
-              ),
-              ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-              ([appletHash, applet]) => html`
+          Array.from(applets.entries()).sort(([_, a], [__, b]) =>
+            a.custom_name.localeCompare(b.custom_name),
+          ),
+          ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+          ([appletHash, applet]) => html`
                 <applet-settings-card
                   class="flex flex-1"
                   style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                   @applets-disabled=${(e) => {
-                    this.dispatchEvent(
-                      new CustomEvent('applets-disabled', {
-                        detail: e.detail,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+              this.dispatchEvent(
+                new CustomEvent('applets-disabled', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                   .appletHash=${appletHash}
                   .applet=${applet}
                 ></applet-settings-card>
               `,
-            )}
+        )}
           </div>
         `;
     }
@@ -140,6 +141,9 @@ export class ToolsSettings extends LitElement {
   renderToolsAbandoned() {
     return html`${this.renderAbandonedApplets()}`;
   }
+  renderToolsIgnored() {
+    return html`<inactive-tools .showIgnoredOnly=${true}></inactive-tools>`;
+  }
 
   renderContent() {
     switch (this.tabsState) {
@@ -149,6 +153,8 @@ export class ToolsSettings extends LitElement {
         return this.renderToolsActive();
       case TabsState.Abandoned:
         return this.renderToolsAbandoned();
+      case TabsState.Ignored:
+        return this.renderToolsIgnored();
     }
   }
 
@@ -182,7 +188,7 @@ export class ToolsSettings extends LitElement {
             <span
               class="placeholder"
               style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
-              >${msg('No abandoned Tools.')}
+              >${msg('No uninstalled tools.')}
             </span>
           </div>
         `;
@@ -192,16 +198,16 @@ export class ToolsSettings extends LitElement {
       return html`
         <div class="column" style="flex: 1;">
           ${repeat(
-            abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
-            ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-            ([appletHash, applet]) => html`
+        abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
+        ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+        ([appletHash, applet]) => html`
               <abandoned-applet-settings-card
                 style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                 .appletHash=${appletHash}
                 .applet=${applet}
               ></abandoned-applet-settings-card>
             `,
-          )}
+      )}
         </div>
       `;
     }
@@ -218,26 +224,34 @@ export class ToolsSettings extends LitElement {
           <button
             class="tab ${this.tabsState === TabsState.Inactive ? 'tab-selected' : ''}"
             @click=${() => {
-              this.tabsState = TabsState.Inactive;
-            }}
+        this.tabsState = TabsState.Inactive;
+      }}
           >
             ${msg('To Activate')}
           </button>
           <button
             class="tab ${this.tabsState === TabsState.Active ? 'tab-selected' : ''}"
             @click=${() => {
-              this.tabsState = TabsState.Active;
-            }}
+        this.tabsState = TabsState.Active;
+      }}
           >
             ${msg('Active')}
           </button>
           <button
             class="tab ${this.tabsState === TabsState.Abandoned ? 'tab-selected' : ''}"
             @click=${() => {
-              this.tabsState = TabsState.Abandoned;
-            }}
+        this.tabsState = TabsState.Abandoned;
+      }}
           >
-            ${msg('Abandoned')}
+            ${msg('Uninstalled')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Ignored ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Ignored;
+      }}
+          >
+            ${msg('Ignored')}
           </button>
         </div>
         <div

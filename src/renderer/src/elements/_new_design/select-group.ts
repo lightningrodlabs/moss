@@ -2,7 +2,7 @@ import { DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
-import { customElement, query, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -49,6 +49,12 @@ export class SelectGroup extends LitElement {
   @state()
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
+  @property({ type: String })
+  buttonWidth: 'auto' | 'fixed' = 'fixed';
+
+  @property({ type: String })
+  buttonText: string | undefined;
+
   @query('#group-selector')
   _groupSelector!: SlDropdown;
 
@@ -72,7 +78,7 @@ export class SelectGroup extends LitElement {
             id="group-selector"
             .placeholder=${msg('Select Group')}
             name="groupDnaHash"
-            style="margin-top: 16px; margin-bottom: 20px;width:263px"
+            style="margin-top: 16px; margin-bottom: 20px;${this.buttonWidth === 'fixed' ? 'width:263px' : ''}"
             @click=${(e) => e.stopPropagation()}
             @sl-select=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail.item.value;
@@ -88,10 +94,10 @@ export class SelectGroup extends LitElement {
             hoist
             required
           >
-            <button slot="trigger" class="install-button moss-button" style="width:100%">
+            <button slot="trigger" class="install-button moss-button" style="width:${this.buttonWidth === 'auto' ? 'auto' : '100%'}">
               <div class="row center-content">
                 ${installToolIcon(20)}
-                <div style="margin-left: 10px;">${msg('Install to a group space')}</div>
+                <div style="margin-left: 10px;">${this.buttonText || msg('Install to a group space')}</div>
               </div>
             </button>
             <sl-menu>

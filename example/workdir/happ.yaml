@@ -1,5 +1,5 @@
 ---
-manifest_version: '1'
+manifest_version: "0"
 name: example-applet
 description: 'Example forum app'
 roles:
@@ -8,7 +8,7 @@ roles:
       strategy: create
       deferred: false
     dna:
-      bundled: '../dnas/forum/workdir/forum.dna'
+      path: '../dnas/forum/workdir/forum.dna'
       modifiers:
         network_seed: ~
         properties: ~

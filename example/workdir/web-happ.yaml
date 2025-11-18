@@ -1,7 +1,7 @@
 ---
-manifest_version: "1"
+manifest_version: "0"
 name: example-applet
 ui:
-  bundled: "../ui/dist.zip"
-happ_manifest:
-  bundled: "./example-applet.happ"
+  path: "../ui/dist.zip"
+happ:
+  path: "./example-applet.happ"

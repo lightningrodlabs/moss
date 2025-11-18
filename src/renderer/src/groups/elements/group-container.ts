@@ -21,9 +21,9 @@ import { mdiPowerPlugOff } from '@mdi/js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
 import { GroupHome } from './group-home.js';
-import { closeIcon } from '../../elements/_new_design/icons.js';
-import { SlDialog } from '@shoelace-style/shoelace';
 import { MyProfileSettings } from '../../elements/_new_design/group-settings/my-profile-settings.js';
+import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
+import '../../elements/_new_design/moss-dialog.js';
 
 @localized()
 @customElement('group-container')
@@ -38,7 +38,7 @@ export class GroupContainer extends LitElement {
   private _groupHome: GroupHome | undefined;
 
   @query('#my-profile-dialog')
-  private _myProfileDialog: SlDialog | undefined;
+  private _myProfileDialog: MossDialog | undefined;
 
   @query('#my-profile-settings')
   private _myProfileSettings: MyProfileSettings | undefined;
@@ -87,53 +87,39 @@ export class GroupContainer extends LitElement {
     } else {
       return html`
         <moss-profile-prompt>
-          <sl-dialog
-            class="moss-dialog"
+          <moss-dialog
+            class="gradient"
+            width="670px"
             id="my-profile-dialog"
-            no-header
             @sl-hide=${() => {
-              this._myProfileSettings?.resetProfile();
-            }}
+          this._myProfileSettings?.resetProfile();
+        }}
           >
-            <div
-              class="column center-content dialog-title"
-              style="margin: 10px 0 0; position: relative;"
-            >
-              <span>${msg('My Profile')}</span>
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -22px; right: -11px;"
-                @click=${() => {
-                  this._myProfileDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-            </div>
-            <my-profile-settings id="my-profile-settings" show-group-profile></my-profile-settings>
-          </sl-dialog>
+              <span slot="header">${msg('My Profile')}</span>
+            <my-profile-settings slot="content" id="my-profile-settings" show-group-profile></my-profile-settings>
+          </moss-dialog>
           <div class="row flex-1">
             <group-area-sidebar
               class="flex"
               .selectedAppletHash=${this.selectedAppletHash()}
               @unjoined-tools-clicked=${() => {
-                console.log('unjoined tools clicked');
+          console.log('unjoined tools clicked');
 
-                if (this._groupHome) {
-                  this._groupHome.openInactiveTools();
-                  // this.dispatchEvent(
-                  //   new CustomEvent('group-selected', {
-                  //     detail: { groupDnaHash: this.groupDnaHash },
-                  //     composed: true,
-                  //   }),
-                  // );
+          if (this._groupHome) {
+            this._groupHome.openInactiveTools();
+            // this.dispatchEvent(
+            //   new CustomEvent('group-selected', {
+            //     detail: { groupDnaHash: this.groupDnaHash },
+            //     composed: true,
+            //   }),
+            // );
 
-                  // this._groupHome.selectTab('unjoined tools');
-                }
-              }}
+            // this._groupHome.selectTab('unjoined tools');
+          }
+        }}
               @my-profile-clicked=${() => {
-                this._myProfileDialog?.show();
-              }}
+          this._myProfileDialog?.show();
+        }}
             ></group-area-sidebar>
             <applet-main-views
               class="flex flex-1"
@@ -143,8 +129,8 @@ export class GroupContainer extends LitElement {
               id="group-home"
               class="group-home"
               style="flex: 1; position: relative; ${this.selectedAppletHash()
-                ? 'display: none;'
-                : ''}"
+          ? 'display: none;'
+          : ''}"
             ></group-home>
           </div>
         </moss-profile-prompt>

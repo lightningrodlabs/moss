@@ -55,6 +55,7 @@ pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
         }
     }
 }
+
 fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     match action.hashed.content.clone() {
         Action::CreateLink(create_link) => {
@@ -64,10 +65,10 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                 emit_signal(Signal::LinkCreated { action, link_type })?;
             }
             Ok(())
-        }
+        },
         Action::DeleteLink(delete_link) => {
-            let record = get(delete_link.link_add_address.clone(), GetOptions::default())?.ok_or(
-                wasm_error!(WasmErrorInner::Guest(
+            let record = get(delete_link.link_add_address.clone(), GetOptions::default())?
+                .ok_or(wasm_error!(WasmErrorInner::Guest(
                     "Failed to fetch CreateLink action".to_string()
                 )),
             )?;
@@ -86,7 +87,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                     )));
                 }
             }
-        }
+        },
         Action::Create(create) => {
             if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
                 emit_signal(Signal::EntryCreated {
@@ -94,43 +95,38 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                     app_entry: app_entry.clone(),
                 })?;
 
-                match app_entry {
-                    EntryTypes::Post(post) => {
-                        let signal = Signal::NewPost {
-                            post,
-                            timestamp: create.timestamp,
-                        };
-                        let peers_anchor = anchor(
-                            LinkTypes::PeerSubscription,
-                            String::from("PEER_SUBSCRIPTION"),
-                            String::from("PEER_SUBSCRIPTION"),
-                        )?;
-                        let peer_links = get_links(
-                            GetLinksInputBuilder::try_new(
-                                peers_anchor,
-                                LinkTypes::PeerSubscription,
-                            )?
-                            .build(),
-                        )?;
-                        let peers = peer_links
-                            .iter()
-                            .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
-                            .collect::<Vec<AgentPubKey>>();
-                        send_remote_signal(
-                            ExternIO::encode(signal).map_err(|e| {
-                                wasm_error!(WasmErrorInner::Guest(format!(
-                                    "Failed to encode remote signal payload: {}",
-                                    e
-                                )))
-                            })?,
-                            peers,
-                        )?;
-                    }
-                    _ => (),
-                }
+                let EntryTypes::Post(post) = app_entry;
+                let signal = Signal::NewPost {
+                    post,
+                    timestamp: create.timestamp,
+                };
+                let peers_anchor = anchor(
+                    LinkTypes::PeerSubscription,
+                    String::from("PEER_SUBSCRIPTION"),
+                    String::from("PEER_SUBSCRIPTION"),
+                )?;
+                let peer_links = get_links(
+                    LinkQuery::new(
+                        peers_anchor,
+                        LinkTypes::PeerSubscription.try_into_filter().unwrap(),
+                    ), GetStrategy::default()
+                )?;
+                let peers = peer_links
+                    .iter()
+                    .filter_map(|link| AgentPubKey::try_from(link.target.clone()).ok())
+                    .collect::<Vec<AgentPubKey>>();
+                send_remote_signal(
+                    ExternIO::encode(signal).map_err(|e| {
+                        wasm_error!(WasmErrorInner::Guest(format!(
+                            "Failed to encode remote signal payload: {}",
+                            e
+                        )))
+                    })?,
+                    peers,
+                )?;
             }
             Ok(())
-        }
+        },
         Action::Update(update) => {
             if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
                 if let Ok(Some(original_app_entry)) =
@@ -144,7 +140,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                 }
             }
             Ok(())
-        }
+        },
         Action::Delete(delete) => {
             if let Ok(Some(original_app_entry)) = get_entry_for_action(&delete.deletes_address) {
                 emit_signal(Signal::EntryDeleted {
@@ -153,10 +149,11 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                 })?;
             }
             Ok(())
-        }
+        },
         _ => Ok(()),
     }
 }
+
 fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTypes>> {
     let record = match get_details(action_hash.clone(), GetOptions::default())? {
         Some(Details::Record(record_details)) => record_details.record,

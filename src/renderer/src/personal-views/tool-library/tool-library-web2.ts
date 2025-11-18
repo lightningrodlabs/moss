@@ -19,7 +19,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import '../../elements/_new_design/select-group.js';
-import { mdiEmailOutline, mdiPublish, mdiWeb } from '@mdi/js';
+import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
@@ -34,16 +34,18 @@ import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
-import { SlDialog } from '@shoelace-style/shoelace';
 import {
   appStoreIcon,
+  devIcon,
   experimentalToolIcon,
   stableToolIcon,
 } from '../../elements/_new_design/icons.js';
+import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
+import '../../elements/_new_design/moss-dialog.js';
 
 const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.14/curations-0.14.json',
+    url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
     useLists: ['default'],
   },
 ];
@@ -81,7 +83,7 @@ export class ToolLibraryWeb2 extends LitElement {
   _selectGroup!: SelectGroup;
 
   @query('#publish-dialog')
-  _publishDialog!: SlDialog;
+  _publishDialog!: MossDialog;
 
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
@@ -229,34 +231,34 @@ export class ToolLibraryWeb2 extends LitElement {
         ? Object.values(this.availableTools)
         : this.classification === 'stable'
           ? Object.values(this.availableTools).filter(
-              (info) => info.curationInfos[0].info.visiblity !== 'low',
-            )
+            (info) => info.curationInfos[0].info.visiblity !== 'low',
+          )
           : Object.values(this.availableTools).filter(
-              (info) => info.curationInfos[0].info.visiblity === 'low',
-            );
+            (info) => info.curationInfos[0].info.visiblity === 'low',
+          );
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
         <div class="row items-center">
           <div class="tool-classification-selector">
             <button
               class="classification-button classification-button-all ${this.classification === 'all'
-                ? 'classification-active'
-                : ''}"
+        ? 'classification-active'
+        : ''}"
               @click=${async () => {
-                this.classification = 'all';
-              }}
+        this.classification = 'all';
+      }}
             >
               ${appStoreIcon(16)} <span style="margin-left:5px">${msg('all tools')}</span>
             </button>
             <sl-tooltip content="Tested and loved tools.">
               <button
                 class="classification-button classification-button-stable ${this.classification ===
-                'stable'
-                  ? 'classification-active'
-                  : ''}"
+        'stable'
+        ? 'classification-active'
+        : ''}"
                 @click=${async () => {
-                  this.classification = 'stable';
-                }}
+        this.classification = 'stable';
+      }}
               >
                 ${stableToolIcon(16)} stable
               </button></sl-tooltip
@@ -264,12 +266,12 @@ export class ToolLibraryWeb2 extends LitElement {
             <sl-tooltip content="Fun, but may glitch!">
               <button
                 class="classification-button classification-button-experimental ${this
-                  .classification === 'experimental'
-                  ? 'classification-active'
-                  : ''}"
+        .classification === 'experimental'
+        ? 'classification-active'
+        : ''}"
                 @click=${async () => {
-                  this.classification = 'experimental';
-                }}
+        this.classification = 'experimental';
+      }}
               >
                 ${experimentalToolIcon(16)} experimental
               </button></sl-tooltip
@@ -281,23 +283,23 @@ export class ToolLibraryWeb2 extends LitElement {
           .devCollectives=${this.allDeveloperCollectives}
           .installableTools=${availableTools}
           @install-tool-to-group=${(e) => {
-            this._selectedTool = e.detail.tool;
-            this._selectedGroupDnaHash = e.detail.groupDnaHash;
-            setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
-          }}
+        this._selectedTool = e.detail.tool;
+        this._selectedGroupDnaHash = e.detail.groupDnaHash;
+        setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+      }}
           @applet-installed=${(_e) => {
-            console.log('@group-home: GOT APPLET INSTALLED EVENT.');
-            this.view = ToolLibraryView.Main;
-            this.detailView = ToolDetailView.Description;
-            // re-dispatch event since for some reason it doesn't bubble further
-            // this.dispatchEvent(
-            //   new CustomEvent("applet-installed", {
-            //     detail: e.detail,
-            //     composed: true,
-            //     bubbles: true,
-            //   })
-            // );
-          }}
+        console.log('@group-home: GOT APPLET INSTALLED EVENT.');
+        this.view = ToolLibraryView.Main;
+        this.detailView = ToolDetailView.Description;
+        // re-dispatch event since for some reason it doesn't bubble further
+        // this.dispatchEvent(
+        //   new CustomEvent("applet-installed", {
+        //     detail: e.detail,
+        //     composed: true,
+        //     bubbles: true,
+        //   })
+        // );
+      }}
         ></installable-tools-web2>
       </div>
     `;
@@ -330,8 +332,8 @@ export class ToolLibraryWeb2 extends LitElement {
               class="moss-button"
               style="background: white; color: black;"
               @click=${async () => {
-                this._selectGroup.show();
-              }}
+        this._selectGroup.show();
+      }}
             >
               ${msg('+ Add to Group')}
             </button>
@@ -363,10 +365,10 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon>
           <span style="margin-right: 10px;">${msg('Website')}:</span>
           ${publisher.contact.website && publisher.contact.website !== ''
-            ? html`
+        ? html`
                 <span><a href="${publisher.contact.website}">${publisher.contact.website}</a></span>
               `
-            : html`<span>N/A</span>`}
+        : html`<span>N/A</span>`}
         </div>
         <div class="row" style="align-items: center; margin-top: 8px;">
           <sl-icon
@@ -375,8 +377,8 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon>
           <span style="margin-right: 10px;">${msg('Contact')}:</span>
           ${publisher.contact.email && publisher.contact.email !== ''
-            ? html` <span>${publisher.contact.email}</span> `
-            : html`<span>N/A</span>`}
+        ? html` <span>${publisher.contact.email}</span> `
+        : html`<span>N/A</span>`}
         </div>
       </div>
     `;
@@ -401,34 +403,28 @@ export class ToolLibraryWeb2 extends LitElement {
   }
 
   renderPublishDialog() {
-    return html` <sl-dialog
-      class="moss-dialog"
+    return html` <moss-dialog
       id="publish-dialog"
-      style="--width: 900px;"
-      no-header
+      width="670px"
+      headerAlign="center"
     >
-      <div class="publish-dialog">
-        <div
-          class="row"
-          style="align-items: center; font-size: 30px; justify-content: center; margin-bottom: 28px;"
-        >
-          <span style="margin-left: 5px;">${msg('Publish A Tool')}</span>
-        </div>
-        <div style="max-width: 800px; margin-top: 20px; font-size: 20px;">
+      
+          <span slot="header">${msg('Publish A Tool')}</span>
+        
+        <div slot="content">
           To publish a Moss Tool it needs to be added to a Tool list hosted at a web2 URL. There is
           currently no detailed documentation about this process. You can check out the Tool list
           repository of Lightningrod Labs
           <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>. <br /><br />
           If you would like to publish a Tool, please contact us at
-          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
+          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
           or
           <a href="https://github.com/lightningrodlabs/moss/issues/new"
             >create an issue on Github</a
           >
           so that we can assist you in setting up your own tool list.<br /><br />
         </div>
-      </div>
-    </sl-dialog>`;
+    </moss-dialog>`;
   }
 
   renderContent() {
@@ -442,20 +438,19 @@ export class ToolLibraryWeb2 extends LitElement {
 
   render() {
     return html`
-      ${this.renderPublishDialog()}
       ${this._selectedGroupDnaHash
         ? html`
             <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
               <install-tool-dialog-web2
                 @install-tool-dialog-closed=${() => {
-                  this._selectedGroupDnaHash = undefined;
-                }}
+            this._selectedGroupDnaHash = undefined;
+          }}
                 @applet-installed=${() => {
-                  this._selectedGroupDnaHash = undefined;
-                  this._selectedTool = undefined;
-                  this.view = ToolLibraryView.Main;
-                  this.detailView = ToolDetailView.Description;
-                }}
+            this._selectedGroupDnaHash = undefined;
+            this._selectedTool = undefined;
+            this.view = ToolLibraryView.Main;
+            this.detailView = ToolDetailView.Description;
+          }}
                 id="install-tool-dialog"
               ></install-tool-dialog-web2>
             </group-context>
@@ -464,20 +459,21 @@ export class ToolLibraryWeb2 extends LitElement {
           ? html`
               <install-tool-dialog-web2
                 @install-tool-dialog-closed=${() => {
-                  this._selectedGroupDnaHash = undefined;
-                  this._selectedTool = undefined;
-                }}
+              this._selectedGroupDnaHash = undefined;
+              this._selectedTool = undefined;
+            }}
                 @applet-installed=${() => {
-                  this._selectedGroupDnaHash = undefined;
-                  this._selectedTool = undefined;
-                  this.view = ToolLibraryView.Main;
-                  this.detailView = ToolDetailView.Description;
-                }}
+              this._selectedGroupDnaHash = undefined;
+              this._selectedTool = undefined;
+              this.view = ToolLibraryView.Main;
+              this.detailView = ToolDetailView.Description;
+            }}
                 id="install-tool-dialog"
               ></install-tool-dialog-web2>
             `
           : html``}
       <div class="column container" style="flex: 1;">
+
         <div class="header column center-content">
           <div class="row" style="align-items: center; font-size: 34px;">
             <span style="flex: 1; margin-left: 10px; font-weight: bold;"
@@ -490,14 +486,16 @@ export class ToolLibraryWeb2 extends LitElement {
             @click=${() => this._publishDialog.show()}
           >
             <div class="row items-center">
-              <sl-icon .src=${wrapPathInSvg(mdiPublish)} style="font-size: 20px;"></sl-icon>
+              ${devIcon(16)}
               <span style="margin-left: 5px;font-size: 12px; ">${msg('Publish a tool')}</span>
             </div>
           </button>
         </div>
-        <div class="column flex-scrollable-parent">
+        <div class="column flex-scrollable-parent" style="position:relative">
           <div class="flex-scrollable-container">
-            <div class="column flex-scrollable-y">${this.renderContent()}</div>
+                          
+
+            <div class="column flex-scrollable-y">${this.renderPublishDialog()}${this.renderContent()}</div>
           </div>
         </div>
       </div>

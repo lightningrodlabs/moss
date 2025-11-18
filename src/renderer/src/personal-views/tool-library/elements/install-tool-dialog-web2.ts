@@ -21,8 +21,8 @@ import { GroupStore } from '../../../groups/group-store.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { ToolAndCurationInfo } from '../../../types.js';
-import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import { closeIcon } from '../../../elements/_new_design/icons.js';
+import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
+import '../../../elements/_new_design/moss-dialog.js';
 
 @localized()
 @customElement('install-tool-dialog-web2')
@@ -39,11 +39,11 @@ export class InstallToolDialogWeb2 extends LitElement {
       pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
         joinAsyncMap(slice(this.groupStore.applets, allAppletsHashes)),
       ),
-    () => [],
+    () => [this.groupStore],
   );
 
   @query('#applet-dialog')
-  _appletDialog!: any;
+  _appletDialog!: MossDialog;
 
   @query('form')
   form!: HTMLFormElement;
@@ -185,40 +185,40 @@ export class InstallToolDialogWeb2 extends LitElement {
               style="margin-bottom: 16px"
               required
               ${ref((input) => {
-                if (!input) return;
-                setTimeout(() => {
-                  if (
-                    this._tool &&
-                    allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
-                  ) {
-                    (input as HTMLInputElement).setCustomValidity('Name already exists');
-                  } else {
-                    (input as HTMLInputElement).setCustomValidity('');
-                  }
-                });
-              })}
+          if (!input) return;
+          setTimeout(() => {
+            if (
+              this._tool &&
+              allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
+            ) {
+              (input as HTMLInputElement).setCustomValidity('Name already exists');
+            } else {
+              (input as HTMLInputElement).setCustomValidity('');
+            }
+          });
+        })}
               @input=${(e) => {
-                if (allAppletsNames.includes(e.target.value)) {
-                  e.target.setCustomValidity('Name already exists');
-                } else if (e.target.value === '') {
-                  e.target.setCustomValidity('You need to choose a name for the Tool instance.');
-                } else {
-                  e.target.setCustomValidity('');
-                }
-              }}
+            if (allAppletsNames.includes(e.target.value)) {
+              e.target.setCustomValidity('Name already exists');
+            } else if (e.target.value === '') {
+              e.target.setCustomValidity('You need to choose a name for the Tool instance.');
+            } else {
+              e.target.setCustomValidity('');
+            }
+          }}
               .defaultValue=${this._tool.toolInfoAndVersions.title}
             ></sl-input>
 
             <span
               style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
               @click=${() => {
-                this._showAdvanced = !this._showAdvanced;
-              }}
+            this._showAdvanced = !this._showAdvanced;
+          }}
               >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
             </span>
 
             ${this._showAdvanced
-              ? html`
+            ? html`
                   <sl-input
                     name="network_seed"
                     id="network-seed-field"
@@ -226,7 +226,7 @@ export class InstallToolDialogWeb2 extends LitElement {
                     style="margin-bottom: 16px"
                   ></sl-input>
                 `
-              : html``}
+            : html``}
 
             <div
               style="margin:0 20px 20px -120px; width: 673px; height:1px; flex-shrink: 0;background-color: var(--moss-grey-light)"
@@ -269,55 +269,44 @@ export class InstallToolDialogWeb2 extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="applet-dialog"
-        class="moss-dialog"
-        .label=${msg('Add New Tool to Group')}
-        no-header
+        width="674px"
         @sl-request-close=${(e) => {
-          if (this._installing) {
-            e.preventDefault();
-          } else {
-            this.dispatchEvent(
-              new CustomEvent('install-tool-dialog-closed', {
-                composed: true,
-                bubbles: true,
-              }),
-            );
-          }
-        }}
+        if (this._installing) {
+          e.preventDefault();
+        } else {
+          this.dispatchEvent(
+            new CustomEvent('install-tool-dialog-closed', {
+              composed: true,
+              bubbles: true,
+            }),
+          );
+        }
+      }}
       >
-        <div style="margin: 0 100px">
-          <div class="column dialog-title" style="margin: 60px 0 40px 0; position: relative;">
-            <span style="display:flex;align-items:center;"
-              >${msg('Installing to:')} ${this.renderGroup()}</span
-            >
+        
+      <div slot="header">
+        <span style="display:flex;align-items:center;"
+          >${msg('Installing to:')} ${this.renderGroup()}</span
+        >
 
-            <span>${msg('Heads-up!')}</span>
-            <span>${msg('Give this app a custom name.')}</span>
-            <button
-              class="moss-dialog-close-button"
-              style="position: absolute; top: -72px; right: -110px;"
-              @click=${() => {
-                if (!this._installing)
-                  (this.shadowRoot?.getElementById('applet-dialog') as SlDialog).hide();
-              }}
-            >
-              ${closeIcon(24)}
-            </button>
-          </div>
-
+        <span>${msg('Heads-up!')}</span>
+        <span>${msg('Give this app a custom name.')}</span>
+      </div>
+           
+        <div slot="content">
           <div class="form-text" style="margin-top: -20px; margin-bottom: 30px;">
             <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span
             >${msg('Adding a new Tool to a group ')}<b>${msg(
-              'creates a new unique instance ',
-            )}</b>${msg(
-              "of that Tool which other group members may join directly from the group's main page.",
-            )}
+        'creates a new unique instance ',
+      )}</b>${msg(
+        "of that Tool which other group members may join directly from the group's main page.",
+      )}
             <sl-tooltip
               content=${msg(
-                `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
-              )}
+        `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
+      )}
             >
               <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
                 >${msg('Details')}</span
@@ -325,8 +314,8 @@ export class InstallToolDialogWeb2 extends LitElement {
             >
           </div>
           <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
-        </div>
-      </sl-dialog>
+        <div>
+        </moss-dialog>
     `;
   }
 
@@ -364,10 +353,6 @@ export class InstallToolDialogWeb2 extends LitElement {
         margin-bottom: 10px;
       }
 
-      #applet-dialog {
-        --width: 674px;
-        --height: 519px;
-      }
     `,
   ];
 }

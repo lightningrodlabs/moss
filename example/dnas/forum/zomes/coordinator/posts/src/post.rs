@@ -18,7 +18,8 @@ pub fn create_post(post: Post) -> ExternResult<Record> {
 #[hdk_extern]
 pub fn get_post(original_post_hash: ActionHash) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(original_post_hash.clone(), LinkTypes::PostUpdates)?.build(),
+        LinkQuery::new(original_post_hash.clone(), LinkTypes::PostUpdates.try_into_filter().unwrap()),
+        GetStrategy::default(),
     )?;
     println!("get_post: {:?}", links);
     get_latest_record_from_links_with_original_hash(links, original_post_hash)

@@ -12,3 +12,4 @@ hdk = { workspace = true }
 serde = { workspace = true }
 group_integrity = { workspace = true }
 moss_helpers = { workspace = true }
+holochain_serialized_bytes = { workspace = true }

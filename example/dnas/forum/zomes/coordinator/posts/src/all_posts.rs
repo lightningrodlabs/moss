@@ -4,7 +4,8 @@ use posts_integrity::*;
 pub fn get_all_posts(_: ()) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_posts");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllPosts)?.build(),
+        LinkQuery::new(path.path_entry_hash()?, LinkTypes::AllPosts.try_into_filter().unwrap()),
+        GetStrategy::default(),
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

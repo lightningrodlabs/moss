@@ -1,5 +1,4 @@
 import {
-  CellId,
   CellInfo,
   AppInfo,
   ListAppsResponse,
@@ -47,9 +46,9 @@ import { getAppletDevPort } from './electron-api.js';
 import {
   appIdFromAppletId,
   appletIdFromAppId,
-  deriveToolCompatibilityId,
+  deriveToolCompatibilityId, getCellId,
   toLowerCaseB64,
-  toOriginalCaseB64,
+  toOriginalCaseB64
 } from '@theweave/utils';
 import { DeveloperCollective, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
 
@@ -103,38 +102,6 @@ export function findAppForDnaHash(
         }
       }
     }
-  }
-  return undefined;
-}
-
-export function getStatus(app: AppInfo): string {
-  if (isAppRunning(app)) {
-    return 'RUNNING';
-  } else if (isAppDisabled(app)) {
-    return 'DISABLED';
-  } else if (isAppPaused(app)) {
-    return 'PAUSED';
-  } else {
-    return 'UNKNOWN';
-  }
-}
-
-export function isAppRunning(app: AppInfo): boolean {
-  return app.status.type === 'running';
-}
-export function isAppDisabled(app: AppInfo): boolean {
-  return app.status.type === 'disabled';
-}
-export function isAppPaused(app: AppInfo): boolean {
-  return app.status.type === 'paused';
-}
-
-export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if (cellInfo.type === CellType.Provisioned) {
-    return cellInfo.value.cell_id;
-  }
-  if (cellInfo.type === CellType.Cloned) {
-    return cellInfo.value.cell_id;
   }
   return undefined;
 }
@@ -439,13 +406,6 @@ export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
-export function encodeContext(context: any) {
-  return fromUint8Array(encode(context), true);
-}
-
-export function decodeContext(contextStringified: string): any {
-  return decode(toUint8Array(contextStringified));
-}
 
 /**
  * Fetches an image, crops it to 300x300px, compresses it to max 200KB and
@@ -646,7 +606,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.14://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.15://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {

@@ -65,25 +65,25 @@ export class AppletTitle extends LitElement {
     return html`
       <div class="row" style="align-items: center;" title=${appletStore.applet.custom_name}>
         ${this.invert
-          ? html`<span style="font-size: var(--font-size, initial); margin-right: 4px;"
+        ? html`<span style="font-size: var(--font-size, initial); margin-right: 4px;"
               >${appletStore.applet.custom_name}</span
             >`
-          : html``}
+        : html``}
         ${this._logo.value.status === 'complete'
-          ? html`
+        ? html`
               <img
                 .src=${this._logo.value.value}
                 alt="${appletStore.applet.custom_name}"
                 style="height: var(--size, 25px); width: var(--size, 25px); border-radius: var(--border-radius, 20%); display: flex;"
               />
             `
-          : html`<sl-skeleton
+        : html`<sl-skeleton
               style="height: var(--size, 25px); width: var(--size, 25px); --border-radius: var(--border-radius, 20%);"
               effect="pulse"
             ></sl-skeleton>`}
         ${this.invert
-          ? html``
-          : html`<span style="font-size: var(--font-size, initial); margin-left: 4px;"
+        ? html``
+        : html`<span style="font-size: var(--font-size, initial); margin-left: 4px;"
               >${appletStore.applet.custom_name}</span
             >`}
       </div>
@@ -99,7 +99,7 @@ export class AppletTitle extends LitElement {
       case 'error':
         return html`<display-error
           tooltip
-          .headline=${msg('Error fetching the information about the applet')}
+          .headline=${msg('Error fetching the information about the tool')}
           .error=${this._applet.value.error}
         ></display-error>`;
     }

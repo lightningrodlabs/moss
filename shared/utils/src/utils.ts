@@ -7,11 +7,11 @@ import {
   ToolVersionInfo,
 } from '@theweave/moss-types';
 import {
-  AgentPubKey,
+  AgentPubKey, AppInfo, CellId, CellInfo, CellType,
   decodeHashFromBase64,
   encodeHashToBase64,
   HoloHashB64,
-  ListAppsResponse,
+  ListAppsResponse
 } from '@holochain/client';
 import { AppletId, AppletHash } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
@@ -48,8 +48,8 @@ export function partialModifiersFromInviteLink(inviteLink: string): PartialModif
   try {
     const split = inviteLink.trim().split('://');
     const split2 = inviteLink.startsWith('https')
-      ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.14://invite/aljsfkajsf
-      : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.14://invite/aljsfkajsf
+      ? split[2].split('/') // link contains the web prefix, i.e. https://theweave.social/wal/weave-0.15://invite/aljsfkajsf
+      : split[1].split('/'); // link does not contain the web prefix, i.e. weave-0.15://invite/aljsfkajsf
     if (split2[0] === 'invite') {
       return invitePropsToPartialModifiers(split2[1]);
     } else {
@@ -129,4 +129,37 @@ export function getLatestVersionFromToolInfo(
       (version) => validateSemver(version.version) && happSha256 === version.hashes.happSha256,
     )
     .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
+}
+
+
+export function getAppStatus(app: AppInfo): string {
+  if (isAppRunning(app)) {
+    return 'ENABLED';
+  } else if (isAppDisabled(app)) {
+    return 'DISABLED';
+  } else if (isAppAwaitingMemProofs(app)) {
+    return 'AWAITING_MEMPROOFS';
+  } else {
+    return 'UNKNOWN';
+  }
+}
+
+export function isAppRunning(app: AppInfo): boolean {
+  return app.status.type === 'enabled';
+}
+export function isAppDisabled(app: AppInfo): boolean {
+  return app.status.type === 'disabled';
+}
+export function isAppAwaitingMemProofs(app: AppInfo): boolean {
+  return app.status.type === 'awaiting_memproofs';
+}
+
+export function getCellId(cellInfo: CellInfo): CellId | undefined {
+  if (cellInfo.type === CellType.Provisioned) {
+    return cellInfo.value.cell_id;
+  }
+  if (cellInfo.type === CellType.Cloned) {
+    return cellInfo.value.cell_id;
+  }
+  return undefined;
 }

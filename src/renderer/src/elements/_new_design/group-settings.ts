@@ -89,56 +89,52 @@ export class GroupSettings extends LitElement {
 
   render() {
     return html`
-      <div class="column flex-1" style="padding: 40px 100px;">
-        <div class="dialog-title" style="text-align: left; margin-bottom: 20px;">
-          ${msg('Space Settings')}
-        </div>
-        <div class="row items-center tab-bar flex-1">
-          <button
-            class="tab ${this.tabsState === TabsState.General ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.General;
-            }}
-          >
-            ${msg('General')}
-          </button>
-          <button
-            class="tab ${this.tabsState === TabsState.Tools ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.Tools;
-            }}
-          >
-            ${msg('Group Tools')}
-          </button>
-          <button
-            class="tab ${this.tabsState === TabsState.Members ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.Members;
-            }}
-          >
-            ${msg('Members')}
-          </button>
-          <button
-            class="tab ${this.tabsState === TabsState.MyProfile ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.MyProfile;
-            }}
-          >
-            ${msg('My Profile')}
-          </button>
-          <button
-            class="tab ${this.tabsState === TabsState.DangerZone ? 'tab-selected' : ''}"
-            @click=${() => {
-              this.tabsState = TabsState.DangerZone;
-            }}
-          >
-            ${msg('Danger Zone')}
-          </button>
-        </div>
-        <div class="column" style="margin-top: 10px; min-height: 380px; overflow-y: auto;">
-          ${this.renderContent()}
-        </div>
-      </div>
+
+    <div class="row items-center tab-bar flex-1">
+      <button
+        class="tab ${this.tabsState === TabsState.General ? 'tab-selected' : ''}"
+        @click=${() => {
+        this.tabsState = TabsState.General;
+      }}
+      >
+        ${msg('General')}
+      </button>
+      <button
+        class="tab ${this.tabsState === TabsState.Tools ? 'tab-selected' : ''}"
+        @click=${() => {
+        this.tabsState = TabsState.Tools;
+      }}
+      >
+        ${msg('Group Tools')}
+      </button>
+      <button
+        class="tab ${this.tabsState === TabsState.Members ? 'tab-selected' : ''}"
+        @click=${() => {
+        this.tabsState = TabsState.Members;
+      }}
+      >
+        ${msg('Members')}
+      </button>
+      <button
+        class="tab ${this.tabsState === TabsState.MyProfile ? 'tab-selected' : ''}"
+        @click=${() => {
+        this.tabsState = TabsState.MyProfile;
+      }}
+      >
+        ${msg('My Profile')}
+      </button>
+      <button
+        class="tab ${this.tabsState === TabsState.DangerZone ? 'tab-selected' : ''}"
+        @click=${() => {
+        this.tabsState = TabsState.DangerZone;
+      }}
+      >
+        ${msg('Danger Zone')}
+      </button>
+    </div>
+    <div class="column" style="margin-top: 0px; min-height: 380px; overflow-y: auto;">
+      ${this.renderContent()}
+    </div>
     `;
   }
 
