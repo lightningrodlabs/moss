@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.15",
-  "version": "0.15.0-rc.2",
+  "version": "0.15.0-rc.3",
   "private": true,
   "description": "Moss (0.15)",
   "main": "./out/main/index.js",

@@ -17,7 +17,7 @@ lto = true
 [workspace.dependencies]
 hdi = { version = "0.7.0-rc.0" }
 hdk = { version = "0.6.0-rc.0" }
-holochain = { version = "0.6.0-rc.1" }
+holochain = { version = "0.6.0-rc.2" }
 holochain_serialized_bytes = "0.0.56"
 
 serde = "1"
