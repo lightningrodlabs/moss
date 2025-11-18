@@ -13,7 +13,7 @@ jobs:
         # platform: [ubuntu-22.04-arm]
         # platform: [windows-2022, ubuntu-22.04]
     env:
-      MACOSX_DEPLOYMENT_TARGET: 10.13
+      MACOSX_DEPLOYMENT_TARGET: 10.15
 
     permissions:
       contents: write
@@ -89,18 +89,18 @@ jobs:
           yarn build:mac-x64
           ls dist
 
+      - name: Install FUSE
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2
+
       - name: build (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn build:linux
-
-      - name: Install FUSE
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fuse libfuse2
 
       - name: upload the app (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
