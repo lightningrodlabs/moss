@@ -2,7 +2,7 @@ import { TemplateResult, css, html, LitElement } from 'lit';
 import { property, customElement } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
-import { asyncReadable, AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
+import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -10,10 +10,8 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import './moss-create-profile.js';
 
-import { EntryRecord, LazyHoloHashMap } from '@holochain-open-dev/utils';
+import { EntryRecord } from '@holochain-open-dev/utils';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { AgentPubKey } from '@holochain/client';
-import { encode } from '@msgpack/msgpack';
 
 /**
  * @element profile-prompt
@@ -29,46 +27,11 @@ export class MossProfilePrompt extends LitElement {
   @property()
   store!: ProfilesStore;
 
-
-  profiles = new LazyHoloHashMap((agent: AgentPubKey) =>
-    asyncReadable<EntryRecord<Profile> | undefined>(async set => {
-      let profile = await this.store.client.getAgentProfile(agent, true);
-      // If we don't find it locally, try over the newtork
-      // Note that this means we only discover the latest profiles of
-      // others via gossip, i.e. if someone changes their profile
-      // and it hasn't gossiped to us, we will find one via
-      // GetStrategy::Local and will skip going to the network.
-      if (!profile) {
-        profile = await this.store.client.getAgentProfile(agent, true);
-      }
-      set(profile);
-
-      return this.store.client.onSignal(signal => {
-        if (this.store.client.client.myPubKey.toString() !== agent.toString()) return;
-        if (!(signal.type === 'EntryCreated' || signal.type === 'EntryUpdated'))
-          return;
-        const record = new EntryRecord<Profile>({
-          entry: {
-            Present: {
-              entry_type: 'App',
-              entry: encode(signal.app_entry),
-            },
-          },
-          signed_action: signal.action,
-        });
-        set(record);
-      });
-    })
-  );
-
-  // Fetches your profile
-  myProfile2 = this.profiles.get(this.store.client.client.myPubKey);
-
   /** Private properties */
 
   myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
     this,
-    () => this.myProfile2,
+    () => this.store.myProfile,
     () => [this.store],
   );
 

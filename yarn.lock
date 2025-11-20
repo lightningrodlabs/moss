@@ -1548,13 +1548,13 @@
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
 
-"@holochain-open-dev/elements@^0.600.0-dev.0":
-  version "0.600.0-dev.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/elements/-/elements-0.600.0-dev.0.tgz"
-  integrity sha512-ccn5HlAjpfKqEytzTciFvCA9toj1yBBxke2hStcF79nRUeCuFFse9PGkf/a8eBlHphfo3T0rdNr5EQ1/35hK6g==
+"@holochain-open-dev/elements@^0.600.0":
+  version "0.600.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.600.0.tgz#c10d760a6342d735a17a1afc2e624ff08ee6a315"
+  integrity sha512-fzWIqDj8InG/jv/xb00LFYQJjXZa7pdwY3fHRmCQICbPPKibUF/sBgr60TbE3gxPsXjzX5p7ffBt1dW2p3AfBw==
   dependencies:
     "@holo-host/identicon" "^0.1.0"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain/client" "^0.20.0"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.1.96"
     "@shoelace-style/shoelace" "^2.20.0"
@@ -1579,15 +1579,15 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/profiles@^0.600.0-dev.2":
-  version "0.600.0-dev.2"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.600.0-dev.2.tgz#f43533ace9e6b70b7892af9586b5dea7bafb3700"
-  integrity sha512-MkQF/4jpHALdvYQ/yQPOzis99UwtXx+wiYoZ35Wjsso75/IgGdVOt/8jeuwtkyn3h/hETkysVkAYN2NwF7mKSA==
+"@holochain-open-dev/profiles@^0.600.0-rc.0":
+  version "0.600.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.600.0-rc.0.tgz#d3aae05d92d576aeb410809ec84d61bed0b53874"
+  integrity sha512-xa6+0p1QiQQ3tV9eitc0Cfx8slSOKbqfWDCCQYrshnJhcj0tzBWs1vM+U4wbGqo27bdeYDF1gSCYFoE8vRbVXg==
   dependencies:
-    "@holochain-open-dev/elements" "^0.600.0-dev.0"
-    "@holochain-open-dev/stores" "^0.600.0-dev.0"
-    "@holochain-open-dev/utils" "^0.600.0-dev.0"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain-open-dev/elements" "^0.600.0"
+    "@holochain-open-dev/stores" "^0.600.0"
+    "@holochain-open-dev/utils" "^0.600.0"
+    "@holochain/client" "^0.20.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.1.96"
@@ -1608,14 +1608,14 @@
     lit-svelte-stores "^0.3.0"
     svelte "^3.53.1"
 
-"@holochain-open-dev/stores@^0.600.0-dev.0":
-  version "0.600.0-dev.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/stores/-/stores-0.600.0-dev.0.tgz"
-  integrity sha512-B+LyttBoUlfzwiQs+P3lW7SO/RtBPCqJ6/CyGksVJBxlBsf9WYPKs0FnVlGmoc4FGufTai+y+Mq5UJhbnq4L+w==
+"@holochain-open-dev/stores@^0.600.0":
+  version "0.600.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.600.0.tgz#6151ac2367ac60482d20304246490ab136ab54e8"
+  integrity sha512-alquLMKwRooQ1M0qR7JLcUSudp2xv4QrG9g4wq2PKDtXrMkokKvHtMXJ/Bgcdy8Gh/mst2Xt7VAsFUNblb3sBA==
   dependencies:
     "@alenaksu/json-viewer" "^2.0.1"
-    "@holochain-open-dev/utils" "^0.600.0-dev.0"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain-open-dev/utils" "^0.600.0"
+    "@holochain/client" "^0.20.0"
     "@scoped-elements/cytoscape" "^0.2.0"
     "@shoelace-style/shoelace" "^2.20.0"
     lit "^3.0.2"
@@ -1634,12 +1634,12 @@
     lodash-es "^4.17.21"
     sort-keys "^5.0.0"
 
-"@holochain-open-dev/utils@^0.600.0-dev.0":
-  version "0.600.0-dev.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/utils/-/utils-0.600.0-dev.0.tgz"
-  integrity sha512-J9GrN9xe/39dJtPAKytDiLCeTQJeWmOnt0ib92fuaCtSAAhHq2lNKpXvnbQ7k4JXhaNsQ/12tIgZCIGR6/dyLw==
+"@holochain-open-dev/utils@^0.600.0":
+  version "0.600.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.600.0.tgz#31c7d26cc8381c98f6b96f96342e44bc4053ff6b"
+  integrity sha512-zc/eF1cvVZvumBjLdY/FHZdWO/ICRR95bAM03dnCAhoWs4psIe+HCdMK+mq2u/KV7lXYQU5gKUF+WyUNaB0PFA==
   dependencies:
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain/client" "^0.20.0"
     "@msgpack/msgpack" "^2.8.0"
     blakejs "^1.2.1"
     emittery "^1.0.1"
@@ -1666,10 +1666,10 @@
     lodash-es "^4.17.21"
     ws "^8.14.2"
 
-"@holochain/client@^0.20.0-dev.2":
-  version "0.20.0-dev.2"
-  resolved "https://registry.npmjs.org/@holochain/client/-/client-0.20.0-dev.2.tgz"
-  integrity sha512-kinRhWFB6OWc9rbxvznQWaHAbwMw5aFqsKQf0PqXh9qLULK+gX3+FKqFkAGsaDqGCTsdAWJ7ssyjI2aCJW3AGQ==
+"@holochain/client@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.0.tgz#0ee7997d5ea2c3949264554eb3e9034ba63a796d"
+  integrity sha512-Q6YSnw6YKiiDfg31TW+melwAOABp1jTXU9gO26ThSxPgAEqj3TicHl7DqwT6ic/87L5tRwEr4X1Z4iYeAKwWGQ==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
     "@msgpack/msgpack" "^3.1.1"
@@ -3154,19 +3154,19 @@
 "@theweave/api@file:libs/api":
   version "0.6.0"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.600.0-dev.2"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain-open-dev/profiles" "^0.600.0-rc.0"
+    "@holochain/client" "^0.20.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
   version "0.6.0"
   dependencies:
-    "@holochain-open-dev/elements" "^0.600.0-dev.0"
-    "@holochain-open-dev/profiles" "^0.600.0-dev.2"
-    "@holochain-open-dev/stores" "^0.600.0-dev.0"
-    "@holochain-open-dev/utils" "^0.600.0-dev.0"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain-open-dev/elements" "^0.600.0"
+    "@holochain-open-dev/profiles" "^0.600.0-rc.0"
+    "@holochain-open-dev/stores" "^0.600.0"
+    "@holochain-open-dev/utils" "^0.600.0"
+    "@holochain/client" "^0.20.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -3188,8 +3188,8 @@
 "@theweave/group-client@file:shared/group-client":
   version "0.5.0"
   dependencies:
-    "@holochain-open-dev/utils" "^0.600.0-dev.0"
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain-open-dev/utils" "^0.600.0"
+    "@holochain/client" "^0.20.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.0"
 
@@ -3218,7 +3218,7 @@
 "@theweave/utils@file:shared/utils":
   version "0.5.0"
   dependencies:
-    "@holochain/client" "^0.20.0-dev.2"
+    "@holochain/client" "^0.20.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.0"
     "@theweave/moss-types" "^0.5.0"
