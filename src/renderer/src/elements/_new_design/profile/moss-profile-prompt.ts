@@ -47,9 +47,9 @@ export class MossProfilePrompt extends LitElement {
           <slot name="hero"></slot>
           <moss-create-profile
             @profile-created=${(e) => {
-              console.log('Profile created!', e);
-              setTimeout(() => this.requestUpdate(), 1000);
-            }}
+        console.log('Profile created!', e);
+        setTimeout(() => this.requestUpdate(), 1000);
+      }}
           ></moss-create-profile>
         </div>
       </div>

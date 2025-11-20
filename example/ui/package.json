@@ -14,11 +14,11 @@
     "package": "yarn package:ui && cd .. && cross-env RUSTFLAGS=\"--cfg getrandom_backend=\\\"custom\\\"\" cargo build --release --target-dir target --target wasm32-unknown-unknown && ../resources/bins/hc web-app pack workdir --recursive"
   },
   "dependencies": {
-    "@holochain-open-dev/elements": "^0.600.0-dev.0",
-    "@holochain-open-dev/profiles": "^0.600.0-dev.2",
-    "@holochain-open-dev/stores": "^0.600.0-dev.0",
-    "@holochain-open-dev/utils": "^0.600.0-dev.0",
-    "@holochain/client": "^0.20.0-dev.2",
+    "@holochain-open-dev/elements": "^0.600.0",
+    "@holochain-open-dev/profiles": "^0.600.0-rc.0",
+    "@holochain-open-dev/stores": "^0.600.0",
+    "@holochain-open-dev/utils": "^0.600.0",
+    "@holochain/client": "^0.20.0",
     "@theweave/api": "file:../../libs/api",
     "@theweave/elements": "file:../../libs/elements",
     "@lit/context": "^1.0.1",
