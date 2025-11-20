@@ -50,17 +50,21 @@ export class FoyerStream extends LitElement {
   private _conversationContainer!: HTMLElement;
 
   async firstUpdated() {
-    this.stream = get(this.groupStore.foyerStore.streams)['_all'];
-    this._messages = new StoreSubscriber(
-      this,
-      () => this.stream!.messages,
-      () => [this.stream],
-    );
-    this._acks = new StoreSubscriber(
-      this,
-      () => this.stream!.acks(),
-      () => [this.stream],
-    );
+    console.log("this.groupStore.foyerStore", this.groupStore.foyerStore)
+    setTimeout(() => {
+      this.stream = get(this.groupStore.foyerStore.streams)['_all'];
+      this._messages = new StoreSubscriber(
+        this,
+        () => this.stream!.messages,
+        () => [this.stream],
+      );
+      this._acks = new StoreSubscriber(
+        this,
+        () => this.stream!.acks(),
+        () => [this.stream],
+      );
+    }, 100);
+
   }
 
   @state()
@@ -132,20 +136,20 @@ export class FoyerStream extends LitElement {
       <div
         class="column msg-recipients"
         @mouseleave=${() => {
-          console.log('Got mouseout event');
-          this._showRecipients = 0;
-        }}
+        console.log('Got mouseout event');
+        this._showRecipients = 0;
+      }}
       >
         <div class="msg-recipients-title" style="margin-bottom: 2px;">${msg('received by:')}</div>
         <div class="row" style="flex-wrap: wrap;">
           ${agents.map(
-            (agent) =>
-              html`<agent-avatar
+        (agent) =>
+          html`<agent-avatar
                 style="margin-left: 2px; margin-bottom: 2px;"
                 .size=${18}
                 .agentPubKey=${agent}
               ></agent-avatar>`,
-          )}
+      )}
         </div>
       </div>
     `;
@@ -181,7 +185,7 @@ export class FoyerStream extends LitElement {
   }
 
   renderStream() {
-    if (!this._messages) return html``;
+    if (!this._messages) return html`...`;
     if (this._conversationContainer) {
       const scrollTop = this._conversationContainer.scrollTop;
       const scrollHeight = this._conversationContainer.scrollHeight;
@@ -209,7 +213,7 @@ export class FoyerStream extends LitElement {
         <div class="row" style="position: relative;">
           ${isMyMessage ? html`<span style="flex: 1;"></span>` : html``}
           ${!isMyMessage
-            ? html`
+          ? html`
                 <agent-avatar
                   style="margin-right:5px"
                   disable-copy=${true}
@@ -217,11 +221,11 @@ export class FoyerStream extends LitElement {
                   agent-pub-key=${encodeHashToBase64(msg.from)}
                 ></agent-avatar>
               `
-            : ''}
+          : ''}
           <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
             <div class="msg-content">
               ${msg.payload.type === 'Msg'
-                ? html`
+          ? html`
                     ${unsafeHTML(msgText)}
                     <div class="msg-meta">
                       <span
@@ -231,49 +235,49 @@ export class FoyerStream extends LitElement {
                       >
                       <div class="column">
                         ${isMyMessage
-                          ? html`
+              ? html`
                               ${ackCount > 0
-                                ? html`
+                  ? html`
                                     <div
                                       tabindex="0"
                                       style="margin-top: 1px;"
                                       @mouseover=${() => {
-                                        console.log('mouseover');
-                                        if (this._showRecipients !== msg.payload.created) {
-                                          this._showRecipients = msg.payload.created;
-                                        }
-                                      }}
+                      console.log('mouseover');
+                      if (this._showRecipients !== msg.payload.created) {
+                        this._showRecipients = msg.payload.created;
+                      }
+                    }}
                                       @keypress=${(e: KeyboardEvent) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                          if (this._showRecipients === msg.payload.created) {
-                                            this._showRecipients = 0;
-                                          } else {
-                                            this._showRecipients = msg.payload.created;
-                                          }
-                                        }
-                                      }}
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        if (this._showRecipients === msg.payload.created) {
+                          this._showRecipients = 0;
+                        } else {
+                          this._showRecipients = msg.payload.created;
+                        }
+                      }
+                    }}
                                       class="ack-count row center-content ${ackCount > 9
-                                        ? 'padded'
-                                        : ''}"
+                      ? 'padded'
+                      : ''}"
                                     >
                                       ${ackCount}
                                     </div>
                                   `
-                                : '...'}
+                  : '...'}
                             `
-                          : ''}
+              : ''}
                         <span style="flex: 1;"></span>
                       </div>
                     </div>
                   `
-                : ''}
+          : ''}
             </div>
             ${this._acks &&
-            isMyMessage &&
-            ackCount > 0 &&
-            this._showRecipients === msg.payload.created
-              ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
-              : ''}
+          isMyMessage &&
+          ackCount > 0 &&
+          this._showRecipients === msg.payload.created
+          ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
+          : ''}
           </div>
           ${isMyMessage ? html`` : html`<span style="flex: 1;"></span>`}
         </div>
@@ -290,10 +294,10 @@ export class FoyerStream extends LitElement {
             <div
               @click=${() => this._foyerInfoDialog.show()}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  this._foyerInfoDialog.show();
-                }
-              }}
+        if (e.key === 'Enter' || e.key === ' ') {
+          this._foyerInfoDialog.show();
+        }
+      }}
               class="row info"
               style="align-items: center; font-size: 1.5rem; cursor: help;"
             >
@@ -307,38 +311,38 @@ export class FoyerStream extends LitElement {
         <div id="stream" class="stream">${this.renderStream()}</div>
         <span style="display: flex; flex: 1;"></span>
         ${this._messages && this.newMessages
-          ? html`<div
+        ? html`<div
               tabindex="0"
               class="new-message-indicator"
               @click=${() => {
-                this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
-                this.newMessages = 0;
-                this.previousMessageCount = this._messages!.value.length;
-              }}
+            this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+            this.newMessages = 0;
+            this.previousMessageCount = this._messages!.value.length;
+          }}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
-                  this.newMessages = 0;
-                  this.previousMessageCount = this._messages!.value.length;
-                }
-              }}
+            if (e.key === 'Enter' || e.key === ' ') {
+              this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+              this.newMessages = 0;
+              this.previousMessageCount = this._messages!.value.length;
+            }
+          }}
             >
               ${this.newMessages} new message(s)
             </div>`
-          : html``}
+        : html``}
         <div class="send-controls">
           <sl-input
             id="msg-input"
             style="width:100%;"
             @sl-input=${(e) => {
-              this.disabled = !e.target.value || !this._msgInput.value;
-            }}
+        this.disabled = !e.target.value || !this._msgInput.value;
+      }}
             @keydown=${(e) => {
-              if (e.keyCode == 13) {
-                this.sendMessage();
-                e.stopPropagation();
-              }
-            }}
+        if (e.keyCode == 13) {
+          this.sendMessage();
+          e.stopPropagation();
+        }
+      }}
             placeholder="my message"
           ></sl-input>
           <button
