@@ -73,7 +73,7 @@
     "@holochain-open-dev/profiles": "^0.600.0-dev.2",
     "@holochain-open-dev/stores": "^0.600.0-dev.0",
     "@holochain-open-dev/utils": "^0.600.0-dev.0",
-    "@holochain/client": "^0.20.0-dev.2",
+    "@holochain/client": "^0.20.0",
     "@lightningrodlabs/we-rust-utils": "^0.600.0-dev.0",
     "@matthme/electron-updater": "6.3.0-alpha.1",
     "@msgpack/msgpack": "^2.8.0",
