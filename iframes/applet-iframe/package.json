@@ -9,8 +9,8 @@
     "@holochain-open-dev/utils": "^0.600.0",
     "@holochain-open-dev/stores": "^0.600.0",
     "@holochain/client": "^0.20.0",
-    "@theweave/api": "^0.5.0",
-    "@theweave/utils": "0.4.0",
+    "@theweave/api": "^0.6.0",
+    "@theweave/utils": "0.5.0",
     "inline-module": "^0.6.1"
   },
   "devDependencies": {
