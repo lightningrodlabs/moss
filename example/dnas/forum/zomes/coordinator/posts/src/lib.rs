@@ -109,7 +109,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                     LinkQuery::new(
                         peers_anchor,
                         LinkTypes::PeerSubscription.try_into_filter().unwrap(),
-                    ), GetStrategy::default()
+                    ), GetStrategy::Local,
                 )?;
                 let peers = peer_links
                     .iter()
@@ -155,7 +155,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
 }
 
 fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTypes>> {
-    let record = match get_details(action_hash.clone(), GetOptions::default())? {
+    let record = match get_details(action_hash.clone(), GetOptions::local())? {
         Some(Details::Record(record_details)) => record_details.record,
         _ => {
             return Ok(None);

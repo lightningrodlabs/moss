@@ -4,13 +4,16 @@ use posts_integrity::*;
 pub fn get_all_posts(_: ()) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_posts");
     let links = get_links(
-        LinkQuery::new(path.path_entry_hash()?, LinkTypes::AllPosts.try_into_filter().unwrap()),
-        GetStrategy::default(),
+        LinkQuery::new(
+            path.path_entry_hash()?,
+            LinkTypes::AllPosts.try_into_filter().unwrap(),
+        ),
+        GetStrategy::Local,
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
         .filter_map(|link| link.target.into_action_hash())
-        .map(|action_hash| GetInput::new(action_hash.into(), GetOptions::default()))
+        .map(|action_hash| GetInput::new(action_hash.into(), GetOptions::local()))
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let records: Vec<Record> = records.into_iter().filter_map(|r| r).collect();

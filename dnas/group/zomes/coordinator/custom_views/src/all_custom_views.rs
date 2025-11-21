@@ -11,7 +11,7 @@ pub fn get_all_custom_views(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>>
     let get_input: Vec<GetInput> = links
         .into_iter()
         .filter_map(|link| link.target.into_action_hash())
-        .map(|action_hash| GetInput::new(action_hash.into(), GetOptions::default()))
+        .map(|action_hash| GetInput::new(action_hash.into(), GetOptions::local()))
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let records: Vec<Record> = records.into_iter().filter_map(|r| r).collect();

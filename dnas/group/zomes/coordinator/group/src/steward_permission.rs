@@ -15,7 +15,7 @@ pub fn create_steward_permission(steward_permission: StewardPermission) -> Exter
         (),
     )?;
     let record =
-        get(steward_permission_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+        get(steward_permission_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
             WasmErrorInner::Guest("Could not find the newly created StewardPermission".to_string())
         ))?;
     let path = Path::from("all_steward_permissions");
