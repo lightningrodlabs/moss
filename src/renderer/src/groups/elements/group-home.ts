@@ -622,7 +622,7 @@ export class GroupHome extends LitElement {
   renderMain(groupProfile: GroupProfile) {
     return html`
       <moss-dialog id="group-settings-dialog">
-        <span slot="header"> ${msg('Space Settings')}</span>
+        <span slot="header"> ${msg('Group Settings')}</span>
         <group-settings slot="content"
             id="group-settings"
             @uninstall-applet=${async (e) => this.uninstallApplet(e)}
