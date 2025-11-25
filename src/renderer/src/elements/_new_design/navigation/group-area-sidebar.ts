@@ -53,6 +53,7 @@ import {
 } from '../../../utils.js';
 import { notify } from '@holochain-open-dev/elements/dist/notify.js';
 import { MossDialog } from '../moss-dialog.js';
+import '../group-settings/inactive-tools-dialog.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -113,6 +114,9 @@ export class GroupAppletsSidebar extends LitElement {
 
   @query('#invite-member-dialog')
   inviteMemberDialog: MossDialog | undefined;
+
+  @query('inactive-tools-dialog')
+  inactiveToolsDialog: any;
 
   private _permissionType = new StoreSubscriber(
     this,
@@ -514,6 +518,10 @@ export class GroupAppletsSidebar extends LitElement {
       .length;
   }
 
+  hasInactiveTools(): boolean {
+    return this.inactiveToolsDialog?.hasInactiveTools() ?? false;
+  }
+
   renderInviteSection() {
     switch (this._groupProfile.value.status) {
       case 'pending':
@@ -691,6 +699,17 @@ export class GroupAppletsSidebar extends LitElement {
 
   render() {
     return html`
+      <inactive-tools-dialog
+        @open-library-requested=${(e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('add-tool-requested', {
+              detail: e.detail,
+              bubbles: false,
+              composed: true,
+            }),
+          );
+        }}
+      ></inactive-tools-dialog>
       ${!this.onlinePeersCollapsed
         ? ''
         : html`
@@ -812,17 +831,23 @@ export class GroupAppletsSidebar extends LitElement {
         !this.collapsed) ||
         !this.amISteward()
         ? html``
-        : html`<sl-tooltip hoist content="${msg('Add a tool')}" placement="bottom">
+        : html`<sl-tooltip hoist content="${msg('Add a new tool for the group')}" placement="bottom">
               <button
                 class="${this.collapsed ? 'purple-btn-large' : 'purple-btn'}"
-                @click=${() => {
-            this.dispatchEvent(
-              new CustomEvent('add-tool-requested', {
-                detail: { groupHash: this._groupStore.groupDnaHash },
-                bubbles: false,
-                composed: true,
-              }),
-            );
+                @click=${async () => {
+            // Check if there are inactive tools first
+            if (this.hasInactiveTools()) {
+              this.inactiveToolsDialog?.show();
+            } else {
+              // No inactive tools, proceed directly to library
+              this.dispatchEvent(
+                new CustomEvent('add-tool-requested', {
+                  detail: { groupHash: this._groupStore.groupDnaHash },
+                  bubbles: false,
+                  composed: true,
+                }),
+              );
+            }
           }}
               >
                 <div class="column center-content">${plusIcon()}</div>
