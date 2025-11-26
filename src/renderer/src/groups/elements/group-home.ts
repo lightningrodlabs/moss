@@ -377,7 +377,7 @@ export class GroupHome extends LitElement {
                 </div>
               `
             : html`
-                <div class="row" style="flex-wrap: wrap;">
+                <div class="row" style="flex-wrap: wrap; max-height: calc(100vh - 207px); overflow-y: auto;">
                   ${filteredApplets.map(
               (info) => html`
                       <sl-card class="applet-card">
