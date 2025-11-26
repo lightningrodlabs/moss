@@ -251,16 +251,15 @@ export class ActivityView extends LitElement {
 
   getButtonStyle(method) {
     return this.sortMethod1 === method
-      ? 'background-color: #44b134; color: #000'
-      : 'background-color: #193423; color: #fff';
+      ? 'background-color: var(--moss-medium-green); color: #000'
+      : 'background-color: var(--moss-dark-green); color: #fff';
   }
 
   render() {
-    const combinedNotifications = this.combineNotifications(this._notificationFeed.value);
+    const notifications = this._notificationFeed.value ?? [];
+    const combinedNotifications = this.combineNotifications(notifications);
     const sortedNotifications = this.sortNotifications(combinedNotifications);
-    const filteredIndividualNotifications = this.filterIndividualNotifications(
-      this._notificationFeed.value,
-    );
+    const filteredIndividualNotifications = this.filterIndividualNotifications(notifications);
     const displayShowMoreButton =
       filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
@@ -269,23 +268,26 @@ export class ActivityView extends LitElement {
         <div class="column feed">
           <div class="sort-buttons">
             <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-              Activity currents
+              Activity Currents
             </div>
             <button
               @click=${() => (this.sortMethod1 = 'popular')}
               style=${this.getButtonStyle('popular')}
+              title="View assets sorted by number of people involved"
             >
               Popular
             </button>
             <button
               @click=${() => (this.sortMethod1 = 'active')}
               style=${this.getButtonStyle('active')}
+              title="View assets sorted by most activity"
             >
               Active
             </button>
             <button
               @click=${() => (this.sortMethod1 = 'latest')}
               style=${this.getButtonStyle('latest')}
+              title="View assets sorted by most recent"
             >
               Latest
             </button>
@@ -313,7 +315,7 @@ export class ActivityView extends LitElement {
             ${sortedNotifications.length === 0
         ? html`
                   <div
-                    style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your activity will appear here
                   </div>
@@ -344,15 +346,16 @@ export class ActivityView extends LitElement {
         </div>
         <div class="column feed">
           <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-            All notifications
+            Notifications Pool
           </div>
           <div class="sort-buttons">
             <button
               @click=${() => (this.sortMethod2 = 'high')}
               class="sort-button"
               style=${this.sortMethod2 === 'high'
-        ? 'background-color: #44b134; color: #000'
-        : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show high urgency notifications only"
             >
               High
             </button>
@@ -360,8 +363,9 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'medium')}
               class="sort-button"
               style=${this.sortMethod2 === 'medium'
-        ? 'background-color: #44b134; color: #000'
-        : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show medium urgency notifications only"
             >
               Medium
             </button>
@@ -369,8 +373,9 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'low')}
               class="sort-button"
               style=${this.sortMethod2 === 'low'
-        ? 'background-color: #44b134; color: #000'
-        : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show low urgency notifications only"
             >
               Low
             </button>
@@ -398,7 +403,7 @@ export class ActivityView extends LitElement {
             ${filteredIndividualNotifications.length === 0
         ? html`
                   <div
-                    style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your notifications will appear here
                   </div>
@@ -442,6 +447,10 @@ export class ActivityView extends LitElement {
 
   static styles = [
     css`
+      :host {
+        background: var(--moss-grey-green);
+        border-radius: 10px;
+      }
       .feed {
         padding: 30px;
       }
@@ -457,10 +466,10 @@ export class ActivityView extends LitElement {
         cursor: pointer;
       }
       .sort-buttons button:hover {
-        background-color: #53d43f;
+        background-color: var(--moss-hint-green);
       }
       .time-select {
-        background-color: #193423;
+        background-color: var(--moss-dark-green);
         color: #fff;
         border: none;
         padding: 5px 10px;

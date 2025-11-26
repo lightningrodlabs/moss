@@ -1,6 +1,7 @@
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
+import { until } from 'lit/directives/until.js';
 import { localized } from '@lit/localize';
 import type { FrameNotification } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -19,6 +20,7 @@ import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
 import { AppletNotification } from '../../types.js';
 import { mossStyles } from '../../shared-styles.js';
+import { decodeHashFromBase64, AgentPubKey } from '@holochain/client';
 
 @localized()
 @customElement('notification-asset')
@@ -131,7 +133,61 @@ export class NotificationAsset extends LitElement {
     }
   }
 
+  private extractAgentKeys(text: string): string[] {
+    const agentKeyRegex = /([A-Za-z0-9_-]{53})/g;
+    const agentKeys: string[] = [];
+    let match;
+    while ((match = agentKeyRegex.exec(text)) !== null) {
+      agentKeys.push(match[1]);
+    }
+    return agentKeys;
+  }
+
+  private async getAgentName(pubkeyB64: string): Promise<string> {
+    try {
+      // console.log('Looking up profile for agent key:', pubkeyB64);
+      const agentPubKey: AgentPubKey = decodeHashFromBase64(pubkeyB64);
+
+      // Get the group stores for this applet
+      const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash));
+
+      // Try to get the profile from any of the groups (we'll use the first one)
+      const groupStores = Array.from(groupStoreMap.values());
+      if (groupStores.length === 0) {
+        return pubkeyB64.slice(0, 8); // Fallback to truncated key
+      }
+
+      const firstGroupStore = groupStores[0];
+      const profileStore = await toPromise(firstGroupStore.membersProfiles.get(agentPubKey));
+
+      if (profileStore && profileStore.type === 'profile') {
+        // console.log('Found profile for agent:', pubkeyB64, profileStore.profile.entry.nickname);
+        return profileStore.profile.entry.nickname || pubkeyB64.slice(0, 8);
+      }
+
+      // console.log('No profile found for agent:', pubkeyB64);
+      return pubkeyB64.slice(0, 8); // Fallback
+    } catch (error) {
+      // console.error('Failed to get agent name:', error);
+      return pubkeyB64.slice(0, 8); // Fallback
+    }
+  }
+
   render() {
+    // console.log('Rendering notification:', this.notification);
+    const body = this.notification?.body ?? '';
+    const agentKeys = this.extractAgentKeys(body);
+    // console.log('Extracted agent keys from body:', agentKeys);
+    const agentNamePromises = agentKeys.map((key) => this.getAgentName(key));
+    const bodyWithNamesPromise = Promise.all(agentNamePromises).then((agentNames) => {
+      let modifiedBody = body;
+      agentKeys.forEach((key, index) => {
+        const name = agentNames[index];
+        modifiedBody = modifiedBody.replace(`${key}`, `${name}`);
+      });
+      return modifiedBody;
+    });
+
     switch (this.appletLogo.value.status) {
       case 'pending':
         return html``;
@@ -153,7 +209,7 @@ export class NotificationAsset extends LitElement {
             <span style="display: flex; flex: 1;"></span>
             ${this.renderFirstGroupProfileIcon()} ${this.renderAppletLogo()}
           </div>
-          <div>${this.notification?.body}</div>
+          <div>${until(bodyWithNamesPromise, body)}</div>
           <div class="notification-date">
             ${this.notification
             ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
@@ -175,32 +231,6 @@ export class NotificationAsset extends LitElement {
         flex-direction: column;
       }
 
-      .show-notifications-button,
-      .hide-notifications-button {
-        background: #3b922d;
-        background: transparent;
-        color: white;
-        border: none;
-        border-radius: 0 0 5px 5px;
-        padding: 0 0 3px 0;
-        color: transparent;
-        cursor: pointer;
-        margin-top: -18px;
-        font-size: 14px;
-      }
-
-      .show-notifications-button:hover,
-      .hide-notifications-button:hover {
-        background: #29711d;
-      }
-
-      .hide-notifications-button {
-        border-radius: 0;
-        background: #3b922d;
-        color: white;
-        padding: 3px 0 0 0;
-      }
-
       .asset-title {
         font-size: 20px;
       }
@@ -209,12 +239,12 @@ export class NotificationAsset extends LitElement {
         padding: 10px;
         margin-bottom: 10px;
         border-radius: 5px;
-        background: #193423;
+        background: var(--moss-dark-green);
         color: #fff;
         flex: 1;
       }
       .notification-card:hover {
-        background-color: #3f6733;
+        background: var(--moss-hint-green);
         cursor: pointer;
       }
       .notification-title {
