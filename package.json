@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.15",
-  "version": "0.15.0-rc.5",
+  "version": "0.15.0",
   "private": true,
   "description": "Moss (0.15)",
   "main": "./out/main/index.js",
@@ -70,7 +70,7 @@
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
     "@holochain-open-dev/elements": "^0.600.0",
-    "@holochain-open-dev/profiles": "^0.600.0-rc.0",
+    "@holochain-open-dev/profiles": "^0.600.0",
     "@holochain-open-dev/stores": "^0.600.0",
     "@holochain-open-dev/utils": "^0.600.0",
     "@holochain/client": "^0.20.0",
