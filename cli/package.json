@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@holochain/client": "^0.20.0",
-    "@holochain-open-dev/elements": "^0.600.0-dev.0",
-    "@holochain-open-dev/profiles": "^0.600.0-dev.2",
-    "@holochain-open-dev/stores": "^0.600.0-dev.0",
-    "@holochain-open-dev/utils": "^0.600.0-dev.0",
+    "@holochain-open-dev/elements": "^0.600.0",
+    "@holochain-open-dev/profiles": "^0.600.0",
+    "@holochain-open-dev/stores": "^0.600.0",
+    "@holochain-open-dev/utils": "^0.600.0",
     "@lightningrodlabs/we-rust-utils": "^0.600.0-dev.0",
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",

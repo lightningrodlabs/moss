@@ -757,7 +757,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -2041,8 +2041,8 @@ dependencies = [
 
 [[package]]
 name = "hc_zome_profiles_coordinator"
-version = "0.4.0-dev.0"
-source = "git+https://github.com/holochain-open-dev/profiles?branch=main-0.6#209f805d10643499c66c16bee1a3989f4386bc38"
+version = "0.4.0-rc.0"
+source = "git+https://github.com/holochain-open-dev/profiles?branch=main-0.6#30a2e525cccb4124316f315fac710258fd8d8cd4"
 dependencies = [
  "derive_more 0.99.20",
  "hc_zome_profiles_integrity",
@@ -2053,8 +2053,8 @@ dependencies = [
 
 [[package]]
 name = "hc_zome_profiles_integrity"
-version = "0.4.0-dev.0"
-source = "git+https://github.com/holochain-open-dev/profiles?branch=main-0.6#209f805d10643499c66c16bee1a3989f4386bc38"
+version = "0.4.0-rc.0"
+source = "git+https://github.com/holochain-open-dev/profiles?branch=main-0.6#30a2e525cccb4124316f315fac710258fd8d8cd4"
 dependencies = [
  "derive_more 0.99.20",
  "hdi",
@@ -4650,7 +4650,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -7476,7 +7476,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

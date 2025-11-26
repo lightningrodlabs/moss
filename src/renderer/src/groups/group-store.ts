@@ -190,19 +190,19 @@ export class GroupStore {
     // in combination with PING_AGENTS_FREQUENCY_MS will determine the frequency of
     // re-fetching profiles
     setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
     }, 5000);
 
     setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
     }, 10000);
 
     setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
     }, 20000);
 
     setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
     }, 40000);
 
     setInterval(async () => {
@@ -727,7 +727,7 @@ export class GroupStore {
   groupProfile = reloadableLazyLoadAndPollUntil(
     async () => {
       // only poll in case groupProfile is not yet defined
-      const entryRecord = await this.groupClient.getGroupProfile(false);
+      const entryRecord = await this.groupClient.getGroupProfile(true);
       return entryRecord?.entry;
     },
     undefined,
@@ -742,7 +742,7 @@ export class GroupStore {
 
   groupDescription = reloadableLazyLoadAndPollUntil(
     async () => {
-      const entryRecord = await this.groupClient.getGroupDescription();
+      const entryRecord = await this.groupClient.getGroupDescription(true);
       return entryRecord?.entry;
     },
     undefined,
@@ -768,7 +768,7 @@ export class GroupStore {
     asyncReadable<MaybeProfile | undefined>(async (set) => {
       try {
         console.log('Getting agent profile.');
-        const profile = await this.profilesStore.client.getAgentProfile(agent);
+        const profile = await this.profilesStore.client.getAgentProfile(agent, true);
         profile ? set({ type: 'profile', profile }) : set({ type: 'unknown' });
       } catch (e) {
         console.error('Failed to fetch profile: ', e);
@@ -859,7 +859,7 @@ export class GroupStore {
         ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
         : Promise.resolve();
     } else {
-      const allAgents = await this.profilesStore.client.getAgentsWithProfile();
+      const allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
       this.allAgents = allAgents;
       const agentsThatNeedPinging = allAgents.filter(
         (agent) =>
@@ -1161,7 +1161,7 @@ export class GroupStore {
   // in the local conductor yet (provided that storing the Applet entry to the local source chain has
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
-    const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
+    const unjoinedApplets = await this.groupClient.getUnjoinedApplets(true);
     const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AppletAgent[]]> =
       new EntryHashMap();
     try {

@@ -56,7 +56,7 @@ pub fn add_asset_relation(
                 LinkTypes::AllAssetRelations,
                 (),
             )?;
-            get(action_hash, GetOptions::default())?.ok_or(wasm_error!(WasmErrorInner::Guest(
+            get(action_hash, GetOptions::local())?.ok_or(wasm_error!(WasmErrorInner::Guest(
                 format!("Failed to get the record that was just created.")
             )))?
         }
@@ -203,7 +203,7 @@ pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternRes
     for link in links {
         if let Some(target) = link.target.into_entry_hash() {
             if target.eq(&relation_hash.input) {
-                delete_link(link.create_link_hash, GetOptions::default())?;
+                delete_link(link.create_link_hash, GetOptions::local())?;
             }
         }
     }
@@ -217,7 +217,7 @@ pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternRes
         LinkQuery::try_new(src_wal_entry_hash, LinkTypes::SrcWalToAssetRelations)?, relation_hash.get_strategy())?;
     for link in src_wal_links {
         if link.target.clone().into_hash() == relation_hash.input.clone().into() {
-            delete_link(link.create_link_hash, GetOptions::default())?;
+            delete_link(link.create_link_hash, GetOptions::local())?;
         }
     }
 
@@ -227,7 +227,7 @@ pub fn remove_asset_relation(relation_hash: ZomeFnInput<EntryHash>) -> ExternRes
         LinkQuery::try_new(dst_wal_entry_hash, LinkTypes::DstWalToAssetRelations)?, relation_hash.get_strategy())?;
     for link in dst_wal_links {
         if link.target.clone().into_hash() == relation_hash.input.clone().into() {
-            delete_link(link.create_link_hash, GetOptions::default())?;
+            delete_link(link.create_link_hash, GetOptions::local())?;
         }
     }
 
@@ -260,8 +260,8 @@ pub fn remove_all_tags_from_asset_relation(
                     "Failed to decode link tag content: {e}"
                 )))
             })?;
-        delete_link(link.create_link_hash, GetOptions::default())?;
-        delete_link(link_tag_content.backlink_action_hash, GetOptions::default())?;
+        delete_link(link.create_link_hash, GetOptions::local())?;
+        delete_link(link_tag_content.backlink_action_hash, GetOptions::local())?;
     }
     Ok(())
 }
@@ -312,8 +312,8 @@ pub fn remove_tags_from_asset_relation(
             }) {
             Ok(link_tag_content) => {
                 if input.input.tags.contains(&link_tag_content.tag) {
-                    delete_link(link.create_link_hash, GetOptions::default())?;
-                    delete_link(link_tag_content.backlink_action_hash, GetOptions::default())?;
+                    delete_link(link.create_link_hash, GetOptions::local())?;
+                    delete_link(link_tag_content.backlink_action_hash, GetOptions::local())?;
                 }
             }
             Err(e) => {

@@ -124,7 +124,7 @@ export class InstallableToolsWeb2 extends LitElement {
         );
       }}
           class=""
-          style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:20px;left: -22px; right: 0px;"
+          style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:30px;left: -22px; right: 0px;"
           id="select-group"
         ></select-group>
       </div>
@@ -172,8 +172,8 @@ export class InstallableToolsWeb2 extends LitElement {
             .devCollectives=${this.devCollectives}
             .tool=${this.selectedTool}
             @install-tool-to-group=${() => {
-              this.toolDetailsDialog?.hide();
-            }}
+        this.toolDetailsDialog?.hide();
+      }}
           ></library-tool-details>
       </moss-dialog>
       <div

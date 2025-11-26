@@ -11,4 +11,3 @@ name = "profiles_integrity"
 serde = "1"
 derive_more = "0"
 hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", branch = "main-0.6" }
-#hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", rev = "0051f323ed7518e8307e1484385bc48506f321e8" }

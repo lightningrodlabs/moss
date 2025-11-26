@@ -10,10 +10,10 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "@holochain/client": "^0.20.0",
-    "@holochain/tryorama": "^0.18.3",
-    "@holochain-open-dev/utils": "^0.600.0-dev.0",
-    "@theweave/group-client": "^0.4.0",
-    "@theweave/api": "^0.5.0",
+    "@holochain/tryorama": "^0.19.0",
+    "@holochain-open-dev/utils": "^0.600.0",
+    "@theweave/group-client": "^0.5.0",
+    "@theweave/api": "^0.6.0",
     "typescript": "^5.8.3",
     "vitest": "^0.28.4"
   },

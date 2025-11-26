@@ -5,7 +5,7 @@ use moss_helpers::ZomeFnInput;
 #[hdk_extern]
 pub fn create_thing(thing: Thing) -> ExternResult<Record> {
     let thing_hash = create_entry(&EntryTypes::Thing(thing.clone()))?;
-    let record = get(thing_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(thing_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Thing"))
     ))?;
     let path = Path::from("all_things");
@@ -42,7 +42,7 @@ pub fn update_thing(input: UpdateThingInput) -> ExternResult<Record> {
         LinkTypes::ThingUpdates,
         (),
     )?;
-    let record = get(updated_thing_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(updated_thing_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly updated Thing"))
     ))?;
     Ok(record)
