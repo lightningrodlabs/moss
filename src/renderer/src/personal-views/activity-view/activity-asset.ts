@@ -293,16 +293,16 @@ export class ActivityAsset extends LitElement {
         font-size: 14px;
       }
 
-      .show-notifications-button:hover,
-      .hide-notifications-button:hover {
-        background: var(--moss-hint-green);
-      }
-
       .hide-notifications-button {
         border-radius: 0;
         background: var(--moss-hint-green);
         color: white;
         padding: 3px 0 0 0;
+      }
+
+      .show-notifications-button:hover,
+      .hide-notifications-button:hover {
+        background: var(--moss-hint-green);
       }
 
       .activity-asset {

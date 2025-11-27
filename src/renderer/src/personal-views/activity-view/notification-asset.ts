@@ -134,7 +134,7 @@ export class NotificationAsset extends LitElement {
   }
 
   private extractAgentKeys(text: string): string[] {
-    const agentKeyRegex = /([A-Za-z0-9_-]{53})/g;
+    const agentKeyRegex = /(uhCAk[A-Za-z0-9_-]{48})/g;
     const agentKeys: string[] = [];
     let match;
     while ((match = agentKeyRegex.exec(text)) !== null) {
@@ -145,16 +145,22 @@ export class NotificationAsset extends LitElement {
 
   private async getAgentName(pubkeyB64: string): Promise<string> {
     try {
-      // console.log('Looking up profile for agent key:', pubkeyB64);
-      const agentPubKey: AgentPubKey = decodeHashFromBase64(pubkeyB64);
+      console.log('Looking up profile for agent key:', pubkeyB64);
+      let agentPubKey: AgentPubKey;
+      try {
+        agentPubKey = decodeHashFromBase64(pubkeyB64);
+      } catch (e) {
+        console.error('Failed to decode agent pub key from base64:', e);
+        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+      }
 
       // Get the group stores for this applet
       const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash));
 
-      // Try to get the profile from any of the groups (we'll use the first one)
+      // Try to get the profile from any of the groups and use the first one
       const groupStores = Array.from(groupStoreMap.values());
       if (groupStores.length === 0) {
-        return pubkeyB64.slice(0, 8); // Fallback to truncated key
+        return pubkeyB64.slice(0, 8) + "..."; // Fallback
       }
 
       const firstGroupStore = groupStores[0];
@@ -166,10 +172,10 @@ export class NotificationAsset extends LitElement {
       }
 
       // console.log('No profile found for agent:', pubkeyB64);
-      return pubkeyB64.slice(0, 8); // Fallback
+      return pubkeyB64.slice(0, 8) + "..."; // Fallback
     } catch (error) {
       // console.error('Failed to get agent name:', error);
-      return pubkeyB64.slice(0, 8); // Fallback
+      return pubkeyB64.slice(0, 8) + "..."; // Fallback
     }
   }
 
