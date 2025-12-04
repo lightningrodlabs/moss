@@ -46,21 +46,25 @@ export class LibraryToolDetails extends LitElement {
     `;
   }
 
-  renderVersion(version, showInstallButton = false, versionBranch?: string, isFirstInList = false, hasMultipleVersions = false) {
-    const versionParts = version.version.split('.');
-    const majorVersion = versionParts[0];
-    const minorVersion = versionParts.length > 1 ? `.${versionParts[1]}` : '';
-    const patchVersion = versionParts.length > 2 ? `.${versionParts[2]}` : '';
+  renderVersion(version, showInstallButton = false, versionBranch?: string, isFirstInList = false, hasMultipleBranches = false) {
 
     return html`<div class="column" style="margin-top: 10px; padding-left: 0; border-left: none;">
       <div class="row" style="justify-content: space-between; align-items: center;">
         <div class="version" style="padding-left: 0; border-left: none;">
-          <span style="font-size: 20px;">v${majorVersion}</span><span style="font-weight: 500;">${minorVersion}${patchVersion}</span>${isFirstInList ? ' (latest)' : ''}
+          v${version.version} ${isFirstInList ? ' (latest)' : ''}
         </div>
-        ${showInstallButton && hasMultipleVersions ? html`
+      </div>
+      <div>
+        Released:
+        <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
+          <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
+        >
+      </div>
+      <div>Change Log: ${version.changelog}</div>
+          ${showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
-            .buttonText=${msg(`Install v${version.version}`)}
+            .buttonText=${msg(`Install v${version.version} to a group space`)}
             @group-selected=${async (e: CustomEvent) => {
           this.dispatchEvent(
             new CustomEvent('install-tool-to-group', {
@@ -75,34 +79,22 @@ export class LibraryToolDetails extends LitElement {
         }}
           ></select-group>
         ` : ''}
-      </div>
-      <div>
-        Released:
-        <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
-          <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
-        >
-      </div>
-      <div>Change Log: ${version.changelog}</div>
     </div>`;
   }
 
-  renderVersionBranch(branchInfo: VersionBranchInfo, isPrimaryBranch = false, hasMultipleVersionsTotal = false, isFirstBranch = false) {
-    // Show install button after first version if:
-    // 1. There are multiple versions total
-    // 2. This is NOT the primary branch (primary branch has install button at top)
-    const showInstallButtonAfterFirst = hasMultipleVersionsTotal && !isPrimaryBranch;
+  renderVersionBranch(branchInfo: VersionBranchInfo, isPrimaryBranch = false, hasMultipleBranches = false, isFirstBranch = false) {
 
     return html`
       ${!isFirstBranch ? html`<div class="version-branch-divider"></div>` : ''}
       ${branchInfo.allVersions.map((version, index) =>
-        this.renderVersion(
-          version,
-          index === 0 && showInstallButtonAfterFirst, // Show install button after first version if conditions met
-          branchInfo.versionBranch,
-          index === 0 && isPrimaryBranch, // isFirstInList - only mark as latest if it's the primary branch and first version
-          hasMultipleVersionsTotal
-        )
-      )}
+      this.renderVersion(
+        version,
+        index === 0 && hasMultipleBranches, // Show install button after first version if there are multiple branches
+        branchInfo.versionBranch,
+        index === 0 && isPrimaryBranch, // isFirstInList - only mark as latest if it's the primary branch and first version
+        hasMultipleBranches
+      )
+    )}
     `;
   }
 
@@ -133,7 +125,7 @@ export class LibraryToolDetails extends LitElement {
 
           const partsA = parseVersionBranch(a.versionBranch);
           const partsB = parseVersionBranch(b.versionBranch);
-          
+
           // Compare parts from left to right
           const maxLen = Math.max(partsA.length, partsB.length);
           for (let i = 0; i < maxLen; i++) {
@@ -143,30 +135,28 @@ export class LibraryToolDetails extends LitElement {
               return valB - valA; // Descending
             }
           }
-          
+
           // If all parts are equal, compare strings
           return b.versionBranch.localeCompare(a.versionBranch);
         });
 
       const primaryBranch = getPrimaryVersionBranch(this.unifiedTool);
-      const totalVersions = branches.reduce((sum, branch) => sum + branch.allVersions.length, 0);
-      const hasMultipleVersions = totalVersions > 1;
+      const hasMultipleBranches = branches.length > 1;
 
       return html`
         <div class="version-list">
           ${branches.map((branch, branchIndex) =>
-        this.renderVersionBranch(branch, branch === primaryBranch, hasMultipleVersions, branchIndex === 0)
+        this.renderVersionBranch(branch, branch === primaryBranch, hasMultipleBranches, branchIndex === 0)
       )}
         </div>
       `;
     } else if (this.tool) {
-      // Fallback to old behavior
+      // Fallback to old behavior - no branches, so no install buttons in list
       const versions = this.tool.toolInfoAndVersions.versions;
-      const hasMultipleVersions = versions.length > 1;
       return html`
         <div class="version-list">
           ${versions.map((version, index) =>
-        this.renderVersion(version, false, undefined, index === 0, hasMultipleVersions)
+        this.renderVersion(version, false, undefined, index === 0, false)
       )}
         </div>
       `;
@@ -198,15 +188,14 @@ export class LibraryToolDetails extends LitElement {
       latestVersion: this.tool!.latestVersion,
     };
 
-    // Calculate total versions for "older versions available" message
-    let totalVersions = 0;
+    // Calculate if there are multiple version branches (major versions) for "older versions available" message
+    let hasMultipleBranches = false;
     if (this.unifiedTool) {
-      totalVersions = Array.from(this.unifiedTool.versionBranches.values())
-        .reduce((sum, branch) => sum + branch.allVersions.length, 0);
+      hasMultipleBranches = this.unifiedTool.versionBranches.size > 1;
     } else if (this.tool) {
-      totalVersions = this.tool.toolInfoAndVersions.versions.length;
+      // For old format, check if there are multiple versions (can't determine branches)
+      hasMultipleBranches = false; // Old format doesn't have branch info, so don't show the message
     }
-    const hasMultipleVersions = totalVersions > 1;
 
     return html` 
       
@@ -269,8 +258,8 @@ export class LibraryToolDetails extends LitElement {
         }}
               ></select-group>
             ` : ''}
-            ${hasMultipleVersions ? html`
-              <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: 8px; text-align: right;">
+            ${hasMultipleBranches ? html`
+              <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: -15px; text-align: right;">
                 older versions available
               </div>
             ` : ''}
@@ -313,7 +302,8 @@ export class LibraryToolDetails extends LitElement {
         margin: 20px 0;
       }
       .version {
-        font-size: 20px;
+        font-size: 16px;
+        font-weight: 600;
       }
     `,
   ];
