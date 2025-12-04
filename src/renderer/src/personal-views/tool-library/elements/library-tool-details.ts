@@ -1,7 +1,8 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { ToolAndCurationInfo } from '../../../types';
+import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../../types';
+import { getPrimaryVersionBranch, extractMajorVersion } from '../../../utils';
 import { mossStyles } from '../../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
@@ -23,7 +24,10 @@ export class LibraryToolDetails extends LitElement {
   timeAgo = new TimeAgo('en-US');
 
   @property()
-  tool: ToolAndCurationInfo | undefined;
+  tool: ToolAndCurationInfo | undefined; // Keep for backward compatibility
+
+  @property()
+  unifiedTool: UnifiedToolEntry | undefined;
 
   @property()
   devCollectives: Record<string, DeveloperCollective> = {};
@@ -32,16 +36,46 @@ export class LibraryToolDetails extends LitElement {
   tabsState: TabsState = TabsState.Overview;
 
   renderOverview() {
+    const tool = this.unifiedTool || (this.tool ? {
+      description: this.tool.toolInfoAndVersions.description,
+    } : null);
     return html`
       <div class="tool-description" style="margin-top:25px;">
-        ${this.tool?.toolInfoAndVersions.description}
+        ${tool?.description || this.tool?.toolInfoAndVersions.description}
       </div>
     `;
   }
 
-  renderVersion(version) {
-    return html`<div class="column" style="margin-top: 10px;">
-      <div class="version">v${version.version}</div>
+  renderVersion(version, showInstallButton = false, versionBranch?: string, isFirstInList = false, hasMultipleVersions = false) {
+    const versionParts = version.version.split('.');
+    const majorVersion = versionParts[0];
+    const minorVersion = versionParts.length > 1 ? `.${versionParts[1]}` : '';
+    const patchVersion = versionParts.length > 2 ? `.${versionParts[2]}` : '';
+
+    return html`<div class="column" style="margin-top: 10px; padding-left: 0; border-left: none;">
+      <div class="row" style="justify-content: space-between; align-items: center;">
+        <div class="version" style="padding-left: 0; border-left: none;">
+          <span style="font-size: 20px;">v${majorVersion}</span><span style="font-weight: 500;">${minorVersion}${patchVersion}</span>${isFirstInList ? ' (latest)' : ''}
+        </div>
+        ${showInstallButton && hasMultipleVersions ? html`
+          <select-group
+            .buttonWidth=${'auto'}
+            .buttonText=${msg(`Install v${version.version}`)}
+            @group-selected=${async (e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('install-tool-to-group', {
+              detail: {
+                unifiedTool: this.unifiedTool,
+                versionBranch: versionBranch,
+                groupDnaHash: e.detail
+              },
+              composed: true,
+            }),
+          );
+        }}
+          ></select-group>
+        ` : ''}
+      </div>
       <div>
         Released:
         <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
@@ -52,12 +86,60 @@ export class LibraryToolDetails extends LitElement {
     </div>`;
   }
 
-  renderVersions() {
+  renderVersionBranch(branchInfo: VersionBranchInfo, isPrimaryBranch = false, hasMultipleVersionsTotal = false, isFirstBranch = false) {
+    // Show install button after first version if:
+    // 1. There are multiple versions total
+    // 2. This is NOT the primary branch (primary branch has install button at top)
+    const showInstallButtonAfterFirst = hasMultipleVersionsTotal && !isPrimaryBranch;
+
     return html`
-      <div class="version-list">
-        ${this.tool?.toolInfoAndVersions.versions.map((version) => this.renderVersion(version))}
-      </div>
+      ${!isFirstBranch ? html`<div class="version-branch-divider"></div>` : ''}
+      ${branchInfo.allVersions.map((version, index) =>
+        this.renderVersion(
+          version,
+          index === 0 && showInstallButtonAfterFirst, // Show install button after first version if conditions met
+          branchInfo.versionBranch,
+          index === 0 && isPrimaryBranch, // isFirstInList - only mark as latest if it's the primary branch and first version
+          hasMultipleVersionsTotal
+        )
+      )}
     `;
+  }
+
+  renderVersions() {
+    if (this.unifiedTool) {
+      // Show version branches grouped by major version
+      const branches = Array.from(this.unifiedTool.versionBranches.values())
+        .sort((a, b) => {
+          const majorA = extractMajorVersion(a.versionBranch);
+          const majorB = extractMajorVersion(b.versionBranch);
+          return majorB - majorA; // Descending
+        });
+
+      const primaryBranch = getPrimaryVersionBranch(this.unifiedTool);
+      const totalVersions = branches.reduce((sum, branch) => sum + branch.allVersions.length, 0);
+      const hasMultipleVersions = totalVersions > 1;
+
+      return html`
+        <div class="version-list">
+          ${branches.map((branch, branchIndex) =>
+        this.renderVersionBranch(branch, branch === primaryBranch, hasMultipleVersions, branchIndex === 0)
+      )}
+        </div>
+      `;
+    } else if (this.tool) {
+      // Fallback to old behavior
+      const versions = this.tool.toolInfoAndVersions.versions;
+      const hasMultipleVersions = versions.length > 1;
+      return html`
+        <div class="version-list">
+          ${versions.map((version, index) =>
+        this.renderVersion(version, false, undefined, index === 0, hasMultipleVersions)
+      )}
+        </div>
+      `;
+    }
+    return html``;
   }
 
   renderContent() {
@@ -70,50 +152,97 @@ export class LibraryToolDetails extends LitElement {
   }
 
   render() {
-    if (this.tool === undefined) {
+    const tool = this.unifiedTool || this.tool;
+    if (!tool) {
       return 'NOTHING';
     }
+
+    const primaryBranch = this.unifiedTool ? getPrimaryVersionBranch(this.unifiedTool) : null;
+    const displayTool = this.unifiedTool || {
+      icon: this.tool!.toolInfoAndVersions.icon,
+      title: this.tool!.toolInfoAndVersions.title,
+      subtitle: this.tool!.toolInfoAndVersions.subtitle,
+      tags: this.tool!.toolInfoAndVersions.tags,
+      latestVersion: this.tool!.latestVersion,
+    };
+
+    // Calculate total versions for "older versions available" message
+    let totalVersions = 0;
+    if (this.unifiedTool) {
+      totalVersions = Array.from(this.unifiedTool.versionBranches.values())
+        .reduce((sum, branch) => sum + branch.allVersions.length, 0);
+    } else if (this.tool) {
+      totalVersions = this.tool.toolInfoAndVersions.versions.length;
+    }
+    const hasMultipleVersions = totalVersions > 1;
+
     return html` 
       
       <div class="column" style="margin-top: 10px;">
         <div class="row" style="justify-content: space-between; align-items: center;">
           <div class="row">
             <img
-              src=${this.tool.toolInfoAndVersions.icon}
-              alt="${this.tool.toolInfoAndVersions.title} tool icon"
+              src=${displayTool.icon}
+              alt="${displayTool.title} tool icon"
               style="height: 64px; width: 64px; border-radius: 16px; margin-right: 15px;"
             />
             <div class="column">
-              ${this.tool.toolInfoAndVersions.subtitle}
-              ${this.tool.toolInfoAndVersions.tags.length > 0
-          ? html`
+              ${displayTool.subtitle}
+              ${displayTool.tags.length > 0
+        ? html`
                     <div class="row tool-tag-list" style="margin-top:6px">
-                      ${this.tool.toolInfoAndVersions.tags.map(
-            (tag) => html`<div class="tool-tag">${tag}</div>`,
-          )}
+                      ${displayTool.tags.map(
+          (tag) => html`<div class="tool-tag">${tag}</div>`,
+        )}
                     </div>
                   `
-          : ''}
+        : ''}
             </div>
           </div>
-          <select-group
-            .buttonWidth=${'auto'}
-            .buttonText=${(() => {
-              if (this.tool?.toolInfoAndVersions.versions && this.tool.toolInfoAndVersions.versions.length > 0) {
-                const version = this.tool.toolInfoAndVersions.versions[0].version;
-                return msg(`Install v${version} to a group space`);
-              }
-              return undefined;
-            })()}
-            @group-selected=${async (e: CustomEvent) => {
-              this.dispatchEvent(
-                new CustomEvent('install-tool-to-group', {
-                  detail: { tool: this.tool, groupDnaHash: e.detail },
-                  composed: true,
-                }),
-              );
-            }}
-          ></select-group>
+          <div class="column" style="align-items: flex-end;">
+            ${primaryBranch ? html`
+              <select-group
+                .buttonWidth=${'auto'}
+                .buttonText=${msg(`Install v${primaryBranch.latestVersion.version} to a group space`)}
+                @group-selected=${async (e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('install-tool-to-group', {
+              detail: {
+                unifiedTool: this.unifiedTool,
+                versionBranch: primaryBranch.versionBranch,
+                groupDnaHash: e.detail
+              },
+              composed: true,
+            }),
+          );
+        }}
+              ></select-group>
+            ` : this.tool ? html`
+              <select-group
+                .buttonWidth=${'auto'}
+                .buttonText=${(() => {
+          if (this.tool?.toolInfoAndVersions.versions && this.tool.toolInfoAndVersions.versions.length > 0) {
+            const version = this.tool.toolInfoAndVersions.versions[0].version;
+            return msg(`Install v${version} to a group space`);
+          }
+          return undefined;
+        })()}
+                @group-selected=${async (e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('install-tool-to-group', {
+              detail: { tool: this.tool, groupDnaHash: e.detail },
+              composed: true,
+            }),
+          );
+        }}
+              ></select-group>
+            ` : ''}
+            ${hasMultipleVersions ? html`
+              <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: 8px; text-align: right;">
+                older versions available
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div class="row items-center tab-bar flex-1" style="margin-top:30px">
           <button
@@ -145,6 +274,14 @@ export class LibraryToolDetails extends LitElement {
     css`
       .version-list {
         margin-top: 25px;
+      }
+      .version-branch-divider {
+        height: 1px;
+        background-color: rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+      }
+      .version {
+        font-size: 20px;
       }
     `,
   ];

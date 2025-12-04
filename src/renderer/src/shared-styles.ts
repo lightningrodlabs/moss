@@ -344,7 +344,6 @@ export const mossStyles = [
 
     .install-button {
       display: flex;
-      height: 32px;
       align-items: center;
       justify-content: center;
       border-radius: 8px;

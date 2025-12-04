@@ -66,6 +66,43 @@ export type ToolInfoAndLatestVersion = {
   distributionInfo: DistributionInfo;
 };
 
+/**
+ * Represents information about a specific version branch of a tool
+ */
+export type VersionBranchInfo = {
+  versionBranch: string;
+  toolCompatibilityId: ToolCompatibilityId;
+  toolInfoAndVersions: ToolInfoAndVersions;
+  latestVersion: ToolVersionInfo;
+  allVersions: ToolVersionInfo[];
+  curationInfos: Array<{
+    info: CuratedTool;
+    curator: ToolCurator;
+  }>;
+};
+
+/**
+ * Represents a unified tool entry that groups all version branches of the same tool
+ * This allows tools with the same toolId but different versionBranch values to appear
+ * as a single entry in the library, while still allowing installation of specific major versions.
+ */
+export type UnifiedToolEntry = {
+  toolId: string;
+  toolListUrl: string;
+  developerCollectiveId: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  tags: string[];
+  curationInfos: Array<{
+    info: CuratedTool;
+    curator: ToolCurator;
+  }>;
+  versionBranches: Map<string, VersionBranchInfo>;
+  deprecation?: string;
+};
+
 export type MossEvent = 'open-asset';
 
 export type MossEventMap = {

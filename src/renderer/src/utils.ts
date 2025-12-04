@@ -29,7 +29,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart, ToolAndCurationInfo } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -52,6 +52,7 @@ import {
 } from '@theweave/utils';
 import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { Md5 } from 'ts-md5';
 
 /**
  * Sorts versions array in descending order (highest version first) by semver.
@@ -66,6 +67,106 @@ export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersion
   );
   // Append invalid versions at the end
   return [...sorted, ...invalidVersions];
+}
+
+/**
+ * Derives a tool's base ID (without version branch)
+ * Used for grouping tools with the same ID but different version branches
+ */
+export function deriveToolBaseId(toolListUrl: string, toolId: string): string {
+  return Md5.hashStr(`${toolListUrl}#${toolId}`);
+}
+
+/**
+ * Extracts major version number from version branch string
+ * "1.x.x" -> 1, "2.x.x" -> 2, "0.1.x" -> 0
+ */
+export function extractMajorVersion(versionBranch: string): number {
+  const match = versionBranch.match(/^(\d+)\./);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Groups ToolAndCurationInfo entries by toolId, creating UnifiedToolEntry objects
+ * This unifies tools with the same toolId but different versionBranch values
+ */
+export function groupToolsByBaseId(
+  tools: Record<ToolCompatibilityId, ToolAndCurationInfo>,
+): Map<string, UnifiedToolEntry> {
+  const grouped = new Map<string, UnifiedToolEntry>();
+
+  for (const tool of Object.values(tools)) {
+    const baseId = deriveToolBaseId(tool.toolListUrl, tool.toolInfoAndVersions.id);
+
+    let unifiedEntry = grouped.get(baseId);
+    if (!unifiedEntry) {
+      // Create new unified entry
+      unifiedEntry = {
+        toolId: tool.toolInfoAndVersions.id,
+        toolListUrl: tool.toolListUrl,
+        developerCollectiveId: tool.developerCollectiveId,
+        title: tool.toolInfoAndVersions.title,
+        subtitle: tool.toolInfoAndVersions.subtitle,
+        description: tool.toolInfoAndVersions.description,
+        icon: tool.toolInfoAndVersions.icon,
+        tags: tool.toolInfoAndVersions.tags,
+        curationInfos: [...tool.curationInfos],
+        versionBranches: new Map(),
+        deprecation: tool.toolInfoAndVersions.deprecation,
+      };
+      grouped.set(baseId, unifiedEntry);
+    } else {
+      // Merge curation info
+      unifiedEntry.curationInfos.push(...tool.curationInfos);
+
+      // Update metadata if this version branch is newer (use latest version branch's metadata)
+      // Prefer non-deprecated branches
+      if (!unifiedEntry.deprecation && tool.toolInfoAndVersions.deprecation) {
+        unifiedEntry.deprecation = tool.toolInfoAndVersions.deprecation;
+      }
+    }
+
+    // Add version branch info
+    unifiedEntry.versionBranches.set(tool.toolInfoAndVersions.versionBranch, {
+      versionBranch: tool.toolInfoAndVersions.versionBranch,
+      toolCompatibilityId: tool.toolCompatibilityId,
+      toolInfoAndVersions: tool.toolInfoAndVersions,
+      latestVersion: tool.latestVersion,
+      allVersions: tool.toolInfoAndVersions.versions,
+      curationInfos: tool.curationInfos,
+    });
+  }
+
+  return grouped;
+}
+
+/**
+ * Gets the primary version branch (for display purposes)
+ * Strategy: prefer non-deprecated, then highest semver major version
+ */
+export function getPrimaryVersionBranch(
+  unifiedEntry: UnifiedToolEntry,
+): VersionBranchInfo | undefined {
+  const branches = Array.from(unifiedEntry.versionBranches.values());
+
+  // Filter out deprecated branches
+  const nonDeprecated = branches.filter(
+    (branch) => !branch.toolInfoAndVersions.deprecation,
+  );
+
+  const candidates = nonDeprecated.length > 0 ? nonDeprecated : branches;
+
+  if (candidates.length === 0) return undefined;
+
+  // Sort by version branch (e.g., "2.x.x" > "1.x.x" > "0.1.x")
+  // Extract major version number for comparison
+  candidates.sort((a, b) => {
+    const majorA = extractMajorVersion(a.versionBranch);
+    const majorB = extractMajorVersion(b.versionBranch);
+    return majorB - majorA; // Descending
+  });
+
+  return candidates[0];
 }
 
 export function iframeOrigin(iframeKind: IframeKind): string {
