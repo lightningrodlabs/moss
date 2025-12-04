@@ -55,16 +55,89 @@ import { compareVersions, validate as validateSemver } from 'compare-versions';
 import { Md5 } from 'ts-md5';
 
 /**
+ * Custom comparison for pre-release identifiers
+ * "rc" is considered later than "dev"
+ */
+function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: string | null): number {
+  if (!prereleaseA && !prereleaseB) return 0;
+  if (!prereleaseA) return 1; // No prerelease is later
+  if (!prereleaseB) return -1; // No prerelease is later
+  
+  // Extract the identifier part (e.g., "rc.1" -> "rc", "dev.3" -> "dev")
+  const getIdentifier = (pr: string): string => {
+    const match = pr.match(/^([a-zA-Z]+)/);
+    return match ? match[1].toLowerCase() : '';
+  };
+  
+  const idA = getIdentifier(prereleaseA);
+  const idB = getIdentifier(prereleaseB);
+  
+  // "rc" is later than "dev"
+  if (idA === 'rc' && idB === 'dev') return 1;
+  if (idA === 'dev' && idB === 'rc') return -1;
+  
+  // For same identifier type, compare properly handling numeric parts
+  // Split by dots and compare each part
+  const partsA = prereleaseA.split('.');
+  const partsB = prereleaseB.split('.');
+  const maxLen = Math.max(partsA.length, partsB.length);
+  
+  for (let i = 0; i < maxLen; i++) {
+    const partA = partsA[i] || '';
+    const partB = partsB[i] || '';
+    
+    // Try to parse as numbers
+    const numA = parseInt(partA, 10);
+    const numB = parseInt(partB, 10);
+    
+    if (!isNaN(numA) && !isNaN(numB)) {
+      // Both are numbers, compare numerically
+      if (numB !== numA) return numB - numA; // Descending
+    } else {
+      // At least one is not a number, compare lexicographically
+      const cmp = partB.localeCompare(partA);
+      if (cmp !== 0) return cmp;
+    }
+  }
+  
+  return 0;
+}
+
+/**
  * Sorts versions array in descending order (highest version first) by semver.
+ * Handles pre-release identifiers with custom logic: "rc" is later than "dev".
  * Filters out invalid semver versions before sorting.
  * This is an internal utility function, not part of the published @theweave/utils package.
  */
 export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
   const validVersions = versions.filter((version) => validateSemver(version.version));
   const invalidVersions = versions.filter((version) => !validateSemver(version.version));
-  const sorted = validVersions.sort((version_a, version_b) =>
-    compareVersions(version_b.version, version_a.version),
-  );
+  
+  const sorted = validVersions.sort((version_a, version_b) => {
+    const vA = version_a.version;
+    const vB = version_b.version;
+    
+    // First compare the main version parts (without prerelease)
+    const mainCompare = compareVersions(
+      vB.split('-')[0], 
+      vA.split('-')[0]
+    );
+    
+    if (mainCompare !== 0) {
+      return mainCompare;
+    }
+    
+    // If main versions are equal, compare prerelease identifiers
+    const prereleaseA = vA.includes('-') ? vA.split('-').slice(1).join('-') : null;
+    const prereleaseB = vB.includes('-') ? vB.split('-').slice(1).join('-') : null;
+    
+    if (!prereleaseA && !prereleaseB) return 0;
+    if (!prereleaseA) return 1; // No prerelease is later than prerelease
+    if (!prereleaseB) return -1; // Prerelease is earlier than no prerelease
+    
+    return comparePreReleaseIdentifiers(prereleaseA, prereleaseB);
+  });
+  
   // Append invalid versions at the end
   return [...sorted, ...invalidVersions];
 }

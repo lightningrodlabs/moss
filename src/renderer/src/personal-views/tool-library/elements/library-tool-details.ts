@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../../types';
-import { getPrimaryVersionBranch, extractMajorVersion } from '../../../utils';
+import { getPrimaryVersionBranch } from '../../../utils';
 import { mossStyles } from '../../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
@@ -109,11 +109,43 @@ export class LibraryToolDetails extends LitElement {
   renderVersions() {
     if (this.unifiedTool) {
       // Show version branches grouped by major version
+      // Sort by comparing versionBranch strings properly:
+      // - Extract numeric parts and compare
+      // - Handle formats like "1.x.x", "0.1.x", "0.0.1"
       const branches = Array.from(this.unifiedTool.versionBranches.values())
         .sort((a, b) => {
-          const majorA = extractMajorVersion(a.versionBranch);
-          const majorB = extractMajorVersion(b.versionBranch);
-          return majorB - majorA; // Descending
+          // Parse versionBranch strings to compare properly
+          const parseVersionBranch = (vb: string): number[] => {
+            // Handle formats: "1.x.x", "0.1.x", "0.0.1"
+            const parts = vb.split('.');
+            const nums: number[] = [];
+            for (const part of parts) {
+              if (part === 'x') break; // Stop at first 'x'
+              const num = parseInt(part, 10);
+              if (!isNaN(num)) {
+                nums.push(num);
+              } else {
+                break;
+              }
+            }
+            return nums;
+          };
+
+          const partsA = parseVersionBranch(a.versionBranch);
+          const partsB = parseVersionBranch(b.versionBranch);
+          
+          // Compare parts from left to right
+          const maxLen = Math.max(partsA.length, partsB.length);
+          for (let i = 0; i < maxLen; i++) {
+            const valA = partsA[i] ?? 0;
+            const valB = partsB[i] ?? 0;
+            if (valB !== valA) {
+              return valB - valA; // Descending
+            }
+          }
+          
+          // If all parts are equal, compare strings
+          return b.versionBranch.localeCompare(a.versionBranch);
         });
 
       const primaryBranch = getPrimaryVersionBranch(this.unifiedTool);
