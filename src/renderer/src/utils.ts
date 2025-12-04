@@ -50,7 +50,23 @@ import {
   toLowerCaseB64,
   toOriginalCaseB64
 } from '@theweave/utils';
-import { DeveloperCollective, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
+
+/**
+ * Sorts versions array in descending order (highest version first) by semver.
+ * Filters out invalid semver versions before sorting.
+ * This is an internal utility function, not part of the published @theweave/utils package.
+ */
+export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
+  const validVersions = versions.filter((version) => validateSemver(version.version));
+  const invalidVersions = versions.filter((version) => !validateSemver(version.version));
+  const sorted = validVersions.sort((version_a, version_b) =>
+    compareVersions(version_b.version, version_a.version),
+  );
+  // Append invalid versions at the end
+  return [...sorted, ...invalidVersions];
+}
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -953,17 +969,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             ? `file://${toolConfig.icon.path}`
             : toolConfig.icon.url,
         versions: [
-          {
-            version: '0.1.1',
-            url: toolUrl,
-            changelog: 'New thing. Just an example changelog.',
-            releasedAt: Date.now(),
-            hashes: {
-              webhappSha256: '###DEVCONFIG###',
-              happSha256: '###DEVCONFIG###',
-              uiSha256: '###DEVCONFIG###',
-            },
-          },
+          // Intentionally put in wrong order (0.1.0 before 0.1.1) to test sorting
           {
             version: '0.1.0',
             url: toolUrl,
@@ -975,12 +981,23 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
               uiSha256: '###DEVCONFIG###',
             },
           },
+          {
+            version: '0.1.1',
+            url: toolUrl,
+            changelog: 'New thing. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
         ],
       },
       latestVersion: {
-        version: '0.1.0',
+        version: '0.1.1',
         url: toolUrl,
-        changelog: 'Same same. Just an example changelog.',
+        changelog: 'New thing. Just an example changelog.',
         releasedAt: Date.now(),
         hashes: {
           webhappSha256: '###DEVCONFIG###',
@@ -989,6 +1006,10 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         },
       },
     };
+    // Sort versions in descending order (highest first) - this will fix the intentionally wrong order
+    toolAndCurationInfo.toolInfoAndVersions.versions = sortVersionsDescending(
+      toolAndCurationInfo.toolInfoAndVersions.versions,
+    );
     // counter += 1;
     return toolAndCurationInfo;
   });

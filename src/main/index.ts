@@ -92,6 +92,7 @@ import {
   toolCompatibilityIdFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
+import { sortVersionsDescending } from './utils';
 import { Jimp } from 'jimp';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -1686,6 +1687,8 @@ if (!RUNNING_WITH_COMMAND) {
                   tool.versionBranch === distributionInfo.info.versionBranch,
               );
               if (!toolInfo) throw new Error('Tool not found in fetched Tool list.');
+              // Sort versions in descending order (highest first)
+              toolInfo.versions = sortVersionsDescending(toolInfo.versions);
               const iconUrl = new URL(toolInfo.icon); // Validate that it's a proper URL
               // Try to fetch the icon 3 times in case it fails due to
               const base64Icon = await retryNTimes(

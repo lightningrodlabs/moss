@@ -1,7 +1,8 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { validate as validateSemver } from 'compare-versions';
+import { sortVersionsDescending } from '../../utils.js';
 import {
   DeveloperCollective,
   DeveloperCollectiveToolList,
@@ -181,9 +182,10 @@ export class ToolLibraryWeb2 extends LitElement {
             tool.id === curatedTool.toolId && tool.versionBranch === curatedTool.versionBranch,
         );
         if (!relevantTool) return;
+        // Sort versions in descending order (highest first)
+        relevantTool.versions = sortVersionsDescending(relevantTool.versions);
         const latestVersion = relevantTool.versions
-          .filter((version) => validateSemver(version.version))
-          .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
+          .filter((version) => validateSemver(version.version))[0];
         if (!latestVersion) return;
         const toolCompatibilityId = deriveToolCompatibilityId({
           toolListUrl: curatedTool.toolListUrl,

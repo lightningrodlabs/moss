@@ -111,6 +111,7 @@ import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { sortVersionsDescending } from './utils.js';
 import { IframeStore } from './iframe-store.js';
 
 export type SearchStatus = 'complete' | 'loading';
@@ -784,7 +785,11 @@ export class MossStore {
       const toolInfo = toolList.tools.find(
         (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
       );
-      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      if (toolInfo) {
+        // Sort versions in descending order (highest first)
+        toolInfo.versions = sortVersionsDescending(toolInfo.versions);
+        this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      }
       return toolInfo;
     } catch (e) {
       throw new Error(`Failed to fetch or parse Tool info: ${e}`);
