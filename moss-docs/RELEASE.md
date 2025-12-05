@@ -31,10 +31,10 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 5. Follow the release process from the [Release](#release) section above.
 
 
-## Update to a new version of group happ (WIP)
+## Update to a new version of group happ
 
-Create draft release for group-happ.
-Use publish-happ workflow.
+Trigger `publish-happ` workflow. It will create the release draft automatically and use the version number from `package.json`.
+Get the sha256 hash of the happ bundle and paste it into the `moss.config.json` file.
 
 
 ## Releasing NPM packages

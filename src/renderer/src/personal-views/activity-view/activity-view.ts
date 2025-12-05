@@ -251,53 +251,55 @@ export class ActivityView extends LitElement {
 
   getButtonStyle(method) {
     return this.sortMethod1 === method
-      ? 'background-color: #44b134; color: #000'
-      : 'background-color: #193423; color: #fff';
+      ? 'background-color: var(--moss-medium-green); color: #000'
+      : 'background-color: var(--moss-dark-green); color: #fff';
   }
 
   render() {
-    const combinedNotifications = this.combineNotifications(this._notificationFeed.value);
+    const notifications = this._notificationFeed.value ?? [];
+    const combinedNotifications = this.combineNotifications(notifications);
     const sortedNotifications = this.sortNotifications(combinedNotifications);
-    const filteredIndividualNotifications = this.filterIndividualNotifications(
-      this._notificationFeed.value,
-    );
+    const filteredIndividualNotifications = this.filterIndividualNotifications(notifications);
     const displayShowMoreButton =
       filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
     return html`
-      <div class="row">
+      <div class="row" style="z-index: 1">
         <div class="column feed">
           <div class="sort-buttons">
             <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-              Activity currents
+              Activity Currents
             </div>
             <button
               @click=${() => (this.sortMethod1 = 'popular')}
               style=${this.getButtonStyle('popular')}
+              title="View assets sorted by number of people involved"
             >
               Popular
             </button>
             <button
               @click=${() => (this.sortMethod1 = 'active')}
               style=${this.getButtonStyle('active')}
+              title="View assets sorted by most activity"
             >
               Active
             </button>
             <button
               @click=${() => (this.sortMethod1 = 'latest')}
               style=${this.getButtonStyle('latest')}
+              title="View assets sorted by most recent"
             >
               Latest
             </button>
             <select
               class="time-select"
               @change=${(e) => {
-                // By default, notifications 1 week back should already be loaded
-                if (this.lookBackString1 === 'month') {
-                  this._mossStore.loadNotificationFeed(30);
-                }
-                this.lookBackString1 = e.target.value;
-              }}
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString1 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString1 = e.target.value;
+      }}
               .value=${this.lookBackString1 || 'day'}
             >
               <option value="minute">Last minute</option>
@@ -311,48 +313,49 @@ export class ActivityView extends LitElement {
           </div>
           <div style="overflow-y: auto; padding-bottom: 15px;">
             ${sortedNotifications.length === 0
-              ? html`
+        ? html`
                   <div
-                    style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your activity will appear here
                   </div>
                 `
-              : sortedNotifications.map((aboutWal) => {
-                  const notifications = combinedNotifications[aboutWal].notifications;
-                  const appletHash: AppletHash = appletHashFromAppId(
-                    appIdFromAppletId(combinedNotifications[aboutWal].appletId),
-                  );
-                  return html`
+        : sortedNotifications.map((aboutWal) => {
+          const notifications = combinedNotifications[aboutWal].notifications;
+          const appletHash: AppletHash = appletHashFromAppId(
+            appIdFromAppletId(combinedNotifications[aboutWal].appletId),
+          );
+          return html`
                     <activity-asset
                       @open-wal=${async (e) => {
-                        this.dispatchEvent(
-                          new CustomEvent('open-wal', {
-                            detail: e.detail,
-                            bubbles: true,
-                            composed: true,
-                          }),
-                        );
-                      }}
+              this.dispatchEvent(
+                new CustomEvent('open-wal', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                       .notifications=${notifications}
                       .wal=${aboutWal}
                       .appletHash=${appletHash}
                     ></activity-asset>
                   `;
-                })}
+        })}
           </div>
         </div>
         <div class="column feed">
           <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-            All notifications
+            Notifications Pool
           </div>
           <div class="sort-buttons">
             <button
               @click=${() => (this.sortMethod2 = 'high')}
               class="sort-button"
               style=${this.sortMethod2 === 'high'
-                ? 'background-color: #44b134; color: #000'
-                : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show high urgency notifications only"
             >
               High
             </button>
@@ -360,8 +363,9 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'medium')}
               class="sort-button"
               style=${this.sortMethod2 === 'medium'
-                ? 'background-color: #44b134; color: #000'
-                : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show medium urgency notifications only"
             >
               Medium
             </button>
@@ -369,20 +373,21 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'low')}
               class="sort-button"
               style=${this.sortMethod2 === 'low'
-                ? 'background-color: #44b134; color: #000'
-                : 'background-color: #193423; color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show low urgency notifications only"
             >
               Low
             </button>
             <select
               class="time-select"
               @change=${(e) => {
-                // By default, notifications 1 week back should already be loaded
-                if (this.lookBackString2 === 'month') {
-                  this._mossStore.loadNotificationFeed(30);
-                }
-                this.lookBackString2 = e.target.value;
-              }}
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString2 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString2 = e.target.value;
+      }}
               .value=${this.lookBackString2 || 'day'}
             >
               <option value="minute">Last minute</option>
@@ -396,44 +401,44 @@ export class ActivityView extends LitElement {
           </div>
           <div class="column" style="overflow-y: auto; padding-bottom: 80px;">
             ${filteredIndividualNotifications.length === 0
-              ? html`
+        ? html`
                   <div
-                    style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your notifications will appear here
                   </div>
                 `
-              : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
-                  (notification) => html`
+        : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
+          (notification) => html`
                     <notification-asset
                       style="display: flex; flex: 1;"
                       .notification=${notification.notification}
                       .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
                       @open-applet-main=${(e) => {
-                        console.log('notification clicked', e.detail);
-                        this.dispatchEvent(
-                          new CustomEvent('open-applet-main', {
-                            detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-                            bubbles: true,
-                            composed: true,
-                          }),
-                        );
-                      }}
+              console.log('notification clicked', e.detail);
+              this.dispatchEvent(
+                new CustomEvent('open-applet-main', {
+                  detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                     ></notification-asset>
                   `,
-                )}
+        )}
             ${displayShowMoreButton
-              ? html`<div class="row" style="justify-content: center;">
+        ? html`<div class="row" style="justify-content: center;">
                   <button
                     @click=${() => {
-                      this.maxNumShownNotifications += 50;
-                    }}
+            this.maxNumShownNotifications += 50;
+          }}
                     style="margin-top: 20px; with: 80px;"
                   >
                     Show More
                   </button>
                 </div>`
-              : html``}
+        : html``}
           </div>
         </div>
       </div>
@@ -442,6 +447,10 @@ export class ActivityView extends LitElement {
 
   static styles = [
     css`
+      :host {
+        background: var(--moss-grey-green);
+        border-radius: 10px;
+      }
       .feed {
         padding: 30px;
       }
@@ -457,10 +466,10 @@ export class ActivityView extends LitElement {
         cursor: pointer;
       }
       .sort-buttons button:hover {
-        background-color: #53d43f;
+        background-color: var(--moss-hint-green);
       }
       .time-select {
-        background-color: #193423;
+        background-color: var(--moss-dark-green);
         color: #fff;
         border: none;
         padding: 5px 10px;

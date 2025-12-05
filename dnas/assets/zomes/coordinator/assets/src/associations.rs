@@ -45,7 +45,7 @@ pub fn remove_tags_from_asset(input: ZomeFnInput<TagsToAssetInput>) -> ExternRes
         match std::str::from_utf8(&link.tag.0) {
             Ok(tag) => {
                 if input.input.tags.contains(&tag.to_string()) {
-                    delete_link(link.create_link_hash, GetOptions::default())?;
+                    delete_link(link.create_link_hash, GetOptions::local())?;
                 }
             }
             Err(e) => {
@@ -60,7 +60,7 @@ pub fn remove_tags_from_asset(input: ZomeFnInput<TagsToAssetInput>) -> ExternRes
         let links = get_links(LinkQuery::try_new(tag_entry_hash, LinkTypes::AssociationTagToWals)?, input.get_strategy())?;
         for link in links {
             if link.target.clone().into_hash() == wal_hash.clone().into() {
-                delete_link(link.create_link_hash, GetOptions::default())?;
+                delete_link(link.create_link_hash, GetOptions::local())?;
             }
         }
     }

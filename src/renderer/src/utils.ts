@@ -29,7 +29,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart, ToolAndCurationInfo } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -50,7 +50,197 @@ import {
   toLowerCaseB64,
   toOriginalCaseB64
 } from '@theweave/utils';
-import { DeveloperCollective, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { Md5 } from 'ts-md5';
+
+/**
+ * Custom comparison for pre-release identifiers
+ * "rc" is considered later than "dev"
+ */
+function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: string | null): number {
+  if (!prereleaseA && !prereleaseB) return 0;
+  if (!prereleaseA) return 1; // No prerelease is later
+  if (!prereleaseB) return -1; // No prerelease is later
+  
+  // Extract the identifier part (e.g., "rc.1" -> "rc", "dev.3" -> "dev")
+  const getIdentifier = (pr: string): string => {
+    const match = pr.match(/^([a-zA-Z]+)/);
+    return match ? match[1].toLowerCase() : '';
+  };
+  
+  const idA = getIdentifier(prereleaseA);
+  const idB = getIdentifier(prereleaseB);
+  
+  // "rc" is later than "dev"
+  if (idA === 'rc' && idB === 'dev') return 1;
+  if (idA === 'dev' && idB === 'rc') return -1;
+  
+  // For same identifier type, compare properly handling numeric parts
+  // Split by dots and compare each part
+  const partsA = prereleaseA.split('.');
+  const partsB = prereleaseB.split('.');
+  const maxLen = Math.max(partsA.length, partsB.length);
+  
+  for (let i = 0; i < maxLen; i++) {
+    const partA = partsA[i] || '';
+    const partB = partsB[i] || '';
+    
+    // Try to parse as numbers
+    const numA = parseInt(partA, 10);
+    const numB = parseInt(partB, 10);
+    
+    if (!isNaN(numA) && !isNaN(numB)) {
+      // Both are numbers, compare numerically
+      if (numB !== numA) return numB - numA; // Descending
+    } else {
+      // At least one is not a number, compare lexicographically
+      const cmp = partB.localeCompare(partA);
+      if (cmp !== 0) return cmp;
+    }
+  }
+  
+  return 0;
+}
+
+/**
+ * Sorts versions array in descending order (highest version first) by semver.
+ * Handles pre-release identifiers with custom logic: "rc" is later than "dev".
+ * Filters out invalid semver versions before sorting.
+ * This is an internal utility function, not part of the published @theweave/utils package.
+ */
+export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
+  const validVersions = versions.filter((version) => validateSemver(version.version));
+  const invalidVersions = versions.filter((version) => !validateSemver(version.version));
+  
+  const sorted = validVersions.sort((version_a, version_b) => {
+    const vA = version_a.version;
+    const vB = version_b.version;
+    
+    // First compare the main version parts (without prerelease)
+    const mainCompare = compareVersions(
+      vB.split('-')[0], 
+      vA.split('-')[0]
+    );
+    
+    if (mainCompare !== 0) {
+      return mainCompare;
+    }
+    
+    // If main versions are equal, compare prerelease identifiers
+    const prereleaseA = vA.includes('-') ? vA.split('-').slice(1).join('-') : null;
+    const prereleaseB = vB.includes('-') ? vB.split('-').slice(1).join('-') : null;
+    
+    if (!prereleaseA && !prereleaseB) return 0;
+    if (!prereleaseA) return 1; // No prerelease is later than prerelease
+    if (!prereleaseB) return -1; // Prerelease is earlier than no prerelease
+    
+    return comparePreReleaseIdentifiers(prereleaseA, prereleaseB);
+  });
+  
+  // Append invalid versions at the end
+  return [...sorted, ...invalidVersions];
+}
+
+/**
+ * Derives a tool's base ID (without version branch)
+ * Used for grouping tools with the same ID but different version branches
+ */
+export function deriveToolBaseId(toolListUrl: string, toolId: string): string {
+  return Md5.hashStr(`${toolListUrl}#${toolId}`);
+}
+
+/**
+ * Extracts major version number from version branch string
+ * "1.x.x" -> 1, "2.x.x" -> 2, "0.1.x" -> 0
+ */
+export function extractMajorVersion(versionBranch: string): number {
+  const match = versionBranch.match(/^(\d+)\./);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Groups ToolAndCurationInfo entries by toolId, creating UnifiedToolEntry objects
+ * This unifies tools with the same toolId but different versionBranch values
+ */
+export function groupToolsByBaseId(
+  tools: Record<ToolCompatibilityId, ToolAndCurationInfo>,
+): Map<string, UnifiedToolEntry> {
+  const grouped = new Map<string, UnifiedToolEntry>();
+
+  for (const tool of Object.values(tools)) {
+    const baseId = deriveToolBaseId(tool.toolListUrl, tool.toolInfoAndVersions.id);
+
+    let unifiedEntry = grouped.get(baseId);
+    if (!unifiedEntry) {
+      // Create new unified entry
+      unifiedEntry = {
+        toolId: tool.toolInfoAndVersions.id,
+        toolListUrl: tool.toolListUrl,
+        developerCollectiveId: tool.developerCollectiveId,
+        title: tool.toolInfoAndVersions.title,
+        subtitle: tool.toolInfoAndVersions.subtitle,
+        description: tool.toolInfoAndVersions.description,
+        icon: tool.toolInfoAndVersions.icon,
+        tags: tool.toolInfoAndVersions.tags,
+        curationInfos: [...tool.curationInfos],
+        versionBranches: new Map(),
+        deprecation: tool.toolInfoAndVersions.deprecation,
+      };
+      grouped.set(baseId, unifiedEntry);
+    } else {
+      // Merge curation info
+      unifiedEntry.curationInfos.push(...tool.curationInfos);
+
+      // Update metadata if this version branch is newer (use latest version branch's metadata)
+      // Prefer non-deprecated branches
+      if (!unifiedEntry.deprecation && tool.toolInfoAndVersions.deprecation) {
+        unifiedEntry.deprecation = tool.toolInfoAndVersions.deprecation;
+      }
+    }
+
+    // Add version branch info
+    unifiedEntry.versionBranches.set(tool.toolInfoAndVersions.versionBranch, {
+      versionBranch: tool.toolInfoAndVersions.versionBranch,
+      toolCompatibilityId: tool.toolCompatibilityId,
+      toolInfoAndVersions: tool.toolInfoAndVersions,
+      latestVersion: tool.latestVersion,
+      allVersions: tool.toolInfoAndVersions.versions,
+      curationInfos: tool.curationInfos,
+    });
+  }
+
+  return grouped;
+}
+
+/**
+ * Gets the primary version branch (for display purposes)
+ * Strategy: prefer non-deprecated, then highest semver major version
+ */
+export function getPrimaryVersionBranch(
+  unifiedEntry: UnifiedToolEntry,
+): VersionBranchInfo | undefined {
+  const branches = Array.from(unifiedEntry.versionBranches.values());
+
+  // Filter out deprecated branches
+  const nonDeprecated = branches.filter(
+    (branch) => !branch.toolInfoAndVersions.deprecation,
+  );
+
+  const candidates = nonDeprecated.length > 0 ? nonDeprecated : branches;
+
+  if (candidates.length === 0) return undefined;
+
+  // Sort by version branch (e.g., "2.x.x" > "1.x.x" > "0.1.x")
+  // Extract major version number for comparison
+  candidates.sort((a, b) => {
+    const majorA = extractMajorVersion(a.versionBranch);
+    const majorB = extractMajorVersion(b.versionBranch);
+    return majorB - majorA; // Descending
+  });
+
+  return candidates[0];
+}
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -953,17 +1143,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
             ? `file://${toolConfig.icon.path}`
             : toolConfig.icon.url,
         versions: [
-          {
-            version: '0.1.1',
-            url: toolUrl,
-            changelog: 'New thing. Just an example changelog.',
-            releasedAt: Date.now(),
-            hashes: {
-              webhappSha256: '###DEVCONFIG###',
-              happSha256: '###DEVCONFIG###',
-              uiSha256: '###DEVCONFIG###',
-            },
-          },
+          // Intentionally put in wrong order (0.1.0 before 0.1.1) to test sorting
           {
             version: '0.1.0',
             url: toolUrl,
@@ -975,12 +1155,23 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
               uiSha256: '###DEVCONFIG###',
             },
           },
+          {
+            version: '0.1.1',
+            url: toolUrl,
+            changelog: 'New thing. Just an example changelog.',
+            releasedAt: Date.now(),
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
         ],
       },
       latestVersion: {
-        version: '0.1.0',
+        version: '0.1.1',
         url: toolUrl,
-        changelog: 'Same same. Just an example changelog.',
+        changelog: 'New thing. Just an example changelog.',
         releasedAt: Date.now(),
         hashes: {
           webhappSha256: '###DEVCONFIG###',
@@ -989,6 +1180,10 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         },
       },
     };
+    // Sort versions in descending order (highest first) - this will fix the intentionally wrong order
+    toolAndCurationInfo.toolInfoAndVersions.versions = sortVersionsDescending(
+      toolAndCurationInfo.toolInfoAndVersions.versions,
+    );
     // counter += 1;
     return toolAndCurationInfo;
   });

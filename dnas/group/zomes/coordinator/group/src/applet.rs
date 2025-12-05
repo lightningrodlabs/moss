@@ -77,7 +77,7 @@ fn abandon_applet(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
             // delete link and create abandoned link
             // TODO reconsider whether this link should really be deleted as it contains information
             // to resolve the public keys of other people in the group
-            delete_link(link.create_link_hash, GetOptions::default())?;
+            delete_link(link.create_link_hash, GetOptions::local())?;
             create_link(
                 applet_hash.input.clone(),
                 my_pubkey.clone(),
@@ -105,7 +105,7 @@ fn archive_applet(applet_hash: ZomeFnInput<EntryHash>) -> ExternResult<()> {
     for link in links {
         if let Some(target_applet_hash) = link.target.into_entry_hash() {
             if target_applet_hash.eq(&applet_hash.input) {
-                delete_link(link.create_link_hash, GetOptions::default())?;
+                delete_link(link.create_link_hash, GetOptions::local())?;
             }
         }
     }

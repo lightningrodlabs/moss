@@ -6,7 +6,7 @@ use crate::get_latest_record_from_links;
 #[hdk_extern]
 pub fn set_group_profile(group_profile: GroupProfile) -> ExternResult<Record> {
     let group_profile_hash = create_entry(&EntryTypes::GroupProfile(group_profile.clone()))?;
-    let record = get(group_profile_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(group_profile_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest("Could not find the newly created GroupProfile".to_string())
     ))?;
     let path = Path::from("all_group_profiles");

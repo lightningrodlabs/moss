@@ -111,6 +111,7 @@ import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { sortVersionsDescending } from './utils.js';
 import { IframeStore } from './iframe-store.js';
 
 export type SearchStatus = 'complete' | 'loading';
@@ -784,7 +785,11 @@ export class MossStore {
       const toolInfo = toolList.tools.find(
         (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
       );
-      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      if (toolInfo) {
+        // Sort versions in descending order (highest first)
+        toolInfo.versions = sortVersionsDescending(toolInfo.versions);
+        this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      }
       return toolInfo;
     } catch (e) {
       throw new Error(`Failed to fetch or parse Tool info: ${e}`);
@@ -954,9 +959,9 @@ export class MossStore {
       const groupProfile = await toPromise(groupStore.groupProfile);
       const groupProfilePartial: GroupProfilePartial | undefined = groupProfile
         ? {
-            name: groupProfile?.name,
-            icon_src: groupProfile?.icon_src,
-          }
+          name: groupProfile?.name,
+          icon_src: groupProfile?.icon_src,
+        }
         : undefined;
       if (groupProfilePartial)
         storeGroupProfile(encodeHashToBase64(groupDnaHash), groupProfilePartial);
@@ -1154,19 +1159,19 @@ export class MossStore {
         appHashes =
           toolConfig.source.type === 'localhost'
             ? {
-                type: 'happ',
-                sha256: '###DEVCONFIG###',
-              }
+              type: 'happ',
+              sha256: '###DEVCONFIG###',
+            }
             : {
-                type: 'webhapp',
+              type: 'webhapp',
+              sha256: '###DEVCONFIG###',
+              happ: {
                 sha256: '###DEVCONFIG###',
-                happ: {
-                  sha256: '###DEVCONFIG###',
-                },
-                ui: {
-                  sha256: '###DEVCONFIG###',
-                },
-              };
+              },
+              ui: {
+                sha256: '###DEVCONFIG###',
+              },
+            };
 
         const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
         if (uiPortString) {
@@ -1178,7 +1183,7 @@ export class MossStore {
         const toolList: DeveloperCollectiveToolList = await resp.json();
 
         // take all apps and add them to the list of all apps
-        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId);
+        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId && tool.versionBranch == distributionInfo.info.versionBranch);
         if (!toolInfo) throw new Error('No tool info found in developer collective.');
         // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
         const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
@@ -1581,24 +1586,24 @@ export class MossStore {
     return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
       location
         ? pipe(
-            this.appletStores.get(location.dnaLocation.appletHash),
-            (appletStore) => appletStore!.host,
-            (host) =>
-              lazyLoad(() =>
-                host
-                  ? host.getAppletAssetInfo(
-                      wal,
-                      location.entryDefLocation
-                        ? {
-                            roleName: location.dnaLocation.roleName,
-                            integrityZomeName: location.entryDefLocation.integrity_zome,
-                            entryType: location.entryDefLocation.entry_def,
-                          }
-                        : undefined,
-                    )
-                  : Promise.resolve(undefined),
-              ),
-          )
+          this.appletStores.get(location.dnaLocation.appletHash),
+          (appletStore) => appletStore!.host,
+          (host) =>
+            lazyLoad(() =>
+              host
+                ? host.getAppletAssetInfo(
+                  wal,
+                  location.entryDefLocation
+                    ? {
+                      roleName: location.dnaLocation.roleName,
+                      integrityZomeName: location.entryDefLocation.integrity_zome,
+                      entryType: location.entryDefLocation.entry_def,
+                    }
+                    : undefined,
+                )
+                : Promise.resolve(undefined),
+            ),
+        )
         : completed(undefined),
     );
   });

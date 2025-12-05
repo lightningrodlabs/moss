@@ -12,9 +12,10 @@ import {
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
+import { ResourceLocation, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { sha512 } from 'js-sha512';
 import { WeEmitter } from './weEmitter';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -224,4 +225,19 @@ export async function retryNTimes<T>(
   }
 
   throw new Error(`Callback failed after ${n} attempts: ${lastError}`);
+}
+
+/**
+ * Sorts versions array in descending order (highest version first) by semver.
+ * Filters out invalid semver versions before sorting.
+ * This is an internal utility function, not part of the published @theweave/utils package.
+ */
+export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
+  const validVersions = versions.filter((version) => validateSemver(version.version));
+  const invalidVersions = versions.filter((version) => !validateSemver(version.version));
+  const sorted = validVersions.sort((version_a, version_b) =>
+    compareVersions(version_b.version, version_a.version),
+  );
+  // Append invalid versions at the end
+  return [...sorted, ...invalidVersions];
 }

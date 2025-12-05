@@ -1,7 +1,8 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { validate as validateSemver } from 'compare-versions';
+import { sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch } from '../../utils.js';
 import {
   DeveloperCollective,
   DeveloperCollectiveToolList,
@@ -11,6 +12,7 @@ import {
   ToolCurations,
   ToolCurator,
 } from '@theweave/moss-types';
+import { UnifiedToolEntry } from '../../types.js';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -98,6 +100,9 @@ export class ToolLibraryWeb2 extends LitElement {
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
 
   @state()
+  unifiedTools: Map<string, UnifiedToolEntry> = new Map();
+
+  @state()
   classification = 'all';
 
   async firstUpdated() {
@@ -181,9 +186,10 @@ export class ToolLibraryWeb2 extends LitElement {
             tool.id === curatedTool.toolId && tool.versionBranch === curatedTool.versionBranch,
         );
         if (!relevantTool) return;
+        // Sort versions in descending order (highest first)
+        relevantTool.versions = sortVersionsDescending(relevantTool.versions);
         const latestVersion = relevantTool.versions
-          .filter((version) => validateSemver(version.version))
-          .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
+          .filter((version) => validateSemver(version.version))[0];
         if (!latestVersion) return;
         const toolCompatibilityId = deriveToolCompatibilityId({
           toolListUrl: curatedTool.toolListUrl,
@@ -217,8 +223,12 @@ export class ToolLibraryWeb2 extends LitElement {
 
     console.log('AVAILABLE TOOLS: ', allTools);
 
+    // Group tools by base ID to unify tools with same toolId but different versionBranch
+    const unifiedTools = groupToolsByBaseId(allTools);
+
     this.allDeveloperCollectives = developerCollectives;
     this.availableTools = allTools;
+    this.unifiedTools = unifiedTools;
   }
 
   resetView() {
@@ -226,15 +236,22 @@ export class ToolLibraryWeb2 extends LitElement {
   }
 
   renderMainView() {
-    const availableTools =
+    const unifiedToolsArray = Array.from(this.unifiedTools.values());
+    const filteredUnifiedTools =
       this.classification === 'all'
-        ? Object.values(this.availableTools)
+        ? unifiedToolsArray
         : this.classification === 'stable'
-          ? Object.values(this.availableTools).filter(
-            (info) => info.curationInfos[0].info.visiblity !== 'low',
+          ? unifiedToolsArray.filter(
+            (entry) => {
+              const primary = getPrimaryVersionBranch(entry);
+              return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
+            },
           )
-          : Object.values(this.availableTools).filter(
-            (info) => info.curationInfos[0].info.visiblity === 'low',
+          : unifiedToolsArray.filter(
+            (entry) => {
+              const primary = getPrimaryVersionBranch(entry);
+              return primary && primary.curationInfos[0]?.info.visiblity === 'low';
+            },
           );
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
@@ -281,11 +298,32 @@ export class ToolLibraryWeb2 extends LitElement {
         <installable-tools-web2
           style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
-          .installableTools=${availableTools}
+          .unifiedTools=${filteredUnifiedTools}
           @install-tool-to-group=${(e) => {
-        this._selectedTool = e.detail.tool;
-        this._selectedGroupDnaHash = e.detail.groupDnaHash;
-        setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+        // Handle both old format (tool) and new format (unifiedTool + versionBranch)
+        if (e.detail.unifiedTool) {
+          const versionBranch = e.detail.versionBranch;
+          const branchInfo = e.detail.unifiedTool.versionBranches.get(versionBranch);
+          if (branchInfo) {
+            // Convert to ToolAndCurationInfo for the install dialog (backward compatibility)
+            const toolForDialog: ToolAndCurationInfo = {
+              toolCompatibilityId: branchInfo.toolCompatibilityId,
+              toolInfoAndVersions: branchInfo.toolInfoAndVersions,
+              latestVersion: branchInfo.latestVersion,
+              curationInfos: branchInfo.curationInfos,
+              toolListUrl: e.detail.unifiedTool.toolListUrl,
+              developerCollectiveId: e.detail.unifiedTool.developerCollectiveId,
+            };
+            this._selectedTool = toolForDialog;
+            this._selectedGroupDnaHash = e.detail.groupDnaHash;
+            setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+          }
+        } else if (e.detail.tool) {
+          // Old format for backward compatibility
+          this._selectedTool = e.detail.tool;
+          this._selectedGroupDnaHash = e.detail.groupDnaHash;
+          setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+        }
       }}
           @applet-installed=${(_e) => {
         console.log('@group-home: GOT APPLET INSTALLED EVENT.');

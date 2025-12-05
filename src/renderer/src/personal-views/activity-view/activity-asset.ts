@@ -270,6 +270,16 @@ export class ActivityAsset extends LitElement {
         flex-direction: column;
       }
 
+      .activity-asset-outer:hover > button {
+        background: #193423de;
+        color: white;
+      }
+
+      .activity-asset-outer:hover > button:hover {
+        background: var(--moss-hint-green);
+        color: white;
+      }
+
       .show-notifications-button,
       .hide-notifications-button {
         background: transparent;
@@ -283,28 +293,23 @@ export class ActivityAsset extends LitElement {
         font-size: 14px;
       }
 
-      .show-notifications-button:hover,
-      .hide-notifications-button:hover {
-        background: #3f6733;
-      }
-
       .hide-notifications-button {
         border-radius: 0;
-        background: #204d31;
+        background: var(--moss-hint-green);
         color: white;
         padding: 3px 0 0 0;
       }
 
-      .activity-asset-outer:hover > button {
-        background: #193423;
-        color: white;
+      .show-notifications-button:hover,
+      .hide-notifications-button:hover {
+        background: var(--moss-hint-green);
       }
 
       .activity-asset {
         background: white;
         border-radius: 5px;
         padding: 10px;
-        background: #193423;
+        background: var(--moss-dark-green);
         color: #fff;
         min-width: 416px;
         max-width: calc(60vw - 110px);
@@ -313,7 +318,7 @@ export class ActivityAsset extends LitElement {
 
       .activity-asset:hover {
         cursor: pointer;
-        background: #3f6733;
+        background: var(--moss-hint-green);
       }
 
       .asset-title {
@@ -322,7 +327,7 @@ export class ActivityAsset extends LitElement {
       }
 
       .displayed-notifications-list {
-        background: #0080574a;
+        background: var(--moss-dark-green);
         color: #c2f2c1;
         padding-bottom: 4px;
         margin-top: -9px;
