@@ -14,6 +14,16 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { encode } from '@msgpack/msgpack';
 import { fromUint8Array } from 'js-base64';
 
+// Performance markers for tool setup measurement (Method 2)
+const PERF_MARKERS = {
+  GROUP_SETUP_START: 'group-setup-start',
+  FIRST_APPLET_READY: 'first-applet-ready',
+  ALL_APPLETS_READY: 'all-applets-ready',
+};
+
+// Track which applets have been marked as ready
+const readyApplets = new Set<string>();
+
 @localized()
 @customElement('view-frame')
 export class ViewFrame extends LitElement {
@@ -45,6 +55,19 @@ export class ViewFrame extends LitElement {
   async firstUpdated() {
     if (this.mossStore.isAppletDev) {
       this.appletDevPort = await this.mossStore.getAppletDevPort(this.iframeKind);
+    }
+    
+    // Track when iframe starts loading (for main applet views)
+    if (
+      this.renderView.type === 'applet-view' &&
+      this.renderView.view.type === 'main' &&
+      this.iframeKind.type === 'applet'
+    ) {
+      const appletId = encodeHashToBase64(this.iframeKind.appletHash);
+      if (!readyApplets.has(appletId)) {
+        // This is a new applet iframe being created
+        console.log(`[PERF DEBUG] Starting to load applet: ${appletId}`);
+      }
     }
   }
 
@@ -103,6 +126,62 @@ export class ViewFrame extends LitElement {
     `;
   }
 
+  handleIframeLoad() {
+    this.loading = false;
+    
+    // Track when applet iframe is ready (for main applet views)
+    if (
+      this.renderView.type === 'applet-view' &&
+      this.renderView.view.type === 'main' &&
+      this.iframeKind.type === 'applet'
+    ) {
+      const appletId = encodeHashToBase64(this.iframeKind.appletHash);
+      if (!readyApplets.has(appletId)) {
+        readyApplets.add(appletId);
+        
+        // Check if this is the first applet ready
+        if (readyApplets.size === 1) {
+          performance.mark(PERF_MARKERS.FIRST_APPLET_READY);
+          
+          // Check if GROUP_SETUP_START marker exists
+          const setupStartMark = performance.getEntriesByName(PERF_MARKERS.GROUP_SETUP_START, 'mark');
+          if (setupStartMark.length > 0) {
+            try {
+              performance.measure(
+                'first-applet-ready',
+                PERF_MARKERS.GROUP_SETUP_START,
+                PERF_MARKERS.FIRST_APPLET_READY,
+              );
+              
+              const measure = performance.getEntriesByName('first-applet-ready');
+              if (measure.length > 0) {
+                const lastMeasure = measure[measure.length - 1];
+                console.log(`[PERF] First applet ready: ${lastMeasure.duration.toFixed(2)}ms`);
+              }
+            } catch (e) {
+              console.warn('[PERF] Failed to measure first-applet-ready:', e);
+              // Fallback: measure from navigation start
+              const navStart = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+              if (navStart) {
+                const timeSinceNavStart = performance.now() - navStart.fetchStart;
+                console.log(`[PERF] First applet ready (from nav start): ${timeSinceNavStart.toFixed(2)}ms`);
+              }
+            }
+          } else {
+            // GROUP_SETUP_START marker doesn't exist, use navigation timing as fallback
+            const navStart = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+            if (navStart) {
+              const timeSinceNavStart = performance.now() - navStart.fetchStart;
+              console.log(`[PERF] First applet ready (from nav start, no group-setup-start): ${timeSinceNavStart.toFixed(2)}ms`);
+            } else {
+              console.log(`[PERF] First applet ready: ${appletId}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
   renderProductionFrame() {
     return html`<iframe
         frameborder="0"
@@ -116,7 +195,7 @@ export class ViewFrame extends LitElement {
         style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
         allow="camera *; microphone *; clipboard-write *;"
         @load=${() => {
-          this.loading = false;
+          this.handleIframeLoad();
         }}
       ></iframe>
       ${this.renderLoading()}`;
@@ -145,7 +224,7 @@ export class ViewFrame extends LitElement {
             style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
             allow="camera *; microphone *; clipboard-write *;"
             @load=${() => {
-              this.loading = false;
+              this.handleIframeLoad();
             }}
           ></iframe>
           ${this.renderLoading()}`;

@@ -83,6 +83,17 @@ import {
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
 
+// Performance markers for tool setup measurement (Method 2)
+const PERF_MARKERS = {
+  GROUP_SETUP_START: 'group-setup-start',
+  RUNNING_APPLETS_START: 'running-applets-load-start',
+  RUNNING_APPLETS_END: 'running-applets-load-end',
+  APPLET_STORES_START: 'applet-stores-init-start',
+  APPLET_STORES_END: 'applet-stores-init-end',
+  FIRST_APPLET_READY: 'first-applet-ready',
+  ALL_APPLETS_READY: 'all-applets-ready',
+};
+
 export const NEW_APPLETS_POLLING_FREQUENCY = 15000;
 const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
@@ -144,6 +155,9 @@ export class GroupStore {
     public mossStore: MossStore,
     public assetsClient: AssetsClient,
   ) {
+    // Performance marker: Group setup start
+    performance.mark(PERF_MARKERS.GROUP_SETUP_START);
+
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
 
     this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
@@ -1101,6 +1115,9 @@ export class GroupStore {
   });
 
   allMyRunningApplets = manualReloadStore(async () => {
+    // Performance marker: Running applets load start
+    performance.mark(PERF_MARKERS.RUNNING_APPLETS_START);
+
     const allMyApplets = await (async () => {
       if (!this.constructed) {
         return retryUntilResolved<Array<AppletHash>>(
@@ -1126,6 +1143,23 @@ export class GroupStore {
     const output = allMyApplets.filter((appletHash) =>
       runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
+
+    // Performance marker: Running applets load end
+    performance.mark(PERF_MARKERS.RUNNING_APPLETS_END);
+    performance.measure(
+      'running-applets-load',
+      PERF_MARKERS.RUNNING_APPLETS_START,
+      PERF_MARKERS.RUNNING_APPLETS_END,
+    );
+
+    const measure = performance.getEntriesByName('running-applets-load');
+    if (measure.length > 0) {
+      const lastMeasure = measure[measure.length - 1];
+      console.log(
+        `[PERF] Running applets load: ${lastMeasure.duration.toFixed(2)}ms (${output.length} applets)`,
+      );
+    }
+
     // console.log(
     //   'Got allMyRunningApplets: ',
     //   output.map((h) => encodeHashToBase64(h)),

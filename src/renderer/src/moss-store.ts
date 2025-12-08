@@ -1296,6 +1296,10 @@ export class MossStore {
 
   appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
     asyncReadable<AppletStore>(async (set) => {
+      // Performance marker: Applet store init start
+      const appletStoreMarker = `applet-store-init-${encodeHashToBase64(appletHash)}`;
+      performance.mark(`${appletStoreMarker}-start`);
+      
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
       const groups = await toPromise(this.groupsForApplet.get(appletHash));
       // console.log(
@@ -1314,6 +1318,24 @@ export class MossStore {
       if (!applet) throw new Error('Applet not found yet');
 
       const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+
+      // Performance marker: Applet store init end
+      performance.mark(`${appletStoreMarker}-end`);
+      performance.measure(
+        appletStoreMarker,
+        `${appletStoreMarker}-start`,
+        `${appletStoreMarker}-end`,
+      );
+      
+      const measure = performance.getEntriesByName(appletStoreMarker);
+      if (measure.length > 0) {
+        const lastMeasure = measure[measure.length - 1];
+        if (lastMeasure.duration > 100) {
+          console.log(
+            `[PERF] Slow applet store init: ${encodeHashToBase64(appletHash)} took ${lastMeasure.duration.toFixed(2)}ms`,
+          );
+        }
+      }
 
       set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
     }),
