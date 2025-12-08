@@ -489,6 +489,52 @@ const weaveApi: WeaveServices = {
         value: creatables,
       });
     });
+  } else if (view.type === 'background-processor') {
+    // Background processor iframe - special handling
+    if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config for background processor');
+
+    const [profilesClient, appletClient] = await Promise.all([
+      setupProfilesClient(
+        iframeConfig.appPort,
+        iframeConfig.profilesLocation.authenticationToken,
+        iframeConfig.profilesLocation.profilesRoleName,
+      ),
+      setupAppletClient(iframeConfig.appPort, iframeConfig.authenticationToken),
+    ]);
+
+    if (window.__WEAVE_IFRAME_KIND__.type !== 'applet')
+      throw new Error(
+        'Failed to initialize background processor iframe: Iframe origin does not match iframe kind from query string.',
+      );
+
+    const appletHash = window.__WEAVE_IFRAME_KIND__.appletHash;
+
+    // Get group DNA hash from iframe config
+    const groupDnaHash = iframeConfig.groupDnaHash;
+    if (!groupDnaHash) {
+      throw new Error('Background processor iframe missing groupDnaHash in config');
+    }
+
+    const peerStatusStore: ReadonlyPeerStatusStore = readable<Record<AgentPubKeyB64, PeerStatus>>(
+      {},
+      (set) => {
+        window.addEventListener('peer-status-update', (e: CustomEvent<PeerStatusUpdate>) => {
+          set(e.detail);
+        });
+      },
+    );
+
+    window.__WEAVE_RENDER_INFO__ = {
+      type: 'background-processor',
+      appletHash,
+      appletClient,
+      profilesClient,
+      peerStatusStore,
+      groupDnaHash,
+    };
+
+    // Background processors don't need creatables, but we still dispatch the ready event
+    // The actual background processor function will be called from the applet code
   } else if (view.type === 'cross-group-view') {
     const applets: EntryHashMap<{
       appletClient: AppClient;
@@ -761,13 +807,20 @@ async function getRenderView(): Promise<RenderView | undefined> {
 async function queryStringToRenderView(s: string): Promise<RenderView> {
   const args = s.split('&');
 
-  const view = args[0].split('=')[1] as 'applet-view' | 'cross-group-view';
+  const view = args[0].split('=')[1] as 'applet-view' | 'cross-group-view' | 'background-processor';
   let viewType: string | undefined;
   let block: string | undefined;
   let hrl: Hrl | undefined;
   let context: any | undefined;
   let creatableName: string | undefined;
   let dialogId: string | undefined;
+
+  // Handle background-processor view type
+  if (view === 'background-processor') {
+    return {
+      type: 'background-processor',
+    };
+  }
 
   if (args[1]) {
     viewType = args[1].split('=')[1];

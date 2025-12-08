@@ -565,6 +565,11 @@ export function renderViewToQueryString(
 ): string {
   let base = `view=${renderView.type}`;
 
+  // Handle background-processor (no view property)
+  if (renderView.type === 'background-processor') {
+    return base;
+  }
+
   if (renderView.view) {
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
 

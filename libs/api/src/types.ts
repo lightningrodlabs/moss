@@ -38,22 +38,22 @@ export type WeaveUrl = string;
 
 export type WeaveLocation =
   | {
-      type: 'group';
-      dnaHash: DnaHash;
-    }
+    type: 'group';
+    dnaHash: DnaHash;
+  }
   | {
-      type: 'applet';
-      appletHash: AppletHash;
-    }
+    type: 'applet';
+    appletHash: AppletHash;
+  }
   | {
-      type: 'asset';
-      wal: WAL;
-    }
+    type: 'asset';
+    wal: WAL;
+  }
   | {
-      type: 'invitation';
-      // network seed and membrane proofs
-      secret: string;
-    };
+    type: 'invitation';
+    // network seed and membrane proofs
+    secret: string;
+  };
 
 // Weave Asset Locator - an HRL with context
 // Use case: Image we want to point to a specific section of a document
@@ -168,44 +168,44 @@ export type AppletView =
   | { type: 'main' }
   | { type: 'block'; block: string; context: any }
   | {
-      type: 'asset';
-      /**
-       * If the WAL points to a Record (AnyDhtHash) recordInfo will be defined, if the WAL
-       * points to a DNA (i.e. null hash for the AnyDhtHash) then recordInfo is not defined
-       */
-      recordInfo?: RecordInfo;
-      wal: WAL;
-    }
+    type: 'asset';
+    /**
+     * If the WAL points to a Record (AnyDhtHash) recordInfo will be defined, if the WAL
+     * points to a DNA (i.e. null hash for the AnyDhtHash) then recordInfo is not defined
+     */
+    recordInfo?: RecordInfo;
+    wal: WAL;
+  }
   | {
-      type: 'creatable';
-      name: CreatableName;
-      /**
-       * To be called after the creatable has been successfully created. Will close the creatable view.
-       * @param wal
-       * @returns
-       */
-      resolve: (wal: WAL) => Promise<void>;
-      /**
-       * To be called if creation fails due to an error
-       * @param error
-       * @returns
-       */
-      reject: (error: any) => Promise<void>;
-      /**
-       * To be called if user cancels the creation
-       */
-      cancel: () => Promise<void>;
-    };
+    type: 'creatable';
+    name: CreatableName;
+    /**
+     * To be called after the creatable has been successfully created. Will close the creatable view.
+     * @param wal
+     * @returns
+     */
+    resolve: (wal: WAL) => Promise<void>;
+    /**
+     * To be called if creation fails due to an error
+     * @param error
+     * @returns
+     */
+    reject: (error: any) => Promise<void>;
+    /**
+     * To be called if user cancels the creation
+     */
+    cancel: () => Promise<void>;
+  };
 
 export type CrossGroupView =
   | {
-      type: 'main';
-    }
+    type: 'main';
+  }
   | {
-      type: 'block';
-      block: string;
-      context: any;
-    };
+    type: 'block';
+    block: string;
+    context: any;
+  };
 
 export type CreatableType = {
   /**
@@ -224,16 +224,16 @@ export type CreatableName = string;
 
 export type CreatableResult =
   | {
-      type: 'success';
-      wal: WAL;
-    }
+    type: 'success';
+    wal: WAL;
+  }
   | {
-      type: 'cancel';
-    }
+    type: 'cancel';
+  }
   | {
-      type: 'error';
-      error: any;
-    };
+    type: 'error';
+    error: any;
+  };
 
 export type BlockType = {
   label: string;
@@ -243,83 +243,127 @@ export type BlockType = {
 
 export type BlockName = string;
 
+/**
+ * Lifecycle management interface for background processors.
+ * Allows processors to respond to system state changes and throttle/pause processing.
+ */
+export interface BackgroundProcessorLifecycle {
+  /**
+   * Whether the application tab/window is currently visible to the user.
+   * Processors should throttle or pause non-critical work when false.
+   */
+  isAppVisible: Readable<boolean>;
+
+  /**
+   * Whether the applet's group is currently the active group being viewed.
+   * Processors may want to reduce activity when their group is not active.
+   */
+  isGroupActive: Readable<boolean>;
+
+  /**
+   * Current system resource state. Processors should respect this and reduce
+   * activity when resources are constrained.
+   */
+  resourceState: Readable<'normal' | 'constrained' | 'critical'>;
+
+  /**
+   * Subscribe to lifecycle changes. Callback receives the new lifecycle state.
+   */
+  onLifecycleChange: (callback: (state: {
+    isAppVisible: boolean;
+    isGroupActive: boolean;
+    resourceState: 'normal' | 'constrained' | 'critical';
+  }) => void) => UnsubscribeFunction;
+}
+
 export type RenderInfo =
   | {
-      type: 'applet-view';
-      view: AppletView;
-      appletClient: AppClient;
-      profilesClient: ProfilesClient;
-      peerStatusStore: ReadonlyPeerStatusStore;
-      appletHash: AppletHash;
-      /**
-       * Non-exhaustive array of profiles of the groups the given applet is shared with.
-       * Note that an applet may be shared with other groups beyond the ones returned
-       * by this array if the applet has been federated with groups that the agent
-       * of the given Moss instance is not part of.
-       */
-      groupProfiles: GroupProfile[];
-    }
+    type: 'applet-view';
+    view: AppletView;
+    appletClient: AppClient;
+    profilesClient: ProfilesClient;
+    peerStatusStore: ReadonlyPeerStatusStore;
+    appletHash: AppletHash;
+    /**
+     * Non-exhaustive array of profiles of the groups the given applet is shared with.
+     * Note that an applet may be shared with other groups beyond the ones returned
+     * by this array if the applet has been federated with groups that the agent
+     * of the given Moss instance is not part of.
+     */
+    groupProfiles: GroupProfile[];
+  }
   | {
-      type: 'cross-group-view';
-      view: CrossGroupView;
-      applets: ReadonlyMap<EntryHash, AppletClients>;
-    };
+    type: 'cross-group-view';
+    view: CrossGroupView;
+    applets: ReadonlyMap<EntryHash, AppletClients>;
+  }
+  | {
+    type: 'background-processor';
+    appletHash: AppletHash;
+    appletClient: AppClient;
+    profilesClient: ProfilesClient;
+    peerStatusStore: ReadonlyPeerStatusStore;
+    groupDnaHash: DnaHash; // Group this applet belongs to
+  };
 
 export type RenderView =
   | {
-      type: 'applet-view';
-      view: AppletView;
-    }
+    type: 'applet-view';
+    view: AppletView;
+  }
   | {
-      type: 'cross-group-view';
-      view: CrossGroupView;
-    };
+    type: 'cross-group-view';
+    view: CrossGroupView;
+  }
+  | {
+    type: 'background-processor';
+  };
 
 export type ParentToAppletMessage =
   | {
-      type: 'get-applet-asset-info';
-      wal: WAL;
-      recordInfo?: RecordInfo;
-    }
+    type: 'get-applet-asset-info';
+    wal: WAL;
+    recordInfo?: RecordInfo;
+  }
   | {
-      type: 'get-block-types';
-    }
+    type: 'get-block-types';
+  }
   | {
-      type: 'search';
-      filter: string;
-    }
+    type: 'search';
+    filter: string;
+  }
   | {
-      type: 'peer-status-update';
-      payload: PeerStatusUpdate;
-    }
+    type: 'peer-status-update';
+    payload: PeerStatusUpdate;
+  }
   | {
-      type: 'on-before-unload';
-    }
+    type: 'on-before-unload';
+  }
   | {
-      type: 'asset-store-update';
-      /**
-       * We can save ourselves one unnecessary stringification step
-       * by sending it as stringified
-       */
-      walStringified: string;
-      value: AsyncStatus<AssetStoreContent>;
-    }
+    type: 'asset-store-update';
+    /**
+     * We can save ourselves one unnecessary stringification step
+     * by sending it as stringified
+     */
+    walStringified: string;
+    value: AsyncStatus<AssetStoreContent>;
+  }
   | {
-      type: 'remote-signal-received';
-      payload: Uint8Array;
-    };
+    type: 'remote-signal-received';
+    payload: Uint8Array;
+  };
 
 export type IframeKind =
   | {
-      type: 'applet';
-      appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
-      subType: string;
-    }
+    type: 'applet';
+    appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+    subType: string;
+  }
   | {
-      type: 'cross-group';
-      toolCompatibilityId: string; // Only required in dev mode when iframe origin is localhost
-      subType: string;
-    };
+    type: 'cross-group';
+    toolCompatibilityId: string; // Only required in dev mode when iframe origin is localhost
+    subType: string;
+  };
 
 export type AppletToParentMessage = {
   request: AppletToParentRequest;
@@ -334,226 +378,230 @@ export type ZomeCallLogInfo = {
 
 export type AppletToParentRequest =
   | {
-      type: 'ready';
-    }
+    type: 'ready';
+  }
   | {
-      // This one is used by initializeHotReload() and is the only one that
-      // affects the API exposed to tool devs
-      //
-      // It's also used as a means to register the iframe in order for Moss
-      // to be able to send messages to it
-      type: 'get-iframe-config';
-      id: string;
-      subType: 'main' | 'asset' | 'block' | 'creatable';
-    }
+    // This one is used by initializeHotReload() and is the only one that
+    // affects the API exposed to tool devs
+    //
+    // It's also used as a means to register the iframe in order for Moss
+    // to be able to send messages to it
+    type: 'get-iframe-config';
+    id: string;
+    subType: 'main' | 'asset' | 'block' | 'creatable' | 'background-processor';
+  }
   | {
-      type: 'unregister-iframe';
-      id: string;
-    }
+    type: 'unregister-iframe';
+    id: string;
+  }
   | {
-      type: 'get-record-info';
-      hrl: Hrl;
-    }
+    type: 'get-record-info';
+    hrl: Hrl;
+  }
   | {
-      type: 'sign-zome-call';
-      request: CallZomeRequest;
-    }
+    type: 'sign-zome-call';
+    request: CallZomeRequest;
+  }
   | {
-      type: 'log-zome-call';
-      info: ZomeCallLogInfo;
-    }
+    type: 'log-zome-call';
+    info: ZomeCallLogInfo;
+  }
   | {
-      type: 'open-view';
-      request: OpenViewRequest;
-    }
+    type: 'open-view';
+    request: OpenViewRequest;
+  }
   | {
-      type: 'search';
-      filter: string;
-    }
+    type: 'search';
+    filter: string;
+  }
   | {
-      type: 'notify-frame';
-      notifications: Array<FrameNotification>;
-    }
+    type: 'notify-frame';
+    notifications: Array<FrameNotification>;
+  }
   | {
-      type: 'get-applet-info';
-      appletHash: AppletHash;
-    }
+    type: 'get-applet-info';
+    appletHash: AppletHash;
+  }
   | {
-      type: 'get-group-profile';
-      groupHash: DnaHash;
-    }
+    type: 'get-group-profile';
+    groupHash: DnaHash;
+  }
   | {
-      type: 'my-group-permission-type';
-    }
+    type: 'my-group-permission-type';
+  }
   | {
-      type: 'applet-participants';
-    }
+    type: 'applet-participants';
+  }
   | {
-      type: 'user-select-screen';
-    }
+    type: 'user-select-screen';
+  }
   | {
-      type: 'toggle-pocket';
-    }
+    type: 'toggle-pocket';
+  }
   | {
-      type: 'update-creatable-types';
-      value: Record<CreatableName, CreatableType>;
-    }
+    type: 'update-creatable-types';
+    value: Record<CreatableName, CreatableType>;
+  }
   | {
-      type: 'creatable-result';
-      result: CreatableResult;
-      /**
-       * The id of the dialog this result is coming from
-       */
-      dialogId: string;
-    }
+    type: 'creatable-result';
+    result: CreatableResult;
+    /**
+     * The id of the dialog this result is coming from
+     */
+    dialogId: string;
+  }
   | {
-      type: 'get-applet-iframe-script';
-    }
+    type: 'get-applet-iframe-script';
+  }
   | {
-      type: 'request-close';
-    }
+    type: 'request-close';
+  }
   | {
-      type: 'send-remote-signal';
-      payload: Uint8Array;
-      toAgents?: AgentPubKey[];
-    }
+    type: 'send-remote-signal';
+    payload: Uint8Array;
+    toAgents?: AgentPubKey[];
+  }
   | {
-      type: 'create-clone-cell';
-      req: CreateCloneCellRequest;
-      publicToGroupMembers: boolean;
-    }
+    type: 'create-clone-cell';
+    req: CreateCloneCellRequest;
+    publicToGroupMembers: boolean;
+  }
   | {
-      type: 'disable-clone-cell';
-      req: DisableCloneCellRequest;
-    }
+    type: 'disable-clone-cell';
+    req: DisableCloneCellRequest;
+  }
   | {
-      type: 'enable-clone-cell';
-      req: EnableCloneCellRequest;
-    }
+    type: 'enable-clone-cell';
+    req: EnableCloneCellRequest;
+  }
   /**
    * Asset related requests
    */
   | {
-      type: 'asset-to-pocket';
-      wal: WAL;
-    }
+    type: 'asset-to-pocket';
+    wal: WAL;
+  }
   | {
-      type: 'user-select-asset';
-      from?: 'search' | 'pocket' | 'create';
-    }
+    type: 'user-select-asset';
+    from?: 'search' | 'pocket' | 'create';
+  }
   | {
-      type: 'user-select-asset-relation-tag';
-    }
+    type: 'user-select-asset-relation-tag';
+  }
   | {
-      type: 'get-global-asset-info';
-      wal: WAL;
-    }
+    type: 'get-global-asset-info';
+    wal: WAL;
+  }
   | {
-      type: 'drag-asset';
-      wal: WAL;
-    }
+    type: 'drag-asset';
+    wal: WAL;
+  }
   | {
-      type: 'add-tags-to-asset';
-      wal: WAL;
-      tags: string[];
-    }
+    type: 'add-tags-to-asset';
+    wal: WAL;
+    tags: string[];
+  }
   | {
-      type: 'remove-tags-from-asset';
-      wal: WAL;
-      tags: string[];
-    }
+    type: 'remove-tags-from-asset';
+    wal: WAL;
+    tags: string[];
+  }
   | {
-      type: 'add-asset-relation';
-      srcWal: WAL;
-      dstWal: WAL;
-      tags?: string[];
-    }
+    type: 'add-asset-relation';
+    srcWal: WAL;
+    dstWal: WAL;
+    tags?: string[];
+  }
   | {
-      type: 'remove-asset-relation';
-      relationHash: EntryHash;
-    }
+    type: 'remove-asset-relation';
+    relationHash: EntryHash;
+  }
   | {
-      type: 'add-tags-to-asset-relation';
-      relationHash: EntryHash;
-      tags: string[];
-    }
+    type: 'add-tags-to-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+  }
   | {
-      type: 'remove-tags-from-asset-relation';
-      relationHash: EntryHash;
-      tags: string[];
-    }
+    type: 'remove-tags-from-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+  }
   | {
-      type: 'get-all-asset-relation-tags';
-      crossGroup?: boolean;
-    }
+    type: 'get-all-asset-relation-tags';
+    crossGroup?: boolean;
+  }
   | {
-      type: 'subscribe-to-asset-store';
-      wal: WAL;
-    }
+    type: 'subscribe-to-asset-store';
+    wal: WAL;
+  }
   | {
-      type: 'unsubscribe-from-asset-store';
-      wal: WAL;
-    };
+    type: 'unsubscribe-from-asset-store';
+    wal: WAL;
+  };
 
 export type OpenViewRequest =
   | {
-      type: 'applet-main';
-      appletHash: EntryHash;
-    }
+    type: 'applet-main';
+    appletHash: EntryHash;
+  }
   | {
-      type: 'cross-group-main';
-      appletBundleId: string;
-    }
+    type: 'cross-group-main';
+    appletBundleId: string;
+  }
   | {
-      type: 'applet-block';
-      appletHash: EntryHash;
-      block: string;
-      context: any;
-    }
+    type: 'applet-block';
+    appletHash: EntryHash;
+    block: string;
+    context: any;
+  }
   | {
-      type: 'cross-group-block';
-      appletBundleId: string;
-      block: string;
-      context: any;
-    }
+    type: 'cross-group-block';
+    appletBundleId: string;
+    block: string;
+    context: any;
+  }
   | {
-      type: 'asset';
-      wal: WAL;
-      mode?: OpenAssetMode;
-    };
+    type: 'asset';
+    wal: WAL;
+    mode?: OpenAssetMode;
+  };
 
 export type IframeConfig =
   | {
-      type: 'applet';
-      appPort: number;
-      /**
-       * The origin of the main Moss UI. Used to validate iframe message origins.
-       */
-      mainUiOrigin: string;
-      appletHash: EntryHash;
-      authenticationToken: AppAuthenticationToken;
-      weaveProtocolVersion: string;
-      mossVersion: string;
-      profilesLocation: ProfilesLocation;
-      groupProfiles: GroupProfile[];
-      zomeCallLogging: boolean;
-    }
+    type: 'applet';
+    appPort: number;
+    /**
+     * The origin of the main Moss UI. Used to validate iframe message origins.
+     */
+    mainUiOrigin: string;
+    appletHash: EntryHash;
+    authenticationToken: AppAuthenticationToken;
+    weaveProtocolVersion: string;
+    mossVersion: string;
+    profilesLocation: ProfilesLocation;
+    groupProfiles: GroupProfile[];
+    zomeCallLogging: boolean;
+    /**
+     * Group DNA hash for background processor iframes
+     */
+    groupDnaHash?: DnaHash;
+  }
   | {
-      type: 'cross-group';
-      appPort: number;
-      /**
-       * The origin of the main Moss UI. Used to validate iframe message origins.
-       */
-      mainUiOrigin: string;
-      weaveProtocolVersion: string;
-      mossVersion: string;
-      applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
-      zomeCallLogging: boolean;
-    }
+    type: 'cross-group';
+    appPort: number;
+    /**
+     * The origin of the main Moss UI. Used to validate iframe message origins.
+     */
+    mainUiOrigin: string;
+    weaveProtocolVersion: string;
+    mossVersion: string;
+    applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
+    zomeCallLogging: boolean;
+  }
   | {
-      type: 'not-installed';
-      appletName: string;
-    };
+    type: 'not-installed';
+    appletName: string;
+  };
 
 export type ProfilesLocation = {
   authenticationToken: AppAuthenticationToken;
@@ -589,21 +637,21 @@ export type ReadonlyPeerStatusStore = Readable<Record<AgentPubKeyB64, PeerStatus
 
 export type GroupPermissionType =
   | {
-      type: 'Steward';
-      /**
-       * Expiry date in ms since Unix epoch time
-       */
-      expiry?: number;
-    }
+    type: 'Steward';
+    /**
+     * Expiry date in ms since Unix epoch time
+     */
+    expiry?: number;
+  }
   | {
-      type: 'Member';
-    }
+    type: 'Member';
+  }
   | {
-      /**
-       * Can only occur if the applet belongs to more than one group
-       */
-      type: 'Ambiguous';
-    };
+    /**
+     * Can only occur if the applet belongs to more than one group
+     */
+    type: 'Ambiguous';
+  };
 
 export type WalRelationAndTags = {
   relationHash: EntryHash;
@@ -623,15 +671,15 @@ export type AssetStoreContent = {
 
 export type AsyncStatus<T> =
   | {
-      status: 'pending';
-    }
+    status: 'pending';
+  }
   | {
-      status: 'complete';
-      value: T;
-    }
+    status: 'complete';
+    value: T;
+  }
   | {
-      status: 'error';
-      error: any;
-    };
+    status: 'error';
+    error: any;
+  };
 
 export type AssetStore = Readable<AsyncStatus<AssetStoreContent>>;

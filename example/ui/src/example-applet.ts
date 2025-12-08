@@ -67,6 +67,24 @@ export class ExampleApplet extends LitElement {
   render() {
     if (!this.weaveClient.renderInfo) return html`loading...`;
     switch (this.weaveClient.renderInfo.type) {
+      case 'background-processor':
+        // Background processor - execute the processor function
+        (async () => {
+          const appletServices = (window as any).__WEAVE_APPLET_SERVICES__;
+          if (appletServices?.backgroundProcessor && this.weaveClient.renderInfo.type === 'background-processor') {
+            const { createBackgroundProcessorLifecycle } = await import('@theweave/api');
+            const lifecycle = createBackgroundProcessorLifecycle(
+              this.weaveClient.renderInfo.groupDnaHash
+            );
+            await appletServices.backgroundProcessor(
+              this.weaveClient,
+              this.weaveClient.renderInfo.appletClient,
+              this.weaveClient.renderInfo.profilesClient,
+              lifecycle
+            );
+          }
+        })();
+        return html`<div style="display: none;">Background processor running...</div>`;
       case 'applet-view':
         switch (this.weaveClient.renderInfo.view.type) {
           case 'main':
@@ -81,22 +99,22 @@ export class ExampleApplet extends LitElement {
                     .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
-                      const appInfo = await client.appInfo();
-                      if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                        .cell_id[0];
-                      this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
-                    }}
+                const appInfo = await client.appInfo();
+                if (!appInfo) throw new Error('AppInfo is null.');
+                const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                  .cell_id[0];
+                this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
+              }}
                     @drag-post=${async (e: CustomEvent) => {
-                      console.log('GOT DRAG POST EVENT!');
-                      const appInfo = await client.appInfo();
-                      if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                        .cell_id[0];
-                      this.weaveClient!.assets.dragAsset({
-                        hrl: [dnaHash, e.detail],
-                      });
-                    }}
+                console.log('GOT DRAG POST EVENT!');
+                const appInfo = await client.appInfo();
+                if (!appInfo) throw new Error('AppInfo is null.');
+                const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                  .cell_id[0];
+                this.weaveClient!.assets.dragAsset({
+                  hrl: [dnaHash, e.detail],
+                });
+              }}
                   ></applet-main>
                 </profiles-context>
               </posts-context>
@@ -155,27 +173,27 @@ export class ExampleApplet extends LitElement {
                       <button @click=${async () => cancel()}>Cancel</button>
                       <button
                         @click=${async () => {
-                          const title = (
-                            this.shadowRoot!.getElementById('title-input') as HTMLInputElement
-                          ).value;
-                          const post = {
-                            title,
-                            content: '',
-                          };
-                          try {
-                            const postRecord = await postsClient.createPost(post);
-                            const appInfo = await appletClient.appInfo();
-                            if (!appInfo) throw new Error('AppInfo is null.');
-                            const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                              .cell_id[0];
-                            const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
-                            await resolve({
-                              hrl,
-                            });
-                          } catch (e) {
-                            await reject(e);
-                          }
-                        }}
+                    const title = (
+                      this.shadowRoot!.getElementById('title-input') as HTMLInputElement
+                    ).value;
+                    const post = {
+                      title,
+                      content: '',
+                    };
+                    try {
+                      const postRecord = await postsClient.createPost(post);
+                      const appInfo = await appletClient.appInfo();
+                      if (!appInfo) throw new Error('AppInfo is null.');
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                        .cell_id[0];
+                      const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
+                      await resolve({
+                        hrl,
+                      });
+                    } catch (e) {
+                      await reject(e);
+                    }
+                  }}
                       >
                         Create
                       </button>

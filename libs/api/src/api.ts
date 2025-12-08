@@ -30,6 +30,7 @@ import {
   UnsubscribeFunction,
   GroupPermissionType,
   AssetStore,
+  BackgroundProcessorLifecycle,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -82,8 +83,7 @@ export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   }
   url =
     url +
-    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
-      wal.context ? `?context=${encodeContext(wal.context)}` : ''
+    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
@@ -155,6 +155,8 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
+export { createBackgroundProcessorLifecycle } from './background-processor-lifecycle.js';
+
 export const initializeHotReload = async () => {
   try {
     const appletIframeScript = await postMessage<string>({
@@ -173,7 +175,8 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined);
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined),
+      (this.backgroundProcessor = undefined);
   }
 
   /**
@@ -202,6 +205,30 @@ export class AppletServices {
     weaveServices: WeaveServices,
     searchFilter: string,
   ) => Promise<Array<WAL>>;
+  /**
+   * Optional background processor function that runs independently of the main applet view.
+   * This function is executed in a separate lightweight iframe context that persists
+   * even when the main applet view is not rendered or when users switch between groups.
+   * 
+   * The function receives a WeaveClient instance with limited API access (notifications,
+   * signals, etc.) and should handle background tasks like:
+   * - Periodic data synchronization
+   * - Notification processing
+   * - Background data fetching
+   * - WebSocket connections
+   * 
+   * The background processor iframe is created when the applet is first loaded and
+   * persists until the applet is uninstalled or the application is closed.
+   * 
+   * The processor receives lifecycle events to allow it to throttle or pause processing
+   * when appropriate (e.g., when app is in background, when group is not active, etc.).
+   */
+  backgroundProcessor?: (
+    weaveClient: WeaveClient,
+    appletClient: AppClient,
+    profilesClient: any, // ProfilesClient type - using any to avoid circular dependency
+    lifecycle: BackgroundProcessorLifecycle,
+  ) => Promise<void> | void;
 }
 
 export interface AssetServices {
@@ -458,7 +485,7 @@ export class WeaveClient implements WeaveServices {
     return window.__WEAVE_RENDER_INFO__;
   }
 
-  private constructor() {}
+  private constructor() { }
 
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
     if (window.__WEAVE_RENDER_INFO__) {
