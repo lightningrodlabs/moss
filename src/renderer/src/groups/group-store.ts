@@ -83,12 +83,12 @@ import {
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
 
-export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
+export const NEW_APPLETS_POLLING_FREQUENCY = 15000;
 const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
 export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
-const ASSET_RELATION_POLLING_PERIOD = 10000;
+const ASSET_RELATION_POLLING_PERIOD = 30000;
 
 export type MaybeProfile =
   | {
