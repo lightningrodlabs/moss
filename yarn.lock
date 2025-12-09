@@ -1563,21 +1563,6 @@
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/profiles@^0.600.0-rc.0":
-  version "0.600.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.600.0-rc.0.tgz#d3aae05d92d576aeb410809ec84d61bed0b53874"
-  integrity sha512-xa6+0p1QiQQ3tV9eitc0Cfx8slSOKbqfWDCCQYrshnJhcj0tzBWs1vM+U4wbGqo27bdeYDF1gSCYFoE8vRbVXg==
-  dependencies:
-    "@holochain-open-dev/elements" "^0.600.0"
-    "@holochain-open-dev/stores" "^0.600.0"
-    "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
-    "@lit/context" "^1.0.1"
-    "@lit/localize" "^0.12.0"
-    "@mdi/js" "^7.1.96"
-    "@shoelace-style/shoelace" "^2.11.0"
-    lit "^3.0.2"
-
 "@holochain-open-dev/stores@^0.600.0":
   version "0.600.0"
   resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.600.0.tgz#6151ac2367ac60482d20304246490ab136ab54e8"
