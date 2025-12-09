@@ -243,38 +243,7 @@ export type BlockType = {
 
 export type BlockName = string;
 
-/**
- * Lifecycle management interface for background processors.
- * Allows processors to respond to system state changes and throttle/pause processing.
- */
-export interface BackgroundProcessorLifecycle {
-  /**
-   * Whether the application tab/window is currently visible to the user.
-   * Processors should throttle or pause non-critical work when false.
-   */
-  isAppVisible: Readable<boolean>;
-
-  /**
-   * Whether the applet's group is currently the active group being viewed.
-   * Processors may want to reduce activity when their group is not active.
-   */
-  isGroupActive: Readable<boolean>;
-
-  /**
-   * Current system resource state. Processors should respect this and reduce
-   * activity when resources are constrained.
-   */
-  resourceState: Readable<'normal' | 'constrained' | 'critical'>;
-
-  /**
-   * Subscribe to lifecycle changes. Callback receives the new lifecycle state.
-   */
-  onLifecycleChange: (callback: (state: {
-    isAppVisible: boolean;
-    isGroupActive: boolean;
-    resourceState: 'normal' | 'constrained' | 'critical';
-  }) => void) => UnsubscribeFunction;
-}
+export type LifecycleState = 'active' | 'inactive' | 'suspended' | 'discarded';
 
 export type RenderInfo =
   | {
@@ -291,19 +260,19 @@ export type RenderInfo =
      * of the given Moss instance is not part of.
      */
     groupProfiles: GroupProfile[];
+    /**
+     * Current lifecycle state of this applet iframe.
+     * - 'active': Applet is currently visible and selected in the active group
+     * - 'inactive': Applet is not visible but recently was active (DOM hidden)
+     * - 'suspended': Applet has been inactive for a while (DOM removed but kept in memory)
+     * - 'discarded': Applet has been suspended for a long time (iframe removed, recreate on activate)
+     */
+    lifecycleState: LifecycleState;
   }
   | {
     type: 'cross-group-view';
     view: CrossGroupView;
     applets: ReadonlyMap<EntryHash, AppletClients>;
-  }
-  | {
-    type: 'background-processor';
-    appletHash: AppletHash;
-    appletClient: AppClient;
-    profilesClient: ProfilesClient;
-    peerStatusStore: ReadonlyPeerStatusStore;
-    groupDnaHash: DnaHash; // Group this applet belongs to
   };
 
 export type RenderView =
@@ -314,9 +283,6 @@ export type RenderView =
   | {
     type: 'cross-group-view';
     view: CrossGroupView;
-  }
-  | {
-    type: 'background-processor';
   };
 
 export type ParentToAppletMessage =
@@ -351,6 +317,20 @@ export type ParentToAppletMessage =
   | {
     type: 'remote-signal-received';
     payload: Uint8Array;
+  }
+  | {
+    type: 'lifecycle-state-change';
+    state: LifecycleState;
+    previousState: LifecycleState;
+  }
+  | {
+    type: 'suspend-dom';
+  }
+  | {
+    type: 'restore-dom';
+  }
+  | {
+    type: 'discard-dom';
   };
 
 export type IframeKind =
@@ -388,7 +368,7 @@ export type AppletToParentRequest =
     // to be able to send messages to it
     type: 'get-iframe-config';
     id: string;
-    subType: 'main' | 'asset' | 'block' | 'creatable' | 'background-processor';
+    subType: 'main' | 'asset' | 'block' | 'creatable';
   }
   | {
     type: 'unregister-iframe';
@@ -581,10 +561,6 @@ export type IframeConfig =
     profilesLocation: ProfilesLocation;
     groupProfiles: GroupProfile[];
     zomeCallLogging: boolean;
-    /**
-     * Group DNA hash for background processor iframes
-     */
-    groupDnaHash?: DnaHash;
   }
   | {
     type: 'cross-group';

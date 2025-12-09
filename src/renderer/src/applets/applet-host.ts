@@ -340,7 +340,6 @@ export async function handleAppletIframeMessage(
 
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
-        const groupDnaHash = groupStore.groupDnaHash;
         const config: IframeConfig = {
           type: 'applet',
           appletHash,
@@ -355,8 +354,6 @@ export async function handleAppletIframeMessage(
           },
           groupProfiles: filteredGroupProfiles,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
-          // Include groupDnaHash for background processor iframes
-          groupDnaHash: message.subType === 'background-processor' ? groupDnaHash : undefined,
         };
 
         mossStore.iframeStore.registerAppletIframe(

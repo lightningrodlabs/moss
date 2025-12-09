@@ -64,12 +64,34 @@ export class AppletSidebarButton extends LitElement {
     () => [this.appletStore],
   );
 
+  appletLifecycleState = new StoreSubscriber(
+    this,
+    () => this.mossStore.appletLifecycleState(this.appletStore.appletHash),
+    () => [this.mossStore, this.appletStore],
+  );
+
   notificationUrgency(): string | undefined {
     return this.appletNotificationStatus.value[0];
   }
 
   notificationCount(): number | undefined {
     return this.appletNotificationStatus.value[1];
+  }
+
+  getLifecycleColor(): string {
+    const state = this.appletLifecycleState.value;
+    switch (state) {
+      case 'active':
+        return 'black';
+      case 'inactive':
+        return 'green';
+      case 'suspended':
+        return 'yellow';
+      case 'discarded':
+        return 'red';
+      default:
+        return 'black';
+    }
   }
 
   renderLogo() {
@@ -114,7 +136,7 @@ export class AppletSidebarButton extends LitElement {
             <div class="row items-center">${this.renderLogo()}</div>
             ${this.collapsed
         ? html``
-        : html` <div class="name" style="margin-left: 4px;">
+        : html` <div class="name" style="margin-left: 4px; color: ${this.getLifecycleColor()};">
                   ${this.appletStore.applet.custom_name}
                 </div>`}
           </div>

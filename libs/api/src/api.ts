@@ -30,7 +30,7 @@ import {
   UnsubscribeFunction,
   GroupPermissionType,
   AssetStore,
-  BackgroundProcessorLifecycle,
+  LifecycleState,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -155,8 +155,6 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
-export { createBackgroundProcessorLifecycle } from './background-processor-lifecycle.js';
-
 export const initializeHotReload = async () => {
   try {
     const appletIframeScript = await postMessage<string>({
@@ -175,8 +173,7 @@ export class AppletServices {
     (this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined),
-      (this.backgroundProcessor = undefined);
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined);
   }
 
   /**
@@ -205,30 +202,6 @@ export class AppletServices {
     weaveServices: WeaveServices,
     searchFilter: string,
   ) => Promise<Array<WAL>>;
-  /**
-   * Optional background processor function that runs independently of the main applet view.
-   * This function is executed in a separate lightweight iframe context that persists
-   * even when the main applet view is not rendered or when users switch between groups.
-   * 
-   * The function receives a WeaveClient instance with limited API access (notifications,
-   * signals, etc.) and should handle background tasks like:
-   * - Periodic data synchronization
-   * - Notification processing
-   * - Background data fetching
-   * - WebSocket connections
-   * 
-   * The background processor iframe is created when the applet is first loaded and
-   * persists until the applet is uninstalled or the application is closed.
-   * 
-   * The processor receives lifecycle events to allow it to throttle or pause processing
-   * when appropriate (e.g., when app is in background, when group is not active, etc.).
-   */
-  backgroundProcessor?: (
-    weaveClient: WeaveClient,
-    appletClient: AppClient,
-    profilesClient: any, // ProfilesClient type - using any to avoid circular dependency
-    lifecycle: BackgroundProcessorLifecycle,
-  ) => Promise<void> | void;
 }
 
 export interface AssetServices {
@@ -483,6 +456,41 @@ export interface WeaveServices {
 export class WeaveClient implements WeaveServices {
   get renderInfo(): RenderInfo {
     return window.__WEAVE_RENDER_INFO__;
+  }
+
+  /**
+   * Get the current lifecycle state of this applet iframe.
+   * Returns 'active' for non-applet views or if lifecycle state is not available.
+   */
+  get lifecycleState(): LifecycleState {
+    const renderInfo = this.renderInfo;
+    if (renderInfo.type === 'applet-view') {
+      return renderInfo.lifecycleState;
+    }
+    return 'active';
+  }
+
+  /**
+   * Subscribe to lifecycle state changes.
+   * Allows tools to respond to state changes (e.g., pause/resume timers, cleanup DOM, etc.)
+   */
+  onLifecycleChange(
+    callback: (state: LifecycleState) => void,
+  ): UnsubscribeFunction {
+    // Listen for lifecycle change events from parent
+    const handleLifecycleChange = (event: CustomEvent<{ state: LifecycleState; previousState: LifecycleState }>) => {
+      callback(event.detail.state);
+    };
+
+    window.addEventListener('weave-lifecycle-change', handleLifecycleChange as EventListener);
+
+    // Return initial state
+    callback(this.lifecycleState);
+
+    // Return unsubscribe function
+    return () => {
+      window.removeEventListener('weave-lifecycle-change', handleLifecycleChange as EventListener);
+    };
   }
 
   private constructor() { }

@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@theweave/api';
+import { WeaveClient, FrameNotification, UnsubscribeFunction, LifecycleState } from '@theweave/api';
 import { weaveClientContext } from '@theweave/elements';
 
 import '@theweave/elements/dist/elements/weave-client-context.js';
@@ -39,6 +39,8 @@ export class ExampleApplet extends LitElement {
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
 
+  lifecycleUnsubscribe: UnsubscribeFunction | undefined;
+
   firstUpdated() {
     this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
       // Uncomment below to test that unloading after force reload timeout works
@@ -46,6 +48,33 @@ export class ExampleApplet extends LitElement {
       // await new Promise((resolve) => setTimeout(resolve, 10000));
       console.log('Unloading now.');
     });
+
+    // Subscribe to lifecycle changes
+    this.lifecycleUnsubscribe = this.weaveClient.onLifecycleChange((state: LifecycleState) => {
+      console.log(`[Example Applet] Lifecycle state changed to: ${state}`);
+
+      // Tools can adjust their behavior based on lifecycle state
+      // For example, pause/resume timers, cleanup DOM, etc.
+      switch (state) {
+        case 'active':
+          // Applet is active - resume full functionality
+          console.log('[Example Applet] Resuming full functionality');
+          break;
+        case 'inactive':
+          // Applet is inactive but recently used - continue background processing
+          console.log('[Example Applet] Continuing background processing');
+          break;
+        case 'suspended':
+          // Applet is suspended - DOM removed but data kept
+          console.log('[Example Applet] Suspended - DOM removed, data preserved');
+          break;
+        case 'discarded':
+          // Applet is discarded - iframe will be recreated on activation
+          console.log('[Example Applet] Discarded - will be recreated on activation');
+          break;
+      }
+    });
+
     // To test whether applet iframe properly gets removed after disabling applet.
     // setInterval(() => {
     //   console.log('Hello from the example applet iframe.');
@@ -67,24 +96,6 @@ export class ExampleApplet extends LitElement {
   render() {
     if (!this.weaveClient.renderInfo) return html`loading...`;
     switch (this.weaveClient.renderInfo.type) {
-      case 'background-processor':
-        // Background processor - execute the processor function
-        (async () => {
-          const appletServices = (window as any).__WEAVE_APPLET_SERVICES__;
-          if (appletServices?.backgroundProcessor && this.weaveClient.renderInfo.type === 'background-processor') {
-            const { createBackgroundProcessorLifecycle } = await import('@theweave/api');
-            const lifecycle = createBackgroundProcessorLifecycle(
-              this.weaveClient.renderInfo.groupDnaHash
-            );
-            await appletServices.backgroundProcessor(
-              this.weaveClient,
-              this.weaveClient.renderInfo.appletClient,
-              this.weaveClient.renderInfo.profilesClient,
-              lifecycle
-            );
-          }
-        })();
-        return html`<div style="display: none;">Background processor running...</div>`;
       case 'applet-view':
         switch (this.weaveClient.renderInfo.view.type) {
           case 'main':
