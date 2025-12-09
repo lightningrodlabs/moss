@@ -683,7 +683,7 @@ export class GroupHome extends LitElement {
 
           <!-- Top Row -->
 
-          <div class="row" style="align-items: center; margin-bottom: 24px">
+          <div class="row" style="align-items: center;padding-bottom: 6px; border-bottom: solid 1px var(--moss-main-green);">
             <div class="row" style="align-items: center; flex: 1;">
               <div
                 style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;"
@@ -721,7 +721,7 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
-          <div class="row tab-bar ">
+          <div class="row tab-bar " style="display:none">
             <div
               tabindex="0"
               class="tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"
