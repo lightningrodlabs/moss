@@ -9,7 +9,7 @@ import './elements/create-post.js';
 import './elements/post-detail.js';
 import './elements/posts-context.js';
 
-import { WeaveClient, FrameNotification, UnsubscribeFunction } from '@theweave/api';
+import { WeaveClient, FrameNotification, UnsubscribeFunction, LifecycleState } from '@theweave/api';
 import { weaveClientContext } from '@theweave/elements';
 
 import '@theweave/elements/dist/elements/weave-client-context.js';
@@ -39,6 +39,8 @@ export class ExampleApplet extends LitElement {
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
 
+  lifecycleUnsubscribe: UnsubscribeFunction | undefined;
+
   firstUpdated() {
     this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
       // Uncomment below to test that unloading after force reload timeout works
@@ -46,6 +48,33 @@ export class ExampleApplet extends LitElement {
       // await new Promise((resolve) => setTimeout(resolve, 10000));
       console.log('Unloading now.');
     });
+
+    // Subscribe to lifecycle changes
+    this.lifecycleUnsubscribe = this.weaveClient.onLifecycleChange((state: LifecycleState) => {
+      console.log(`[Example Applet] Lifecycle state changed to: ${state}`);
+
+      // Tools can adjust their behavior based on lifecycle state
+      // For example, pause/resume timers, cleanup DOM, etc.
+      switch (state) {
+        case 'active':
+          // Applet is active - resume full functionality
+          console.log('[Example Applet] Resuming full functionality');
+          break;
+        case 'inactive':
+          // Applet is inactive but recently used - continue background processing
+          console.log('[Example Applet] Continuing background processing');
+          break;
+        case 'suspended':
+          // Applet is suspended - DOM removed but data kept
+          console.log('[Example Applet] Suspended - DOM removed, data preserved');
+          break;
+        case 'discarded':
+          // Applet is discarded - iframe will be recreated on activation
+          console.log('[Example Applet] Discarded - will be recreated on activation');
+          break;
+      }
+    });
+
     // To test whether applet iframe properly gets removed after disabling applet.
     // setInterval(() => {
     //   console.log('Hello from the example applet iframe.');
@@ -81,22 +110,22 @@ export class ExampleApplet extends LitElement {
                     .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
-                      const appInfo = await client.appInfo();
-                      if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                        .cell_id[0];
-                      this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
-                    }}
+                const appInfo = await client.appInfo();
+                if (!appInfo) throw new Error('AppInfo is null.');
+                const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                  .cell_id[0];
+                this.weaveClient!.openAsset({ hrl: [dnaHash, e.detail.postHash] }, 'side');
+              }}
                     @drag-post=${async (e: CustomEvent) => {
-                      console.log('GOT DRAG POST EVENT!');
-                      const appInfo = await client.appInfo();
-                      if (!appInfo) throw new Error('AppInfo is null.');
-                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                        .cell_id[0];
-                      this.weaveClient!.assets.dragAsset({
-                        hrl: [dnaHash, e.detail],
-                      });
-                    }}
+                console.log('GOT DRAG POST EVENT!');
+                const appInfo = await client.appInfo();
+                if (!appInfo) throw new Error('AppInfo is null.');
+                const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                  .cell_id[0];
+                this.weaveClient!.assets.dragAsset({
+                  hrl: [dnaHash, e.detail],
+                });
+              }}
                   ></applet-main>
                 </profiles-context>
               </posts-context>
@@ -155,27 +184,27 @@ export class ExampleApplet extends LitElement {
                       <button @click=${async () => cancel()}>Cancel</button>
                       <button
                         @click=${async () => {
-                          const title = (
-                            this.shadowRoot!.getElementById('title-input') as HTMLInputElement
-                          ).value;
-                          const post = {
-                            title,
-                            content: '',
-                          };
-                          try {
-                            const postRecord = await postsClient.createPost(post);
-                            const appInfo = await appletClient.appInfo();
-                            if (!appInfo) throw new Error('AppInfo is null.');
-                            const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
-                              .cell_id[0];
-                            const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
-                            await resolve({
-                              hrl,
-                            });
-                          } catch (e) {
-                            await reject(e);
-                          }
-                        }}
+                    const title = (
+                      this.shadowRoot!.getElementById('title-input') as HTMLInputElement
+                    ).value;
+                    const post = {
+                      title,
+                      content: '',
+                    };
+                    try {
+                      const postRecord = await postsClient.createPost(post);
+                      const appInfo = await appletClient.appInfo();
+                      if (!appInfo) throw new Error('AppInfo is null.');
+                      const dnaHash = (appInfo.cell_info.forum[0].value as ProvisionedCell)
+                        .cell_id[0];
+                      const hrl: [DnaHash, ActionHash] = [dnaHash, postRecord.actionHash];
+                      await resolve({
+                        hrl,
+                      });
+                    } catch (e) {
+                      await reject(e);
+                    }
+                  }}
                       >
                         Create
                       </button>

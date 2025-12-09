@@ -30,6 +30,7 @@ import {
   UnsubscribeFunction,
   GroupPermissionType,
   AssetStore,
+  LifecycleState,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -82,8 +83,7 @@ export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
   }
   url =
     url +
-    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
-      wal.context ? `?context=${encodeContext(wal.context)}` : ''
+    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${wal.context ? `?context=${encodeContext(wal.context)}` : ''
     }`;
   return url;
 }
@@ -458,7 +458,42 @@ export class WeaveClient implements WeaveServices {
     return window.__WEAVE_RENDER_INFO__;
   }
 
-  private constructor() {}
+  /**
+   * Get the current lifecycle state of this applet iframe.
+   * Returns 'active' for non-applet views or if lifecycle state is not available.
+   */
+  get lifecycleState(): LifecycleState {
+    const renderInfo = this.renderInfo;
+    if (renderInfo.type === 'applet-view') {
+      return renderInfo.lifecycleState;
+    }
+    return 'active';
+  }
+
+  /**
+   * Subscribe to lifecycle state changes.
+   * Allows tools to respond to state changes (e.g., pause/resume timers, cleanup DOM, etc.)
+   */
+  onLifecycleChange(
+    callback: (state: LifecycleState) => void,
+  ): UnsubscribeFunction {
+    // Listen for lifecycle change events from parent
+    const handleLifecycleChange = (event: CustomEvent<{ state: LifecycleState; previousState: LifecycleState }>) => {
+      callback(event.detail.state);
+    };
+
+    window.addEventListener('weave-lifecycle-change', handleLifecycleChange as EventListener);
+
+    // Return initial state
+    callback(this.lifecycleState);
+
+    // Return unsubscribe function
+    return () => {
+      window.removeEventListener('weave-lifecycle-change', handleLifecycleChange as EventListener);
+    };
+  }
+
+  private constructor() { }
 
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
     if (window.__WEAVE_RENDER_INFO__) {

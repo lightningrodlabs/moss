@@ -35,9 +35,8 @@ import {
   ProvisionedCell,
   RoleNameCallZomeRequest,
 } from '@holochain/client';
-import { encodeHashToBase64 } from '@holochain/client';
 import { EntryHashB64 } from '@holochain/client';
-import { ActionHash, AdminWebsocket, DnaHash, EntryHash } from '@holochain/client';
+import { ActionHash, AdminWebsocket, DnaHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
 import {
   CreatableResult,
   CreatableName,
@@ -53,6 +52,7 @@ import {
   IframeKind,
   ZomeCallLogInfo,
   ParentToAppletMessage,
+  LifecycleState,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -306,6 +306,39 @@ export class MossStore {
     position: 'side',
     visible: false,
   });
+
+  /**
+   * Track lifecycle states of applet iframes for UI display
+   * Map from appletHash (base64) to lifecycle state
+   */
+  private _appletLifecycleStates: Writable<Map<AppletId, LifecycleState>> = writable(new Map());
+
+  /**
+   * Get the lifecycle state of an applet (readable store)
+   */
+  appletLifecycleState(appletHash: AppletHash): Readable<LifecycleState> {
+    const appletId = encodeHashToBase64(appletHash);
+    return derived(this._appletLifecycleStates, (states) => states.get(appletId) || 'active');
+  }
+
+  /**
+   * Get the lifecycle state of an applet (synchronous getter)
+   */
+  getAppletLifecycleState(appletHash: AppletHash): LifecycleState {
+    const appletId = encodeHashToBase64(appletHash);
+    return get(this._appletLifecycleStates).get(appletId) || 'active';
+  }
+
+  /**
+   * Set the lifecycle state of an applet
+   */
+  setAppletLifecycleState(appletHash: AppletHash, state: LifecycleState): void {
+    const appletId = encodeHashToBase64(appletHash);
+    const currentStates = get(this._appletLifecycleStates);
+    const newStates = new Map(currentStates);
+    newStates.set(appletId, state);
+    this._appletLifecycleStates.set(newStates);
+  }
 
   assetViewerState(): Readable<AssetViewerState> {
     return derived(this._assetViewerState, (state) => state);
@@ -1296,6 +1329,10 @@ export class MossStore {
 
   appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
     asyncReadable<AppletStore>(async (set) => {
+      // Performance marker: Applet store init start
+      const appletStoreMarker = `applet-store-init-${encodeHashToBase64(appletHash)}`;
+      performance.mark(`${appletStoreMarker}-start`);
+
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
       const groups = await toPromise(this.groupsForApplet.get(appletHash));
       // console.log(
@@ -1314,6 +1351,24 @@ export class MossStore {
       if (!applet) throw new Error('Applet not found yet');
 
       const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
+
+      // Performance marker: Applet store init end
+      performance.mark(`${appletStoreMarker}-end`);
+      performance.measure(
+        appletStoreMarker,
+        `${appletStoreMarker}-start`,
+        `${appletStoreMarker}-end`,
+      );
+
+      const measure = performance.getEntriesByName(appletStoreMarker);
+      if (measure.length > 0) {
+        const lastMeasure = measure[measure.length - 1];
+        if (lastMeasure.duration > 100) {
+          console.log(
+            `[PERF] Slow applet store init: ${encodeHashToBase64(appletHash)} took ${lastMeasure.duration.toFixed(2)}ms`,
+          );
+        }
+      }
 
       set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
     }),

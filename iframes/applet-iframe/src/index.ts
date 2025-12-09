@@ -470,6 +470,7 @@ const weaveApi: WeaveServices = {
       peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
+      lifecycleState: 'active', // Initial state, will be updated by parent
     };
 
     window.addEventListener('weave-client-connected', async () => {
@@ -521,6 +522,49 @@ const weaveApi: WeaveServices = {
     throw new Error('Bad RenderView type.');
   }
   window.dispatchEvent(new CustomEvent('applet-iframe-ready'));
+
+  // Listen for lifecycle state changes from parent
+  window.addEventListener('message', (event: MessageEvent) => {
+    // Only handle messages from parent window
+    if (event.source !== window.parent) return;
+
+    const message = event.data;
+    if (!message || typeof message !== 'object') return;
+
+    switch (message.type) {
+      case 'lifecycle-state-change': {
+        const { state, previousState } = message;
+
+        // Update renderInfo lifecycle state
+        if (window.__WEAVE_RENDER_INFO__ && window.__WEAVE_RENDER_INFO__.type === 'applet-view') {
+          window.__WEAVE_RENDER_INFO__.lifecycleState = state;
+        }
+
+        // Dispatch event for tools to listen to
+        window.dispatchEvent(
+          new CustomEvent('weave-lifecycle-change', {
+            detail: { state, previousState },
+          }),
+        );
+        break;
+      }
+      case 'suspend-dom': {
+        // Tool can implement DOM suspension logic
+        window.dispatchEvent(new CustomEvent('weave-suspend-dom'));
+        break;
+      }
+      case 'restore-dom': {
+        // Tool can implement DOM restoration logic
+        window.dispatchEvent(new CustomEvent('weave-restore-dom'));
+        break;
+      }
+      case 'discard-dom': {
+        // Tool can implement DOM discard logic (save state, etc.)
+        window.dispatchEvent(new CustomEvent('weave-discard-dom'));
+        break;
+      }
+    }
+  });
 })();
 
 // async function fetchLocalStorage() {
