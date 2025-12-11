@@ -243,7 +243,7 @@ export class MainDashboard extends LitElement {
 
   _allGroupHashes = new StoreSubscriber(
     this,
-    () => this._mossStore.groupsDnaHashes,
+    () => this._mossStore.allGroupsDnaHashes,
     () => [this._mossStore],
   );
 
