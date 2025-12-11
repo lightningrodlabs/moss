@@ -32,7 +32,7 @@ export type StewardPermissionClaim = {
   permission: StewardPermission;
 };
 
-export type PermissionType =
+export type Accountability =
   | {
       type: 'Progenitor';
     }

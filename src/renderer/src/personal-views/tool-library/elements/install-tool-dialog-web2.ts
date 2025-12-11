@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHashB64 } from '@holochain/client';
+import { ActionHash, ActionHashB64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
@@ -109,6 +109,25 @@ export class InstallToolDialogWeb2 extends LitElement {
     return this._duplicateName;
   }
 
+  // TODO: Use MossPrivilege instead
+  async checkPrivileges(): Promise<[boolean, ActionHash | undefined]> {
+    const myAccountabilities = await toPromise(this.groupStore.myAccountabilities);
+    let hash: ActionHash | undefined = undefined;
+    let isPriv = false;
+    for (const acc of myAccountabilities) {
+      if (acc.type === 'Steward') {
+        hash = acc.content.permission_hash;
+        isPriv = true;
+        continue;
+      }
+      if (acc.type == 'Progenitor') {
+        isPriv = true;
+        continue;
+      }
+    }
+    return [isPriv, hash];
+  }
+
   async installApplet(fields: { custom_name: string; network_seed?: string }) {
     if (this._installing) return;
     if (!this._tool) {
@@ -120,8 +139,8 @@ export class InstallToolDialogWeb2 extends LitElement {
       // Trigger the download of the icon
       // TODO convert icon to base64 and store it on disk
       this._installationProgress = 'Checking permission type...';
-      const permissionType = await toPromise(this.groupStore.permissionType);
-      if (permissionType.type === 'Member') {
+      const [isPriv, permission_hash] = await this.checkPrivileges();
+      if (!isPriv) {
         console.error('No valid permission to add a Tool to this group.');
         notifyError('No valid permission to add a Tool to this group.');
         this._appletDialog.hide();
@@ -134,7 +153,7 @@ export class InstallToolDialogWeb2 extends LitElement {
         this._tool,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
-        permissionType.type === 'Steward' ? permissionType.content.permission_hash : undefined,
+        permission_hash
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs

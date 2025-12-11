@@ -1534,7 +1534,7 @@
 
 "@holochain-open-dev/elements@^0.600.0":
   version "0.600.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.600.0.tgz#c10d760a6342d735a17a1afc2e624ff08ee6a315"
+  resolved "https://registry.npmjs.org/@holochain-open-dev/elements/-/elements-0.600.0.tgz"
   integrity sha512-fzWIqDj8InG/jv/xb00LFYQJjXZa7pdwY3fHRmCQICbPPKibUF/sBgr60TbE3gxPsXjzX5p7ffBt1dW2p3AfBw==
   dependencies:
     "@holo-host/identicon" "^0.1.0"
@@ -1550,23 +1550,8 @@
 
 "@holochain-open-dev/profiles@^0.600.0":
   version "0.600.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.600.0.tgz#137a1df772fe600ac0b5a45f68a3f37ef0f34e59"
+  resolved "https://registry.npmjs.org/@holochain-open-dev/profiles/-/profiles-0.600.0.tgz"
   integrity sha512-n749EjHKMlbyWY5P+VxVCsD137b41EOCgI2nwGiGUZzDe25fw1lx0FDEatPkOApFYyNuVyuiHo1pseddeyjIcg==
-  dependencies:
-    "@holochain-open-dev/elements" "^0.600.0"
-    "@holochain-open-dev/stores" "^0.600.0"
-    "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
-    "@lit/context" "^1.0.1"
-    "@lit/localize" "^0.12.0"
-    "@mdi/js" "^7.1.96"
-    "@shoelace-style/shoelace" "^2.11.0"
-    lit "^3.0.2"
-
-"@holochain-open-dev/profiles@^0.600.0-rc.0":
-  version "0.600.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.600.0-rc.0.tgz#d3aae05d92d576aeb410809ec84d61bed0b53874"
-  integrity sha512-xa6+0p1QiQQ3tV9eitc0Cfx8slSOKbqfWDCCQYrshnJhcj0tzBWs1vM+U4wbGqo27bdeYDF1gSCYFoE8vRbVXg==
   dependencies:
     "@holochain-open-dev/elements" "^0.600.0"
     "@holochain-open-dev/stores" "^0.600.0"
@@ -1580,7 +1565,7 @@
 
 "@holochain-open-dev/stores@^0.600.0":
   version "0.600.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.600.0.tgz#6151ac2367ac60482d20304246490ab136ab54e8"
+  resolved "https://registry.npmjs.org/@holochain-open-dev/stores/-/stores-0.600.0.tgz"
   integrity sha512-alquLMKwRooQ1M0qR7JLcUSudp2xv4QrG9g4wq2PKDtXrMkokKvHtMXJ/Bgcdy8Gh/mst2Xt7VAsFUNblb3sBA==
   dependencies:
     "@alenaksu/json-viewer" "^2.0.1"
@@ -1594,7 +1579,7 @@
 
 "@holochain-open-dev/utils@^0.600.0":
   version "0.600.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.600.0.tgz#31c7d26cc8381c98f6b96f96342e44bc4053ff6b"
+  resolved "https://registry.npmjs.org/@holochain-open-dev/utils/-/utils-0.600.0.tgz"
   integrity sha512-zc/eF1cvVZvumBjLdY/FHZdWO/ICRR95bAM03dnCAhoWs4psIe+HCdMK+mq2u/KV7lXYQU5gKUF+WyUNaB0PFA==
   dependencies:
     "@holochain/client" "^0.20.0"
@@ -1611,7 +1596,7 @@
 
 "@holochain/client@^0.20.0":
   version "0.20.0"
-  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.0.tgz#0ee7997d5ea2c3949264554eb3e9034ba63a796d"
+  resolved "https://registry.npmjs.org/@holochain/client/-/client-0.20.0.tgz"
   integrity sha512-Q6YSnw6YKiiDfg31TW+melwAOABp1jTXU9gO26ThSxPgAEqj3TicHl7DqwT6ic/87L5tRwEr4X1Z4iYeAKwWGQ==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
@@ -1626,7 +1611,7 @@
 
 "@holochain/tryorama@^0.19.0":
   version "0.19.0"
-  resolved "https://registry.yarnpkg.com/@holochain/tryorama/-/tryorama-0.19.0.tgz#ceaadb671fb6941606515f0ff3e8612bd7ec3ff6"
+  resolved "https://registry.npmjs.org/@holochain/tryorama/-/tryorama-0.19.0.tgz"
   integrity sha512-qDAXfphyTCg5RjTyOt/wQt9/3sUhf3FlqMxo6HLnhiTP4Dp4zkJyOvrhXtEgfzZt3fa97/L2BME2vZIymTnjug==
   dependencies:
     "@holochain/client" "^0.20.0"
@@ -5921,9 +5906,9 @@ csso@^4.2.0:
     css-tree "^1.1.2"
 
 csstype@^3.1.3:
-  version "3.1.3"
-  resolved "https://registry.npmjs.org/csstype/-/csstype-3.1.3.tgz"
-  integrity sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==
+  version "3.2.3"
+  resolved "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz"
+  integrity sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==
 
 cytoscape-cola@^2.5.0:
   version "2.5.1"
@@ -11446,7 +11431,7 @@ rimraf@5.0.5:
 
 rimraf@^3.0.2:
   version "3.0.2"
-  resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-3.0.2.tgz#f1a5402ba6220ad52cc1282bac1ae3aa49fd061a"
+  resolved "https://registry.npmjs.org/rimraf/-/rimraf-3.0.2.tgz"
   integrity sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==
   dependencies:
     glob "^7.1.3"

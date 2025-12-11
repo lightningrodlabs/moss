@@ -28,8 +28,8 @@ import {
   RecordInfo,
   PeerStatusUpdate,
   UnsubscribeFunction,
-  GroupPermissionType,
   AssetStore,
+  MossAccountability,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -406,10 +406,11 @@ export interface WeaveServices {
    */
   requestClose: () => Promise<void>;
   /**
-   * Gets the group permission type. May be used to restrict certain actions in the UI.
+   * Gets the agent's accountabilities for this applet.
+   * May be used to restrict certain actions in the UI.
    * @returns
    */
-  myGroupPermissionType: () => Promise<GroupPermissionType>;
+  myAccountabilitiesPerGroup: () => Promise<[DnaHash, MossAccountability[]][]>;
   /**
    * Gets all the agents that joined the Tool instance of the Tool calling this function
    * @returns
@@ -541,7 +542,7 @@ export class WeaveClient implements WeaveServices {
 
   requestClose = () => window.__WEAVE_API__.requestClose();
 
-  myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
+  myAccountabilitiesPerGroup = () => window.__WEAVE_API__.myAccountabilitiesPerGroup();
 
   appletParticipants = () => window.__WEAVE_API__.appletParticipants();
 

@@ -31,3 +31,5 @@ weave.dev.config*
 ## doc temp/local files
 libs/*/docs/**
 libs/*/markdown/**
+
+.claude

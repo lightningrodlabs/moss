@@ -118,9 +118,9 @@ export class GroupAppletsSidebar extends LitElement {
   @query('inactive-tools-dialog')
   inactiveToolsDialog: any;
 
-  private _permissionType = new StoreSubscriber(
+  private myAccountabilities = new StoreSubscriber(
     this,
-    () => this._groupStore.permissionType,
+    () => this._groupStore.myAccountabilities,
     () => [this._groupStore],
   );
 
@@ -201,11 +201,17 @@ export class GroupAppletsSidebar extends LitElement {
   @state()
   onlinePeersCollapsed: boolean = false;
 
-  amISteward(): boolean {
-    return (
-      this._permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this._permissionType.value.value.type)
-    );
+  // TODO: Use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
+    return false;
   }
 
   renderAppletButtons(applets: ReadonlyMap<EntryHash, AppletStore>) {
@@ -372,7 +378,7 @@ export class GroupAppletsSidebar extends LitElement {
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amISteward()
+        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amIPrivileged()
           ? html`<div
               class="column items-center"
               style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
@@ -829,7 +835,7 @@ export class GroupAppletsSidebar extends LitElement {
         ${(this._groupApplets.value.status === 'complete' &&
         this._groupApplets.value.value.size === 0 &&
         !this.collapsed) ||
-        !this.amISteward()
+        !this.amIPrivileged()
         ? html``
         : html`<sl-tooltip hoist content="${msg('Add a new tool for the group')}" placement="bottom">
               <button

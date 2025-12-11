@@ -88,9 +88,9 @@ export class GroupHome extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   private _groupStore!: GroupStore;
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this._groupStore.permissionType,
+    () => this._groupStore.myAccountabilities,
     () => [this._groupStore],
   );
 
@@ -131,6 +131,19 @@ export class GroupHome extends LitElement {
   _loadingDescription = false;
 
   _unsubscribe: Unsubscriber | undefined;
+
+  // Memoization for performance
+  private _timeAgo = new TimeAgo('en-US');
+  private _cachedFilteredApplets: Array<{
+    appletHash: AppletHash;
+    appletEntry: Applet | undefined;
+    toolInfoAndVersions: ToolInfoAndVersions | undefined;
+    agentKey: AgentPubKey;
+    timestamp: number;
+    joinedMembers: AppletAgent[];
+    isIgnored: boolean;
+  }> | null = null;
+  private _cachedAppletsKey: string | null = null;
 
   _groupDescription = new StoreSubscriber(
     this,
@@ -226,13 +239,6 @@ export class GroupHome extends LitElement {
     this.groupSettings?.showInactiveTools();
   }
 
-  hasStewardPermission(): boolean {
-    return (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    );
-  }
-
   async uninstallApplet(e: CustomEvent) {
     const confirmation = await dialogMessagebox({
       message:
@@ -294,24 +300,75 @@ export class GroupHome extends LitElement {
     return 2;
   }
 
-  newAppletsAvailable(): number {
-    if (this._unjoinedApplets.value.status === 'complete') {
-      const ignoredApplets = this._ignoredApplets.value;
-      const filteredApplets = this._unjoinedApplets.value.value
-        .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
-        .map(([appletHash, appletEntry, agentKey, timestamp, joinedMembers]) => ({
+  private _getFilteredApplets(): Array<{
+    appletHash: AppletHash;
+    appletEntry: Applet | undefined;
+    toolInfoAndVersions: ToolInfoAndVersions | undefined;
+    agentKey: AgentPubKey;
+    timestamp: number;
+    joinedMembers: AppletAgent[];
+    isIgnored: boolean;
+  }> | null {
+    if (this._unjoinedApplets.value.status !== 'complete') {
+      return null;
+    }
+
+    // Create cache key based on actual applet hashes + filter state
+    // This ensures cache invalidates when applets are added/removed, not just when count changes
+    const appletHashes = Array.from(this._unjoinedApplets.value.value.keys() as Iterable<EntryHash>)
+      .map((h) => encodeHashToBase64(h))
+      .sort()
+      .join(',');
+    const ignoredApplets = this._ignoredApplets.value;
+    const ignoredKey = ignoredApplets ? ignoredApplets.sort().join(',') : '';
+    const recentlyJoinedKey = this._recentlyJoined.sort().join(',');
+    const cacheKey = `${appletHashes}-${this._showIgnoredApplets}-${recentlyJoinedKey}-${ignoredKey}`;
+
+    // Return cached result if key matches
+    if (this._cachedAppletsKey === cacheKey && this._cachedFilteredApplets) {
+      return this._cachedFilteredApplets;
+    }
+
+    // Process and cache
+    const filteredApplets = this._unjoinedApplets.value.value
+      .filter(
+        ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
+      )
+      .map(
+        ([
           appletHash,
           appletEntry,
+          toolInfoAndVersions,
           agentKey,
           timestamp,
           joinedMembers,
-          isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
-        }))
-        .filter((info) => (info.isIgnored ? false : true));
+        ]) => ({
+          appletHash,
+          appletEntry,
+          toolInfoAndVersions,
+          agentKey,
+          timestamp,
+          joinedMembers,
+          isIgnored:
+            !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
+        }),
+      )
+      .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
+      .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
 
-      return filteredApplets.length;
+    this._cachedAppletsKey = cacheKey;
+    this._cachedFilteredApplets = filteredApplets;
+
+    return filteredApplets;
+  }
+
+  newAppletsAvailable(): number {
+    const filteredApplets = this._getFilteredApplets();
+    if (!filteredApplets) {
+      return 0;
     }
-    return 0;
+    // Filter out ignored applets for the count
+    return filteredApplets.filter((info) => !info.isIgnored).length;
   }
 
   renderNewApplets() {
@@ -328,35 +385,13 @@ export class GroupHome extends LitElement {
           <span>${this._unjoinedApplets.value.error}</span>
         </div> `;
       case 'complete':
-        const timeAgo = new TimeAgo('en-US');
-        const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
-          encodeHashToBase64(this._groupStore.groupDnaHash),
-        );
-        const filteredApplets = this._unjoinedApplets.value.value
-          .filter(
-            ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
-          )
-          .map(
-            ([
-              appletHash,
-              appletEntry,
-              toolInfoAndVersions,
-              agentKey,
-              timestamp,
-              joinedMembers,
-            ]) => ({
-              appletHash,
-              appletEntry,
-              toolInfoAndVersions,
-              agentKey,
-              timestamp,
-              joinedMembers,
-              isIgnored:
-                !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
-            }),
-          )
-          .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
-          .sort((info_a, info_b) => info_b.timestamp - info_a.timestamp);
+        // Use cached filtered applets (memoized for performance)
+        const filteredApplets = this._getFilteredApplets();
+        if (!filteredApplets) {
+          return html`<div class="column center-content">
+            <sl-spinner style="font-size: 30px;"></sl-spinner>
+          </div>`;
+        }
 
         return html` <div
             class="row"
@@ -403,7 +438,7 @@ export class GroupHome extends LitElement {
                             <div
                               style="margin-bottom: 3px; text-align: right; opacity: 0.65; font-size: 12px;"
                             >
-                              ${timeAgo.format(new Date(info.timestamp / 1000))}
+                              ${this._timeAgo.format(new Date(info.timestamp / 1000))}
                             </div>
                           </div>
                           <div class="card-content" style="align-items: center;">
@@ -465,6 +500,33 @@ export class GroupHome extends LitElement {
     }
   }
 
+
+  // TODO: use MossPrivilege instead
+  getMyPermissionHash(): ActionHash | undefined {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return undefined;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward') {
+        return acc.content.permission_hash;
+      }
+    }
+    return undefined;
+  }
+
+  // TODO: use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   renderHomeContent() {
     switch (this._groupDescription.value.status) {
       case 'pending':
@@ -493,22 +555,20 @@ export class GroupHome extends LitElement {
               const descriptionInput = this.shadowRoot!.getElementById(
                 'group-description-input',
               ) as HTMLTextAreaElement;
-              const myPermission = await toPromise(this._groupStore.permissionType);
-              if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
+              // TODO: use MossPrivilege instead
+              if (!this.amIPrivileged()) {
                 this._editGroupDescription = false;
                 notifyError('No permission to edit group profile.');
                 return;
               } else {
-                console.log('Saving decription...');
+                console.log('Saving description...');
                 console.log('Value: ', descriptionInput.value);
                 const result = await this._groupStore.groupClient.setGroupDescription(
-                  myPermission.type === 'Steward'
-                    ? myPermission.content.permission_hash
-                    : undefined,
+                  this.getMyPermissionHash(),
                   descriptionInput.value,
                 );
 
-                console.log('decription saved: ', result.entry);
+                console.log('description saved: ', result.entry);
 
                 await this._groupStore.groupDescription.reload();
                 this._editGroupDescription = false;
@@ -533,7 +593,7 @@ export class GroupHome extends LitElement {
               No group description.
               <button
                 class="moss-button"
-                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.hasStewardPermission()
+                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
               ? ''
               : 'display: none;'}"
                 @click=${() => {
@@ -549,7 +609,7 @@ export class GroupHome extends LitElement {
             <div class="column">
               <div class="row" style="justify-content: flex-end;">
                 <button
-                  style="${this.hasStewardPermission() ? '' : 'display: none;'}"
+                  style="${this.amIPrivileged() ? '' : 'display: none;'}"
                   @click=${async () => {
               this._loadingDescription = true;
               // Reload group description in case another Steward has edited it in the meantime
@@ -641,7 +701,7 @@ export class GroupHome extends LitElement {
 
           <!-- Top Row -->
 
-          <div class="row" style="align-items: center; margin-bottom: 24px">
+          <div class="row" style="align-items: center;padding-bottom: 6px; border-bottom: solid 1px var(--moss-main-green);">
             <div class="row" style="align-items: center; flex: 1;">
               <div
                 style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;"
@@ -679,7 +739,7 @@ export class GroupHome extends LitElement {
           </div>
 
           <!-- NEW APPLETS -->
-          <div class="row tab-bar ">
+          <div class="row tab-bar " style="display:none">
             <div
               tabindex="0"
               class="tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"

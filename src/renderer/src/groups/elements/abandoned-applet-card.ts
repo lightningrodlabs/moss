@@ -58,9 +58,9 @@ export class AbandonedAppletCard extends LitElement {
     () => [this.groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
@@ -79,23 +79,35 @@ export class AbandonedAppletCard extends LitElement {
   @state()
   addedBy: AgentPubKey | undefined;
 
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  // TODO: Use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
+  // TODO: Use MossPrivilege instead
   canIArchive() {
-    const addedByMe =
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
-    const iAmProgenitor =
-      this.permissionType.value.status === 'complete' &&
-      this.permissionType.value.value.type === 'Progenitor';
-    if (iAmProgenitor || addedByMe) return true;
+    // added by me
+    if (!!this.addedBy
+      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+      return true;
+    }
+    // progenitor
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 

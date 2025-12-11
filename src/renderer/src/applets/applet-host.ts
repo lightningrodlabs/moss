@@ -14,6 +14,7 @@ import {
   type PeerStatusUpdate,
   type IframeKind,
   type AppletToParentMessage,
+  MossAccountability, MossRole,
 } from '@theweave/api';
 import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -41,7 +42,7 @@ import { AppletToParentRequest as AppletToParentRequestSchema } from '../validat
 import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
-import { GroupRemoteSignal, PermissionType } from '@theweave/group-client';
+import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { GroupStore } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
@@ -246,8 +247,8 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeaveServices.');
     },
-    async myGroupPermissionType() {
-      throw new Error('myGroupPermissionType is not supported in headless WeaveServices.');
+    async myAccountabilitiesPerGroup() {
+      throw new Error('myAccountabilitiesPerGroup is not supported in headless WeaveServices.');
     },
     async appletParticipants() {
       throw new Error('appletParticipants is not supported in headless WeaveServices.');
@@ -512,43 +513,55 @@ export async function handleAppletIframeMessage(
         }
       }
       return assetInfo;
-    case 'my-group-permission-type': {
+    case 'my-accountabilities-per-group': {
       if (source.type === 'cross-group') {
-        throw new Error('Group permission type is not defined for cross-group views.');
+        throw new Error('Group Accountabilities not defined for cross-group views.');
       }
       const appletHash = source.appletHash;
       const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
       if (groupStores.size === 0) throw new Error('No group store found for applet.');
-      const groupPermissions: PermissionType[] = [];
+      const accountabilitiesPerGroup: [DnaHash, MossAccountability[]][] = [];
       await Promise.all(
         Array.from(groupStores.values()).map(async (store) => {
-          const permission = await toPromise(store.permissionType);
-          groupPermissions.push(permission);
+          const accs = await toPromise(store.myAccountabilities);
+          const mossAccountabilities = accs.map((acc: Accountability) => {
+            // Convert 'Accountability' (Zome-defined) to 'MossAccountability' (UI-defined)
+            switch (acc.type) {
+              case 'Member': return { role: MossRole.Member, startDate: 0 };
+              case 'Progenitor': return { role: MossRole.Progenitor, startDate: 0 };
+              case 'Steward': return { role: MossRole.Steward, startDate: 0 };
+            }
+          });
+          accountabilitiesPerGroup.push([store.groupDnaHash, mossAccountabilities]);
         }),
       );
-
-      if (groupPermissions.length > 1)
-        return {
-          type: 'Ambiguous',
-        };
-
-      switch (groupPermissions[0].type) {
-        case 'Member':
-          return {
-            type: 'Member',
-          };
-        case 'Progenitor':
-          return {
-            type: 'Steward',
-          };
-        case 'Steward': {
-          const expiry = groupPermissions[0].content.permission.expiry;
-          return {
-            type: 'Steward',
-            expiry: expiry ? expiry / 1000 : undefined,
-          };
-        }
-      }
+      return accountabilitiesPerGroup;
+      // if (accountabilitiesPerGroup.length === 0) {
+      //   return { type: 'Member' };
+      // }
+      //
+      // if (accountabilitiesPerGroup.length > 1)
+      //   return {
+      //     type: 'Ambiguous',
+      //   };
+      //
+      // switch (accountabilitiesPerGroup[0].type) {
+      //   case 'Member':
+      //     return {
+      //       type: 'Member',
+      //     };
+      //   case 'Progenitor':
+      //     return {
+      //       type: 'Steward',
+      //     };
+      //   case 'Steward': {
+      //     const expiry = accountabilitiesPerGroup[0].content.permission.expiry;
+      //     return {
+      //       type: 'Steward',
+      //       expiry: expiry ? expiry / 1000 : undefined,
+      //     };
+      //   }
+      //}
     }
     case 'applet-participants': {
       if (source.type === 'cross-group') {
@@ -606,7 +619,7 @@ export async function handleAppletIframeMessage(
         appletId: encodeHashToBase64(appletHash),
         payload: message.payload,
       };
-      // For every group store, get the currently online peers and send a remote signal to them;
+      // For every group store, get current online peers and send a remote signal to them;
       await Promise.all(
         Array.from(groupStores.values()).map(async (store) => {
           const peerStatuses = get(store.peerStatuses());

@@ -714,14 +714,14 @@ export class GroupStore {
     return dnaModifiers;
   });
 
-  permissionType = lazyReloadableStore(async () => this.groupClient.getMyPermissionType());
+  myAccountabilities = lazyReloadableStore(async () => this.groupClient.getMyAccountabilities());
 
-  allAgentPermissionTypes = lazyReloadableStore(async () =>
-    this.groupClient.getAllAgentPermissionTypes(),
+  allAgentsAccountabilities = lazyReloadableStore(async () =>
+    this.groupClient.getAllAgentsAccountabilities(),
   );
 
-  agentPermission = new LazyHoloHashMap((agent) =>
-    lazyLoad(() => this.groupClient.getAgentPermissionType(agent)),
+  agentAccountabilities = new LazyHoloHashMap((agent) =>
+    lazyLoad(() => this.groupClient.getAgentAccountabilities(agent)),
   );
 
   groupProfile = reloadableLazyLoadAndPollUntil(

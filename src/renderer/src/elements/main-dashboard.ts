@@ -243,7 +243,7 @@ export class MainDashboard extends LitElement {
 
   _allGroupHashes = new StoreSubscriber(
     this,
-    () => this._mossStore.groupsDnaHashes,
+    () => this._mossStore.allGroupsDnaHashes,
     () => [this._mossStore],
   );
 
@@ -1731,8 +1731,8 @@ export class MainDashboard extends LitElement {
           >
             <div class="column center-content">
               ${this._assetViewerState.value.visible
-        ? chevronDoubleRightIcon(28)
-        : chevronDoubleLeftIcon(28)}
+        ? chevronDoubleRightIcon(18)
+        : chevronDoubleLeftIcon(18)}
             </div>
           </button>
         </sl-tooltip>
@@ -2082,12 +2082,11 @@ export class MainDashboard extends LitElement {
           align-items: center;
           justify-content: center;
           flex-direction: row;
-          color: var(--sl-color-tertiary-0);
-          background: var(--sl-color-tertiary-800);
+          color: var(--moss-purple  );
           cursor: pointer;
-          /* margin: 5px; */
-          height: 50px;
-          width: 50px;
+          margin: 8px;
+          height: 25px;
+          width: 25px;
           border-radius: 5px 0 0 5px;
         }
 

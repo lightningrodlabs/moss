@@ -383,7 +383,7 @@ export type AppletToParentRequest =
       groupHash: DnaHash;
     }
   | {
-      type: 'my-group-permission-type';
+      type: 'my-accountabilities-per-group';
     }
   | {
       type: 'applet-participants';
@@ -587,23 +587,40 @@ export type PeerStatusUpdate = Record<AgentPubKeyB64, PeerStatus>;
 
 export type ReadonlyPeerStatusStore = Readable<Record<AgentPubKeyB64, PeerStatus>>;
 
-export type GroupPermissionType =
-  | {
-      type: 'Steward';
-      /**
-       * Expiry date in ms since Unix epoch time
-       */
-      expiry?: number;
-    }
-  | {
-      type: 'Member';
-    }
-  | {
-      /**
-       * Can only occur if the applet belongs to more than one group
-       */
-      type: 'Ambiguous';
-    };
+/**
+ * An accountability is when an agent holds a role in a specific time period.
+ * A role is a set of privileges and has a fixed term/mandate duration.
+ * A privilege lets an agent perform a certain action.
+ */
+
+/** */
+export enum MossPrivilege {
+  ArchiveTool,
+  AddTool,
+  MakeSteward,
+  ChangeGroupProperties,
+}
+
+export type GroupRole = {
+  name: string,
+  defaultMandateDuration: number; // in ms since Unix epoch time ; 0 == forever
+  privileges: MossPrivilege[];
+}
+
+/** MossRole is a typed Enum of GroupRoles */
+export const MossRole = {
+  Member: { name: 'Member', mandateDuration: 0, privileges: [] },
+  Steward: { name: 'Steward', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.MakeSteward] },
+  Progenitor: { name: 'Progenitor', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.ArchiveTool, MossPrivilege.MakeSteward]},
+} as const;
+export type MossRole = typeof MossRole[keyof typeof MossRole];
+
+export type MossAccountability = {
+  role: MossRole,
+  startDate: number, // in ms since Unix epoch time
+  duration?: number, // use role's defaultMandateDuration if not specified
+  // expiry() // = startDate + mandateDuration
+}
 
 export type WalRelationAndTags = {
   relationHash: EntryHash;

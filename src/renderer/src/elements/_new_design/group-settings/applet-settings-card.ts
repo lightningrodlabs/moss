@@ -1,4 +1,4 @@
-import { AppInfo, encodeHashToBase64 } from '@holochain/client';
+import { ActionHash, AppInfo, encodeHashToBase64 } from '@holochain/client';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
@@ -59,16 +59,13 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     );
   }
 
+  // TODO: use MossPrivilege instead
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
-    console.log('amISteward: ', this.amISteward());
-    if (
-      this.groupAppletsMetaData.value.status !== 'complete' ||
-      !this.amISteward() ||
-      this.permissionType.value.status !== 'complete' ||
-      !['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
+    console.log('amIPrivileged: ', this.amIPrivileged());
+    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amIPrivileged()) {
       return;
+    }
     console.log('Changing setting.');
     const groupAppletsMetaData = this.groupAppletsMetaData.value.value || {};
     const appletId = encodeHashToBase64(this.appletHash);
@@ -86,13 +83,23 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     }
 
     groupAppletsMetaData[appletId] = appletMetaData;
-    const permissionHash =
-      this.permissionType.value.value.type === 'Steward'
-        ? this.permissionType.value.value.content.permission_hash
-        : undefined;
+    const permissionHash = this.getMyPermissionHash();
     await this.groupStore.groupClient.setGroupAppletsMetaData(permissionHash, groupAppletsMetaData);
     notify(message);
     await this.groupStore.groupAppletsMetaData.reload();
+  }
+
+  // TODO: use MossPrivilege instead
+  getMyPermissionHash(): ActionHash | undefined {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return undefined;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward') {
+        return acc.content.permission_hash;
+      }
+    }
+    return undefined;
   }
 
   toolVersion() {
@@ -113,7 +120,7 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     if (this.groupAppletsMetaData.value.status === 'error') {
       console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
     }
-    const isSteward = this.groupAppletsMetaData.value.status === 'complete' && this.amISteward();
+    const isSteward = this.groupAppletsMetaData.value.status === 'complete' && this.amIPrivileged();
     const alwaysOnlineEnabled = this.groupAppletsMetaData.value.status === 'complete'
       ? this.alwaysOnlineNodesShouldInstall(this.groupAppletsMetaData.value.value)
       : false;

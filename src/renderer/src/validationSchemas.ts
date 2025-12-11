@@ -305,7 +305,7 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('my-group-permission-type'),
+      type: Type.Literal('my-accountabilities-per-group'),
     },
     { additionalProperties: false },
   ),

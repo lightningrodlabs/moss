@@ -119,7 +119,7 @@ export class GroupMemberList extends LitElement {
       notify('Steward role assigned.');
     });
     this.assignSteward = undefined;
-    await this._groupStore.allAgentPermissionTypes.reload();
+    await this._groupStore.allAgentsAccountabilities.reload();
     this.requestUpdate();
     this.assigning = false;
   }
