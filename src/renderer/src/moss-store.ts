@@ -1098,6 +1098,23 @@ export class MossStore {
       .map((app) => (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0] as DnaHash);
   });
 
+  allGroupsDnaHashes = pipe(this.groupsDnaHashes, (runningGroupHashes) =>
+    asyncDerived(this.disabledGroups, (disabledGroupHashes) => {
+      // Combine running and disabled groups
+      const allHashes = [...runningGroupHashes];
+
+      // Add disabled groups that aren't already in the list
+      for (const disabledHash of disabledGroupHashes) {
+        const disabledHashB64 = encodeHashToBase64(disabledHash);
+        if (!allHashes.some((h) => encodeHashToBase64(h) === disabledHashB64)) {
+          allHashes.push(disabledHash);
+        }
+      }
+
+      return allHashes;
+    }),
+  );
+
   groupProfilePersisted = new LazyMap((groupDnaHashB64: DnaHashB64) => {
     return asyncReadable<GroupProfilePartial | undefined>(async (set) => {
       const groupProfile = await this.groupProfile(groupDnaHashB64);
