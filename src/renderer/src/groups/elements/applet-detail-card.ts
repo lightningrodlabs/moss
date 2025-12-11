@@ -1,4 +1,4 @@
-import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64, ActionHash } from '@holochain/client';
 import { hashProperty, notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -66,9 +66,9 @@ export class AppletDetailCard extends LitElement {
     () => [this.groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
@@ -99,23 +99,35 @@ export class AppletDetailCard extends LitElement {
   @state()
   showAdvanced = false;
 
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  // TODO: Use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
+  // TODO: Use MossPrivilege instead
   canIArchive() {
-    const addedByMe =
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
-    const iAmProgenitor =
-      this.permissionType.value.status === 'complete' &&
-      this.permissionType.value.value.type === 'Progenitor';
-    if (iAmProgenitor || addedByMe) return true;
+    // added by me
+    if (!!this.addedBy
+      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+        return true;
+    }
+    // progenitor
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -185,14 +197,13 @@ export class AppletDetailCard extends LitElement {
     }
   }
 
+  // TODO: use MossPrivilege instead
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
-    console.log('amISteward: ', this.amISteward());
+    console.log('amIPrivileged: ', this.amIPrivileged());
     if (
-      this.groupAppletsMetaData.value.status !== 'complete' ||
-      !this.amISteward() ||
-      this.permissionType.value.status !== 'complete' ||
-      !['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
+      this.groupAppletsMetaData.value.status !== 'complete'
+      || !this.amIPrivileged()
     )
       return;
     console.log('Changing setting.');
@@ -212,13 +223,23 @@ export class AppletDetailCard extends LitElement {
     }
 
     groupAppletsMetaData[appletId] = appletMetaData;
-    const permissionHash =
-      this.permissionType.value.value.type === 'Steward'
-        ? this.permissionType.value.value.content.permission_hash
-        : undefined;
-    await this.groupStore.groupClient.setGroupAppletsMetaData(permissionHash, groupAppletsMetaData);
+    const myPermissionHash = this.getMyPermissionHash();
+    await this.groupStore.groupClient.setGroupAppletsMetaData(myPermissionHash, groupAppletsMetaData);
     notify(message);
     await this.groupStore.groupAppletsMetaData.reload();
+  }
+
+  // TODO: use MossPrivilege instead
+  getMyPermissionHash(): ActionHash | undefined {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return undefined;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward') {
+        return acc.content.permission_hash;
+      }
+    }
+    return undefined;
   }
 
   toolVersion() {
@@ -292,7 +313,7 @@ export class AppletDetailCard extends LitElement {
     if (this.groupAppletsMetaData.value.status === 'error') {
       console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
     }
-    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amISteward()) return html``;
+    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amIPrivileged()) return html``;
     return html`
       <div class="column meta-settings">
         <div class="font-bold">${msg('Advanced Settings')}</div>

@@ -30,7 +30,7 @@
     "dev:electron": "yarn typecheck && electron-vite dev",
     "build": "yarn typecheck && yarn build:applet-iframe && electron-vite build && yarn build:cli",
     "setup": "yarn install && yarn build:libs && yarn build:iframes && mkdir -p resources/default-apps && yarn prepare:default-apps && mkdir -p resources/bins && yarn fetch:binaries && yarn check:binaries && yarn install --check-files",
-    "setup:release": "yarn install --network-timeout 600000  && yarn build:libs && yarn build:iframes && yarn fetch:group-happ && yarn fetch:binaries && yarn check:binaries && yarn install --check-files",
+    "setup:release": "yarn install --network-timeout 600000 && yarn build:libs && yarn build:iframes && yarn fetch:group-happ && yarn fetch:binaries && yarn check:binaries && yarn install --check-files",
     "build:libs": "yarn build:api && yarn build:elements && yarn build:grapes && yarn build:gc && yarn build:mt && yarn install --check-files && yarn build:utils && yarn build:tc",
     "build:applet-iframe": "yarn workspace applet-iframe build",
     "build:happ-iframe": "yarn workspace happ-iframe build",

@@ -67,9 +67,9 @@ export abstract class BaseAppletSettingsCard extends LitElement {
     () => [this.groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
@@ -111,24 +111,34 @@ export abstract class BaseAppletSettingsCard extends LitElement {
     // Override in subclasses if needed
   }
 
-  // Common methods - identical in both components
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
-  canIDeprecate() {
-    const addedByMe =
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
-    const iAmProgenitor =
-      this.permissionType.value.status === 'complete' &&
-      this.permissionType.value.value.type === 'Progenitor';
-    if (iAmProgenitor || addedByMe) return true;
+  // TODO: Use MossPrivilege instead
+  canIArchive() {
+    // added by me
+    if (!!this.addedBy
+      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+      return true;
+    }
+    // progenitor
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -228,7 +238,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
   }
 
   renderDeprecateButton() {
-    if (!this.canIDeprecate()) return html``;
+    if (!this.canIArchive()) return html``;
     switch (this.deprecateState()) {
       case 'notArchived':
         return html`

@@ -11,16 +11,15 @@ import {
   type FrameNotification,
   WeaveClient,
   ReadonlyPeerStatusStore,
-  GroupPermissionType,
-  UnsubscribeFunction,
+  UnsubscribeFunction, MossAccountability
 } from '@theweave/api';
 import {
   AgentPubKey,
   AppClient,
   CellInfo,
   CellType,
-  ClonedCell,
-  ProvisionedCell,
+  ClonedCell, DnaHash,
+  ProvisionedCell
 } from '@holochain/client';
 import '@theweave/elements/dist/elements/wal-embed.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
@@ -30,6 +29,7 @@ import './elements/agent-status.js';
 import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
 import { weaveClientContext } from '@theweave/elements';
 import { decode, encode } from '@msgpack/msgpack';
+import { Accountability } from '@theweave/group-client';
 
 @localized()
 @customElement('applet-main')
@@ -76,7 +76,7 @@ export class AppletMain extends LitElement {
   bare: boolean = true;
 
   @state()
-  groupPermissionType: GroupPermissionType | undefined;
+  myAccountabilitiesPerGroup: [DnaHash, MossAccountability[]][] | undefined;
 
   @state()
   appletParticipants: AgentPubKey[] | undefined;
@@ -109,7 +109,8 @@ export class AppletMain extends LitElement {
       console.log('@example-applet: Running second unbeforeunload callback.');
     });
 
-    this.groupPermissionType = await this.weaveClient.myGroupPermissionType();
+    this.myAccountabilitiesPerGroup = await this.weaveClient.myAccountabilitiesPerGroup();
+    console.log('myAccountabilitiesPerGroup: ', this.myAccountabilitiesPerGroup);
     this.appletParticipants = await this.weaveClient.appletParticipants();
 
     this.weaveClient.onRemoteSignal((payload) => {
@@ -303,7 +304,7 @@ export class AppletMain extends LitElement {
         <div class="row" style="justify-content: flex-start; align-items: center;">
           <span>All Tool participants:</span>${this.renderAppletParticipants()}
         </div>
-        <div><b>My Group Permission Type: </b>${JSON.stringify(this.groupPermissionType)}</div>
+        <div><b>My Group Accountabilities: </b>${JSON.stringify(this.myAccountabilitiesPerGroup)}</div>
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>

@@ -301,9 +301,9 @@ const weaveApi: WeaveServices = {
       type: 'request-close',
     }),
 
-  myGroupPermissionType: () =>
+  myAccountabilitiesPerGroup: () =>
     postMessage({
-      type: 'my-group-permission-type',
+      type: 'my-accountabilities-per-group',
     }),
 
   appletParticipants: () =>

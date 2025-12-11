@@ -14,7 +14,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, decodeHashFromBase64 } from '@holochain/client';
-import { PermissionType } from '@theweave/group-client';
+import { Accountability } from '@theweave/group-client';
 import { mossStyles } from '../../shared-styles.js';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 
@@ -35,33 +35,38 @@ export class StewardsSettings extends LitElement {
   @state()
   _expirySelected: boolean = false;
 
-  allAgentPermissionTypes = new StoreSubscriber(
+  allAgentsAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.allAgentPermissionTypes,
+    () => this.groupStore.allAgentsAccountabilities,
     () => [this.groupStore],
   );
 
-  myPermissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
   async firstUpdated() {
-    await this.groupStore.permissionType.reload();
+    await this.groupStore.myAccountabilities.reload();
   }
 
-  validityDuration(level: PermissionType) {
-    if (level.type === 'Steward' && level.content.permission.expiry) {
-      return `expires ${new Date(level.content.permission.expiry / 1000).toISOString()}`;
+  validityDuration(acc: Accountability) {
+    if (acc.type === 'Steward' && acc.content.permission.expiry) {
+      return `expires ${new Date(acc.content.permission.expiry / 1000).toISOString()}`;
     }
-    if (level.type === 'Member') return '';
+    if (acc.type === 'Member') return '';
     return 'no expiry';
   }
 
-  canICreatePermissions(level: PermissionType): boolean {
-    if (level.type === 'Progenitor') return true;
-    if (level.type === 'Steward' && !level.content.permission.expiry) return true;
+  // TODO: Use MossPrivilege instead
+  canIGrantAccontabilities(accs: Accountability[]): boolean {
+    for (const acc of accs) {
+      if (acc.type === 'Progenitor'
+        || (acc.type  === 'Steward' && !acc.content.permission.expiry)) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -74,7 +79,7 @@ export class StewardsSettings extends LitElement {
     }
   }
 
-  async createPermission() {
+  async grantAccountability() {
     console.log('Creating permission...');
     console.log('this._expirySelected', this._expirySelected);
     let usTimestamp;
@@ -125,21 +130,21 @@ export class StewardsSettings extends LitElement {
     const expiryInput = this.shadowRoot?.getElementById('permission-expiry') as HTMLInputElement;
     expiryInput.value = '';
     this._expirySelected = false;
-    await this.groupStore.allAgentPermissionTypes.reload();
+    await this.groupStore.allAgentsAccountabilities.reload();
     notify('New Steward Added.');
     this.requestUpdate();
   }
 
   renderAddPermission() {
-    switch (this.myPermissionType.value.status) {
+    switch (this.myAccountabilities.value.status) {
       case 'pending':
         return html``;
       case 'error':
-        console.error('Failed to get my permission level: ', this.myPermissionType.value.error);
+        console.error('Failed to get my permission level: ', this.myAccountabilities.value.error);
         return html``;
       case 'complete': {
-        const permissionType = this.myPermissionType.value.value;
-        if (this.canICreatePermissions(permissionType)) {
+        const myAccountabilities = this.myAccountabilities.value.value;
+        if (this.canIGrantAccontabilities(myAccountabilities)) {
           return html`
             <h3>${msg('Add Steward:')}</h3>
             <div>Public key:</div>
@@ -163,7 +168,7 @@ export class StewardsSettings extends LitElement {
               />
             </div>
             <button
-              @click=${async () => await this.createPermission()}
+              @click=${async () => await this.grantAccountability()}
               style="margin-bottom: 50px;"
             >
               Add Steward
@@ -175,9 +180,9 @@ export class StewardsSettings extends LitElement {
     }
   }
 
-  renderPermissionTypes(levels: Array<[AgentPubKey, PermissionType]>) {
+  renderAccountabilities(accs: Array<[AgentPubKey, Accountability]>) {
     return html`
-      ${levels.map(
+      ${accs.map(
         ([pubkey, level]) => html`
           <sl-card class="permission">
             <div class="row" style="flex: 1; align-items: center;">
@@ -202,21 +207,21 @@ export class StewardsSettings extends LitElement {
     `;
   }
 
-  renderAllAgentPermissions() {
-    switch (this.allAgentPermissionTypes.value.status) {
+  renderAllAgentAccountabilities() {
+    switch (this.allAgentsAccountabilities.value.status) {
       case 'pending':
         return html`loading...`;
       case 'error':
         console.error(
           'Failed to get all agent permission levels: ',
-          this.allAgentPermissionTypes.value.error,
+          this.allAgentsAccountabilities.value.error,
         );
         return html`Failed to get all agent permission levels:
-        ${this.allAgentPermissionTypes.value.error}`;
+        ${this.allAgentsAccountabilities.value.error}`;
       case 'complete':
         return html`
-          ${this.allAgentPermissionTypes.value.value
-            ? this.renderPermissionTypes(this.allAgentPermissionTypes.value.value)
+          ${this.allAgentsAccountabilities.value.value
+            ? this.renderAccountabilities(this.allAgentsAccountabilities.value.value)
             : html`This group has no Stewards. All members have unrestricted permissions.`}
         `;
     }
@@ -226,7 +231,7 @@ export class StewardsSettings extends LitElement {
     return html`
       <div class="column" style="flex: 1; align-items: center;">
         <h2>Group Stewards</h2>
-        ${this.renderAllAgentPermissions()}
+        ${this.renderAllAgentAccountabilities()}
       </div>
     `;
   }

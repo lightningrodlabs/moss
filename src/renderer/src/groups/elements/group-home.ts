@@ -88,9 +88,9 @@ export class GroupHome extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   private _groupStore!: GroupStore;
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this._groupStore.permissionType,
+    () => this._groupStore.myAccountabilities,
     () => [this._groupStore],
   );
 
@@ -237,13 +237,6 @@ export class GroupHome extends LitElement {
   public openInactiveTools() {
     this.groupSettingsDialog?.show();
     this.groupSettings?.showInactiveTools();
-  }
-
-  hasStewardPermission(): boolean {
-    return (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    );
   }
 
   async uninstallApplet(e: CustomEvent) {
@@ -507,6 +500,33 @@ export class GroupHome extends LitElement {
     }
   }
 
+
+  // TODO: use MossPrivilege instead
+  getMyPermissionHash(): ActionHash | undefined {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return undefined;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward') {
+        return acc.content.permission_hash;
+      }
+    }
+    return undefined;
+  }
+
+  // TODO: use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   renderHomeContent() {
     switch (this._groupDescription.value.status) {
       case 'pending':
@@ -535,22 +555,20 @@ export class GroupHome extends LitElement {
               const descriptionInput = this.shadowRoot!.getElementById(
                 'group-description-input',
               ) as HTMLTextAreaElement;
-              const myPermission = await toPromise(this._groupStore.permissionType);
-              if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
+              // TODO: use MossPrivilege instead
+              if (!this.amIPrivileged()) {
                 this._editGroupDescription = false;
                 notifyError('No permission to edit group profile.');
                 return;
               } else {
-                console.log('Saving decription...');
+                console.log('Saving description...');
                 console.log('Value: ', descriptionInput.value);
                 const result = await this._groupStore.groupClient.setGroupDescription(
-                  myPermission.type === 'Steward'
-                    ? myPermission.content.permission_hash
-                    : undefined,
+                  this.getMyPermissionHash(),
                   descriptionInput.value,
                 );
 
-                console.log('decription saved: ', result.entry);
+                console.log('description saved: ', result.entry);
 
                 await this._groupStore.groupDescription.reload();
                 this._editGroupDescription = false;
@@ -575,7 +593,7 @@ export class GroupHome extends LitElement {
               No group description.
               <button
                 class="moss-button"
-                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.hasStewardPermission()
+                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
               ? ''
               : 'display: none;'}"
                 @click=${() => {
@@ -591,7 +609,7 @@ export class GroupHome extends LitElement {
             <div class="column">
               <div class="row" style="justify-content: flex-end;">
                 <button
-                  style="${this.hasStewardPermission() ? '' : 'display: none;'}"
+                  style="${this.amIPrivileged() ? '' : 'display: none;'}"
                   @click=${async () => {
               this._loadingDescription = true;
               // Reload group description in case another Steward has edited it in the meantime

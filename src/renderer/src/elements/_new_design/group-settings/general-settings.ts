@@ -39,9 +39,9 @@ export class GroupGeneralSettings extends LitElement {
     () => [this._groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this._groupStore.permissionType,
+    () => this._groupStore.myAccountabilities,
     () => [this._groupStore],
   );
 
@@ -54,12 +54,15 @@ export class GroupGeneralSettings extends LitElement {
   @state()
   saveable = false;
 
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -143,7 +146,7 @@ export class GroupGeneralSettings extends LitElement {
           <form ${onSubmit((f) => this.updateProfile(f))}>
             <div class="column items-center">
               <div class="row items-center">
-                ${this.amISteward()
+                ${this.amIPrivileged()
                   ? html` <moss-select-avatar
                       id="select-group-avatar"
                       .value=${this.groupProfile.value.value?.icon_src}
@@ -170,11 +173,11 @@ export class GroupGeneralSettings extends LitElement {
                     .defaultValue=${this.groupProfile.value.value?.name}
                     .value=${this.groupProfile.value.value?.name}
                     @input=${() => this.isSaveable()}
-                    ?disabled=${!this.amISteward()}
+                    ?disabled=${!this.amIPrivileged()}
                   ></sl-input>
                 </div>
               </div>
-              ${this.amISteward()
+              ${this.amIPrivileged()
                 ? html``
                 : html`<div style="font-size: 12px; opacity: 0.6; margin-top: 4px;">
                     ${msg('Only stewards can change the group profile.')}
@@ -188,7 +191,7 @@ export class GroupGeneralSettings extends LitElement {
                 ${msg('Unique identifier of this group.')}
               </div>
 
-              ${this.amISteward()
+              ${this.amIPrivileged()
                 ? html`<div class="row items-center">
                     <button
                       type="button"

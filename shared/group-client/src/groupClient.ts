@@ -8,7 +8,7 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
   ActionHash,
-  RoleNameCallZomeRequest,
+  RoleNameCallZomeRequest, Timestamp
 } from '@holochain/client';
 import { AppletHash, UnsubscribeFunction } from '@theweave/api';
 import { encode } from '@msgpack/msgpack';
@@ -21,13 +21,12 @@ import {
   GroupAppletsMetaData,
   GroupMetaData,
   JoinAppletInput,
-  PermissionType,
   AppletEntryPrivate,
   StewardPermission,
   AppletClonedCell,
   GroupRemoteSignal,
   SignalPayloadGroup,
-  GroupProfile,
+  GroupProfile, Accountability
 } from './types.js';
 
 export class GroupClient {
@@ -303,33 +302,38 @@ export class GroupClient {
   }
 
   /**
-   *
+   * @param ts Timestamp in ms since the Unix Epoch.
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getMyPermissionType(local: boolean = true): Promise<PermissionType> {
-    return this.callZome('get_my_permission_type', { input: null, local });
+  async getMyAccountabilities(ts?: Timestamp, local: boolean = true): Promise<Accountability[]> {
+    let timestamp = ts? ts : Date.now();
+    return this.callZome('get_my_accountabilities', { input: timestamp * 1000, local });
   }
 
   /**
    *
    * @param agent
+   * @param ts Timestamp in ms since the Unix Epoch.
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getAgentPermissionType(agent: AgentPubKey, local: boolean = true): Promise<PermissionType> {
-    return this.callZome('get_agent_permission_type', { input: agent, local });
+  async getAgentAccountabilities(agent: AgentPubKey, ts?: Timestamp, local: boolean = true): Promise<Accountability[]> {
+    let timestamp = ts? ts : Date.now();
+    return this.callZome('get_agent_accountabilities', { input: [agent, timestamp], local });
   }
 
   /**
-   *
+   * @param ts Timestamp in ms since the Unix Epoch.
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getAllAgentPermissionTypes(
+  async getAllAgentsAccountabilities(
+    ts?: Timestamp,
     local: boolean = true,
-  ): Promise<Array<[AgentPubKey, PermissionType]> | undefined> {
-    return this.callZome('get_all_agent_permission_types', { input: null, local });
+  ): Promise<Array<[AgentPubKey, Accountability]> | undefined> {
+    let timestamp = ts? ts : Date.now();
+    return this.callZome('get_all_agents_accountabilities', { input: timestamp, local });
   }
 
   /**

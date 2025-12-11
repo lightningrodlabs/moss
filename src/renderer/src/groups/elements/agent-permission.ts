@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { PermissionType } from '@theweave/group-client';
+import { Accountability } from '@theweave/group-client';
 import { mossStyles } from '../../shared-styles.js';
 
 @customElement('agent-permission')
@@ -22,32 +22,28 @@ export class AgentPermission extends LitElement {
   @property(hashProperty('agent'))
   agent!: AgentPubKey;
 
-  permissionType = new StoreSubscriber(
+  accountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.agentPermission.get(this.agent),
-    () => [this.agent, this.groupStore.agentPermission],
+    () => this.groupStore.agentAccountabilities.get(this.agent),
+    () => [this.agent, this.groupStore.agentAccountabilities],
   );
 
-  renderPermissionType(permissionType: PermissionType) {
-    console.log('Got permission type: ', permissionType);
-    switch (permissionType.type) {
-      case 'Member':
-        return html`Member`;
-      case 'Progenitor':
-        return html`Steward`;
-      case 'Steward':
-        return html`Steward`;
-    }
+  renderAccountabilities(accs: Accountability[]) {
+    console.log('Got accountabilities: ', accs);
+    if (accs.length == 0) return html`Member`;
+    // Dedup and concat types
+    const str = [...new Set(accs.map(a => a.type))].join(',');
+    return html`${str}`;
   }
 
   render() {
-    switch (this.permissionType.value.status) {
+    switch (this.accountabilities.value.status) {
       case 'pending':
         return html`loading...`;
       case 'complete':
-        return this.renderPermissionType(this.permissionType.value.value);
+        return this.renderAccountabilities(this.accountabilities.value.value);
       case 'error':
-        console.error('Failed to get agent permission type: ', this.permissionType.value.error);
+        console.error('Failed to get agent accountabilities: ', this.accountabilities.value.error);
         return html`ERROR`;
     }
   }
