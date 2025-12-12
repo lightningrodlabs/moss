@@ -39,7 +39,7 @@ Get the sha256 hash of the happ bundle and paste it into the `moss.config.json` 
 
 ## Releasing NPM packages
 
-For the CLI, make sure the updated holochain binaries have been fetched (`cd cli & npm run postinstall`)
+For the CLI, make sure the updated holochain binaries have been fetched (`yarn build:cli ; cd cli & npm run postinstall`)
 
 When updating all packages, publish in this order:
 
