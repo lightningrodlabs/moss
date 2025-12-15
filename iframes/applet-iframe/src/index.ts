@@ -273,6 +273,13 @@ const weaveApi: WeaveServices = {
       },
     }),
 
+  toolInstaller: (appletHash, groupHash) =>
+    postMessage({
+      type: 'get-tool-installer',
+      appletHash,
+      groupHash,
+    }),
+
   groupProfile: (groupHash) =>
     postMessage({
       type: 'get-group-profile',

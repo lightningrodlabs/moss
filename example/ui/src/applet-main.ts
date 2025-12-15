@@ -18,7 +18,7 @@ import {
   AppClient,
   CellInfo,
   CellType,
-  ClonedCell, DnaHash,
+  ClonedCell, DnaHash, encodeHashToBase64,
   ProvisionedCell
 } from '@holochain/client';
 import '@theweave/elements/dist/elements/wal-embed.js';
@@ -76,6 +76,9 @@ export class AppletMain extends LitElement {
   bare: boolean = true;
 
   @state()
+  toolInstaller: AgentPubKey | undefined;
+
+  @state()
   myAccountabilitiesPerGroup: [DnaHash, MossAccountability[]][] | undefined;
 
   @state()
@@ -110,7 +113,15 @@ export class AppletMain extends LitElement {
     });
 
     this.myAccountabilitiesPerGroup = await this.weaveClient.myAccountabilitiesPerGroup();
-    console.log('myAccountabilitiesPerGroup: ', this.myAccountabilitiesPerGroup);
+
+    if (this.weaveClient.renderInfo.type === 'applet-view') {
+      const appletInfo = await this.weaveClient.appletInfo(this.weaveClient.renderInfo.appletHash);
+      if (appletInfo) {
+        const groupHash = appletInfo.groupsHashes[0];
+        this.toolInstaller = await this.weaveClient.toolInstaller(this.weaveClient.renderInfo.appletHash, groupHash);
+      }
+    }
+
     this.appletParticipants = await this.weaveClient.appletParticipants();
 
     this.weaveClient.onRemoteSignal((payload) => {
@@ -304,6 +315,7 @@ export class AppletMain extends LitElement {
         <div class="row" style="justify-content: flex-start; align-items: center;">
           <span>All Tool participants:</span>${this.renderAppletParticipants()}
         </div>
+        <div><b>Tool Installer: </b>${this.toolInstaller? encodeHashToBase64(this.toolInstaller) : "unknown"}</div>
         <div><b>My Group Accountabilities: </b>${JSON.stringify(this.myAccountabilitiesPerGroup)}</div>
         <div class="row">
           <div class="column">

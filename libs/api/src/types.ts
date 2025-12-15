@@ -378,6 +378,11 @@ export type AppletToParentRequest =
       type: 'get-applet-info';
       appletHash: AppletHash;
     }
+    | {
+    type: 'get-tool-installer';
+    appletHash: AppletHash;
+    groupHash: DnaHash;
+  }
   | {
       type: 'get-group-profile';
       groupHash: DnaHash;

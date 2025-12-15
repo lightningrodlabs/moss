@@ -377,6 +377,12 @@ export interface WeaveServices {
    */
   openAsset: (wal: WAL, mode?: OpenAssetMode) => Promise<void>;
   /**
+   * Get the AgentPubKey of the installer of a tool for the specified group
+   * @param groupHash
+   * @returns
+   */
+  toolInstaller: (appletHash: AppletHash, groupHash: DnaHash) => Promise<AgentPubKey | undefined>;
+  /**
    * Get the group profile of the specified group
    * @param groupHash
    * @returns
@@ -530,6 +536,8 @@ export class WeaveClient implements WeaveServices {
       window.__WEAVE_API__.assets.getAllAssetRelationTags(crossGroup),
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
   };
+
+  toolInstaller = (appletHash: AppletHash, groupHash: DnaHash) => window.__WEAVE_API__.toolInstaller(appletHash, groupHash);
 
   groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
 

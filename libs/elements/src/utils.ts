@@ -8,27 +8,28 @@ import { fromUint8Array, toUint8Array } from 'js-base64';
 
 export async function getAppletsInfosAndGroupsProfiles(
   weaveClient: WeaveClient,
-  appletsHashes: EntryHash[],
+  appletsHashes: AppletHash[],
 ): Promise<{
-  appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
+  appletsInfos: ReadonlyMap<AppletHash, AppletInfo>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
 }> {
+  const appletsInfos = new HoloHashMap<AppletHash, AppletInfo>();
   const groupsProfiles = new HoloHashMap<DnaHash, GroupProfile>();
-  const appletsInfos = new HoloHashMap<EntryHash, AppletInfo>();
 
   for (const appletHash of appletsHashes) {
     const appletInfo = await weaveClient.appletInfo(appletHash);
-    if (appletInfo) {
-      appletsInfos.set(appletHash, appletInfo);
-
-      for (const groupHash of appletInfo.groupsHashes) {
-        if (!groupsProfiles.has(groupHash)) {
-          const groupProfile = await weaveClient.groupProfile(groupHash);
-
-          if (groupProfile) {
-            groupsProfiles.set(groupHash, groupProfile);
-          }
-        }
+    if (!appletInfo) {
+      console.warn(`Could not find applet info for ` + encodeHashToBase64(appletHash));
+      continue;
+    }
+    appletsInfos.set(appletHash, appletInfo);
+    for (const groupHash of appletInfo.groupsHashes) {
+      if (groupsProfiles.has(groupHash)) {
+        continue;
+      }
+      const groupProfile = await weaveClient.groupProfile(groupHash);
+      if (groupProfile) {
+        groupsProfiles.set(groupHash, groupProfile);
       }
     }
   }
@@ -41,28 +42,15 @@ export async function getAppletsInfosAndGroupsProfiles(
 
 export async function getAppletInfoAndGroupsProfiles(
   weaveClient: WeaveClient,
-  appletHash: EntryHash,
+  appletHash: AppletHash,
 ): Promise<{
   appletInfo: AppletInfo | undefined;
   groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
 }> {
-  const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
-  const appletInfo = await weaveClient.appletInfo(appletHash);
-  if (appletInfo) {
-    for (const groupHash of appletInfo.groupsHashes) {
-      if (!groupProfiles.has(groupHash)) {
-        const groupProfile = await weaveClient.groupProfile(groupHash);
-
-        if (groupProfile) {
-          groupProfiles.set(groupHash, groupProfile);
-        }
-      }
-    }
-  }
-
+  const res = await getAppletsInfosAndGroupsProfiles(weaveClient, [appletHash]);
   return {
-    appletInfo,
-    groupProfiles,
+    appletInfo: res.appletsInfos.get(appletHash),
+    groupProfiles: res.groupsProfiles,
   };
 }
 

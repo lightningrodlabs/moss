@@ -16,7 +16,7 @@ import {
   type AppletToParentMessage,
   MossAccountability, MossRole,
 } from '@theweave/api';
-import { decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
+import { AgentPubKey, decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import { AppOpenViews } from '../layout/types.js';
 import {
@@ -201,6 +201,20 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
+    async toolInstaller(appletHash: AppletHash, groupDnaHash: DnaHash): Promise<AgentPubKey | undefined> {
+      console.debug("tool installer called: ", encodeHashToBase64(groupDnaHash));
+      const groupStore = await mossStore.groupStore(groupDnaHash);
+      if (!groupStore) {
+        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupDnaHash))
+        return undefined;
+      }
+      const appletRecord = await groupStore.groupClient.getPublicApplet(appletHash);
+      if (!appletRecord) {
+        console.warn("tool installer: Failed to find appletRecord for " + encodeHashToBase64(appletHash))
+        return undefined;
+      }
+      return appletRecord.action.author;
+    },
     async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await mossStore.groupStore(groupDnaHash);
       if (groupStore) {
@@ -312,9 +326,11 @@ export async function handleAppletIframeMessage(
         };
         mossStore.iframeStore.registerCrossGroupIframe(
           source.toolCompatibilityId,
-          message.id,
-          message.subType,
-          eventSource,
+          {
+            id: message.id,
+            subType: message.subType,
+            source: eventSource,
+          }
         );
         return config;
       } else {
@@ -359,9 +375,9 @@ export async function handleAppletIframeMessage(
 
         mossStore.iframeStore.registerAppletIframe(
           encodeHashToBase64(source.appletHash),
-          message.id,
-          message.subType,
-          eventSource,
+          {id: message.id,
+          subType: message.subType,
+          source: eventSource,}
         );
 
         return config;
@@ -502,6 +518,21 @@ export async function handleAppletIframeMessage(
     }
     case 'get-applet-info':
       return weaveServices.appletInfo(message.appletHash);
+    case 'get-tool-installer': {
+      if (source.type === 'cross-group') {
+        throw new Error('Tool installer not defined for cross-group views.');
+      }
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash));
+      if (groupStores.size === 0) throw new Error('No group store found for applet (get-tool-installer).');
+      const groupStore = groupStores.get(message.groupHash)
+      if (!groupStore) throw new Error('Requested group store not found for applet (get-tool-installer).');
+      const appletRecord = await groupStore.groupClient.getPublicApplet(message.appletHash);
+      if (!appletRecord) {
+        console.warn("get-tool-installer: Failed to find appletRecord for " + encodeHashToBase64(message.appletHash))
+        return undefined;
+      }
+      return appletRecord.action.author;
+    }
     case 'get-group-profile':
       return weaveServices.groupProfile(message.groupHash);
     case 'get-global-asset-info':

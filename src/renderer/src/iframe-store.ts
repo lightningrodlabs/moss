@@ -1,6 +1,13 @@
 import { AppletId, ParentToAppletMessage } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
+
+export type IframeInfo = {
+  id: string; // RNG
+  subType: string;
+  source: MessageEventSource | null | 'wal-window';
+};
+
 /**
  * Stores references to iframes and allows to send iframe messages
  * to them
@@ -8,26 +15,17 @@ import { ToolCompatibilityId } from '@theweave/moss-types';
 export class IframeStore {
   constructor() {}
 
-  appletIframes: Record<
-    AppletId,
-    Array<{ id: string; subType: string; source: MessageEventSource | null | 'wal-window' }>
-  > = {};
-
-  crossGroupIframes: Record<
-    ToolCompatibilityId,
-    Array<{ id: string; subType: string; source: MessageEventSource | null | 'wal-window' }>
-  > = {};
+  appletIframes: Record<AppletId, Array<IframeInfo>> = {};
+  crossGroupIframes: Record<ToolCompatibilityId, Array<IframeInfo>> = {};
 
   registerAppletIframe(
     appletId: AppletId,
-    id: string,
-    subType: string,
-    source: MessageEventSource | null | 'wal-window',
+    iframeInfo: IframeInfo,
   ): void {
-    // console.log(`### Registering ${subType} iframe for applet ${appletId}`);
+    // TODO: Check if iframeInfo.id is already in use
     let iframes = this.appletIframes[appletId];
     if (!iframes) iframes = [];
-    iframes.push({ id, subType, source });
+    iframes.push(iframeInfo);
     this.appletIframes[appletId] = iframes;
   }
 
@@ -38,13 +36,12 @@ export class IframeStore {
 
   registerCrossGroupIframe(
     toolCompatibilityId: ToolCompatibilityId,
-    id: string,
-    subType: string,
-    source: MessageEventSource | null | 'wal-window',
+    iframeInfo: IframeInfo,
   ): void {
+    // TODO: Check if iframeInfo.id is already in use
     let iframes = this.crossGroupIframes[toolCompatibilityId];
     if (!iframes) iframes = [];
-    iframes.push({ id, subType, source });
+    iframes.push(iframeInfo);
     this.crossGroupIframes[toolCompatibilityId] = iframes;
   }
 

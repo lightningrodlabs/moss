@@ -604,16 +604,14 @@ export class MainDashboard extends LitElement {
       const [appletIframes, crossGroupIframes] = payload;
       Object.entries(appletIframes).forEach(([appletId, iframes]) => {
         iframes.forEach(({ id, subType }) => {
-          this._mossStore.iframeStore.registerAppletIframe(appletId, id, subType, 'wal-window');
+          this._mossStore.iframeStore.registerAppletIframe(appletId, {id, subType, source: 'wal-window'});
         });
       });
       Object.entries(crossGroupIframes).forEach(([toolCompatibilityId, iframes]) => {
         iframes.forEach(({ id, subType }) => {
           this._mossStore.iframeStore.registerCrossGroupIframe(
             toolCompatibilityId,
-            id,
-            subType,
-            'wal-window',
+            { id, subType, source: 'wal-window' },
           );
         });
       });

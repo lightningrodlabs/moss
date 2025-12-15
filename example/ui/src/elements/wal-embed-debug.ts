@@ -14,7 +14,7 @@ import {
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { appletOrigin, urlFromAppletHash } from '@theweave/elements';
+import { appletOrigin, getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash, EntryHash } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';
@@ -245,31 +245,4 @@ export class WalEmbed extends LitElement {
       }
     `,
   ];
-}
-
-export async function getAppletInfoAndGroupsProfiles(
-  weaveClient: WeaveClient,
-  appletHash: EntryHash
-): Promise<{
-  appletInfo: AppletInfo | undefined;
-  groupProfiles: ReadonlyMap<DnaHash, GroupProfile>;
-}> {
-  const groupProfiles = new HoloHashMap<DnaHash, GroupProfile>();
-  const appletInfo = await weaveClient.appletInfo(appletHash);
-  if (appletInfo) {
-    for (const groupHash of appletInfo.groupsHashes) {
-      if (!groupProfiles.has(groupHash)) {
-        const groupProfile = await weaveClient.groupProfile(groupHash);
-
-        if (groupProfile) {
-          groupProfiles.set(groupHash, groupProfile);
-        }
-      }
-    }
-  }
-
-  return {
-    appletInfo,
-    groupProfiles,
-  };
 }
