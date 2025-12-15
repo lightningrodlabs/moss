@@ -298,6 +298,14 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('get-tool-installer'),
+      appletHash: AppletHash,
+      groupHash: DnaHash,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('get-group-profile'),
       groupHash: DnaHash,
     },

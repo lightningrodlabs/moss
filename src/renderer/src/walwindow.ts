@@ -228,17 +228,19 @@ export class WalWindow extends LitElement {
               if (iframeKind.type === 'cross-group') {
                 this.iframeStore.registerCrossGroupIframe(
                   iframeKind.toolCompatibilityId,
-                  request.request.id,
-                  request.request.subType,
-                  message.source,
+                  {
+                    id: request.request.id,
+                    subType: request.request.subType,
+                    source: message.source,
+                  }
                 );
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
                 this.iframeStore.registerAppletIframe(
                   appletId,
-                  request.request.id,
-                  request.request.subType,
-                  message.source,
+                  {id: request.request.id,
+                  subType: request.request.subType,
+                  source: message.source,}
                 );
               }
               return handleDefault();
