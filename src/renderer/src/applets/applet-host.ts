@@ -355,6 +355,9 @@ export async function handleAppletIframeMessage(
           (profile) => !!profile,
         ) as GroupProfile[];
 
+        // Extract the group DNA hash (there's always exactly one for applet-view)
+        const groupHash = Array.from(groupsStores.keys())[0];
+
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
         const config: IframeConfig = {
@@ -370,6 +373,7 @@ export async function handleAppletIframeMessage(
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
+          groupHash,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
 

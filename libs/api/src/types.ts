@@ -258,6 +258,7 @@ export type RenderInfo =
        * of the given Moss instance is not part of.
        */
       groupProfiles: GroupProfile[];
+      groupHash: DnaHash;
     }
   | {
       type: 'cross-group-view';
@@ -541,6 +542,7 @@ export type IframeConfig =
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
+      groupHash: DnaHash;
       zomeCallLogging: boolean;
     }
   | {

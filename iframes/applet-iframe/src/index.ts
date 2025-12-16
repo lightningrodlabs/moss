@@ -477,6 +477,7 @@ const weaveApi: WeaveServices = {
       peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
+      groupHash: iframeConfig.groupHash,
     };
 
     window.addEventListener('weave-client-connected', async () => {
