@@ -378,10 +378,11 @@ export interface WeaveServices {
   openAsset: (wal: WAL, mode?: OpenAssetMode) => Promise<void>;
   /**
    * Get the AgentPubKey of the installer of a tool for the specified group
-   * @param groupHash
+   * @param appletHash - The hash of the applet/tool
+   * @param groupHash - The group hash. If not provided, uses the groupHash from the current applet instance's renderInfo
    * @returns
    */
-  toolInstaller: (appletHash: AppletHash, groupHash: DnaHash) => Promise<AgentPubKey | undefined>;
+  toolInstaller: (appletHash: AppletHash, groupHash?: DnaHash) => Promise<AgentPubKey | undefined>;
   /**
    * Get the group profile of the specified group
    * @param groupHash
@@ -537,7 +538,18 @@ export class WeaveClient implements WeaveServices {
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
   };
 
-  toolInstaller = (appletHash: AppletHash, groupHash: DnaHash) => window.__WEAVE_API__.toolInstaller(appletHash, groupHash);
+  toolInstaller = (appletHash: AppletHash, groupHash?: DnaHash) => {
+    // If groupHash not provided, use the groupHash from the current applet instance
+    const effectiveGroupHash = groupHash ?? (
+      this.renderInfo.type === 'applet-view'
+        ? this.renderInfo.groupHash
+        : undefined
+    );
+    if (!effectiveGroupHash) {
+      throw new Error('groupHash is required when toolInstaller is called from a cross-group view');
+    }
+    return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
+  };
 
   groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
 

@@ -397,6 +397,7 @@ if (!RUNNING_WITH_COMMAND) {
     string,
     {
       appletId: AppletId;
+      groupId: DnaHashB64;
       window: BrowserWindow;
       wal: WAL;
     }
@@ -1049,7 +1050,7 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle('sign-zome-call', handleSignZomeCall);
     ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
-    ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId, wal: WAL) => {
+    ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
       const maybeExistingWindowInfo = WAL_WINDOWS[src];
       if (maybeExistingWindowInfo) {
         maybeExistingWindowInfo.window.show();
@@ -1072,13 +1073,14 @@ if (!RUNNING_WITH_COMMAND) {
       WAL_WINDOWS[src] = {
         window: newWalWindow,
         appletId,
+        groupId,
         wal,
       };
     });
     // To be called by WAL windows to find out which src the iframe is supposed to use
     ipcMain.handle(
       'get-my-src',
-      (e): { iframeSrc: string; appletId: AppletId; wal: WAL } | undefined => {
+      (e): { iframeSrc: string; appletId: AppletId; groupId: DnaHashB64, wal: WAL } | undefined => {
         console.log();
         const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
           ([_src, window]) => window.window.webContents.id === e.sender.id,
@@ -1087,6 +1089,7 @@ if (!RUNNING_WITH_COMMAND) {
           return {
             iframeSrc: walAndWindowInfo[0],
             appletId: walAndWindowInfo[1].appletId,
+            groupId: walAndWindowInfo[1].groupId,
             wal: walAndWindowInfo[1].wal,
           };
         return undefined;

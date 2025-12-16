@@ -78,6 +78,7 @@ export class ExampleApplet extends LitElement {
                   <applet-main
                     .client=${this.weaveClient.renderInfo.appletClient}
                     .weaveClient=${this.weaveClient}
+                    .groupHash=${this.weaveClient.renderInfo.groupHash}
                     .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {

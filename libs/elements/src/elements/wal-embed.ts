@@ -254,9 +254,12 @@ export class WalEmbed extends LitElement {
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
           this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
+        if (!this.appletInfo) throw Error("Missing appletInfo in <wal-embed>");
+        const groupHash = this.appletInfo.groupsHashes[0];
         const iframeKind: IframeKind = {
           type: 'applet',
           appletHash: this.assetStatus.assetInfo.appletHash,
+          groupHash,
           subType: 'asset',
         };
         const iframeSrc = this.assetStatus.assetInfo.appletDevPort

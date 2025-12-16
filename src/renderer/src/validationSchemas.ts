@@ -300,7 +300,7 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('get-tool-installer'),
       appletHash: AppletHash,
-      groupHash: DnaHash,
+      groupHash: Type.Optional(DnaHash),
     },
     { additionalProperties: false },
   ),

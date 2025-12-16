@@ -64,6 +64,7 @@ export class AppletMainViews extends LitElement {
             return html`
               <applet-main
                 .appletHash=${appletHash}
+                .groupHash=${this._groupStore.groupDnaHash}
                 .reloading=${this._reloadingApplets.includes(encodeHashToBase64(appletHash))}
                 style="flex: 1; ${this.displayApplet(appletHash) ? '' : 'display: none'}"
                 @hard-refresh=${async () => {

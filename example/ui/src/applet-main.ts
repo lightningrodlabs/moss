@@ -115,11 +115,11 @@ export class AppletMain extends LitElement {
     this.myAccountabilitiesPerGroup = await this.weaveClient.myAccountabilitiesPerGroup();
 
     if (this.weaveClient.renderInfo.type === 'applet-view') {
-      const appletInfo = await this.weaveClient.appletInfo(this.weaveClient.renderInfo.appletHash);
-      if (appletInfo) {
-        const groupHash = appletInfo.groupsHashes[0];
-        this.toolInstaller = await this.weaveClient.toolInstaller(this.weaveClient.renderInfo.appletHash, groupHash);
-      }
+      console.debug("Getting toolInstaller ...", this.weaveClient.renderInfo);
+      this.toolInstaller = await this.weaveClient.toolInstaller(
+          this.weaveClient.renderInfo.appletHash
+          //, this.weaveClient.renderInfo.groupHash
+          );
     }
 
     this.appletParticipants = await this.weaveClient.appletParticipants();

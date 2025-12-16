@@ -68,8 +68,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
-  openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) =>
-    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, wal),
+  openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
+      ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
+  },
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),

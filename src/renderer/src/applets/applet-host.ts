@@ -58,6 +58,7 @@ export function getIframeKind(
     receivedFromSource = {
       type: 'applet',
       appletHash: decodeHashFromBase64(appletId),
+      groupHash: null, // TODO: get groupHash from applet:// origin
       subType: message.data.source.subType,
     };
   } else if (message.origin.startsWith('cross-group://')) {
@@ -201,10 +202,14 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
-    async toolInstaller(appletHash: AppletHash, groupDnaHash: DnaHash): Promise<AgentPubKey | undefined> {
-      const groupStore = await mossStore.groupStore(groupDnaHash);
+    async toolInstaller(appletHash: AppletHash, groupHash?: DnaHash): Promise<AgentPubKey | undefined> {
+      if (!groupHash) {
+        console.warn("tool installer: missing groupHash argument");
+        return undefined;
+      }
+      const groupStore = await mossStore.groupStore(groupHash);
       if (!groupStore) {
-        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupDnaHash))
+        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupHash))
         return undefined;
       }
       const appletRecord = await groupStore.groupClient.getPublicApplet(appletHash);
@@ -214,8 +219,8 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       }
       return appletRecord.action.author;
     },
-    async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
-      const groupStore = await mossStore.groupStore(groupDnaHash);
+    async groupProfile(groupHash: DnaHash): Promise<GroupProfile | undefined> {
+      const groupStore = await mossStore.groupStore(groupHash);
       if (groupStore) {
         const groupProfile = await toPromise(groupStore.groupProfile);
         return groupProfile;
@@ -354,6 +359,7 @@ export async function handleAppletIframeMessage(
           (profile) => !!profile,
         ) as GroupProfile[];
 
+
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
         const config: IframeConfig = {
@@ -369,6 +375,7 @@ export async function handleAppletIframeMessage(
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
+          groupHash: source.groupHash, // Use the groupHash from the iframe source if any
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
 
@@ -521,9 +528,12 @@ export async function handleAppletIframeMessage(
       if (source.type === 'cross-group') {
         throw new Error('Tool installer not defined for cross-group views.');
       }
+      console.debug('get-tool-installer: ', message, source);
+      const groupHash = message.groupHash? message.groupHash : source.groupHash;
+      if (!groupHash) throw new Error('No groupHash provided for get-tool-installer.');
       const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash));
       if (groupStores.size === 0) throw new Error('No group store found for applet (get-tool-installer).');
-      const groupStore = groupStores.get(message.groupHash)
+      const groupStore = groupStores.get(groupHash);
       if (!groupStore) throw new Error('Requested group store not found for applet (get-tool-installer).');
       const appletRecord = await groupStore.groupClient.getPublicApplet(message.appletHash);
       if (!appletRecord) {

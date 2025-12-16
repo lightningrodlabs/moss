@@ -477,6 +477,7 @@ const weaveApi: WeaveServices = {
       peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
+      groupHash: iframeConfig.groupHash,
     };
 
     window.addEventListener('weave-client-connected', async () => {
@@ -726,6 +727,7 @@ function readIframeKind(): IframeKind {
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
+      groupHash: null, // TODO: Add groupHash to "applet://" origin
       subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('cross-group://')) {
@@ -741,6 +743,7 @@ function readIframeKind(): IframeKind {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
+    // TODO: assert iframeKind is of correct type.
     return iframeKind;
   }
   throw new Error(`Failed to read iframe kind. Invalid origin: ${window.origin}`);
