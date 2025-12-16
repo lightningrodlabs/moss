@@ -201,11 +201,14 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
-    async toolInstaller(appletHash: AppletHash, groupDnaHash: DnaHash): Promise<AgentPubKey | undefined> {
-      console.debug("tool installer called: ", encodeHashToBase64(groupDnaHash));
-      const groupStore = await mossStore.groupStore(groupDnaHash);
+    async toolInstaller(appletHash: AppletHash, groupHash?: DnaHash): Promise<AgentPubKey | undefined> {
+      if (!groupHash) {
+          console.warn("tool installer: missing groupHash argument");
+          return undefined;
+      }
+      const groupStore = await mossStore.groupStore(groupHash);
       if (!groupStore) {
-        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupDnaHash))
+        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupHash))
         return undefined;
       }
       const appletRecord = await groupStore.groupClient.getPublicApplet(appletHash);
@@ -215,8 +218,8 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       }
       return appletRecord.action.author;
     },
-    async groupProfile(groupDnaHash: DnaHash): Promise<GroupProfile | undefined> {
-      const groupStore = await mossStore.groupStore(groupDnaHash);
+    async groupProfile(groupHash: DnaHash): Promise<GroupProfile | undefined> {
+      const groupStore = await mossStore.groupStore(groupHash);
       if (groupStore) {
         const groupProfile = await toPromise(groupStore.groupProfile);
         return groupProfile;
@@ -355,8 +358,6 @@ export async function handleAppletIframeMessage(
           (profile) => !!profile,
         ) as GroupProfile[];
 
-        // Use the provided groupDnaHash from the iframe source
-        const groupHash = source.groupDnaHash!;
 
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
@@ -373,7 +374,7 @@ export async function handleAppletIframeMessage(
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
-          groupHash,
+          groupHash: source.groupHash, // Use the groupHash from the iframe source if any
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
 

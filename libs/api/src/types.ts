@@ -258,7 +258,7 @@ export type RenderInfo =
        * of the given Moss instance is not part of.
        */
       groupProfiles: GroupProfile[];
-      groupHash: DnaHash;
+      groupHash?: DnaHash;
     }
   | {
       type: 'cross-group-view';
@@ -314,7 +314,7 @@ export type IframeKind =
   | {
       type: 'applet';
       appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
-      groupDnaHash?: DnaHash; // The group DNA hash that this applet belongs to
+      groupHash?: DnaHash; // The group DNA hash that this iframe belongs to
       subType: string;
     }
   | {
@@ -383,7 +383,7 @@ export type AppletToParentRequest =
     | {
     type: 'get-tool-installer';
     appletHash: AppletHash;
-    groupHash: DnaHash;
+    groupHash: DnaHash | undefined;
   }
   | {
       type: 'get-group-profile';
@@ -543,7 +543,7 @@ export type IframeConfig =
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
-      groupHash: DnaHash;
+      groupHash?: DnaHash;
       zomeCallLogging: boolean;
     }
   | {
