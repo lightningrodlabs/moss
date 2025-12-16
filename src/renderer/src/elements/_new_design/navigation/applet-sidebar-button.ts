@@ -123,7 +123,7 @@ export class AppletSidebarButton extends LitElement {
         ? html``
         : html`
               <div
-                class="row center-content notification-dot ${this.notificationUrgency() === 'high'
+                class="row center-content notification-dot ${this.collapsed ? 'notification-dot-collapsed' : ''} ${this.notificationUrgency() === 'high'
             ? 'urgent'
             : ''}"
               >
@@ -184,13 +184,16 @@ export class AppletSidebarButton extends LitElement {
 
       .notification-dot {
         position: absolute;
-        top: -4px;
+        top: 12px;
         right: 0px;
         font-weight: bold;
         background: var(--moss-purple);
         border-radius: 10px;
         height: 10px;
         min-width: 10px;
+      }
+      .notification-dot-collapsed {
+        top: -3px;
       }
 
       .urgent {
