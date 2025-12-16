@@ -160,6 +160,56 @@ export function extractMajorVersion(versionBranch: string): number {
 }
 
 /**
+ * Extracts all numeric version parts from a version branch string up to the .x suffix
+ * Examples:
+ *   "0.14.x" -> [0, 14]
+ *   "0.15.x" -> [0, 15]
+ *   "2.x" -> [2]
+ *   "1.5.2.x" -> [1, 5, 2]
+ */
+export function extractVersionParts(versionBranch: string): number[] {
+  const parts = versionBranch.split('.');
+  const versionParts: number[] = [];
+
+  for (const part of parts) {
+    // Stop when we hit 'x' or any non-numeric part
+    if (part === 'x' || !/^\d+$/.test(part)) {
+      break;
+    }
+    versionParts.push(parseInt(part, 10));
+  }
+
+  return versionParts;
+}
+
+/**
+ * Compares two version branch strings to determine which is higher
+ * Returns: positive if a > b, negative if a < b, 0 if equal
+ * Examples:
+ *   compareVersionBranches("0.15.x", "0.14.x") -> 1 (0.15.x is higher)
+ *   compareVersionBranches("2.x", "1.x") -> 1 (2.x is higher)
+ *   compareVersionBranches("1.5.x", "1.4.x") -> 1 (1.5.x is higher)
+ *   compareVersionBranches("1.x", "1.x") -> 0 (equal)
+ */
+export function compareVersionBranches(a: string, b: string): number {
+  const partsA = extractVersionParts(a);
+  const partsB = extractVersionParts(b);
+
+  // Compare each version part
+  const maxLength = Math.max(partsA.length, partsB.length);
+  for (let i = 0; i < maxLength; i++) {
+    const partA = partsA[i] || 0;
+    const partB = partsB[i] || 0;
+
+    if (partA !== partB) {
+      return partA - partB;
+    }
+  }
+
+  return 0; // All parts are equal
+}
+
+/**
  * Groups ToolAndCurationInfo entries by toolId, creating UnifiedToolEntry objects
  * This unifies tools with the same toolId but different versionBranch values
  */
@@ -215,7 +265,8 @@ export function groupToolsByBaseId(
 
 /**
  * Gets the primary version branch (for display purposes)
- * Strategy: prefer non-deprecated, then highest semver major version
+ * Strategy: prefer non-deprecated, then highest version branch
+ * Compares all version parts up to .x (e.g., "0.15.x" > "0.14.x", "2.x" > "1.x")
  */
 export function getPrimaryVersionBranch(
   unifiedEntry: UnifiedToolEntry,
@@ -231,12 +282,10 @@ export function getPrimaryVersionBranch(
 
   if (candidates.length === 0) return undefined;
 
-  // Sort by version branch (e.g., "2.x.x" > "1.x.x" > "0.1.x")
-  // Extract major version number for comparison
+  // Sort by version branch using full version comparison
+  // This compares all numeric parts before .x (e.g., "0.15.x" > "0.14.x")
   candidates.sort((a, b) => {
-    const majorA = extractMajorVersion(a.versionBranch);
-    const majorB = extractMajorVersion(b.versionBranch);
-    return majorB - majorA; // Descending
+    return compareVersionBranches(b.versionBranch, a.versionBranch); // Descending
   });
 
   return candidates[0];

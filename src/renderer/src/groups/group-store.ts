@@ -924,7 +924,7 @@ export class GroupStore {
   }
 
   /**
-   * Fetches the applet from the devhub, installs it in the current conductor
+   * Fetches the tool from the devhub, installs it in the current conductor
    * and advertises it in the group DNA. To be called by the first agent
    * installing this specific instance of the Applet.
    * This function can only successfully be called by the Progenitor or

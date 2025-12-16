@@ -921,7 +921,7 @@ export class MossStore {
 
     await Promise.all(
       applets.map(async (appletHash) => {
-        // TODO: Is this save? groupsForApplet depends on the network so it may not always
+        // TODO: Is this safe? groupsForApplet depends on the network so it may not always
         // actually return all groups that depend on this applet
         const groupsForApplet = await this.getGroupsForApplet(appletHash);
 
@@ -1418,42 +1418,18 @@ export class MossStore {
     ),
   );
 
-  groupsForApplet = new LazyHoloHashMap((appletHash: EntryHash) =>
+  groupsForApplet = new LazyHoloHashMap((appletHash: AppletHash) =>
     pipe(
       this.groupStores,
       (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
       async (appletsByGroup) => {
-        // console.log(
-        //   'appletsByGroup: ',
-        //   Array.from(appletsByGroup.values()).map((hashes) =>
-        //     hashes.map((hash) => encodeHashToBase64(hash)),
-        //   ),
-        // );
+        const appletId = encodeHashToBase64(appletHash);
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
-            appletsHashes.find(
-              (hash) => encodeHashToBase64(hash) === encodeHashToBase64(appletHash),
-            ),
+            appletsHashes.find((hash) => encodeHashToBase64(hash) === appletId)
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
-
-        // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
-        // console.log('groupDnaHashes: ', groupDnaHashes);
-
         const groupStores = await toPromise(this.groupStores);
-
-        // console.log(
-        //   'GROUPSTORES HASHES: ',
-        //   Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
-        // );
-
-        // console.log(
-        //   'Sliced group stores: ',
-        //   Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
-        //     encodeHashToBase64(hash),
-        //   ),
-        // );
-
         return slice(groupStores, groupDnaHashes);
       },
     ),
@@ -1470,11 +1446,11 @@ export class MossStore {
     await Promise.all(
       groupApps.map(async (app) => {
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
-        const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
-          .cell_id[0];
         const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
-        const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
-        if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
+        const allMyAppletHashes = await groupClient.getMyJoinedAppletsHashes();
+        if (allMyAppletHashes.map((hash) => hash.toString()).includes(appletHash.toString())) {
+          const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
+            .cell_id[0];
           groupsWithApplet.push(groupDnaHash);
         }
       }),
