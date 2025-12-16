@@ -314,6 +314,7 @@ export type IframeKind =
   | {
       type: 'applet';
       appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+      groupDnaHash?: DnaHash; // The group DNA hash that this applet belongs to
       subType: string;
     }
   | {

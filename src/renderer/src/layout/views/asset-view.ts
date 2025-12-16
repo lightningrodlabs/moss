@@ -20,7 +20,7 @@ import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/pocket/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
-import { encodeHashToBase64 } from '@holochain/client';
+import { CellType, encodeHashToBase64 } from '@holochain/client';
 import { openWalInWindow } from '../../utils.js';
 
 @customElement('asset-view')
@@ -72,9 +72,16 @@ export class AssetView extends LitElement {
   }
 
   renderGroupView(dnaLocation: DnaLocation, entryTypeLocation?: EntryDefLocation) {
+    // Extract the group DNA hash from the appInfo
+    const groupCell = dnaLocation.appInfo.cell_info['group']?.find(
+      (cellInfo) => cellInfo.type === CellType.Provisioned,
+    );
+    const groupDnaHash = groupCell?.value.cell_id[0];
+
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
+        .groupDnaHash=${groupDnaHash}
         .hostColor=${'#dde7ff'}
         .view=${{
           type: 'asset',

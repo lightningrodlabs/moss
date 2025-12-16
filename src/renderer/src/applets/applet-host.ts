@@ -355,8 +355,8 @@ export async function handleAppletIframeMessage(
           (profile) => !!profile,
         ) as GroupProfile[];
 
-        // Extract the group DNA hash (there's always exactly one for applet-view)
-        const groupHash = Array.from(groupsStores.keys())[0];
+        // Use the provided groupDnaHash from the iframe source
+        const groupHash = source.groupDnaHash!;
 
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
