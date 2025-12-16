@@ -202,7 +202,6 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
     async toolInstaller(appletHash: AppletHash, groupDnaHash: DnaHash): Promise<AgentPubKey | undefined> {
-      console.debug("tool installer called: ", encodeHashToBase64(groupDnaHash));
       const groupStore = await mossStore.groupStore(groupDnaHash);
       if (!groupStore) {
         console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupDnaHash))
