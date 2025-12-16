@@ -99,7 +99,7 @@ declare global {
       ) => void;
       closeMainWindow: () => Promise<void>;
       openApp: (appId: string) => Promise<void>;
-      openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;
+      openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<
         Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>
       >;

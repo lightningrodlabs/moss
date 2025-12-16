@@ -12,17 +12,17 @@ export class AppletMain extends LitElement {
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
 
-  @property(hashProperty('group-dna-hash'))
-  groupDnaHash: DnaHash | undefined;
+  @property(hashProperty('group-hash'))
+  groupHash!: DnaHash;
 
   @property()
   reloading = false;
 
   render() {
-    return html`<applet-view
+      return html`<applet-view
       .view=${{ type: 'main' }}
       .appletHash=${this.appletHash}
-      .groupDnaHash=${this.groupDnaHash}
+      .groupHash=${this.groupHash}
       .reloading=${this.reloading}
       style="flex: 1"
     ></applet-view>`;

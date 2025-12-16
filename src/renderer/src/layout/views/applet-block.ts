@@ -13,7 +13,7 @@ export class AppletBlock extends LitElement {
   appletHash!: EntryHash;
 
   @property(hashProperty('group-hash'))
-  groupHash: DnaHash | undefined;
+  groupHash!: DnaHash;
 
   @property()
   block!: string;

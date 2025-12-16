@@ -13,10 +13,10 @@ import {
   WAL,
 } from '@theweave/api';
 import {
-  CallZomeRequest,
-  CallZomeRequestSigned,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    CallZomeRequest,
+    CallZomeRequestSigned,
+    decodeHashFromBase64, DnaHash, DnaHashB64,
+    encodeHashToBase64,
 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 
@@ -46,6 +46,7 @@ declare global {
         | {
             iframeSrc: string;
             appletId: AppletId;
+            groupId: DnaHashB64,
             wal: WAL;
           }
         | undefined
@@ -81,6 +82,9 @@ export class WalWindow extends LitElement {
 
   @state()
   appletHash: AppletHash | undefined;
+
+  @state()
+  groupHash: DnaHash | undefined;
 
   @state()
   loading: string | undefined = msg('loading...');
@@ -165,6 +169,7 @@ export class WalWindow extends LitElement {
             source: {
               type: 'applet',
               appletHash: this.appletHash!,
+              groupHash: this.groupHash!,
               subType: request.source.subType,
             },
           };
@@ -188,6 +193,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  groupHash: this.groupHash!,
                   subType: request.source.subType,
                 },
               };
@@ -209,6 +215,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  groupHash: this.groupHash!,
                   subType: request.source.subType,
                 },
               };
@@ -285,6 +292,7 @@ export class WalWindow extends LitElement {
     if (!appletSrcInfo) throw new Error('No associated applet info found.');
     this.iframeSrc = appletSrcInfo.iframeSrc;
     this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
+    this.groupHash = decodeHashFromBase64(appletSrcInfo.groupId);
     try {
       const appletInfo: AppletInfo = await walWindow.electronAPI.appletMessageToParent({
         request: {
@@ -294,6 +302,7 @@ export class WalWindow extends LitElement {
         source: {
           type: 'applet',
           appletHash: this.appletHash!,
+          groupHash: this.groupHash!,
           subType: 'wal-window',
         },
       });
@@ -308,6 +317,7 @@ export class WalWindow extends LitElement {
           source: {
             type: 'applet',
             appletHash: this.appletHash!,
+            groupHash: this.groupHash!,
             subType: 'wal-window',
           },
         });
@@ -327,6 +337,7 @@ export class WalWindow extends LitElement {
             source: {
               type: 'applet',
               appletHash: this.appletHash!,
+              groupHash: this.groupHash!,
               subType: 'wal-window',
             },
           });

@@ -58,6 +58,7 @@ export function getIframeKind(
     receivedFromSource = {
       type: 'applet',
       appletHash: decodeHashFromBase64(appletId),
+      groupHash: null, // TODO: get groupHash from applet:// origin
       subType: message.data.source.subType,
     };
   } else if (message.origin.startsWith('cross-group://')) {
@@ -527,9 +528,12 @@ export async function handleAppletIframeMessage(
       if (source.type === 'cross-group') {
         throw new Error('Tool installer not defined for cross-group views.');
       }
+      console.debug('get-tool-installer: ', message, source);
+      const groupHash = message.groupHash? message.groupHash : source.groupHash;
+      if (!groupHash) throw new Error('No groupHash provided for get-tool-installer.');
       const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash));
       if (groupStores.size === 0) throw new Error('No group store found for applet (get-tool-installer).');
-      const groupStore = groupStores.get(message.groupHash)
+      const groupStore = groupStores.get(groupHash);
       if (!groupStore) throw new Error('Requested group store not found for applet (get-tool-installer).');
       const appletRecord = await groupStore.groupClient.getPublicApplet(message.appletHash);
       if (!appletRecord) {

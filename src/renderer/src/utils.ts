@@ -992,6 +992,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   };
   const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
+  const groupHash = (await mossStore.getGroupsForApplet(appletHash))[0];
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
@@ -999,16 +1000,17 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       const iframeKind: IframeKind = {
         type: 'applet',
         appletHash,
+        groupHash,
         subType: 'asset',
       };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
       )}#${fromUint8Array(encode(iframeKind))}`;
-      return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+      return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
-  return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 
 export function UTCOffsetStringFromOffsetMinutes(offsetMinutes: number): string {

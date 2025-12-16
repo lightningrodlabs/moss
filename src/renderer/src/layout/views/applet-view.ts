@@ -17,7 +17,7 @@ export class AppletViewEl extends LitElement {
   appletHash!: EntryHash;
 
   @property(hashProperty('group-hash'))
-  groupHash: DnaHash | undefined;
+  groupHash!: DnaHash;
 
   @property()
   view!: AppletView;
