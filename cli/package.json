@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.15.8",
+  "version": "0.15.9",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -24,7 +24,7 @@
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
     "@matthme/electron-updater": "6.3.0-alpha.1",
-    "@theweave/api": "^0.6.1",
+    "@theweave/api": "^0.6.2",
     "@theweave/moss-types": "0.5.1",
     "@theweave/utils": "0.5.1",
     "@msgpack/msgpack": "^2.8.0",

@@ -60,10 +60,13 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
-import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
+import {
+  DistributionInfo,
+  TDistributionInfo,
+  ToolInfoAndVersions,
+} from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import { markdownParseSafe } from '../../utils.js';
-import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from '../../elements/_new_design/group-settings.js';
@@ -111,6 +114,9 @@ export class GroupHome extends LitElement {
 
   @query('#group-settings')
   groupSettings: GroupSettings | undefined;
+
+  @query('#uninstall-confirm-dialog')
+  _uninstallDialog!: MossDialog;
 
   @state()
   _peerStatusLoading = true;
@@ -206,6 +212,12 @@ export class GroupHome extends LitElement {
   @state()
   _joiningNewApplet: string | undefined;
 
+  @state()
+  _appletToUninstall: { hash: AppletHash; name: string; version: string } | undefined;
+
+  @state()
+  _uninstalling = false;
+
   _peerStatusInterval: number | null | undefined;
 
   groupProfile = new StoreSubscriber(
@@ -239,16 +251,99 @@ export class GroupHome extends LitElement {
     this.groupSettings?.showInactiveTools();
   }
 
+  renderUninstallConfirmDialog() {
+    if (!this._appletToUninstall) return html``;
+
+    return html`
+      <moss-dialog
+        id="uninstall-confirm-dialog"
+        width="490px"
+        headerAlign="center"
+        @sl-request-close=${(e) => {
+        if (this._uninstalling) {
+          e.preventDefault();
+        }
+      }}
+      >
+        <span slot="header"
+          >${msg('Uninstalling')} ${this._appletToUninstall.name}
+          ${this._appletToUninstall.version ? `v${this._appletToUninstall.version}` : ''}</span
+        >
+        <div slot="content" class="column" style="align-items: center; text-align: center;">
+          <div style="font-size: 16px; margin-bottom: 20px;">
+            ${msg('Uninstalling affects only you.')}
+          </div>
+
+          <div style="font-size: 14px; color: #C35C1D; margin-bottom: 15px; max-width: 400px;">
+            ${msg(
+        'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
+      )}
+          </div>
+
+          <div style="font-size: 16px; margin-bottom: 30px;">
+            ${msg('Do you want to uninstall it for yourself?')}
+          </div>
+
+          <div class="column" style="gap: 12px; width: 100%;">
+            <button
+              class="moss-button"
+              style="width: 100%; padding: 12px; font-size: 16px;"
+              .disabled=${this._uninstalling}
+              @click=${() => this.confirmUninstall()}
+            >
+              ${this._uninstalling ? msg('Uninstalling...') : msg('Yes, uninstall it')}
+            </button>
+            <button
+              class="moss-button-secondary"
+              style="width: 100%; padding: 12px; font-size: 16px;"
+              .disabled=${this._uninstalling}
+              @click=${() => this.cancelUninstall()}
+            >
+              ${msg('No, keep it')}
+            </button>
+          </div>
+        </div>
+      </moss-dialog>
+    `;
+  }
+
   async uninstallApplet(e: CustomEvent) {
-    const confirmation = await dialogMessagebox({
-      message:
-        'WARNING: Uninstalling a Tool instance is permanent. You will not be able to re-join the same Tool instance at a later point and all your local data associated to that Tool instance will be deleted. Other group members can keep using the Tool instance normally.',
-      type: 'warning',
-      buttons: ['Cancel', 'Continue'],
-    });
-    if (confirmation.response === 0) return;
+    const appletHash = e.detail;
+
+    // Get applet info for dialog
+    const applet = await toPromise(this._groupStore.applets.get(appletHash));
+    if (!applet) return;
+
+    let appletName = applet.custom_name;
+    let appletVersion = '';
+
+    // Try to extract version from distribution info
     try {
-      const appletHash = e.detail;
+      const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+      if (distributionInfo.type === 'web2-tool-list') {
+        appletVersion = distributionInfo.info.toolVersion;
+      }
+    } catch (e) {
+      console.warn('Failed to parse distribution info for version:', e);
+    }
+
+    // Set state and show dialog
+    this._appletToUninstall = {
+      hash: appletHash,
+      name: appletName,
+      version: appletVersion,
+    };
+
+    this._uninstallDialog.show();
+  }
+
+  async confirmUninstall() {
+    if (!this._appletToUninstall) return;
+
+    this._uninstalling = true;
+
+    try {
+      const appletHash = this._appletToUninstall.hash;
       const appId = appIdFromAppletHash(appletHash);
       await window.electronAPI.uninstallApplet(appId);
       const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
@@ -258,10 +353,20 @@ export class GroupHome extends LitElement {
         ),
       );
       await this.mossStore.reloadManualStores();
+
+      this._uninstallDialog.hide();
+      this._appletToUninstall = undefined;
     } catch (e) {
       console.error(`Failed to uninstall tool instance: ${e}`);
       notifyError(msg('Failed to uninstall tool instance.'));
+    } finally {
+      this._uninstalling = false;
     }
+  }
+
+  cancelUninstall() {
+    this._uninstallDialog.hide();
+    this._appletToUninstall = undefined;
   }
 
   async joinNewApplet(appletHash: AppletHash) {
@@ -689,7 +794,9 @@ export class GroupHome extends LitElement {
         ></group-settings>
 
       </moss-dialog>
-  
+
+      ${this.renderUninstallConfirmDialog()}
+
       <div class="row" style="flex: 1;">
         <div
           class="column"
