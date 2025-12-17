@@ -1041,7 +1041,8 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   };
   const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
-  const groupHash = (await mossStore.getGroupsForApplet(appletHash))[0];
+  const groupHash = (await mossStore.getGroupsForApplet(appletHash))[0]; // TODO: get correct group hash
+  const queryString = renderViewToQueryString(renderView) + `&group-hash=${encodeHashToBase64(groupHash)}`;
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
@@ -1052,13 +1053,11 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
         groupHash,
         subType: 'asset',
       };
-      const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
-        renderView,
-      )}#${fromUint8Array(encode(iframeKind))}`;
+      const iframeSrc = `http://localhost:${appletDevPort}?${queryString}#${fromUint8Array(encode(iframeKind))}`;
       return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${queryString}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 

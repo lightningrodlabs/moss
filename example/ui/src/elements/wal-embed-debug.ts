@@ -16,8 +16,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { appletOrigin, getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { DnaHash, EntryHash } from '@holochain/client';
-import { HoloHashMap } from '@holochain-open-dev/utils';
+import {DnaHash, encodeHashToBase64} from '@holochain/client';
 import { mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 
@@ -110,9 +109,9 @@ export class WalEmbed extends LitElement {
       case 'loading':
         return html` <sl-spinner></sl-spinner> `;
       case 'success':
-        const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
-          this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
-        }`;
+        const contextParam = this.wal!.context? `&context=${encodeContext(this.wal!.context)}` : '';
+        const groupHashParam = this.appletInfo && this.appletInfo.groupsHashes.length > 0? `&group-hash=${encodeHashToBase64(this.appletInfo.groupsHashes[0])}` : ''; // TODO: get the correct group hash
+        const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${contextParam}${groupHashParam}`;
         const iframeSrc = this.assetStatus.assetInfo.appletDevPort
           ? `http://localhost:${
               this.assetStatus.assetInfo.appletDevPort
