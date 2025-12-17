@@ -63,7 +63,7 @@ const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
     if (dht_summary['0..4294967295']) {
       dht_summary['0..4294967295'].ring_top_hashes = dht_summary[
         '0..4294967295'
-      ].ring_top_hashes.map((h) => `${h.length > 0 ? encodeHashToBase64(h) : ''}`);
+      ].ring_top_hashes.map((h) => `${typeof (h) == "string" ? h : h.length > 0 ? encodeHashToBase64(h) : ''}`);
     }
 
     out[key] = {
