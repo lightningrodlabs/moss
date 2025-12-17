@@ -16,7 +16,7 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
-import { arrowLeftShortIcon, mossIcon, plusCircleIcon } from './elements/_new_design/icons.js';
+import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
 import { defaultIcons } from './elements/_new_design/defaultIcons.js';
@@ -564,7 +564,7 @@ export class MossApp extends LitElement {
       }}
             >
               <div class="row center-content">
-                ${plusCircleIcon(20)}
+                ${createGroupIcon(20)}
                 <div style="margin-left: 10px;">${msg('Create new group space')}</div>
               </div>
             </button>
