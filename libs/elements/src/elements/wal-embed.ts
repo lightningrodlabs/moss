@@ -11,10 +11,9 @@ import {
   WeaveUrl,
   weaveUrlToLocation,
   WeaveClient,
-  IframeKind,
+  IframeKind, intoOrigin
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-import { iframeOrigin } from '../utils';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash } from '@holochain/client';
 import { mdiArrowCollapse, mdiArrowExpand, mdiClose, mdiOpenInNew } from '@mdi/js';
@@ -22,7 +21,6 @@ import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
-import { intoOrigin } from '@theweave/utils';
 
 type AssetStatus =
   | {

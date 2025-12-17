@@ -163,31 +163,3 @@ export function getCellId(cellInfo: CellInfo): CellId | undefined {
   }
   return undefined;
 }
-
-export function intoOrigin(iframeKind: IframeKind): string {
-  switch (iframeKind.type) {
-    case 'applet':
-      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
-    case 'cross-group':
-      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
-  }
-}
-
-export function intoAppletOrigin(appletId: AppletId, groupId: DnaHashB64): string {
-  return `applet://${toLowerCaseB64(appletId)}.${toLowerCaseB64(groupId)}`;
-}
-
-/** Assuming `origin` is `applet://<appletId>.<groupId>` */
-export function getIdsFromAppletOrigin(origin: string): [AppletId, DnaHashB64] {
-  const host = origin.split('://')[1].split('?')[0].split('/')[0];
-  const dollarHost = host.replace(/%24/g, '$');
-  const parts = dollarHost.split('.');
-  return [toOriginalCaseB64(parts[0]), toOriginalCaseB64(parts[1])];
-}
-
-/** Assuming `origin` is `cross-group://<toolId>` */
-export function getToolIdFromCrossGroupOrigin(origin: string): ToolCompatibilityId {
-  const host = origin.split('://')[1].split('?')[0].split('/')[0];
-  const dollarHost = host.replace(/%24/g, '$');
-  return toOriginalCaseB64(dollarHost);
-}
