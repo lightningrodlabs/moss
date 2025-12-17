@@ -291,38 +291,8 @@ export function getPrimaryVersionBranch(
   return candidates[0];
 }
 
-export function iframeOrigin(iframeKind: IframeKind): string {
-  switch (iframeKind.type) {
-    case 'applet':
-      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
-    case 'cross-group':
-      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
-  }
-}
 
-export function appletOriginFromAppletId(appletId: AppletId): string {
-  return `applet://${toLowerCaseB64(appletId)}`;
-}
-
-export function getAppletIdFromOrigin(origin: string): AppletId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
-
-export function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
-
-/**
- * This function assumes that there is only a single app with this same dna
- *
- * @param apps
- * @param dnaHash
- * @returns
- */
+/** Assuming there is only a single app with this same dna */
 export function findAppForDnaHash(
   apps: ListAppsResponse,
   dnaHash: DnaHash,
@@ -797,7 +767,7 @@ export function refreshAllAppletIframes(appletId: AppletId): void {
 
 function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
   const allIframes = getAllIframes();
-  return allIframes.filter((iframe) => iframe.src.startsWith(appletOriginFromAppletId(appletId)));
+  return allIframes.filter((iframe) => iframe.src.startsWith(intoAppletOrigin(appletId)));
 }
 
 /**
@@ -1058,7 +1028,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${intoOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 

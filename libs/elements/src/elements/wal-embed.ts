@@ -22,6 +22,7 @@ import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
+import { intoOrigin } from '@theweave/utils';
 
 type AssetStatus =
   | {
@@ -266,7 +267,7 @@ export class WalEmbed extends LitElement {
           ? `http://localhost:${
               this.assetStatus.assetInfo.appletDevPort
             }?${queryString}#${fromUint8Array(encode(iframeKind))}`
-          : `${iframeOrigin(iframeKind)}?${queryString}`;
+          : `${intoOrigin(iframeKind)}?${queryString}`;
 
         return html`<iframe
           id="${this.iframeId}"

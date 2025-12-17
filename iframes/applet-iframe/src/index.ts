@@ -45,7 +45,7 @@ import {
   IframeKind,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
-import { toOriginalCaseB64 } from '@theweave/utils';
+import { getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin, toOriginalCaseB64 } from '@theweave/utils';
 
 type CallbackWithId = {
   id: number;
@@ -722,51 +722,30 @@ function readIframeKind(): IframeKind {
   const groupHashRegex = /group-hash=(.*?)(?:[&#]|$)/;
   const href = window.location.href;
   if (window.origin.startsWith('applet://')) {
-    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
-    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
-    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-
-    // Extract groupHash from query string if present
-    const groupHashMatch = href.match(groupHashRegex);
-    const groupHash = groupHashMatch ? decodeHashFromBase64(groupHashMatch[1]) : null;
-
+    const [appletId, groupId] = getIdsFromAppletOrigin(window.origin);
     return {
       type: 'applet',
-      appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
-      groupHash,
+      appletHash: decodeHashFromBase64(appletId),
+      groupHash: decodeHashFromBase64(groupId),
       subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('cross-group://')) {
-    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
-    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
-    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+    const toolCompatibilityId = getToolIdFromCrossGroupOrigin(window.origin);
     return {
       type: 'cross-group',
-      toolCompatibilityId: toOriginalCaseB64(lowercaseB64Id),
+      toolCompatibilityId,
       subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('http://localhost')) {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
-    // TODO: assert iframeKind is of correct type.
+    assertIframeKind(iframeKind);
     return iframeKind;
   }
   throw new Error(`Failed to read iframe kind. Invalid origin: ${window.origin}`);
 }
 
-function readAppletId(): AppletId {
-  if (window.origin.startsWith('applet://')) {
-    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
-    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
-    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-    return toOriginalCaseB64(lowercaseB64Id);
-  }
-  // In dev mode, the applet hash will be appended at the end
-  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
 
 async function getRenderView(): Promise<RenderView | undefined> {
   if (window.location.search.length === 0) return undefined;

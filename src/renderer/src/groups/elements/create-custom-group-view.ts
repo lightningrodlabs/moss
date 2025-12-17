@@ -17,7 +17,7 @@ import { GroupStore } from '../group-store.js';
 import { Applet } from '@theweave/group-client';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { iframeOrigin } from '../../utils.js';
+import { intoOrigin } from '../../utils.js';
 
 @localized()
 @customElement('create-custom-group-view')
@@ -51,7 +51,7 @@ export class CreateCustomGroupView extends LitElement {
           label: block.label,
           media: block.icon_src,
           category: applets.get(appletHash)?.custom_name,
-          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, groupHash: this.groupStore.groupDnaHash, subType: 'block' })}?view=${
+          content: `<iframe src="${intoOrigin({ type: 'applet', appletHash, groupHash: this.groupStore.groupDnaHash, subType: 'block' })}?view=${
             block.view
           }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
         });

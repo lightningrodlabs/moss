@@ -18,6 +18,7 @@ export async function postMessage<T>(request: AppletToParentRequest): Promise<T>
     // read it here
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
+    assertIframeKind(iframeKind);
 
     const message: AppletToParentMessage = {
       request,
@@ -39,4 +40,22 @@ export async function postMessage<T>(request: AppletToParentRequest): Promise<T>
 
 export function toOriginalCaseB64(input: string): HoloHashB64 {
   return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
+}
+
+
+function assertIframeKind(iframeKind: any): asserts iframeKind is IframeKind {
+  if (!iframeKind || typeof iframeKind !== 'object') {
+    throw new Error('Invalid iframe kind: not an object.');
+  }
+  if (iframeKind.type === 'applet') {
+    if (!iframeKind.appletHash || !iframeKind.groupHash || typeof iframeKind.subType !== 'string') {
+      throw new Error('Invalid iframe kind: missing applet fields.');
+    }
+  } else if (iframeKind.type === 'cross-group') {
+    if (typeof iframeKind.toolCompatibilityId !== 'string' || typeof iframeKind.subType !== 'string') {
+      throw new Error('Invalid iframe kind: missing cross-group fields.');
+    }
+  } else {
+    throw new Error(`Invalid iframe kind type: ${iframeKind.type}`);
+  }
 }

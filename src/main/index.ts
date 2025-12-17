@@ -87,10 +87,10 @@ import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
-  appletIdFromAppId,
+  appletIdFromAppId, getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
-  toOriginalCaseB64,
+  toOriginalCaseB64
 } from '@theweave/utils';
 import { sortVersionsDescending } from './utils';
 import { Jimp } from 'jimp';
@@ -642,7 +642,8 @@ if (!RUNNING_WITH_COMMAND) {
           // If it's coming from a Tool, figure out the toolId (originalToolActionHash)
           let toolId: string | undefined;
           if (details.requestingUrl.startsWith('applet://')) {
-            const appletAppId = `applet#${details.requestingUrl.slice(9).split('/')[0]}`;
+            const [appletId, _groupId] = getIdsFromAppletOrigin(details.requestingUrl);
+            const appletAppId = `applet#${appletId}`;
             console.log('appletAppId: ', appletAppId);
             try {
               const assetInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appletAppId);
@@ -654,7 +655,7 @@ if (!RUNNING_WITH_COMMAND) {
               console.warn('Failed to read assetInfo during permission request.');
             }
           } else if (details.requestingUrl.startsWith('cross-group://')) {
-            toolId = toOriginalCaseB64(details.requestingUrl.slice(14).split('/')[0]);
+            toolId = getToolIdFromCrossGroupOrigin(details.requestingUrl);
             console.log('@permissionRequestHandler: GOT TOOLID for cross-group iframe: ', toolId);
           }
 

@@ -62,19 +62,6 @@ export function decodeContext(contextStringified: string): any {
   return decode(toUint8Array(contextStringified));
 }
 
-export function appletOrigin(appletHash: AppletHash): string {
-  return `applet://${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
-}
-
-export function iframeOrigin(iframeKind: IframeKind): string {
-  switch (iframeKind.type) {
-    case 'applet':
-      return `applet://${toLowerCaseB64(encodeHashToBase64(iframeKind.appletHash))}`;
-    case 'cross-group':
-      return `cross-group://${toLowerCaseB64(iframeKind.toolCompatibilityId)}`;
-  }
-}
-
 export function toLowerCaseB64(hashb64: HoloHashB64): string {
   return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
 }

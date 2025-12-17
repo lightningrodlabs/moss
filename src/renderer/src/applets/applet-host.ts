@@ -29,11 +29,11 @@ import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
-  getAppletIdFromOrigin,
+  getIdsFromAppletOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
-  getToolCompatibilityIdFromOrigin,
+  getToolIdFromCrossGroupOrigin,
   openWalInWindow,
   storeAppletNotifications,
   validateNotifications,
@@ -54,15 +54,15 @@ export function getIframeKind(
   let receivedFromSource: IframeKind;
 
   if (message.origin.startsWith('applet://')) {
-    const appletId = getAppletIdFromOrigin(message.origin);
+    const [appletId, groupId] = getIdsFromAppletOrigin(message.origin);
     receivedFromSource = {
       type: 'applet',
       appletHash: decodeHashFromBase64(appletId),
-      groupHash: message.data.source.type === 'applet' ? message.data.source.groupHash : null,
+      groupHash: decodeHashFromBase64(groupId),
       subType: message.data.source.subType,
     };
   } else if (message.origin.startsWith('cross-group://')) {
-    const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
+    const toolCompatibilityId = getToolIdFromCrossGroupOrigin(message.origin);
     receivedFromSource = {
       type: 'cross-group',
       toolCompatibilityId,
