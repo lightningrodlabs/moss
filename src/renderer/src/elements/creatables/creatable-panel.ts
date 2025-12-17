@@ -33,6 +33,7 @@ export type CreatableInfo = {
   appletHash: AppletHash;
   creatableName: CreatableName;
   creatable: CreatableType;
+  groupHash: DnaHash | undefined;
 };
 
 /**
@@ -75,6 +76,9 @@ export class CreatablePanel extends LitElement {
 
   @state()
   _showCreatablesSelection: AppletId | undefined;
+
+  @state()
+  _selectedGroupHash: DnaHash | undefined;
 
   @state()
   _activeDialogId: string | undefined;
@@ -156,6 +160,7 @@ export class CreatablePanel extends LitElement {
       appletHash,
       creatableName,
       creatable,
+      groupHash: this._selectedGroupHash,
     };
     this._activeDialogId = uuidv4();
     if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
@@ -232,6 +237,7 @@ export class CreatablePanel extends LitElement {
                         .activeApplets=${appletsWithCreatables}
                         @applet-chosen=${(e) => {
                           this._showCreatablesSelection = encodeHashToBase64(e.detail.appletHash);
+                          this._selectedGroupHash = groupDnaHash;
                           setTimeout(() => this._creatableSelectionDialog!.show());
                         }}
                       ></group-applets-row>
@@ -270,6 +276,7 @@ export class CreatablePanel extends LitElement {
                     <creatable-view
                       style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
                       .creatableInfo=${this._showCreatableView}
+                      .groupHash=${this._showCreatableView.groupHash}
                       .dialogId=${this._activeDialogId}
                       @creatable-response-received=${(e) => this.handleCreatableResponse(e)}
                     ></creatable-view>

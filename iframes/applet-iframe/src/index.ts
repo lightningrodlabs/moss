@@ -719,15 +719,21 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 
 function readIframeKind(): IframeKind {
   const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
+  const groupHashRegex = /group-hash=(.*?)(?:[&#]|$)/;
   const href = window.location.href;
   if (window.origin.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+
+    // Extract groupHash from query string if present
+    const groupHashMatch = href.match(groupHashRegex);
+    const groupHash = groupHashMatch ? decodeHashFromBase64(groupHashMatch[1]) : null;
+
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
-      groupHash: null, // TODO: Add groupHash to "applet://" origin
+      groupHash,
       subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('cross-group://')) {

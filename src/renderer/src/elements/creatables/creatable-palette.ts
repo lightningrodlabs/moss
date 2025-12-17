@@ -37,6 +37,7 @@ export type CreatableInfo = {
   appletHash: AppletHash;
   creatableName: CreatableName;
   creatable: CreatableType;
+  groupHash: DnaHash | undefined;
 };
 
 /**
@@ -147,7 +148,11 @@ export class CreatablePalette extends LitElement {
   }
 
   async handleCreatableSelected(creatableInfo: CreatableInfo) {
-    this._showCreatableView = creatableInfo;
+    // Add groupHash to creatableInfo
+    this._showCreatableView = {
+      ...creatableInfo,
+      groupHash: this.groupDnaHash,
+    };
     this._activeDialogId = uuidv4();
     if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
     setTimeout(() => this._creatableViewDialog!.show());
@@ -213,6 +218,7 @@ export class CreatablePalette extends LitElement {
                     <creatable-view
                       style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
                       .creatableInfo=${this._showCreatableView}
+                      .groupHash=${this._showCreatableView.groupHash}
                       .dialogId=${this._activeDialogId}
                       @creatable-response-received=${(e) => this.handleCreatableResponse(e)}
                     ></creatable-view>

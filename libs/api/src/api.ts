@@ -546,7 +546,7 @@ export class WeaveClient implements WeaveServices {
         : undefined
     );
     if (!effectiveGroupHash) {
-      throw new Error('groupHash is required when toolInstaller is called from a cross-group view');
+      throw new Error('groupHash is required but was not provided and could not be determined from renderInfo. Please pass groupHash explicitly to toolInstaller() or ensure the applet iframe has a valid groupHash.');
     }
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };

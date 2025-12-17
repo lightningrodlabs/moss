@@ -17,7 +17,7 @@ export class AppletViewEl extends LitElement {
   appletHash!: EntryHash;
 
   @property(hashProperty('group-hash'))
-  groupHash!: DnaHash;
+  groupHash: DnaHash | undefined;
 
   @property()
   view!: AppletView;
@@ -49,7 +49,7 @@ export class AppletViewEl extends LitElement {
     const iframeKind: IframeKind = {
       type: 'applet',
       appletHash: this.appletHash,
-      groupHash: this.groupHash,
+      groupHash: this.groupHash ?? null,
       subType: this.view.type,
     };
     return html`
