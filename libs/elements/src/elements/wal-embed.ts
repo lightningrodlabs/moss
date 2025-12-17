@@ -16,7 +16,7 @@ import {
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import { iframeOrigin } from '../utils';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { DnaHash } from '@holochain/client';
+import {DnaHash, encodeHashToBase64} from '@holochain/client';
 import { mdiArrowCollapse, mdiArrowExpand, mdiClose, mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 import { getAppletInfoAndGroupsProfiles } from '../utils';
@@ -251,11 +251,14 @@ export class WalEmbed extends LitElement {
       case 'loading':
         return html` <sl-spinner></sl-spinner> `;
       case 'success':
+        if (!this.appletInfo) {
+            throw Error("Missing appletInfo in <wal-embed>");
+        }
+        const groupHash = this.appletInfo.groupsHashes[0]; // TODO get the correct group hash
+        const groupHashParam = `&group-hash=${encodeHashToBase64(groupHash)}`;
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
-          this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
+          this.wal!.context? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
-        if (!this.appletInfo) throw Error("Missing appletInfo in <wal-embed>");
-        const groupHash = this.appletInfo.groupsHashes[0];
         const iframeKind: IframeKind = {
           type: 'applet',
           appletHash: this.assetStatus.assetInfo.appletHash,
@@ -266,7 +269,7 @@ export class WalEmbed extends LitElement {
           ? `http://localhost:${
               this.assetStatus.assetInfo.appletDevPort
             }?${queryString}#${fromUint8Array(encode(iframeKind))}`
-          : `${iframeOrigin(iframeKind)}?${queryString}`;
+          : `${iframeOrigin(iframeKind)}?${queryString}${groupHashParam}`;
 
         return html`<iframe
           id="${this.iframeId}"
