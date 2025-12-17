@@ -104,6 +104,12 @@ export class ViewFrame extends LitElement {
   }
 
   renderProductionFrame() {
+    // Add groupHash to query string if available
+    const queryString = renderViewToQueryString(this.renderView);
+    const groupHashParam = this.iframeKind.type === 'applet' && this.iframeKind.groupHash
+      ? `&group-hash=${encodeHashToBase64(this.iframeKind.groupHash)}`
+      : '';
+
     return html`<iframe
         frameborder="0"
         title="TODO"
@@ -112,7 +118,7 @@ export class ViewFrame extends LitElement {
         this.iframeKind.type === 'applet'
           ? encodeHashToBase64(this.iframeKind.appletHash)
           : this.renderView.type}
-        src="${iframeOrigin(this.iframeKind)}?${renderViewToQueryString(this.renderView)}"
+        src="${iframeOrigin(this.iframeKind)}?${queryString}${groupHashParam}"
         style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
         allow="camera *; microphone *; clipboard-write *;"
         @load=${() => {

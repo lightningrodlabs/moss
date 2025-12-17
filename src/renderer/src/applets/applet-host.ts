@@ -58,7 +58,7 @@ export function getIframeKind(
     receivedFromSource = {
       type: 'applet',
       appletHash: decodeHashFromBase64(appletId),
-      groupHash: null, // TODO: get groupHash from applet:// origin
+      groupHash: message.data.source.type === 'applet' ? message.data.source.groupHash : null,
       subType: message.data.source.subType,
     };
   } else if (message.origin.startsWith('cross-group://')) {
