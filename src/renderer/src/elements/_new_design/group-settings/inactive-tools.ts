@@ -112,10 +112,38 @@ export class InactiveTools extends LitElement {
   @state()
   _joiningNewApplet: string | undefined;
   @state()
+  _activatingAll = false;
+  @state()
   expandedApplets = {};
   toggleExpandedApplets(hash) {
     this.expandedApplets[hash] = !this.expandedApplets[hash];
     this.requestUpdate();
+  }
+
+  async activateAllTools(applets: Array<{ appletHash: AppletHash }>) {
+    this._activatingAll = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const applet of applets) {
+      try {
+        await this.joinNewApplet(applet.appletHash);
+        successCount++;
+      } catch (e) {
+        failCount++;
+        console.error('Failed to activate tool:', e);
+      }
+    }
+
+    this._activatingAll = false;
+
+    if (failCount === 0) {
+      notify(`Successfully activated all ${successCount} tools.`);
+    } else if (successCount > 0) {
+      notify(`Activated ${successCount} tools. ${failCount} failed (see console for details).`);
+    } else {
+      notifyError(`Failed to activate all tools (see console for details).`);
+    }
   }
 
   renderInactiveTools() {
@@ -182,7 +210,25 @@ export class InactiveTools extends LitElement {
               </div>
             `
           : html`
-              <div class="column">
+              <div class="column" style="position: relative;">
+                ${filteredApplets.length > 1 && !this.showIgnoredOnly
+                  ? html`
+                      <div class="row" style="justify-content: flex-end; margin-bottom: 16px;">
+                        <moss-mini-button
+                          .loading=${this._activatingAll}
+                          .disabled=${!!this._joiningNewApplet || this._activatingAll}
+                          @click=${() => this.activateAllTools(filteredApplets)}
+                        >
+                          ${activateToolIcon(20)}<span style="margin-left: 5px;"
+                            >${msg('Activate All')}</span
+                          >
+                        </moss-mini-button>
+                      </div>
+                    `
+                  : html``}
+                ${(this._joiningNewApplet || this._activatingAll)
+                  ? html`<div class="activation-overlay"></div>`
+                  : html``}
                 ${filteredApplets.map(
             (info) => html`
                     <div
@@ -222,7 +268,7 @@ export class InactiveTools extends LitElement {
                             style="margin-left: 20px;"
                             .loading=${this._joiningNewApplet ===
               encodeHashToBase64(info.appletHash)}
-                            .disabled=${!!this._joiningNewApplet}
+                            .disabled=${!!this._joiningNewApplet || this._activatingAll}
                             @click=${(e) => {
                 e.stopPropagation();
                 this.joinNewApplet(info.appletHash);
@@ -238,6 +284,7 @@ export class InactiveTools extends LitElement {
                                 <moss-mini-button
                                   variant="secondary"
                                   style="margin-left: 8px;"
+                                  .disabled=${!!this._joiningNewApplet || this._activatingAll}
                                   @click=${(e) => {
                     e.stopPropagation();
                     this._groupStore.ignoreApplet(info.appletHash);
@@ -312,6 +359,19 @@ export class InactiveTools extends LitElement {
 
       .buttons {
         margin-right: 10px;
+      }
+
+      .activation-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(0.5px);
+        z-index: 10;
+        pointer-events: all;
+        cursor: wait;
       }
     `,
   ];
