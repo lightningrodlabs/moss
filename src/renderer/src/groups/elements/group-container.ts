@@ -103,8 +103,6 @@ export class GroupContainer extends LitElement {
               class="flex"
               .selectedAppletHash=${this.selectedAppletHash()}
               @unjoined-tools-clicked=${() => {
-          console.log('unjoined tools clicked');
-
           if (this._groupHome) {
             this._groupHome.openInactiveTools();
             // this.dispatchEvent(

@@ -126,6 +126,7 @@ export class InactiveToolsDialog extends LitElement {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
       await this._groupStore.installApplet(appletHash);
+      await this._mossStore.reloadManualStores();
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
           detail: {

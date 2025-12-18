@@ -52,7 +52,8 @@ export class MossDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog class="defaults moss-dialog ${this.class}" id="dialog" no-header style="${this.styles ? `${this.styles};` : ``}${this.width ? ` --width: ${this.width};` : ''}">
+      <sl-dialog class="defaults moss-dialog ${this.class}" id="dialog" no-header style="${this.styles ? `${this.styles};` : ``}${this.width ? ` --width: ${this.width};` : ''}"
+      >
         <div class="column" style="position: relative">
           <button
             class="moss-dialog-close-button"

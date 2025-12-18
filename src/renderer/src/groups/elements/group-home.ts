@@ -136,6 +136,12 @@ export class GroupHome extends LitElement {
   @state()
   _loadingDescription = false;
 
+  @state()
+  _settingsDialogOpen = false;
+
+  @state()
+  _showingInactiveTools = false;
+
   _unsubscribe: Unsubscriber | undefined;
 
   // Memoization for performance
@@ -247,8 +253,24 @@ export class GroupHome extends LitElement {
   }
 
   public openInactiveTools() {
+    this._settingsDialogOpen = true;
+    this._showingInactiveTools = true;
     this.groupSettingsDialog?.show();
     this.groupSettings?.showInactiveTools();
+  }
+
+  updated(changedProperties: Map<string, any>) {
+    super.updated(changedProperties);
+
+    // Re-show the dialog if it should be open after a re-render
+    if (this._settingsDialogOpen && this.groupSettingsDialog) {
+      this.groupSettingsDialog.show();
+
+      // Restore tab state if we were showing inactive tools
+      if (this._showingInactiveTools && this.groupSettings) {
+        this.groupSettings.showInactiveTools();
+      }
+    }
   }
 
   renderUninstallConfirmDialog() {
@@ -373,6 +395,7 @@ export class GroupHome extends LitElement {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
       await this._groupStore.installApplet(appletHash);
+      await this.mossStore.reloadManualStores();
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
           detail: {
@@ -786,7 +809,12 @@ export class GroupHome extends LitElement {
 
   renderMain(groupProfile: GroupProfile) {
     return html`
-      <moss-dialog id="group-settings-dialog">
+      <moss-dialog id="group-settings-dialog"
+        @sl-after-hide=${() => {
+          this._settingsDialogOpen = false;
+          this._showingInactiveTools = false;
+        }}
+      >
         <span slot="header"> ${msg('Group Settings')}</span>
         <group-settings slot="content"
             id="group-settings"
@@ -826,10 +854,12 @@ export class GroupHome extends LitElement {
               class="row settings-btn items-center"
               tabindex="0"
               @click=${() => {
+        this._settingsDialogOpen = true;
         this.groupSettingsDialog?.show();
       }}
               @keypress=${(e: KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === ' ') {
+          this._settingsDialogOpen = true;
           this.groupSettingsDialog?.show();
         }
       }}

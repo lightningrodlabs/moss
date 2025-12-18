@@ -920,7 +920,6 @@ export class GroupStore {
         );
       }
     }
-    await this.mossStore.reloadManualStores();
   }
 
   /**

@@ -39,22 +39,25 @@ export class InactiveTools extends LitElement {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
       await this._groupStore.installApplet(appletHash);
-      this.dispatchEvent(
-        new CustomEvent('applet-installed', {
-          detail: {
-            appletEntryHash: appletHash,
-            groupDnaHash: this._groupStore.groupDnaHash,
-          },
-          composed: true,
-          bubbles: true,
-        }),
-      );
-      notify('Tool activated.');
+
+      // Only reload for single activations; batch activation reloads once at the end
+      if (!this._activatingAll) {
+        await this._mossStore.reloadManualStores();
+      }
+
+      // Don't dispatch 'applet-installed' event here to keep the settings window open
+      // The event is only needed when installing from the tool library
+
+      // Only show individual notification if not activating all
+      if (!this._activatingAll) {
+        notify('Tool activated.');
+      }
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       //this._showIgnoredApplets = false;
     } catch (e) {
       notifyError(`Failed to activate tool (See console for details).`);
       console.error(e);
+      throw e; // Re-throw to let activateAllTools handle it
     }
     this._joiningNewApplet = undefined;
   }
@@ -134,6 +137,9 @@ export class InactiveTools extends LitElement {
         console.error('Failed to activate tool:', e);
       }
     }
+
+    // Reload stores once after all activations complete
+    await this._mossStore.reloadManualStores();
 
     this._activatingAll = false;
 
