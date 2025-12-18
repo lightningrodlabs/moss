@@ -21,7 +21,7 @@ import {
   AppletHash,
   AppletId,
   ParentToAppletMessage,
-  IframeKind, getIdsFromAppletOrigin, intoOrigin
+  IframeKind, getIdsFromAppletOrigin, intoOrigin, AppletOrigin,
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -412,6 +412,7 @@ export function validateNotifications(notifications: Array<FrameNotification>): 
  * @param notifications
  * @param appletId
  * @param storeUnread Whether or not to store the notifications to unread notifications
+ * @param persistedStore
  * @returns
  */
 export function storeAppletNotifications(
@@ -436,7 +437,7 @@ export function storeAppletNotifications(
 
     unreadNotifications = dedupedNotifications.map((notification) =>
       destringifyAndDecode(notification),
-    ); // dedpulicated array
+    ); // deduplicated array
 
     persistedStore.appletNotificationsUnread.set(unreadNotifications, appletId);
   }
@@ -467,33 +468,15 @@ function isMillisecondTimestamp(timestamp: number): boolean {
 /**
  * Gets the state of unread notifications for an applet. Used to display
  * notification dots in sidebars
- * @param appletId
- * @returns
  */
 export function loadAppletNotificationStatus(
-  appletId: AppletId,
+  appletHash: AppletHash,
 ): [string | undefined, number | undefined] {
   const persistedStore = new PersistedStore();
-  const unreadNotifications = persistedStore.appletNotificationsUnread.value(appletId);
+  const unreadNotifications = persistedStore.appletNotificationsUnread.value(encodeHashToBase64(appletHash));
   return getNotificationState(unreadNotifications);
 }
 
-/**
- * Reads the current applet notification states from persisted store
- *
- * @returns
- */
-export function loadAllNotificationStates(): Record<
-  AppletId,
-  [string | undefined, number | undefined]
-> {
-  const states = {};
-  const persistedStore = new PersistedStore();
-  persistedStore.getAppletsWithUnreadNotifications().forEach((appletId) => {
-    states[appletId] = loadAppletNotificationStatus(appletId);
-  });
-  return states;
-}
 
 /**
  * Returns a notification state of the form [urgency, counts], e.g. ["high", 2] given

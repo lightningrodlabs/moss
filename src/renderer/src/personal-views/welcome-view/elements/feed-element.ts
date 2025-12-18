@@ -13,14 +13,15 @@ import '../../../groups/elements/group-context.js';
 import '../../../elements/reusable/profile-detail.js';
 
 import { consume } from '@lit/context';
-import { decodeHashFromBase64 } from '@holochain/client';
-import { AppletNotification, GroupDnaHash } from '../../../types.js';
+import { decodeHashFromBase64, DnaHash } from '@holochain/client';
+import { AppletNotification } from '../../../types.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import TimeAgo from 'javascript-time-ago';
 import { mossStyles } from '../../../shared-styles.js';
 import { stringToMessageParts } from '../../../utils.js';
 import { toPromise } from '@holochain-open-dev/stores';
+import { AppletSelectedEvent } from '../../../events';
 
 @localized()
 @customElement('feed-element')
@@ -33,10 +34,10 @@ export class FeedElement extends LitElement {
   notification!: AppletNotification;
 
   /**
-   * Just pick one of the group's this applet is part of in order to be able to display a profile
+   * Pick first group's this applet is part of to be able to display a profile
    */
   @state()
-  groupDnaHash: GroupDnaHash | undefined;
+  groupDnaHash: DnaHash | undefined;
 
   @state()
   loading = true;
@@ -49,6 +50,8 @@ export class FeedElement extends LitElement {
       const groupHashes = Array.from(groupsForApplet.keys());
       if (groupHashes.length > 0) {
         this.groupDnaHash = groupHashes[0];
+      } else {
+        console.error("<feed-element> No group found for applet", this.notification.appletId);
       }
       this.loading = false;
     } catch (e) {
@@ -65,9 +68,10 @@ export class FeedElement extends LitElement {
         tabindex="0"
         @click=${() =>
           this.dispatchEvent(
-            new CustomEvent('applet-selected', {
+            new CustomEvent<AppletSelectedEvent>('applet-selected', {
               detail: {
                 appletHash: decodeHashFromBase64(this.notification.appletId),
+                groupHash: this.groupDnaHash!,
               },
               bubbles: true,
               composed: true,
@@ -76,9 +80,10 @@ export class FeedElement extends LitElement {
         @keypress=${(e: KeyboardEvent) => {
           if (e.key === 'Enter') {
             this.dispatchEvent(
-              new CustomEvent('applet-selected', {
+              new CustomEvent<AppletSelectedEvent>('applet-selected', {
                 detail: {
                   appletHash: decodeHashFromBase64(this.notification.appletId),
+                  groupHash: this.groupDnaHash!,
                 },
                 bubbles: true,
                 composed: true,

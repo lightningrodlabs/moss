@@ -23,7 +23,6 @@ import {
   CreatableType,
   CreatableName,
   Hrl,
-  WeaveLocation,
   FrameNotification,
   RecordInfo,
   PeerStatusUpdate,
@@ -34,6 +33,8 @@ import {
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
+
+export const WEAVE_COMPATIBLE_PROTOCOL_VERSIONS = ['0.12', '0.13', '0.14', '0.15'];
 
 declare global {
   interface Window {
@@ -58,80 +59,13 @@ export const NULL_HASH = new Uint8Array([132, 33, 36, 219, 175, ...new Uint8Arra
 export const isWeaveContext = () =>
   window.location.protocol === 'applet:' || !!window.__WEAVE_API__;
 
-/**
- *
- * @param appletHash Hash of the applet to generate the link for
- * @param webPrefix Whether to make the link work via web browsers. Default is true.
- * @returns
- */
-export const weaveUrlFromAppletHash = (appletHash: AppletHash, webPrefix = false) => {
-  let url: string = '';
-  if (webPrefix) {
-    url = 'https://theweave.social/wal?';
-  }
-  url =
-    url +
-    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://applet/${encodeHashToBase64(appletHash)}`;
-  return url;
-};
 
-export function weaveUrlFromWal(wal: WAL, webPrefix = false) {
-  let url: string = '';
-  if (webPrefix) {
-    url = 'https://theweave.social/wal?';
-  }
-  url =
-    url +
-    `weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://hrl/${encodeHashToBase64(wal.hrl[0])}/${encodeHashToBase64(wal.hrl[1])}${
-      wal.context ? `?context=${encodeContext(wal.context)}` : ''
-    }`;
-  return url;
-}
-
-export function weaveUrlToLocation(url: string): WeaveLocation {
-  if (!url.startsWith(`weave-${window.__WEAVE_PROTOCOL_VERSION__ || '0.12'}://`)) {
-    throw new Error(`Got invalid Weave url: ${url}`);
-  }
-
-  const split = url.split('://');
-  // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
-  const split2 = split[1].split('/');
-  // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
-
-  if (split2[0] === 'hrl') {
-    const contextSplit = split2[2].split('?context=');
-    return {
-      type: 'asset',
-      wal: {
-        hrl: [decodeHashFromBase64(split2[1]), decodeHashFromBase64(contextSplit[0])],
-        context: contextSplit[1] ? decodeContext(contextSplit[1]) : undefined,
-      },
-    };
-  } else if (split2[0] === 'group') {
-    throw new Error(
-      'Needs to be implemented in Moss version 0.13.x by changing group to invitation',
-    );
-  } else if (split2[0] === 'applet') {
-    return {
-      type: 'applet',
-      appletHash: decodeHashFromBase64(split2[1]),
-    };
-  }
-  throw new Error(`Got We url of unknown format: ${url}`);
-}
-
-export function weaveUrlToWAL(url: string): WAL {
-  const weaveLocation = weaveUrlToLocation(url);
-  if (weaveLocation.type !== 'asset') {
-    throw new Error('Passed URL is not a valid asset locator.');
-  }
-  return weaveLocation.wal;
-}
-
+/** */
 export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
+/** */
 export function stringifyWal(wal: WAL): string {
   // If the context field is missing, it will be encoded differently than if it's undefined
   // or null so the field needs to be explicitly added here to make sure it leads to a
@@ -168,6 +102,7 @@ export const initializeHotReload = async () => {
   }
 };
 
+/** API that must be provided by the Tool */
 export class AppletServices {
   constructor() {
     (this.creatables = {}),
@@ -204,6 +139,7 @@ export class AppletServices {
   ) => Promise<Array<WAL>>;
 }
 
+/** Tool-agnostic API related to Assets */
 export interface AssetServices {
   /**
    * Gets information about an entry in any other Applet in We
@@ -315,6 +251,7 @@ export interface AssetServices {
   assetStore: (wal: WAL) => AssetStore;
 }
 
+/** General API used by Tools to get data on Moss state */
 export interface WeaveServices {
   assets: AssetServices;
   /**
@@ -346,7 +283,7 @@ export interface WeaveServices {
    * @param appletHash
    * @returns
    */
-  openAppletMain: (appletHash: EntryHash) => Promise<void>;
+  openAppletMain: (appletHash: AppletHash, groupHash: DnaHash) => Promise<void>;
   /**
    * Open the specified block view of the specified Applet
    * @param appletHash
@@ -354,7 +291,7 @@ export interface WeaveServices {
    * @param context
    * @returns
    */
-  openAppletBlock: (appletHash, block: string, context: any) => Promise<void>;
+  openAppletBlock: (appletHash: AppletHash, groupHash: DnaHash, block: string, context: any) => Promise<void>;
   /**
    * Open the cross-group main view of the specified Applet Type.
    * @param appletBundleId
@@ -499,11 +436,11 @@ export class WeaveClient implements WeaveServices {
   onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onBeforeUnload(callback);
 
-  openAppletMain = async (appletHash: EntryHash): Promise<void> =>
-    window.__WEAVE_API__.openAppletMain(appletHash);
+  openAppletMain = async (appletHash: AppletHash, groupHash: DnaHash): Promise<void> =>
+    window.__WEAVE_API__.openAppletMain(appletHash, groupHash);
 
-  openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
-    window.__WEAVE_API__.openAppletBlock(appletHash, block, context);
+  openAppletBlock = async (appletHash: AppletHash, groupHash: DnaHash, block: string, context: any): Promise<void> =>
+    window.__WEAVE_API__.openAppletBlock(appletHash, groupHash, block, context);
 
   openCrossGroupMain = (appletBundleId: string): Promise<void> =>
     window.__WEAVE_API__.openCrossGroupMain(appletBundleId);

@@ -1,4 +1,4 @@
-import { AgentPubKeyB64, DnaHash } from '@holochain/client';
+import { AgentPubKeyB64 } from '@holochain/client';
 import { AppletId, FrameNotification, WAL } from '@theweave/api';
 import {
   CuratedTool,
@@ -9,10 +9,6 @@ import {
   ToolVersionInfo,
 } from '@theweave/moss-types';
 
-/**
- * DnaHash of a We group
- */
-export type GroupDnaHash = DnaHash;
 
 export type AppletNotification = {
   appletId: AppletId;

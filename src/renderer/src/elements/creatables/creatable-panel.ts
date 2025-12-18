@@ -33,7 +33,7 @@ export type CreatableInfo = {
   appletHash: AppletHash;
   creatableName: CreatableName;
   creatable: CreatableType;
-  groupHash: DnaHash | undefined;
+  groupHash: DnaHash;
 };
 
 /**
@@ -156,6 +156,10 @@ export class CreatablePanel extends LitElement {
     creatableName: CreatableName,
     creatable: CreatableType,
   ) {
+    if (!this._selectedGroupHash) {
+      notifyError(msg('Please select a group first.'));
+      return;
+    }
     this._showCreatableView = {
       appletHash,
       creatableName,
@@ -220,9 +224,8 @@ export class CreatablePanel extends LitElement {
                   >
                     <div
                       class="row"
-                      style="align-items: center; flex: 1; padding: 5px; border-radius: 5px; ${idx %
-                        2 !==
-                      0
+                      style="align-items: center; flex: 1; padding: 5px; border-radius: 5px;
+                        ${idx % 2 !== 0
                         ? 'background: var(--sl-color-primary-300);'
                         : ''}"
                     >

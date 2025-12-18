@@ -10,13 +10,13 @@ import {
   WeaveLocation,
   WeaveUrl,
   weaveUrlToLocation,
-  WeaveClient,
+  WeaveClient, intoAppletOrigin
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { appletOrigin, getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
+import { getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { DnaHash, EntryHash } from '@holochain/client';
+import { DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 import { HoloHashMap } from '@holochain-open-dev/utils';
 import { mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
@@ -113,11 +113,15 @@ export class WalEmbed extends LitElement {
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
           this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
+        if (!this.appletInfo || this.appletInfo.groupsHashes.length == 0) {
+          console.error('<wal-embed-debug> No group found for asset.');
+          return html` <sl-spinner></sl-spinner> `;
+        }
         const iframeSrc = this.assetStatus.assetInfo.appletDevPort
           ? `http://localhost:${
               this.assetStatus.assetInfo.appletDevPort
             }?${queryString}#${urlFromAppletHash(this.assetStatus.assetInfo.appletHash)}`
-          : `${appletOrigin(this.assetStatus.assetInfo.appletHash)}?${queryString}`;
+          : `${intoAppletOrigin(encodeHashToBase64(this.assetStatus.assetInfo.appletHash), encodeHashToBase64(this.appletInfo!.groupsHashes[0]))}?${queryString}`;
 
         return html`<iframe
           id="${this.iframeId}"

@@ -14,7 +14,7 @@ import {
   EntryHash,
   RoleNameCallZomeRequest,
   decodeHashFromBase64,
-  encodeHashToBase64,
+  encodeHashToBase64, DnaHash
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -42,10 +42,9 @@ import {
   AppletId,
   AssetStoreContent,
   stringifyWal,
-  IframeKind,
+  IframeKind, getToolIdFromCrossGroupOrigin, getIdsFromAppletOrigin, assertIframeKind
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
-import { getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin, toOriginalCaseB64 } from '@theweave/utils';
 
 type CallbackWithId = {
   id: number;
@@ -223,20 +222,22 @@ const weaveApi: WeaveServices = {
     return unlisten;
   },
 
-  openAppletMain: async (appletHash: EntryHash): Promise<void> =>
+  openAppletMain: async (appletHash: AppletHash, groupHash: DnaHash): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'applet-main',
         appletHash,
+        groupHash,
       },
     }),
 
-  openAppletBlock: async (appletHash, block: string, context: any): Promise<void> =>
+  openAppletBlock: async (appletHash: AppletHash, groupHash: DnaHash, block: string, context: any): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'applet-block',
+        groupHash,
         appletHash,
         block,
         context,

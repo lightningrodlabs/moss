@@ -25,6 +25,7 @@ import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';
 import { PersistedStore } from '../../persisted-store.js';
+import { AppletSelectedEvent } from '../../events';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -129,9 +130,9 @@ export class GroupAppletsSidebar extends LitElement {
                 placement="bottom"
                 @click=${() => {
                   this.dispatchEvent(
-                    new CustomEvent('applet-selected', {
+                    new CustomEvent<AppletSelectedEvent>('applet-selected', {
                       detail: {
-                        groupDnaHash: this._groupStore!.groupDnaHash,
+                        groupHash: this._groupStore!.groupDnaHash,
                         appletHash: appletStore.appletHash,
                       },
                       bubbles: true,

@@ -22,6 +22,7 @@ import '../../elements/pocket/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
 import { CellType, encodeHashToBase64 } from '@holochain/client';
 import { openWalInWindow } from '../../utils.js';
+import { AppletSelectedEvent } from '../../events';
 
 @customElement('asset-view')
 export class AssetView extends LitElement {
@@ -45,9 +46,22 @@ export class AssetView extends LitElement {
       console.error('Asset location not defined (yet).');
       notifyError('Failed to jump to Tool (see console for details).');
     } else {
+      // Extract the group DNA hash from the appInfo
+      const groupCell = this.location.value.value.dnaLocation.appInfo.cell_info['group']?.find(
+        (cellInfo) => cellInfo.type === CellType.Provisioned,
+      );
+      if (!groupCell) {
+        console.error('Group cell not found from dnaLocation.', this.location.value.value.dnaLocation);
+        notifyError('Failed to jump to Tool (see console for details).');
+        return;
+      }
+      const groupHash = groupCell!.value.cell_id[0];
       this.dispatchEvent(
-        new CustomEvent('jump-to-applet', {
-          detail: this.location.value.value.dnaLocation.appletHash,
+        new CustomEvent<AppletSelectedEvent>('jump-to-applet', {
+          detail: {
+            groupHash,
+            appletHash: this.location.value.value.dnaLocation.appletHash,
+          },
           bubbles: true,
           composed: true,
         }),
@@ -77,7 +91,6 @@ export class AssetView extends LitElement {
       (cellInfo) => cellInfo.type === CellType.Provisioned,
     );
     const groupHash = groupCell?.value.cell_id[0];
-
 
     return html`<applet-view
         style="flex: 1"

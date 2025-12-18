@@ -54,7 +54,7 @@ export class AppletsSidebar extends LitElement {
                   .appletHash=${appletStore.appletHash}
                   @click=${() => {
                     this.dispatchEvent(
-                      new CustomEvent('applet-selected', {
+                      new CustomEvent('tool-selected', {
                         detail: {
                           toolCompatibilityId: toolId,
                         },

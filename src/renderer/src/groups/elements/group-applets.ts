@@ -27,6 +27,7 @@ import { CustomView } from '../../custom-views/types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { AppletStore } from '../../applets/applet-store.js';
+import { AppletSelectedEvent } from '../../events';
 
 @localized()
 @customElement('group-applets')
@@ -112,9 +113,9 @@ export class GroupApplets extends LitElement {
                 style="margin-right: 25px; align-items: center; cursor: pointer"
                 @click=${() => {
                   this.dispatchEvent(
-                    new CustomEvent('applet-selected', {
+                    new CustomEvent<AppletSelectedEvent>('applet-selected', {
                       detail: {
-                        groupDnaHash: this._groupStore.groupDnaHash,
+                        groupHash: this._groupStore.groupDnaHash,
                         appletHash,
                       },
                       bubbles: true,

@@ -96,16 +96,6 @@ export class PersistedStore {
       this.store.setItem(`ignoredApplets#${groupDnaHashB64}`, value),
   };
 
-  // We don't need this anymore currently
-  // appletLocalStorage: SubStore<Record<string, string>, Record<string, string>, [AppletId]> = {
-  //   value: (appletId: AppletId) => {
-  //     const appletLocalStorage = this.store.getItem<Record<string, string>>(
-  //       `appletLocalStorage#${appletId}`,
-  //     );
-  //     return appletLocalStorage ? appletLocalStorage : {};
-  //   },
-  //   set: (value, appletId: AppletId) => this.store.setItem(`appletLocalStorage#${appletId}`, value),
-  // };
 
   appletNotificationsUnread: SubStore<
     Array<FrameNotification>,

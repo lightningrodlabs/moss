@@ -7,8 +7,8 @@ import {
   pipe,
   writable,
 } from '@holochain-open-dev/stores';
-import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochain/client';
-import { BlockType } from '@theweave/api';
+import { AppAuthenticationToken, encodeHashToBase64 } from '@holochain/client';
+import { AppletHash, BlockType } from '@theweave/api';
 
 import { AppletHost } from './applet-host.js';
 import {
@@ -19,36 +19,40 @@ import {
 import { ConductorInfo } from '../electron-api.js';
 import { Applet } from '@theweave/group-client';
 
+/**
+ * Applet = Tool + DnaModifiers
+ * Used by one or multiple groups since different groups can use the same dnaModifiers
+ * */
 export class AppletStore {
   isAppletDev: boolean;
 
   constructor(
-    public appletHash: EntryHash,
+    public appletHash: AppletHash,
     public applet: Applet,
     public conductorInfo: ConductorInfo,
     public authenticationToken: AppAuthenticationToken,
     isAppletDev: boolean,
   ) {
-    this._unreadNotifications.set(loadAppletNotificationStatus(encodeHashToBase64(appletHash)));
+    this._unreadNotifications.set(loadAppletNotificationStatus(appletHash));
     this.isAppletDev = isAppletDev;
   }
 
   host: AsyncReadable<AppletHost | undefined> = lazyLoad(async () => {
-    const appletHashBase64 = encodeHashToBase64(this.appletHash);
+    const appletId = encodeHashToBase64(this.appletHash);
     const allIframes = getAllIframes();
-    const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
+    const relevantIframe = allIframes.find((iframe) => iframe.id === appletId);
     if (relevantIframe && relevantIframe.contentWindow) {
-      return new AppletHost(relevantIframe, appletHashBase64);
+      return new AppletHost(relevantIframe, appletId);
     } else {
       return new Promise<AppletHost | undefined>((resolve) => {
         setTimeout(() => {
           const allIframes = getAllIframes();
-          const relevantIframe = allIframes.find((iframe) => iframe.id === appletHashBase64);
+          const relevantIframe = allIframes.find((iframe) => iframe.id === appletId);
           if (relevantIframe && relevantIframe.contentWindow) {
-            resolve(new AppletHost(relevantIframe, appletHashBase64));
+            resolve(new AppletHost(relevantIframe, appletId));
           } else {
             console.warn(
-              `Connecting to applet host for applet ${appletHashBase64} timed out in 10000ms`,
+              `Connecting to applet host for applet ${appletId} timed out in 10000ms`,
             );
           }
           resolve(undefined);

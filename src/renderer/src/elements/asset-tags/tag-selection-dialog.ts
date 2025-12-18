@@ -13,7 +13,6 @@ import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL } from '@theweave/a
 import { SlDialog, SlInput } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore, WalInPocket } from '../../moss-store.js';
-import { GroupDnaHash } from '../../types.js';
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { dedupStringArray } from '../../utils.js';
 import { mdiArrowRight } from '@mdi/js';
@@ -40,7 +39,7 @@ export class TagSelectionDialog extends LitElement {
    * The tag selection dialog highlights tags of a specific group
    */
   @property()
-  groupDnaHash: GroupDnaHash | undefined;
+  groupDnaHash: DnaHash | undefined;
 
   @query('#tag-selection-dialog')
   _dialog!: SlDialog;

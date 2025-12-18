@@ -14,7 +14,7 @@ import {
   type PeerStatusUpdate,
   type IframeKind,
   type AppletToParentMessage,
-  MossAccountability, MossRole, getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin
+  MossAccountability, MossRole, getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin, intoAppletOrigin
 } from '@theweave/api';
 import { AgentPubKey, decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -413,10 +413,11 @@ export async function handleAppletIframeMessage(
     case 'open-view':
       switch (message.request.type) {
         case 'applet-main':
-          return openViews.openAppletMain(message.request.appletHash);
+          return openViews.openAppletMain(message.request.appletHash, message.request.groupHash);
         case 'applet-block':
           return openViews.openAppletBlock(
             message.request.appletHash,
+            message.request.groupHash,
             message.request.block,
             message.request.context,
           );
@@ -477,7 +478,7 @@ export async function handleAppletIframeMessage(
       validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
       const maybeUnreadNotifications = storeAppletNotifications(
         notifications,
-        appletId,
+        intoAppletOrigin(appletId, encodeHashToBase64(source.groupHash)),
         !ignoreNotification ? true : false,
         mossStore.persistedStore,
       );
@@ -511,7 +512,7 @@ export async function handleAppletIframeMessage(
                 notification,
                 notificationTypeSettings.showInSystray,
                 notificationTypeSettings.allowOSNotification && notification.urgency === 'high',
-                appletStore ? { type: 'applet', appletHash: appletStore.appletHash } : undefined,
+                appletStore ? { type: 'applet', appletHash: appletStore.appletHash, groupHash:  source.groupHash} : undefined,
                 appletStore ? appletStore.applet.custom_name : undefined,
               );
             }

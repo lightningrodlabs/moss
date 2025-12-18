@@ -163,7 +163,7 @@ export class FoyerStore {
           };
           const weaveLocation: WeaveLocation = {
             type: 'group',
-            dnaHash: this.groupStore.groupDnaHash,
+            groupHash: this.groupStore.groupDnaHash,
           };
           await window.electronAPI.notification(
             notification,

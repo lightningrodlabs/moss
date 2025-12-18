@@ -565,11 +565,7 @@ export class MossStore {
     return derived(this._notificationFeed, (store) => store);
   }
 
-  /**
-   * Loads the notification feed n days back for all installed applets.
-   *
-   * @param nDaysBack
-   */
+  /** Loads the notification feed n days back for all installed applets. */
   async loadNotificationFeed(nDaysBack: number) {
     const allApplets = await toPromise(this.runningApplets);
     const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
@@ -1102,7 +1098,6 @@ export class MossStore {
     asyncDerived(this.disabledGroups, (disabledGroupHashes) => {
       // Combine running and disabled groups
       const allHashes = [...runningGroupHashes];
-
       // Add disabled groups that aren't already in the list
       for (const disabledHash of disabledGroupHashes) {
         const disabledHashB64 = encodeHashToBase64(disabledHash);
@@ -1110,7 +1105,6 @@ export class MossStore {
           allHashes.push(disabledHash);
         }
       }
-
       return allHashes;
     }),
   );

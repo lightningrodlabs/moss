@@ -44,7 +44,7 @@ export function toOriginalCaseB64(input: string): HoloHashB64 {
   return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
-function assertIframeKind(iframeKind: any): asserts iframeKind is IframeKind {
+export function assertIframeKind(iframeKind: any): asserts iframeKind is IframeKind {
   if (!iframeKind || typeof iframeKind !== 'object') {
     throw new Error('Invalid iframe kind: not an object.');
   }

@@ -89,26 +89,6 @@ const WAL = Type.Object(
   { additionalProperties: false },
 );
 
-// const WeaveUrl = Type.String({ pattern: '^weave(-d+(.d+)?)?://' });
-
-// const WeaveLocation = Type.Union([
-//   Type.Object({
-//     type: Type.Literal('group'),
-//     dnaHash: DnaHash,
-//   }, { additionalProperties: false }),
-//   Type.Object({
-//     type: Type.Literal('applet'),
-//     appletHash: AppletHash,
-//   }, { additionalProperties: false }),
-//   Type.Object({
-//     type: Type.Literal('asset'),
-//     wal: WAL,
-//   }, { additionalProperties: false }),
-//   Type.Object({
-//     type: Type.Literal('invitation'),
-//     secret: Type.String(),
-//   }, { additionalProperties: false }),
-// ]);
 
 const FrameNotification = Type.Object(
   {
@@ -130,7 +110,8 @@ const OpenViewRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('applet-main'),
-      appletHash: EntryHash,
+      groupHash: DnaHash,
+      appletHash: AppletHash,
     },
     { additionalProperties: false },
   ),
@@ -144,7 +125,8 @@ const OpenViewRequest = Type.Union([
   Type.Object(
     {
       type: Type.Literal('applet-block'),
-      appletHash: EntryHash,
+      groupHash: DnaHash,
+      appletHash: AppletHash,
       block: Type.String(),
       context: Type.Any(),
     },

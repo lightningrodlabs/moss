@@ -1,5 +1,5 @@
 import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
-import { html, LitElement, css } from 'lit';
+import { html, LitElement, css, PropertyValues } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { until } from 'lit/directives/until.js';
 import { localized } from '@lit/localize';
@@ -21,6 +21,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { AppletNotification } from '../../types.js';
 import { mossStyles } from '../../shared-styles.js';
 import { decodeHashFromBase64, AgentPubKey } from '@holochain/client';
+import { AppletSelectedEvent } from '../../events';
+import { GroupStore } from '../../groups/group-store';
 
 @localized()
 @customElement('notification-asset')
@@ -143,6 +145,24 @@ export class NotificationAsset extends LitElement {
     return agentKeys;
   }
 
+
+  protected willUpdate(_changedProperties: PropertyValues) {
+    super.willUpdate(_changedProperties);
+    if (!this._firstGroupStore) {
+      /*await*/ this._determineFirstGroup();
+    }
+  }
+
+  @state() _firstGroupStore: GroupStore | undefined = undefined;
+
+  async _determineFirstGroup() {
+    const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash));
+    const groupStores = Array.from(groupStoreMap.values());
+    if (groupStores.length > 0) {
+      this._firstGroupStore  = groupStores[0];
+    }
+  }
+
   private async getAgentName(pubkeyB64: string): Promise<string> {
     try {
       console.log('Looking up profile for agent key:', pubkeyB64);
@@ -154,17 +174,10 @@ export class NotificationAsset extends LitElement {
         return pubkeyB64.slice(0, 8) + "..."; // Fallback
       }
 
-      // Get the group stores for this applet
-      const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash));
-
-      // Try to get the profile from any of the groups and use the first one
-      const groupStores = Array.from(groupStoreMap.values());
-      if (groupStores.length === 0) {
+      if (!this._firstGroupStore) {
         return pubkeyB64.slice(0, 8) + "..."; // Fallback
       }
-
-      const firstGroupStore = groupStores[0];
-      const profileStore = await toPromise(firstGroupStore.membersProfiles.get(agentPubKey));
+      const profileStore = await toPromise(this._firstGroupStore.membersProfiles.get(agentPubKey));
 
       if (profileStore && profileStore.type === 'profile') {
         // console.log('Found profile for agent:', pubkeyB64, profileStore.profile.entry.nickname);
@@ -201,9 +214,16 @@ export class NotificationAsset extends LitElement {
         return html` <div
           class="column notification-card"
           @click=${() => {
+            if (!this._firstGroupStore) {
+              console.error("<notificiation-asset> No group found for applet");
+              return;
+            }
             this.dispatchEvent(
-              new CustomEvent('open-applet-main', {
-                detail: this.appletHash,
+              new CustomEvent<AppletSelectedEvent>('open-applet-main', {
+                detail: {
+                  groupHash: this._firstGroupStore.groupDnaHash,
+                  appletHash: this.appletHash,
+                },
                 bubbles: true,
                 composed: true,
               }),

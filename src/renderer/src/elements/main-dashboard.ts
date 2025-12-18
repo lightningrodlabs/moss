@@ -86,6 +86,7 @@ import {
   turingBlobIconHover,
 } from './_new_design/icons.js';
 import { MossDialog } from './_new_design/moss-dialog.js';
+import { AppletSelectedEvent } from '../events';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -266,13 +267,7 @@ export class MainDashboard extends LitElement {
   @provide({ context: openViewsContext })
   @property()
   openViews: AppOpenViews = {
-    openAppletMain: async (appletHash) => {
-      const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash));
-      const groupDnaHashes = Array.from(groupsForApplet.keys());
-      if (groupDnaHashes.length === 0) {
-        notifyError('Applet not found in any of your groups.');
-        throw new Error('Applet not found in any of your groups.');
-      }
+    openAppletMain: async (appletHash: AppletHash, groupHash: DnaHash) => {
       if (
         !this._openApplets
           .map((appletHash) => appletHash.toString())
@@ -280,15 +275,13 @@ export class MainDashboard extends LitElement {
       ) {
         this._openApplets = [...this._openApplets, appletHash];
       }
-      // pick an arbitrary group this applet is installed in
-      const groupDnaHash = groupDnaHashes[0];
       this._mossStore.setDashboardState({
         viewType: 'group',
-        groupHash: groupDnaHash,
+        groupHash,
         appletHash,
       });
     },
-    openAppletBlock: (_appletHash, _block, _context) => {
+    openAppletBlock: (_appletHash, _groupHash, _block, _context) => {
       throw new Error('Opening applet blocks is currently not implemented.');
     },
     openCrossGroupMain: (_appletBundleHash) => {
@@ -503,7 +496,7 @@ export class MainDashboard extends LitElement {
     } else {
       switch (weaveLocation.type) {
         case 'applet':
-          return this.handleOpenAppletMain(weaveLocation.appletHash);
+          return this.handleOpenAppletMain(weaveLocation.appletHash, weaveLocation.groupHash);
         case 'group':
           // TODO fix after renaming of group links to invite links
           notifyError('URL type not supported.');
@@ -518,8 +511,8 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async handleOpenAppletMain(appletHash: AppletHash) {
-    this.openViews.openAppletMain(appletHash);
+  async handleOpenAppletMain(appletHash: AppletHash, groupHash: DnaHash) {
+    this.openViews.openAppletMain(appletHash, groupHash);
   }
 
   hardRefresh() {
@@ -619,9 +612,9 @@ export class MainDashboard extends LitElement {
 
     window.electronAPI.onSwitchToWeaveLocation((_, weaveLocation) => {
       if (weaveLocation) {
-        if (weaveLocation.type === 'applet')
-          this.openViews.openAppletMain(weaveLocation.appletHash);
-        else if (weaveLocation.type === 'group') this.openGroup(weaveLocation.dnaHash);
+        if (weaveLocation.type === 'applet') {
+          this.openViews.openAppletMain(weaveLocation.appletHash, weaveLocation.groupHash);
+        } else if (weaveLocation.type === 'group') this.openGroup(weaveLocation.groupHash);
       }
     });
 
@@ -629,13 +622,7 @@ export class MainDashboard extends LitElement {
       console.log('Received deeplink: ', deepLink);
       try {
         const split = deepLink.split('://');
-        // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
         const split2 = split[1].split('/');
-        // ['hrl', 'uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3buMpVRa9', 'uhCkkzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
-
-        console.log('split 1: ', split);
-        console.log('split 2: ', split2);
-
         if (split2[0] === 'hrl') {
           const contextSplit = split2[2].split('?context=');
           console.log('contextSplit', contextSplit);
@@ -648,7 +635,7 @@ export class MainDashboard extends LitElement {
         } else if (split2[0] === 'group') {
           await this.handleOpenGroup(split2[1]);
         } else if (split2[0] === 'applet') {
-          await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
+          await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]), decodeHashFromBase64(split2[2]));
         }
       } catch (e) {
         console.error(e);
@@ -895,8 +882,8 @@ export class MainDashboard extends LitElement {
           : ''} overflow-x: hidden;"
         @request-create-group=${() => this.createGroupDialog.open()}
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
-        @applet-selected=${(e: CustomEvent) => {
-        this.openViews.openAppletMain(e.detail.appletHash);
+        @applet-selected=${(e: CustomEvent<AppletSelectedEvent>) => {
+        this.openViews.openAppletMain(e.detail.appletHash, e.detail.groupHash);
       }}
       ></welcome-view>
 
@@ -913,8 +900,8 @@ export class MainDashboard extends LitElement {
         @open-wal=${async (e) => {
         await this.handleOpenWal(e.detail);
       }}
-        @open-applet-main=${(e: CustomEvent) => {
-        this.openViews.openAppletMain(e.detail);
+        @open-applet-main=${(e: CustomEvent<AppletSelectedEvent>) => {
+        this.openViews.openAppletMain(e.detail.appletHash, e.detail.groupHash);
       }}
         style="${this.displayMossView('activity-view')
         ? 'display: flex; flex: 1;'
@@ -1028,9 +1015,7 @@ export class MainDashboard extends LitElement {
                 groupHash: (this._dashboardState.value as any).groupHash,
               });
             }}
-                  @applet-selected=${(e: {
-              detail: { appletHash: AppletHash; groupDnaHash: DnaHash };
-            }) => {
+                  @applet-selected=${(e: CustomEvent<AppletSelectedEvent>) => {
               if (
                 !this._openApplets
                   .map((appletHash) => appletHash.toString())
@@ -1040,10 +1025,10 @@ export class MainDashboard extends LitElement {
               }
               this._mossStore.setDashboardState({
                 viewType: 'group',
-                groupHash: e.detail.groupDnaHash,
+                groupHash: e.detail.groupHash,
                 appletHash: e.detail.appletHash,
               });
-              this.openViews.openAppletMain(e.detail.appletHash);
+              this.openViews.openAppletMain(e.detail.appletHash, e.detail.groupHash);
             }}
                   @add-tool-requested=${() => {
               this._mossStore.setDashboardState({
@@ -1104,8 +1089,8 @@ export class MainDashboard extends LitElement {
     switch (info.tab.type) {
       case 'wal':
         return html`<asset-view
-          @jump-to-applet=${(e) => {
-            this.openViews.openAppletMain(e.detail);
+          @jump-to-applet=${(e: CustomEvent<AppletSelectedEvent>) => {
+            this.openViews.openAppletMain(e.detail.appletHash, e.detail.groupHash);
           }}
           .wal=${info.tab.wal}
           style="display: flex; flex: 1;"

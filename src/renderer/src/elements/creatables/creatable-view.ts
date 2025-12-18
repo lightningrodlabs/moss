@@ -34,7 +34,7 @@ export class CreatableView extends LitElement {
   creatableInfo!: CreatableInfo;
 
   @property()
-  groupHash: DnaHash | undefined;
+  groupHash!: DnaHash;
 
   @state()
   _unsubscribe: Unsubscriber | undefined;

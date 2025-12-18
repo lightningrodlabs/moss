@@ -54,6 +54,7 @@ import {
 import { notify } from '@holochain-open-dev/elements/dist/notify.js';
 import { MossDialog } from '../moss-dialog.js';
 import '../group-settings/inactive-tools-dialog.js';
+import { AppletSelectedEvent } from '../../../events';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -281,9 +282,9 @@ export class GroupAppletsSidebar extends LitElement {
                   placement="bottom"
                   @click=${() => {
             this.dispatchEvent(
-              new CustomEvent('applet-selected', {
+              new CustomEvent<AppletSelectedEvent>('applet-selected', {
                 detail: {
-                  groupDnaHash: this._groupStore!.groupDnaHash,
+                  groupHash: this._groupStore!.groupDnaHash,
                   appletHash: appletStore.appletHash,
                 },
                 bubbles: true,

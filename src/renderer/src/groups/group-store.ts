@@ -99,7 +99,7 @@ export type MaybeProfile =
     profile: EntryRecord<Profile>;
   };
 
-// Given a group, all the functionality related to that group
+// All the functionality related to a given group
 export class GroupStore {
   profilesStore: ProfilesStore;
 

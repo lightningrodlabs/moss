@@ -20,6 +20,8 @@ import {
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
+export type GroupId = DnaHashB64;
+export type AppletOrigin = string; // applet://<appletId>.<groupId>
 
 /**
  * Hash of Holohash lenght but all zeroes
@@ -30,30 +32,6 @@ export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
 export type OpenAssetMode = 'front' | 'side' | 'window';
-
-/**
- * String of the format weave-0.15://
- */
-export type WeaveUrl = string;
-
-export type WeaveLocation =
-  | {
-      type: 'group';
-      dnaHash: DnaHash;
-    }
-  | {
-      type: 'applet';
-      appletHash: AppletHash;
-    }
-  | {
-      type: 'asset';
-      wal: WAL;
-    }
-  | {
-      type: 'invitation';
-      // network seed and membrane proofs
-      secret: string;
-    };
 
 // Weave Asset Locator - an HRL with context
 // Use case: Image we want to point to a specific section of a document
@@ -136,8 +114,8 @@ export type NotificationCount = {
 };
 
 export interface OpenViews {
-  openAppletMain(appletHash: EntryHash): void;
-  openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
+  openAppletMain(appletHash: AppletHash, groupHash: DnaHash): void;
+  openAppletBlock(appletHash: AppletHash, groupHash: DnaHash, block: string, context: any): void;
   openWal(wal: WAL): void;
   openCrossGroupMain(appletBundleId: string): void;
   openCrossGroupBlock(appletBundleId: string, block: string, context: any): void;
@@ -505,7 +483,8 @@ export type AppletToParentRequest =
 export type OpenViewRequest =
   | {
       type: 'applet-main';
-      appletHash: EntryHash;
+      appletHash: AppletHash;
+      groupHash: DnaHash;
     }
   | {
       type: 'cross-group-main';
@@ -513,7 +492,8 @@ export type OpenViewRequest =
     }
   | {
       type: 'applet-block';
-      appletHash: EntryHash;
+      groupHash: DnaHash
+      appletHash: AppletHash;
       block: string;
       context: any;
     }
@@ -543,7 +523,7 @@ export type IframeConfig =
       mossVersion: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
-      groupHash: DnaHash | null;
+      groupHash: DnaHash;
       zomeCallLogging: boolean;
     }
   | {
