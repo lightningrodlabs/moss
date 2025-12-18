@@ -719,7 +719,7 @@ export class GroupHome extends LitElement {
             ></sl-textarea>
           `;
         }
-        if (!this._groupDescription.value.value) {
+        if (!this._groupDescription.value.value || !this._groupDescription.value.value.data?.trim()) {
           return html`
             <div class="column center-content" style="flex: 1; padding: 40px 0;">
               No group description.
