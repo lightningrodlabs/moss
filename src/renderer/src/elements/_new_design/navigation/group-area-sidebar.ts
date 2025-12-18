@@ -390,16 +390,34 @@ export class GroupAppletsSidebar extends LitElement {
                 class="moss-button flex flex-1"
                 style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
                 @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent('add-tool-requested', {
-                  detail: { groupHash: this._groupStore.groupDnaHash },
-                  bubbles: false,
-                  composed: true,
-                }),
-              );
+              // If there are unactivated tools, open inactive tools dialog
+              // Otherwise, open tool library
+              if (this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) {
+                this.dispatchEvent(
+                  new CustomEvent('group-home-selected', {
+                    bubbles: false,
+                    composed: true,
+                  }),
+                );
+                this.dispatchEvent(
+                  new CustomEvent('unjoined-tools-clicked', {
+                    composed: true,
+                  }),
+                );
+              } else {
+                this.dispatchEvent(
+                  new CustomEvent('add-tool-requested', {
+                    detail: { groupHash: this._groupStore.groupDnaHash },
+                    bubbles: false,
+                    composed: true,
+                  }),
+                );
+              }
             }}
               >
-                <div class="flex- flex-1">+ ${msg('add a tool')}</div>
+                <div class="flex- flex-1">
+                  + ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? msg('activate tools') : msg('add a tool')}
+                </div>
               </button>
             </div>`
           : this.renderAppletButtons(this._groupApplets.value.value);
@@ -616,7 +634,16 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   renderUnjoinedAppletsButton() {
+    // Don't show this button if there are no unjoined tools
     if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
+
+    // Don't show this button if there are no activated tools yet
+    // (in that case, the "No tools yet" pane handles it)
+    if (this._groupApplets.value.status === 'complete' &&
+        this._groupApplets.value.value.size === 0) {
+      return html``;
+    }
+
     return html`<sl-tooltip
       content="${msg('Activate tools peers already use')}"
       placement="right"
@@ -707,14 +734,14 @@ export class GroupAppletsSidebar extends LitElement {
     return html`
       <inactive-tools-dialog
         @open-library-requested=${(e: CustomEvent) => {
-          this.dispatchEvent(
-            new CustomEvent('add-tool-requested', {
-              detail: e.detail,
-              bubbles: false,
-              composed: true,
-            }),
-          );
-        }}
+        this.dispatchEvent(
+          new CustomEvent('add-tool-requested', {
+            detail: e.detail,
+            bubbles: false,
+            composed: true,
+          }),
+        );
+      }}
       ></inactive-tools-dialog>
       ${!this.onlinePeersCollapsed
         ? ''
