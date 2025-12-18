@@ -21,7 +21,7 @@ import {
   AppletHash,
   AppletId,
   ParentToAppletMessage,
-  IframeKind,
+  IframeKind, getIdsFromAppletOrigin, intoOrigin
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -48,7 +48,6 @@ import {
   appletIdFromAppId,
   deriveToolCompatibilityId, getCellId,
   toLowerCaseB64,
-  toOriginalCaseB64
 } from '@theweave/utils';
 import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
@@ -767,7 +766,13 @@ export function refreshAllAppletIframes(appletId: AppletId): void {
 
 function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
   const allIframes = getAllIframes();
-  return allIframes.filter((iframe) => iframe.src.startsWith(intoAppletOrigin(appletId)));
+  return allIframes.filter((iframe) => {
+    if (!iframe.src.startsWith('applet://')) {
+      return false;
+    }
+    const [curAppletId, _groupId] = getIdsFromAppletOrigin(iframe.src);
+    return curAppletId == appletId;
+  });
 }
 
 /**

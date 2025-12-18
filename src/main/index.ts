@@ -81,16 +81,17 @@ import {
   ParentToAppletMessage,
   WAL,
   WeaveLocation,
+  getToolIdFromCrossGroupOrigin,
+  getIdsFromAppletOrigin,
 } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
-  appletIdFromAppId, getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin,
+  appletIdFromAppId,
   globalPubKeyFromListAppsResponse,
   toolCompatibilityIdFromDistInfo,
-  toOriginalCaseB64
 } from '@theweave/utils';
 import { sortVersionsDescending } from './utils';
 import { Jimp } from 'jimp';

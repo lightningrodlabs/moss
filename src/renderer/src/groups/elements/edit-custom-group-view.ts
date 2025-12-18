@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ActionHash, EntryHash } from '@holochain/client';
 import { hashProperty, sharedStyles } from '@holochain-open-dev/elements';
-import {BlockType} from '@theweave/api';
+import { BlockType, intoOrigin } from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
 import {
   asyncDeriveAndJoin,
@@ -23,7 +23,6 @@ import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { Applet } from '@theweave/group-client';
 import { CustomView } from '../../custom-views/types.js';
-import { intoOrigin } from '../../utils.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 

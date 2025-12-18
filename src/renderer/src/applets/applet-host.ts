@@ -14,7 +14,7 @@ import {
   type PeerStatusUpdate,
   type IframeKind,
   type AppletToParentMessage,
-  MossAccountability, MossRole,
+  MossAccountability, MossRole, getIdsFromAppletOrigin, getToolIdFromCrossGroupOrigin
 } from '@theweave/api';
 import { AgentPubKey, decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
@@ -29,11 +29,9 @@ import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
-  getIdsFromAppletOrigin,
   getAppletNotificationSettings,
   getNotificationState,
   getNotificationTypeSettings,
-  getToolIdFromCrossGroupOrigin,
   openWalInWindow,
   storeAppletNotifications,
   validateNotifications,

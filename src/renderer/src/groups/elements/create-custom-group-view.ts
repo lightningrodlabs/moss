@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { EntryHash } from '@holochain/client';
 import { sharedStyles } from '@holochain-open-dev/elements';
-import { BlockType } from '@theweave/api';
+import { BlockType, intoOrigin } from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
 import { asyncDeriveAndJoin, mapAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 
@@ -17,7 +17,6 @@ import { GroupStore } from '../group-store.js';
 import { Applet } from '@theweave/group-client';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
-import { intoOrigin } from '../../utils.js';
 
 @localized()
 @customElement('create-custom-group-view')

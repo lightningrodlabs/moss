@@ -2,10 +2,10 @@ import { css, html, LitElement, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
-import { IframeKind, RenderView } from '@theweave/api';
+import { IframeKind, intoOrigin, RenderView } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
-import { intoOrigin, renderViewToQueryString } from '../../utils.js';
+import { renderViewToQueryString } from '../../utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { localized, msg } from '@lit/localize';
