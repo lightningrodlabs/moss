@@ -71,6 +71,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from '../../elements/_new_design/group-settings.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
+import { editIcon, closeIcon, saveIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -669,16 +670,19 @@ export class GroupHome extends LitElement {
       case 'complete':
         if (this._editGroupDescription) {
           return html`
-            <div class="row" style="justify-content: flex-end;">
+            <div class="row" style="justify-content: flex-end; align-items: center;">
               <button
-                style="margin-right: 3px;"
+                class="moss-button"
+                style="margin-right: 8px; padding: 8px; border-radius: 6px;"
                 @click=${() => {
               this._editGroupDescription = false;
             }}
               >
-                ${msg('Cancel')}
+                <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
               </button>
               <button
+                class="moss-button"
+                style="padding: 8px; border-radius: 6px;"
                 @click=${async () => {
               const descriptionInput = this.shadowRoot!.getElementById(
                 'group-description-input',
@@ -703,7 +707,7 @@ export class GroupHome extends LitElement {
               }
             }}
               >
-                Save
+                <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
               </button>
             </div>
 
@@ -734,11 +738,11 @@ export class GroupHome extends LitElement {
           `;
         } else {
           return html`
-            <div class="column">
-              <div class="row" style="justify-content: flex-end;">
-                <button
-                  style="${this.amIPrivileged() ? '' : 'display: none;'}"
-                  @click=${async () => {
+            <div class="column" style="position: relative;">
+              <button
+                class="moss-button"
+                style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
+                @click=${async () => {
               this._loadingDescription = true;
               // Reload group description in case another Steward has edited it in the meantime
               try {
@@ -749,14 +753,15 @@ export class GroupHome extends LitElement {
               this._loadingDescription = false;
               this._editGroupDescription = true;
             }}
-                  ?disabled=${this._loadingDescription}
-                >
-                  ${this._loadingDescription ? '...' : msg('Edit Description')}
-                </button>
+                ?disabled=${this._loadingDescription}
+              >
+                <div class="column center-content" style="padding-top: 2px;">
+                  ${this._loadingDescription ? '...' : editIcon(18)}
+                </div>
+              </button>
+              <div class="group-description">
+                ${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}
               </div>
-            </div>
-            <div class="group-description">
-              ${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}
             </div>
           `;
         }
