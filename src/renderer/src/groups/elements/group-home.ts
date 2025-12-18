@@ -671,44 +671,48 @@ export class GroupHome extends LitElement {
         if (this._editGroupDescription) {
           return html`
             <div class="row" style="justify-content: flex-end; align-items: center;">
-              <button
-                class="moss-button"
-                style="margin-right: 8px; padding: 8px; border-radius: 6px;"
-                @click=${() => {
-              this._editGroupDescription = false;
-            }}
-              >
-                <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
-              </button>
-              <button
-                class="moss-button"
-                style="padding: 8px; border-radius: 6px;"
-                @click=${async () => {
-              const descriptionInput = this.shadowRoot!.getElementById(
-                'group-description-input',
-              ) as HTMLTextAreaElement;
-              // TODO: use MossPrivilege instead
-              if (!this.amIPrivileged()) {
+              <sl-tooltip content="Cancel">
+                <button
+                  class="moss-button"
+                  style="margin-right: 8px; padding: 8px; border-radius: 6px;"
+                  @click=${() => {
                 this._editGroupDescription = false;
-                notifyError('No permission to edit group profile.');
-                return;
-              } else {
-                console.log('Saving description...');
-                console.log('Value: ', descriptionInput.value);
-                const result = await this._groupStore.groupClient.setGroupDescription(
-                  this.getMyPermissionHash(),
-                  descriptionInput.value,
-                );
+              }}
+                >
+                  <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
+                </button>
+              </sl-tooltip>
+              <sl-tooltip content="Save">
+                <button
+                  class="moss-button"
+                  style="padding: 8px; border-radius: 6px;"
+                  @click=${async () => {
+                const descriptionInput = this.shadowRoot!.getElementById(
+                  'group-description-input',
+                ) as HTMLTextAreaElement;
+                // TODO: use MossPrivilege instead
+                if (!this.amIPrivileged()) {
+                  this._editGroupDescription = false;
+                  notifyError('No permission to edit group profile.');
+                  return;
+                } else {
+                  console.log('Saving description...');
+                  console.log('Value: ', descriptionInput.value);
+                  const result = await this._groupStore.groupClient.setGroupDescription(
+                    this.getMyPermissionHash(),
+                    descriptionInput.value,
+                  );
 
-                console.log('description saved: ', result.entry);
+                  console.log('description saved: ', result.entry);
 
-                await this._groupStore.groupDescription.reload();
-                this._editGroupDescription = false;
-              }
-            }}
-              >
-                <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
-              </button>
+                  await this._groupStore.groupDescription.reload();
+                  this._editGroupDescription = false;
+                }
+              }}
+                >
+                  <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
+                </button>
+              </sl-tooltip>
             </div>
 
             <sl-textarea
@@ -739,26 +743,28 @@ export class GroupHome extends LitElement {
         } else {
           return html`
             <div class="column" style="position: relative;">
-              <button
-                class="moss-button"
-                style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
-                @click=${async () => {
-              this._loadingDescription = true;
-              // Reload group description in case another Steward has edited it in the meantime
-              try {
-                await this._groupStore.groupDescription.reload();
-              } catch (e) {
-                console.warn('Failed to load description: ', e);
-              }
-              this._loadingDescription = false;
-              this._editGroupDescription = true;
-            }}
-                ?disabled=${this._loadingDescription}
-              >
-                <div class="column center-content" style="padding-top: 2px;">
-                  ${this._loadingDescription ? '...' : editIcon(18)}
-                </div>
-              </button>
+              <sl-tooltip content="Edit Description">
+                <button
+                  class="moss-button"
+                  style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
+                  @click=${async () => {
+                this._loadingDescription = true;
+                // Reload group description in case another Steward has edited it in the meantime
+                try {
+                  await this._groupStore.groupDescription.reload();
+                } catch (e) {
+                  console.warn('Failed to load description: ', e);
+                }
+                this._loadingDescription = false;
+                this._editGroupDescription = true;
+              }}
+                  ?disabled=${this._loadingDescription}
+                >
+                  <div class="column center-content" style="padding-top: 2px;">
+                    ${this._loadingDescription ? '...' : editIcon(18)}
+                  </div>
+                </button>
+              </sl-tooltip>
               <div class="group-description">
                 ${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}
               </div>
