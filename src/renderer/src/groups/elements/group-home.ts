@@ -54,6 +54,7 @@ import '../../elements/_new_design/group-settings.js';
 import '../../elements/_new_design/moss-dialog.js';
 import '../../elements/_new_design/profile/moss-profile-detail.js';
 import '../../elements/_new_design/copy-hash.js';
+import '../../elements/_new_design/invite-people-dialog.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -71,7 +72,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from '../../elements/_new_design/group-settings.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import { editIcon, closeIcon, saveIcon } from '../../elements/_new_design/icons.js';
+import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -118,6 +119,9 @@ export class GroupHome extends LitElement {
 
   @query('#uninstall-confirm-dialog')
   _uninstallDialog!: MossDialog;
+
+  @query('invite-people-dialog')
+  inviteMemberDialog: any;
 
   @state()
   _peerStatusLoading = true;
@@ -818,8 +822,13 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderMain(groupProfile: GroupProfile) {
+  renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     return html`
+      <invite-people-dialog
+        .groupProfile=${groupProfile}
+        .modifiers=${modifiers}
+      ></invite-people-dialog>
+
       <moss-dialog id="group-settings-dialog"
         @sl-after-hide=${() => {
           this._settingsDialogOpen = false;
@@ -861,28 +870,36 @@ export class GroupHome extends LitElement {
               <span class="title">${groupProfile.name}</span>
             </div>
 
-            <div
-              class="row settings-btn items-center"
-              tabindex="0"
-              @click=${() => {
-        this._settingsDialogOpen = true;
-        this.groupSettingsDialog?.show();
-      }}
-              @keypress=${(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          this._settingsDialogOpen = true;
-          this.groupSettingsDialog?.show();
-        }
-      }}
-            >
-              <div
-                style="font-weight: bold; margin-right: 3px; font-size: 18px; margin-bottom: 5px;"
+            <div class="row items-center" style="gap: 8px;">
+              ${this.amIPrivileged()
+                ? html`
+                    <button
+                      class="moss-button"
+                      style="padding: 10px 16px;"
+                      @click=${() => {
+                    this.inviteMemberDialog?.show();
+                  }}
+                    >
+                      <div class="row center-content items-center;">
+                        <div class="column" style="color: white;">${personPlusIcon(20)}</div>
+                        <div style="font-size: 16px; margin-left: 8px;">${msg('Invite People')}</div>
+                      </div>
+                    </button>
+                  `
+                : html``}
+              <button
+                class="moss-button"
+                style="padding: 10px 16px;"
+                @click=${() => {
+              this._settingsDialogOpen = true;
+              this.groupSettingsDialog?.show();
+            }}
               >
-                ${msg('Settings')}
-              </div>
-              <div style="position: relative;">
-                <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 2rem;"></sl-icon>
-              </div>
+                <div class="row center-content items-center;">
+                  <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 20px; color: white;"></sl-icon>
+                  <div style="font-size: 16px; margin-left: 8px;">${msg('Settings')}</div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -962,10 +979,10 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderContentInner(groupProfile: GroupProfile, _: DnaModifiers) {
+  renderContentInner(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
-        return this.renderMain(groupProfile);
+        return this.renderMain(groupProfile, modifiers);
       case 'create-custom-view':
         return this.renderCreateCustomView();
       case 'edit-custom-view':

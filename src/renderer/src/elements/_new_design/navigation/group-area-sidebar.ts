@@ -47,13 +47,12 @@ import { EntryRecord } from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
 import {
   localTimeFromUtcOffset,
-  modifiersToInviteUrl,
   relativeTzOffsetString,
   UTCOffsetStringFromOffsetMinutes,
 } from '../../../utils.js';
-import { notify } from '@holochain-open-dev/elements/dist/notify.js';
 import { MossDialog } from '../moss-dialog.js';
 import '../group-settings/inactive-tools-dialog.js';
+import '../invite-people-dialog.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -112,8 +111,8 @@ export class GroupAppletsSidebar extends LitElement {
   @query('#member-profile')
   _memberProfileDialog!: MossDialog;
 
-  @query('#invite-member-dialog')
-  inviteMemberDialog: MossDialog | undefined;
+  @query('invite-people-dialog')
+  inviteMemberDialog: any;
 
   @query('inactive-tools-dialog')
   inactiveToolsDialog: any;
@@ -555,78 +554,29 @@ export class GroupAppletsSidebar extends LitElement {
         if (!groupProfile) {
           return `Profile not found...`;
         }
-        const invitationUrl = modifiersToInviteUrl(modifiers);
-
         return html`
-          <moss-dialog
-            id="invite-member-dialog"
-            headerAlign="center"
-            width="674px"
-          >
-            <span slot="header">${msg('Invite People')}</span>
-            <div slot="content">
-              <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
-                <img
-                  .src=${groupProfile.icon_src}
-                  style="height: 40px; width: 40px; margin-right: 16px; border-radius: 50%;"
-                  alt="${groupProfile.name}"
-                />
-                <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
-              </div>
-              <div class="column" style="max-width: 440px;">
-                <span style="opacity: 0.7; font-size: 16px;"
-                  >${msg('Copy and send the link below to invite people:')}</span
+          <invite-people-dialog
+            .groupProfile=${groupProfile}
+            .modifiers=${modifiers}
+          ></invite-people-dialog>
+
+          ${this.amIPrivileged()
+            ? html`
+                <button
+                  class="moss-button"
+                  style="padding: 10px 0; margin: 40px 6px 6px 6px;"
+                  variant="primary"
+                  @click=${() => {
+                this.inviteMemberDialog?.show();
+              }}
                 >
-                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
-                  <sl-input
-                    disabled
-                    value=${invitationUrl}
-                    class="moss-input copy-link-input"
-                    style="margin-right: 8px; cursor: pointer; flex: 1;"
-                    @click=${async () => {
-            console.log('CLIKED');
-            await navigator.clipboard.writeText(invitationUrl);
-            notify(msg('Invite link copied to clipboard.'));
-          }}
-                  >
-                  </sl-input>
-                  <button
-                    variant="primary"
-                    class="moss-button"
-                    @click=${async () => {
-            await navigator.clipboard.writeText(invitationUrl);
-            notify(msg('Invite link copied to clipboard.'));
-          }}
-                  >
-                    ${msg('Copy')}
-                  </button>
-                </div>
-
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
-                  ${msg('About invite links:')}
-                </div>
-                <div style="font-size: 12px; opacity: 0.7;">
-                  ${msg(
-            'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
-          )}
-                </div>
-              </div>
-            </div>
-          </moss-dialog>
-
-          <button
-            class="moss-button"
-            style="padding: 10px 0; margin: 40px 6px 6px 6px;"
-            variant="primary"
-            @click=${() => {
-            this.inviteMemberDialog?.show();
-          }}
-          >
-            <div class="row center-content items-center;">
-              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
-              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite People')}</div>
-            </div>
-          </button>
+                  <div class="row center-content items-center;">
+                    <div class="column" style="color: white;">${personPlusIcon(25)}</div>
+                    <div style="font-size: 16px; margin-left: 5px;">${msg('Invite People')}</div>
+                  </div>
+                </button>
+              `
+            : html``}
         `;
       case 'error':
         return 'ERROR';
