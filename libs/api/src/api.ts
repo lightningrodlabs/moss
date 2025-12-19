@@ -7,7 +7,6 @@ import {
   DnaHash,
   EnableCloneCellRequest,
   EntryHash,
-  decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
 import {

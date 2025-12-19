@@ -11,7 +11,6 @@ import {
   CreateCloneCellRequest,
   DisableCloneCellRequest,
   EnableCloneCellRequest,
-  EntryHash,
   RoleNameCallZomeRequest,
   decodeHashFromBase64,
   encodeHashToBase64, DnaHash
@@ -39,12 +38,13 @@ import {
   PeerStatus,
   ReadonlyPeerStatusStore,
   AppletToParentRequest,
-  AppletId,
   AssetStoreContent,
   stringifyWal,
   IframeKind, getToolIdFromCrossGroupOrigin, getIdsFromAppletOrigin, assertIframeKind
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
+
+console.debug("<applet-iframe> script start ", window.location.href);
 
 type CallbackWithId = {
   id: number;
@@ -719,25 +719,28 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 }
 
 function readIframeKind(): IframeKind {
+  console.debug("readIframeKind: ", window.location.href);
   const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
-  const groupHashRegex = /group-hash=(.*?)(?:[&#]|$)/;
   const href = window.location.href;
   if (window.origin.startsWith('applet://')) {
     const [appletId, groupId] = getIdsFromAppletOrigin(window.origin);
+      console.debug("readIframeKind: groupId", groupId);
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(appletId),
       groupHash: decodeHashFromBase64(groupId),
       subType: href.match(viewTypeRegex)![1],
     };
-  } else if (window.origin.startsWith('cross-group://')) {
+  }
+  if (window.origin.startsWith('cross-group://')) {
     const toolCompatibilityId = getToolIdFromCrossGroupOrigin(window.origin);
     return {
       type: 'cross-group',
       toolCompatibilityId,
       subType: href.match(viewTypeRegex)![1],
     };
-  } else if (window.origin.startsWith('http://localhost')) {
+  }
+  if (window.origin.startsWith('http://localhost')) {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;

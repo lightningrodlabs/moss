@@ -61,6 +61,7 @@ export class AppletMainViews extends LitElement {
           this._runningGroupApplets.value.value,
           (appletHash) => encodeHashToBase64(appletHash),
           (appletHash) => {
+              console.debug("<applet-main-views> groupHash", encodeHashToBase64(this._groupStore.groupDnaHash));
             return html`
               <applet-main
                 .appletHash=${appletHash}

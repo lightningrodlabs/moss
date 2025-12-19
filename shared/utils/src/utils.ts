@@ -2,18 +2,16 @@ import {
   PartialModifiers,
   DistributionInfo,
   TDistributionInfo,
-  ToolCompatibilityId,
   ToolInfoAndVersions,
   ToolVersionInfo,
 } from '@theweave/moss-types';
 import {
   AgentPubKey, AppInfo, CellId, CellInfo, CellType,
-  decodeHashFromBase64, DnaHash, DnaHashB64,
+  decodeHashFromBase64,
   encodeHashToBase64,
-  HoloHashB64,
   ListAppsResponse
 } from '@holochain/client';
-import { AppletId, AppletHash, IframeKind } from '@theweave/api';
+import { AppletId, AppletHash, toOriginalCaseB64, toLowerCaseB64, ToolCompatibilityId } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
 import { Md5 } from 'ts-md5';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
@@ -21,10 +19,8 @@ import { compareVersions, validate as validateSemver } from 'compare-versions';
 export function invitePropsToPartialModifiers(props: string): PartialModifiers {
   const [networkSeed, progenitorString] = props.split('&progenitor=');
   if (!progenitorString) throw new Error('Invite string does not contain progenitor.');
-  let progenitor;
-  if (progenitorString === 'null') {
-    progenitor = null;
-  } else {
+  let progenitor: string | null = null;
+  if (progenitorString !== 'null') {
     try {
       const rawKey = decodeHashFromBase64(progenitorString);
       if (rawKey.length !== 39) {
@@ -74,14 +70,6 @@ export function appletHashFromAppId(installedAppId: string): AppletHash {
 
 export function appletIdFromAppId(installedAppId: string): AppletId {
   return toOriginalCaseB64(installedAppId.slice(7));
-}
-
-export function toLowerCaseB64(hashb64: HoloHashB64): string {
-  return hashb64.replace(/[A-Z]/g, (match) => match.toLowerCase() + '$');
-}
-
-export function toOriginalCaseB64(input: string): HoloHashB64 {
-  return input.replace(/[a-z]\$/g, (match) => match[0].toUpperCase());
 }
 
 export function deriveToolCompatibilityId(input: {

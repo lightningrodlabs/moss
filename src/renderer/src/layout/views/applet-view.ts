@@ -1,5 +1,5 @@
 import { hashProperty } from '@holochain-open-dev/elements';
-import { DnaHash, EntryHash } from '@holochain/client';
+import {DnaHash, encodeHashToBase64, EntryHash} from '@holochain/client';
 import { localized } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
@@ -49,9 +49,10 @@ export class AppletViewEl extends LitElement {
     const iframeKind: IframeKind = {
       type: 'applet',
       appletHash: this.appletHash,
-      groupHash: this.groupHash ?? null,
+      groupHash: this.groupHash,
       subType: this.view.type,
     };
+    console.debug("<applet-view> groupHash", encodeHashToBase64(this.groupHash));
     return html`
       ${this.hostStyle()}
       <view-frame

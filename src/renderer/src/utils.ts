@@ -21,7 +21,7 @@ import {
   AppletHash,
   AppletId,
   ParentToAppletMessage,
-  IframeKind, getIdsFromAppletOrigin, intoOrigin, AppletOrigin,
+  IframeKind, getIdsFromAppletOrigin, intoOrigin,
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
 import { decode, encode } from '@msgpack/msgpack';
@@ -47,9 +47,9 @@ import {
   appIdFromAppletId,
   appletIdFromAppId,
   deriveToolCompatibilityId, getCellId,
-  toLowerCaseB64,
 } from '@theweave/utils';
-import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollective, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { ToolCompatibilityId, toLowerCaseB64 } from '@theweave/api';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
 import { Md5 } from 'ts-md5';
 

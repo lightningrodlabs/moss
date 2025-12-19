@@ -17,7 +17,7 @@ import '../../applets/elements/applet-logo-raw.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
-import { ToolCompatibilityId } from '@theweave/moss-types';
+import { ToolCompatibilityId } from '@theweave/api';
 
 // Sidebar for the applet instances of a group
 @localized()

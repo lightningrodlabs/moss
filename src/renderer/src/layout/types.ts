@@ -1,6 +1,5 @@
 import { DnaHash } from '@holochain/client';
-import { WAL, OpenAssetMode, AppletHash } from '@theweave/api';
-import { ToolCompatibilityId } from '@theweave/moss-types';
+import { WAL, OpenAssetMode, AppletHash, ToolCompatibilityId } from '@theweave/api';
 
 export interface AppOpenViews {
   openAppletMain(appletHash: AppletHash, groupHash: DnaHash): void;

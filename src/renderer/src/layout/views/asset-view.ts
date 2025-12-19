@@ -90,7 +90,12 @@ export class AssetView extends LitElement {
     const groupCell = dnaLocation.appInfo.cell_info['group']?.find(
       (cellInfo) => cellInfo.type === CellType.Provisioned,
     );
-    const groupHash = groupCell?.value.cell_id[0];
+    if (!groupCell) {
+        return html`<div class="row center-content" style="flex: 1">
+          <sl-spinner style="font-size: 2rem"></sl-spinner>
+        </div>`;
+    }
+    const groupHash = groupCell!.value.cell_id[0];
 
     return html`<applet-view
         style="flex: 1"

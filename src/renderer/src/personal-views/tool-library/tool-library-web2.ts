@@ -6,7 +6,6 @@ import { sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch } f
 import {
   DeveloperCollective,
   DeveloperCollectiveToolList,
-  ToolCompatibilityId,
   ToolCurationConfig,
   ToolCurationList,
   ToolCurations,
@@ -36,6 +35,7 @@ import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
+import { ToolCompatibilityId } from '@theweave/api';
 import {
   appStoreIcon,
   devIcon,

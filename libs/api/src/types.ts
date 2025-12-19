@@ -21,21 +21,32 @@ import {
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
 export type GroupId = DnaHashB64;
-export type AppletOrigin = string; // applet://<appletId>.<groupId>
-
 /**
- * Hash of Holohash lenght but all zeroes
+ * An ID to determine which Tool instances belong to the same compatible Tool class.
+ * It is derived from the URL of the developer collective Tool list where it had been
+ * published, as well as its tool ID and versionBranch in that list.
  */
+export type ToolCompatibilityId = string;
+
+/** String representing `applet://<appletId>.<groupId>` */
+export type AppletOrigin = string;
+
+
+/** HoloHash but all zeroes */
 export type NullHash = Uint8Array;
 
+/** Holochain Resource Locator */
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
+/** The different ways an asset can be opened and displayed to the user */
 export type OpenAssetMode = 'front' | 'side' | 'window';
 
-// Weave Asset Locator - an HRL with context
-// Use case: Image we want to point to a specific section of a document
-// The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
+/**
+ * Weave Asset Locator - an HRL with context
+ * Use case: Image we want to point to a specific section of a document
+ * The document action hash would be the Hrl, and the context could be { section: "Second Paragraph" }
+ */
 export type WAL = {
   hrl: Hrl;
   context?: any;
@@ -52,6 +63,7 @@ export type GroupProfile = {
   meta_data?: string;
 };
 
+/** Notification produced by a Tool to be displayed in Moss */
 export type FrameNotification = {
   /**
    * Title of the message.
@@ -105,21 +117,21 @@ export type FrameNotification = {
   // customCountReset?: NotificationId;
 };
 
-export type NotificationId = string;
+// export type NotificationId = string;
+//
+// export type NotificationCount = {
+//   low: number;
+//   medium: number;
+//   high: number;
+// };
 
-export type NotificationCount = {
-  low: number;
-  medium: number;
-  high: number;
-};
-
-export interface OpenViews {
-  openAppletMain(appletHash: AppletHash, groupHash: DnaHash): void;
-  openAppletBlock(appletHash: AppletHash, groupHash: DnaHash, block: string, context: any): void;
-  openWal(wal: WAL): void;
-  openCrossGroupMain(appletBundleId: string): void;
-  openCrossGroupBlock(appletBundleId: string, block: string, context: any): void;
-}
+// export interface OpenViews {
+//   openAppletMain(appletHash: AppletHash, groupHash: DnaHash): void;
+//   openAppletBlock(appletHash: AppletHash, groupHash: DnaHash, block: string, context: any): void;
+//   openWal(wal: WAL): void;
+//   openCrossGroupMain(appletBundleId: string): void;
+//   openCrossGroupBlock(appletBundleId: string, block: string, context: any): void;
+// }
 
 export type AssetLocationAndInfo = {
   appletHash: AppletHash;
@@ -492,7 +504,7 @@ export type OpenViewRequest =
     }
   | {
       type: 'applet-block';
-      groupHash: DnaHash
+      groupHash: DnaHash;
       appletHash: AppletHash;
       block: string;
       context: any;
@@ -554,11 +566,6 @@ export type RecordInfo = {
   entryType: string;
 };
 
-/**
- *
- * Events
- *
- */
 
 export type UnsubscribeFunction = () => void;
 

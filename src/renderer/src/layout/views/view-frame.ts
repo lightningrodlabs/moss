@@ -103,59 +103,33 @@ export class ViewFrame extends LitElement {
     `;
   }
 
-  renderProductionFrame() {
-    // Add groupHash to query string if available
-    const queryString = renderViewToQueryString(this.renderView);
-    const groupHashParam = this.iframeKind.type === 'applet' && this.iframeKind.groupHash
-      ? `&group-hash=${encodeHashToBase64(this.iframeKind.groupHash)}`
-      : '';
-
-    return html`<iframe
+  renderIframe(src: string) {
+    console.debug("<view-frame> iframeSrc = ", src);
+    return html`
+      <iframe
         frameborder="0"
         title="TODO"
-        id=${this.renderView.type === 'applet-view' &&
+        .id=${this.renderView.type === 'applet-view' &&
         this.renderView.view.type === 'main' &&
         this.iframeKind.type === 'applet'
           ? encodeHashToBase64(this.iframeKind.appletHash)
           : this.renderView.type}
-        src="${intoOrigin(this.iframeKind)}?${queryString}${groupHashParam}"
+        .src=${src}
         style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
         allow="camera *; microphone *; clipboard-write *;"
-        @load=${() => {
-          this.loading = false;
-        }}
+        @load=${() => this.loading = false}
       ></iframe>
-      ${this.renderLoading()}`;
+      ${this.renderLoading()}
+    `;
   }
 
   render() {
-    switch (this.mossStore.isAppletDev) {
-      case false:
-        return this.renderProductionFrame();
-      case true:
-        if (!this.appletDevPort) {
-          return this.renderProductionFrame();
-        }
-        const iframeSrc = `http://localhost:${this.appletDevPort}?${renderViewToQueryString(
-          this.renderView,
-        )}#${fromUint8Array(encode(this.iframeKind))}`;
-        return html`<iframe
-            frameborder="0"
-            title="TODO"
-            id=${this.renderView.type === 'applet-view' &&
-            this.renderView.view.type === 'main' &&
-            this.iframeKind.type === 'applet'
-              ? encodeHashToBase64(this.iframeKind.appletHash)
-              : this.renderView.type}
-            src="${iframeSrc}"
-            style="flex: 1; display: ${this.loading ? 'none' : 'block'}; padding: 0; margin: 0;"
-            allow="camera *; microphone *; clipboard-write *;"
-            @load=${() => {
-              this.loading = false;
-            }}
-          ></iframe>
-          ${this.renderLoading()}`;
+    if (this.mossStore.isAppletDev && this.appletDevPort) {
+        const iframeSrc = `http://localhost:${this.appletDevPort}?${renderViewToQueryString(this.renderView)}#${fromUint8Array(encode(this.iframeKind))}`;
+        return this.renderIframe(iframeSrc);
     }
+    const productionSrc = intoOrigin(this.iframeKind) + renderViewToQueryString(this.renderView);
+    return this.renderIframe(productionSrc);
   }
 
   static styles = [

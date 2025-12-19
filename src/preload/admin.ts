@@ -8,15 +8,14 @@ import {
   AppletToParentMessage,
   FrameNotification,
   GroupProfile,
-  ParentToAppletMessage,
+  ParentToAppletMessage, ToolCompatibilityId,
   WAL,
-  WeaveLocation,
+  WeaveLocation
 } from '@theweave/api';
 import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
-  ToolCompatibilityId,
 } from '@theweave/moss-types';
 import { ProgressInfo } from '@matthme/electron-updater';
 

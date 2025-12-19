@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized } from '@lit/localize';
-import { IframeKind, RenderView } from '@theweave/api';
+import { IframeKind, RenderView, ToolCompatibilityId } from '@theweave/api';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -11,7 +11,6 @@ import './view-frame.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
-import { ToolCompatibilityId } from '@theweave/moss-types';
 
 @localized()
 @customElement('cross-group-main')

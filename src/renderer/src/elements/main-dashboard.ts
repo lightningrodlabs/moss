@@ -21,7 +21,7 @@ import {
   OpenAssetMode,
   WeaveLocation,
   weaveUrlToLocation,
-  weaveUrlFromWal, decodeContext
+  weaveUrlFromWal, decodeContext, ToolCompatibilityId
 } from '@theweave/api';
 import { invitePropsToPartialModifiers } from '@theweave/utils';
 
@@ -73,7 +73,6 @@ import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
-import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
 import {

@@ -1,9 +1,8 @@
 import { AgentPubKeyB64 } from '@holochain/client';
-import { AppletId, FrameNotification, WAL } from '@theweave/api';
+import { AppletId, FrameNotification, ToolCompatibilityId, WAL } from '@theweave/api';
 import {
   CuratedTool,
   DistributionInfo,
-  ToolCompatibilityId,
   ToolCurator,
   ToolInfoAndVersions,
   ToolVersionInfo,

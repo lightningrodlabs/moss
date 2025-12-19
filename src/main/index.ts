@@ -51,7 +51,6 @@ import {
   DeveloperCollectiveToolList,
   DistributionInfo,
   ResourceLocation,
-  ToolCompatibilityId,
   ToolInfoAndVersions,
   WeaveDevConfig,
 } from '@theweave/moss-types';
@@ -82,7 +81,7 @@ import {
   WAL,
   WeaveLocation,
   getToolIdFromCrossGroupOrigin,
-  getIdsFromAppletOrigin,
+  getIdsFromAppletOrigin, ToolCompatibilityId
 } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
 import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
@@ -1228,7 +1227,7 @@ if (!RUNNING_WITH_COMMAND) {
       return undefined;
     });
     ipcMain.handle('get-applet-iframe-script', (): string => {
-      // TODO make sure we is in dev mode (e.g. not return iframe script if We is in production mode)
+      // TODO make sure we is in dev mode (e.g. not return iframe script if Moss is in production mode)
       return APPLET_IFRAME_SCRIPT;
     });
     ipcMain.handle('get-installed-apps', async (): Promise<Array<AppInfo>> => {

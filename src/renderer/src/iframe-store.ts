@@ -1,5 +1,4 @@
-import { AppletId, ParentToAppletMessage } from '@theweave/api';
-import { ToolCompatibilityId } from '@theweave/moss-types';
+import { AppletId, ParentToAppletMessage, ToolCompatibilityId } from '@theweave/api';
 
 
 export type IframeInfo = {

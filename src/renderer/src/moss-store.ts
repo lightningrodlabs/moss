@@ -52,7 +52,7 @@ import {
   GroupProfile as GroupProfilePartial,
   IframeKind,
   ZomeCallLogInfo,
-  ParentToAppletMessage,
+  ParentToAppletMessage, ToolCompatibilityId
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -81,7 +81,6 @@ import {
   DistributionInfo,
   ResourceLocation,
   TDistributionInfo,
-  ToolCompatibilityId,
   ToolInfoAndVersions,
   WeaveDevConfig,
 } from '@theweave/moss-types';

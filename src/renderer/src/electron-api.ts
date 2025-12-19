@@ -17,6 +17,7 @@ import {
   ParentToAppletMessage,
   WAL,
   WeaveLocation,
+  ToolCompatibilityId,
 } from '@theweave/api';
 
 import {
@@ -24,7 +25,6 @@ import {
   AppHashes,
   DistributionInfo,
   ResourceLocation,
-  ToolCompatibilityId,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';

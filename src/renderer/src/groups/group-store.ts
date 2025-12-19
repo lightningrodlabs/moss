@@ -43,6 +43,7 @@ import {
   WAL,
   deStringifyWal,
   stringifyWal,
+  toLowerCaseB64,
 } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
 
@@ -70,7 +71,6 @@ import {
   deriveToolCompatibilityId,
   isAppDisabled,
   isAppRunning,
-  toLowerCaseB64
 } from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {

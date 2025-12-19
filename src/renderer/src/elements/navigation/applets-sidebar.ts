@@ -18,8 +18,8 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
-import { ToolCompatibilityId } from '@theweave/moss-types';
 import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
+import { ToolCompatibilityId } from '@theweave/api';
 
 @localized()
 @customElement('applets-sidebar')

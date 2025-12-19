@@ -11,8 +11,7 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
-import { AppletHash } from '@theweave/api';
-import { ToolCompatibilityId } from '@theweave/moss-types';
+import { AppletHash, ToolCompatibilityId } from '@theweave/api';
 
 type ToolIdentifier =
   | {

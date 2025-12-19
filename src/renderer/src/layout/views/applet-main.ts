@@ -1,5 +1,5 @@
 import { hashProperty } from '@holochain-open-dev/elements';
-import { DnaHash, EntryHash } from '@holochain/client';
+import {DnaHash, encodeHashToBase64, EntryHash} from '@holochain/client';
 import { localized } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
@@ -19,6 +19,7 @@ export class AppletMain extends LitElement {
   reloading = false;
 
   render() {
+      console.debug("<applet-main> groupHash", encodeHashToBase64(this.groupHash));
       return html`<applet-view
       .view=${{ type: 'main' }}
       .appletHash=${this.appletHash}

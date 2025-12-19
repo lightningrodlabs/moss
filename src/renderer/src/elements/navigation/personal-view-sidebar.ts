@@ -17,11 +17,10 @@ import './tool-personal-bar-button.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
-import { AppletId } from '@theweave/api';
+import { AppletId, ToolCompatibilityId } from '@theweave/api';
 import { PersonalViewState } from '../main-dashboard.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiGraph, mdiHome } from '@mdi/js';
-import { ToolCompatibilityId } from '@theweave/moss-types';
 
 // Sidebar for the applet instances of a group
 @localized()
