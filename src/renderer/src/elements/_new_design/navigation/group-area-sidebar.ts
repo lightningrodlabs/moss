@@ -982,7 +982,28 @@ export class GroupAppletsSidebar extends LitElement {
         border-radius: var(--border-radius, 8px);
         z-index: 10;
         min-height: 100px;
+        max-height: calc(100vh - 50px);
+        overflow-y: auto;
+        overflow-x: hidden;
         border: solid 1px rgba(0, 0, 0, 0.2);
+        scrollbar-width: thin;
+      }
+
+      .online-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .online-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .online-list::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+      }
+
+      .online-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
       }
 
       .unjoined-tools-indicator {
