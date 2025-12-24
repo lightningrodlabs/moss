@@ -24,6 +24,7 @@ weave.dev.config*
 *.dmg
 *.exe
 *.deb
+test-updates
 
 # vitepress
 **/.vitepress/cache/**

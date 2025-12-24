@@ -83,7 +83,7 @@ import {
   WeaveLocation,
 } from '@theweave/api';
 import { readLocalServices, startLocalServices } from './cli/devSetup';
-import { autoUpdater, UpdateCheckResult } from '@matthme/electron-updater';
+import { autoUpdater, UpdateCheckResult } from 'electron-updater';
 import { mossMenu } from './menu';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
@@ -859,6 +859,24 @@ if (!RUNNING_WITH_COMMAND) {
     if (app.isPackaged) {
       autoUpdater.allowPrerelease = true;
       autoUpdater.autoDownload = false;
+
+      // Check for dev update config (for local testing)
+      // Set DEV_UPDATE_CONFIG env var to path of dev-app-update.yml
+      const devUpdateConfigPath = process.env.DEV_UPDATE_CONFIG;
+      if (devUpdateConfigPath && fs.existsSync(devUpdateConfigPath)) {
+        try {
+          const yaml = require('js-yaml');
+          const devConfig = yaml.load(fs.readFileSync(devUpdateConfigPath, 'utf8'));
+          console.log('Using dev update config from:', devUpdateConfigPath);
+          console.log('Config:', devConfig);
+          autoUpdater.setFeedURL({
+            provider: devConfig.provider,
+            url: devConfig.url,
+          });
+        } catch (e) {
+          console.warn('Failed to load dev update config:', e);
+        }
+      }
 
       let updateCheckResult: UpdateCheckResult | null | undefined;
 

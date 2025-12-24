@@ -18,7 +18,7 @@ import {
   ResourceLocation,
   ToolCompatibilityId,
 } from '@theweave/moss-types';
-import { ProgressInfo } from '@matthme/electron-updater';
+import { ProgressInfo } from 'electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -69,7 +69,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
-      ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
   },
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>

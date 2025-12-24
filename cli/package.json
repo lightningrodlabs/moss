@@ -23,7 +23,7 @@
     "@lightningrodlabs/we-rust-utils": "^0.600.0-dev.0",
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@matthme/electron-updater": "6.3.0-alpha.1",
+    "electron-updater": "6.6.2",
     "@theweave/api": "^0.6.2",
     "@theweave/moss-types": "0.5.1",
     "@theweave/utils": "0.5.1",
