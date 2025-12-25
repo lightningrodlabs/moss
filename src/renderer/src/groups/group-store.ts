@@ -929,7 +929,6 @@ export class GroupStore {
 
   async pingAgentsAndCleanPeerStatuses() {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
       if (!statuses) {
@@ -944,10 +943,7 @@ export class GroupStore {
             };
           }
         });
-        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
-          lastSeen: now,
-          status: myStatus,
-        };
+        // Don't add self to peer statuses - peer statuses should only track other agents
       }
       return statuses;
     });
