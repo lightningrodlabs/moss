@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { property, customElement, state, query } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { sharedStyles, notifyError } from '@holochain-open-dev/elements';
+import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
@@ -92,7 +92,7 @@ export class MossCreateProfile extends LitElement {
         this.errorMessage = msg('There was an error creating your profile. Please try again.');
       }
 
-      notifyError(this.errorMessage);
+      // Error is shown in the dialog, no need for notification popup
     }
   }
 
