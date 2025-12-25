@@ -31,6 +31,7 @@ import {
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
+  dhtLocationFrom32,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -819,23 +820,39 @@ export class GroupStore {
   }
 
   /**
-   * Extract partial agent ID (middle 32 bytes) from full AgentPubKey
-   * This is used to match profile agents with agentInfo partial IDs
+   * Reconstruct full AgentPubKey from partial agent ID returned by agentInfo.
+   * AgentInfo returns only the middle 32 bytes (core hash) as URL-safe base64.
+   * We reconstruct: [3 byte prefix][32 byte core][4 byte DHT location]
    */
-  private getPartialAgentId(agentPubKey: AgentPubKey): string {
-    // AgentPubKey structure: [3 byte prefix][32 byte core][4 byte DHT location]
-    // We need the middle 32 bytes
-    const bytes = new Uint8Array(agentPubKey);
-    const middle = bytes.slice(3, 35); // Skip 3 byte prefix, take next 32 bytes
+  private getFullAgentId(partialAgentIdB64: string): AgentPubKey {
+    const prefix = new Uint8Array([132, 32, 36]); // Agent hash type prefix
 
-    // Encode to URL-safe base64 (matching agentInfo format)
-    const binaryString = Array.from(middle)
-      .map((byte) => String.fromCharCode(byte))
-      .join('');
-    const standardBase64 = btoa(binaryString);
-    const urlSafeBase64 = standardBase64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    // Decode URL-safe base64 to Uint8Array
+    // Convert URL-safe base64 to standard base64
+    const standardBase64 = partialAgentIdB64.replace(/-/g, '+').replace(/_/g, '/');
 
-    return urlSafeBase64;
+    // Add padding if needed
+    const padded = standardBase64.padEnd(
+      standardBase64.length + ((4 - (standardBase64.length % 4)) % 4),
+      '=',
+    );
+
+    const binaryString = atob(padded);
+    const middle = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      middle[i] = binaryString.charCodeAt(i);
+    }
+
+    // Calculate DHT location bytes using Holochain's algorithm
+    const suffix = dhtLocationFrom32(middle);
+
+    // Combine all parts
+    const agentKey = new Uint8Array(prefix.length + middle.length + suffix.length);
+    agentKey.set(prefix, 0);
+    agentKey.set(middle, prefix.length);
+    agentKey.set(suffix, prefix.length + middle.length);
+
+    return agentKey as AgentPubKey;
   }
 
   /**
@@ -850,9 +867,9 @@ export class GroupStore {
         dna_hashes: [this.groupDnaHash],
       });
 
-      // Extract partial agent IDs from agentInfo response (excluding self)
-      const partialAgentIds = new Set<string>();
-      const myPartialId = this.getPartialAgentId(this.groupClient.myPubKey);
+      // Extract partial agent IDs and reconstruct full agent keys
+      const knownAgents = new Set<AgentPubKeyB64>();
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
 
       for (const agentInfoItem of response) {
         try {
@@ -875,58 +892,22 @@ export class GroupStore {
             continue;
           }
 
-          // Exclude self from the partial IDs set
-          if (partialAgentId !== myPartialId) {
-            partialAgentIds.add(partialAgentId);
+          // Reconstruct full agent key from partial ID
+          const fullAgentKey = this.getFullAgentId(partialAgentId);
+          const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
+
+          // Exclude self
+          if (fullAgentKeyB64 !== myPubKeyB64) {
+            knownAgents.add(fullAgentKeyB64);
           }
         } catch (error) {
           console.warn('[AgentInfo] Failed to parse agent info item:', agentInfoItem, error);
         }
       }
 
-      // Get agents with profiles from the reactive store (automatically updated)
-      const agentsStore = get(this.profilesStore.agentsWithProfile);
-
-      // Handle AsyncStatus - only proceed if data is loaded
-      if (agentsStore.status !== 'complete') {
-        console.log('[AgentInfo] Profiles not yet loaded, skipping this poll');
-        return;
-      }
-
-      const agentsWithProfiles = agentsStore.value;
-
-      // Match profile agents with agentInfo partial IDs
-      const knownAgents = new Set<AgentPubKeyB64>();
-
-      for (const agent of agentsWithProfiles) {
-        const partialId = this.getPartialAgentId(agent);
-        if (partialAgentIds.has(partialId)) {
-          knownAgents.add(encodeHashToBase64(agent));
-        }
-      }
-
       this._knownAgents.set(knownAgents);
 
-      // Calculate profile count excluding self for clarity
-      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
-      const profilesExcludingSelf = agentsWithProfiles.filter(
-        (agent) => encodeHashToBase64(agent) !== myPubKeyB64,
-      ).length;
-
-      console.log(
-        `[AgentInfo] Discovered ${knownAgents.size} agents in network (from ${partialAgentIds.size} agentInfo entries excluding self, ${profilesExcludingSelf} profiles excluding self)`,
-      );
-
-      // Debug: Show which agents matched
-      const profileAgentIds = agentsWithProfiles.map((agent) => encodeHashToBase64(agent));
-      const inProfileNotAgentInfo = profileAgentIds.filter((id) => !knownAgents.has(id));
-
-      if (inProfileNotAgentInfo.length > 0) {
-        console.log(
-          '[AgentInfo] DEBUG - In profiles but NOT in agentInfo:',
-          inProfileNotAgentInfo.map((id) => shortenPubkey(id)),
-        );
-      }
+      console.log(`[AgentInfo] Discovered ${knownAgents.size} agents in network`);
     } catch (error) {
       console.warn('[AgentInfo] Failed to poll agent info:', error);
       // Don't throw - if agentInfo fails, signaling will likely fail too
