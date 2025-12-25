@@ -1,5 +1,5 @@
 import { css, html, LitElement } from 'lit';
-import { property, customElement, state } from 'lit/decorators.js';
+import { property, customElement, state, query } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { sharedStyles, notifyError } from '@holochain-open-dev/elements';
@@ -11,6 +11,7 @@ import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-de
 import { mossStyles } from '../../../shared-styles.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
+import { MossEditProfile } from './moss-edit-profile.js';
 
 /**
  * A custom element that fires event on value change.
@@ -40,6 +41,12 @@ export class MossCreateProfile extends LitElement {
   @state()
   profile: Profile | undefined;
 
+  @state()
+  errorMessage: string | undefined;
+
+  @query('moss-edit-profile')
+  editProfileComponent!: MossEditProfile;
+
   firstUpdated() {
     // pre-populate with the profile we used last time
     const personas = this.mossStore.persistedStore.personas.value();
@@ -52,6 +59,9 @@ export class MossCreateProfile extends LitElement {
 
   async createProfile(profile: Profile) {
     try {
+      // Clear any previous error
+      this.errorMessage = undefined;
+
       await this.profileStore.client.createProfile(profile);
       // We persist the profile in localStorage as the default profile
       // to pre-populate the profile next time a new profile needs to
@@ -67,19 +77,43 @@ export class MossCreateProfile extends LitElement {
         }),
       );
     } catch (e) {
-      console.error(e);
-      notifyError(msg('Error creating the profile'));
+      console.error('Error creating profile:', e);
+
+      // Clear the loading state on the button
+      if (this.editProfileComponent) {
+        this.editProfileComponent.clearLoading();
+      }
+
+      // Check if it's a timeout error
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+        this.errorMessage = msg('Profile creation timed out. Please try again.');
+      } else {
+        this.errorMessage = msg('There was an error creating your profile. Please try again.');
+      }
+
+      notifyError(this.errorMessage);
     }
   }
 
   render() {
     return html`
       <div class="moss-card column">
-        <span class="dialog-title" style="margin-top: 50px; margin-bottom: 48px;"
+        <span class="dialog-title" style="margin-top: 50px; margin-bottom: ${this.errorMessage ? '24px' : '48px'};"
           >${this.title}</span
         >
+
+        ${this.errorMessage
+          ? html`
+              <div class="error-message" style="background-color: #fee; border: 2px solid #c33; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; width: 350px; color: #c33;">
+                <div style="font-weight: 600; margin-bottom: 4px;">${msg('Error')}</div>
+                <div style="font-size: 14px;">${this.errorMessage}</div>
+              </div>
+            `
+          : html``}
+
         <moss-edit-profile
-          .saveProfileLabel=${this.buttonLabel}
+          .saveProfileLabel=${this.errorMessage ? msg('Retry') : this.buttonLabel}
           .profile=${this.profile}
           @save-profile=${(e: CustomEvent) => this.createProfile(e.detail.profile)}
         ></moss-edit-profile>
@@ -93,7 +127,12 @@ export class MossCreateProfile extends LitElement {
     css`
       .moss-card {
         width: 630px;
-        height: 466px;
+        min-height: 466px;
+        height: auto;
+      }
+
+      .error-message {
+        align-self: center;
       }
     `,
   ];
