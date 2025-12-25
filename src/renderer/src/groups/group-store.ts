@@ -90,6 +90,14 @@ export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they di
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 const ASSET_RELATION_POLLING_PERIOD = 10000;
 
+/**
+ * Shortens a pubkey to show first 16 chars and last 4 chars
+ */
+function shortenPubkey(pubkey: string): string {
+  if (pubkey.length <= 24) return pubkey;
+  return `${pubkey.substring(0, 16)}...${pubkey.substring(pubkey.length - 4)}`;
+}
+
 export type MaybeProfile =
   | {
     type: 'unknown';
@@ -916,8 +924,7 @@ export class GroupStore {
       if (inProfileNotAgentInfo.length > 0) {
         console.log(
           '[AgentInfo] DEBUG - In profiles but NOT in agentInfo:',
-          inProfileNotAgentInfo.length,
-          'agents',
+          inProfileNotAgentInfo.map((id) => shortenPubkey(id)),
         );
       }
     } catch (error) {
@@ -968,7 +975,8 @@ export class GroupStore {
     const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
 
     console.log(
-      `[PeerStatus] Pinging ${knownAgents.length} known agents`,
+      `[PeerStatus] Pinging ${knownAgents.length} known agents:`,
+      knownAgentsB64.map((b64) => shortenPubkey(b64)),
     );
 
     return knownAgents.length > 0
