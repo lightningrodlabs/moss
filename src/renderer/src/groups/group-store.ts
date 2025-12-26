@@ -91,14 +91,6 @@ export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they di
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 const ASSET_RELATION_POLLING_PERIOD = 10000;
 
-/**
- * Shortens a pubkey to show first 16 chars and last 4 chars
- */
-function shortenPubkey(pubkey: string): string {
-  if (pubkey.length <= 24) return pubkey;
-  return `${pubkey.substring(0, 16)}...${pubkey.substring(pubkey.length - 4)}`;
-}
-
 export type MaybeProfile =
   | {
     type: 'unknown';
@@ -906,8 +898,6 @@ export class GroupStore {
       }
 
       this._knownAgents.set(knownAgents);
-
-      console.log(`[AgentInfo] Discovered ${knownAgents.size} agents in network`);
     } catch (error) {
       console.warn('[AgentInfo] Failed to poll agent info:', error);
       // Don't throw - if agentInfo fails, signaling will likely fail too
@@ -954,11 +944,6 @@ export class GroupStore {
     // Get agents that Holochain knows about in the network (self already excluded)
     const knownAgentsB64 = Array.from(get(this._knownAgents));
     const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
-
-    console.log(
-      `[PeerStatus] Pinging ${knownAgents.length} known agents:`,
-      knownAgentsB64.map((b64) => shortenPubkey(b64)),
-    );
 
     return knownAgents.length > 0
       ? this.peerStatusClient.ping(knownAgents, myStatus, tzOffset)
