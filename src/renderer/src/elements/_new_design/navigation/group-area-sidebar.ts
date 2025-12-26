@@ -149,9 +149,9 @@ export class GroupAppletsSidebar extends LitElement {
         return 1; // self
     }
   }
-  private _peerStatuses = new StoreSubscriber(
+  private _onlinePeersCount = new StoreSubscriber(
     this,
-    () => this._groupStore.peerStatuses(),
+    () => this._groupStore?.onlinePeersCount,
     () => [this._groupStore],
   );
 
@@ -516,19 +516,14 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   numPeersOnline(): number | undefined {
-    if (!this._peerStatuses.value) return undefined;
-    const myPubKeyB64 = encodeHashToBase64(this._groupStore.groupClient.myPubKey);
-    // We don't count ourselves as online
-    return Object.entries(this._peerStatuses.value).filter(
-      ([pubkeyB64, status]) =>
-        pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
-    ).length;
+    return this._onlinePeersCount.value;
   }
 
   renderPeersOnline() {
-    if (!this._peerStatuses.value) return html`??<span style="opacity: 0.3;">/??</span>`;
-    const totalPeers = this.totalMembers() - 1; //Object.keys(this._peerStatuses.value).length;
-    return html`${this.numPeersOnline()}<span style="opacity: 0.3;">/${totalPeers}</span>`; // We don't count ourselves to the totl number of peers
+    const count = this.numPeersOnline();
+    if (count === undefined) return html`??<span style="opacity: 0.3;">/??</span>`;
+    const totalPeers = this.totalMembers() - 1;
+    return html`${count}<span style="opacity: 0.3;">/${totalPeers}</span>`;
   }
 
   numUnjoinedTools(): number | undefined {
@@ -770,7 +765,7 @@ export class GroupAppletsSidebar extends LitElement {
 
         <!-- Online Peers indicator -->
         <sl-tooltip
-          content="${msg('Your Peers')}${this._peerStatuses.value
+          content="${msg('Your Peers')}${this._onlinePeersCount.value !== undefined
         ? ` (${this.numPeersOnline()} online)`
         : ''}"
           placement="right"

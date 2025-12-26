@@ -11,7 +11,6 @@ import { mossStoreContext } from '../../context.js';
 import './sidebar-button.js';
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { encodeHashToBase64 } from '@holochain/client';
 
 @customElement('group-sidebar-button')
 export class GroupSidebarButton extends LitElement {
@@ -33,9 +32,9 @@ export class GroupSidebarButton extends LitElement {
   @state()
   _loadingPeerCount = false;
 
-  _peerStatuses = new StoreSubscriber(
+  private _onlinePeersCount = new StoreSubscriber(
     this,
-    () => this._groupStore.peerStatuses(),
+    () => this._groupStore?.onlinePeersCount,
     () => [this._groupStore],
   );
 
@@ -60,15 +59,8 @@ export class GroupSidebarButton extends LitElement {
   }
 
   firstUpdated() {
-    this._unsubscribe = this._peerStatuses.store.subscribe((value) => {
-      if (!value) {
-        value = {};
-      }
-      const numOnlineAgents = Object.entries(value).filter(
-        ([pubkey, status]) =>
-          status.status === 'online' &&
-          pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
-      ).length;
+    this._unsubscribe = this._onlinePeersCount.store.subscribe((count) => {
+      const numOnlineAgents = count ?? 0;
       if (numOnlineAgents > 0) {
         if (this._previousOnlineAgents === 0) {
           console.log('NEW AGENTS ONLINE.');
@@ -114,16 +106,7 @@ export class GroupSidebarButton extends LitElement {
 
   renderOnlineCount() {
     const totalPeers = this.totalMembers() - 1;
-    const onlineAgentCount =
-      this._peerStatuses.value || this._peerStatuses.value === 0
-        ? Object.entries(this._peerStatuses.value).filter(
-            ([pubkey, status]) =>
-              ['online', 'inactive'].includes(status.status) &&
-              pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
-          ).length
-        : undefined;
-
-    // console.log('onlineAgentCount: ', onlineAgentCount);
+    const onlineAgentCount = this._onlinePeersCount.value;
 
     return html`
       <div

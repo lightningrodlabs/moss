@@ -114,6 +114,12 @@ export class GroupStore {
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
+  /**
+   * Reactive store that calculates the number of online peers (excluding self).
+   * Counts agents with status 'online' or 'inactive'.
+   */
+  onlinePeersCount: Readable<number | undefined>;
+
   private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
@@ -179,6 +185,19 @@ export class GroupStore {
 
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
       return this.agentsProfiles(agents);
+    });
+
+    // Centralized reactive store for online peer count
+    this.onlinePeersCount = derived(this._peerStatuses, (peerStatuses) => {
+      if (!peerStatuses) return undefined;
+
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+
+      // Count agents with status 'online' or 'inactive', excluding self
+      return Object.entries(peerStatuses).filter(
+        ([pubkeyB64, status]) =>
+          pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
+      ).length;
     });
 
     this._ignoredApplets.set(
