@@ -799,15 +799,14 @@ export class GroupStore {
 
   updatePeerStatus(agent: AgentPubKey, status: string, tzUtcOffset?: number) {
     this._peerStatuses.update((value) => {
-      if (!value) {
-        value = {};
-      }
-      value[encodeHashToBase64(agent)] = {
+      // Create a new object to ensure derived stores detect the change
+      const newValue = value ? { ...value } : {};
+      newValue[encodeHashToBase64(agent)] = {
         lastSeen: Date.now(),
         status,
         tzUtcOffset,
       };
-      return value;
+      return newValue;
     });
   }
 
@@ -909,21 +908,19 @@ export class GroupStore {
     const now = Date.now();
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
-      if (!statuses) {
-        statuses = {};
-      }
-      if (statuses) {
-        Object.keys(statuses).forEach((agent) => {
-          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
-            statuses[agent] = {
-              lastSeen: statuses[agent].lastSeen,
-              status: 'offline',
-            };
-          }
-        });
-        // Don't add self to peer statuses - peer statuses should only track other agents
-      }
-      return statuses;
+      // Create a new object to ensure derived stores detect the change
+      const newStatuses = statuses ? { ...statuses } : {};
+
+      Object.keys(newStatuses).forEach((agent) => {
+        if (now - newStatuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+          newStatuses[agent] = {
+            lastSeen: newStatuses[agent].lastSeen,
+            status: 'offline',
+          };
+        }
+      });
+      // Don't add self to peer statuses - peer statuses should only track other agents
+      return newStatuses;
     });
     await this.pingAgents();
   }
