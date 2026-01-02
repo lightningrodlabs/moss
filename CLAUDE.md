@@ -8,6 +8,15 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 
 **Core Architecture**: Electron main process (Node.js + Rust utils) manages Holochain conductor subprocesses, while the renderer process provides a web UI that loads applet iframes. Applets communicate via `@theweave/api` and make Holochain zome calls through WebSocket connections.
 
+## Requirements, Tradeoffs & Dev Instructions
+
+0. When reporting on status, or asking questions don't add the emotional tags at the beginning and end of phrases, (you can tell you are doing this if there's an exclamation point at the end of the phrase/sentence).  Just code related information.
+1. Each step of the process must be built using test-driven development practices such that CI can confirm no regressions before merging a PR
+2. Perfect is the enemy of the good. This plan should not be implemented to the highest possible standard of efficiency or robustness, but rather in a way that allows for reaching the functionality goals in reasonable time, and iterating on quality goals over time.
+3. Don't add claude co-authored/generated messages in commit descriptions
+4. **Strong typing**: when possible allways use strong typing in typescript.
+5. **Holochain reference sources**: We are using Holochain 0.6.  The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
+
 ## Development Commands
 
 ### Setup
