@@ -17,7 +17,6 @@ The testing setup consists of:
 - **dev-app-update.yml** - Configuration file that points to localhost update server
 - **scripts/update-server.mjs** - Local Express server that serves update files
 - **scripts/generate-update-yml.mjs** - Generates update metadata files
-- **test-updates/** directory - Where you place built packages for testing
 - **DEV_UPDATE_CONFIG** environment variable - Points the app to dev-app-update.yml
 
 ## Quick Start
@@ -49,52 +48,23 @@ The built files will be in the `dist/` directory. You can test from this directo
 yarn build:linux  # (or your platform)
 ```
 
-3. Create the test-updates directory:
-
-```bash
-mkdir -p test-updates
-```
-
-4. Copy the built package to test-updates:
-
-The actual filenames include the app ID from electron-builder.yml. Check your `dist/` directory for the exact filename.
-
-```bash
-# Linux (check dist/ for exact arch - x86_64, arm64, etc.)
-cp dist/org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage test-updates/
-
-# macOS (if building on Mac)
-# cp dist/org.lightningrodlabs.moss-0.15-0.15.1-arm64.dmg test-updates/
-# cp dist/org.lightningrodlabs.moss-0.15-0.15.1-x64.dmg test-updates/
-
-# Windows (if building on Windows)
-# cp dist/org.lightningrodlabs.moss-0.15-0.15.1-setup.exe test-updates/
-```
-
-To find your exact filename:
-```bash
-ls -la dist/*.AppImage  # Linux
-# ls -la dist/*.dmg     # macOS
-# ls -la dist/*.exe     # Windows
-```
-
 ### Step 3: Generate Update Metadata
 
 Run the metadata generator for your platform (use the exact filename you copied):
 
 ```bash
 # Linux example (adjust architecture as needed)
-yarn gen-update-meta linux 0.15.1 test-updates/org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage
+yarn gen-update-meta linux 0.15.1 dist/org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage
 
 # macOS examples (if building on Mac)
-# yarn gen-update-meta mac 0.15.1 test-updates/org.lightningrodlabs.moss-0.15-0.15.1-arm64.dmg
-# yarn gen-update-meta mac 0.15.1 test-updates/org.lightningrodlabs.moss-0.15-0.15.1-x64.dmg
+# yarn gen-update-meta mac 0.15.1 dist/org.lightningrodlabs.moss-0.15-0.15.1-arm64.dmg
+# yarn gen-update-meta mac 0.15.1 dist/org.lightningrodlabs.moss-0.15-0.15.1-x64.dmg
 
 # Windows example (if building on Windows)
-# yarn gen-update-meta win 0.15.1 test-updates/org.lightningrodlabs.moss-0.15-0.15.1-setup.exe
+# yarn gen-update-meta win 0.15.1 dist/org.lightningrodlabs.moss-0.15-0.15.1-setup.exe
 ```
 
-This will create the appropriate `latest-*.yml` file in the test-updates directory with SHA512 hashes and file metadata.
+This will create the appropriate `latest-*.yml` file in the `dist` directory with SHA512 hashes and file metadata.
 
 ### Step 4: Start Update Server
 
@@ -107,7 +77,7 @@ yarn update-server
 You should see:
 ```
 ✓ Update server running at http://localhost:5555
-✓ Serving from: .../test-updates
+✓ Serving from: .../dist
 ```
 
 Keep this running while you test.
@@ -217,11 +187,9 @@ moss/
 │   ├── update-server.mjs                                      # Local HTTP server
 │   └── generate-update-yml.mjs                                # Metadata generator
 ├── dist/                                                       # Build output
-│   ├── org.lightningrodlabs.moss-0.15-0.15.0-x86_64.AppImage # Current version
-│   └── org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage # Update version
-└── test-updates/
-    ├── latest-linux.yml                                       # Generated metadata
-    └── org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage # Copied update package
+    ├── org.lightningrodlabs.moss-0.15-0.15.0-x86_64.AppImage # Current version
+    ├── org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage # Update version
+    └── latest-linux.yml                                       # Generated metadata
 ```
 
 ## Cleanup
@@ -229,10 +197,7 @@ moss/
 When done testing:
 
 1. Stop the update server (Ctrl+C)
-2. Remove test files:
-```bash
-rm -rf test-updates/
-```
+2. Optionally remove test files in `dist/`
 3. Optionally remove `dev-app-update.yml` if not testing further
 
 ## Upgrading electron-updater

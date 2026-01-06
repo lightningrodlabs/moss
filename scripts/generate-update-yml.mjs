@@ -58,7 +58,7 @@ const [platform, version, filePath] = process.argv.slice(2);
 
 if (!platform || !version || !filePath) {
   console.error('Usage: node generate-update-yml.mjs <platform> <version> <file-path>');
-  console.error('Example: node generate-update-yml.mjs mac 0.15.1 test-updates/Moss-0.15.1-arm64.dmg');
+  console.error('Example: node generate-update-yml.mjs linux 0.15.1 dist/org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage');
   process.exit(1);
 }
 
