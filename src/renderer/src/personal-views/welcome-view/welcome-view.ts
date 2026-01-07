@@ -113,7 +113,7 @@ export class WelcomeView extends LitElement {
       this.mossUpdatePrecentage = 1;
       await window.electronAPI.installMossUpdate();
     } catch (e) {
-      console.error('Moss udpate failed: ', e);
+      console.error('Moss update failed: ', e);
       notifyError('Update failed (see console for details).');
       this.mossUpdatePrecentage = undefined;
     }

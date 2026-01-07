@@ -1,6 +1,6 @@
 /**
  * This script extends the appRun script of an AppImage to disable SUID sandboxing.
- * Then repackages the AppImage and overwrites the latest-linux.yaml file with a new sha256 hash.
+ * Then repackages the AppImage and overwrites the latest-linux.yaml file with a new sha512 hash.
  */
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -10,7 +10,7 @@ import child_process from 'child_process';
 const electronBuilderYaml = yaml.load(fs.readFileSync('electron-builder.yml', 'utf-8'));
 const packageJson = JSON.parse(fs.readFileSync('package.json'));
 const appId = electronBuilderYaml.appId;
-const productName = electronBuilderYaml.productName;
+//const productName = electronBuilderYaml.productName;
 const appVersion = packageJson.version;
 
 let arch;
@@ -30,9 +30,7 @@ const imageFileName = `${appId}-${appVersion}-${arch}.AppImage`;
 const imageFilePath = `dist/${imageFileName}`;
 
 const fileBytesBefore = fs.readFileSync(imageFilePath);
-const hasher1 = crypto.createHash('sha512');
-hasher1.update(fileBytesBefore);
-const sha512_before = hasher1.digest('base64');
+const sha512_before = crypto.createHash('sha512').update(fileBytesBefore).digest('base64');
 console.log('  sha512 before modification: ', sha512_before);
 console.log('fileSize before modification: ', fileBytesBefore.length);
 
@@ -64,9 +62,7 @@ console.log('Modified appImage file packaged.', stdout2.toString());
 
 // Modify sha512 hashes of latest-linux.yaml
 const fileBytes = fs.readFileSync(imageFilePath);
-const hasher = crypto.createHash('sha512');
-hasher.update(fileBytes);
-const sha512 = hasher.digest('base64');
+const sha512 = crypto.createHash('sha512').update(fileBytes).digest('base64');
 
 const latestYaml = yaml.load(
   fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),

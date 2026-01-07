@@ -1,7 +1,7 @@
 /**
  * This script extends the deb postinst script with the creation of an apparmor profile
  * on Ubuntu 24.04 (https://github.com/electron/electron/issues/41066), repackages
- * the deb file and then overwrites the latest-linux.yaml file with the new sha256 hash
+ * the deb file and then overwrites the latest-linux.yaml file with the new sha512 hash
  */
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -28,9 +28,7 @@ const debFileName = `${appId}-${appVersion}-${arch}.deb`;
 const debFilePath = `dist/${debFileName}`;
 
 const fileBytesBefore = fs.readFileSync(debFilePath);
-const hasher1 = crypto.createHash('sha512');
-hasher1.update(fileBytesBefore);
-const sha512_before = hasher1.digest('base64');
+const sha512_before = crypto.createHash('sha512').update(fileBytesBefore).digest('base64');
 console.log('  sha512 before modification: ', sha512_before);
 console.log('fileSize before modification: ', fileBytesBefore.length);
 
@@ -98,9 +96,7 @@ console.log('Modified deb file packaged.');
 
 // Modify sha512 hashes of latest-linux.yaml
 const fileBytes = fs.readFileSync(debFilePath);
-const hasher = crypto.createHash('sha512');
-hasher.update(fileBytes);
-const sha512 = hasher.digest('base64');
+const sha512 = crypto.createHash('sha512').update(fileBytes).digest('base64');
 
 const latestYaml = yaml.load(
   fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),

@@ -56,7 +56,7 @@ export class EditGroupProfile extends LitElement {
     } catch (e) {
       this.committing = false;
       console.error('Failed to update group profile: ', e);
-      notifyError(msg('Failed to udpate group profile.'));
+      notifyError(msg('Failed to update group profile.'));
     }
     this.committing = false;
     await this._mossStore.reloadManualStores();
