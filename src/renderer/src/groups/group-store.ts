@@ -31,7 +31,8 @@ import {
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
-  dhtLocationFrom32,
+  hashFrom32AndType,
+  HoloHashType,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -832,37 +833,25 @@ export class GroupStore {
   /**
    * Reconstruct full AgentPubKey from partial agent ID returned by agentInfo.
    * AgentInfo returns only the middle 32 bytes (core hash) as URL-safe base64.
-   * We reconstruct: [3 byte prefix][32 byte core][4 byte DHT location]
+   * Uses hashFrom32AndType to properly construct the full 39-byte hash.
    */
   private getFullAgentId(partialAgentIdB64: string): AgentPubKey {
-    const prefix = new Uint8Array([132, 32, 36]); // Agent hash type prefix
-
     // Decode URL-safe base64 to Uint8Array
     // Convert URL-safe base64 to standard base64
-    const standardBase64 = partialAgentIdB64.replace(/-/g, '+').replace(/_/g, '/');
-
+    let standardBase64 = partialAgentIdB64.replace(/-/g, '+').replace(/_/g, '/');
     // Add padding if needed
-    const padded = standardBase64.padEnd(
-      standardBase64.length + ((4 - (standardBase64.length % 4)) % 4),
-      '=',
-    );
-
-    const binaryString = atob(padded);
-    const middle = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      middle[i] = binaryString.charCodeAt(i);
+    while (standardBase64.length % 4 !== 0) {
+      standardBase64 += '=';
     }
 
-    // Calculate DHT location bytes using Holochain's algorithm
-    const suffix = dhtLocationFrom32(middle);
+    const binaryString = atob(standardBase64);
+    const coreHash = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      coreHash[i] = binaryString.charCodeAt(i);
+    }
 
-    // Combine all parts
-    const agentKey = new Uint8Array(prefix.length + middle.length + suffix.length);
-    agentKey.set(prefix, 0);
-    agentKey.set(middle, prefix.length);
-    agentKey.set(suffix, prefix.length + middle.length);
-
-    return agentKey as AgentPubKey;
+    // Use hashFrom32AndType to construct the full AgentPubKey
+    return hashFrom32AndType(coreHash, HoloHashType.Agent) as AgentPubKey;
   }
 
   /**
