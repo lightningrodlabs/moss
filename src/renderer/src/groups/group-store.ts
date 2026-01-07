@@ -31,6 +31,7 @@ import {
   EntryHash,
   decodeHashFromBase64,
   encodeHashToBase64,
+  dhtLocationFrom32,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -84,8 +85,8 @@ import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
-const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
+const GET_AGENT_INFO_FREQUENCY_MS = 10000; // Poll agentInfo to discover agents in network
 export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 const ASSET_RELATION_POLLING_PERIOD = 10000;
@@ -112,6 +113,14 @@ export class GroupStore {
   allProfiles: AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>>;
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
+
+  /**
+   * Reactive store that calculates the number of online peers (excluding self).
+   * Counts agents with status 'online' or 'inactive'.
+   */
+  onlinePeersCount: Readable<number | undefined>;
+
+  private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
@@ -178,6 +187,19 @@ export class GroupStore {
       return this.agentsProfiles(agents);
     });
 
+    // Centralized reactive store for online peer count
+    this.onlinePeersCount = derived(this._peerStatuses, (peerStatuses) => {
+      if (!peerStatuses) return undefined;
+
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+
+      // Count agents with status 'online' or 'inactive', excluding self
+      return Object.entries(peerStatuses).filter(
+        ([pubkeyB64, status]) =>
+          pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
+      ).length;
+    });
+
     this._ignoredApplets.set(
       this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
     );
@@ -186,28 +208,22 @@ export class GroupStore {
       await this.pingAgentsAndCleanPeerStatuses();
     });
 
-    // refetch profiles frequently in the beginning. Afterwards, AGENTS_REFETCH_FREQUENCY
-    // in combination with PING_AGENTS_FREQUENCY_MS will determine the frequency of
-    // re-fetching profiles
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
-    }, 5000);
-
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
-    }, 10000);
-
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
-    }, 20000);
-
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
-    }, 40000);
+    // Note: Old agent fetching via getAgentsWithProfile removed
+    // Now using agentInfo polling instead for faster and more accurate agent discovery
 
     setInterval(async () => {
       await this.pingAgentsAndCleanPeerStatuses();
     }, PING_AGENTS_FREQUENCY_MS);
+
+    // Poll agentInfo to discover agents in network
+    setInterval(async () => {
+      await this.pollAgentInfo();
+    }, GET_AGENT_INFO_FREQUENCY_MS);
+
+    // Initial agentInfo poll
+    setTimeout(async () => {
+      await this.pollAgentInfo();
+    }, 1000);
 
     window.setInterval(async () => {
       const walsToPoll = Object.entries(this._assetStores)
@@ -802,76 +818,154 @@ export class GroupStore {
 
   updatePeerStatus(agent: AgentPubKey, status: string, tzUtcOffset?: number) {
     this._peerStatuses.update((value) => {
-      if (!value) {
-        value = {};
-      }
-      value[encodeHashToBase64(agent)] = {
+      // Create a new object to ensure derived stores detect the change
+      const newValue = value ? { ...value } : {};
+      newValue[encodeHashToBase64(agent)] = {
         lastSeen: Date.now(),
         status,
         tzUtcOffset,
       };
-      return value;
+      return newValue;
     });
+  }
+
+  /**
+   * Reconstruct full AgentPubKey from partial agent ID returned by agentInfo.
+   * AgentInfo returns only the middle 32 bytes (core hash) as URL-safe base64.
+   * We reconstruct: [3 byte prefix][32 byte core][4 byte DHT location]
+   */
+  private getFullAgentId(partialAgentIdB64: string): AgentPubKey {
+    const prefix = new Uint8Array([132, 32, 36]); // Agent hash type prefix
+
+    // Decode URL-safe base64 to Uint8Array
+    // Convert URL-safe base64 to standard base64
+    const standardBase64 = partialAgentIdB64.replace(/-/g, '+').replace(/_/g, '/');
+
+    // Add padding if needed
+    const padded = standardBase64.padEnd(
+      standardBase64.length + ((4 - (standardBase64.length % 4)) % 4),
+      '=',
+    );
+
+    const binaryString = atob(padded);
+    const middle = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      middle[i] = binaryString.charCodeAt(i);
+    }
+
+    // Calculate DHT location bytes using Holochain's algorithm
+    const suffix = dhtLocationFrom32(middle);
+
+    // Combine all parts
+    const agentKey = new Uint8Array(prefix.length + middle.length + suffix.length);
+    agentKey.set(prefix, 0);
+    agentKey.set(middle, prefix.length);
+    agentKey.set(suffix, prefix.length + middle.length);
+
+    return agentKey as AgentPubKey;
+  }
+
+  /**
+   * Poll Holochain's agentInfo to discover which agents are in the network.
+   * This does NOT indicate online/offline status - only network membership.
+   * Ping/pong signals determine actual online status.
+   */
+  async pollAgentInfo(): Promise<void> {
+    try {
+      const appWebsocket = this.appWebsocket;
+      const response = await appWebsocket.agentInfo({
+        dna_hashes: [this.groupDnaHash],
+      });
+
+      // Extract partial agent IDs and reconstruct full agent keys
+      const knownAgents = new Set<AgentPubKeyB64>();
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+
+      for (const agentInfoItem of response) {
+        try {
+          // Response format: { agentInfo: "{...json...}", signature: "..." }
+          // Parse the outer structure
+          const parsed =
+            typeof agentInfoItem === 'string' ? JSON.parse(agentInfoItem) : agentInfoItem;
+
+          // Parse the inner agentInfo JSON string
+          const agentInfoData =
+            typeof parsed.agentInfo === 'string'
+              ? JSON.parse(parsed.agentInfo)
+              : parsed.agentInfo;
+
+          // Extract the partial agent ID from the 'agent' field
+          const partialAgentId = agentInfoData.agent;
+
+          if (!partialAgentId) {
+            console.warn('[AgentInfo] No agent field in agentInfo data:', agentInfoData);
+            continue;
+          }
+
+          // Reconstruct full agent key from partial ID
+          const fullAgentKey = this.getFullAgentId(partialAgentId);
+          const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
+
+          // Exclude self
+          if (fullAgentKeyB64 !== myPubKeyB64) {
+            knownAgents.add(fullAgentKeyB64);
+          }
+        } catch (error) {
+          console.warn('[AgentInfo] Failed to parse agent info item:', agentInfoItem, error);
+        }
+      }
+
+      this._knownAgents.set(knownAgents);
+    } catch (error) {
+      console.warn('[AgentInfo] Failed to poll agent info:', error);
+      // Don't throw - if agentInfo fails, signaling will likely fail too
+      // Just keep using the last known agent list
+    }
   }
 
   async pingAgentsAndCleanPeerStatuses() {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
-      if (!statuses) {
-        statuses = {};
-      }
-      if (statuses) {
-        Object.keys(statuses).forEach((agent) => {
-          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
-            statuses[agent] = {
-              lastSeen: statuses[agent].lastSeen,
-              status: 'offline',
-            };
-          }
-        });
-        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
-          lastSeen: now,
-          status: myStatus,
-        };
-      }
-      return statuses;
+      // Create a new object to ensure derived stores detect the change
+      const newStatuses = statuses ? { ...statuses } : {};
+
+      Object.keys(newStatuses).forEach((agent) => {
+        if (now - newStatuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+          newStatuses[agent] = {
+            lastSeen: newStatuses[agent].lastSeen,
+            status: 'offline',
+          };
+        }
+      });
+      // Don't add self to peer statuses - peer statuses should only track other agents
+      return newStatuses;
     });
     await this.pingAgents();
   }
 
   /**
-   * Pings all agents, provided that they need to be pinged based on the needsPinging function
+   * Pings all agents discovered via agentInfo.
+   * Self is already excluded from the knownAgents set by pollAgentInfo().
+   * Since agentInfo only returns agents in the network, we ping all of them
+   * to determine their actual online/offline status.
    */
   async pingAgents(): Promise<void> {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD
+      ? 'inactive'
+      : 'online';
     const tzOffset = this.mossStore.tzUtcOffset();
-    if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
-      const agentsThatNeedPinging = this.allAgents.filter(
-        (agent) =>
-          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
-          this.needsPinging(agent),
-      );
-      this._agentsRefetchCounter += 1;
-      return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
-        : Promise.resolve();
-    } else {
-      const allAgents = await this.profilesStore.client.getAgentsWithProfile(true);
-      this.allAgents = allAgents;
-      const agentsThatNeedPinging = allAgents.filter(
-        (agent) =>
-          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
-          this.needsPinging(agent),
-      );
-      this._agentsRefetchCounter = 0;
-      return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
-        : Promise.resolve();
-    }
+
+    // Get agents that Holochain knows about in the network (self already excluded)
+    const knownAgentsB64 = Array.from(get(this._knownAgents));
+    const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
+
+    return knownAgents.length > 0
+      ? this.peerStatusClient.ping(knownAgents, myStatus, tzOffset)
+      : Promise.resolve();
   }
+
 
   /**
    * Function that returns deterministically but with 50% probability for a given pair

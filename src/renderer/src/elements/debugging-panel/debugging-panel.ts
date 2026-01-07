@@ -9,6 +9,7 @@ import {
   DnaHash,
   DnaHashB64,
   DumpNetworkMetricsResponse,
+  DumpNetworkStatsResponse,
   encodeHashToBase64,
   EntryHash,
   InstalledAppId,
@@ -126,6 +127,9 @@ export class DebuggingPanel extends LitElement {
   @state()
   _networkStats: Record<InstalledAppId, [TransportStats, DumpNetworkMetricsResponse]> = {};
 
+  @state()
+  _adminNetworkStats: DumpNetworkStatsResponse | null = null;
+
   async firstUpdated() {
     // TODO add interval here to reload stuff
     this._refreshInterval = window.setInterval(() => {
@@ -218,6 +222,14 @@ export class DebuggingPanel extends LitElement {
   }
 
   async pollNetworkStats() {
+    if (this._appsToPollNetworkStats.length > 0) {
+      // Fetch admin stats (includes blocked message counts)
+      try {
+        this._adminNetworkStats = await this._mossStore.adminWebsocket.dumpNetworkStats();
+      } catch (e) {
+        console.error('Failed to fetch admin network stats:', e);
+      }
+    }
     await Promise.all(
       this._appsToPollNetworkStats.map(async (appId) => {
         const client = await this._mossStore.getAppClient(appId);
@@ -229,6 +241,47 @@ export class DebuggingPanel extends LitElement {
       }),
     );
     this.requestUpdate();
+  }
+
+  renderBlockedStats() {
+    if (!this._adminNetworkStats) return html``;
+    const blockedCounts = this._adminNetworkStats.blocked_message_counts;
+    const peerUrls = Object.keys(blockedCounts);
+    if (peerUrls.length === 0) {
+      return html`<div class="stats-item"><em>No blocked messages</em></div>`;
+    }
+
+    let totalIncoming = 0;
+    let totalOutgoing = 0;
+    for (const peerUrl of peerUrls) {
+      for (const spaceId of Object.keys(blockedCounts[peerUrl])) {
+        totalIncoming += blockedCounts[peerUrl][spaceId].incoming;
+        totalOutgoing += blockedCounts[peerUrl][spaceId].outgoing;
+      }
+    }
+
+    return html`
+      <div class="stats-item">
+        <div><b>Total blocked:</b> incoming: ${totalIncoming}, outgoing: ${totalOutgoing}</div>
+        <div><b>Blocked peers:</b> ${peerUrls.length}</div>
+        ${peerUrls.map((peerUrl) => {
+          const spaces = blockedCounts[peerUrl];
+          return html`
+            <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #666;">
+              <div style="font-size: 12px; word-break: break-all;"><b>Peer:</b> ${peerUrl}</div>
+              ${Object.entries(spaces).map(
+                ([spaceId, counts]) => html`
+                  <div style="padding-left: 10px; font-size: 11px;">
+                    <span style="color: #666;">Space ${spaceId.slice(0, 8)}...:</span>
+                    incoming: ${counts.incoming}, outgoing: ${counts.outgoing}
+                  </div>
+                `,
+              )}
+            </div>
+          `;
+        })}
+      </div>
+    `;
   }
 
   renderAppNetworkStats(appId: InstalledAppId) {
@@ -264,6 +317,9 @@ export class DebuggingPanel extends LitElement {
             </div>
           `,
     )}
+
+        <h4>Blocked Messages:</h4>
+        ${this.renderBlockedStats()}
 
         <h4>Metrics:</h4>
         <div class="stats-item">
