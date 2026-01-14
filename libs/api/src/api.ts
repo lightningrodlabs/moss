@@ -235,7 +235,7 @@ export interface AssetServices {
    * @param from (optional) source of the WAL
    * @returns
    */
-  userSelectAsset: (from?: 'search' | 'pocket' | 'create') => Promise<WAL | undefined>;
+  userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') => Promise<WAL | undefined>;
   /**
    * Prompts the user with a dialog to select an asset relation tag.
    * Returns the associated tag as a string as soon as the user has
@@ -518,7 +518,7 @@ export class WeaveClient implements WeaveServices {
     dragAsset: (wal: WAL): Promise<void> => window.__WEAVE_API__.assets.dragAsset(wal),
     assetInfo: (wal: WAL) => window.__WEAVE_API__.assets.assetInfo(wal),
     assetToPocket: (wal: WAL) => window.__WEAVE_API__.assets.assetToPocket(wal),
-    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') =>
       window.__WEAVE_API__.assets.userSelectAsset(from),
     userSelectAssetRelationTag: () => window.__WEAVE_API__.assets.userSelectAssetRelationTag(),
     addTagsToAsset: (wal: WAL, tags: string[]) =>

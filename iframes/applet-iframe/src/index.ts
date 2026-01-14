@@ -92,7 +92,7 @@ const weaveApi: WeaveServices = {
         type: 'drag-asset',
         wal,
       }),
-    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') =>
       postMessage({
         type: 'user-select-asset',
         from,

@@ -247,8 +247,8 @@ export class AppletMain extends LitElement {
     }, delay);
   }
 
-  async userSelectWal() {
-    const selectedWal = await this.weaveClient.assets.userSelectAsset();
+  async userSelectWal(from: 'pocket' | 'pocket-no-create') {
+    const selectedWal = await this.weaveClient.assets.userSelectAsset(from);
     this.selectedWal = selectedWal;
   }
 
@@ -397,7 +397,15 @@ export class AppletMain extends LitElement {
               Copy Something To Clipboard
             </button>
 
-            <h2>WAL Embeds</h2>
+            <h2>Select WAL</h2>
+              <button @click=${() => this.userSelectWal("pocket")}>
+                  Select WAL
+              </button>
+              <button @click=${() => this.userSelectWal("pocket-no-create")}>
+                  Select WAL NO CREATE
+              </button>
+              
+              <h2>WAL Embeds</h2>
 
             <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
               <div><b>Embed WAL:</b></div>

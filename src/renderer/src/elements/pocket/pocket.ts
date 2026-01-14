@@ -28,6 +28,8 @@ export interface SearchResult {
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
 }
 
+export type PocketMode = 'open' | 'select' | 'select-no-create'
+
 /**
  * @element search-entry
  * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
@@ -46,7 +48,7 @@ export class MossPocket extends LitElement {
   _searchField!: PocketSearch;
 
   @state()
-  mode: 'open' | 'select' = 'open';
+  mode: PocketMode = 'open';
 
   @state()
   pocketContent: Array<WalInPocket> = [];
@@ -54,7 +56,7 @@ export class MossPocket extends LitElement {
   @state()
   recentlyCreatedContent: Array<string> = [];
 
-  show(mode: 'open' | 'select') {
+  show(mode: PocketMode) {
     this.loadPocketContent();
     this.mode = mode;
     this._dialog.show();
@@ -101,6 +103,7 @@ export class MossPocket extends LitElement {
           }),
         );
         break;
+      case 'select-no-create':
       case 'select':
         this.dispatchEvent(
           new CustomEvent('wal-selected', {
@@ -151,6 +154,7 @@ export class MossPocket extends LitElement {
         id="pocket-dialog"
         width="890px"
         noHeader=true
+        style="${this.mode == 'select-no-create'? "z-index: 1000" : ""}"
         @sl-initial-focus=${(e: { preventDefault: () => void }) => {
         e.preventDefault();
         this._searchField.focus();
@@ -181,7 +185,7 @@ export class MossPocket extends LitElement {
         : ``
       }
 
-          ${this.mode === 'select'
+          ${this.mode === 'select' || this.mode === 'select-no-create'
         ? html`<div style="font-size: 25px; margin-bottom: 30px;">
                   ${msg('Select Attachment:')}
                 </div>`

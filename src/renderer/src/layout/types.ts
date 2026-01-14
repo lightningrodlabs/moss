@@ -9,7 +9,7 @@ export interface AppOpenViews {
   openCrossGroupBlock(toolCompatibilityId: ToolCompatibilityId, block: string, context: any): void;
   openAsset(wal: WAL, mode?: OpenAssetMode): void;
   userSelectWal(
-    from?: 'search' | 'pocket' | 'create',
+    from?: 'search' | 'pocket' | 'create' | 'pocket-no-create',
     groupDnaHash?: DnaHash | undefined,
   ): Promise<WAL | undefined>;
   userSelectAssetRelationTag(): Promise<string | undefined>;

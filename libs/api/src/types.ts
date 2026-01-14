@@ -17,6 +17,7 @@ import {
   EnableCloneCellRequest,
   InstalledAppId,
 } from '@holochain/client';
+import {Type} from "@sinclair/typebox";
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
@@ -446,7 +447,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'user-select-asset';
-      from?: 'search' | 'pocket' | 'create';
+      from?: 'search' | 'pocket' | 'create' | 'pocket-no-create';
     }
   | {
       type: 'user-select-asset-relation-tag';

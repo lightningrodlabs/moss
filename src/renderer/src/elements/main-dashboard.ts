@@ -327,7 +327,11 @@ export class MainDashboard extends LitElement {
       if (from === 'create') {
         this._creatablePalette.show(groupDnaHash);
       } else {
-        this._pocket.show('select');
+          if (from == 'pocket-no-create') {
+              this._pocket.show('select-no-create');
+          } else {
+              this._pocket.show('select');
+          }
       }
 
       return new Promise((resolve) => {
