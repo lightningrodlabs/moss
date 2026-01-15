@@ -1165,6 +1165,7 @@ if (!RUNNING_WITH_COMMAND) {
         await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
       },
     );
+    ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
     ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
     ipcMain.handle(
       'applet-dev-config',

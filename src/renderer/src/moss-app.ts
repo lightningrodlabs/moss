@@ -176,7 +176,9 @@ export class MossApp extends LitElement {
     );
 
     isFirstLaunch = !!window.localStorage.getItem('isFirstLaunch');
-    if (isFirstLaunch) {
+    const isDev = await window.electronAPI.isDevModeEnabled();
+    console.debug("isDevModeEnabled", isDev);
+    if (isFirstLaunch && !isDev) {
       this.state = MossAppState.InitialSetup;
     }
 
@@ -197,7 +199,7 @@ export class MossApp extends LitElement {
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);
 
-    if (!isFirstLaunch) {
+    if (!isFirstLaunch || isDev) {
       this.state = MossAppState.Running;
     }
   }
