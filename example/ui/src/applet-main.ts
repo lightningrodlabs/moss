@@ -30,6 +30,7 @@ import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
 import { weaveClientContext } from '@theweave/elements';
 import { decode, encode } from '@msgpack/msgpack';
 import { Accountability } from '@theweave/group-client';
+import {hrlToString} from "@holochain-open-dev/utils/dist/hrl";
 
 @localized()
 @customElement('applet-main')
@@ -247,7 +248,7 @@ export class AppletMain extends LitElement {
     }, delay);
   }
 
-  async userSelectWal(from: 'pocket' | 'pocket-no-create') {
+  async userSelectWal(from: 'search' | 'pocket' | 'create' | 'pocket-no-create') {
     const selectedWal = await this.weaveClient.assets.userSelectAsset(from);
     this.selectedWal = selectedWal;
   }
@@ -398,15 +399,27 @@ export class AppletMain extends LitElement {
             </button>
 
             <h2>Select WAL</h2>
-              <button @click=${() => this.userSelectWal("pocket")}>
-                  Select WAL
-              </button>
-              <button @click=${() => this.userSelectWal("pocket-no-create")}>
-                  Select WAL NO CREATE
-              </button>
-              
-              <h2>WAL Embeds</h2>
+              <div class="container">
+                  <label for="myCombobox">Select WAL with </label>
+                  <select id="myCombobox" @change=${() => {
+                      const combobox = this.shadowRoot?.getElementById("myCombobox") as any;
+                      this.userSelectWal(combobox.options[combobox.selectedIndex].text)
+                  }}>
+                      <option value="pocket">pocket</option>
+                      <option value="pocket-no-create">pocket-no-create</option>
+                      <option value="search">search</option>
+                      <option value="create">create</option>
+                  </select>
+              </div>
 
+              <div style="margin:10px;">
+                  <div class="wal-output-label">Selected WAL:</div>
+                  ${this.selectedWal
+                          ? html`<div id="selectedWal">${hrlToString(this.selectedWal.hrl)}</div><div style="margin-top:10px;">CONTEXT: ${JSON.stringify(this.selectedWal?.context)}</div>` 
+                          : html`<div>No WAL selected yet.</div>`}
+              </div>              
+              
+            <h2>WAL Embeds</h2>
             <div style="border: 1px solid black; padding: 5px; border-radius: 5px; margin: 10px 0;">
               <div><b>Embed WAL:</b></div>
               <div class="row" style="margin-bottom: 10px;">
