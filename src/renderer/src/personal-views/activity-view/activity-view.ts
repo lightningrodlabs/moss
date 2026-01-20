@@ -264,7 +264,7 @@ export class ActivityView extends LitElement {
       filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
     return html`
-      <div class="row" style="z-index: 1">
+      <div class="row" style="z-index: 1; height: calc(100vh - 58px);">
         <div class="column feed">
           <div class="sort-buttons">
             <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
@@ -311,7 +311,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
             </select>
           </div>
-          <div style="overflow-y: auto; padding-bottom: 15px;">
+          <div style="overflow-y: auto;">
             ${sortedNotifications.length === 0
         ? html`
                   <div
@@ -399,7 +399,7 @@ export class ActivityView extends LitElement {
             <option value="all">All time</option> -->
             </select>
           </div>
-          <div class="column" style="overflow-y: auto; padding-bottom: 80px;">
+          <div class="column" style="overflow-y: auto;">
             ${filteredIndividualNotifications.length === 0
         ? html`
                   <div
