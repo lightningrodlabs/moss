@@ -19,13 +19,16 @@ const appVersion = packageJson.version;
 
 let arch;
 let arch_linux;
+let app_image_arch;
 switch (process.arch) {
     case 'arm64':
         arch = 'arm64';
+        app_image_arch = 'arm64';
         arch_linux = 'aarch64';
         break;
     case 'x64':
         arch = 'amd64';
+        app_image_arch = 'x86_64';
         arch_linux = 'x86_64';
         break;
 }
@@ -33,7 +36,7 @@ switch (process.arch) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // AppImage extraction
-const imageFileName = `${appId}-${appVersion}-${arch_linux}.AppImage`;
+const imageFileName = `${appId}-${appVersion}-${app_image_arch}.AppImage`;
 const imageFilePath = `dist/${imageFileName}`;
 const fileBytesBefore = fs.readFileSync(imageFilePath);
 const sha512_before = crypto.createHash('sha512').update(fileBytesBefore).digest('base64');
