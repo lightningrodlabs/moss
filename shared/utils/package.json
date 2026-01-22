@@ -17,7 +17,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "^0.20.0",
+    "@holochain/client": "=0.20.3-rc.0",
     "@theweave/api": "^0.6.1",
     "@theweave/moss-types": "^0.5.1",
     "@msgpack/msgpack": "^2.7.2",
