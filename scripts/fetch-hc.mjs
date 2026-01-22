@@ -1,3 +1,3 @@
 import {downloadHolochainBinary} from './fetch-fns.mjs';
 
-downloadHolochainBinary("hc");
+downloadHolochainBinary("hc", false);

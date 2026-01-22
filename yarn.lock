@@ -1603,6 +1603,21 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
+"@holochain/client@=0.20.3-rc.0":
+  version "0.20.3-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.3-rc.0.tgz#0aee998bfa72ebe92f2f12ca73c30a65a508ae47"
+  integrity sha512-BxYy+2KwpdzkwVXFAGMlPBryjgq31wbV9Avx4ciIEdVrixtn5qmFuAUzdy6HziKYrkLWOesMF7wsxS15x3eEmA==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@msgpack/msgpack" "^3.1.2"
+    emittery "^1.2.0"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.8"
+    js-sha512 "^0.9.0"
+    libsodium-wrappers "^0.8"
+    lodash-es "^4.17.21"
+    ws "^8.18.3"
+
 "@holochain/client@^0.20.0":
   version "0.20.1"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.1.tgz#3aba51bdc2c4f7f5fa9e03890534a67c4e946e4f"
@@ -3093,10 +3108,10 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.6.3"
+  version "0.6.4"
   dependencies:
     "@holochain-open-dev/profiles" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
@@ -3107,7 +3122,7 @@
     "@holochain-open-dev/profiles" "^0.600.0"
     "@holochain-open-dev/stores" "^0.600.0"
     "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -3120,14 +3135,14 @@
   version "0.5.1"
   dependencies:
     "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.1"
 
 "@theweave/utils@file:shared/utils":
   version "0.5.1"
   dependencies:
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.1"
     "@theweave/moss-types" "^0.5.1"
@@ -9222,10 +9237,22 @@ libsodium-wrappers@^0.7.15:
   dependencies:
     libsodium "^0.7.15"
 
+libsodium-wrappers@^0.8:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/libsodium-wrappers/-/libsodium-wrappers-0.8.1.tgz#0d1e75423687108f4547f175dc263c7dd09a244b"
+  integrity sha512-UOqD9M4HhAhwEo2foIgnUrpqXCj2VKdndZXM3PZ0zGe++9808TzAFSp4o2mOgPM/DNUnUqncR3G0xqiKDoAQXQ==
+  dependencies:
+    libsodium "^0.8.0"
+
 libsodium@^0.7.15:
   version "0.7.15"
   resolved "https://registry.yarnpkg.com/libsodium/-/libsodium-0.7.15.tgz#ac284e3dcb1c29ae9526c5581cdada6a072f6d20"
   integrity sha512-sZwRknt/tUpE2AwzHq3jEyUU5uvIZHtSssktXq7owd++3CSgn8RGrv6UZJJBpP7+iBghBqe7Z06/2M31rI2NKw==
+
+libsodium@^0.8.0:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/libsodium/-/libsodium-0.8.1.tgz#3a100ab54d40a570eb80ce595e30ababcdcb9446"
+  integrity sha512-V70In9cepY7MMoKyEvnrojqgQN5yQM/8i8kGh4n/IC1g3thA5nonK0d84e0fR86tFOeAQsOdaL5ONuR93ru25A==
 
 lilconfig@^2.0.3, lilconfig@^2.0.5:
   version "2.1.0"
