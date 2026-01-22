@@ -1,11 +1,8 @@
 import {
   downloadHolochainBinary,
-  downloadLairBinary,
-  downloadBootstrapBinary,
-  downloadHcBinary
 } from './fetch-fns.mjs';
 
-downloadHolochainBinary();
-downloadLairBinary();
-downloadBootstrapBinary();
-downloadHcBinary(true);
+downloadHolochainBinary("holochain");
+downloadHolochainBinary("lair-keystore");
+downloadHolochainBinary("kitsune2-bootstrap-srv");
+downloadHolochainBinary("hc");

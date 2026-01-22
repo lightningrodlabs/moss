@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import {exec} from 'child_process';
 import crypto from 'crypto';
 
 const mossConfigJSON = fs.readFileSync('moss.config.json');
 const mossConfig = JSON.parse(mossConfigJSON);
 
 const binariesDir = path.join('resources', 'bins');
-fs.mkdirSync(binariesDir, { recursive: true });
+fs.mkdirSync(binariesDir, {recursive: true});
 
 let targetEnding;
 switch (process.platform) {
@@ -69,58 +69,15 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 }
 
 
-export function downloadHolochainBinary(dontVersion) {
-  let holochainBinaryFilename = "holochain"
-  if (!dontVersion) {
-    holochainBinaryFilename = `holochain-v${mossConfig.holochain.version}-${mossConfig.binariesAppendix}${
-      process.platform === 'win32' ? '.exe' : ''
-    }`;
-  }
-  const destinationPath = path.join(binariesDir, holochainBinaryFilename);
-  const holochainBinaryRemoteFilename = `holochain-v${mossConfig.holochain.version}-${targetEnding}`;
-  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${mossConfig.holochain.version}/${holochainBinaryRemoteFilename}`;
+export function downloadHolochainBinary(binaryFilename) {
+  let completeBinaryFilename = `${binaryFilename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
+  let completeBinaryFilenameWithVersion = `${binaryFilename}-v${mossConfig.holochain.version}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
+  const targetPath = path.join(binariesDir, completeBinaryFilenameWithVersion);
+  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain.version}/${completeBinaryFilename}`;
   downloadFile(
     holochainBinaryUrl,
-    destinationPath,
-    mossConfig.holochain.sha256[targetEnding],
+    targetPath,
+    mossConfig[binaryFilename].sha256[targetEnding],
     true,
   );
-}
-
-export function downloadHcBinary(dontVersion) {
-  let hcBinaryFilename = "hc"
-  if (!dontVersion) {
-    hcBinaryFilename = `hc-v${mossConfig.hc.version}-${mossConfig.binariesAppendix}${
-      process.platform === 'win32' ? '.exe' : ''
-    }`
-  };
-  const destinationPath = path.join(binariesDir, hcBinaryFilename);
-  const hcBinaryRemoteFilename = `hc-v${mossConfig.hc.version}-${targetEnding}`;
-  const hcBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/hc-binaries-${mossConfig.hc.version}/${hcBinaryRemoteFilename}`;
-  downloadFile(
-    hcBinaryUrl,
-    destinationPath,
-    mossConfig.hc.sha256[targetEnding],
-    true,
-  );
-}
-
-export function downloadLairBinary() {
-  const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConfig.binariesAppendix}${
-    process.platform === 'win32' ? '.exe' : ''
-  }`;
-  const destinationPath = path.join(binariesDir, lairBinaryFilename);
-  const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lair.version}-${targetEnding}`;
-  const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lair.version}/${lairBinaryRemoteFilename}`;
-  downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256[targetEnding], true);
-}
-
-export function downloadBootstrapBinary() {
-  const bootstrapBinaryFilename = `kitsune2-bootstrap-srv-v${mossConfig.bootstrap.version}-${mossConfig.binariesAppendix}${
-    process.platform === 'win32' ? '.exe' : ''
-  }`;
-  const destinationPath = path.join(binariesDir, bootstrapBinaryFilename);
-  const remoteFilename = `kitsune2-bootstrap-srv-v${mossConfig.bootstrap.version}-${targetEnding}`;
-  const binaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/kitsune2-bootstrap-srv-binaries-${mossConfig.bootstrap.version}/${remoteFilename}`;
-  downloadFile(binaryUrl, destinationPath, mossConfig.bootstrap.sha256[targetEnding], true);
 }
