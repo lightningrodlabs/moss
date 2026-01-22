@@ -16,10 +16,7 @@ import '../pocket/pocket-search.js';
 import { CreatableInfo } from './creatable-panel.js';
 import { Unsubscriber } from '@holochain-open-dev/stores';
 
-/**
- * @element search-entry
- * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
- */
+/** */
 @localized()
 @customElement('creatable-view')
 export class CreatableView extends LitElement {

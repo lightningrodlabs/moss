@@ -36,10 +36,8 @@ export type CreatableInfo = {
   groupHash: DnaHash | undefined;
 };
 
-/**
- * @element search-entry
- * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
- */
+
+/** */
 @localized()
 @customElement('creatable-panel')
 export class CreatablePanel extends LitElement {

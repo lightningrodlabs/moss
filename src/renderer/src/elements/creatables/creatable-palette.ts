@@ -40,10 +40,7 @@ export type CreatableInfo = {
   groupHash: DnaHash | undefined;
 };
 
-/**
- * @element search-entry
- * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
- */
+/** */
 @localized()
 @customElement('creatable-palette')
 export class CreatablePalette extends LitElement {
@@ -135,7 +132,7 @@ export class CreatablePalette extends LitElement {
         notify(`New ${this._showCreatableView?.creatable.label} created.`);
         this._mossStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
-          new CustomEvent('wal-selected', {
+          new CustomEvent('open-wal', {
             detail: { wal: creatableResult.wal },
             bubbles: true,
             composed: true,
@@ -159,7 +156,7 @@ export class CreatablePalette extends LitElement {
   }
 
   walToPocket(wal: WAL) {
-    console.log('Adding hrl to clipboard: ', wal);
+    console.log('Adding wal to clipboard: ', wal);
     this._mossStore.walToPocket(wal);
   }
 
