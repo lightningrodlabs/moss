@@ -30,6 +30,10 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
+// The first one will be picked by default.
+export const PRODUCTION_RELAY_URLS = [
+    "https://use1-1.relay.n0.iroh-canary.iroh.link./",
+];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';

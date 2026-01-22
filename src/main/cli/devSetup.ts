@@ -44,7 +44,7 @@ import { readIcon } from '../utils';
 import { AppletHash } from '@theweave/api';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export async function readLocalServices(): Promise<[string, string]> {
+export async function readLocalServices(): Promise<[string, string, string]> {
   if (!fs.existsSync('.kitsune2_bootstrap_srv')) {
     throw new Error(
       'No .kitsune2_bootstrap_srv file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
@@ -52,15 +52,15 @@ export async function readLocalServices(): Promise<[string, string]> {
   }
   const localServicesString = fs.readFileSync('.kitsune2_bootstrap_srv', 'utf-8');
   try {
-    const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
-    return [bootstrapUrl, signalingUrl];
+    const { bootstrapUrl, signalingUrl, relayUrl } = JSON.parse(localServicesString);
+    return [bootstrapUrl, signalingUrl, relayUrl];
   } catch (e) {
     throw new Error('Failed to parse content of .kitsune2_bootstrap_srv');
   }
 }
 
 export async function startLocalServices(): Promise<
-  [string, string, childProcess.ChildProcessWithoutNullStreams]
+  [string, string, string, childProcess.ChildProcessWithoutNullStreams]
 > {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
@@ -79,10 +79,16 @@ export async function startLocalServices(): Promise<
   return new Promise((resolve) => {
     let bootstrapUrl;
     let signalingUrl;
+    let relayUrl;
     let bootstrapRunning = false;
-    let signalRunnig = false;
+    let signalRunning = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
+      if (line.includes('Internal iroh relay server started at')) {
+          // Match IP:port pattern
+          const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
+          relayUrl = match? match[1] : null;
+      }
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
         bootstrapUrl = `http://${hostAndPort}`;
@@ -90,11 +96,11 @@ export async function startLocalServices(): Promise<
       }
       if (line.includes('#kitsune2_bootstrap_srv#running#')) {
         bootstrapRunning = true;
-        signalRunnig = true;
+        signalRunning = true;
       }
       fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl }));
-      if (bootstrapRunning && signalRunnig)
-        resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
+      if (bootstrapRunning && signalRunning)
+        resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv] ERROR: ${line}`);
