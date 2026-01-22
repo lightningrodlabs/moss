@@ -58,6 +58,7 @@ export class HolochainManager {
     lairUrl: string,
     bootstrapUrl: string,
     signalUrl: string,
+    relayUrl: string,
     iceUrls: Array<string>,
     rustLog?: string,
     wasmLog?: string,
@@ -93,6 +94,7 @@ export class HolochainManager {
     // network parameters
     conductorConfig.network.bootstrap_url = bootstrapUrl;
     conductorConfig.network.signal_url = signalUrl;
+    conductorConfig.network.relay_url = relayUrl;
     conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
     // In dev mode, we have to allow ws:// signal type urls
