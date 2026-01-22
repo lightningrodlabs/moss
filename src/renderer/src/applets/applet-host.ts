@@ -415,7 +415,7 @@ export async function handleAppletIframeMessage(
     case 'open-view':
       switch (message.request.type) {
         case 'applet-main':
-          return openViews.openAppletMain(message.request.appletHash);
+          return openViews.openAppletMain(message.request.appletHash, message.request.wal);
         case 'applet-block':
           return openViews.openAppletBlock(
             message.request.appletHash,
@@ -464,7 +464,7 @@ export async function handleAppletIframeMessage(
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
 
-      // If the applet that the notification is coming from is already open, and the We main window
+      // If the applet that the notification is coming from is already open, and the Moss main window
       // itself is also open, don't do anything
       const dashboardMode = get(mossStore.dashboardState());
 

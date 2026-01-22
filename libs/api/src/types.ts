@@ -23,14 +23,14 @@ export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
 
 /**
- * Hash of Holohash lenght but all zeroes
+ * Hash of HoloHash length but all zeroes
  */
 export type NullHash = Uint8Array;
 
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-export type OpenAssetMode = 'front' | 'side' | 'window';
+export type OpenAssetMode = 'side' | 'window';
 
 /**
  * String of the format weave-0.15://
@@ -137,7 +137,7 @@ export type NotificationCount = {
 };
 
 export interface OpenViews {
-  openAppletMain(appletHash: EntryHash): void;
+  openAppletMain(appletHash: EntryHash, wal?: WAL): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openWal(wal: WAL): void;
   openCrossGroupMain(appletBundleId: string): void;
@@ -507,6 +507,7 @@ export type OpenViewRequest =
   | {
       type: 'applet-main';
       appletHash: EntryHash;
+      wal?: WAL;
     }
   | {
       type: 'cross-group-main';

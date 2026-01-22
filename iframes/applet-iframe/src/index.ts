@@ -223,12 +223,13 @@ const weaveApi: WeaveServices = {
     return unlisten;
   },
 
-  openAppletMain: async (appletHash: EntryHash): Promise<void> =>
+  openAppletMain: async (appletHash: EntryHash, wal?: WAL): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'applet-main',
         appletHash,
+        wal,
       },
     }),
 

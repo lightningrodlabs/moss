@@ -131,6 +131,7 @@ const OpenViewRequest = Type.Union([
     {
       type: Type.Literal('applet-main'),
       appletHash: EntryHash,
+      wal: Type.Optional(WAL),
     },
     { additionalProperties: false },
   ),

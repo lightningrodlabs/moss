@@ -203,7 +203,10 @@ export class NotificationAsset extends LitElement {
           @click=${() => {
             this.dispatchEvent(
               new CustomEvent('open-applet-main', {
-                detail: this.appletHash,
+                detail: {
+                    applet: this.appletHash,
+                    wal: this.notification?.aboutWal,
+                },
                 bubbles: true,
                 composed: true,
               }),

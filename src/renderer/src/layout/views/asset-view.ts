@@ -47,7 +47,10 @@ export class AssetView extends LitElement {
     } else {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {
-          detail: this.location.value.value.dnaLocation.appletHash,
+          detail: {
+              applet: this.location.value.value.dnaLocation.appletHash,
+              wal: this.wal,
+          },
           bubbles: true,
           composed: true,
         }),

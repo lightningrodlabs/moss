@@ -266,7 +266,7 @@ export class MainDashboard extends LitElement {
   @provide({ context: openViewsContext })
   @property()
   openViews: AppOpenViews = {
-    openAppletMain: async (appletHash) => {
+    openAppletMain: async (appletHash, _wal) => {
       const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash));
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
@@ -522,8 +522,8 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  async handleOpenAppletMain(appletHash: AppletHash) {
-    this.openViews.openAppletMain(appletHash);
+  async handleOpenAppletMain(appletHash: AppletHash, wal?: WAL) {
+    this.openViews.openAppletMain(appletHash, wal);
   }
 
   hardRefresh() {
@@ -623,9 +623,11 @@ export class MainDashboard extends LitElement {
 
     window.electronAPI.onSwitchToWeaveLocation((_, weaveLocation) => {
       if (weaveLocation) {
-        if (weaveLocation.type === 'applet')
-          this.openViews.openAppletMain(weaveLocation.appletHash);
-        else if (weaveLocation.type === 'group') this.openGroup(weaveLocation.dnaHash);
+        if (weaveLocation.type === 'applet') {
+            this.openViews.openAppletMain(weaveLocation.appletHash/*, weaveLocation.wal*/);
+        } else if (weaveLocation.type === 'group') {
+            this.openGroup(weaveLocation.dnaHash);
+        }
       }
     });
 
@@ -918,7 +920,7 @@ export class MainDashboard extends LitElement {
         await this.handleOpenWal(e.detail);
       }}
         @open-applet-main=${(e: CustomEvent) => {
-        this.openViews.openAppletMain(e.detail);
+        this.openViews.openAppletMain(e.detail.applet, e.detail.wal);
       }}
         style="${this.displayMossView('activity-view')
         ? 'display: flex; flex: 1;'
@@ -1109,7 +1111,7 @@ export class MainDashboard extends LitElement {
       case 'wal':
         return html`<asset-view
           @jump-to-applet=${(e) => {
-            this.openViews.openAppletMain(e.detail);
+            this.openViews.openAppletMain(e.detail.applet, e.detail.wal);
           }}
           .wal=${info.tab.wal}
           style="display: flex; flex: 1;"

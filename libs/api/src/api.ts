@@ -346,7 +346,7 @@ export interface WeaveServices {
    * @param appletHash
    * @returns
    */
-  openAppletMain: (appletHash: EntryHash) => Promise<void>;
+  openAppletMain: (appletHash: EntryHash, wal?: WAL) => Promise<void>;
   /**
    * Open the specified block view of the specified Applet
    * @param appletHash
@@ -499,8 +499,8 @@ export class WeaveClient implements WeaveServices {
   onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onBeforeUnload(callback);
 
-  openAppletMain = async (appletHash: EntryHash): Promise<void> =>
-    window.__WEAVE_API__.openAppletMain(appletHash);
+  openAppletMain = async (appletHash: EntryHash, wal?: WAL): Promise<void> =>
+    window.__WEAVE_API__.openAppletMain(appletHash, wal);
 
   openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
     window.__WEAVE_API__.openAppletBlock(appletHash, block, context);

@@ -418,7 +418,10 @@ export class ActivityView extends LitElement {
               console.log('notification clicked', e.detail);
               this.dispatchEvent(
                 new CustomEvent('open-applet-main', {
-                  detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
+                  detail: { 
+                      applet: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
+                      wal: e.detail.wal,
+                  },
                   bubbles: true,
                   composed: true,
                 }),

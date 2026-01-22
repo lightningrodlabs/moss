@@ -3,7 +3,7 @@ import { WAL, OpenAssetMode } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
 export interface AppOpenViews {
-  openAppletMain(appletHash: EntryHash): void;
+  openAppletMain(appletHash: EntryHash, wal?: WAL): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openCrossGroupMain(toolCompatibilityId: ToolCompatibilityId): void;
   openCrossGroupBlock(toolCompatibilityId: ToolCompatibilityId, block: string, context: any): void;
