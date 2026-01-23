@@ -255,7 +255,7 @@ export class InactiveTools extends LitElement {
                             ${info.toolInfoAndVersions?.icon
                 ? html`<img
                                   src=${info.toolInfoAndVersions.icon}
-                                  alt="Applet logo"
+                                  alt=${msg("Tool logo")}
                                   style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                                 />`
                 : html``}

@@ -270,8 +270,8 @@ export class MainDashboard extends LitElement {
       const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash));
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
-        notifyError('Applet not found in any of your groups.');
-        throw new Error('Applet not found in any of your groups.');
+        notifyError(msg('Tool not found in any of your groups.'));
+        throw new Error('Tool not found in any of your groups.');
       }
       if (
         !this._openApplets
