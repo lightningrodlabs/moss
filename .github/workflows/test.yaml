@@ -65,6 +65,7 @@ jobs:
 
       - name: Build environment 2/2
         run: |
+          yarn fetch:hc
           yarn fetch:binaries
           yarn check:binaries
           yarn install --check-files
