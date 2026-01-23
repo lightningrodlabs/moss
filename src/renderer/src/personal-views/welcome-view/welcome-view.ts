@@ -70,7 +70,7 @@ export class WelcomeView extends LitElement {
   availableMossUpdate: MossUpdateInfo | undefined;
 
   @state()
-  mossUpdatePrecentage: number | undefined;
+  mossUpdatePercentage: number | undefined;
 
   @state()
   updatingTool = false;
@@ -85,11 +85,11 @@ export class WelcomeView extends LitElement {
 
   async firstUpdated() {
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
-    const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();
-    if (availableMossUpdate && !declinedUdpates.includes(availableMossUpdate.version)) {
+    const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
+    if (availableMossUpdate && !declinedUpdates.includes(availableMossUpdate.version)) {
       this.availableMossUpdate = availableMossUpdate;
       window.electronAPI.onMossUpdateProgress((_, progressInfo) => {
-        this.mossUpdatePrecentage = progressInfo.percent;
+        this.mossUpdatePercentage = progressInfo.percent;
         console.log('Download progress: ', progressInfo);
       });
     }
@@ -97,9 +97,9 @@ export class WelcomeView extends LitElement {
 
   async declineMossUpdate() {
     if (this.availableMossUpdate) {
-      const declinedUdpates = this._mossStore.persistedStore.declinedMossUpdates.value();
-      declinedUdpates.push(this.availableMossUpdate.version);
-      this._mossStore.persistedStore.declinedMossUpdates.set(declinedUdpates);
+      const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
+      declinedUpdates.push(this.availableMossUpdate.version);
+      this._mossStore.persistedStore.declinedMossUpdates.set(declinedUpdates);
     }
     this.availableMossUpdate = undefined;
   }
@@ -110,12 +110,12 @@ export class WelcomeView extends LitElement {
       return;
     }
     try {
-      this.mossUpdatePrecentage = 1;
+      this.mossUpdatePercentage = 1;
       await window.electronAPI.installMossUpdate();
     } catch (e) {
       console.error('Moss update failed: ', e);
       notifyError('Update failed (see console for details).');
-      this.mossUpdatePrecentage = undefined;
+      this.mossUpdatePercentage = undefined;
     }
   }
 
@@ -238,12 +238,12 @@ export class WelcomeView extends LitElement {
         : ''}
           </div>
           <div class="row center-content" style="margin-top: 15px;">
-            ${this.mossUpdatePrecentage
+            ${this.mossUpdatePercentage
         ? html`<span class="flex flex-1"></span>
                   <div class="column">
                     <div>Installing...</div>
                     <sl-progress-bar
-                      value="${this.mossUpdatePrecentage}"
+                      value="${this.mossUpdatePercentage}"
                       style="width: 200px; --height: 15px;"
                     ></sl-progress-bar>
                   </div> `
