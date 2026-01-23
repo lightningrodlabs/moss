@@ -16,7 +16,7 @@ const client = new Octokit({
 });
 
 const OWNER = 'lightningrodlabs';
-const REPO = 'we';
+const REPO = 'moss';
 const URL = `/repos/${OWNER}/${REPO}/releases`;
 const VERSION = pkg.version;
 const APP_ID = pkg.name;

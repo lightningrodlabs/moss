@@ -98,6 +98,7 @@ import { Jimp } from 'jimp';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 let appVersion = app.getVersion();
+console.log('MOSS VERSION: ', appVersion);
 
 // console.log('process.argv: ', process.argv);
 
@@ -857,8 +858,12 @@ if (!RUNNING_WITH_COMMAND) {
 
     // Check for updates
     if (app.isPackaged) {
-      autoUpdater.allowPrerelease = true;
+      autoUpdater.allowPrerelease = false;
       autoUpdater.autoDownload = false;
+      autoUpdater.setFeedURL({
+            provider: 'generic',
+            url: 'https://github.com/lightningrodlabs/moss/releases/latest/download'
+      });
 
       // Check for dev update config (for local testing)
       // Set DEV_UPDATE_CONFIG env var to path of dev-app-update.yml
@@ -894,6 +899,7 @@ if (!RUNNING_WITH_COMMAND) {
         breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
         semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
+        console.log('updateCheckResult.files:', JSON.stringify(updateCheckResult.updateInfo.files));
         UPDATE_AVAILABLE = {
           version: updateCheckResult.updateInfo.version,
           releaseDate: updateCheckResult.updateInfo.releaseDate,
