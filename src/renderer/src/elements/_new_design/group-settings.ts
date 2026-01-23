@@ -48,10 +48,6 @@ export class GroupSettings extends LitElement {
     }, 100);
   }
 
-  firstUpated() {
-    // this._dialog.show();
-  }
-
   renderGeneral() {
     return html`<group-general-settings style="margin-top: 45px;"></group-general-settings>`;
   }

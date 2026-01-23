@@ -46,9 +46,6 @@ export class MossDialog extends LitElement {
   @query('#dialog')
   _dialog!: SlDialog;
 
-  firstUpated() {
-    // this._dialog.show();
-  }
 
   render() {
     return html`
