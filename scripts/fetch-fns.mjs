@@ -69,15 +69,15 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 }
 
 
-export function downloadHolochainBinary(binaryFilename, withVersion = true) {
-  let completeBinaryFilename = `${binaryFilename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
-  let binaryFilenameWithVersion = `${binaryFilename}-v${mossConfig[binaryFilename].version}${process.platform === 'win32' ? '.exe' : ''}`
-  const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : binaryFilename);
+export function downloadHolochainBinary(filename, withVersion = true) {
+  let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
+  let binaryFilenameWithVersion = `${filename}-v${mossConfig[filename].version}${process.platform === 'win32' ? '.exe' : ''}`
+  const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}${process.platform === 'win32' ? '.exe' : ''}`);
   const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain.version}/${completeBinaryFilename}`;
   downloadFile(
     holochainBinaryUrl,
     targetPath,
-    mossConfig[binaryFilename].sha256[targetEnding],
+    mossConfig[filename].sha256[targetEnding],
     true,
   );
 }
