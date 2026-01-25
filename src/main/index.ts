@@ -591,7 +591,7 @@ if (!RUNNING_WITH_COMMAND) {
     });
   };
 
-  Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM, () => MAIN_WINDOW));
+  Menu.setApplicationMenu(mossMenu(WE_FILE_SYSTEM));
 
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
