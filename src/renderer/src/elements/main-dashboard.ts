@@ -13,7 +13,7 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { mdiAccountLockOpen, mdiAccountMultiplePlus } from '@mdi/js';
+import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiCog } from '@mdi/js';
 import {
   AppletHash,
   AppletId,
@@ -50,6 +50,7 @@ import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
 import './_new_design/moss-dialog.js';
+import './_new_design/moss-settings/moss-settings.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -1323,27 +1324,12 @@ export class MainDashboard extends LitElement {
         src="turing-pattern-bottom-left.svg"
         style="position: fixed; bottom: 0; left: 0; height: 250px;"
       />
-      <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
-        <div class="column">
-          <div><b>Factory Reset</b></div>
-          <div
-            class="row items-center"
-            style="background: #ffaaaa; padding: 10px 5px; border-radius: 5px;"
-          >
-            <span style="margin-right: 20px;"
-              >Fully reset Moss and <b>delete all associated data</b></span
-            >
-            <sl-button
-              variant="danger"
-              @click=${async () => await window.electronAPI.factoryReset()}
-              >Factory Reset</sl-button
-            >
-          </div>
+      <moss-dialog id="settings-dialog" width="700px">
+        <span slot="header">${msg('Settings')}</span>
+        <div slot="content">
+          <moss-settings></moss-settings>
         </div>
-        <sl-button slot="footer" variant="primary" @click=${() => this.settingsDialog.hide()}
-          >Close</sl-button
-        >
-      </sl-dialog>
+      </moss-dialog>
       <tag-selection-dialog
         id="tag-selection-dialog"
         @asset-relation-tag-selected=${(e) => {
@@ -1578,9 +1564,19 @@ export class MainDashboard extends LitElement {
             </button>
           </sl-tooltip>
           ${this.isLibrarySelected() ? html`<div class="indicator"></div>` : ''}
+          <sl-tooltip .content="${msg('Settings')}" placement="right" hoist>
+            <button
+              class="moss-sidebar-button"
+              @click=${() => this.settingsDialog.show()}
+            >
+              <div class="column center-content">
+                <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 24px;"></sl-icon>
+              </div>
+            </button>
+          </sl-tooltip>
         </div>
 
-        <div class="sidebar-divider" style="margin-top: 14px;"></div>
+        <div class="sidebar-divider" style="margin-top: 8px;"></div>
 
         <groups-sidebar
           class="left-group-sidebar"

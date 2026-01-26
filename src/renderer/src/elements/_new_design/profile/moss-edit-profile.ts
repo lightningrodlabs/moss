@@ -163,9 +163,9 @@ export class MossEditProfile extends LitElement {
           class="moss-input"
           label=${msg('name*')}
           placeholder=${'name or nickname'}
-          minLength="${this.store.config.minNicknameLength}"
+          minLength="${this.store?.config?.minNicknameLength ?? 3}"
           .value=${this.profile?.nickname || ''}
-          .helpText=${msg(str`Min. ${this.store.config.minNicknameLength} characters`)}
+          .helpText=${msg(str`Min. ${this.store?.config?.minNicknameLength ?? 3} characters`)}
           style="width: 350px; margin-bottom: 10px;"
           @input=${(e) => {
             this.nickname = e.target.value;
