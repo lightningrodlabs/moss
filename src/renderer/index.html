@@ -1,88 +1,113 @@
 <!doctype html>
 <html lang="en-GB">
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      html,
-      body {
-        background: #e0eed5;
-        margin: 0px;
-        height: 100%;
-        width: 100%;
-        display: flex;
-        font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
-      }
 
-      body {
-        --sl-color-primary-0: #ecffb6;
-        --sl-color-primary-50: #d8fc74;
-        --sl-color-primary-100: #a7ea03;
-        --sl-color-primary-200: #95d506;
-        --sl-color-primary-300: #82c009;
-        --sl-color-primary-400: #70ab0c;
-        --sl-color-primary-500: #5d960f;
-        --sl-color-primary-600: #4a8011;
-        --sl-color-primary-700: #386b14;
-        --sl-color-primary-800: #255617;
-        --sl-color-primary-900: #13411a;
-        --sl-color-primary-950: #002c1d;
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @font-face {
+      font-family: 'Mossville-v2';
+      src: url('/fonts/Mossville-v2-Regular.woff2') format('woff2'),
+        url('/fonts/Mossville-v2-Regular.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
 
-        --sl-color-secondary-0: #e2cbd4;
-        --sl-color-secondary-50: #d1b7c1;
-        --sl-color-secondary-100: #c0a5af;
-        --sl-color-secondary-200: #af949d;
-        --sl-color-secondary-300: #9f828c;
-        --sl-color-secondary-400: #8e717a;
-        --sl-color-secondary-500: #7d5f68;
-        --sl-color-secondary-600: #6c4d56;
-        --sl-color-secondary-700: #5b3c44;
-        --sl-color-secondary-800: #4b2a33;
-        --sl-color-secondary-900: #3a1921;
-        --sl-color-secondary-950: #29070f;
+    @font-face {
+      font-family: 'Libre Baskerville';
+      src: url('/fonts/LibreBaskerville-VariableFont_wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+    }
 
-        --sl-color-tertiary-0: #e7eeff;
-        --sl-color-tertiary-50: #dde7ff;
-        --sl-color-tertiary-100: #c7d3ef;
-        --sl-color-tertiary-200: #b1bedf;
-        --sl-color-tertiary-300: #9baacf;
-        --sl-color-tertiary-400: #8595bf;
-        --sl-color-tertiary-500: #6f81b0;
-        --sl-color-tertiary-600: #586ca0;
-        --sl-color-tertiary-700: #425890;
-        --sl-color-tertiary-800: #2c4380;
-        --sl-color-tertiary-900: #162f70;
-        --sl-color-tertiary-950: #001a60;
+    @font-face {
+      font-family: 'Libre Baskerville';
+      src: url('/fonts/LibreBaskerville-Italic-VariableFont_wght.ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: italic;
+    }
 
-        --sidebar-width: 80px;
-      }
+    html,
+    body {
+      background: #e0eed5;
+      margin: 0px;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
 
-      sl-alert {
-        --sl-border-radius-medium: 17px;
-        --sl-font-sans: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
-      }
-    </style>
+    body {
+      --sl-color-primary-0: #ecffb6;
+      --sl-color-primary-50: #d8fc74;
+      --sl-color-primary-100: #a7ea03;
+      --sl-color-primary-200: #95d506;
+      --sl-color-primary-300: #82c009;
+      --sl-color-primary-400: #70ab0c;
+      --sl-color-primary-500: #5d960f;
+      --sl-color-primary-600: #4a8011;
+      --sl-color-primary-700: #386b14;
+      --sl-color-primary-800: #255617;
+      --sl-color-primary-900: #13411a;
+      --sl-color-primary-950: #002c1d;
 
-    <title>Moss - Weaving Social Fabric</title>
-  </head>
-  <body>
-    <moss-app id="app-container"></moss-app>
-    <script>
-      window['__HC_LAUNCHER_ENV__'] = {};
-    </script>
-    <!-- code to make on-before-unload working: -->
-    <script>
-      window.electronAPI.onWindowClosing(() => {
-        // This code is required to discern in the window.onbeforeunload callback
-        // whether the onbeforunload event is coming from a page reload or from a
-        // page close
-        window.__WINDOW_CLOSING__ = true;
-      });
-    </script>
-    <script type="module">
-      import '@shoelace-style/shoelace/dist/themes/light.css';
-      import '@fontsource/aileron';
-      import '@fontsource-variable/inter';
-    </script>
-    <script type="module" src="./src/moss-app.ts"></script>
-  </body>
+      --sl-color-secondary-0: #e2cbd4;
+      --sl-color-secondary-50: #d1b7c1;
+      --sl-color-secondary-100: #c0a5af;
+      --sl-color-secondary-200: #af949d;
+      --sl-color-secondary-300: #9f828c;
+      --sl-color-secondary-400: #8e717a;
+      --sl-color-secondary-500: #7d5f68;
+      --sl-color-secondary-600: #6c4d56;
+      --sl-color-secondary-700: #5b3c44;
+      --sl-color-secondary-800: #4b2a33;
+      --sl-color-secondary-900: #3a1921;
+      --sl-color-secondary-950: #29070f;
+
+      --sl-color-tertiary-0: #e7eeff;
+      --sl-color-tertiary-50: #dde7ff;
+      --sl-color-tertiary-100: #c7d3ef;
+      --sl-color-tertiary-200: #b1bedf;
+      --sl-color-tertiary-300: #9baacf;
+      --sl-color-tertiary-400: #8595bf;
+      --sl-color-tertiary-500: #6f81b0;
+      --sl-color-tertiary-600: #586ca0;
+      --sl-color-tertiary-700: #425890;
+      --sl-color-tertiary-800: #2c4380;
+      --sl-color-tertiary-900: #162f70;
+      --sl-color-tertiary-950: #001a60;
+
+      --sidebar-width: 80px;
+    }
+
+    sl-alert {
+      --sl-border-radius-medium: 17px;
+      --sl-font-sans: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+  </style>
+
+  <title>Moss - Weaving Social Fabric</title>
+</head>
+
+<body>
+  <moss-app id="app-container"></moss-app>
+  <script>
+    window['__HC_LAUNCHER_ENV__'] = {};
+  </script>
+  <!-- code to make on-before-unload working: -->
+  <script>
+    window.electronAPI.onWindowClosing(() => {
+      // This code is required to discern in the window.onbeforeunload callback
+      // whether the onbeforunload event is coming from a page reload or from a
+      // page close
+      window.__WINDOW_CLOSING__ = true;
+    });
+  </script>
+  <script type="module">
+    import '@shoelace-style/shoelace/dist/themes/light.css';
+    import '@fontsource/aileron';
+    import '@fontsource-variable/inter';
+  </script>
+  <script type="module" src="./src/moss-app.ts"></script>
+</body>
+
 </html>

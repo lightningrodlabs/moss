@@ -1,8 +1,20 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
+
 import { notify, notifyError } from '@holochain-open-dev/elements';
+
 import { mossStyles } from '../../shared-styles.js';
+import '../../elements/dialogs/select-group-dialog.js';
+import './elements/feed-element.js';
+import '../../applets/elements/applet-logo.js';
+import '../../applets/elements/applet-title.js';
+import '../../elements/dialogs/loading-dialog.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
@@ -15,20 +27,7 @@ import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
-
-import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
-
 import '../../elements/_new_design/moss-dialog.js';
-import '../../elements/dialogs/select-group-dialog.js';
-import './elements/feed-element.js';
-import '../../applets/elements/applet-logo.js';
-import '../../applets/elements/applet-title.js';
-import '../../elements/dialogs/loading-dialog.js';
-import './elements/notification-card.js'
 
 type UpdateFeedMessageGeneric =
   | {
@@ -82,12 +81,6 @@ export class WelcomeView extends LitElement {
     () => [this._mossStore],
   );
 
-  _notificationFeed = new StoreSubscriber(
-    this,
-    () => this._mossStore.notificationFeed(),
-    () => [this._mossStore],
-  );
-
   timeAgo = new TimeAgo('en-US');
 
   async firstUpdated() {
@@ -100,17 +93,6 @@ export class WelcomeView extends LitElement {
         console.log('Download progress: ', progressInfo);
       });
     }
-
-    // Load notifications once
-    this._mossStore.loadNotificationFeed(30);
-
-    // DEV: Start on page 2
-    // setTimeout(() => {
-    //   const sections = this.shadowRoot?.querySelectorAll('.scroll-section');
-    //   if (sections && sections.length > 1) {
-    //     sections[1].scrollIntoView({ behavior: 'auto' });
-    //   }
-    // }, 0);
   }
 
   async declineMossUpdate() {
@@ -333,112 +315,34 @@ export class WelcomeView extends LitElement {
     `;
   }
 
-  renderQuoteOfTheDay() {
-    return html`
-      <div class="quote-of-the-day-container">
-        <div
-          class="quote-of-the-day"
-        >
-          <p>
-            "April weather, rain and sunshine both together."
-          </p>
-          <div>
-            (English country saying)
-          </div>
-        </div>
-
-        <div class="quote-buttons">
-          <button variant="white" @click=${() => { }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.79912 3.0098C3.8801 2.91388 4.00719 2.85742 4.14216 2.85742H11.8604C11.9954 2.85742 12.1226 2.91396 12.2036 3.00999L14.7558 6.0373C14.8833 6.17828 14.8894 6.38044 14.7648 6.52803L8.3443 14.1336C8.26332 14.2295 8.13623 14.286 8.00127 14.286C7.8663 14.286 7.73921 14.2295 7.65823 14.1336L1.22638 6.51456C1.11204 6.37911 1.11204 6.19287 1.22638 6.05742L3.79912 3.0098ZM13.5635 5.89393L12.0147 4.05683L11.3493 5.89598L13.5635 5.89393ZM10.4482 5.89682L11.2722 3.61933H4.73038L5.55599 5.90135L10.4482 5.89682ZM5.83155 6.663L8.00127 12.6601L10.1724 6.65898L5.83155 6.663ZM4.6555 5.90218L3.98767 4.05629L2.42767 5.90425L4.6555 5.90218ZM2.42632 6.66615L6.81108 11.8603L4.93106 6.66383L2.42632 6.66615ZM9.19145 11.8603L13.5849 6.65581L11.0735 6.65814L9.19145 11.8603Z" fill="#151A11"/>
-            </svg>
-            Collect
-          </button>
-          <button variant="white" @click=${() => { }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z" fill="black"/>
-              <path d="M0.531728 9H4.46421C4.67617 9 4.79196 8.75279 4.65626 8.58995L2.69002 6.23047C2.59007 6.11053 2.40586 6.11053 2.30591 6.23047L0.339672 8.58995C0.203979 8.75279 0.319769 9 0.531728 9Z" fill="black"/>
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99797 3C6.44548 3 5.05853 3.70697 4.14065 4.81839C3.96481 5.03131 3.64966 5.06137 3.43674 4.88552C3.22382 4.70968 3.19376 4.39453 3.36961 4.18161C4.46931 2.85003 6.13459 2 7.99797 2C10.9397 2 13.386 4.1165 13.8991 6.90967C13.9046 6.9397 13.9099 6.96981 13.9149 7H12.898C12.435 4.71778 10.4166 3 7.99797 3ZM3.09789 9C3.5609 11.2822 5.57934 13 7.99797 13C9.55046 13 10.9374 12.293 11.8553 11.1816C12.0311 10.9687 12.3463 10.9386 12.5592 11.1145C12.7721 11.2903 12.8022 11.6055 12.6263 11.8184C11.5266 13.15 9.86135 14 7.99797 14C5.05626 14 2.60995 11.8835 2.09688 9.09033C2.09137 9.0603 2.08607 9.03019 2.08101 9H3.09789Z" fill="black"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  renderNotifications() {
-    const notifications = this._notificationFeed.value ?? [];
-    console.log('Rendering notifications: ', notifications);
-    return html`
-      <div
-        class="column"
-        style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
-      >
-        <div class="feed" style="display: flex; flex-direction: column; align-items: center;">
-        ${notifications.length === 0
-        ? html`<div>No notifications yet...</div>`
-        : notifications.map((notification) => this.renderNotification(notification))}
-        </div>
-      </div>
-    `;
-  }
-
-  renderNotification(notification: { appletId: string; notification: any }) {
-    return html`
-      <notification-card
-        style="display: flex; flex: 1;"
-        .notification=${notification.notification}
-        .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-        @open-applet-main=${(e) => {
-        console.log('notification clicked', e.detail);
-        this.dispatchEvent(
-          new CustomEvent('open-applet-main', {
-            detail: {
-              applet: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-              wal: e.detail.wal,
-            },
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }}
-      @open-wal=${async (e) => {
-        this.dispatchEvent(
-          new CustomEvent('open-wal', {
-            detail: e.detail,
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }}
-      ></notification-card>
-    `;
-  }
-
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
           <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
           ${this.renderFeedbackDialog()}
+          <div class="flex-scrollable-parent" style="width: 870px;">
             <div class="flex-scrollable-container">
-              <div class="scroll-section">
-                <div class="column" style="align-items: center;">
-                  ${this.renderQuoteOfTheDay()}
-                  <div class="welcome-message-highlight">
-                  </div>
-                  <div class="welcome-message">
-                    <div>Good morning,</div>
-                    <div>beautiful human!</div>
-                  </div>
+              <div class="column flex-scrollable-y">
+                <div class="column" style="align-items: center; flex: 1; overflow: auto;">
+                  <button
+                    class="feedback-btn"
+                    style="position: absolute; top: 20px; right: 10px;"
+                    @click=${() => this._feedbackDialog.show()}
+                  >
+                    <div class="row items-center" style="font-size: 26px; justify-content: center;">
+                      <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
+                      <span style="margin-left: 5px;">${msg('Feedback')}</span>
+                    </div>
+                  </button>
+
+                  <!-- Moss Update Feed -->
+
+                  ${this.renderUpdateFeed()}
                 </div>
               </div>
-
-              <div class="scroll-section">
-                <!-- ${this.renderUpdateFeed()} -->
-                ${this.renderNotifications()}
-              </div>
             </div>
+          </div>
         `;
     }
   }
@@ -453,128 +357,6 @@ export class WelcomeView extends LitElement {
         /* background-color: var(--moss-dark-green); */
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
-        background: url('/placeholder.png') no-repeat center center fixed;
-        background-size: cover;
-        height: 100%;
-      }
-
-      .flex-scrollable-container {
-        display: flex;
-        flex-direction: column;
-        overflow-y: scroll;
-        scroll-snap-type: y mandatory;
-        height: 100vh;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE/Edge */
-      }
-
-      .flex-scrollable-container::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera */
-      }
-
-      .scroll-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
-        flex-shrink: 0;
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-        transition: all 0.3s ease;
-      }
-
-      .quote-of-the-day-container {
-        margin-top: 20px;
-      }
-
-      .quote-of-the-day {
-        display: inline-flex;
-        padding: 12px 24px;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.70);
-        transition: background 0.3s ease;
-      }
-
-      .quote-of-the-day-container:hover > .quote-of-the-day {
-        background: #fff;
-      }
-      
-      .quote-buttons {
-        margin-top: 4px;
-        display: flex;
-        gap: 4px;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      .quote-buttons > button {
-        display: inline-flex;
-        padding: 4px 6px;
-        justify-content: center;
-        align-items: center;
-        gap: 4px;
-        border-radius: 8px;
-        background: #FFF;
-        border: 0;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        font-weight: 500;
-      }
-
-      .quote-buttons > button:hover {
-        background: var(--Moss-purplr, #7461EB);
-      }
-
-      .quote-of-the-day-container:hover > .quote-buttons {
-        opacity: 1;
-      }
-
-      .quote-of-the-day > p {
-        color: var(--Moss-dark-button, #151A11);
-        text-align: center;
-        font-family: 'Mossville-v2';
-        font-size: 18px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 91%; /* 16.38px */
-        letter-spacing: -0.54px;
-        margin: 0;
-      }
-
-      .quote-of-the-day > div {
-        color: var(--Moss-dark-button, #151A11);
-        text-align: center;
-        font-family: "Libre Baskerville";
-        font-size: 14px;
-        font-style: italic;
-        font-weight: 400;
-        line-height: 16px; /* 114.286% */
-      }
-
-      .welcome-message-highlight {
-        width: 952px;
-        height: 348px;
-        border-radius: 100%;
-        opacity: 0.5;
-        background: #FFF;
-        filter: blur(100px);
-      }
-
-      .welcome-message {
-        margin-top: -225px;
-        color: var(--Moss-dark-button, #151A11);
-        text-align: center;
-        font-family: Mossville-v2;
-        font-size: 48px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 91%; /* 43.68px */
-        letter-spacing: -1.44px;
-        z-index: 1;
       }
 
       .moss-icon {

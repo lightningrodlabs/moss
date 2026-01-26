@@ -38,6 +38,7 @@ export default defineConfig({
     },
   },
   renderer: {
+    publicDir: resolve(__dirname, 'src/renderer/public'),
     build: {
       rollupOptions: {
         input: {
@@ -58,6 +59,10 @@ export default defineConfig({
           {
             src: resolve(__dirname, 'we_logo.png'),
             dest: 'dist/assets',
+          },
+          {
+            src: resolve(__dirname, 'src/renderer/public/fonts'),
+            dest: '',
           },
         ],
       }),
