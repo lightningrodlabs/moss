@@ -25,6 +25,10 @@ export async function launch(
   runOptions: RunOptions,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
+  //console.log('runOptions: ', JSON.stringify(runOptions, null, 2));
+  if (!runOptions.bootstrapUrl || !runOptions.signalingUrl || !runOptions.relayUrl) {
+      throw new Error(`Failed to launch HolochainManager: bootstrapUrl, relayUrl or signalingUrl is not set in runOptions.`);
+  }
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);
   if (!lairHandleTemp.stdout) {
@@ -85,6 +89,7 @@ export async function launch(
       lairUrl,
       runOptions.bootstrapUrl!,
       runOptions.signalingUrl!,
+      runOptions.relayUrl!,
       runOptions.iceUrls,
       runOptions.holochainRustLog,
       runOptions.holochainWasmLog,

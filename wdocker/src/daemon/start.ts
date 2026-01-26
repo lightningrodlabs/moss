@@ -17,6 +17,7 @@ import {
   DEFAULT_ICE_URLS,
   PRODUCTION_BOOTSTRAP_URLS,
   PRODUCTION_SIGNALING_URLS,
+  PRODUCTION_RELAY_URLS,
 } from '../const.js';
 import { nanoid } from 'nanoid';
 import { MOSS_CONFIG } from '../const.js';
@@ -143,6 +144,7 @@ export async function startConductor(
 
   const bootstrapUrl = PRODUCTION_BOOTSTRAP_URLS[0];
   const signalUrl = PRODUCTION_SIGNALING_URLS[0];
+  const relayUrl = PRODUCTION_RELAY_URLS[0];
   const iceUrls = DEFAULT_ICE_URLS;
   const rustLog = wDockerFs.wdockerConductorConfig.rustLog;
   const wasmLog = wDockerFs.wdockerConductorConfig.wasmLog;
@@ -176,6 +178,7 @@ export async function startConductor(
   // network parameters
   conductorConfig.network.bootstrap_url = bootstrapUrl;
   conductorConfig.network.signal_url = signalUrl;
+  conductorConfig.network.relay_url = relayUrl;
   conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
   console.log('Writing conductor-config.yaml...');

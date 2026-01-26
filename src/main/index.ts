@@ -60,6 +60,7 @@ import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
   PRODUCTION_BOOTSTRAP_URLS,
   PRODUCTION_SIGNALING_URLS,
+  PRODUCTION_RELAY_URLS,
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
@@ -250,6 +251,7 @@ if (!RUNNING_WITH_COMMAND) {
     cliOpts.devConfig = cliOpts.devConfig ? cliOpts.devConfig : 'weave.dev.config.ts';
   }
 
+  //console.log('RUNNING MOSS WITH CLI OPTIONS: ', cliOpts);
   const RUN_OPTIONS = validateArgs(cliOpts);
   // app.commandLine.appendSwitch('enable-logging');
 
@@ -826,10 +828,10 @@ if (!RUNNING_WITH_COMMAND) {
 
     SYSTRAY.setContextMenu(contextMenu);
 
-    if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl) {
+    if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl || !RUN_OPTIONS.relayUrl) {
       // in dev mode
       if (RUN_OPTIONS.devInfo) {
-        const [bootstrapUrl, signalingUrl, localServicesHandle] =
+        const [bootstrapUrl, signalingUrl, relayUrl, localServicesHandle] =
           RUN_OPTIONS.devInfo.agentIdx === 1
             ? await startLocalServices()
             : await readLocalServices();
@@ -839,6 +841,9 @@ if (!RUNNING_WITH_COMMAND) {
         RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
           ? RUN_OPTIONS.signalingUrl
           : signalingUrl;
+        RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
+          ? RUN_OPTIONS.relayUrl
+          : relayUrl;
         LOCAL_SERVICES_HANDLE = localServicesHandle;
       } else {
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
@@ -847,6 +852,9 @@ if (!RUNNING_WITH_COMMAND) {
         RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
           ? RUN_OPTIONS.signalingUrl
           : PRODUCTION_SIGNALING_URLS[0];
+          RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
+            ? RUN_OPTIONS.relayUrl
+            : PRODUCTION_RELAY_URLS[0];
       }
     }
 

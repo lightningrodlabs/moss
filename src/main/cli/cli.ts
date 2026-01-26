@@ -30,6 +30,10 @@ export const PRODUCTION_SIGNALING_URLS = [
   'wss://signal-0.infra.holochain.org',
   'wss://signal.holo.host',
 ];
+// The first one will be picked by default.
+export const PRODUCTION_RELAY_URLS = [
+    "https://use1-1.relay.n0.iroh-canary.iroh.link./",
+];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 
 export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
@@ -49,6 +53,7 @@ export interface CliOpts {
   lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
+  relayUrl?: string;
   iceUrls?: string;
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
@@ -60,6 +65,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
+  relayUrl: string | undefined;
   iceUrls: string[];
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
@@ -181,6 +187,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
+    relayUrl: args.relayUrl,
     iceUrls: args.iceUrls ? args.iceUrls.split(',') : DEFAULT_ICE_URLS,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
