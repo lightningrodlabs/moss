@@ -75,6 +75,7 @@ jobs:
         run: |
           yarn build:mac-arm64
           ls dist
+          cat latest-mac.yml
 
       - name: build and upload the app (macOS x86)
         if: matrix.platform == 'macos-15-intel'

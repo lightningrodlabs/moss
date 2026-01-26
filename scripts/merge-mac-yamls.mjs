@@ -168,7 +168,7 @@ const getPlatformFromLatestMacYml = (content) => {
     } else {
       console.log(`[remote] ${FILE_NAME} found`);
     }
-
+    console.log(`[remote] deleting ${FILE_NAME}:\n`, remoteLatestMacYmlContent);
     await client.request(`DELETE ${URL}/assets/${originalAsset.id}`);
     console.log(`[remote] deleted ${FILE_NAME}`);
   } catch (e) {
