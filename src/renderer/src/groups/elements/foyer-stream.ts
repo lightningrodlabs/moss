@@ -343,7 +343,7 @@ export class FoyerStream extends LitElement {
           e.stopPropagation();
         }
       }}
-            placeholder="my message"
+            placeholder=${msg('my message')}
           ></sl-input>
           <button
             class="moss-button"

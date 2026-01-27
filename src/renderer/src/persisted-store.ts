@@ -16,6 +16,19 @@ export class PersistedStore {
   }
 
   /**
+   * User's preferred locale for the UI (e.g. 'en', 'de', 'fr', 'es')
+   */
+  locale: SubStore<string, string, []> = {
+    value: () => {
+      const locale = this.store.getItem<string>('locale');
+      return locale ? locale : 'en';
+    },
+    set: (value) => {
+      this.store.setItem<string>('locale', value);
+    },
+  };
+
+  /**
    * Whether the applet sidebar is in collapsed mode or not
    */
   appletSidebarCollapsed: SubStore<boolean, boolean, []> = {

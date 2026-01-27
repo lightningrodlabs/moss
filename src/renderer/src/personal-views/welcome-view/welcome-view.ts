@@ -162,20 +162,19 @@ export class WelcomeView extends LitElement {
           class="row" slot="header"
         >
           ${commentHeartIconFilled(28)}
-          <span style="margin-left: 5px;">Feedback</span>
+          <span style="margin-left: 5px;">${msg('Feedback')}</span>
         </div>
         <div slot="content">
-          Moss development is in alpha stage. We highly appreciate active feedback.<br /><br />
+          ${msg('Moss development is in alpha stage. We highly appreciate active feedback.')}<br /><br />
 
-          If you are encountering a problem and are familiar with Github, you can<br /><br />
+          ${msg('If you are encountering a problem and are familiar with Github, you can')}<br /><br />
 
           <a href="https://github.com/lightningrodlabs/moss/issues/new"
-            >create an issue on Github</a
+            >${msg('create an issue on Github')}</a
           >
           <br />
           <br />
-          If you have more general feedback or are not familiar with Github, you can write to the
-          following email address:<br /><br />
+          ${msg('If you have more general feedback or are not familiar with Github, you can write to the following email address:')}<br /><br />
 
           <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
@@ -225,7 +224,7 @@ export class WelcomeView extends LitElement {
           <div class="row" style="align-items: center;">
             <img src="icon.png" class="moss-icon" />
             <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
-              Moss Update Available:
+              ${msg('Moss Update Available:')}
             </div>
             <div style="margin-left: 10px; font-size: 28px;">
               v${this.availableMossUpdate?.version}
@@ -241,7 +240,7 @@ export class WelcomeView extends LitElement {
             ${this.mossUpdatePercentage
         ? html`<span class="flex flex-1"></span>
                   <div class="column">
-                    <div>Installing...</div>
+                    <div>${msg('Installing...')}</div>
                     <sl-progress-bar
                       value="${this.mossUpdatePercentage}"
                       style="width: 200px; --height: 15px;"
@@ -289,21 +288,20 @@ export class WelcomeView extends LitElement {
         class="column"
         style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
       >
-        <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
+        <h1>🏄 &nbsp;&nbsp;${msg('Moss Updates')}&nbsp;&nbsp; 🚧</h1>
         <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
-          >Thank you for surfing the edge of
-          <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are relevant
-          updates for early weavers.</span
+          >${msg('Thank you for surfing the edge of')}
+          <a href="https://theweave.social" style="color: yellow;">${msg('the Weave')}</a>. ${msg('Below are relevant updates for early weavers.')}</span
         >
         ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
         ${composedFeed.length === 0
-        ? html`No big waves lately...`
+        ? html`${msg('No big waves lately...')}`
         : composedFeed.map(
           (message) => html`
                 <div class="update-feed-el">
                   <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
                   <div class="update-type">
-                    ${message.type === 'Moss' ? message.content.type : 'Tool Update'}
+                    ${message.type === 'Moss' ? message.content.type : msg('Tool Update')}
                   </div>
                   ${message.type === 'Moss'
               ? unsafeHTML(markdownParseSafe(message.content.message))
@@ -319,7 +317,7 @@ export class WelcomeView extends LitElement {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
-          <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
+          <loading-dialog id="loading-dialog" .loadingText=${msg('Updating Tool...')}></loading-dialog>
           ${this.renderFeedbackDialog()}
           <div class="flex-scrollable-parent" style="width: 870px;">
             <div class="flex-scrollable-container">

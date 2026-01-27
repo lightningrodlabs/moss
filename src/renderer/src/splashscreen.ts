@@ -169,7 +169,7 @@ export class SplashScreen extends LitElement {
   renderSetup() {
     return html`
       <div class="column items-center" style="font-size: 16px;">
-        <h1>Moss Setup</h1>
+        <h1>${msg('Moss Setup')}</h1>
         <div style="max-width: 700px; text-align: center; line-height: 1.5;">
           ${msg('Choose whether you want to set up Moss with or without a password.')}
         </div>
@@ -214,12 +214,12 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="column center-content">
         <div class="row" style="align-items: center;">
-          <h1>Choose Password</h1>
+          <h1>${msg('Choose Password')}</h1>
         </div>
         <div class="warning" style="font-size: 17px; max-width: 500px; text-align: center;">
-          This password cannot be reset. Write it down or store it somewhere safe.
+          ${msg('This password cannot be reset. Write it down or store it somewhere safe.')}
         </div>
-        <h3>Password:</h3>
+        <h3>${msg('Password:')}</h3>
         <input
           autofocus
           @input=${(_e: InputEvent) => {
@@ -237,7 +237,7 @@ export class SplashScreen extends LitElement {
             style="margin-top: 10px; margin-bottom: 30px;"
             .disabled=${!this.passwordInput || this.passwordInput!.value.length === 0}
           >
-            ${'Next'}
+            ${msg('Next')}
           </button>
         </div>
       </div>
@@ -248,9 +248,9 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="column center-content">
         <div class="row" style="align-items: center;">
-          <h1>Confirm Password</h1>
+          <h1>${msg('Confirm Password')}</h1>
         </div>
-        <h3>Password:</h3>
+        <h3>${msg('Password:')}</h3>
         <input
           @input=${(_e: InputEvent) => this.checkPasswords()}
           id="confirm-password-input"
@@ -264,7 +264,7 @@ export class SplashScreen extends LitElement {
           }}
         />
         <div class="input-error ${this.passwordsDontMatch ? '' : 'color-transparent'}">
-          Passwords don't match!
+          ${msg("Passwords don't match!")}
         </div>
         <button
           @click=${() => this.setupAndLaunch()}
@@ -272,7 +272,7 @@ export class SplashScreen extends LitElement {
           style="margin-top: 10px; margin-bottom: 30px;"
           .disabled=${this.setupDisabled()}
         >
-          Setup and Launch
+          ${msg('Setup and Launch')}
         </button>
       </div>
     `;
@@ -281,7 +281,7 @@ export class SplashScreen extends LitElement {
   renderEnterPassword() {
     return html`
       <div class="column center-content">
-        <h3>Enter Password:</h3>
+        <h3>${msg('Enter Password:')}</h3>
         <input
           autofocus
           @input=${(_e: InputEvent) => {
@@ -305,7 +305,7 @@ export class SplashScreen extends LitElement {
           style="margin-top: 30px; margin-bottom: 30px;"
           .disabled=${!this.password || this.password === ''}
         >
-          Launch
+          ${msg('Launch')}
         </button>
       </div>
     `;
@@ -338,7 +338,7 @@ export class SplashScreen extends LitElement {
   renderContent() {
     switch (this.view) {
       case SplashScreenMode.Loading:
-        return html`loading`;
+        return html`${msg('loading')}`;
       case SplashScreenMode.Setup:
         return this.renderSetup();
       case SplashScreenMode.SetupPassword:
@@ -371,7 +371,7 @@ export class SplashScreen extends LitElement {
               (window as any).electronAPI.exit();
             }
           }}
-          title="Quit"
+          title=${msg('Quit')}
           class="exit-icon"
           .src=${wrapPathInSvg(mdiClose)}
         ></sl-icon>
@@ -383,23 +383,23 @@ export class SplashScreen extends LitElement {
     return html`
       <sl-dialog style="color: black;" id="settings-dialog" label="${msg('Settings')}">
         <div class="column">
-          <div><b>Factory Reset</b></div>
+          <div><b>${msg('Factory Reset')}</b></div>
           <div
             class="row items-center"
             style="background: #ffaaaa; padding: 10px 5px; border-radius: 5px;"
           >
             <span style="margin-right: 20px;"
-              >Fully reset Moss and <b>delete all associated data</b></span
+              >${msg('Fully reset Moss and')} <b>${msg('delete all associated data')}</b></span
             >
             <sl-button
               variant="danger"
               @click=${async () => await (window as any).electronAPI.factoryReset()}
-              >Factory Reset</sl-button
+              >${msg('Factory Reset')}</sl-button
             >
           </div>
         </div>
         <sl-button slot="footer" variant="primary" @click=${() => this.settingsDialog.hide()}
-          >Close</sl-button
+          >${msg('Close')}</sl-button
         >
       </sl-dialog>
       <div class="background">

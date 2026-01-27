@@ -6,10 +6,12 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { mossStyles } from '../../../shared-styles.js';
 import './profile-settings.js';
+import './language-settings.js';
 import './danger-zone-settings.js';
 
 enum TabsState {
   Profile,
+  Language,
   DangerZone,
 }
 
@@ -26,6 +28,10 @@ export class MossSettings extends LitElement {
     return html`<moss-profile-settings style="margin-top: 45px;"></moss-profile-settings>`;
   }
 
+  renderLanguage() {
+    return html`<moss-language-settings style="margin-top: 45px;"></moss-language-settings>`;
+  }
+
   renderDangerZone() {
     return html`<moss-danger-zone-settings></moss-danger-zone-settings>`;
   }
@@ -34,6 +40,8 @@ export class MossSettings extends LitElement {
     switch (this.tabsState) {
       case TabsState.Profile:
         return this.renderProfile();
+      case TabsState.Language:
+        return this.renderLanguage();
       case TabsState.DangerZone:
         return this.renderDangerZone();
     }
@@ -49,6 +57,14 @@ export class MossSettings extends LitElement {
           }}
         >
           ${msg('Profile')}
+        </button>
+        <button
+          class="tab ${this.tabsState === TabsState.Language ? 'tab-selected' : ''}"
+          @click=${() => {
+            this.tabsState = TabsState.Language;
+          }}
+        >
+          ${msg('Language')}
         </button>
         <button
           class="tab ${this.tabsState === TabsState.DangerZone ? 'tab-selected' : ''}"

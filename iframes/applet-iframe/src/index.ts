@@ -60,6 +60,7 @@ declare global {
     __WEAVE_IFRAME_KIND__: IframeKind;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
+    __WEAVE_LOCALE__: string;
     __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
@@ -72,6 +73,7 @@ declare global {
       value: AsyncStatus<AssetStoreContent>;
     }>;
     'remote-signal-received': CustomEvent<Uint8Array>;
+    'locale-change': CustomEvent<string>;
   }
 }
 
@@ -188,6 +190,16 @@ const weaveApi: WeaveServices = {
 
   mossVersion: () => {
     return window.__MOSS_VERSION__;
+  },
+
+  getLocale: () => {
+    return window.__WEAVE_LOCALE__ || 'en';
+  },
+
+  onLocaleChange: (callback: (locale: string) => any) => {
+    const listener = (e: CustomEvent<string>) => callback(e.detail);
+    window.addEventListener('locale-change', listener);
+    return () => window.removeEventListener('locale-change', listener);
   },
 
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
@@ -408,6 +420,7 @@ const weaveApi: WeaveServices = {
 
   window.__WEAVE_PROTOCOL_VERSION__ = iframeConfig.weaveProtocolVersion;
   window.__MOSS_VERSION__ = iframeConfig.mossVersion;
+  window.__WEAVE_LOCALE__ = iframeConfig.type !== 'not-installed' ? iframeConfig.locale : 'en';
 
   // add eventlistener for clipboard
   window.addEventListener('keydown', async (zEvent) => {
@@ -549,6 +562,15 @@ const handleEventMessage = async (message: ParentToAppletMessage) => {
       const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
       await Promise.all(
         allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
+      );
+      // return 1 to indicate that message was handled
+      return 1;
+    case 'locale-change':
+      window.__WEAVE_LOCALE__ = message.locale;
+      window.dispatchEvent(
+        new CustomEvent('locale-change', {
+          detail: message.locale,
+        }),
       );
       // return 1 to indicate that message was handled
       return 1;

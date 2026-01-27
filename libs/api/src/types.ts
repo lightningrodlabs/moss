@@ -309,6 +309,10 @@ export type ParentToAppletMessage =
   | {
       type: 'remote-signal-received';
       payload: Uint8Array;
+    }
+  | {
+      type: 'locale-change';
+      locale: string;
     };
 
 export type IframeKind =
@@ -543,6 +547,10 @@ export type IframeConfig =
       authenticationToken: AppAuthenticationToken;
       weaveProtocolVersion: string;
       mossVersion: string;
+      /**
+       * The current UI locale (e.g. 'en', 'de', 'fr', 'es')
+       */
+      locale: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
       groupHash: DnaHash | null;
@@ -557,6 +565,10 @@ export type IframeConfig =
       mainUiOrigin: string;
       weaveProtocolVersion: string;
       mossVersion: string;
+      /**
+       * The current UI locale (e.g. 'en', 'de', 'fr', 'es')
+       */
+      locale: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
       zomeCallLogging: boolean;
     }

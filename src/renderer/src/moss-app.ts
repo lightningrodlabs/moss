@@ -16,6 +16,7 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
+import { setLocale, getBrowserLocale, isSupportedLocale } from './locales/localization.js';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
@@ -99,6 +100,9 @@ export class MossApp extends LitElement {
   private loadingText = 'loading...';
 
   async firstUpdated() {
+    // Initialize locale from persisted storage or browser preference
+    await this.initializeLocale();
+
     this.loadingText = 'loading...';
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
@@ -118,6 +122,39 @@ export class MossApp extends LitElement {
       async () => await this._mossStore.checkForUiUpdates(),
       3_600_000,
     );
+  }
+
+  /**
+   * Initialize locale from persisted storage or browser preference.
+   * Called before MossStore is created, so we read directly from localStorage.
+   */
+  private async initializeLocale() {
+    // Read directly from localStorage since MossStore may not be initialized yet
+    const storedItem = window.localStorage.getItem('locale');
+    let locale = 'en';
+
+    if (storedItem) {
+      try {
+        // PersistedStore uses JSON.stringify, so we need to parse
+        const parsed = JSON.parse(storedItem);
+        if (isSupportedLocale(parsed)) {
+          locale = parsed;
+        }
+      } catch {
+        // If parsing fails, use browser locale as fallback
+        locale = getBrowserLocale();
+      }
+    } else {
+      // No stored preference, detect from browser
+      locale = getBrowserLocale();
+    }
+
+    try {
+      await setLocale(locale);
+    } catch (e) {
+      console.warn('Failed to set locale:', e);
+      // Locale files may not exist yet, continue with English
+    }
   }
 
   disconnectedCallback(): void {
@@ -277,7 +314,7 @@ export class MossApp extends LitElement {
           <div class="column items-center">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'My group is called'}</span
+              >${msg('My group is called')}</span
             >
 
             <sl-input
@@ -358,7 +395,7 @@ export class MossApp extends LitElement {
           <div class="column items-center flex-1" style="height: calc(100% - 28px);">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'Choose Group Type'}</span
+              >${msg('Choose Group Type')}</span
             >
 
             <sl-radio-group
@@ -481,10 +518,10 @@ export class MossApp extends LitElement {
         <div class="moss-card" style="width: 630px; height: 466px;">
           <div class="column items-center">
             <div class="card-title" style="margin-top: 30px;">
-              ${joining ? 'Joining group' : 'Creating a new space'}
+              ${joining ? msg('Joining group') : msg('Creating a new space')}
             </div>
             <div class="card-title medium-green" style="margin-bottom: 38px;">
-              ${'in the beautiful p2p realm.'}
+              ${msg('in the beautiful p2p realm.')}
             </div>
 
             <img src="loading_animation.svg" />
@@ -581,7 +618,7 @@ export class MossApp extends LitElement {
           class="skip-button"
           style="position: absolute; bottom: 10px;"
         >
-          ${'Skip Setup'}
+          ${msg('Skip Setup')}
         </button>
       </div>
     `;

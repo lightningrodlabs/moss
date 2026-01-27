@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../../types';
 import { getPrimaryVersionBranch } from '../../../utils';
 import { mossStyles } from '../../../shared-styles';
@@ -64,7 +64,7 @@ export class LibraryToolDetails extends LitElement {
           ${showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
-            .buttonText=${msg(`Install v${version.version} to a group space`)}
+            .buttonText=${msg(str`Install v${version.version} to a group space`)}
             @group-selected=${async (e: CustomEvent) => {
           this.dispatchEvent(
             new CustomEvent('install-tool-to-group', {
@@ -224,7 +224,7 @@ export class LibraryToolDetails extends LitElement {
             ${primaryBranch ? html`
               <select-group
                 .buttonWidth=${'auto'}
-                .buttonText=${msg(`Install v${primaryBranch.latestVersion.version} to a group space`)}
+                .buttonText=${msg(str`Install v${primaryBranch.latestVersion.version} to a group space`)}
                 @group-selected=${async (e: CustomEvent) => {
           this.dispatchEvent(
             new CustomEvent('install-tool-to-group', {
@@ -244,7 +244,7 @@ export class LibraryToolDetails extends LitElement {
                 .buttonText=${(() => {
           if (this.tool?.toolInfoAndVersions.versions && this.tool.toolInfoAndVersions.versions.length > 0) {
             const version = this.tool.toolInfoAndVersions.versions[0].version;
-            return msg(`Install v${version} to a group space`);
+            return msg(str`Install v${version} to a group space`);
           }
           return undefined;
         })()}

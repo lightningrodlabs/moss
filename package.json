@@ -64,6 +64,8 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
+    "i18n:extract": "cd src/renderer && npx lit-localize extract",
+    "i18n:build": "cd src/renderer && npx lit-localize build",
     "test": "yarn workspace tests test",
     "update-server": "node scripts/update-server.mjs",
     "gen-update-meta": "node scripts/generate-update-yml.mjs"

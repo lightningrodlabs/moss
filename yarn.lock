@@ -1646,6 +1646,21 @@
   resolved "https://registry.npmjs.org/@holochain-playground/cli/-/cli-0.1.1.tgz"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
+"@holochain/client@=0.20.3-rc.0":
+  version "0.20.3-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.3-rc.0.tgz#0aee998bfa72ebe92f2f12ca73c30a65a508ae47"
+  integrity sha512-BxYy+2KwpdzkwVXFAGMlPBryjgq31wbV9Avx4ciIEdVrixtn5qmFuAUzdy6HziKYrkLWOesMF7wsxS15x3eEmA==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@msgpack/msgpack" "^3.1.2"
+    emittery "^1.2.0"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.8"
+    js-sha512 "^0.9.0"
+    libsodium-wrappers "^0.8"
+    lodash-es "^4.17.21"
+    ws "^8.18.3"
+
 "@holochain/client@^0.20.0":
   version "0.20.2"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.2.tgz#08166c6dc4411dbb703e256296668d31a4606677"
@@ -2251,7 +2266,7 @@
   dependencies:
     "@lit/reactive-element" "^1.6.2 || ^2.1.0"
 
-"@lit/localize-tools@^0.7.1":
+"@lit/localize-tools@^0.7.0", "@lit/localize-tools@^0.7.1":
   version "0.7.2"
   resolved "https://registry.npmjs.org/@lit/localize-tools/-/localize-tools-0.7.2.tgz"
   integrity sha512-d5tehVao3Hz1DlTq6jy7TUYrCeyFi/E4BkzWr8MuAMjIM8aoKCR9s3cUw6m++8ZIiqGm2z7+6aHaPc/p1FGHyA==
@@ -3154,7 +3169,7 @@
   version "0.6.4"
   dependencies:
     "@holochain-open-dev/profiles" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
@@ -3165,7 +3180,7 @@
     "@holochain-open-dev/profiles" "^0.600.0"
     "@holochain-open-dev/stores" "^0.600.0"
     "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -3178,14 +3193,14 @@
   version "0.5.1"
   dependencies:
     "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.1"
 
 "@theweave/utils@file:shared/utils":
   version "0.5.1"
   dependencies:
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.3-rc.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.1"
     "@theweave/moss-types" "^0.5.1"

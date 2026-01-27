@@ -105,7 +105,7 @@ export class DangerTone extends LitElement {
         <div class="row items-center" style="margin-bottom: 20px;">
           <button
             class="moss-button"
-            style="height: 22px; min-width: 160px;"
+            style="min-height: 22px; min-width: 160px; padding: 8px 12px; text-align: center;"
             @click=${async () => {
         this.dispatchEvent(
           new CustomEvent('disable-group', {
@@ -116,9 +116,9 @@ export class DangerTone extends LitElement {
         );
       }}
           >
-            <div class="row center-content">
+            <div class="column center-content">
               <sl-icon
-                style="margin-right: 5px; font-size: 1.3rem;"
+                style="margin-bottom: 4px; font-size: 1.3rem;"
                 .src=${wrapPathInSvg(mdiPowerPlugOffOutline)}
               ></sl-icon>
               <div>${msg('Disable Group')}</div>
@@ -133,12 +133,12 @@ export class DangerTone extends LitElement {
         <div class="row items-center">
           <button
             class="moss-button center-content"
-            style="height: 22px; min-width: 160px; background: #b70000;"
+            style="min-height: 22px; min-width: 160px; padding: 8px 12px; text-align: center; background: #b70000;"
             @click=${() => this.dialog.show()}
           >
-            <div class="row center-content">
+            <div class="column center-content">
               <div>${doorIcon(20)}</div>
-              <div style="margin-left: 10px;">${msg('Leave Group')}</div>
+              <div style="margin-top: 4px;">${msg('Leave Group')}</div>
             </div>
           </button>
           <div style="margin-left: 40px;">

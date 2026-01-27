@@ -730,7 +730,7 @@ export class GroupHome extends LitElement {
         if (!this._groupDescription.value.value || !this._groupDescription.value.value.data?.trim()) {
           return html`
             <div class="column center-content" style="flex: 1; padding: 40px 0;">
-              No group description.
+              ${msg('No group description.')}
               <button
                 class="moss-button"
                 style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
@@ -740,14 +740,14 @@ export class GroupHome extends LitElement {
               this._editGroupDescription = true;
             }}
               >
-                + Add Description
+                ${msg('+ Add Description')}
               </button>
             </div>
           `;
         } else {
           return html`
             <div class="column" style="position: relative;">
-              <sl-tooltip content="Edit Description">
+              <sl-tooltip content=${msg('Edit Description')}>
                 <button
                   class="moss-button"
                   style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
@@ -817,7 +817,7 @@ export class GroupHome extends LitElement {
       }}
         title=${hashB64}
         class="copyable-hash"
-        >${msg(text)}: ${hashText}</span
+        >${text}: ${hashText}</span
       >
     `;
   }
