@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -12,7 +13,8 @@ import type SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialo
  * Dialog showing a captured screenshot with a text area for feedback.
  *
  * @element feedback-dialog
- * @fires feedback-submitted - { detail: { screenshot: string, text: string } }
+ * @fires feedback-submitted - { detail: { screenshot: string, text: string, mossVersion: string, os: string } }
+ * @fires feedback-copied - { detail: { screenshot: string, text: string, mossVersion: string, os: string } }
  * @fires feedback-cancelled
  */
 @localized()
@@ -20,6 +22,12 @@ import type SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialo
 export class FeedbackDialog extends LitElement {
   @property({ type: String })
   screenshot: string = '';
+
+  @property({ type: String })
+  mossVersion: string = '';
+
+  @property({ type: String })
+  os: string = '';
 
   @state()
   private _feedbackText: string = '';
@@ -47,12 +55,33 @@ export class FeedbackDialog extends LitElement {
         detail: {
           screenshot: this.screenshot,
           text: this._feedbackText,
+          mossVersion: this.mossVersion,
+          os: this.os,
         },
         bubbles: true,
         composed: true,
       }),
     );
     this._submitting = false;
+    this.hide();
+  }
+
+  private async _copyToClipboard() {
+    const markdown = `## Design Feedback\n\n${this._feedbackText}\n\n### Screenshot\n\n![screenshot](${this.screenshot})\n\n### Environment\n- **Moss version:** ${this.mossVersion}\n- **OS:** ${this.os}`;
+    await navigator.clipboard.writeText(markdown);
+    notify(msg('Copied to clipboard'));
+    this.dispatchEvent(
+      new CustomEvent('feedback-copied', {
+        detail: {
+          screenshot: this.screenshot,
+          text: this._feedbackText,
+          mossVersion: this.mossVersion,
+          os: this.os,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
     this.hide();
   }
 
@@ -86,10 +115,24 @@ export class FeedbackDialog extends LitElement {
               this._feedbackText = (e.target as HTMLTextAreaElement).value;
             }}
           ></sl-textarea>
+          <div class="disclaimer">
+            ${msg('This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the')}
+            <a href="https://github.com/lightningrodlabs/moss" target="_blank"
+              >${msg('Moss GitHub repo')}</a
+            >.
+            ${msg('If you want to send it privately, press "Copy" to copy the feedback to your clipboard to send by other means.')}
+          </div>
         </div>
         <div slot="footer" class="row" style="gap: 8px; justify-content: flex-end;">
           <sl-button variant="default" @click=${this._cancel}>
             ${msg('Cancel')}
+          </sl-button>
+          <sl-button
+            variant="default"
+            ?disabled=${!this._feedbackText.trim()}
+            @click=${this._copyToClipboard}
+          >
+            ${msg('Copy')}
           </sl-button>
           <sl-button
             variant="primary"
@@ -110,6 +153,7 @@ export class FeedbackDialog extends LitElement {
       border-radius: 8px;
       overflow: hidden;
       max-height: 400px;
+      padding: 8px;
     }
 
     .screenshot-img {
@@ -118,6 +162,16 @@ export class FeedbackDialog extends LitElement {
       display: block;
       object-fit: contain;
       max-height: 400px;
+    }
+
+    .disclaimer {
+      font-size: 13px;
+      opacity: 0.7;
+      line-height: 1.4;
+    }
+
+    .disclaimer a {
+      color: var(--sl-color-primary-600, #4c8cf5);
     }
   `;
 }

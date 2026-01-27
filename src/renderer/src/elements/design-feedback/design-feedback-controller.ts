@@ -7,6 +7,7 @@ import './area-selector.js';
 import './feedback-dialog.js';
 import { FeedbackDialog } from './feedback-dialog.js';
 import { PersistedStore } from '../../persisted-store.js';
+import { getAppVersion } from '../../electron-api.js';
 
 type FeedbackState = 'idle' | 'capturing' | 'selecting' | 'dialog';
 
@@ -25,6 +26,8 @@ export class DesignFeedbackController extends LitElement {
   @state() private _enabled = false;
   @state() private _fullScreenshot: string = '';
   @state() private _croppedScreenshot: string = '';
+  @state() private _mossVersion: string = '';
+  @state() private _os: string = '';
 
   @query('feedback-dialog')
   private _feedbackDialog!: FeedbackDialog;
@@ -34,20 +37,25 @@ export class DesignFeedbackController extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._enabled = this._persistedStore.designFeedbackMode.value();
-    // Listen for changes from settings
+    this._os = navigator.userAgent;
+    getAppVersion().then((v) => {
+      this._mossVersion = v;
+    });
     window.addEventListener('design-feedback-mode-changed', this._onModeChanged as EventListener);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    window.removeEventListener('design-feedback-mode-changed', this._onModeChanged as EventListener);
+    window.removeEventListener(
+      'design-feedback-mode-changed',
+      this._onModeChanged as EventListener,
+    );
   }
 
   private _onModeChanged = (e: CustomEvent<boolean>) => {
     this._enabled = e.detail;
   };
 
-  /** Re-check persisted store (called externally if needed) */
   refresh() {
     this._enabled = this._persistedStore.designFeedbackMode.value();
   }
@@ -55,7 +63,6 @@ export class DesignFeedbackController extends LitElement {
   private async _startCapture() {
     this._state = 'capturing';
     try {
-      // Capture the full screen via Electron IPC
       this._fullScreenshot = await window.electronAPI.captureScreen();
       this._state = 'selecting';
     } catch (e) {
@@ -64,15 +71,17 @@ export class DesignFeedbackController extends LitElement {
     }
   }
 
-  private async _onAreaSelected(e: CustomEvent<{ x: number; y: number; width: number; height: number }>) {
+  private async _onAreaSelected(
+    e: CustomEvent<{ x: number; y: number; width: number; height: number }>,
+  ) {
     const { x, y, width, height } = e.detail;
     try {
-      // Crop the full screenshot to the selected area
       this._croppedScreenshot = await this._cropImage(this._fullScreenshot, x, y, width, height);
       this._state = 'dialog';
-      // Wait a tick for the dialog element to be ready
       await this.updateComplete;
       this._feedbackDialog.screenshot = this._croppedScreenshot;
+      this._feedbackDialog.mossVersion = this._mossVersion;
+      this._feedbackDialog.os = this._os;
       this._feedbackDialog.show();
     } catch (err) {
       console.error('Failed to crop screenshot:', err);
@@ -85,11 +94,76 @@ export class DesignFeedbackController extends LitElement {
     this._fullScreenshot = '';
   }
 
-  private _onFeedbackSubmitted(e: CustomEvent<{ screenshot: string; text: string }>) {
-    const { screenshot, text } = e.detail;
-    // Stub submission: log to console
-    console.log('[Design Feedback] Submitted:', { text, screenshotLength: screenshot.length });
-    notify(msg('Feedback recorded. Thank you.'));
+  private async _onFeedbackSubmitted(
+    e: CustomEvent<{ screenshot: string; text: string; mossVersion: string; os: string }>,
+  ) {
+    const { screenshot, text, mossVersion, os } = e.detail;
+    const timestamp = Date.now();
+
+    // Save locally first
+    let feedbackId: string | undefined;
+    try {
+      feedbackId = await window.electronAPI.saveFeedback({
+        text,
+        screenshot,
+        mossVersion,
+        os,
+        timestamp,
+      });
+    } catch (err) {
+      console.error('Failed to save feedback locally:', err);
+    }
+
+    // Try to submit to worker
+    try {
+      const workerUrl = await window.electronAPI.getFeedbackWorkerUrl();
+      if (workerUrl) {
+        const response = await fetch(`${workerUrl}/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ screenshot, text, mossVersion, os }),
+        });
+
+        if (response.ok) {
+          const data = (await response.json()) as { issueUrl: string; issueNumber: number };
+          if (feedbackId && data.issueUrl) {
+            await window.electronAPI.updateFeedbackIssueUrl(feedbackId, data.issueUrl);
+          }
+          notify(msg('Feedback submitted. GitHub issue created.'));
+        } else {
+          console.error('Worker returned error:', response.status);
+          notify(msg('Feedback saved locally. Could not create GitHub issue.'));
+        }
+      } else {
+        notify(msg('Feedback saved locally.'));
+      }
+    } catch (err) {
+      console.error('Failed to submit feedback to worker:', err);
+      notify(msg('Feedback saved locally. Could not reach server.'));
+    }
+
+    this._state = 'idle';
+    this._fullScreenshot = '';
+    this._croppedScreenshot = '';
+  }
+
+  private async _onFeedbackCopied(
+    e: CustomEvent<{ screenshot: string; text: string; mossVersion: string; os: string }>,
+  ) {
+    const { screenshot, text, mossVersion, os } = e.detail;
+    try {
+      await window.electronAPI.saveFeedback({
+        text,
+        screenshot,
+        mossVersion,
+        os,
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error('Failed to save feedback locally:', err);
+    }
     this._state = 'idle';
     this._fullScreenshot = '';
     this._croppedScreenshot = '';
@@ -111,7 +185,6 @@ export class DesignFeedbackController extends LitElement {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        // Account for device pixel ratio
         const dpr = window.devicePixelRatio || 1;
         const canvas = document.createElement('canvas');
         canvas.width = width * dpr;
@@ -148,8 +221,19 @@ export class DesignFeedbackController extends LitElement {
               title="${msg('Give Design Feedback')}"
               @click=${this._startCapture}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
               </svg>
             </button>
           `
@@ -164,6 +248,7 @@ export class DesignFeedbackController extends LitElement {
         : html``}
       <feedback-dialog
         @feedback-submitted=${this._onFeedbackSubmitted}
+        @feedback-copied=${this._onFeedbackCopied}
         @feedback-cancelled=${this._onFeedbackCancelled}
       ></feedback-dialog>
     `;

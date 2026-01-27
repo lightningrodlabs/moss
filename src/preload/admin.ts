@@ -133,6 +133,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
+  getFeedbackWorkerUrl: () => ipcRenderer.invoke('get-feedback-worker-url'),
+  saveFeedback: (feedback: {
+    text: string;
+    screenshot: string;
+    mossVersion: string;
+    os: string;
+    timestamp: number;
+    issueUrl?: string;
+  }) => ipcRenderer.invoke('save-feedback', feedback),
+  listFeedback: () => ipcRenderer.invoke('list-feedback'),
+  getFeedback: (id: string) => ipcRenderer.invoke('get-feedback', id),
+  updateFeedbackIssueUrl: (id: string, issueUrl: string) =>
+    ipcRenderer.invoke('update-feedback-issue-url', id, issueUrl),
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,

@@ -44,6 +44,7 @@ export class MossFileSystem {
   public happsDir: string;
   public uisDir: string;
   public iconsDir: string;
+  public feedbackDir: string;
 
   constructor(profileDataDir: string, profileConfigDir: string, profileLogsDir: string) {
     this.profileDataDir = profileDataDir;
@@ -58,6 +59,7 @@ export class MossFileSystem {
     this.happsDir = path.join(profileDataDir, 'happs');
     this.uisDir = path.join(profileDataDir, 'uis');
     this.iconsDir = path.join(profileDataDir, 'icons');
+    this.feedbackDir = path.join(profileDataDir, 'feedback');
 
     createDirIfNotExists(this.conductorDir);
     createDirIfNotExists(this.keystoreDir);
@@ -67,6 +69,7 @@ export class MossFileSystem {
     createDirIfNotExists(this.happsDir);
     createDirIfNotExists(this.uisDir);
     createDirIfNotExists(this.iconsDir);
+    createDirIfNotExists(this.feedbackDir);
   }
 
   static connect(app: Electron.App, profile?: Profile, tempDir?: string) {

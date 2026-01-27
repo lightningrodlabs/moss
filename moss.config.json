@@ -20,7 +20,7 @@
     }
   },
   "kitsune2-bootstrap-srv": {
-    "version": "0.1.5",
+    "version": "0.4.0-dev.2",
     "sha256": {
       "aarch64-apple-darwin": "b347a9994f7ed05d36b55d227012ea32a83f9712120d30a09b9839da952d6e65",
       "aarch64-unknown-linux-gnu": "b51e0083f2cc0f49f91666fb676e7f21c657799c5cc8ba0be9ee1d26aaeecb4c",
@@ -43,5 +43,6 @@
     "version": "0.15.0-rc.7",
     "sha256": "3b1a10f4f0c29d402a45ff17c3cc70dce82467ef066b7b480409c8ddfea65ad5"
   },
-  "binariesAppendix": "moss-0.15"
+  "binariesAppendix": "moss-0.15",
+  "feedbackWorkerUrl": "https://moss-design-feedback.eric-114.workers.dev"
 }

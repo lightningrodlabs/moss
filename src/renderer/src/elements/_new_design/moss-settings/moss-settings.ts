@@ -1,6 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
@@ -10,6 +11,15 @@ import { PersistedStore } from '../../../persisted-store.js';
 import './profile-settings.js';
 import './language-settings.js';
 import './danger-zone-settings.js';
+
+type FeedbackRecord = {
+  id: string;
+  text: string;
+  mossVersion: string;
+  os: string;
+  timestamp: number;
+  issueUrl?: string;
+};
 
 enum TabsState {
   Profile,
@@ -30,11 +40,50 @@ export class MossSettings extends LitElement {
   @state()
   _designFeedbackMode: boolean = false;
 
+  @state()
+  _feedbackHistory: FeedbackRecord[] = [];
+
+  @state()
+  _loadingHistory = false;
+
   private _persistedStore = new PersistedStore();
 
   connectedCallback() {
     super.connectedCallback();
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
+  }
+
+  private async _loadFeedbackHistory() {
+    this._loadingHistory = true;
+    try {
+      this._feedbackHistory = await window.electronAPI.listFeedback();
+    } catch (e) {
+      console.error('Failed to load feedback history:', e);
+      this._feedbackHistory = [];
+    }
+    this._loadingHistory = false;
+  }
+
+  private async _copyFeedback(id: string) {
+    try {
+      const feedback = await window.electronAPI.getFeedback(id);
+      if (!feedback) return;
+      const markdown = `## Design Feedback\n\n${feedback.text}\n\n### Screenshot\n\n![screenshot](${feedback.screenshot})\n\n### Environment\n- **Moss version:** ${feedback.mossVersion}\n- **OS:** ${feedback.os}`;
+      await navigator.clipboard.writeText(markdown);
+      notify(msg('Copied to clipboard'));
+    } catch (e) {
+      console.error('Failed to copy feedback:', e);
+    }
+  }
+
+  private _formatDate(timestamp: number): string {
+    return new Date(timestamp).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   renderProfile() {
@@ -58,15 +107,55 @@ export class MossSettings extends LitElement {
             const checked = (e.target as HTMLInputElement).checked;
             this._designFeedbackMode = checked;
             this._persistedStore.designFeedbackMode.set(checked);
-            this.dispatchEvent(new CustomEvent('design-feedback-mode-changed', {
-              detail: checked,
-              bubbles: true,
-              composed: true,
-            }));
+            this.dispatchEvent(
+              new CustomEvent('design-feedback-mode-changed', {
+                detail: checked,
+                bubbles: true,
+                composed: true,
+              }),
+            );
           }}
         >
           ${msg('Enable Design Feedback Mode')}
         </sl-switch>
+
+        <h4 style="margin: 16px 0 0 0;">${msg('Feedback History')}</h4>
+        ${this._feedbackHistory.length === 0 && !this._loadingHistory
+          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
+              ${msg('No feedback submitted yet.')}
+            </p>`
+          : html``}
+        ${this._loadingHistory
+          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
+              ${msg('loading...')}
+            </p>`
+          : html``}
+        <div class="column" style="gap: 8px;">
+          ${this._feedbackHistory.map(
+            (item) => html`
+              <div class="feedback-item row" style="gap: 12px; align-items: center;">
+                <div class="column" style="flex: 1; min-width: 0;">
+                  <span class="feedback-text">${item.text.length > 80 ? item.text.substring(0, 77) + '...' : item.text}</span>
+                  <span class="feedback-date">${this._formatDate(item.timestamp)}</span>
+                </div>
+                ${item.issueUrl
+                  ? html`<sl-button
+                      variant="text"
+                      size="small"
+                      href=${item.issueUrl}
+                      target="_blank"
+                      >${msg('View Issue')}</sl-button
+                    >`
+                  : html`<sl-button
+                      variant="text"
+                      size="small"
+                      @click=${() => this._copyFeedback(item.id)}
+                      >${msg('Copy')}</sl-button
+                    >`}
+              </div>
+            `,
+          )}
+        </div>
       </div>
     `;
   }
@@ -111,6 +200,7 @@ export class MossSettings extends LitElement {
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"
           @click=${() => {
             this.tabsState = TabsState.Feedback;
+            this._loadFeedbackHistory();
           }}
         >
           ${msg('Feedback')}
@@ -130,5 +220,26 @@ export class MossSettings extends LitElement {
     `;
   }
 
-  static styles = [mossStyles, css``];
+  static styles = [
+    mossStyles,
+    css`
+      .feedback-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .feedback-text {
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .feedback-date {
+        font-size: 12px;
+        opacity: 0.6;
+      }
+    `,
+  ];
 }

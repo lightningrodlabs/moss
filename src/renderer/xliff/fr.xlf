@@ -159,8 +159,8 @@
   <target>Installer dans un espace de groupe</target>
 </trans-unit>
 <trans-unit id="s25f1d9708501730f">
-  <source>Install v<x id="0" equiv-text="${version.version}" /> to a group space</source>
-  <target>Installer v<x id="0" equiv-text="${version.version}" /> dans un espace de groupe</target>
+  <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
+  <target>Installer v<x id="0" equiv-text="${version.version}"/> dans un espace de groupe</target>
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
@@ -859,8 +859,8 @@
   <target>nom*</target>
 </trans-unit>
 <trans-unit id="s3798c0344c399eb7">
-  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}" /> characters</source>
-  <target>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}" /> caracteres</target>
+  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
+  <target>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> caracteres</target>
 </trans-unit>
 <trans-unit id="sc93a9aa3e5bcbf5d">
   <source>Save Profile</source>
@@ -1127,8 +1127,8 @@
   <target>Rechercher ou entrer une URL weave-0.15://</target>
 </trans-unit>
 <trans-unit id="sade7d29e999d2472">
-  <source>Enter at least <x id="0" equiv-text="${this.minChars}" /> characters to start searching.</source>
-  <target>Entrez au moins <x id="0" equiv-text="${this.minChars}" /> caracteres pour commencer la recherche.</target>
+  <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
+  <target>Entrez au moins <x id="0" equiv-text="${this.minChars}"/> caracteres pour commencer la recherche.</target>
 </trans-unit>
 <trans-unit id="sa81413e2e309b882">
   <source>No results found.</source>
@@ -1513,12 +1513,43 @@
 <trans-unit id="sb3d4f79d9d8b71e5">
   <source>Submit</source>
 <target>Soumettre</target></trans-unit>
-<trans-unit id="s5ac005849e61d393">
-  <source>Feedback recorded. Thank you.</source>
-<target>Retour enregistré. Merci.</target></trans-unit>
 <trans-unit id="sd8505ee703ddcb65">
   <source>Give Design Feedback</source>
 <target>Donner un retour sur le design</target></trans-unit>
+<trans-unit id="sa832cb9d119e48f8">
+  <source>Copied to clipboard</source>
+<target>Copié dans le presse-papiers</target></trans-unit>
+<trans-unit id="s417a0b7eadfddf0e">
+  <source>Feedback History</source>
+<target>Historique des retours</target></trans-unit>
+<trans-unit id="sf55d0809d5afeafc">
+  <source>No feedback submitted yet.</source>
+<target>Aucun retour soumis pour le moment.</target></trans-unit>
+<trans-unit id="s8b7af9c477e83543">
+  <source>View Issue</source>
+<target>Voir l'issue</target></trans-unit>
+<trans-unit id="sea97ee88ea35358e">
+  <source>Moss GitHub repo</source>
+<target>dépôt GitHub de Moss</target></trans-unit>
+<trans-unit id="s34299de3f5a7b967">
+  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard to send by other means.</source>
+<target>Si vous souhaitez l'envoyer de manière privée, appuyez sur « Copier » pour copier le retour dans votre presse-papiers et l'envoyer par un autre moyen.</target></trans-unit>
+<trans-unit id="see302f30d4ca5691">
+  <source>Feedback submitted. GitHub issue created.</source>
+<target>Retour soumis. Issue GitHub créée.</target></trans-unit>
+<trans-unit id="se2841d25d173cfa5">
+  <source>Feedback saved locally. Could not create GitHub issue.</source>
+<target>Retour sauvegardé localement. Impossible de créer l'issue GitHub.</target></trans-unit>
+<trans-unit id="s403d86e8b3392e49">
+  <source>Feedback saved locally.</source>
+<target>Retour sauvegardé localement.</target></trans-unit>
+<trans-unit id="sbccd620b66cf8efd">
+  <source>Feedback saved locally. Could not reach server.</source>
+<target>Retour sauvegardé localement. Serveur inaccessible.</target></trans-unit>
+<trans-unit id="sa001c7eb0d28aaec">
+  <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
+  <target>Cette capture dâÃ©cran et ce texte, ainsi que la version de Moss et les informations sur lâOS, seront ajoutÃ©s en tant quâissue GitHub publique au</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
