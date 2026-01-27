@@ -16,7 +16,6 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
-import { setLocale, getBrowserLocale, isSupportedLocale } from './locales/localization.js';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
@@ -100,8 +99,8 @@ export class MossApp extends LitElement {
   private loadingText = 'loading...';
 
   async firstUpdated() {
-    // Initialize locale from persisted storage or browser preference
-    await this.initializeLocale();
+    // Note: Locale is initialized in index.html before the app loads
+    // to avoid flash of untranslated content
 
     this.loadingText = 'loading...';
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
@@ -122,39 +121,6 @@ export class MossApp extends LitElement {
       async () => await this._mossStore.checkForUiUpdates(),
       3_600_000,
     );
-  }
-
-  /**
-   * Initialize locale from persisted storage or browser preference.
-   * Called before MossStore is created, so we read directly from localStorage.
-   */
-  private async initializeLocale() {
-    // Read directly from localStorage since MossStore may not be initialized yet
-    const storedItem = window.localStorage.getItem('locale');
-    let locale = 'en';
-
-    if (storedItem) {
-      try {
-        // PersistedStore uses JSON.stringify, so we need to parse
-        const parsed = JSON.parse(storedItem);
-        if (isSupportedLocale(parsed)) {
-          locale = parsed;
-        }
-      } catch {
-        // If parsing fails, use browser locale as fallback
-        locale = getBrowserLocale();
-      }
-    } else {
-      // No stored preference, detect from browser
-      locale = getBrowserLocale();
-    }
-
-    try {
-      await setLocale(locale);
-    } catch (e) {
-      console.warn('Failed to set locale:', e);
-      // Locale files may not exist yet, continue with English
-    }
   }
 
   disconnectedCallback(): void {
