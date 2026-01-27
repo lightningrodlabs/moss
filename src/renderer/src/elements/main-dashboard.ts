@@ -51,6 +51,7 @@ import './debugging-panel/debugging-panel.js';
 
 import './_new_design/moss-dialog.js';
 import './_new_design/moss-settings/moss-settings.js';
+import './design-feedback/design-feedback-controller.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -1330,6 +1331,7 @@ export class MainDashboard extends LitElement {
           <moss-settings></moss-settings>
         </div>
       </moss-dialog>
+      <design-feedback-controller></design-feedback-controller>
       <tag-selection-dialog
         id="tag-selection-dialog"
         @asset-relation-tag-selected=${(e) => {

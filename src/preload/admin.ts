@@ -132,6 +132,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
+  captureScreen: () => ipcRenderer.invoke('capture-screen'),
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,

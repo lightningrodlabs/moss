@@ -1077,6 +1077,14 @@ if (!RUNNING_WITH_COMMAND) {
         return Promise.reject('Cannot select multiple screens/windows at once.');
       return selectScreenOrWindow();
     });
+    ipcMain.handle('capture-screen', async () => {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (!focusedWindow) {
+        throw new Error('No focused window to capture');
+      }
+      const image = await focusedWindow.capturePage();
+      return image.toDataURL();
+    });
     ipcMain.handle('source-selected', (_e, id: string) =>
       WE_EMITTER.emitScreenOrWindowSelected(id),
     );

@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<?xml version='1.0' encoding='UTF-8'?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
 <file target-language="pt" source-language="en" original="lit-localize-inputs" datatype="plaintext">
 <body>
 <trans-unit id="saa3ad43ab0b9071e">
@@ -219,8 +219,8 @@
   <target>Instalar em um espaço de grupo</target>
 </trans-unit>
 <trans-unit id="s25f1d9708501730f">
-  <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
-  <target>Instalar v<x id="0" equiv-text="${version.version}"/> em um espaço de grupo</target>
+  <source>Install v<x id="0" equiv-text="${version.version}" /> to a group space</source>
+  <target>Instalar v<x id="0" equiv-text="${version.version}" /> em um espaço de grupo</target>
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
@@ -923,8 +923,8 @@
   <target>nome*</target>
 </trans-unit>
 <trans-unit id="s3798c0344c399eb7">
-  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
-  <target>Mín. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> caracteres</target>
+  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}" /> characters</source>
+  <target>Mín. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}" /> caracteres</target>
 </trans-unit>
 <trans-unit id="sc93a9aa3e5bcbf5d">
   <source>Save Profile</source>
@@ -1203,8 +1203,8 @@
   <target>Buscar ou inserir URL weave-0.15://</target>
 </trans-unit>
 <trans-unit id="sade7d29e999d2472">
-  <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
-  <target>Digite pelo menos <x id="0" equiv-text="${this.minChars}"/> caracteres para iniciar a busca.</target>
+  <source>Enter at least <x id="0" equiv-text="${this.minChars}" /> characters to start searching.</source>
+  <target>Digite pelo menos <x id="0" equiv-text="${this.minChars}" /> caracteres para iniciar a busca.</target>
 </trans-unit>
 <trans-unit id="sa81413e2e309b882">
   <source>No results found.</source>
@@ -1486,6 +1486,39 @@
   <source>starting Holochain...</source>
   <target>iniciando Holochain...</target>
 </trans-unit>
+<trans-unit id="s182d4e00e211dcca">
+  <source>Design Feedback</source>
+<target>Feedback de Design</target></trans-unit>
+<trans-unit id="s48218f1042ae9df4">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
+<target>Ative o modo de feedback de design para mostrar um botão de feedback no canto superior direito. Clique nele para capturar uma área da tela e enviar feedback.</target></trans-unit>
+<trans-unit id="sd24445593cfc39de">
+  <source>Enable Design Feedback Mode</source>
+<target>Ativar modo de feedback de design</target></trans-unit>
+<trans-unit id="s1a5230a71d9285c1">
+  <source>Capture</source>
+<target>Capturar</target></trans-unit>
+<trans-unit id="sb5e180cb985511ff">
+  <source>Click and drag to select an area</source>
+<target>Clique e arraste para selecionar uma área</target></trans-unit>
+<trans-unit id="s5fa1b8f452fda064">
+  <source>Submit Feedback</source>
+<target>Enviar Feedback</target></trans-unit>
+<trans-unit id="sb2682d714ccbac46">
+  <source>Describe your feedback</source>
+<target>Descreva seu feedback</target></trans-unit>
+<trans-unit id="s5ac24d9358320eef">
+  <source>What would you like to share about this part of the UI?</source>
+<target>O que você gostaria de compartilhar sobre esta parte da interface?</target></trans-unit>
+<trans-unit id="sb3d4f79d9d8b71e5">
+  <source>Submit</source>
+<target>Enviar</target></trans-unit>
+<trans-unit id="s5ac005849e61d393">
+  <source>Feedback recorded. Thank you.</source>
+<target>Feedback registrado. Obrigado.</target></trans-unit>
+<trans-unit id="sd8505ee703ddcb65">
+  <source>Give Design Feedback</source>
+<target>Dar feedback de design</target></trans-unit>
 </body>
 </file>
 </xliff>
