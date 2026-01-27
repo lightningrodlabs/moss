@@ -2,7 +2,7 @@ import { configureLocalization } from '@lit/localize';
 
 // Supported locales - must match lit-localize.json targetLocales
 export const sourceLocale = 'en';
-export const targetLocales = ['de', 'fr', 'es', 'tr'] as const;
+export const targetLocales = ['de', 'fr', 'es', 'tr', 'it', 'pt'] as const;
 export const allLocales = [sourceLocale, ...targetLocales] as const;
 
 export type SupportedLocale = (typeof allLocales)[number];
@@ -22,6 +22,10 @@ const localization = configureLocalization({
           return import('./generated/es.js');
         case 'tr':
           return import('./generated/tr.js');
+        case 'it':
+          return import('./generated/it.js');
+        case 'pt':
+          return import('./generated/pt.js');
         default:
           // Source locale (en) doesn't need to load anything
           return { templates: {} };
@@ -62,4 +66,6 @@ export const LANGUAGE_NAMES: Record<SupportedLocale, string> = {
   fr: 'Français',
   es: 'Español',
   tr: 'Türkçe',
+  it: 'Italiano',
+  pt: 'Português',
 };

@@ -96,13 +96,13 @@ export class MossApp extends LitElement {
   // private avatar = '';
 
   @state()
-  private loadingText = 'loading...';
+  private loadingText = msg('loading...');
 
   async firstUpdated() {
     // Note: Locale is initialized in index.html before the app loads
     // to avoid flash of untranslated content
 
-    this.loadingText = 'loading...';
+    this.loadingText = msg('loading...');
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
@@ -146,7 +146,7 @@ export class MossApp extends LitElement {
     // is being run as part of a page reload)
     if (!info) {
       try {
-        this.loadingText = 'starting Holochain...';
+        this.loadingText = msg('starting Holochain...');
         await window.electronAPI.launch();
         info = await getConductorInfo();
         if (!info) throw new Error('Failed to get conductor info after launch.');

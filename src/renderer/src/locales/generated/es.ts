@@ -205,6 +205,7 @@
 's7ec9f93dd4d1a712': `Instalar y reiniciar`,
 's81850fd21bd71f71': `hash de herramienta`,
 's8213840a0f7d2644': `No, mantener`,
+'s823aec927799efba': `iniciando Holochain...`,
 's82665b2ffabc9c0a': `Sitio web`,
 's82e64a7930881094': `Desinstalar esta herramienta para ti (irreversible)`,
 's83300eac0e548879': `Mi grupo se llama`,

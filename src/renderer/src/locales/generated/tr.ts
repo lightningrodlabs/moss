@@ -205,6 +205,7 @@
 's7ec9f93dd4d1a712': `Yükle ve Yeniden Başlat`,
 's81850fd21bd71f71': `araç hash'i`,
 's8213840a0f7d2644': `Hayır, kalsın`,
+'s823aec927799efba': `Holochain başlatılıyor...`,
 's82665b2ffabc9c0a': `Web Sitesi`,
 's82e64a7930881094': `Bu aracı kendiniz için kaldırın (geri alınamaz)`,
 's83300eac0e548879': `Grubumun adı`,

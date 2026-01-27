@@ -1482,6 +1482,10 @@
   <source>Close</source>
   <target>Kapat</target>
 </trans-unit>
+<trans-unit id="s823aec927799efba">
+  <source>starting Holochain...</source>
+  <target>Holochain başlatılıyor...</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

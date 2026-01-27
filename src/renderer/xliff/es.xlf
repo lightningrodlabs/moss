@@ -1482,6 +1482,10 @@
   <source>Close</source>
   <target>Cerrar</target>
 </trans-unit>
+<trans-unit id="s823aec927799efba">
+  <source>starting Holochain...</source>
+  <target>iniciando Holochain...</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

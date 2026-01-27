@@ -205,6 +205,7 @@
 's7ec9f93dd4d1a712': `Installer et redemarrer`,
 's81850fd21bd71f71': `hash de l'outil`,
 's8213840a0f7d2644': `Non, conserver`,
+'s823aec927799efba': `démarrage de Holochain...`,
 's82665b2ffabc9c0a': `Site web`,
 's82e64a7930881094': `Desinstaller cet outil pour vous-meme (irreversible)`,
 's83300eac0e548879': `Mon groupe s'appelle`,
