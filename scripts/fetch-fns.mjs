@@ -22,7 +22,7 @@ switch (process.platform) {
     }
     break;
   case 'win32':
-    targetEnding = 'x86_64-pc-windows-msvc.exe';
+    targetEnding = 'x86_64-pc-windows-msvc';
     break;
   case 'darwin':
     switch (process.arch) {
@@ -70,9 +70,9 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 
 
 export function downloadHolochainBinary(filename, withVersion = true) {
-  let completeBinaryFilename = `${filename}-${targetEnding}`
-  let binaryFilenameWithVersion = `${filename}-v${mossConfig[filename].version}`
-  const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}`);
+  let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
+  let binaryFilenameWithVersion = `${filename}-v${mossConfig[filename].version}${process.platform === 'win32' ? '.exe' : ''}`
+  const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}${process.platform === 'win32' ? '.exe' : ''}`);
   const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain.version}/${completeBinaryFilename}`;
   downloadFile(
     holochainBinaryUrl,
