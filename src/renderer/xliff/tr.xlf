@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
 <file target-language="tr" source-language="en" original="lit-localize-inputs" datatype="plaintext">
 <body>
 <trans-unit id="saa3ad43ab0b9071e">
@@ -186,10 +186,6 @@
   <source>Add to Group</source>
   <target>Gruba Ekle</target>
 </trans-unit>
-<trans-unit id="s834d4babf5a8d7eb">
-  <source>Error fetching the registered applets in this group</source>
-  <target>Bu gruptaki kayıtlı appletler alınırken hata</target>
-</trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
   <target>Şuraya yükleniyor:</target>
@@ -366,10 +362,6 @@
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
   <target>Şu anda Moss davetleri "İşte ev adresim, kapı açık" kuralına göre çalışıyor. Bağlantıya sahip herkes gruba katılabilir, bu yüzden bu bağlantıyı nerede paylaştığınıza dikkat edin.</target>
 </trans-unit>
-<trans-unit id="s33b508d0ff961c4b">
-  <source>Error displaying the applets</source>
-  <target>Appletler görüntülenirken hata</target>
-</trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
   <target>Henüz araç yok.</target>
@@ -445,10 +437,6 @@
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
   <target> yukarıdaki simge) giderek bu gruba applet yükleyin.</target>
-</trans-unit>
-<trans-unit id="s72ef2c43063bb181">
-  <source>Error fetching the applets installed in this group</source>
-  <target>Bu grupta yüklü appletler alınırken hata</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
@@ -1018,10 +1006,6 @@
   <source>Failed to get groups.</source>
   <target>Gruplar alınamadı.</target>
 </trans-unit>
-<trans-unit id="se0202a76c1595f2f">
-  <source>Failed to get running applets.</source>
-  <target>Çalışan appletler alınamadı.</target>
-</trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
   <target>Varsayılan profil kaydedildi.</target>
@@ -1486,81 +1470,161 @@
   <source>starting Holochain...</source>
   <target>Holochain başlatılıyor...</target>
 </trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Lütfen buradaki dil çevirilerinin yapay zeka tarafından yapıldığını unutmayın. Herhangi bir hata bulursanız lütfen bize geri bildirim gönderin. Ana sayfadaki Geri Bildirim düğmesinden erişilebilen Geri Bildirim iletişim kutusundaki uygulama içi ekran görüntüsü/geri bildirim aracını etkinleştirebilirsiniz.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>Panoyu açmak için</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Cebinizde hiçbir şey yok. Cebinize bir şeyler eklemek için cep simgelerine dikkat edin.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>cebe eklemek için bırakın</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Cebinizde hiçbir şey yok. Cebinize varlık eklemek için cep simgelerine dikkat edin.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Foyer</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>Foyer, grubun diğer üyelerine geçici mesajlar göndermek için bir alandır.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Bu mesajların hiçbiri hiçbir zaman saklanmaz ve yalnızca grubun üye listesinde çevrimiçi olarak görünen diğer üyelere gider.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Foyer Mesajları:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Araçları yükleyebilmek için önce bir Grup oluşturmanız veya bir Gruba katılmanız gerekir.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Bu gruptaki kayıtlı araçlar alınırken hata oluştu</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Araçlar görüntülenirken hata oluştu</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Bu grupta yüklü araçlar alınırken hata oluştu</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Çalışan araçlar alınamadı.</target>
+</trans-unit>
 <trans-unit id="s182d4e00e211dcca">
   <source>Design Feedback</source>
-<target>Tasarım Geri Bildirimi</target></trans-unit>
+  <target>Tasarım Geri Bildirimi</target>
+</trans-unit>
 <trans-unit id="s48218f1042ae9df4">
   <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-<target>Sağ üst köşede bir geri bildirim düğmesi göstermek için Tasarım Geri Bildirim Modunu etkinleştirin. Bir alanın ekran görüntüsünü almak ve geri bildirim göndermek için tıklayın.</target></trans-unit>
+  <target>Sağ üst köşede bir geri bildirim düğmesi göstermek için Tasarım Geri Bildirim Modunu etkinleştirin. Bir alanın ekran görüntüsünü almak ve geri bildirim göndermek için tıklayın.</target>
+</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
-<target>Tasarım Geri Bildirim Modunu Etkinleştir</target></trans-unit>
+  <target>Tasarım Geri Bildirim Modunu Etkinleştir</target>
+</trans-unit>
 <trans-unit id="s1a5230a71d9285c1">
   <source>Capture</source>
-<target>Yakala</target></trans-unit>
+  <target>Yakala</target>
+</trans-unit>
 <trans-unit id="sb5e180cb985511ff">
   <source>Click and drag to select an area</source>
-<target>Bir alan seçmek için tıklayıp sürükleyin</target></trans-unit>
+  <target>Bir alan seçmek için tıklayıp sürükleyin</target>
+</trans-unit>
 <trans-unit id="s5fa1b8f452fda064">
   <source>Submit Feedback</source>
-<target>Geri Bildirim Gönder</target></trans-unit>
+  <target>Geri Bildirim Gönder</target>
+</trans-unit>
 <trans-unit id="sb2682d714ccbac46">
   <source>Describe your feedback</source>
-<target>Geri bildiriminizi açıklayın</target></trans-unit>
+  <target>Geri bildiriminizi açıklayın</target>
+</trans-unit>
 <trans-unit id="s5ac24d9358320eef">
   <source>What would you like to share about this part of the UI?</source>
-<target>Arayüzün bu kısmı hakkında ne paylaşmak istersiniz?</target></trans-unit>
+  <target>Arayüzün bu kısmı hakkında ne paylaşmak istersiniz?</target>
+</trans-unit>
 <trans-unit id="sb3d4f79d9d8b71e5">
   <source>Submit</source>
-<target>Gönder</target></trans-unit>
+  <target>Gönder</target>
+</trans-unit>
 <trans-unit id="sd8505ee703ddcb65">
   <source>Give Design Feedback</source>
-<target>Tasarım Geri Bildirimi Ver</target></trans-unit>
+  <target>Tasarım Geri Bildirimi Ver</target>
+</trans-unit>
 <trans-unit id="sa832cb9d119e48f8">
   <source>Copied to clipboard</source>
-<target>Panoya kopyalandı</target></trans-unit>
+  <target>Panoya kopyalandı</target>
+</trans-unit>
 <trans-unit id="s417a0b7eadfddf0e">
   <source>Feedback History</source>
-<target>Geri Bildirim Geçmişi</target></trans-unit>
+  <target>Geri Bildirim Geçmişi</target>
+</trans-unit>
 <trans-unit id="sf55d0809d5afeafc">
   <source>No feedback submitted yet.</source>
-<target>Henüz geri bildirim gönderilmedi.</target></trans-unit>
+  <target>Henüz geri bildirim gönderilmedi.</target>
+</trans-unit>
 <trans-unit id="s8b7af9c477e83543">
   <source>View Issue</source>
-<target>Issue'yu Görüntüle</target></trans-unit>
+  <target>Issue'yu Görüntüle</target>
+</trans-unit>
 <trans-unit id="sea97ee88ea35358e">
   <source>Moss GitHub repo</source>
-<target>Moss GitHub deposuna</target></trans-unit>
+  <target>Moss GitHub deposuna</target>
+</trans-unit>
 <trans-unit id="see302f30d4ca5691">
   <source>Feedback submitted. GitHub issue created.</source>
-<target>Geri bildirim gönderildi. GitHub issue'su oluşturuldu.</target></trans-unit>
+  <target>Geri bildirim gönderildi. GitHub issue'su oluşturuldu.</target>
+</trans-unit>
 <trans-unit id="se2841d25d173cfa5">
   <source>Feedback saved locally. Could not create GitHub issue.</source>
-<target>Geri bildirim yerel olarak kaydedildi. GitHub issue'su oluşturulamadı.</target></trans-unit>
+  <target>Geri bildirim yerel olarak kaydedildi. GitHub issue'su oluşturulamadı.</target>
+</trans-unit>
 <trans-unit id="s403d86e8b3392e49">
   <source>Feedback saved locally.</source>
-<target>Geri bildirim yerel olarak kaydedildi.</target></trans-unit>
+  <target>Geri bildirim yerel olarak kaydedildi.</target>
+</trans-unit>
 <trans-unit id="sbccd620b66cf8efd">
   <source>Feedback saved locally. Could not reach server.</source>
-<target>Geri bildirim yerel olarak kaydedildi. Sunucuya ulaşılamadı.</target></trans-unit>
+  <target>Geri bildirim yerel olarak kaydedildi. Sunucuya ulaşılamadı.</target>
+</trans-unit>
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
-  <target>Bu ekran gÃ¶rÃ¼ntÃ¼sÃ¼ ve metin, Moss sÃ¼rÃ¼mÃ¼ ve iÅletim sistemi bilgileriyle birlikte, herkese aÃ§Ä±k bir GitHub issue olarak</target>
+  <target>Bu ekran görüntüsü ve metin, Moss sürümü ve işletim sistemi bilgileriyle birlikte, herkese açık bir GitHub issue olarak</target>
 </trans-unit>
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
+  <target>Tasarım Geri Bildirim Modu</target>
 </trans-unit>
 <trans-unit id="s6b17a3076dcd1490">
   <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Ekran görüntüleri almak ve uygulamanın herhangi bir yerinden doğrudan görsel geri bildirim göndermek için Tasarım Geri Bildirim Modunu etkinleştirin. Sağ üst köşede bir geri bildirim düğmesi görünecek ve ekranın herhangi bir alanını seçerek geri bildiriminizi açıklamanıza olanak tanıyacaktır.</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
+  <target>Bu modu Ayarlar &gt; Geri Bildirim'den de etkinleştirebilir veya devre dışı bırakabilirsiniz.</target>
 </trans-unit>
 <trans-unit id="s415e501370e4f1e4">
   <source>Other Ways to Give Feedback</source>
+  <target>Geri Bildirim Vermenin Diğer Yolları</target>
 </trans-unit>
 <trans-unit id="sd1b9a0f04718bc5d">
   <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
+  <target>Gizli olarak göndermek istiyorsanız, geri bildirimi panonuza kopyalamak için "Kopyala"ya basın ve moss.0.15.feedback@theweave.social adresine e-posta ile gönderin.</target>
 </trans-unit>
 </body>
 </file>

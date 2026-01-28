@@ -261,7 +261,7 @@ export class InstallToolDialogWeb2 extends LitElement {
 
       case 'error':
         return html`<display-error
-          .headline=${msg('Error fetching the registered applets in this group')}
+          .headline=${msg('Error fetching the registered Tools in this group')}
           .error=${this._registeredApplets.value.error}
         ></display-error>`;
     }

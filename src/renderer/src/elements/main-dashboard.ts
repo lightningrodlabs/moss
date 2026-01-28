@@ -1288,7 +1288,7 @@ export class MainDashboard extends LitElement {
                 .src=${wrapPathInSvg(mdiAccountLockOpen)}
                 style="height: 40px; width: 40px; margin-right: 10px;"
               ></sl-icon>
-              <span>${'Join Group'}</span>
+              <span>${msg('Join Group')}</span>
             </div>
           </button>
           <button

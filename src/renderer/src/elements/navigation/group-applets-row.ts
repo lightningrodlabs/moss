@@ -123,7 +123,7 @@ export class GroupAppletsRow extends LitElement {
       case 'error':
         console.error('ERROR: ', this._groupApplets.value.error);
         return html`<display-error
-          .headline=${msg('Error displaying the applets')}
+          .headline=${msg('Error displaying the Tools')}
           tooltip
           .error=${this._groupApplets.value.error}
         ></display-error>`;

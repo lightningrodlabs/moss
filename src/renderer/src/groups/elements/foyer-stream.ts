@@ -171,13 +171,12 @@ export class FoyerStream extends LitElement {
         >
           <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
           <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
-          <span style="margin-left: 5px;">Foyer</span>
+          <span style="margin-left: 5px;">${msg('Foyer')}</span>
         </div>
         <div style="margin-top: 20px; font-size: 20px;">
-          <p>The Foyer is a space for sending ephemeral messages to other members of the group.</p>
+          <p>${msg('The Foyer is a space for sending ephemeral messages to other members of the group.')}</p>
           <p>
-            None of these messages are ever stored, and they only go to other members who show as
-            online in the group's member list.
+            ${msg('None of these messages are ever stored, and they only go to other members who show as online in the group\'s member list.')}
           </p>
         </div>
       </div>
@@ -304,7 +303,7 @@ export class FoyerStream extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
               <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
             </div>
-            <span>Foyer Messages: ${this._messages ? this._messages.value.length : '0'}</span>
+            <span>${msg('Foyer Messages:')} ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
           <div style="display:flex; align-items: center"></div>
         </div>

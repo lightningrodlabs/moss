@@ -74,6 +74,10 @@ export class MossLanguageSettings extends LitElement {
             )}
           </select>
         </div>
+
+        <div class="ai-notice" style="margin-top: 24px;">
+          ${msg('Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.')}
+        </div>
       </div>
     `;
   }
@@ -103,6 +107,15 @@ export class MossLanguageSettings extends LitElement {
         outline: none;
         border-color: var(--sl-color-primary-500);
         box-shadow: 0 0 0 3px var(--sl-color-primary-100);
+      }
+
+      .ai-notice {
+        font-size: 13px;
+        opacity: 0.7;
+        line-height: 1.5;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 6px;
       }
     `,
   ];

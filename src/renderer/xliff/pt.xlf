@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
 <file target-language="pt" source-language="en" original="lit-localize-inputs" datatype="plaintext">
 <body>
 <trans-unit id="saa3ad43ab0b9071e">
@@ -246,10 +246,6 @@
   <source>Add to Group</source>
   <target>Adicionar ao Grupo</target>
 </trans-unit>
-<trans-unit id="s834d4babf5a8d7eb">
-  <source>Error fetching the registered applets in this group</source>
-  <target>Erro ao buscar os applets registrados neste grupo</target>
-</trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
   <target>Instalando em:</target>
@@ -426,10 +422,6 @@
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
   <target>Atualmente os convites do Moss funcionam segundo a regra "Aqui está meu endereço, a porta está aberta." Qualquer pessoa com o link pode entrar no grupo, então tenha cuidado ao compartilhar este link.</target>
 </trans-unit>
-<trans-unit id="s33b508d0ff961c4b">
-  <source>Error displaying the applets</source>
-  <target>Erro ao exibir os applets</target>
-</trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
   <target>Nenhum tool ainda.</target>
@@ -505,10 +497,6 @@
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
   <target> ícone acima) para instalar applets neste grupo.</target>
-</trans-unit>
-<trans-unit id="s72ef2c43063bb181">
-  <source>Error fetching the applets installed in this group</source>
-  <target>Erro ao buscar os applets instalados neste grupo</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
@@ -1094,10 +1082,6 @@
   <source>Failed to get groups.</source>
   <target>Falha ao obter grupos.</target>
 </trans-unit>
-<trans-unit id="se0202a76c1595f2f">
-  <source>Failed to get running applets.</source>
-  <target>Falha ao obter applets em execução.</target>
-</trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
   <target>Perfil padrão salvo.</target>
@@ -1486,81 +1470,161 @@
   <source>starting Holochain...</source>
   <target>iniciando Holochain...</target>
 </trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Por favor, note que as traduções de idiomas aqui foram feitas por IA. Se encontrar algum erro, envie-nos o seu feedback. Pode ativar a ferramenta de captura de ecrã/feedback na aplicação no diálogo de Feedback acessível através do botão Feedback na página inicial.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>para abrir a área de transferência</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Nada no seu bolso. Procure os ícones de bolso para adicionar itens ao seu bolso.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>solte para adicionar ao bolso</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Nada no seu bolso. Procure os ícones de bolso para adicionar recursos ao seu bolso.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Foyer</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>O Foyer é um espaço para enviar mensagens efêmeras a outros membros do grupo.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Nenhuma dessas mensagens é armazenada, e elas só são enviadas para outros membros que aparecem online na lista de membros do grupo.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Mensagens do Foyer:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Você precisa criar ou entrar em um grupo antes de poder instalar ferramentas.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Erro ao obter as ferramentas registradas neste grupo</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Erro ao exibir as ferramentas</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Erro ao obter as ferramentas instaladas neste grupo</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Falha ao obter as ferramentas em execução.</target>
+</trans-unit>
 <trans-unit id="s182d4e00e211dcca">
   <source>Design Feedback</source>
-<target>Feedback de Design</target></trans-unit>
+  <target>Feedback de Design</target>
+</trans-unit>
 <trans-unit id="s48218f1042ae9df4">
   <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-<target>Ative o modo de feedback de design para mostrar um botão de feedback no canto superior direito. Clique nele para capturar uma área da tela e enviar feedback.</target></trans-unit>
+  <target>Ative o modo de feedback de design para mostrar um botão de feedback no canto superior direito. Clique nele para capturar uma área da tela e enviar feedback.</target>
+</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
-<target>Ativar modo de feedback de design</target></trans-unit>
+  <target>Ativar modo de feedback de design</target>
+</trans-unit>
 <trans-unit id="s1a5230a71d9285c1">
   <source>Capture</source>
-<target>Capturar</target></trans-unit>
+  <target>Capturar</target>
+</trans-unit>
 <trans-unit id="sb5e180cb985511ff">
   <source>Click and drag to select an area</source>
-<target>Clique e arraste para selecionar uma área</target></trans-unit>
+  <target>Clique e arraste para selecionar uma área</target>
+</trans-unit>
 <trans-unit id="s5fa1b8f452fda064">
   <source>Submit Feedback</source>
-<target>Enviar Feedback</target></trans-unit>
+  <target>Enviar Feedback</target>
+</trans-unit>
 <trans-unit id="sb2682d714ccbac46">
   <source>Describe your feedback</source>
-<target>Descreva seu feedback</target></trans-unit>
+  <target>Descreva seu feedback</target>
+</trans-unit>
 <trans-unit id="s5ac24d9358320eef">
   <source>What would you like to share about this part of the UI?</source>
-<target>O que você gostaria de compartilhar sobre esta parte da interface?</target></trans-unit>
+  <target>O que você gostaria de compartilhar sobre esta parte da interface?</target>
+</trans-unit>
 <trans-unit id="sb3d4f79d9d8b71e5">
   <source>Submit</source>
-<target>Enviar</target></trans-unit>
+  <target>Enviar</target>
+</trans-unit>
 <trans-unit id="sd8505ee703ddcb65">
   <source>Give Design Feedback</source>
-<target>Dar feedback de design</target></trans-unit>
+  <target>Dar feedback de design</target>
+</trans-unit>
 <trans-unit id="sa832cb9d119e48f8">
   <source>Copied to clipboard</source>
-<target>Copiado para a área de transferência</target></trans-unit>
+  <target>Copiado para a área de transferência</target>
+</trans-unit>
 <trans-unit id="s417a0b7eadfddf0e">
   <source>Feedback History</source>
-<target>Histórico de feedback</target></trans-unit>
+  <target>Histórico de feedback</target>
+</trans-unit>
 <trans-unit id="sf55d0809d5afeafc">
   <source>No feedback submitted yet.</source>
-<target>Nenhum feedback enviado ainda.</target></trans-unit>
+  <target>Nenhum feedback enviado ainda.</target>
+</trans-unit>
 <trans-unit id="s8b7af9c477e83543">
   <source>View Issue</source>
-<target>Ver issue</target></trans-unit>
+  <target>Ver issue</target>
+</trans-unit>
 <trans-unit id="sea97ee88ea35358e">
   <source>Moss GitHub repo</source>
-<target>repositório GitHub do Moss</target></trans-unit>
+  <target>repositório GitHub do Moss</target>
+</trans-unit>
 <trans-unit id="see302f30d4ca5691">
   <source>Feedback submitted. GitHub issue created.</source>
-<target>Feedback enviado. Issue do GitHub criada.</target></trans-unit>
+  <target>Feedback enviado. Issue do GitHub criada.</target>
+</trans-unit>
 <trans-unit id="se2841d25d173cfa5">
   <source>Feedback saved locally. Could not create GitHub issue.</source>
-<target>Feedback salvo localmente. Não foi possível criar a issue do GitHub.</target></trans-unit>
+  <target>Feedback salvo localmente. Não foi possível criar a issue do GitHub.</target>
+</trans-unit>
 <trans-unit id="s403d86e8b3392e49">
   <source>Feedback saved locally.</source>
-<target>Feedback salvo localmente.</target></trans-unit>
+  <target>Feedback salvo localmente.</target>
+</trans-unit>
 <trans-unit id="sbccd620b66cf8efd">
   <source>Feedback saved locally. Could not reach server.</source>
-<target>Feedback salvo localmente. Não foi possível acessar o servidor.</target></trans-unit>
+  <target>Feedback salvo localmente. Não foi possível acessar o servidor.</target>
+</trans-unit>
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
-  <target>Esta captura de tela e texto, juntamente com a versÃ£o do Moss e informaÃ§Ãµes do sistema operacional, serÃ£o adicionados como uma issue pÃºblica do GitHub ao</target>
+  <target>Esta captura de tela e texto, juntamente com a versão do Moss e informações do sistema operacional, serão adicionados como uma issue pública do GitHub ao</target>
 </trans-unit>
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
+  <target>Modo de feedback de design</target>
 </trans-unit>
 <trans-unit id="s6b17a3076dcd1490">
   <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Ative o modo de feedback de design para capturar telas e enviar feedback visual diretamente de qualquer lugar do aplicativo. Um botão de feedback aparecerá no canto superior direito, permitindo selecionar qualquer área da tela e descrever seu feedback.</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
+  <target>Você também pode ativar ou desativar este modo em Configurações &gt; Feedback.</target>
 </trans-unit>
 <trans-unit id="s415e501370e4f1e4">
   <source>Other Ways to Give Feedback</source>
+  <target>Outras formas de dar feedback</target>
 </trans-unit>
 <trans-unit id="sd1b9a0f04718bc5d">
   <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
+  <target>Se quiser enviar de forma privada, pressione "Copiar" para copiar o feedback para a área de transferência e envie por e-mail para moss.0.15.feedback@theweave.social.</target>
 </trans-unit>
 </body>
 </file>
