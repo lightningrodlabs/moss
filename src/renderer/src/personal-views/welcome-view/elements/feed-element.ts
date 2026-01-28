@@ -32,9 +32,7 @@ export class FeedElement extends LitElement {
   @property()
   notification!: AppletNotification;
 
-  /**
-   * Just pick one of the group's this applet is part of in order to be able to display a profile
-   */
+  /** Pick one of the group this applet is part of to be able to display a profile */
   @state()
   groupDnaHash: GroupDnaHash | undefined;
 
@@ -44,7 +42,7 @@ export class FeedElement extends LitElement {
   async firstUpdated() {
     try {
       const groupsForApplet = await toPromise(
-        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId)),
+        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId))!
       );
       const groupHashes = Array.from(groupsForApplet.keys());
       if (groupHashes.length > 0) {

@@ -52,7 +52,7 @@ export class AppletLogo extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this.appletLogoReadable(this.toolIdentifier),
+    () => this.appletLogoReadable(this.toolIdentifier)!,
     () => [this.toolIdentifier],
   );
 

@@ -59,9 +59,8 @@ export async function readLocalServices(): Promise<[string, string, string]> {
   }
 }
 
-export async function startLocalServices(): Promise<
-  [string, string, string, childProcess.ChildProcessWithoutNullStreams]
-> {
+export async function startLocalServices()
+    : Promise<[string, string , string, childProcess.ChildProcessWithoutNullStreams]> {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
@@ -87,7 +86,7 @@ export async function startLocalServices(): Promise<
       if (line.includes('Internal iroh relay server started at')) {
           // Match IP:port pattern
           const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
-          relayUrl = match? match[1] : null;
+          relayUrl = match? "https://" + match[1] : undefined;
       }
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
@@ -98,9 +97,10 @@ export async function startLocalServices(): Promise<
         bootstrapRunning = true;
         signalRunning = true;
       }
-      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl }));
-      if (bootstrapRunning && signalRunning)
-        resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
+      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl, relayUrl }));
+      if (bootstrapRunning && signalRunning && bootstrapUrl) {
+          resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
+      }
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv] ERROR: ${line}`);

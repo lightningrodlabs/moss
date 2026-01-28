@@ -625,7 +625,7 @@ export class DebuggingPanel extends LitElement {
 
       return html`
             <div class="stats-item">
-              <div>webrtc: ${connection.is_webrtc}</div>
+              <div>Direct: ${connection.is_direct}</div>
               <div>
                 <b>agent:</b>
                 ${formattedAgentKey

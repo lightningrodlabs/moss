@@ -45,9 +45,9 @@ export class EditCustomGroupView extends LitElement {
     this,
     () =>
       joinAsync([
-        this.groupStore.customViewsStore.customViews.get(this.customViewHash),
+        this.groupStore.customViewsStore.customViews.get(this.customViewHash)!,
         asyncDeriveAndJoin(this.groupStore.allBlocks, (allBlocks) =>
-          mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)),
+          mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)!),
         ),
       ]) as AsyncReadable<
         [

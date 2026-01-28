@@ -1,5 +1,5 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { parseHrl } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
   AgentPubKeyB64,
@@ -12,6 +12,8 @@ import {
   DisableCloneCellRequest,
   EnableCloneCellRequest,
   EntryHash,
+  EntryHashMap,
+  HoloHashMap,
   RoleNameCallZomeRequest,
   decodeHashFromBase64,
   encodeHashToBase64,

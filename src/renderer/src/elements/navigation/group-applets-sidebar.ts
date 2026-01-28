@@ -25,6 +25,7 @@ import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';
 import { PersistedStore } from '../../persisted-store.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -51,7 +52,7 @@ export class GroupAppletsSidebar extends LitElement {
     () =>
       this._groupStore
         ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-            sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+            sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),
           ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],

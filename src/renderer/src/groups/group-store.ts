@@ -19,20 +19,22 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, EntryRecord, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import {EntryRecord, GetonlyMap, mapValues} from '@holochain-open-dev/utils';
 import {
-  ActionHash,
-  AgentPubKey,
-  AgentPubKeyB64,
-  AppAuthenticationToken,
-  AppWebsocket,
-  CellType,
-  DnaHash,
-  EntryHash,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-  hashFrom32AndType,
-  HoloHashType,
+    ActionHash,
+    AgentPubKey,
+    AgentPubKeyB64,
+    AppAuthenticationToken,
+    AppWebsocket,
+    CellType,
+    DnaHash,
+    EntryHash,
+    EntryHashMap,
+    decodeHashFromBase64,
+    encodeHashToBase64,
+    hashFrom32AndType,
+    HoloHashType,
+    LazyHoloHashMap, HoloHashMap,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -84,6 +86,7 @@ import {
 } from '@theweave/group-client';
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
+import {AppletStore} from "../applets/applet-store";
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const PING_AGENTS_FREQUENCY_MS = 8000;
@@ -778,7 +781,7 @@ export class GroupStore {
   agentsProfiles(
     agents: Array<AgentPubKey>,
   ): AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>> {
-    return sliceAndJoin(this.membersProfiles, agents);
+    return sliceAndJoin(this.membersProfiles as GetonlyMap<any, any>, agents);
   }
 
   membersProfiles = new LazyHoloHashMap((agent: AgentPubKey) =>
@@ -1151,7 +1154,7 @@ export class GroupStore {
     await this.mossStore.reloadManualStores();
   }
 
-  applets = new LazyHoloHashMap((appletHash: EntryHash) =>
+  applets: LazyHoloHashMap<AppletHash, AsyncReadable<Applet | undefined>> = new LazyHoloHashMap((appletHash: EntryHash) =>
     lazyLoad(async () => this.groupClient.getApplet(appletHash)),
   );
 
@@ -1284,8 +1287,9 @@ export class GroupStore {
   //     )
   // );
 
-  activeAppletStores = pipe(this.allMyRunningApplets, (allApplets) =>
-    sliceAndJoin(this.mossStore.appletStores, allApplets),
+  activeAppletStores: AsyncReadable<HoloHashMap<EntryHash, AppletStore>> = pipe(
+        this.allMyRunningApplets,
+        (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
   );
 
   allBlocks = pipe(this.activeAppletStores, (appletsStores) =>

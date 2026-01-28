@@ -139,7 +139,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         const dnaHash = wal.hrl[0];
 
         try {
-          const location = await toPromise(mossStore.hrlLocations.get(dnaHash).get(wal.hrl[1]));
+          const location = await toPromise(mossStore.hrlLocations.get(dnaHash)!.get(wal.hrl[1])!);
           if (!location) return undefined;
           const assetInfo = await toPromise(mossStore.assetInfo.get(stringifyWal(wal)));
 
@@ -234,7 +234,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
 
       let appletStore: AppletStore | undefined;
       try {
-        appletStore = await toPromise(mossStore.appletStores.get(appletHash));
+        appletStore = await toPromise(mossStore.appletStores.get(appletHash)!);
       } catch (e) {
         console.warn(
           'No appletInfo found for applet with id ',
@@ -244,8 +244,8 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         );
       }
       if (!appletStore) return undefined;
-      const groupsForApplet = await toPromise(mossStore.groupsForApplet.get(appletHash));
-      const icon = await toPromise(mossStore.appletLogo.get(appletHash));
+      const groupsForApplet = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
+      const icon = await toPromise(mossStore.appletLogo.get(appletHash)!);
 
       return {
         appletBundleId: toolCompatibilityIdFromDistInfoString(appletStore.applet.distribution_info),
@@ -339,8 +339,8 @@ export async function handleAppletIframeMessage(
         return config;
       } else {
         const appletHash = source.appletHash;
-        const isInstalled = await toPromise(mossStore.isInstalled.get(appletHash));
-        const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
+        const isInstalled = await toPromise(mossStore.isInstalled.get(appletHash)!);
+        const appletStore = await toPromise(mossStore.appletStores.get(appletHash)!);
         if (!isInstalled) {
           const iframeConfig: IframeConfig = {
             type: 'not-installed',
@@ -349,10 +349,10 @@ export async function handleAppletIframeMessage(
           return iframeConfig;
         }
 
-        const groupsStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+        const groupsStores = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
 
         const groupProfiles = await Promise.all(
-          Array.from(groupsStores.values()).map((store) => toPromise(store.groupProfile)),
+          Array.from(groupsStores.values()).map((store) => toPromise(store!.groupProfile)),
         );
 
         const filteredGroupProfiles = groupProfiles.filter(
@@ -371,7 +371,7 @@ export async function handleAppletIframeMessage(
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
           mossVersion: mossStore.conductorInfo.moss_version,
           profilesLocation: {
-            authenticationToken: groupStore.groupClient.authenticationToken,
+            authenticationToken: groupStore!.groupClient.authenticationToken,
             profilesRoleName: 'group',
           },
           groupProfiles: filteredGroupProfiles,
@@ -401,7 +401,7 @@ export async function handleAppletIframeMessage(
       }
     case 'get-record-info': {
       const location = await toPromise(
-        mossStore.hrlLocations.get(message.hrl[0]).get(message.hrl[1]),
+        mossStore.hrlLocations.get(message.hrl[0])!.get(message.hrl[1])!,
       );
       if (!location || !location.entryDefLocation) throw new Error('Record not found');
 
@@ -460,7 +460,7 @@ export async function handleAppletIframeMessage(
       }
       const appletHash = source.appletHash;
       const appletId = encodeHashToBase64(appletHash);
-      const appletStore = await toPromise(mossStore.appletStores.get(appletHash));
+      const appletStore = await toPromise(mossStore.appletStores.get(appletHash)!);
 
       const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
 
@@ -531,7 +531,7 @@ export async function handleAppletIframeMessage(
       console.debug('get-tool-installer: ', message, source);
       const groupHash = message.groupHash? message.groupHash : source.groupHash;
       if (!groupHash) throw new Error('No groupHash provided for get-tool-installer.');
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash)!);
       if (groupStores.size === 0) throw new Error('No group store found for applet (get-tool-installer).');
       const groupStore = groupStores.get(groupHash);
       if (!groupStore) throw new Error('Requested group store not found for applet (get-tool-installer).');
@@ -558,12 +558,12 @@ export async function handleAppletIframeMessage(
         throw new Error('Group Accountabilities not defined for cross-group views.');
       }
       const appletHash = source.appletHash;
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
       if (groupStores.size === 0) throw new Error('No group store found for applet.');
       const accountabilitiesPerGroup: [DnaHash, MossAccountability[]][] = [];
       await Promise.all(
         Array.from(groupStores.values()).map(async (store) => {
-          const accs = await toPromise(store.myAccountabilities);
+          const accs = await toPromise(store!.myAccountabilities);
           const mossAccountabilities = accs.map((acc: Accountability) => {
             // Convert 'Accountability' (Zome-defined) to 'MossAccountability' (UI-defined)
             switch (acc.type) {
@@ -572,7 +572,7 @@ export async function handleAppletIframeMessage(
               case 'Steward': return { role: MossRole.Steward, startDate: 0 };
             }
           });
-          accountabilitiesPerGroup.push([store.groupDnaHash, mossAccountabilities]);
+          accountabilitiesPerGroup.push([store!.groupDnaHash, mossAccountabilities]);
         }),
       );
       return accountabilitiesPerGroup;
@@ -608,13 +608,13 @@ export async function handleAppletIframeMessage(
         throw new Error('Applet participants are not defined for cross-group view.');
       }
       const appletHash = source.appletHash;
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
       if (groupStores.size === 0) throw new Error('No group store found for applet.');
 
       // TODO: Think through in case multiple groups are supposed to be possible again
       // for the same applet.
       const groupStore = Array.from(groupStores.values())[0];
-      const appletAgents = await groupStore.groupClient.getJoinedAppletAgents(appletHash);
+      const appletAgents = await groupStore!.groupClient.getJoinedAppletAgents(appletHash);
       return appletAgents.map((appletAgent) => appletAgent.applet_pubkey);
     }
     case 'sign-zome-call':
@@ -653,7 +653,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const appletHash = source.appletHash;
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
       const remoteSignalPayload: GroupRemoteSignal = {
         type: 'applet-signal',
         appletId: encodeHashToBase64(appletHash),
@@ -662,13 +662,13 @@ export async function handleAppletIframeMessage(
       // For every group store, get current online peers and send a remote signal to them;
       await Promise.all(
         Array.from(groupStores.values()).map(async (store) => {
-          const peerStatuses = get(store.peerStatuses());
+          const peerStatuses = get(store!.peerStatuses());
           if (peerStatuses) {
             let peersToSendSignal = Object.entries(peerStatuses)
               .filter(
                 ([pubkeyB64, status]) =>
                   status.status !== 'offline' &&
-                  pubkeyB64 !== encodeHashToBase64(store.groupClient.myPubKey),
+                  pubkeyB64 !== encodeHashToBase64(store!.groupClient.myPubKey),
               )
               .map(([pubkeyB64, _]) => decodeHashFromBase64(pubkeyB64));
 
@@ -679,7 +679,7 @@ export async function handleAppletIframeMessage(
               );
             }
 
-            await store.groupClient.remoteSignalArbitrary(remoteSignalPayload, peersToSendSignal);
+            await store!.groupClient.remoteSignalArbitrary(remoteSignalPayload, peersToSendSignal);
           }
         }),
       );
@@ -692,7 +692,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const appletHash = source.appletHash;
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(appletHash)!);
       if (groupStores.size === 0) throw new Error('No group store found.');
       // Install the clone in the group
       const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
@@ -701,7 +701,7 @@ export async function handleAppletIframeMessage(
       if (message.publicToGroupMembers) {
         await Promise.all(
           Array.from(groupStores.values()).map(async (groupStore) => {
-            await groupStore.groupClient.joinClonedCell({
+            await groupStore!.groupClient.joinClonedCell({
               applet_hash: appletHash,
               dna_hash: clonedCell.cell_id[0],
               role_name: message.req.role_name,
@@ -746,7 +746,7 @@ export async function handleAppletIframeMessage(
     case 'user-select-asset':
       let groupDnaHash: DnaHash | undefined;
       if (message.from === 'create' && source.type === 'applet') {
-        const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
+        const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
         console.log('groupstores: ', groupStores);
         groupDnaHash = Array.from(groupStores.keys())[0];
         console.log('groupDnaHash: ', groupDnaHash);
@@ -762,7 +762,7 @@ export async function handleAppletIframeMessage(
       }
       // We want to make sure that
       const hrl = message.wal.hrl;
-      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0])!.get(hrl[1])!);
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow adding to assets from the same applet
       if (
@@ -772,14 +772,14 @@ export async function handleAppletIframeMessage(
         throw new Error('Cannot add tags to an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash)!,
       );
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.addTagsToAsset(message.wal, message.tags),
+          groupStore!.assetsClient.addTagsToAsset(message.wal, message.tags),
         ),
       );
     }
@@ -790,7 +790,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const hrl = message.wal.hrl;
-      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0])!.get(hrl[1])!);
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow removing to assets from the same applet
       if (
@@ -800,14 +800,14 @@ export async function handleAppletIframeMessage(
         throw new Error('Cannot remove tags from an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash)!,
       );
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.removeTagsFromAsset(message.wal, message.tags),
+          groupStore!.assetsClient.removeTagsFromAsset(message.wal, message.tags),
         ),
       );
     }
@@ -818,7 +818,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const hrl = message.srcWal.hrl;
-      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0])!.get(hrl[1])!);
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       // Only allow removing to assets from the same applet
       if (
@@ -828,14 +828,14 @@ export async function handleAppletIframeMessage(
         throw new Error('Cannot relation to an asset that belongs to another Tool.');
       // Add tags to all group stores that the asset belongs to
       const groupStores = await toPromise(
-        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+        mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash)!,
       );
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.addAssetRelation(message.srcWal, message.dstWal),
+          groupStore!.assetsClient.addAssetRelation(message.srcWal, message.dstWal),
         ),
       );
     }
@@ -848,14 +848,14 @@ export async function handleAppletIframeMessage(
       // Note: We assume here that the asset relation that gets removed lives inside the
       // Tool that requests the removal. If that's not the case it fails. And it probably
       // shouldn't be allowed to remove an asset relation belonging to another Tool anyway
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       console.log('### removing asset relation');
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.removeAssetRelation(message.relationHash),
+          groupStore!.assetsClient.removeAssetRelation(message.relationHash),
         ),
       );
     }
@@ -867,13 +867,13 @@ export async function handleAppletIframeMessage(
       }
       console.log('@appletHost: GOT add-tags-to-asset-relation message. ');
 
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) =>
-          groupStore.assetsClient.addTagsToAssetRelation(message.relationHash, message.tags),
+          groupStore!.assetsClient.addTagsToAssetRelation(message.relationHash, message.tags),
         ),
       );
     }
@@ -884,14 +884,14 @@ export async function handleAppletIframeMessage(
         );
       }
       console.log('@appletHost: GOT remove-tags-from-asset-relation message. ');
-      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
+      const groupStores = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
       if (groupStores.size === 0) {
         throw new Error('No associated group found for the provided WAL.');
       }
       return Promise.all(
         Array.from(groupStores.values()).map((groupStore) => {
           console.log('@appletHost: REMOVING TAGS FROM ASSET RELATION: ', message.tags);
-          groupStore.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags);
+          groupStore!.assetsClient.removeTagsFromAssetRelation(message.relationHash, message.tags);
         }),
       );
     }
@@ -907,8 +907,8 @@ export async function handleAppletIframeMessage(
         const groupStoresMap = await toPromise(mossStore.groupStores);
         groupStores = Array.from(groupStoresMap.values());
       } else {
-        const groupStoresMap = await toPromise(mossStore.groupsForApplet.get(source.appletHash));
-        groupStores = Array.from(groupStoresMap.values());
+        const groupStoresMap = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
+        groupStores = Array.from(groupStoresMap.values()).filter((store): store is GroupStore => store !== undefined);
         if (groupStores.length === 0) {
           throw new Error('No associated group found for the provided WAL.');
         }
@@ -929,7 +929,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const hrl = message.wal.hrl;
-      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0])!.get(hrl[1])!);
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       const groupStore = await getFirstGroupStoreForHrl(mossStore, hrlLocation);
       if (!groupStore) {
@@ -947,7 +947,7 @@ export async function handleAppletIframeMessage(
         );
       }
       const hrl = message.wal.hrl;
-      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0]).get(hrl[1]));
+      const hrlLocation = await toPromise(mossStore.hrlLocations.get(hrl[0])!.get(hrl[1])!);
       if (!hrlLocation) throw new Error('Failed to resolve WAL.');
       const groupStore = await getFirstGroupStoreForHrl(mossStore, hrlLocation);
       if (!groupStore) {
@@ -1023,7 +1023,7 @@ async function getFirstGroupStoreForHrl(
   hrlLocation: HrlLocation,
 ): Promise<GroupStore | undefined> {
   const groupsForApplet = await toPromise(
-    mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash),
+    mossStore.groupsForApplet.get(hrlLocation.dnaLocation.appletHash)!,
   );
   if (groupsForApplet.size === 0) {
     return undefined;

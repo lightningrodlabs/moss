@@ -71,7 +71,7 @@ export class InactiveTools extends LitElement {
             async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
               let appletEntry: Applet | undefined;
               try {
-                appletEntry = await toPromise(this._groupStore.applets.get(appletHash));
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }

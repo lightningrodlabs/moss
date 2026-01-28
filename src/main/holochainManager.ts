@@ -108,7 +108,7 @@ export class HolochainManager {
       conductorConfig.network.advanced = advancedSettings;
     }
 
-    console.log('Writing conductor-config.yaml...');
+    console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
 
     fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 

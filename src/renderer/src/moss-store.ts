@@ -1,30 +1,30 @@
 import {
-  asyncDerived,
-  asyncDeriveStore,
-  completed,
-  lazyLoad,
-  mapAndJoin,
-  pipe,
-  toPromise,
-  Readable,
-  Writable,
-  writable,
-  derived,
-  manualReloadStore,
-  asyncReadable,
-  Unsubscriber,
-  readable,
-  get,
+    asyncDerived,
+    asyncDeriveStore,
+    completed,
+    lazyLoad,
+    mapAndJoin,
+    pipe,
+    toPromise,
+    Readable,
+    Writable,
+    writable,
+    derived,
+    manualReloadStore,
+    asyncReadable,
+    Unsubscriber,
+    readable,
+    get,
 } from '@holochain-open-dev/stores';
+import {
+    GetonlyMap,
+    pickBy,
+    slice,
+} from '@holochain-open-dev/utils';
 import {
   DnaHashMap,
   HoloHashMap,
   LazyHoloHashMap,
-  LazyMap,
-  pickBy,
-  slice,
-} from '@holochain-open-dev/utils';
-import {
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppInfo,
@@ -114,6 +114,19 @@ import { compareVersions } from 'compare-versions';
 import { sortVersionsDescending } from './utils.js';
 import { IframeStore } from './iframe-store.js';
 
+export class LazyMap<K, V> implements GetonlyMap<K, V> {
+    map = new Map<K, V>();
+
+    constructor(protected newValue: (hash: K) => V) {}
+
+    get(hash: K): V {
+        if (!this.map.has(hash)) {
+            this.map.set(hash, this.newValue(hash));
+        }
+        return this.map.get(hash)!;
+    }
+}
+
 export type SearchStatus = 'complete' | 'loading';
 
 type ZomeCallLogInfoExtended = {
@@ -186,7 +199,7 @@ export class MossStore {
     if (iframeKind.type === 'applet') {
       appletId = encodeHashToBase64(iframeKind.appletHash);
     } else {
-      const applets = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
+      const applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
       const appletIds = Object.keys(applets);
       if (appletIds.length === 0)
         throw new Error(
@@ -1043,9 +1056,8 @@ export class MossStore {
     }
   }
 
-  /**
-   * Stores
-   */
+
+  /** -- Stores -- */
 
   groupStores = manualReloadStore(async () => {
     const groupStores = new DnaHashMap<GroupStore>();
@@ -1053,21 +1065,18 @@ export class MossStore {
     const runningGroupsApps = apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppRunning(app));
-
     console.log('RUNNING GROUP APPS: ', runningGroupsApps);
     await Promise.all(
       runningGroupsApps.map(async (app) => {
         const groupDnaHash = (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0];
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const assetsClient = new AssetsClient(groupAppWebsocket);
-
         groupStores.set(
           groupDnaHash,
           new GroupStore(groupAppWebsocket, token, groupDnaHash, this, assetsClient),
         );
       }),
     );
-
     return groupStores;
   });
 
@@ -1259,7 +1268,7 @@ export class MossStore {
   }
 
   async disableApplet(appletHash: EntryHash) {
-    const installed = await toPromise(this.isInstalled.get(appletHash));
+    const installed = await toPromise(this.isInstalled.get(appletHash)!);
     if (!installed) return;
 
     await this.adminWebsocket.disableApp({
@@ -1269,7 +1278,7 @@ export class MossStore {
   }
 
   async enableApplet(appletHash: EntryHash) {
-    const installed = await toPromise(this.isInstalled.get(appletHash));
+    const installed = await toPromise(this.isInstalled.get(appletHash)!);
     if (!installed) return;
 
     await this.adminWebsocket.enableApp({
@@ -1314,7 +1323,7 @@ export class MossStore {
   appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
     asyncReadable<AppletStore>(async (set) => {
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
-      const groups = await toPromise(this.groupsForApplet.get(appletHash));
+      const groups = await toPromise(this.groupsForApplet.get(appletHash)!);
       // console.log(
       //   '@appletStores: groups: ',
       //   Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
@@ -1324,7 +1333,7 @@ export class MossStore {
 
       const applet = await Promise.race(
         Array.from(groups.values()).map((groupStore) =>
-          toPromise(groupStore.applets.get(appletHash)),
+          toPromise(groupStore!.applets.get(appletHash)!),
         ),
       );
 
@@ -1342,7 +1351,7 @@ export class MossStore {
     const runningAppletStores = new HoloHashMap<AppletHash, AppletStore>();
     for (const hash of appletsHashes) {
       try {
-        const appletStore = await toPromise(this.appletStores.get(hash));
+        const appletStore = await toPromise(this.appletStores.get(hash)!);
         runningAppletStores.set(hash, appletStore);
       } catch (e) {
         console.warn(
@@ -1396,14 +1405,14 @@ export class MossStore {
           ),
         ),
       (appletsForThisToolId) =>
-        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
+        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)!),
       async (groupsByApplets) => {
         const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
 
         for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
           const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
           if (groups.size > 0) {
-            const firstGroupToken = Array.from(groups.values())[0].groupClient.authenticationToken;
+            const firstGroupToken = Array.from(groups.values())[0]!.groupClient.authenticationToken;
             appletsB64[encodeHashToBase64(appletHash)] = [
               appletToken,
               {
@@ -1439,7 +1448,7 @@ export class MossStore {
    * A reliable function to get the groups for an applet and is guaranteed
    * to reflect the current state.
    */
-  getGroupsForApplet = async (appletHash: AppletHash) => {
+  async getGroupsForApplet(appletHash: AppletHash) {
     const allApps = await this.adminWebsocket.listApps({});
     const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
     const groupsWithApplet: Array<DnaHash> = [];
@@ -1552,7 +1561,7 @@ export class MossStore {
   hrlLocations = new LazyHoloHashMap(
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
-        return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
+        return asyncDerived(this.dnaLocations.get(dnaHash)!, async (dnaLocation: DnaLocation) => {
           if (encodeHashToBase64(hash) === encodeHashToBase64(NULL_HASH)) {
             return {
               dnaLocation,
@@ -1576,10 +1585,10 @@ export class MossStore {
 
   assetInfo = new LazyMap((walStringified: string) => {
     const wal = deStringifyWal(walStringified);
-    return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
+    return pipe(this.hrlLocations.get(wal.hrl[0])!.get(wal.hrl[1])!, (location) =>
       location
         ? pipe(
-          this.appletStores.get(location.dnaLocation.appletHash),
+          this.appletStores.get(location.dnaLocation.appletHash)!,
           (appletStore) => appletStore!.host,
           (host) =>
             lazyLoad(() =>

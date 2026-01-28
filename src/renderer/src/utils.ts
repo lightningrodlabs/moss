@@ -1022,8 +1022,8 @@ export function lazyLoadAndPollUntil<T>(
 }
 
 export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
-  // determine iframeSrc, then open wal in window
-  const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]));
+  // determine iframeSrc, then open wal in a window
+  const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0])!.get(wal.hrl[1])!);
   if (!location) throw new Error('Asset not found.');
   const renderView: RenderView = {
     type: 'applet-view',

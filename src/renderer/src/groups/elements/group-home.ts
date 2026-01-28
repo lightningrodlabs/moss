@@ -177,7 +177,7 @@ export class GroupHome extends LitElement {
             async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
               let appletEntry: Applet | undefined;
               try {
-                appletEntry = await toPromise(this._groupStore.applets.get(appletHash));
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
@@ -338,7 +338,7 @@ export class GroupHome extends LitElement {
     const appletHash = e.detail;
 
     // Get applet info for dialog
-    const applet = await toPromise(this._groupStore.applets.get(appletHash));
+    const applet = await toPromise(this._groupStore.applets.get(appletHash)!);
     if (!applet) return;
 
     let appletName = applet.custom_name;
@@ -373,10 +373,10 @@ export class GroupHome extends LitElement {
       const appletHash = this._appletToUninstall.hash;
       const appId = appIdFromAppletHash(appletHash);
       await window.electronAPI.uninstallApplet(appId);
-      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash));
+      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash)!);
       await Promise.all(
         Array.from(groupsForApplet.values()).map((groupStore) =>
-          groupStore.groupClient.abandonApplet(appletHash),
+          groupStore!.groupClient.abandonApplet(appletHash),
         ),
       );
       await this.mossStore.reloadManualStores();

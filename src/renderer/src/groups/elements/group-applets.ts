@@ -10,7 +10,7 @@ import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
 import { ActionHash, EntryHash } from '@holochain/client';
-import { EntryRecord } from '@holochain-open-dev/utils';
+import {EntryRecord, GetonlyMap} from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiToyBrickPlus } from '@mdi/js';
 
@@ -42,10 +42,10 @@ export class GroupApplets extends LitElement {
     () =>
       joinAsync([
         pipe(this._groupStore.customViewsStore.allCustomViews, (allCustomViews) =>
-          sliceAndJoin(this._groupStore.customViewsStore.customViews, allCustomViews),
+          sliceAndJoin(this._groupStore.customViewsStore.customViews as GetonlyMap<any, any>, allCustomViews),
         ),
         pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-          sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+          sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),
         ),
       ]) as AsyncReadable<
         [ReadonlyMap<ActionHash, EntryRecord<CustomView>>, ReadonlyMap<EntryHash, AppletStore>]

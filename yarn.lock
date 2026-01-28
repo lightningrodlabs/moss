@@ -1584,13 +1584,13 @@
   resolved "https://registry.npmjs.org/@holo-host/identicon/-/identicon-0.1.0.tgz"
   integrity sha512-Dn5pTV/m3XaK1Zvq3liw/vQUt7goM7Y84x2zUyH8cb9CNMs4kPCNHs3kalbJZ/ymzFvwcdiLwwNW8AKk+WWN5A==
 
-"@holochain-open-dev/elements@^0.600.0":
-  version "0.600.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/elements/-/elements-0.600.0.tgz"
-  integrity sha512-fzWIqDj8InG/jv/xb00LFYQJjXZa7pdwY3fHRmCQICbPPKibUF/sBgr60TbE3gxPsXjzX5p7ffBt1dW2p3AfBw==
+"@holochain-open-dev/elements@^0.601.0":
+  version "0.601.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.601.0.tgz#21044dbd56df1a6892b1a08e6e81c0de7a84606e"
+  integrity sha512-a4cyNdV6YlsrMZSIUEdyC/V6dXrdJdOfql250SZE64vKJxmfHSrebYMIlzTaf3HKZoPaMOlxbfsvWqk1sDf1sg==
   dependencies:
     "@holo-host/identicon" "^0.1.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.1.96"
     "@shoelace-style/shoelace" "^2.20.0"
@@ -1600,29 +1600,29 @@
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
 
-"@holochain-open-dev/profiles@^0.600.0":
-  version "0.600.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/profiles/-/profiles-0.600.0.tgz"
-  integrity sha512-n749EjHKMlbyWY5P+VxVCsD137b41EOCgI2nwGiGUZzDe25fw1lx0FDEatPkOApFYyNuVyuiHo1pseddeyjIcg==
+"@holochain-open-dev/profiles@^0.601.1":
+  version "0.601.1"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.601.1.tgz#2bc465d445cf52039585fadab3e56aecb9e93725"
+  integrity sha512-IdHiECD5ABVTv8IPob0blDR+5zw8KG2D/SLFiiGfoxntQx/YNnAJLxvUuGFYJ+sp8DIJr5OusR6Ice/Ju0UYXQ==
   dependencies:
-    "@holochain-open-dev/elements" "^0.600.0"
-    "@holochain-open-dev/stores" "^0.600.0"
-    "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain-open-dev/elements" "^0.601.0"
+    "@holochain-open-dev/stores" "^0.601.0"
+    "@holochain-open-dev/utils" "^0.601.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.1.96"
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/stores@^0.600.0":
-  version "0.600.0"
-  resolved "https://registry.npmjs.org/@holochain-open-dev/stores/-/stores-0.600.0.tgz"
-  integrity sha512-alquLMKwRooQ1M0qR7JLcUSudp2xv4QrG9g4wq2PKDtXrMkokKvHtMXJ/Bgcdy8Gh/mst2Xt7VAsFUNblb3sBA==
+"@holochain-open-dev/stores@^0.601.0":
+  version "0.601.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.601.0.tgz#eb59caebac6546290e29277fb48bacd1bcf0529a"
+  integrity sha512-ON8pPnotK+akaWjD9f2pcJpD4cvsi4jjYdInjdcANYPnLjFy7cRv+DAl4pEb2M8HfExFz1DF7lrwND1oxMxgVg==
   dependencies:
     "@alenaksu/json-viewer" "^2.0.1"
     "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@scoped-elements/cytoscape" "^0.2.0"
     "@shoelace-style/shoelace" "^2.20.0"
     lit "^3.0.2"
@@ -1641,10 +1641,37 @@
     lodash-es "^4.17.21"
     sort-keys "^5.0.0"
 
+"@holochain-open-dev/utils@^0.601.0":
+  version "0.601.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.601.0.tgz#f04dcda1c864730883cc5353924fe6d428e94220"
+  integrity sha512-y6gKoPbYGp4U9UHI3ZttcEnp97JAIT2XdQOuDgT6tJMKORdhXP88e5FxV+P2tArby127+DnRYvW2fenydZAJdw==
+  dependencies:
+    "@holochain/client" "=0.20.4-rc.0"
+    "@msgpack/msgpack" "^2.8.0"
+    blakejs "^1.2.1"
+    emittery "^1.0.1"
+    lodash-es "^4.17.21"
+    sort-keys "^5.0.0"
+
 "@holochain-playground/cli@^0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@holochain-playground/cli/-/cli-0.1.1.tgz"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
+
+"@holochain/client@=0.20.4-rc.0":
+  version "0.20.4-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.20.4-rc.0.tgz#36892368516db757c7e3066072f837646bca77b8"
+  integrity sha512-vE+RZKbn9t+3pRYQaxAiK0UFkHxDmYZgsD17XhlTkBhF3RvzjMFFgkKJzsx3Y5Jq+TiVXrm1+eGBm4F8KVzdGQ==
+  dependencies:
+    "@bitgo/blake2b" "^3.2.4"
+    "@msgpack/msgpack" "^3.1.2"
+    emittery "^1.2.0"
+    isomorphic-ws "^5.0.0"
+    js-base64 "^3.7.8"
+    js-sha512 "^0.9.0"
+    libsodium-wrappers "^0.8"
+    lodash-es "^4.17.21"
+    ws "^8.18.3"
 
 "@holochain/client@^0.20.0":
   version "0.20.2"
@@ -3153,19 +3180,19 @@
 "@theweave/api@file:libs/api":
   version "0.6.4"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain-open-dev/profiles" "^0.601.1"
+    "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
   version "0.6.1"
   dependencies:
-    "@holochain-open-dev/elements" "^0.600.0"
-    "@holochain-open-dev/profiles" "^0.600.0"
-    "@holochain-open-dev/stores" "^0.600.0"
-    "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain-open-dev/elements" "^0.601.0"
+    "@holochain-open-dev/profiles" "^0.601.1"
+    "@holochain-open-dev/stores" "^0.601.0"
+    "@holochain-open-dev/utils" "^0.601.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -3177,17 +3204,17 @@
 "@theweave/group-client@file:shared/group-client":
   version "0.5.1"
   dependencies:
-    "@holochain-open-dev/utils" "^0.600.0"
-    "@holochain/client" "^0.20.0"
+    "@holochain-open-dev/utils" "^0.601.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.1"
 
 "@theweave/utils@file:shared/utils":
   version "0.5.1"
   dependencies:
-    "@holochain/client" "^0.20.0"
+    "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "^0.6.1"
+    "@theweave/api" "^0.6.3"
     "@theweave/moss-types" "^0.5.1"
     compare-versions "6.1.1"
     js-base64 "^3.7.2"

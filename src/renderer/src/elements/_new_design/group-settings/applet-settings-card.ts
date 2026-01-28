@@ -34,7 +34,7 @@ import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 export class AppletSettingsCard extends BaseAppletSettingsCard {
   _toolVersion = new StoreSubscriber(
     this,
-    () => this.mossStore.appletToolVersion.get(this.appletHash),
+    () => this.mossStore.appletToolVersion.get(this.appletHash)!,
     () => [this.mossStore, this.appletHash],
   );
 
