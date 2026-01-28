@@ -532,7 +532,7 @@
 </trans-unit>
 <trans-unit id="sf2f0e2d57183480d">
   <source>Failed to undeprecate Tool (see console for details)</source>
-  <target>Échec du retrait de l'obsolescene de l'outil (voir la console pour les détails)</target>
+  <target>Échec du retrait de l'obsolescence de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="sd13c458659b1b8e7">
   <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
@@ -604,23 +604,23 @@
 </trans-unit>
 <trans-unit id="sd6620673dc924b12">
   <source>Failed to update group profile.</source>
-  <target>Echec de la mise a jour du profil du groupe.</target>
+  <target>Échec de la mise à jour du profil du groupe.</target>
 </trans-unit>
 <trans-unit id="s8b0432eecbd8b034">
   <source>Update</source>
-  <target>Mettre a jour</target>
+  <target>Mettre à jour</target>
 </trans-unit>
 <trans-unit id="s894309352d8be05c">
   <source>Error deleting the custom view</source>
-  <target>Erreur lors de la suppression de la vue personnalisee</target>
+  <target>Erreur lors de la suppression de la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s0ef3a153ae591dda">
   <source>Delete Custom View</source>
-  <target>Supprimer la vue personnalisee</target>
+  <target>Supprimer la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s2e314d89467fa967">
   <source>Are you sure you want to delete this custom view?</source>
-  <target>Etes-vous sur de vouloir supprimer cette vue personnalisee ?</target>
+  <target>Êtes-vous sûr de vouloir supprimer cette vue personnalisée ?</target>
 </trans-unit>
 <trans-unit id="sdc673e73b5c13aea">
   <source>Delete</source>
@@ -632,35 +632,35 @@
 </trans-unit>
 <trans-unit id="s2752f1c4b072e911">
   <source>The requested custom view doesn't exist</source>
-  <target>La vue personnalisee demandee n'existe pas</target>
+  <target>La vue personnalisée demandée n'existe pas</target>
 </trans-unit>
 <trans-unit id="s846816c3fb2f8354">
   <source>Error fetching the custom view</source>
-  <target>Erreur lors de la recuperation de la vue personnalisee</target>
+  <target>Erreur lors de la récuperation de la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s2c61d603d1bbdb45">
   <source>Error fetching the custom views</source>
-  <target>Erreur lors de la recuperation des vues personnalisees</target>
+  <target>Erreur lors de la récuperation des vues personnalisées</target>
 </trans-unit>
 <trans-unit id="s9b21b1ade9a93f3b">
   <source>Error creating the custom view</source>
-  <target>Erreur lors de la creation de la vue personnalisee</target>
+  <target>Erreur lors de la création de la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
-  <target>Nom de la vue personnalisee</target>
+  <target>Nom de la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s57d1286dd70605a5">
   <source>Create Custom View</source>
-  <target>Creer une vue personnalisee</target>
+  <target>Creer une vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s55797f0c2b3b37a0">
   <source>Error fetching the blocks for this group</source>
-  <target>Erreur lors de la recuperation des blocs pour ce groupe</target>
+  <target>Erreur lors de la récuperation des blocs pour ce groupe</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
-  <target>Erreur lors de la mise a jour de la vue personnalisee</target>
+  <target>Erreur lors de la mise à jour de la vue personnalisée</target>
 </trans-unit>
 <trans-unit id="s33f85f24c0f5f008">
   <source>Save</source>
@@ -668,7 +668,7 @@
 </trans-unit>
 <trans-unit id="sfa5aa53305538dbf">
   <source>received by:</source>
-  <target>recu par :</target>
+  <target>reçu par :</target>
 </trans-unit>
 <trans-unit id="s3299c9f18ea6ef17">
   <source>Choose Profile Picture</source>
@@ -680,11 +680,11 @@
 </trans-unit>
 <trans-unit id="s16fbcb6c19d06e60">
   <source>Hash copied to clipboard.</source>
-  <target>Hash copie dans le presse-papiers.</target>
+  <target>Hash copié dans le presse-papiers.</target>
 </trans-unit>
 <trans-unit id="se5d39037ee051a67">
   <source>Change Group Icon</source>
-  <target>Changer l'icone du groupe</target>
+  <target>Changer l'icône du groupe</target>
 </trans-unit>
 <trans-unit id="sa5ca0ea1eea6b70b">
   <source>Only stewards can change the group profile.</source>
@@ -708,39 +708,39 @@
 </trans-unit>
 <trans-unit id="s0760375151ab885e">
   <source>Tool deprecated.</source>
-  <target>Outil deprecie.</target>
+  <target>Outil obsolète.</target>
 </trans-unit>
 <trans-unit id="s3e8665467b867e72">
   <source>Failed to deprecate tool (see console for details)</source>
-  <target>Echec de la depreciation de l'outil (voir la console pour les details)</target>
+  <target>Échec de l'obsolescence de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="s4eb1d65f04b7c16d">
   <source>Failed to undeprecate tool (see console for details)</source>
-  <target>Echec du retrait de la depreciation (voir la console pour les details)</target>
+  <target>Échec du retrait de l'obsolescence de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="s47b949de125f96c3">
   <source>Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.</source>
-  <target>La depreciation masquera cet outil pour l'activation par les nouveaux membres ; les membres existants le verront comme deprecie.</target>
+  <target>L'obsolescence cachera cet outil pour les nouveaux membres ; les membres existants le verront comme obsolète.</target>
 </trans-unit>
 <trans-unit id="s5b3f628f0a5a62ac">
   <source>Deprecate for Group</source>
-  <target>Deprecier pour le groupe</target>
+  <target>Rendre obsolète pour le groupe</target>
 </trans-unit>
 <trans-unit id="s0e53ef4364107018">
   <source>Remove deprecation tag for this tool.</source>
-  <target>Retirer la marque de depreciation pour cet outil.</target>
+  <target>Retirer la marque d'obsolescence pour cet outil.</target>
 </trans-unit>
 <trans-unit id="s872b1ad125de32b5">
   <source>Undeprecate</source>
-  <target>Retirer la depreciation</target>
+  <target>Retirer la marque d'obsolescence</target>
 </trans-unit>
 <trans-unit id="s58cf3830485fd5ec">
   <source>advanced settings</source>
-  <target>parametres avances</target>
+  <target>paramètres avancés</target>
 </trans-unit>
 <trans-unit id="s195a1ab2540d51a4">
   <source>Deprecated</source>
-  <target>Deprecie</target>
+  <target>Marqué comme obsolète</target>
 </trans-unit>
 <trans-unit id="s81850fd21bd71f71">
   <source>tool hash</source>
@@ -748,11 +748,11 @@
 </trans-unit>
 <trans-unit id="s454fef8d9887fc7b">
   <source>Allways-online nodes should install this tool by default</source>
-  <target>Les noeuds toujours en ligne doivent installer cet outil par defaut</target>
+  <target>Les noeuds toujours-en-ligne doivent installer cet outil par défaut</target>
 </trans-unit>
 <trans-unit id="s965c503c3e42fdfe">
   <source>Enabled</source>
-  <target>Active</target>
+  <target>Activé</target>
 </trans-unit>
 <trans-unit id="s66722bc2ea775e05">
   <source>Disabled</source>
@@ -760,11 +760,11 @@
 </trans-unit>
 <trans-unit id="s5f6a6b76ddc59610">
   <source>Uninstall for me</source>
-  <target>Desinstaller pour moi</target>
+  <target>Désinstaller pour moi</target>
 </trans-unit>
 <trans-unit id="se53f0886d793813b">
   <source>No ignored tools.</source>
-  <target>Aucun outil ignore.</target>
+  <target>Aucun outil ignoré.</target>
 </trans-unit>
 <trans-unit id="s79ce03bd39ecb043">
   <source>Activate All</source>
@@ -776,11 +776,11 @@
 </trans-unit>
 <trans-unit id="sbf4310079743ede4">
   <source>No uninstalled tools.</source>
-  <target>Aucun outil desinstalle.</target>
+  <target>Aucun outil désinstallé.</target>
 </trans-unit>
 <trans-unit id="sdf2d511781a96bad">
   <source>To Activate</source>
-  <target>A activer</target>
+  <target>À activer</target>
 </trans-unit>
 <trans-unit id="sa45a194b58837e4f">
   <source>Active</source>
@@ -788,15 +788,15 @@
 </trans-unit>
 <trans-unit id="s0e1dc13dc6a16310">
   <source>Uninstalled</source>
-  <target>Desinstalle</target>
+  <target>Désinstallé</target>
 </trans-unit>
 <trans-unit id="s637e927368a66f25">
   <source>Ignored</source>
-  <target>Ignore</target>
+  <target>Ignoré</target>
 </trans-unit>
 <trans-unit id="s43417e56f957ff34">
   <source>assign steward role</source>
-  <target>attribuer le role d'administrateur</target>
+  <target>attribuer le rôle d'administrateur</target>
 </trans-unit>
 <trans-unit id="s6e84b6d6d9819c25">
   <source>no expiry</source>
@@ -804,15 +804,15 @@
 </trans-unit>
 <trans-unit id="sbde6a2d370f6356f">
   <source>Extend Role</source>
-  <target>Prolonger le role</target>
+  <target>Prolonger le rôle</target>
 </trans-unit>
 <trans-unit id="s4df2cd89bceba12f">
   <source>Assign Steward role to </source>
-  <target>Attribuer le role d'administrateur a </target>
+  <target>Attribuer le rôle d'administrateur à </target>
 </trans-unit>
 <trans-unit id="s043ccb66dea567af">
   <source>until:</source>
-  <target>jusqu'a :</target>
+  <target>jusqu'à :</target>
 </trans-unit>
 <trans-unit id="sac8252732f2edb19">
   <source>Date</source>
@@ -828,7 +828,7 @@
 </trans-unit>
 <trans-unit id="s0b93f9778794737c">
   <source>I understand that after assigning someone to the Steward role</source>
-  <target>Je comprends qu'apres avoir attribue le role d'administrateur a quelqu'un</target>
+  <target>Je comprends qu'après avoir attribué le rôle d'administrateur à quelqu'un</target>
 </trans-unit>
 <trans-unit id="s5359ae748cb89c2c">
   <source>I cannot undo the action.</source>
@@ -836,11 +836,11 @@
 </trans-unit>
 <trans-unit id="sc99731a5ed9a3ccb">
   <source>A member will stay a Steward forever or until the specified date.</source>
-  <target>Un membre restera administrateur pour toujours ou jusqu'a la date specifiee.</target>
+  <target>Un membre restera administrateur pour toujours où jusqu'à la date specifiée.</target>
 </trans-unit>
 <trans-unit id="s443f3886c4025e94">
   <source>Assign Steward Role</source>
-  <target>Attribuer le role d'administrateur</target>
+  <target>Attribuer le rôle d'administrateur</target>
 </trans-unit>
 <trans-unit id="safb6dffff2680544">
   <source>name*</source>
@@ -848,7 +848,7 @@
 </trans-unit>
 <trans-unit id="s3798c0344c399eb7">
   <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
-  <target>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> caracteres</target>
+  <target>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> caractères</target>
 </trans-unit>
 <trans-unit id="sc93a9aa3e5bcbf5d">
   <source>Save Profile</source>
@@ -856,7 +856,7 @@
 </trans-unit>
 <trans-unit id="s639c68c3284a2269">
   <source>Update Profile</source>
-  <target>Mettre a jour le profil</target>
+  <target>Mettre à jour le profil</target>
 </trans-unit>
 <trans-unit id="s08b73807b55c4bbe">
   <source>in</source>
@@ -864,27 +864,27 @@
 </trans-unit>
 <trans-unit id="s77997784a8b9d635">
   <source>This will delete all your data related to this group and the Tools you joined therein from your computer.</source>
-  <target>Cela supprimera toutes vos donnees liees a ce groupe et aux outils auxquels vous avez adhere de votre ordinateur.</target>
+  <target>Cela supprimera toutes vos donnees liées à ce groupe et aux outils auxquels vous avez adheré de votre ordinateur.</target>
 </trans-unit>
 <trans-unit id="s51a3788bbb43cf2f">
   <source>Other members of the group can keep using the group and any Tools they joined themselves.</source>
-  <target>Les autres membres du groupe peuvent continuer a utiliser le groupe et tous les outils auxquels ils ont adhere eux-memes.</target>
+  <target>Les autres membres du groupe peuvent continuer à utiliser le groupe et tous les outils auxquels ils ont adhéré eux-mêmes.</target>
 </trans-unit>
 <trans-unit id="sfad30611c68ecd70">
   <source>Disable Group</source>
-  <target>Desactiver le groupe</target>
+  <target>Désactiver le groupe</target>
 </trans-unit>
 <trans-unit id="sb1cdb5ae8fce51ce">
   <source>Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.</source>
-  <target>Desactive ce groupe pour vous et vous arreterez de synchroniser les donnees avec les autres membres de ce groupe. Vous pouvez le reactiver plus tard.</target>
+  <target>Cela désactive ce groupe pour vous-même et arrête la synchronisation des données avec les autres membres de ce groupe. Vous pourrez le réactiver à nouveau.</target>
 </trans-unit>
 <trans-unit id="s399a70b452ca4dbf">
   <source>Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.</source>
-  <target>Quitter le groupe definitivement. Vous ne pouvez pas le rejoindre a nouveau avec cette instance de Moss et toutes vos donnees associees a ce groupe et ses outils seront supprimees de votre ordinateur. Les autres membres du groupe peuvent continuer a utiliser le groupe et tous les outils auxquels ils ont adhere.</target>
+  <target>Quitter le groupe définitivement. Vous ne pourrez pas le rejoindre à nouveau avec cette instance de Moss et toutes vos données associées à ce groupe et ses outils seront supprimées de votre ordinateur. Les autres membres du groupe peuvent continuer à utiliser le groupe et tous les outils auxquels ils ont adhéré.</target>
 </trans-unit>
 <trans-unit id="sc3ac225273c8316b">
   <source>General</source>
-  <target>General</target>
+  <target>Général</target>
 </trans-unit>
 <trans-unit id="se03590807dedd737">
   <source>Group Tools</source>
@@ -904,47 +904,47 @@
 </trans-unit>
 <trans-unit id="s3563f6f848d5f4c7">
   <source>Uninstalling</source>
-  <target>Desinstallation</target>
+  <target>Désinstallation</target>
 </trans-unit>
 <trans-unit id="s318c4eefa759ada0">
   <source>Uninstalling affects only you.</source>
-  <target>La desinstallation ne vous affecte que vous.</target>
+  <target>La désinstallation n'affecte que vous.</target>
 </trans-unit>
 <trans-unit id="sfa6b141d95c6d21d">
   <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
-  <target>Vous ne pourrez plus utiliser cette application, mais votre groupe continuera a l'utiliser jusqu'a ce qu'un administrateur la deprecie pour tout le monde.</target>
+  <target>Vous ne pourrez plus utiliser cette Outil, mais votre groupe continuera à l'utiliser jusqu'à ce qu'un administrateur le marque obsolète pour tout le monde.</target>
 </trans-unit>
 <trans-unit id="s5e454aea488489d6">
   <source>Do you want to uninstall it for yourself?</source>
-  <target>Voulez-vous la desinstaller pour vous-meme ?</target>
+  <target>Voulez-vous la désinstaller pour vous-même ?</target>
 </trans-unit>
 <trans-unit id="s55f9020091babf63">
   <source>Uninstalling...</source>
-  <target>Desinstallation...</target>
+  <target>Désinstallation en cours...</target>
 </trans-unit>
 <trans-unit id="s4c4589bab8bdda6f">
   <source>Yes, uninstall it</source>
-  <target>Oui, desinstaller</target>
+  <target>Oui, désinstaller</target>
 </trans-unit>
 <trans-unit id="s8213840a0f7d2644">
   <source>No, keep it</source>
-  <target>Non, conserver</target>
+  <target>Non, gardez-le</target>
 </trans-unit>
 <trans-unit id="sbe99741971f28360">
   <source>Failed to uninstall tool instance.</source>
-  <target>Echec de la desinstallation de l'instance de l'outil.</target>
+  <target>Échec de la désinstallation de l'instance de l'outil.</target>
 </trans-unit>
 <trans-unit id="s6a5d4d5cd480dc6d">
   <source>Show ignored Tools</source>
-  <target>Afficher les outils ignores</target>
+  <target>Afficher les outils ignorés</target>
 </trans-unit>
 <trans-unit id="sde11e4fb0760a7d5">
   <source>No new Tools to activate.</source>
-  <target>Aucun nouvel outil a activer.</target>
+  <target>Aucun nouvel outil à activer.</target>
 </trans-unit>
 <trans-unit id="s31e38b72638e66d0">
   <source>added an instance of </source>
-  <target>a ajoute une instance de </target>
+  <target>à ajouté une instance de </target>
 </trans-unit>
 <trans-unit id="s016f5be842987ba5">
   <source>Participants </source>
@@ -952,19 +952,19 @@
 </trans-unit>
 <trans-unit id="s3c1efcb18ec4d6c9">
   <source>Group Settings</source>
-  <target>Parametres du groupe</target>
+  <target>Paramètres du groupe</target>
 </trans-unit>
 <trans-unit id="s9d8b8aa2b404c2c8">
   <source>Settings</source>
-  <target>Parametres</target>
+  <target>Paramètres</target>
 </trans-unit>
 <trans-unit id="sa86c0479a1e62db6">
   <source>Unactivated Tools</source>
-  <target>Outils non actives</target>
+  <target>Outils non activés</target>
 </trans-unit>
 <trans-unit id="s231e097343f22c21">
   <source>Error fetching the group information</source>
-  <target>Erreur lors de la recuperation des informations du groupe</target>
+  <target>Erreur lors de la récuperation des informations du groupe</target>
 </trans-unit>
 <trans-unit id="sb401e9c080830dc7">
   <source>This group will see me as</source>
@@ -976,11 +976,11 @@
 </trans-unit>
 <trans-unit id="s4404b38d84707655">
   <source>Profile creation timed out. Please try again.</source>
-  <target>La creation du profil a expire. Veuillez reessayer.</target>
+  <target>La creation du profil a expiré. Veuillez réessayer.</target>
 </trans-unit>
 <trans-unit id="s0c24d12af180ccbf">
   <source>There was an error creating your profile. Please try again.</source>
-  <target>Une erreur s'est produite lors de la creation de votre profil. Veuillez reessayer.</target>
+  <target>Une erreur s'est produite lors de la création de votre profil. Veuillez réessayer.</target>
 </trans-unit>
 <trans-unit id="s5f343a43e7ea9f91">
   <source>Error</source>
@@ -988,15 +988,15 @@
 </trans-unit>
 <trans-unit id="s2c8189544e3ea679">
   <source>Retry</source>
-  <target>Reessayer</target>
+  <target>Réessayer</target>
 </trans-unit>
 <trans-unit id="s98de281a36c50aa7">
   <source>Failed to read your profile</source>
-  <target>Echec de la lecture de votre profil</target>
+  <target>Échec de la lecture de votre profil</target>
 </trans-unit>
 <trans-unit id="s715fe9da1b5b38c0">
   <source>This group is disabled.</source>
-  <target>Ce groupe est desactive.</target>
+  <target>Ce groupe est désactivé.</target>
 </trans-unit>
 <trans-unit id="sa0bcc0ad6e32e0ec">
   <source>cell name</source>
@@ -1004,15 +1004,15 @@
 </trans-unit>
 <trans-unit id="sc8b6248d1ceeee57">
   <source>Failed to get groups.</source>
-  <target>Echec de la recuperation des groupes.</target>
+  <target>Échec de la récuperation des groupes.</target>
 </trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
-  <target>Profil par defaut enregistre.</target>
+  <target>Profil par défaut enregistré.</target>
 </trans-unit>
 <trans-unit id="sb743fe792217d795">
   <source>This profile will be used as default when joining new groups.</source>
-  <target>Ce profil sera utilise par defaut lors de l'adhesion a de nouveaux groupes.</target>
+  <target>Ce profil sera utilisé par défaut lors de l'adhéesion à de nouveaux groupes.</target>
 </trans-unit>
 <trans-unit id="s6d8f193aef66d440">
   <source>Save Default Profile</source>
@@ -1020,15 +1020,15 @@
 </trans-unit>
 <trans-unit id="s27ac935473f90d03">
   <source>Language changed.</source>
-  <target>Langue modifiee.</target>
+  <target>Langue modifiée.</target>
 </trans-unit>
 <trans-unit id="s5e00b40d697f6d2b">
   <source>Failed to change language.</source>
-  <target>Echec du changement de langue.</target>
+  <target>Échec du changement de langue.</target>
 </trans-unit>
 <trans-unit id="sb210f3f516da46a4">
   <source>Select your preferred language for the Moss interface.</source>
-  <target>Selectionnez votre langue preferee pour l'interface Moss.</target>
+  <target>Selectionnez votre langue preferée pour l'interface Moss.</target>
 </trans-unit>
 <trans-unit id="sefcf950b3cc4fc3b">
   <source>Language</source>
@@ -1036,31 +1036,31 @@
 </trans-unit>
 <trans-unit id="secbfe3119ef57156">
   <source>Factory Reset</source>
-  <target>Reinitialisation d'usine</target>
+  <target>Réinitialisation d'usine</target>
 </trans-unit>
 <trans-unit id="s4a4cb96bfa2fb8bb">
   <source>Fully reset Moss and</source>
-  <target>Reinitialiser completement Moss et</target>
+  <target>Réinitialiser complètement Moss et</target>
 </trans-unit>
 <trans-unit id="s8456f5387d5d6727">
   <source>delete all associated data</source>
-  <target>supprimer toutes les donnees associees</target>
+  <target>supprimer toutes les données associées</target>
 </trans-unit>
 <trans-unit id="sb061ff5a347a296e">
   <source>Profile</source>
   <target>Profil</target>
 </trans-unit>
 <trans-unit id="s79e68c83bbbbfb92">
-  <source>No existing asset relation tags yet...</source>
-  <target>Pas encore de balises de relation d'actifs existantes...</target>
+  <source>No existing Asset relation tags yet...</source>
+  <target>Pas encore de tag de relation entre Assets existants...</target>
 </trans-unit>
 <trans-unit id="sc7a932781c029939">
   <source>No tags with this search filter</source>
-  <target>Aucune balise avec ce filtre de recherche</target>
+  <target>Aucune tag trouvé avec ce filtre de recherche</target>
 </trans-unit>
 <trans-unit id="scd35145816591894">
   <source>Select existing tag:</source>
-  <target>Selectionner une balise existante :</target>
+  <target>Sélectionner une balise existante :</target>
 </trans-unit>
 <trans-unit id="s2d13c0844c68a8ea">
   <source>Choose Asset Relation Tag:</source>
@@ -1080,19 +1080,19 @@
 </trans-unit>
 <trans-unit id="s46b40e6a61bc0208">
   <source>URL copied.</source>
-  <target>URL copiee.</target>
+  <target>URL copiée.</target>
 </trans-unit>
 <trans-unit id="s8fc0228da60f2c2b">
   <source>Remove from Pocket</source>
-  <target>Retirer de la poche</target>
+  <target>Retirer de la Poche</target>
 </trans-unit>
 <trans-unit id="s1da2307057f1524c">
   <source>Cannot be selected - the associated Tool is disabled</source>
-  <target>Ne peut pas etre selectionne - l'outil associe est desactive</target>
+  <target>Ne peut pas être selectionné - l'outil associé est désactivé</target>
 </trans-unit>
 <trans-unit id="sfc63e31ac7c956ed">
   <source>Select</source>
-  <target>Selectionner</target>
+  <target>Sélectionner</target>
 </trans-unit>
 <trans-unit id="sc592307ea80f16b9">
   <source>Unknown</source>
@@ -1108,19 +1108,19 @@
 </trans-unit>
 <trans-unit id="sc1b8a74e113727e2">
   <source>Search or enter weave-0.15:// URL</source>
-  <target>Rechercher ou entrer une URL weave-0.15://</target>
+  <target>Recherchez ou entrez une URL weave-0.15://</target>
 </trans-unit>
 <trans-unit id="sade7d29e999d2472">
   <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
-  <target>Entrez au moins <x id="0" equiv-text="${this.minChars}"/> caracteres pour commencer la recherche.</target>
+  <target>Entrez au moins <x id="0" equiv-text="${this.minChars}"/> caractères pour commencer la recherche.</target>
 </trans-unit>
 <trans-unit id="sa81413e2e309b882">
   <source>No results found.</source>
-  <target>Aucun resultat trouve.</target>
+  <target>Aucun résultat trouvé.</target>
 </trans-unit>
 <trans-unit id="sf46397f167ec5533">
   <source>Searching...</source>
-  <target>Recherche...</target>
+  <target>Recherche en cours...</target>
 </trans-unit>
 <trans-unit id="s7abafd331dfb06bc">
   <source>Open URL</source>
@@ -1128,11 +1128,11 @@
 </trans-unit>
 <trans-unit id="sa1d04f065ab25208">
   <source>Select Attachment:</source>
-  <target>Selectionner une piece jointe :</target>
+  <target>Sélectionner une pièce jointe :</target>
 </trans-unit>
 <trans-unit id="seead559236062e71">
   <source>Recently created:</source>
-  <target>Recemment cree :</target>
+  <target>Récemment crée :</target>
 </trans-unit>
 <trans-unit id="s1f7698c061c208c9">
   <source>Open</source>
@@ -1140,7 +1140,7 @@
 </trans-unit>
 <trans-unit id="s007a5e0a003f5515">
   <source>In Your Pocket:</source>
-  <target>Dans votre poche :</target>
+  <target>Dans votre Poche :</target>
 </trans-unit>
 <trans-unit id="s00b8b5c1000437fe">
   <source>Reload Tool</source>
@@ -1148,35 +1148,35 @@
 </trans-unit>
 <trans-unit id="sc851c05e0ca38177">
   <source>No Creatables available for the selected Group.</source>
-  <target>Aucun element creatable disponible pour le groupe selectionne.</target>
+  <target>Aucun Asset creable disponible pour le groupe selectionné.</target>
 </trans-unit>
 <trans-unit id="sc530113873b2fd9a">
   <source>From which Tool do you want to create something?</source>
-  <target>Depuis quel outil voulez-vous creer quelque chose ?</target>
+  <target>Depuis quel outil voulez-vous créer quelque chose ?</target>
 </trans-unit>
 <trans-unit id="s9a730edb8b4733e7">
   <source>Create New</source>
-  <target>Creer nouveau</target>
+  <target>Créer un nouveau</target>
 </trans-unit>
 <trans-unit id="s585eef6df9f6be7d">
   <source>What do you want to create?</source>
-  <target>Que voulez-vous creer ?</target>
+  <target>Que voulez-vous créer?</target>
 </trans-unit>
 <trans-unit id="seacc6f1617124704">
   <source>No group selected.</source>
-  <target>Aucun groupe selectionne.</target>
+  <target>Aucun groupe sélectionné.</target>
 </trans-unit>
 <trans-unit id="sa6091c63e770ecfb">
   <source>Create New Asset</source>
-  <target>Creer un nouvel actif</target>
+  <target>Créer un nouvel actif</target>
 </trans-unit>
 <trans-unit id="s233f99bcd0cc14a1">
   <source>Tool not found in any of your groups.</source>
-  <target>Outil non trouve dans aucun de vos groupes.</target>
+  <target>Outil non-trouvé dans aucun de vos groupes.</target>
 </trans-unit>
 <trans-unit id="s16a9f872b944f5f1">
   <source>You're already part of this group.</source>
-  <target>Vous faites deja partie de ce groupe.</target>
+  <target>Vous faites déjà partie de ce groupe.</target>
 </trans-unit>
 <trans-unit id="s4a35a3da7fbd9504">
   <source>Error opening the link.</source>
@@ -1184,15 +1184,15 @@
 </trans-unit>
 <trans-unit id="saa3672a331070a0c">
   <source>Failed to disable Group.</source>
-  <target>Echec de la desactivation du groupe.</target>
+  <target>Échec de la désactivation du groupe.</target>
 </trans-unit>
 <trans-unit id="seb1bdc3ff128123f">
   <source>switch to personal view</source>
-  <target>passer a la vue personnelle</target>
+  <target>passer à la vue personnelle</target>
 </trans-unit>
 <trans-unit id="s95354afd524e0854">
   <source>Added to Pocket</source>
-  <target>Ajoute a la poche</target>
+  <target>Ajouté à la Poche</target>
 </trans-unit>
 <trans-unit id="s1967faf9ed8d3504">
   <source>Avatar</source>
@@ -1208,11 +1208,11 @@
 </trans-unit>
 <trans-unit id="s0be4a2cf7dafcecb">
   <source>random image</source>
-  <target>image aleatoire</target>
+  <target>image aléatoire</target>
 </trans-unit>
 <trans-unit id="s1b710daaf8c152d3">
   <source>Failed to join the group.</source>
-  <target>Echec de l'adhesion au groupe.</target>
+  <target>Échec de l'adhésion au groupe.</target>
 </trans-unit>
 <trans-unit id="s9a46ff9baa276602">
   <source>back</source>
@@ -1228,7 +1228,7 @@
 </trans-unit>
 <trans-unit id="s97c954bf5d700fc4">
   <source>Create group space</source>
-  <target>Creer un espace de groupe</target>
+  <target>Créer un espace de groupe</target>
 </trans-unit>
 <trans-unit id="sd33aeb1a43a080b1">
   <source>Choose Group Type</source>
@@ -1240,7 +1240,7 @@
 </trans-unit>
 <trans-unit id="sa5ad0d6001e29e11">
   <source>Creating a new space</source>
-  <target>Creation d'un nouvel espace</target>
+  <target>Création d'un nouvel espace en cours</target>
 </trans-unit>
 <trans-unit id="s882ccaf3aa86f663">
   <source>in the beautiful p2p realm.</source>
@@ -1248,7 +1248,7 @@
 </trans-unit>
 <trans-unit id="s3a1a79c51ae32bba">
   <source>may take up to 1-2 minutes</source>
-  <target>peut prendre jusqu'a 1-2 minutes</target>
+  <target>peut prendre jusqu'à 1-2 minutes</target>
 </trans-unit>
 <trans-unit id="s5a5e67d875579d70">
   <source>Welcome to Moss.</source>
@@ -1256,7 +1256,7 @@
 </trans-unit>
 <trans-unit id="s4dcc66195b1ddc69">
   <source>What brought you here today?</source>
-  <target>Qu'est-ce qui vous amene ici aujourd'hui ?</target>
+  <target>Qu'est-ce qui vous amène ici aujourd'hui ?</target>
 </trans-unit>
 <trans-unit id="sbf68658bb3dad7f1">
   <source>I have an invite link to join a group</source>
@@ -1264,7 +1264,7 @@
 </trans-unit>
 <trans-unit id="s3eadd48b1fc794ca">
   <source>An invite link looks like:</source>
-  <target>Un lien d'invitation ressemble a :</target>
+  <target>Un lien d'invitation ressemble à :</target>
 </trans-unit>
 <trans-unit id="s9c0c49be73d09c2b">
   <source>paste invite link here</source>
@@ -1280,11 +1280,11 @@
 </trans-unit>
 <trans-unit id="sd8fc07c566540e32">
   <source>I want to start a space for my group</source>
-  <target>Je veux creer un espace pour mon groupe</target>
+  <target>Je veux créer un espace pour mon groupe</target>
 </trans-unit>
 <trans-unit id="s4e9e4d368feaf09a">
   <source>Create new group space</source>
-  <target>Creer un nouvel espace de groupe</target>
+  <target>Créer un nouvel espace de groupe</target>
 </trans-unit>
 <trans-unit id="s9c0f4d29e125d6d3">
   <source>Skip Setup</source>
@@ -1292,19 +1292,19 @@
 </trans-unit>
 <trans-unit id="s47c33f08061ea16c">
   <source>Holochain failed to start up and crashed :(</source>
-  <target>Holochain n'a pas pu demarrer et a plante :(</target>
+  <target>Holochain n'a pas pu démarrer et à planté :(</target>
 </trans-unit>
 <trans-unit id="scf5e435555ee676b">
   <source>If you want to support us in finding the problem, please export the logs and send them to </source>
-  <target>Si vous voulez nous aider a trouver le probleme, veuillez exporter les journaux et les envoyer a </target>
+  <target>Si vous voulez nous aider à trouver le problème, veuillez exporter les logs et les envoyer à </target>
 </trans-unit>
 <trans-unit id="s025d191d3f77cdf8">
   <source>Open Logs</source>
-  <target>Ouvrir les journaux</target>
+  <target>Ouvrir les logs</target>
 </trans-unit>
 <trans-unit id="s07e9dc65d473e7f2">
   <source>Export Logs</source>
-  <target>Exporter les journaux</target>
+  <target>Exporter les logs</target>
 </trans-unit>
 <trans-unit id="sad273202fc27c4b7">
   <source>Choose whether you want to set up Moss with or without a password.</source>
@@ -1312,11 +1312,11 @@
 </trans-unit>
 <trans-unit id="sdbd1191439f543ae">
   <source>The password will be used to encrypt your data locally on your device.</source>
-  <target>Le mot de passe sera utilise pour chiffrer vos donnees localement sur votre appareil.</target>
+  <target>Le mot de passe sera utilisé pour chiffrer vos données localement sur votre appareil.</target>
 </trans-unit>
 <trans-unit id="s441d1a59a5deb96e">
   <source>A password cannot be added, changed or removed later.</source>
-  <target>Un mot de passe ne peut pas etre ajoute, modifie ou supprime ulterieurement.</target>
+  <target>Un mot de passe ne peut pas être ajouté, modifié ou supprimé ulterieurement.</target>
 </trans-unit>
 <trans-unit id="s1288a007963d95a7">
   <source>Setup With Password</source>
@@ -1324,11 +1324,11 @@
 </trans-unit>
 <trans-unit id="s79cf807d7b63cbab">
   <source>Setup Without Password</source>
-  <target>Configurer sans mot de passe</target>
+  <target>Configurez sans mot de passe</target>
 </trans-unit>
 <trans-unit id="sff696c02c0929f45">
   <source>Holochain failed to start up :(</source>
-  <target>Holochain n'a pas pu demarrer :(</target>
+  <target>Holochain n'a pas pu démarrer :(</target>
 </trans-unit>
 <trans-unit id="sc16e00a7a8b2fde2">
   <source>Back</source>
@@ -1340,7 +1340,7 @@
 </trans-unit>
 <trans-unit id="s030b3a4396f2b7ff">
   <source>Moss development is in alpha stage. We highly appreciate active feedback.</source>
-  <target>Moss est en phase alpha. Nous apprécions grandement vos retours actifs.</target>
+  <target>Moss est en cours de développement. Nous apprécions grandement vos retours.</target>
 </trans-unit>
 <trans-unit id="s476d01fc816de04c">
   <source>If you are encountering a problem and are familiar with Github, you can</source>
@@ -1348,11 +1348,11 @@
 </trans-unit>
 <trans-unit id="sc17269a64b255817">
   <source>create an issue on Github</source>
-  <target>créer une issue sur Github</target>
+  <target>créer une Issue sur Github</target>
 </trans-unit>
 <trans-unit id="s51811537b64de77a">
   <source>If you have more general feedback or are not familiar with Github, you can write to the following email address:</source>
-  <target>Si vous avez des retours plus généraux ou n'êtes pas familier avec Github, vous pouvez écrire à l'adresse email suivante :</target>
+  <target>Si vous avez des retours plus généraux ou n'êtes pas familier avec Github, vous pouvez écrire à l'adresse courriel suivante :</target>
 </trans-unit>
 <trans-unit id="s890c46ca8389a6bb">
   <source>Moss Update Available:</source>
@@ -1392,7 +1392,7 @@
 </trans-unit>
 <trans-unit id="sbcd75c9c2a54295f">
   <source>The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.</source>
-  <target>Le créateur du groupe est le premier Intendant. Seuls les Intendants peuvent modifier le profil du groupe, ajouter et supprimer des Outils et ajouter des Intendants supplémentaires.</target>
+  <target>Le créateur du groupe est le premier Administrateur. Seuls les Administrateurs peuvent modifier le profil du groupe, ajouter et supprimer des Outils et ajouter des Administrateurs supplémentaires.</target>
 </trans-unit>
 <trans-unit id="sd61c6c6ae1ff0b1e">
   <source>All members have full permissions.</source>
@@ -1480,15 +1480,15 @@
 </trans-unit>
 <trans-unit id="sbe33c7c17242705f">
   <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
-  <target>Rien dans votre poche. Cherchez les icônes de poche pour ajouter des éléments à votre poche.</target>
+  <target>Rien dans votre poche. Cherchez les icônes de la Poche pour ajouter des éléments à votre Poche.</target>
 </trans-unit>
 <trans-unit id="se2e3d764f68cee6b">
   <source>drop to add to pocket</source>
-  <target>déposer pour ajouter à la poche</target>
+  <target>déposer pour ajouter à la Poche</target>
 </trans-unit>
 <trans-unit id="sc1407b21ee25eeab">
   <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
-  <target>Rien dans votre poche. Cherchez les icônes de poche pour ajouter des ressources à votre poche.</target>
+  <target>Rien dans votre Poche. Cherchez les icônes de Poche pour ajouter des ressources à votre Poche.</target>
 </trans-unit>
 <trans-unit id="s04b098165a8b8e1a">
   <source>Foyer</source>
@@ -1500,7 +1500,7 @@
 </trans-unit>
 <trans-unit id="sd8ea620cc72ecf78">
   <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
-  <target>Aucun de ces messages n'est jamais stocké, et ils ne sont envoyés qu'aux autres membres qui apparaissent en ligne dans la liste des membres du groupe.</target>
+  <target>Aucun de ces messages n'est stocké, et ils ne sont envoyés qu'aux autres membres qui apparaissent en ligne dans la liste des membres du groupe.</target>
 </trans-unit>
 <trans-unit id="sa9f7f0bd2f12faa0">
   <source>Foyer Messages:</source>
