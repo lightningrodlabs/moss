@@ -51,7 +51,17 @@ export class MossSettings extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
+    window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
   }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+  }
+
+  private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
+    this._designFeedbackMode = e.detail;
+  };
 
   private async _loadFeedbackHistory() {
     this._loadingHistory = true;
@@ -200,6 +210,7 @@ export class MossSettings extends LitElement {
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"
           @click=${() => {
             this.tabsState = TabsState.Feedback;
+            this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
             this._loadFeedbackHistory();
           }}
         >

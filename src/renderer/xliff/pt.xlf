@@ -1531,9 +1531,6 @@
 <trans-unit id="sea97ee88ea35358e">
   <source>Moss GitHub repo</source>
 <target>repositório GitHub do Moss</target></trans-unit>
-<trans-unit id="s34299de3f5a7b967">
-  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard to send by other means.</source>
-<target>Se quiser enviar de forma privada, pressione "Copiar" para copiar o feedback para sua área de transferência e enviar por outro meio.</target></trans-unit>
 <trans-unit id="see302f30d4ca5691">
   <source>Feedback submitted. GitHub issue created.</source>
 <target>Feedback enviado. Issue do GitHub criada.</target></trans-unit>
@@ -1549,6 +1546,21 @@
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
   <target>Esta captura de tela e texto, juntamente com a versÃ£o do Moss e informaÃ§Ãµes do sistema operacional, serÃ£o adicionados como uma issue pÃºblica do GitHub ao</target>
+</trans-unit>
+<trans-unit id="sed6fca73e1adda45">
+  <source>Design Feedback Mode</source>
+</trans-unit>
+<trans-unit id="s6b17a3076dcd1490">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
+</trans-unit>
+<trans-unit id="sdd3888e4a6dbb0b7">
+  <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
+</trans-unit>
+<trans-unit id="s415e501370e4f1e4">
+  <source>Other Ways to Give Feedback</source>
+</trans-unit>
+<trans-unit id="sd1b9a0f04718bc5d">
+  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
 </trans-unit>
 </body>
 </file>

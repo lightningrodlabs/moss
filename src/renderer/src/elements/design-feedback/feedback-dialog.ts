@@ -120,7 +120,7 @@ export class FeedbackDialog extends LitElement {
             <a href="https://github.com/lightningrodlabs/moss" target="_blank"
               >${msg('Moss GitHub repo')}</a
             >.
-            ${msg('If you want to send it privately, press "Copy" to copy the feedback to your clipboard to send by other means.')}
+            ${msg('If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.')}
           </div>
         </div>
         <div slot="footer" class="row" style="gap: 8px; justify-content: flex-end;">

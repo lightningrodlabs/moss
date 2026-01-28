@@ -28,6 +28,9 @@ import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import '../../elements/_new_design/moss-dialog.js';
+import { PersistedStore } from '../../persisted-store.js';
+
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 type UpdateFeedMessageGeneric =
   | {
@@ -75,6 +78,11 @@ export class WelcomeView extends LitElement {
   @state()
   updatingTool = false;
 
+  @state()
+  _designFeedbackMode = false;
+
+  private _persistedStore = new PersistedStore();
+
   availableToolUpdates = new StoreSubscriber(
     this,
     () => this._mossStore.availableToolUpdates(),
@@ -82,6 +90,34 @@ export class WelcomeView extends LitElement {
   );
 
   timeAgo = new TimeAgo('en-US');
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
+    window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+  }
+
+  private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
+    this._designFeedbackMode = e.detail;
+  };
+
+  private _enableDesignFeedbackMode() {
+    this._designFeedbackMode = true;
+    this._persistedStore.designFeedbackMode.set(true);
+    window.dispatchEvent(
+      new CustomEvent('design-feedback-mode-changed', {
+        detail: true,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this._feedbackDialog.hide();
+  }
 
   async firstUpdated() {
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
@@ -166,6 +202,30 @@ export class WelcomeView extends LitElement {
         </div>
         <div slot="content">
           ${msg('Moss development is in alpha stage. We highly appreciate active feedback.')}<br /><br />
+
+          <!-- Design Feedback Mode Section -->
+          <div class="design-feedback-section">
+            <h3 style="margin: 0 0 8px 0;">${msg('Design Feedback Mode')}</h3>
+            <p style="margin: 0 0 12px 0; opacity: 0.9;">
+              ${msg('Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.')}
+            </p>
+            <p style="margin: 0 0 12px 0; opacity: 0.7; font-size: 14px;">
+              ${msg('You can also enable or disable this mode in Settings > Feedback.')}
+            </p>
+            <sl-button
+              variant="primary"
+              @click=${() => this._enableDesignFeedbackMode()}
+            >
+              <div class="row items-center">
+                ${commentHeartIconFilled(18)}
+                <span style="margin-left: 6px;">${msg('Enable Design Feedback Mode')}</span>
+              </div>
+            </sl-button>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(255,255,255,0.2);" />
+
+          <h3 style="margin: 0 0 8px 0;">${msg('Other Ways to Give Feedback')}</h3>
 
           ${msg('If you are encountering a problem and are familiar with Github, you can')}<br /><br />
 
@@ -323,16 +383,20 @@ export class WelcomeView extends LitElement {
             <div class="flex-scrollable-container">
               <div class="column flex-scrollable-y">
                 <div class="column" style="align-items: center; flex: 1; overflow: auto;">
-                  <button
-                    class="feedback-btn"
-                    style="position: absolute; top: 20px; right: 10px;"
-                    @click=${() => this._feedbackDialog.show()}
-                  >
-                    <div class="row items-center" style="font-size: 26px; justify-content: center;">
-                      <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
-                      <span style="margin-left: 5px;">${msg('Feedback')}</span>
-                    </div>
-                  </button>
+                  ${!this._designFeedbackMode
+                    ? html`
+                      <button
+                        class="feedback-btn"
+                        style="position: absolute; top: 20px; right: 10px;"
+                        @click=${() => this._feedbackDialog.show()}
+                      >
+                        <div class="row items-center" style="font-size: 26px; justify-content: center;">
+                          <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
+                          <span style="margin-left: 5px;">${msg('Feedback')}</span>
+                        </div>
+                      </button>
+                    `
+                    : html``}
 
                   <!-- Moss Update Feed -->
 
@@ -425,6 +489,12 @@ export class WelcomeView extends LitElement {
 
       .feedback-btn:focus-visible {
         outline: 2px solid var(--moss-purple);
+      }
+
+      .design-feedback-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 16px;
       }
 
       .button-section {

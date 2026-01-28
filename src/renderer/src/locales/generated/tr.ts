@@ -90,7 +90,6 @@
 's33b508d0ff961c4b': `Appletler görüntülenirken hata`,
 's33e25cb4c896d243': `profil resmim`,
 's33f85f24c0f5f008': `Kaydet`,
-'s34299de3f5a7b967': `eklenecektir. Özel olarak göndermek isterseniz, geri bildirimi panonuza kopyalamak için "Kopyala" düğmesine basın ve başka bir yolla gönderin.`,
 's355b21b89ce5d9c5': `Ayrıntılar`,
 's3563f6f848d5f4c7': `Kaldırılıyor`,
 's3687049d1af562c4': `Kopyala`,
@@ -401,5 +400,10 @@
 'sfc63e31ac7c956ed': `Seç`,
 'sfda931c0d8d794fb': `araçları etkinleştir`,
 'sff696c02c0929f45': `Holochain başlatılamadı :(`,
+'sed6fca73e1adda45': `Design Feedback Mode`,
+'s6b17a3076dcd1490': `Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.`,
+'sdd3888e4a6dbb0b7': `You can also enable or disable this mode in Settings &gt; Feedback.`,
+'s415e501370e4f1e4': `Other Ways to Give Feedback`,
+'sd1b9a0f04718bc5d': `If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.`,
     };
   

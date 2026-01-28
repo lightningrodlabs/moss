@@ -8,6 +8,7 @@ import './feedback-dialog.js';
 import { FeedbackDialog } from './feedback-dialog.js';
 import { PersistedStore } from '../../persisted-store.js';
 import { getAppVersion } from '../../electron-api.js';
+import { commentHeartIconFilled } from '../../icons/icons.js';
 
 type FeedbackState = 'idle' | 'capturing' | 'selecting' | 'dialog';
 
@@ -221,20 +222,7 @@ export class DesignFeedbackController extends LitElement {
               title="${msg('Give Design Feedback')}"
               @click=${this._startCapture}
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                ></path>
-              </svg>
+              ${commentHeartIconFilled(20)}
             </button>
           `
         : html``}
