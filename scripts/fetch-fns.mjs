@@ -70,7 +70,7 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 
 
 export function downloadHolochainBinary(filename, withVersion = true) {
-  let completeBinaryFilename = `${filename}-${targetEnding}}`
+  let completeBinaryFilename = `${filename}-${targetEnding}`
   let binaryFilenameWithVersion = `${filename}-v${mossConfig[filename].version}`
   const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}`);
   const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain.version}/${completeBinaryFilename}`;
