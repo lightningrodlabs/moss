@@ -113,7 +113,7 @@
 's40ad7672a00dd569': `Klicken zum Kopieren des offentlichen Schlussels`,
 's416a540b16275f2e': `Gruppe erstellen`,
 's417b25879ae9b5a0': `Einladungslink`,
-'s419da48ed70a4441': `Moss-Updates`,
+'s419da48ed70a4441': `Moss-Neuigkeiten`,
 's43417e56f957ff34': `Verwalterrolle zuweisen`,
 's4404b38d84707655': `Zeituberschreitung bei der Profilerstellung. Bitte versuchen Sie es erneut.`,
 's441d1a59a5deb96e': `Ein Passwort kann spater nicht hinzugefugt, geandert oder entfernt werden.`,
