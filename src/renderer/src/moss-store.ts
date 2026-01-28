@@ -1,118 +1,120 @@
 import {
     asyncDerived,
     asyncDeriveStore,
+    asyncReadable,
     completed,
+    derived,
+    get,
     lazyLoad,
+    manualReloadStore,
     mapAndJoin,
     pipe,
-    toPromise,
     Readable,
+    readable,
+    toPromise,
+    Unsubscriber,
     Writable,
     writable,
-    derived,
-    manualReloadStore,
-    asyncReadable,
-    Unsubscriber,
-    readable,
-    get,
 } from '@holochain-open-dev/stores';
+import {GetonlyMap, pickBy, slice,} from '@holochain-open-dev/utils';
 import {
-    GetonlyMap,
-    pickBy,
-    slice,
-} from '@holochain-open-dev/utils';
-import {
-  DnaHashMap,
-  HoloHashMap,
-  LazyHoloHashMap,
-  AgentPubKeyB64,
-  AppAuthenticationToken,
-  AppInfo,
-  AppWebsocket,
-  CallZomeRequest,
-  DnaHashB64,
-  InstalledAppId,
-  ProvisionedCell,
-  RoleNameCallZomeRequest,
+    ActionHash,
+    AdminWebsocket,
+    AgentPubKeyB64,
+    AppAuthenticationToken,
+    AppInfo,
+    AppStatusFilter,
+    AppWebsocket,
+    CallZomeRequest,
+    DnaHash,
+    DnaHashB64,
+    DnaHashMap,
+    encodeHashToBase64,
+    EntryHash,
+    EntryHashB64,
+    HoloHashMap,
+    InstalledAppId,
+    LazyHoloHashMap,
+    ProvisionedCell,
+    RoleNameCallZomeRequest,
 } from '@holochain/client';
-import { encodeHashToBase64 } from '@holochain/client';
-import { EntryHashB64 } from '@holochain/client';
-import { ActionHash, AdminWebsocket, DnaHash, EntryHash } from '@holochain/client';
 import {
-  CreatableResult,
-  CreatableName,
-  WAL,
-  ProfilesLocation,
-  CreatableType,
-  NULL_HASH,
-  AppletHash,
-  AppletId,
-  stringifyWal,
-  deStringifyWal,
-  GroupProfile as GroupProfilePartial,
-  IframeKind,
-  ZomeCallLogInfo,
-  ParentToAppletMessage,
+    AppletHash,
+    AppletId,
+    CreatableName,
+    CreatableResult,
+    CreatableType,
+    deStringifyWal,
+    GroupProfile as GroupProfilePartial,
+    IframeKind,
+    NULL_HASH,
+    ParentToAppletMessage,
+    ProfilesLocation,
+    stringifyWal,
+    WAL,
+    ZomeCallLogInfo,
 } from '@theweave/api';
-import { GroupStore } from './groups/group-store.js';
-import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
+import {GroupStore} from './groups/group-store.js';
+import {DnaLocation, HrlLocation, locateHrl} from './processes/hrl/locate-hrl.js';
 import {
-  ConductorInfo,
-  getAllAppAssetsInfos,
-  getAppletDevPort,
-  getGroupProfile,
-  getToolIcon,
-  installGroupHapp,
-  joinGroup,
-  storeGroupProfile,
+    ConductorInfo,
+    getAllAppAssetsInfos,
+    getAppletDevPort,
+    getGroupProfile,
+    getToolIcon,
+    installGroupHapp,
+    joinGroup,
+    storeGroupProfile,
 } from './electron-api.js';
 import {
-  destringifyAndDecode,
-  devModeToolLibraryFromDevConfig,
-  encodeAndStringify,
-  findAppForDnaHash,
-  validateWal,
+    destringifyAndDecode,
+    devModeToolLibraryFromDevConfig,
+    encodeAndStringify,
+    findAppForDnaHash,
+    sortVersionsDescending,
+    validateWal,
 } from './utils.js';
-import { AppletStore } from './applets/applet-store.js';
+import {AppletStore} from './applets/applet-store.js';
 import {
-  AppHashes,
-  DeveloperCollective,
-  DeveloperCollectiveToolList,
-  DistributionInfo,
-  ResourceLocation,
-  TDistributionInfo,
-  ToolCompatibilityId,
-  ToolInfoAndVersions,
-  WeaveDevConfig,
+    AppHashes,
+    DeveloperCollective,
+    DeveloperCollectiveToolList,
+    DistributionInfo,
+    ResourceLocation,
+    TDistributionInfo,
+    ToolCompatibilityId,
+    ToolInfoAndVersions,
+    WeaveDevConfig,
 } from '@theweave/moss-types';
 import {
-  appIdFromAppletHash,
-  appIdFromAppletId,
-  appletHashFromAppId,
-  appletIdFromAppId,
-  deriveToolCompatibilityId,
-  getLatestVersionFromToolInfo, isAppDisabled, isAppRunning,
-  toolCompatibilityIdFromDistInfo,
-  toolCompatibilityIdFromDistInfoString
+    appIdFromAppletHash,
+    appIdFromAppletId,
+    appletHashFromAppId,
+    appletIdFromAppId,
+    deriveToolCompatibilityId,
+    getLatestVersionFromToolInfo,
+    isAppDisabled,
+    isAppRunning,
+    toolCompatibilityIdFromDistInfo,
+    toolCompatibilityIdFromDistInfoString
 } from '@theweave/utils';
-import { Value } from '@sinclair/typebox/value';
+import {Value} from '@sinclair/typebox/value';
 import {
-  AppletNotification,
-  CallbackWithId,
-  MossEvent,
-  MossEventMap,
-  ToolAndCurationInfo,
-  ToolInfoAndLatestVersion,
+    AppletNotification,
+    CallbackWithId,
+    MossEvent,
+    MossEventMap,
+    ToolAndCurationInfo,
+    ToolInfoAndLatestVersion,
 } from './types.js';
-import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
-import { fromUint8Array } from 'js-base64';
-import { encode } from '@msgpack/msgpack';
-import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
-import { PersistedStore } from './persisted-store.js';
-import { MossCache } from './cache.js';
-import { compareVersions } from 'compare-versions';
-import { sortVersionsDescending } from './utils.js';
-import { IframeStore } from './iframe-store.js';
+import {Applet, AssetsClient, GroupClient, GroupProfile} from '@theweave/group-client';
+import {fromUint8Array} from 'js-base64';
+import {encode} from '@msgpack/msgpack';
+import {AssetViewerState, DashboardState} from './elements/main-dashboard.js';
+import {PersistedStore} from './persisted-store.js';
+import {MossCache} from './cache.js';
+import {compareVersions} from 'compare-versions';
+import {IframeStore} from './iframe-store.js';
 
 export class LazyMap<K, V> implements GetonlyMap<K, V> {
     map = new Map<K, V>();
@@ -1448,8 +1450,8 @@ export class MossStore {
    * A reliable function to get the groups for an applet and is guaranteed
    * to reflect the current state.
    */
-  async getGroupsForApplet(appletHash: AppletHash) {
-    const allApps = await this.adminWebsocket.listApps({});
+  async getGroupsForApplet(appletHash: AppletHash): Promise<Array<DnaHash>> {
+    const allApps = await this.adminWebsocket.listApps({status_filter: AppStatusFilter.Enabled});
     const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
     const groupsWithApplet: Array<DnaHash> = [];
     await Promise.all(
