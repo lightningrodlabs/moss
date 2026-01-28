@@ -60,7 +60,7 @@ export async function readLocalServices(): Promise<[string, string, string]> {
 }
 
 export async function startLocalServices()
-    : Promise<[string, string , string, childProcess.ChildProcessWithoutNullStreams]> {
+  : Promise<[string, string, string, childProcess.ChildProcessWithoutNullStreams]> {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
@@ -84,9 +84,9 @@ export async function startLocalServices()
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
       if (line.includes('Internal iroh relay server started at')) {
-          // Match IP:port pattern
-          const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
-          relayUrl = match? "https://" + match[1] : undefined;
+        // Match IP:port pattern
+        const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
+        relayUrl = match ? "http://" + match[1] : undefined;
       }
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
@@ -99,7 +99,7 @@ export async function startLocalServices()
       }
       fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl, relayUrl }));
       if (bootstrapRunning && signalRunning && bootstrapUrl) {
-          resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
+        resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
       }
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
@@ -274,19 +274,19 @@ export async function devSetup(
           const appHashes: AppHashes =
             maybeUiHash && maybeWebHappHash
               ? {
-                  type: 'webhapp',
-                  sha256: maybeWebHappHash,
-                  happ: {
-                    sha256: happHash,
-                  },
-                  ui: {
-                    sha256: maybeUiHash,
-                  },
-                }
-              : {
-                  type: 'happ',
+                type: 'webhapp',
+                sha256: maybeWebHappHash,
+                happ: {
                   sha256: happHash,
-                };
+                },
+                ui: {
+                  sha256: maybeUiHash,
+                },
+              }
+              : {
+                type: 'happ',
+                sha256: happHash,
+              };
 
           let distributionInfo: DistributionInfo;
 
@@ -713,10 +713,29 @@ function storeAppAssetsInfo(
   const appAssetsInfo: AppAssetsInfo =
     appletConfig.source.type === 'localhost'
       ? {
+        type: 'webhapp',
+        assetSource: {
+          type: 'https',
+          url: `file://${happPath}`,
+        },
+        distributionInfo,
+        happ: {
+          sha256: happHash,
+        },
+        ui: {
+          location: {
+            type: 'localhost',
+            port: appletConfig.source.uiPort,
+          },
+        },
+      }
+      : maybeWebHappHash
+        ? {
           type: 'webhapp',
+          sha256: maybeWebHappHash,
           assetSource: {
             type: 'https',
-            url: `file://${happPath}`,
+            url: `file://${maybeWebHappPath}`,
           },
           distributionInfo,
           happ: {
@@ -724,39 +743,20 @@ function storeAppAssetsInfo(
           },
           ui: {
             location: {
-              type: 'localhost',
-              port: appletConfig.source.uiPort,
+              type: 'filesystem',
+              sha256: maybeUiHash!,
             },
           },
         }
-      : maybeWebHappHash
-        ? {
-            type: 'webhapp',
-            sha256: maybeWebHappHash,
-            assetSource: {
-              type: 'https',
-              url: `file://${maybeWebHappPath}`,
-            },
-            distributionInfo,
-            happ: {
-              sha256: happHash,
-            },
-            ui: {
-              location: {
-                type: 'filesystem',
-                sha256: maybeUiHash!,
-              },
-            },
-          }
         : {
-            type: 'happ',
-            sha256: happHash,
-            assetSource: {
-              type: 'https',
-              url: `file://${happPath}`,
-            },
-            distributionInfo,
-          };
+          type: 'happ',
+          sha256: happHash,
+          assetSource: {
+            type: 'https',
+            url: `file://${happPath}`,
+          },
+          distributionInfo,
+        };
 
   mossFileSystem.storeAppAssetsInfo(appId, appAssetsInfo);
 }
