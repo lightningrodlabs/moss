@@ -4,7 +4,7 @@
 <body>
 <trans-unit id="saa3ad43ab0b9071e">
   <source>Select Group</source>
-  <target>Gruppe auswahlen</target>
+  <target>Gruppe auswählen</target>
 </trans-unit>
 <trans-unit id="s6275fe1f696960ea">
   <source>Error fetching your groups</source>
@@ -12,7 +12,7 @@
 </trans-unit>
 <trans-unit id="sac4ffb6126da9502">
   <source>Select the Group to which to add an instance of this Tool:</source>
-  <target>Wahlen Sie die Gruppe aus, der eine Instanz dieses Tools hinzugefugt werden soll:</target>
+  <target>Wählen Sie die Gruppe aus, der eine Instanz dieses Tools hinzugefügt werden soll:</target>
 </trans-unit>
 <trans-unit id="saf29d48ad1df5d19">
   <source>Error fetching the tool logo</source>
@@ -20,7 +20,7 @@
 </trans-unit>
 <trans-unit id="sf13543ac8f332d6a">
   <source>Error fetching the information about the tool</source>
-  <target>Fehler beim Abrufen der Informationen uber das Tool</target>
+  <target>Fehler beim Abrufen der Informationen über das Tool</target>
 </trans-unit>
 <trans-unit id="s498865c7bd1f3959">
   <source>unknown</source>
@@ -108,7 +108,7 @@
 </trans-unit>
 <trans-unit id="s964f6725aeb7662f">
   <source>Add Group</source>
-  <target>Gruppe hinzufugen</target>
+  <target>Gruppe hinzufügen</target>
 </trans-unit>
 <trans-unit id="s5cc18ba855f09834">
   <source>Error displaying the tool classes</source>
@@ -156,15 +156,15 @@
 </trans-unit>
 <trans-unit id="s06971ea804e7d673">
   <source>Install to a group space</source>
-  <target>In einem Gruppenbereich installieren</target>
+  <target>In einer Gruppe installieren</target>
 </trans-unit>
 <trans-unit id="s25f1d9708501730f">
   <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
-  <target>V<x id="0" equiv-text="${version.version}"/> in einem Gruppenbereich installieren</target>
+  <target>V<x id="0" equiv-text="${version.version}"/> in einer Gruppe installieren</target>
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
-  <target>Ubersicht</target>
+  <target>Übersicht</target>
 </trans-unit>
 <trans-unit id="se19e2ed58cd65d6c">
   <source>Versions</source>
@@ -172,7 +172,7 @@
 </trans-unit>
 <trans-unit id="sb1f175f79f1ddcd2">
   <source>No Tools available yet...</source>
-  <target>Noch keine Tools verfugbar...</target>
+  <target>Noch keine Tools verfügbar...</target>
 </trans-unit>
 <trans-unit id="s384efdec2b99d471">
   <source>Custom Name</source>
@@ -184,7 +184,7 @@
 </trans-unit>
 <trans-unit id="s2fd07bfa38737ad6">
   <source>Add to Group</source>
-  <target>Zur Gruppe hinzufugen</target>
+  <target>Zur Gruppe hinzufügen</target>
 </trans-unit>
 <trans-unit id="s834d4babf5a8d7eb">
   <source>Error fetching the registered applets in this group</source>
@@ -208,7 +208,7 @@
 </trans-unit>
 <trans-unit id="s3a5ee4be3d2b0782">
   <source>Adding a new Tool to a group </source>
-  <target>Das Hinzufugen eines neuen Tools zu einer Gruppe </target>
+  <target>Das Hinzufügen eines neuen Tools zu einer Gruppe </target>
 </trans-unit>
 <trans-unit id="sc7ad8e8ab04ac0c7">
   <source>creates a new unique instance </source>
@@ -312,7 +312,7 @@
 </trans-unit>
 <trans-unit id="sbc42b2ee96abb572">
   <source>installed this tool to the group space </source>
-  <target>hat dieses Tool im Gruppenbereich installiert </target>
+  <target>hat dieses Tool in der Gruppe installiert </target>
 </trans-unit>
 <trans-unit id="s3be52ccc6f018908">
   <source>In use by: </source>
@@ -340,7 +340,7 @@
 </trans-unit>
 <trans-unit id="s7390f8b75a4e40d4">
   <source>They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!</source>
-  <target>Moglicherweise verwenden sie bereits ein Tool, das Sie suchen. Sie mussen es nicht zu Ihrem Gruppenbereich hinzufugen - aktivieren Sie es einfach fur sich selbst und beginnen Sie mit der Zusammenarbeit!</target>
+  <target>Möglicherweise verwenden sie bereits ein Tool, das Sie suchen. Sie müssen es nicht zur Gruppe hinzufügen - aktivieren Sie es einfach für sich selbst und beginnen Sie mit der Zusammenarbeit!</target>
 </trans-unit>
 <trans-unit id="s1d1484091c0237f3">
   <source>Invite People</source>
