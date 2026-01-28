@@ -4,23 +4,23 @@
 <body>
 <trans-unit id="saa3ad43ab0b9071e">
   <source>Select Group</source>
-  <target>Selectionner le groupe</target>
+  <target>Sélectionner le groupe</target>
 </trans-unit>
 <trans-unit id="s6275fe1f696960ea">
   <source>Error fetching your groups</source>
-  <target>Erreur lors de la recuperation de vos groupes</target>
+  <target>Erreur lors de la récuperation de vos groupes</target>
 </trans-unit>
 <trans-unit id="sac4ffb6126da9502">
   <source>Select the Group to which to add an instance of this Tool:</source>
-  <target>Selectionnez le groupe auquel ajouter une instance de cet outil :</target>
+  <target>Sélectionnez le groupe auquel ajouter une instance de cet outil :</target>
 </trans-unit>
 <trans-unit id="saf29d48ad1df5d19">
   <source>Error fetching the tool logo</source>
-  <target>Erreur lors de la recuperation du logo de l'outil</target>
+  <target>Erreur lors de la récuperation du logo de l'outil</target>
 </trans-unit>
 <trans-unit id="sf13543ac8f332d6a">
   <source>Error fetching the information about the tool</source>
-  <target>Erreur lors de la recuperation des informations sur l'outil</target>
+  <target>Erreur lors de la récuperation des informations sur l'outil</target>
 </trans-unit>
 <trans-unit id="s498865c7bd1f3959">
   <source>unknown</source>
@@ -32,15 +32,15 @@
 </trans-unit>
 <trans-unit id="sfc0b466925cd2e9a">
   <source>Tool updated.</source>
-  <target>Outil mis a jour.</target>
+  <target>Outil mis à jour.</target>
 </trans-unit>
 <trans-unit id="s2610398ee33c066e">
   <source>Failed to update Tool.</source>
-  <target>Echec de la mise a jour de l'outil.</target>
+  <target>Échec de la mise à jour de l'outil.</target>
 </trans-unit>
 <trans-unit id="sb80aa454e12cd901">
   <source>Install Update</source>
-  <target>Installer la mise a jour</target>
+  <target>Installer la mise à jour</target>
 </trans-unit>
 <trans-unit id="s32322dc45e502559">
   <source>Decline</source>
@@ -48,7 +48,7 @@
 </trans-unit>
 <trans-unit id="s7ec9f93dd4d1a712">
   <source>Install and Restart</source>
-  <target>Installer et redemarrer</target>
+  <target>Installer et redémarrer</target>
 </trans-unit>
 <trans-unit id="sbb588bb505779122">
   <source>Feedback</source>
@@ -64,11 +64,11 @@
 </trans-unit>
 <trans-unit id="s98763cf06252f01e">
   <source>Error creating the group.</source>
-  <target>Erreur lors de la creation du groupe.</target>
+  <target>Erreur lors de la création du groupe.</target>
 </trans-unit>
 <trans-unit id="sb06c7a269f3a91ec">
   <source>Create New Group</source>
-  <target>Creer un nouveau groupe</target>
+  <target>Créer un nouveau groupe</target>
 </trans-unit>
 <trans-unit id="s030655287e89069f">
   <source>Group name</source>
@@ -80,15 +80,15 @@
 </trans-unit>
 <trans-unit id="s06db052ab09cbad2">
   <source>Stewarded</source>
-  <target>Administre</target>
+  <target>Administré</target>
 </trans-unit>
 <trans-unit id="s5ac92050a6baecb3">
   <source>Unstewarded</source>
-  <target>Non administre</target>
+  <target>Non administré</target>
 </trans-unit>
 <trans-unit id="s416a540b16275f2e">
   <source>Create Group</source>
-  <target>Creer le groupe</target>
+  <target>Créer le groupe</target>
 </trans-unit>
 <trans-unit id="sb8c91273249cba0c">
   <source>Waiting for peers...</source>
@@ -96,11 +96,11 @@
 </trans-unit>
 <trans-unit id="s0fa3391db68e4425">
   <source>disabled</source>
-  <target>desactive</target>
+  <target>désactivé</target>
 </trans-unit>
 <trans-unit id="saebc6d4487f8ee06">
   <source>Disabled Group</source>
-  <target>Groupe desactive</target>
+  <target>Groupe désactivé</target>
 </trans-unit>
 <trans-unit id="s9340f248c79fc576">
   <source>Error displaying the groups</source>
@@ -120,7 +120,7 @@
 </trans-unit>
 <trans-unit id="sc58f4b3e7fe9e85c">
   <source>Activity Stream</source>
-  <target>Flux d'activite</target>
+  <target>Flux d'activité</target>
 </trans-unit>
 <trans-unit id="scc99769aaee688ec">
   <source>Assets Graph</source>
@@ -128,11 +128,11 @@
 </trans-unit>
 <trans-unit id="s3a4df362e4b10c3d">
   <source>Modifiers undefined.</source>
-  <target>Modificateurs non definis.</target>
+  <target>Modificateurs non définis.</target>
 </trans-unit>
 <trans-unit id="s6924404e2d21606d">
   <source>Error joining the group.</source>
-  <target>Erreur lors de l'adhesion au groupe.</target>
+  <target>Erreur lors de l'adhésion au groupe.</target>
 </trans-unit>
 <trans-unit id="sba9838a36a8a0f12">
   <source>Join Group</source>
@@ -144,7 +144,7 @@
 </trans-unit>
 <trans-unit id="sa7b4f3aab0562402">
   <source>You have been invited to join a group.</source>
-  <target>Vous avez ete invite a rejoindre un groupe.</target>
+  <target>Vous avez été invité à rejoindre un groupe.</target>
 </trans-unit>
 <trans-unit id="s0451ae0d0ce5c2e2">
   <source>reloading...</source>
@@ -164,7 +164,7 @@
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
-  <target>Apercu</target>
+  <target>Aperçu</target>
 </trans-unit>
 <trans-unit id="se19e2ed58cd65d6c">
   <source>Versions</source>
@@ -176,11 +176,11 @@
 </trans-unit>
 <trans-unit id="s384efdec2b99d471">
   <source>Custom Name</source>
-  <target>Nom personnalise</target>
+  <target>Nom personnalisé</target>
 </trans-unit>
 <trans-unit id="s07a4bf5a1393494d">
   <source>Custom Network Seed</source>
-  <target>Graine reseau personnalisee</target>
+  <target>Identifiant de réseau personnalisée</target>
 </trans-unit>
 <trans-unit id="s2fd07bfa38737ad6">
   <source>Add to Group</source>
@@ -192,11 +192,11 @@
 </trans-unit>
 <trans-unit id="sdcf12775cd424249">
   <source>Heads-up!</source>
-  <target>Attention !</target>
+  <target>Attention!</target>
 </trans-unit>
 <trans-unit id="sea831745df80be1c">
   <source>Give this app a custom name.</source>
-  <target>Donnez un nom personnalise a cette application.</target>
+  <target>Donnez un nom personnalisé à cette application.</target>
 </trans-unit>
 <trans-unit id="sf8bb1851d084043f">
   <source>Note: </source>
@@ -204,11 +204,11 @@
 </trans-unit>
 <trans-unit id="s3a5ee4be3d2b0782">
   <source>Adding a new Tool to a group </source>
-  <target>L'ajout d'un nouvel outil a un groupe </target>
+  <target>L'ajout d'un nouvel outil à un groupe </target>
 </trans-unit>
 <trans-unit id="sc7ad8e8ab04ac0c7">
   <source>creates a new unique instance </source>
-  <target>cree une nouvelle instance unique </target>
+  <target>crée une nouvelle instance unique </target>
 </trans-unit>
 <trans-unit id="sdf60b24054c98179">
   <source>of that Tool which other group members may join directly from the group's main page.</source>
@@ -216,11 +216,11 @@
 </trans-unit>
 <trans-unit id="s12c3249c3396ef2f">
   <source>Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.</source>
-  <target>Chaque fois que vous ajoutez un outil a un groupe via la bibliotheque d'outils, vous creez un nouveau reseau pair-a-pair unique specifiquement pour cette instance de l'outil. Les autres membres du groupe ne peuvent rejoindre le meme reseau que s'ils le font depuis la page principale du groupe ou il apparaitra dans la section "Outils disponibles". Si deux membres ajoutent chacun le meme outil depuis la bibliotheque, ils creent deux reseaux pair-a-pair independants. Ainsi, un groupe peut avoir plusieurs instances independantes du meme outil.</target>
+  <target>À chaque fois que vous ajoutez un outil à un groupe via la bibliothèque d'outils, vous créez un nouveau réseau pair-à-pair unique spécifiquement pour cette instance de l'outil. Les autres membres du groupe ne peuvent rejoindre le même réseau que s'ils le font depuis la page principale du groupe où il apparaîtra dans la section "Outils disponibles". Si deux membres ajoutent chacun le même outil depuis la bibliothèque, ils créent deux réseaux pair-à-pair indépendants. Ainsi, un groupe peut avoir plusieurs instances indépendantes du même outil.</target>
 </trans-unit>
 <trans-unit id="s355b21b89ce5d9c5">
   <source>Details</source>
-  <target>Details</target>
+  <target>Détails</target>
 </trans-unit>
 <trans-unit id="se40280a068167fdf">
   <source>all tools</source>
@@ -240,15 +240,15 @@
 </trans-unit>
 <trans-unit id="s571a486a72782024">
   <source>Published by:</source>
-  <target>Publie par :</target>
+  <target>Publié par :</target>
 </trans-unit>
 <trans-unit id="s4bbd8057b8726b43">
   <source>Publish A Tool</source>
-  <target>Publier un outil</target>
+  <target>Publier un Outil</target>
 </trans-unit>
 <trans-unit id="s3d4ca40eab578130">
   <source>Tool Library</source>
-  <target>Bibliotheque d'outils</target>
+  <target>Bibliotheque d'Outils</target>
 </trans-unit>
 <trans-unit id="s8de2ae4fdfa77943">
   <source>Publish a tool</source>
@@ -256,11 +256,11 @@
 </trans-unit>
 <trans-unit id="sd05405ee1ffc6ddd">
   <source>Add to Pocket</source>
-  <target>Ajouter a la poche</target>
+  <target>Ajouter à la Poche</target>
 </trans-unit>
 <trans-unit id="s550b6572499ea8bd">
   <source>URL copied to clipboard.</source>
-  <target>URL copiee dans le presse-papiers.</target>
+  <target>URL copiée dans le presse-papiers.</target>
 </trans-unit>
 <trans-unit id="s2df075aface0dab8">
   <source>Share</source>
@@ -268,11 +268,11 @@
 </trans-unit>
 <trans-unit id="sd92992bbe009445c">
   <source>Error fetching the entry</source>
-  <target>Erreur lors de la recuperation de l'entree</target>
+  <target>Erreur lors de la récuperation de la donnée</target>
 </trans-unit>
 <trans-unit id="s4c119cd7d224a110">
   <source>Asset not found.</source>
-  <target>Actif non trouve.</target>
+  <target>Asset non trouvé.</target>
 </trans-unit>
 <trans-unit id="s109251ef1bfdad31">
   <source>Local Time</source>
@@ -296,7 +296,7 @@
 </trans-unit>
 <trans-unit id="s86af0278a12266f5">
   <source>No new tools to activate.</source>
-  <target>Aucun nouvel outil a activer.</target>
+  <target>Aucun nouvel outil à activer.</target>
 </trans-unit>
 <trans-unit id="s21866f14afd110fa">
   <source>Tool logo</source>
@@ -308,15 +308,15 @@
 </trans-unit>
 <trans-unit id="sbc42b2ee96abb572">
   <source>installed this tool to the group space </source>
-  <target>a installe cet outil dans l'espace de groupe </target>
+  <target>a installé cet outil dans l'espace de groupe </target>
 </trans-unit>
 <trans-unit id="s3be52ccc6f018908">
   <source>In use by: </source>
-  <target>Utilise par : </target>
+  <target>Utilisé par : </target>
 </trans-unit>
 <trans-unit id="sb4a967e0437350ff">
   <source>The tool I need is not listed. Take me to the Library.</source>
-  <target>L'outil dont j'ai besoin n'est pas liste. Aller a la bibliotheque.</target>
+  <target>L'outil dont j'ai besoin n'est pas listé. Aller à la bibliotheque.</target>
 </trans-unit>
 <trans-unit id="sf7d93e17ec4b1219">
   <source>...</source>
@@ -328,19 +328,19 @@
 </trans-unit>
 <trans-unit id="s039176e0c5659ca1">
   <source>Before adding a new tool to</source>
-  <target>Avant d'ajouter un nouvel outil a</target>
+  <target>Avant d'ajouter un nouvel outil à</target>
 </trans-unit>
 <trans-unit id="sb2238d95ff6d0fbc">
   <source>Check what your peers already use</source>
-  <target>Verifiez ce que vos pairs utilisent deja</target>
+  <target>Vérifiez ce que vos pairs utilisent déjà</target>
 </trans-unit>
 <trans-unit id="s7390f8b75a4e40d4">
   <source>They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!</source>
-  <target>Ils utilisent peut-etre deja un outil que vous recherchez. Pas besoin de l'ajouter a votre espace de groupe - activez-le simplement pour vous et commencez a collaborer !</target>
+  <target>Ils utilisent peut-être déjà un outil que vous recherchez. Pas besoin de l'ajouter à votre espace de groupe - activez-le simplement pour vous et commencez à collaborer !</target>
 </trans-unit>
 <trans-unit id="s1d1484091c0237f3">
   <source>Invite People</source>
-  <target>Inviter des personnes</target>
+  <target>Invitez des personnes</target>
 </trans-unit>
 <trans-unit id="s21d35084661d25a6">
   <source>Copy and send the link below to invite people:</source>
@@ -348,7 +348,7 @@
 </trans-unit>
 <trans-unit id="s7236264a0e8164bb">
   <source>Invite link copied to clipboard.</source>
-  <target>Lien d'invitation copie dans le presse-papiers.</target>
+  <target>Lien d'invitation copié dans le presse-papiers.</target>
 </trans-unit>
 <trans-unit id="s3687049d1af562c4">
   <source>Copy</source>
@@ -356,11 +356,11 @@
 </trans-unit>
 <trans-unit id="s5ae217c0cc09e418">
   <source>About invite links:</source>
-  <target>A propos des liens d'invitation :</target>
+  <target>À propos des liens d'invitation :</target>
 </trans-unit>
 <trans-unit id="s85211b812dbfebf4">
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
-  <target>Actuellement, les invitations Moss fonctionnent selon la regle "Voici mon adresse, la porte est ouverte." Toute personne ayant un lien peut rejoindre le groupe, alors soyez prudent ou vous partagez ce lien.</target>
+  <target>Actuellement, les invitations Moss fonctionnent selon la règle "Voici mon adresse, la porte est ouverte." Toute personne ayant un lien peut rejoindre le groupe, alors soyez prudent où vous partagez ce lien.</target>
 </trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
@@ -380,7 +380,7 @@
 </trans-unit>
 <trans-unit id="sf753462fb5ec0f72">
   <source>Error fetching the group profile</source>
-  <target>Erreur lors de la recuperation du profil du groupe</target>
+  <target>Erreur lors de la récuperation du profil du groupe</target>
 </trans-unit>
 <trans-unit id="s49730f3d5751a433">
   <source>Loading...</source>
@@ -392,15 +392,15 @@
 </trans-unit>
 <trans-unit id="s2ce9c3328e830141">
   <source>Activate tools peers already use</source>
-  <target>Activer les outils que vos pairs utilisent deja</target>
+  <target>Activer les outils que vos pairs utilisent déjà</target>
 </trans-unit>
 <trans-unit id="s3be68760fd7935f7">
   <source>more used by peers</source>
-  <target>plus utilises par les pairs</target>
+  <target>d'autres utilisés par les pairs</target>
 </trans-unit>
 <trans-unit id="s40ad7672a00dd569">
   <source>click to copy public key</source>
-  <target>cliquez pour copier la cle publique</target>
+  <target>cliquez pour copier la clé publique</target>
 </trans-unit>
 <trans-unit id="s06d3f0cf967e308e">
   <source>This is peer's public key. Use it to confirm the identity of the profile.</source>
