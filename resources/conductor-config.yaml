@@ -15,7 +15,7 @@ network:
   base64_auth_material: ~
   bootstrap_url: '###DEFINED_AT_RUNTIME###'
   signal_url: '###DEFINED_AT_RUNTIME###'
-  relay_url: "###DEFINED_AT_RUNTIME###"
+  relay_url: '###DEFINED_AT_RUNTIME###'
   webrtc_config:
     iceServers:
       - urls:

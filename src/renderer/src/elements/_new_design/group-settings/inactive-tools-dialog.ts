@@ -54,7 +54,7 @@ export class InactiveToolsDialog extends LitElement {
             async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
               let appletEntry: Applet | undefined;
               try {
-                appletEntry = await toPromise(this._groupStore.applets.get(appletHash));
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
               } catch (e) {
                 console.warn('@inactive-tools-dialog @unjoined-applets: Failed to get appletEntry: ', e);
               }

@@ -16,8 +16,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { appletOrigin, getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { DnaHash, EntryHash } from '@holochain/client';
-import { HoloHashMap } from '@holochain-open-dev/utils';
+import { DnaHash } from '@holochain/client';
 import { mdiOpenInNew } from '@mdi/js';
 import { localized, msg } from '@lit/localize';
 

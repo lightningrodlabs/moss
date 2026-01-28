@@ -1,5 +1,4 @@
-import { HoloHashMap } from '@holochain-open-dev/utils';
-import { EntryHash, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
+import { HoloHashMap, HoloHashB64, encodeHashToBase64 } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletHash, AppletInfo, GroupProfile, IframeKind } from '@theweave/api';
 import { WeaveClient } from '@theweave/api';

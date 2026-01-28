@@ -80,7 +80,7 @@ export class AppletDetailCard extends LitElement {
 
   _toolVersion = new StoreSubscriber(
     this,
-    () => this.mossStore.appletToolVersion.get(this.appletHash),
+    () => this.mossStore.appletToolVersion.get(this.appletHash)!,
     () => [this.mossStore, this.appletHash],
   );
 

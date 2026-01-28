@@ -17,8 +17,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain/client": "=0.20.3-rc.0",
-    "@holochain-open-dev/utils": "^0.600.0"
+    "@holochain/client": "=0.20.4-rc.0",
+    "@holochain-open-dev/utils": "^0.601.0"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

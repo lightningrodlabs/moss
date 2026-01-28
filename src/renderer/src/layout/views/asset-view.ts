@@ -36,7 +36,7 @@ export class AssetView extends LitElement {
 
   location = new StoreSubscriber(
     this,
-    () => this._mossStore.hrlLocations.get(this.wal.hrl[0]).get(this.wal.hrl[1]),
+    () => this._mossStore.hrlLocations.get(this.wal.hrl[0])!.get(this.wal.hrl[1])!,
     () => [this.wal],
   );
 

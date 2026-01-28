@@ -24,7 +24,7 @@ export class AgentPermission extends LitElement {
 
   accountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.agentAccountabilities.get(this.agent),
+    () => this.groupStore.agentAccountabilities.get(this.agent)!,
     () => [this.agent, this.groupStore.agentAccountabilities],
   );
 

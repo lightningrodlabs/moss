@@ -48,10 +48,10 @@ export class ActivityAsset extends LitElement {
   _groupProfiles = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
+      pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
-            toPromise(groupStore.groupProfile),
+            toPromise(groupStore!.groupProfile),
           ),
         );
         return groupProfiles;
@@ -61,14 +61,14 @@ export class ActivityAsset extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this._mossStore.appletLogo.get(this.appletHash),
+    () => this._mossStore.appletLogo.get(this.appletHash)!,
     () => [this.appletHash],
   );
 
   appletName = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.appletStores.get(this.appletHash), (appletStore) => {
+      pipe(this._mossStore.appletStores.get(this.appletHash)!, (appletStore) => {
         if (appletStore) {
           return appletStore.applet.custom_name;
         }

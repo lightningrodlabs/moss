@@ -27,7 +27,7 @@ export class AppletLogo extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this.mossStore.appletLogo.get(this.appletHash),
+    () => this.mossStore.appletLogo.get(this.appletHash)!,
     () => [this.appletHash],
   );
 

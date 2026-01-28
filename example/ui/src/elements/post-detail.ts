@@ -73,7 +73,7 @@ export class PostDetail extends LitElement {
    */
   _post = new StoreSubscriber(
     this,
-    () => this.postsStore.posts.get(this.postHash),
+    () => this.postsStore.posts.get(this.postHash)!,
     () => [this.postHash]
   );
 

@@ -3,7 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import {encodeHashToBase64, EntryHash} from '@holochain/client';
 import { hashState } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -21,6 +21,9 @@ import { mossStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { repeat } from 'lit/directives/repeat.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
+import {AppletHash} from "@theweave/api";
+import {Applet} from "@theweave/group-client";
 
 @localized()
 @customElement('group-applets-settings')
@@ -35,7 +38,7 @@ export class GroupAppletsSettings extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
-        sliceAndJoin(this._groupStore.applets, myInstalledApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, myInstalledApplets),
       ),
     () => [this._groupStore, this._mossStore],
   );
@@ -44,7 +47,7 @@ export class GroupAppletsSettings extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyApplets, (allMyEverJoinedApplets) =>
-        sliceAndJoin(this._groupStore.applets, allMyEverJoinedApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, allMyEverJoinedApplets),
       ),
     () => [this._groupStore],
   );
@@ -75,7 +78,7 @@ export class GroupAppletsSettings extends LitElement {
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        const applets = this._groupApplets.value.value;
+        const applets = this._groupApplets.value.value as ReadonlyMap<AppletHash, Applet>;
         const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
           this._groupStore.groupDnaHash,
         );
@@ -160,7 +163,7 @@ export class GroupAppletsSettings extends LitElement {
       return html`
         <div class="column" style="flex: 1;">
           ${repeat(
-        abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
+        abandonedApplets.sort(([_, a], [__, b]) => (a as Applet).custom_name.localeCompare((b  as Applet).custom_name)),
         ([appletHash, _applet]) => encodeHashToBase64(appletHash),
         ([appletHash, applet]) => html`
               <abandoned-applet-card

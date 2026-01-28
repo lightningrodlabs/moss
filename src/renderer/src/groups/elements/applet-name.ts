@@ -25,7 +25,7 @@ export class AppletName extends LitElement {
 
   applet = new StoreSubscriber(
     this,
-    () => this.groupStore.applets.get(this.appletHash),
+    () => this.groupStore.applets.get(this.appletHash)!,
     () => [],
   );
 

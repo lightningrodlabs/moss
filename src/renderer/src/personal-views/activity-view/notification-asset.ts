@@ -41,10 +41,10 @@ export class NotificationAsset extends LitElement {
   _groupProfiles = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
+      pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
-            toPromise(groupStore.groupProfile),
+            toPromise(groupStore!.groupProfile),
           ),
         );
         return groupProfiles;
@@ -54,14 +54,14 @@ export class NotificationAsset extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this._mossStore.appletLogo.get(this.appletHash),
+    () => this._mossStore.appletLogo.get(this.appletHash)!,
     () => [this.appletHash],
   );
 
   appletName = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.appletStores.get(this.appletHash), (appletStore) => {
+      pipe(this._mossStore.appletStores.get(this.appletHash)!, (appletStore) => {
         if (appletStore) {
           return appletStore.applet.custom_name;
         }
@@ -155,7 +155,7 @@ export class NotificationAsset extends LitElement {
       }
 
       // Get the group stores for this applet
-      const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash));
+      const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash)!);
 
       // Try to get the profile from any of the groups and use the first one
       const groupStores = Array.from(groupStoreMap.values());
@@ -164,7 +164,7 @@ export class NotificationAsset extends LitElement {
       }
 
       const firstGroupStore = groupStores[0];
-      const profileStore = await toPromise(firstGroupStore.membersProfiles.get(agentPubKey));
+      const profileStore = await toPromise(firstGroupStore!.membersProfiles.get(agentPubKey)!);
 
       if (profileStore && profileStore.type === 'profile') {
         // console.log('Found profile for agent:', pubkeyB64, profileStore.profile.entry.nickname);

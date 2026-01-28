@@ -6,8 +6,7 @@ import {
   pipe,
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash, DnaHash, encodeHashToBase64, ProvisionedCell } from '@holochain/client';
+import { ActionHash, LazyHoloHashMap, DnaHash, encodeHashToBase64, ProvisionedCell } from '@holochain/client';
 import { ConductorInfo } from '../../electron-api.js';
 import { Tool, UpdateableEntity, ToolsLibraryClient } from '@theweave/tool-library-client';
 
@@ -34,12 +33,12 @@ export class ToolsLibraryStore {
     ),
   );
 
-  toolLogo = new LazyHoloHashMap((orignalToolActionHash: ActionHash) =>
-    pipe(this.installableTools.get(orignalToolActionHash), (toolEntity) =>
+  toolLogo = new LazyHoloHashMap((originalToolActionHash: ActionHash) =>
+    pipe(this.installableTools.get(originalToolActionHash)!, (toolEntity) =>
       retryUntilSuccess(async () => {
         if (!toolEntity)
           throw new Error(
-            `Cannot find Tool Entity for action hash: ${encodeHashToBase64(orignalToolActionHash)}`,
+            `Cannot find Tool Entity for action hash: ${encodeHashToBase64(originalToolActionHash)}`,
           );
 
         return toolEntity.record.entry.icon;
