@@ -2,7 +2,7 @@ import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { EntryHash } from '@holochain/client';
+import {encodeHashToBase64, EntryHash} from '@holochain/client';
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { BlockType } from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
@@ -43,8 +43,8 @@ export class CreateCustomGroupView extends LitElement {
     blocksByApplet: ReadonlyMap<EntryHash, Record<string, BlockType>>,
     applets: ReadonlyMap<EntryHash, Applet | undefined>,
   ) {
+    const groupHashParam = `&group-hash=${encodeHashToBase64(this.groupStore.groupDnaHash)}`;
     const blocks: Array<BlockProperties> = [];
-
     for (const [appletHash, blockTypes] of Array.from(blocksByApplet.entries())) {
       for (const [blockName, block] of Object.entries(blockTypes)) {
         blocks.push({
@@ -53,7 +53,7 @@ export class CreateCustomGroupView extends LitElement {
           category: applets.get(appletHash)?.custom_name,
           content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, groupHash: this.groupStore.groupDnaHash, subType: 'block' })}?view=${
             block.view
-          }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
+          }&view-type=block&block=${blockName}${groupHashParam}" style="width: 100%"></iframe>`,
         });
       }
     }
