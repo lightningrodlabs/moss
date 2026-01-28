@@ -404,7 +404,7 @@
 </trans-unit>
 <trans-unit id="s06d3f0cf967e308e">
   <source>This is peer's public key. Use it to confirm the identity of the profile.</source>
-  <target>Ceci est la cle publique du pair. Utilisez-la pour confirmer l'identite du profil.</target>
+  <target>Ceci est la clé publique du pair. Utilisez-la pour confirmer l'identité du profil.</target>
 </trans-unit>
 <trans-unit id="sc7c6cffb1c2355c7">
   <source>Your Peers</source>
@@ -424,55 +424,55 @@
 </trans-unit>
 <trans-unit id="s7293d04c5979a8ad">
   <source>Expand sidebar</source>
-  <target>Developper la barre laterale</target>
+  <target>Étendre le panneau latérale</target>
 </trans-unit>
 <trans-unit id="s470c476fc184bbf2">
   <source>Fold sidebar</source>
-  <target>Replier la barre laterale</target>
+  <target>Replier le panneau latérale</target>
 </trans-unit>
 <trans-unit id="s79cff44197beb0e9">
   <source>This group doesn't have any applets installed yet. Go to the applet library (the </source>
-  <target>Ce groupe n'a pas encore d'applets installes. Allez a la bibliotheque d'applets (l'</target>
+  <target>Ce groupe n'a pas encore d'outils installés. Allez à la bibliothèque d'outils (l'</target>
 </trans-unit>
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
-  <target> icone ci-dessus) pour installer des applets dans ce groupe.</target>
+  <target> icône ci-dessus) pour installer des applets dans ce groupe.</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
-  <target>Outil archive.</target>
+  <target>Outil archivé.</target>
 </trans-unit>
 <trans-unit id="s9302f706cfbb6665">
   <source>Failed to archive Tool (see console for details)</source>
-  <target>Echec de l'archivage de l'outil (voir la console pour les details)</target>
+  <target>Échec de l'archivage de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="s2897e4baafaea906">
   <source>Tool unarchived.</source>
-  <target>Outil desarchive.</target>
+  <target>Outil désarchivé.</target>
 </trans-unit>
 <trans-unit id="s0a4fb0b83ddada0a">
   <source>Failed to unarchive Tool (see console for details)</source>
-  <target>Echec du desarchivage de l'outil (voir la console pour les details)</target>
+  <target>Échec du désarchivage de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="s8b5e873468d50311">
   <source>Disabled.</source>
-  <target>Desactive.</target>
+  <target>Désactivé.</target>
 </trans-unit>
 <trans-unit id="sc1da265dcbd54870">
   <source>Enabled.</source>
-  <target>Active.</target>
+  <target>Activé.</target>
 </trans-unit>
 <trans-unit id="s74982e57a1d8896c">
   <source>Advanced Settings</source>
-  <target>Parametres avances</target>
+  <target>Paramètres avancés</target>
 </trans-unit>
 <trans-unit id="s50e8f1afca10c29f">
   <source>Always-online nodes should install this tool by default</source>
-  <target>Les noeuds toujours en ligne doivent installer cet outil par defaut</target>
+  <target>Les noeuds toujours-en-ligne doivent installer cet outil par défaut</target>
 </trans-unit>
 <trans-unit id="s1d7f1ed11d4a839c">
   <source>Deprecating will hide tool for activation by new members</source>
-  <target>La depreciation masquera l'outil pour l'activation par les nouveaux membres</target>
+  <target>L'obsolescence masquera l'outil pour l'activation par les nouveaux membres</target>
 </trans-unit>
 <trans-unit id="sa0ca791d0f13f0e5">
   <source>Archive</source>
@@ -480,23 +480,23 @@
 </trans-unit>
 <trans-unit id="sd72a018193e00fb6">
   <source>Undeprecate this Tool for it to show up again for new members</source>
-  <target>Retirer la depreciation de cet outil pour qu'il apparaisse a nouveau pour les nouveaux membres</target>
+  <target>Retirer l'obsolescence de cet outil pour qu'il apparaisse à nouveau pour les nouveaux membres</target>
 </trans-unit>
 <trans-unit id="sf71a90bc017f1e80">
   <source>Unarchive</source>
-  <target>Desarchiver</target>
+  <target>Désarchiver</target>
 </trans-unit>
 <trans-unit id="s89026d7ba87704d3">
   <source>ARCHIVED</source>
-  <target>ARCHIVE</target>
+  <target>ARCHIVÉ</target>
 </trans-unit>
 <trans-unit id="s70d885806b56289e">
   <source>enabled</source>
-  <target>active</target>
+  <target>activÉ</target>
 </trans-unit>
 <trans-unit id="s96ed4200ee683221">
   <source>Disable the app for yourself</source>
-  <target>Desactiver l'application pour vous-meme</target>
+  <target>Désactiver l'application pour vous-même</target>
 </trans-unit>
 <trans-unit id="s9078ee819c18df6e">
   <source>Enable</source>
@@ -504,51 +504,51 @@
 </trans-unit>
 <trans-unit id="se2bb78d39ad97b71">
   <source>Tool disabled.</source>
-  <target>Outil desactive.</target>
+  <target>Outil désactivé.</target>
 </trans-unit>
 <trans-unit id="s0718ed2cbd2fdad0">
   <source>Tool enabled.</source>
-  <target>Outil active.</target>
+  <target>Outil activé.</target>
 </trans-unit>
 <trans-unit id="sb9cdae3a069581f6">
   <source>Hide Advanced Settings</source>
-  <target>Masquer les parametres avances</target>
+  <target>Cacher les paramètres avancés</target>
 </trans-unit>
 <trans-unit id="s6d7cf29525f2611f">
   <source>Show Advanced Settings</source>
-  <target>Afficher les parametres avances</target>
+  <target>Afficher les paramètres avancés</target>
 </trans-unit>
 <trans-unit id="s82e64a7930881094">
   <source>Uninstall this Tool for yourself (irreversible)</source>
-  <target>Desinstaller cet outil pour vous-meme (irreversible)</target>
+  <target>Désinstaller cet outil pour vous-même (action irréversible)</target>
 </trans-unit>
 <trans-unit id="sbc5bb5bb74d141b9">
   <source>Uninstall</source>
-  <target>Desinstaller</target>
+  <target>Désinstaller</target>
 </trans-unit>
 <trans-unit id="s928362b2d36f34f7">
   <source>Tool undeprecated.</source>
-  <target>Depreciation de l'outil retiree.</target>
+  <target>L'outil n'est plus obsolète.</target>
 </trans-unit>
 <trans-unit id="sf2f0e2d57183480d">
   <source>Failed to undeprecate Tool (see console for details)</source>
-  <target>Echec du retrait de la depreciation de l'outil (voir la console pour les details)</target>
+  <target>Échec du retrait de l'obsolescene de l'outil (voir la console pour les détails)</target>
 </trans-unit>
 <trans-unit id="sd13c458659b1b8e7">
   <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
-  <target>Vous n'avez aucun outil installe dans ce groupe. Allez a la bibliotheque d'outils pour installer des outils dans ce groupe.</target>
+  <target>Vous n'avez aucun outil installé dans ce groupe. Allez à la bibliothèque d'outils pour installer des outils dans ce groupe.</target>
 </trans-unit>
 <trans-unit id="s45a179a4d2fe3729">
   <source>No abandoned Tools.</source>
-  <target>Aucun outil abandonne.</target>
+  <target>Aucun outil abandonné.</target>
 </trans-unit>
 <trans-unit id="s4e92d160c3305647">
   <source>Activated Tools</source>
-  <target>Outils actives</target>
+  <target>Outils activés</target>
 </trans-unit>
 <trans-unit id="sa670264e8f449d1c">
   <source>Abandoned Tools</source>
-  <target>Outils abandonnes</target>
+  <target>Outils abandonnés</target>
 </trans-unit>
 <trans-unit id="s2aac2023bcfa6e62">
   <source>Add Steward:</source>
@@ -560,7 +560,7 @@
 </trans-unit>
 <trans-unit id="s445ad48f4f733285">
   <source>Error leaving the group</source>
-  <target>Erreur lors du depart du groupe</target>
+  <target>Erreur en quittant du groupe</target>
 </trans-unit>
 <trans-unit id="sc0b43e6938b15b03">
   <source>Leave Group</source>
@@ -568,15 +568,15 @@
 </trans-unit>
 <trans-unit id="s5bf0cb955266a68c">
   <source>Are you sure you want to leave this group?</source>
-  <target>Etes-vous sur de vouloir quitter ce groupe ?</target>
+  <target>Êtes-vous sûr de vouloir quitter ce groupe ?</target>
 </trans-unit>
 <trans-unit id="s62e9eba92a6d2fef">
   <source>⚠️ This will delete all your Tools of this group and the data therein</source>
-  <target>⚠️ Cela supprimera tous vos outils de ce groupe et les donnees qu'ils contiennent</target>
+  <target>⚠️ Cela supprimera tous vos outils de ce groupe et les données qu'ils contiennent</target>
 </trans-unit>
 <trans-unit id="se869a6655b76b079">
   <source> (unless a Tool is shared with another group of yours).</source>
-  <target> (sauf si un outil est partage avec un autre de vos groupes).</target>
+  <target> (sauf si un outil est partagé avec un autre de vos groupes).</target>
 </trans-unit>
 <trans-unit id="s2ceb11be2290bb1b">
   <source>Cancel</source>
@@ -592,11 +592,11 @@
 </trans-unit>
 <trans-unit id="s1faa6574a9c4fd7a">
   <source>Looking for peers...</source>
-  <target>Recherche de pairs...</target>
+  <target>Recherche de pairs en cours...</target>
 </trans-unit>
 <trans-unit id="s5e63e3491c0af038">
   <source>No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.</source>
-  <target>Aucun pair trouve pour recuperer les metadonnees du groupe. Demandez a l'un des membres de ce groupe de lancer Moss pour que vous puissiez commencer a vous synchroniser avec eux.</target>
+  <target>Aucun pair trouvé pour récuperer les métadonnées du groupe. Demandez à l'un des membres de ce groupe de démarrer Moss pour que vous puissiez commencer à vous synchroniser avec eux.</target>
 </trans-unit>
 <trans-unit id="sde1c98062b1c6d22">
   <source>The group ID is: </source>
