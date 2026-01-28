@@ -961,7 +961,7 @@ export class DebuggingPanel extends LitElement {
         return html`Loading...`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Failed to get running applets.')}
+          .headline=${msg('Failed to get running Tools.')}
           tooltip
           .error=${this._applets.value.error}
         ></display-error>`;

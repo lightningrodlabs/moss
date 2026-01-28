@@ -240,8 +240,7 @@ export class OverlayPocket extends LitElement {
                           ></wal-created-element>
                         `,
                       )
-                    : html`Nothing in your pocket. Watch out for pocket icons to add things to your
-                      pocket.`}
+                    : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`}
                 </div>
               `
             : html``}
@@ -290,7 +289,7 @@ export class OverlayPocket extends LitElement {
                         src=${wrapPathInSvg(mdiArrowDownBoldBoxOutline)}
                       ></sl-icon>
                       <span style="margin-left: 20px; font-size: 60px;">
-                        drop to add to pocket</span
+                        ${msg('drop to add to pocket')}</span
                       >
                     </div>
                   </div>
@@ -311,7 +310,7 @@ export class OverlayPocket extends LitElement {
                     `,
                   )
                 : html`<div style="font-size: 20px; ${this.hoverArea ? 'display: none;' : ''}">
-                    Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.
+                    ${msg('Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.')}
                   </div>`}
             </div>
           </div>

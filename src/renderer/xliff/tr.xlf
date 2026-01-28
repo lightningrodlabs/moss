@@ -186,10 +186,6 @@
   <source>Add to Group</source>
   <target>Gruba Ekle</target>
 </trans-unit>
-<trans-unit id="s834d4babf5a8d7eb">
-  <source>Error fetching the registered applets in this group</source>
-  <target>Bu gruptaki kayıtlı appletler alınırken hata</target>
-</trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
   <target>Şuraya yükleniyor:</target>
@@ -366,10 +362,6 @@
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
   <target>Şu anda Moss davetleri "İşte ev adresim, kapı açık" kuralına göre çalışıyor. Bağlantıya sahip herkes gruba katılabilir, bu yüzden bu bağlantıyı nerede paylaştığınıza dikkat edin.</target>
 </trans-unit>
-<trans-unit id="s33b508d0ff961c4b">
-  <source>Error displaying the applets</source>
-  <target>Appletler görüntülenirken hata</target>
-</trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
   <target>Henüz araç yok.</target>
@@ -445,10 +437,6 @@
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
   <target> yukarıdaki simge) giderek bu gruba applet yükleyin.</target>
-</trans-unit>
-<trans-unit id="s72ef2c43063bb181">
-  <source>Error fetching the applets installed in this group</source>
-  <target>Bu grupta yüklü appletler alınırken hata</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
@@ -1018,10 +1006,6 @@
   <source>Failed to get groups.</source>
   <target>Gruplar alınamadı.</target>
 </trans-unit>
-<trans-unit id="se0202a76c1595f2f">
-  <source>Failed to get running applets.</source>
-  <target>Çalışan appletler alınamadı.</target>
-</trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
   <target>Varsayılan profil kaydedildi.</target>
@@ -1485,6 +1469,62 @@
 <trans-unit id="s823aec927799efba">
   <source>starting Holochain...</source>
   <target>Holochain başlatılıyor...</target>
+</trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Lütfen buradaki dil çevirilerinin yapay zeka tarafından yapıldığını unutmayın. Herhangi bir hata bulursanız lütfen bize geri bildirim gönderin. Ana sayfadaki Geri Bildirim düğmesinden erişilebilen Geri Bildirim iletişim kutusundaki uygulama içi ekran görüntüsü/geri bildirim aracını etkinleştirebilirsiniz.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>Panoyu açmak için</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Cebinizde hiçbir şey yok. Cebinize bir şeyler eklemek için cep simgelerine dikkat edin.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>cebe eklemek için bırakın</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Cebinizde hiçbir şey yok. Cebinize varlık eklemek için cep simgelerine dikkat edin.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Foyer</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>Foyer, grubun diğer üyelerine geçici mesajlar göndermek için bir alandır.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Bu mesajların hiçbiri hiçbir zaman saklanmaz ve yalnızca grubun üye listesinde çevrimiçi olarak görünen diğer üyelere gider.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Foyer Mesajları:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Araçları yükleyebilmek için önce bir Grup oluşturmanız veya bir Gruba katılmanız gerekir.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Bu gruptaki kayıtlı araçlar alınırken hata oluştu</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Araçlar görüntülenirken hata oluştu</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Bu grupta yüklü araçlar alınırken hata oluştu</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Çalışan araçlar alınamadı.</target>
 </trans-unit>
 </body>
 </file>

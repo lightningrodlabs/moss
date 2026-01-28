@@ -186,10 +186,6 @@
   <source>Add to Group</source>
   <target>Añadir al grupo</target>
 </trans-unit>
-<trans-unit id="s834d4babf5a8d7eb">
-  <source>Error fetching the registered applets in this group</source>
-  <target>Error al obtener los applets registrados en este grupo</target>
-</trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
   <target>Instalando en:</target>
@@ -366,10 +362,6 @@
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
   <target>Actualmente las invitaciones de Moss funcionan según la regla "Aquí está mi dirección, la puerta está abierta". Cualquiera con un enlace puede unirse al grupo, así que ten cuidado dónde compartes este enlace.</target>
 </trans-unit>
-<trans-unit id="s33b508d0ff961c4b">
-  <source>Error displaying the applets</source>
-  <target>Error al mostrar los applets</target>
-</trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
   <target>Sin herramientas aún.</target>
@@ -445,10 +437,6 @@
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
   <target> icono de arriba) para instalar applets en este grupo.</target>
-</trans-unit>
-<trans-unit id="s72ef2c43063bb181">
-  <source>Error fetching the applets installed in this group</source>
-  <target>Error al obtener los applets instalados en este grupo</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
@@ -1018,10 +1006,6 @@
   <source>Failed to get groups.</source>
   <target>Error al obtener grupos.</target>
 </trans-unit>
-<trans-unit id="se0202a76c1595f2f">
-  <source>Failed to get running applets.</source>
-  <target>Error al obtener applets en ejecución.</target>
-</trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
   <target>Perfil predeterminado guardado.</target>
@@ -1485,6 +1469,62 @@
 <trans-unit id="s823aec927799efba">
   <source>starting Holochain...</source>
   <target>iniciando Holochain...</target>
+</trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Tenga en cuenta que las traducciones de idiomas aquí fueron realizadas por IA. Si encuentra algún error, envíenos sus comentarios. Puede activar la herramienta de captura de pantalla/comentarios en la aplicación en el diálogo de Comentarios accesible desde el botón Comentarios en la página de inicio.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>para abrir el portapapeles</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Nada en tu bolsillo. Busca los iconos de bolsillo para añadir cosas a tu bolsillo.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>soltar para añadir al bolsillo</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Nada en tu bolsillo. Busca los iconos de bolsillo para añadir recursos a tu bolsillo.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Vestíbulo</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>El Vestíbulo es un espacio para enviar mensajes efímeros a otros miembros del grupo.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Ninguno de estos mensajes se almacena, y solo se envían a otros miembros que aparecen en línea en la lista de miembros del grupo.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Mensajes del Vestíbulo:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Necesitas crear o unirte a un grupo antes de poder instalar herramientas.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Error al obtener las herramientas registradas en este grupo</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Error al mostrar las herramientas</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Error al obtener las herramientas instaladas en este grupo</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Error al obtener las herramientas en ejecución.</target>
 </trans-unit>
 </body>
 </file>

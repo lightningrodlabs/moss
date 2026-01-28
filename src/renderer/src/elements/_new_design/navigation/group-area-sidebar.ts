@@ -372,7 +372,7 @@ export class GroupAppletsSidebar extends LitElement {
       case 'error':
         console.error('ERROR: ', this._groupApplets.value.error);
         return html`<display-error
-          .headline=${msg('Error displaying the applets')}
+          .headline=${msg('Error displaying the Tools')}
           tooltip
           .error=${this._groupApplets.value.error}
         ></display-error>`;
@@ -766,7 +766,7 @@ export class GroupAppletsSidebar extends LitElement {
         <!-- Online Peers indicator -->
         <sl-tooltip
           content="${msg('Your Peers')}${this._onlinePeersCount.value !== undefined
-        ? ` (${this.numPeersOnline()} online)`
+        ? ` (${this.numPeersOnline()} ${msg('online')})`
         : ''}"
           placement="right"
           hoist

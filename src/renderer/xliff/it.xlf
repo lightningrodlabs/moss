@@ -246,10 +246,6 @@
   <source>Add to Group</source>
   <target>Aggiungi al Gruppo</target>
 </trans-unit>
-<trans-unit id="s834d4babf5a8d7eb">
-  <source>Error fetching the registered applets in this group</source>
-  <target>Errore nel recupero degli applet registrati in questo gruppo</target>
-</trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
   <target>Installazione in:</target>
@@ -426,10 +422,6 @@
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
   <target>Attualmente gli inviti di Moss funzionano secondo la regola "Ecco il mio indirizzo, la porta è aperta." Chiunque abbia un link può unirsi al gruppo, quindi fai attenzione a dove condividi questo link.</target>
 </trans-unit>
-<trans-unit id="s33b508d0ff961c4b">
-  <source>Error displaying the applets</source>
-  <target>Errore nella visualizzazione degli applet</target>
-</trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
   <target>Nessun tool ancora.</target>
@@ -505,10 +497,6 @@
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
   <target> icona sopra) per installare applet in questo gruppo.</target>
-</trans-unit>
-<trans-unit id="s72ef2c43063bb181">
-  <source>Error fetching the applets installed in this group</source>
-  <target>Errore nel recupero degli applet installati in questo gruppo</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
@@ -1094,10 +1082,6 @@
   <source>Failed to get groups.</source>
   <target>Recupero dei gruppi non riuscito.</target>
 </trans-unit>
-<trans-unit id="se0202a76c1595f2f">
-  <source>Failed to get running applets.</source>
-  <target>Recupero degli applet in esecuzione non riuscito.</target>
-</trans-unit>
 <trans-unit id="s45ab5e3bc8490c0e">
   <source>Default profile saved.</source>
   <target>Profilo predefinito salvato.</target>
@@ -1485,6 +1469,62 @@
 <trans-unit id="s823aec927799efba">
   <source>starting Holochain...</source>
   <target>avvio di Holochain...</target>
+</trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Si prega di notare che le traduzioni linguistiche qui sono state fatte dall'IA. Se trovi errori, inviaci il tuo feedback. Puoi attivare lo strumento di screenshot/feedback in-app nella finestra di dialogo Feedback accessibile dal pulsante Feedback nella pagina iniziale.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>per aprire gli appunti</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Niente nella tua tasca. Cerca le icone della tasca per aggiungere elementi alla tua tasca.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>rilascia per aggiungere alla tasca</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Niente nella tua tasca. Cerca le icone della tasca per aggiungere risorse alla tua tasca.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Foyer</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>Il Foyer è uno spazio per inviare messaggi effimeri agli altri membri del gruppo.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Nessuno di questi messaggi viene mai memorizzato, e vengono inviati solo agli altri membri che appaiono online nell'elenco dei membri del gruppo.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Messaggi del Foyer:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Devi creare o unirti a un gruppo prima di poter installare gli strumenti.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Errore nel recupero degli strumenti registrati in questo gruppo</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Errore nella visualizzazione degli strumenti</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Errore nel recupero degli strumenti installati in questo gruppo</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Impossibile ottenere gli strumenti in esecuzione.</target>
 </trans-unit>
 </body>
 </file>
