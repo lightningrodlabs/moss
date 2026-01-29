@@ -1,7 +1,7 @@
 import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { notify, notifyError, sharedStyles } from '@holochain-open-dev/elements';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -129,7 +129,7 @@ export class CreatablePalette extends LitElement {
         return;
       case 'success':
         this._mossStore.walToRecentlyCreated(creatableResult.wal);
-        notify(`New ${this._showCreatableView?.creatable.label} created.`);
+        notify(msg(str`New ${this._showCreatableView?.creatable.label} created.`));
         this._mossStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
           new CustomEvent('open-wal', {

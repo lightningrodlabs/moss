@@ -156,11 +156,11 @@
 </trans-unit>
 <trans-unit id="s06971ea804e7d673">
   <source>Install to a group space</source>
-  <target>Installer dans un espace de groupe</target>
+  <target>Installer dans un groupe</target>
 </trans-unit>
 <trans-unit id="s25f1d9708501730f">
   <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
-  <target>Installer v<x id="0" equiv-text="${version.version}"/> dans un espace de groupe</target>
+  <target>Installer v<x id="0" equiv-text="${version.version}"/> dans un groupe</target>
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
@@ -308,7 +308,7 @@
 </trans-unit>
 <trans-unit id="sbc42b2ee96abb572">
   <source>installed this tool to the group space </source>
-  <target>a installé cet outil dans l'espace de groupe </target>
+  <target>a installé cet outil dans le groupe </target>
 </trans-unit>
 <trans-unit id="s3be52ccc6f018908">
   <source>In use by: </source>
@@ -336,7 +336,7 @@
 </trans-unit>
 <trans-unit id="s7390f8b75a4e40d4">
   <source>They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!</source>
-  <target>Ils utilisent peut-être déjà un outil que vous recherchez. Pas besoin de l'ajouter à votre espace de groupe - activez-le simplement pour vous et commencez à collaborer !</target>
+  <target>Ils utilisent peut-être déjà un outil que vous recherchez. Pas besoin de l'ajouter à votre groupe - activez-le simplement pour vous et commencez à collaborer !</target>
 </trans-unit>
 <trans-unit id="s1d1484091c0237f3">
   <source>Invite People</source>
@@ -396,7 +396,7 @@
 </trans-unit>
 <trans-unit id="s3be68760fd7935f7">
   <source>more used by peers</source>
-  <target>d'autres utilisés par les pairs</target>
+  <target>autre(s) utilisé(s) par les pairs</target>
 </trans-unit>
 <trans-unit id="s40ad7672a00dd569">
   <source>click to copy public key</source>
@@ -492,7 +492,7 @@
 </trans-unit>
 <trans-unit id="s70d885806b56289e">
   <source>enabled</source>
-  <target>activÉ</target>
+  <target>activé</target>
 </trans-unit>
 <trans-unit id="s96ed4200ee683221">
   <source>Disable the app for yourself</source>
@@ -1228,7 +1228,7 @@
 </trans-unit>
 <trans-unit id="s97c954bf5d700fc4">
   <source>Create group space</source>
-  <target>Créer un espace de groupe</target>
+  <target>Créer un groupe</target>
 </trans-unit>
 <trans-unit id="sd33aeb1a43a080b1">
   <source>Choose Group Type</source>
@@ -1284,7 +1284,7 @@
 </trans-unit>
 <trans-unit id="s4e9e4d368feaf09a">
   <source>Create new group space</source>
-  <target>Créer un nouvel espace de groupe</target>
+  <target>Créer un nouveau groupe</target>
 </trans-unit>
 <trans-unit id="s9c0f4d29e125d6d3">
   <source>Skip Setup</source>
@@ -1292,7 +1292,7 @@
 </trans-unit>
 <trans-unit id="s47c33f08061ea16c">
   <source>Holochain failed to start up and crashed :(</source>
-  <target>Holochain n'a pas pu démarrer et à planté :(</target>
+  <target>Holochain n'a pas pu démarrer et a planté :(</target>
 </trans-unit>
 <trans-unit id="scf5e435555ee676b">
   <source>If you want to support us in finding the problem, please export the logs and send them to </source>
@@ -1376,7 +1376,7 @@
 </trans-unit>
 <trans-unit id="s9cf80b52fc9a7340">
   <source>Below are relevant updates for early weavers.</source>
-  <target>Voici les mises à jour pertinentes pour les premiers tisseurs.</target>
+  <target>Voici les mises à jour pertinentes.</target>
 </trans-unit>
 <trans-unit id="s94258cf18a3d4dd1">
   <source>No big waves lately...</source>

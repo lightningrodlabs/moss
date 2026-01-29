@@ -411,7 +411,7 @@ export class GroupHome extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Tool installed.');
+      notify(msg('Tool installed.'));
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       this._showIgnoredApplets = false;
     } catch (e) {

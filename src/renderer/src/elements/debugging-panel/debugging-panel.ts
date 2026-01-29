@@ -2,7 +2,7 @@ import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import {localized, msg} from '@lit/localize';
 import {
   AppClient,
   CellId,
@@ -1011,7 +1011,7 @@ export class DebuggingPanel extends LitElement {
         <sl-button
           @click=${async () => {
         await window.electronAPI.dumpNetworkStats();
-        notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
+        notify(msg('Stats saved to logs folder (Help > Open Logs)'), undefined, undefined, 7000);
       }}
           style="margin-top: 20px;"
         >

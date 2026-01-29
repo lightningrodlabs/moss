@@ -295,7 +295,7 @@ export class AppletDetailCard extends LitElement {
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
           <div class="row" style="align-items: center; margin-top: 4px;">
-            <span><b>abandoned by:&nbsp;</b></span>
+            <span><b>${msg('abandoned by:')}&nbsp;</b></span>
             ${this._abandonedMembers.value.value.map(
           (appletAgent) => html`
                 <agent-avatar

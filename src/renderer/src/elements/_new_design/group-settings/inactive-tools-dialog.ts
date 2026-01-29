@@ -137,7 +137,7 @@ export class InactiveToolsDialog extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Tool activated.');
+      notify(msg('Tool activated.'));
       // Check if there are still inactive tools, if not, close the dialog
       if (!this.hasInactiveTools()) {
         this.hide();

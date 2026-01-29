@@ -104,7 +104,7 @@
 's3a4df362e4b10c3d': `Modificateurs non définis.`,
 's3a5ee4be3d2b0782': `L'ajout d'un nouvel outil à un groupe `,
 's3be52ccc6f018908': `Utilisé par : `,
-'s3be68760fd7935f7': `d'autres utilisés par les pairs`,
+'s3be68760fd7935f7': `autre(s) utilisés par les pairs`,
 's3c1efcb18ec4d6c9': `Paramètres du groupe`,
 's3d197283cb019b5a': `Aperçu`,
 's3d4ca40eab578130': `Bibliotheque d'Outils`,
