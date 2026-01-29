@@ -1626,6 +1626,70 @@
   <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
   <target>Se vuoi inviarlo privatamente, premi "Copia" per copiare il feedback negli appunti e inviarlo via email a moss.0.15.feedback@theweave.social.</target>
 </trans-unit>
+<trans-unit id="s08a64b07b54df8d4">
+  <source>by</source>
+</trans-unit>
+<trans-unit id="s8763e7dbdf84093d">
+  <source>Installation successful</source>
+</trans-unit>
+<trans-unit id="s08a95f07b55050a7">
+  <source>me</source>
+</trans-unit>
+<trans-unit id="sf70accff890a3e36">
+  <source>Tool activated.</source>
+</trans-unit>
+<trans-unit id="s3a41d065ac965e2a">
+  <source>abandoned by:</source>
+</trans-unit>
+<trans-unit id="s6466997515d6d5b3">
+  <source>New Steward Added.</source>
+</trans-unit>
+<trans-unit id="s3d0d58199047bee5">
+  <source>Uninstalled by:</source>
+</trans-unit>
+<trans-unit id="sa60b341bc63f22e5">
+  <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
+</trans-unit>
+<trans-unit id="sb6e3761a156a287c">
+  <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
+</trans-unit>
+<trans-unit id="sef15c43dfc461396">
+  <source>Failed to activate all tools (see console for details).</source>
+</trans-unit>
+<trans-unit id="s4cbb78c19c17b7eb">
+  <source>Steward role assigned.</source>
+</trans-unit>
+<trans-unit id="s2a61c518d1e493d1">
+  <source>Profile updated.</source>
+</trans-unit>
+<trans-unit id="s365a7b194bc6e1dd">
+  <source>Tool installed.</source>
+</trans-unit>
+<trans-unit id="sb5f4daa1bf12f954">
+  <source>DhtOp logged to console.</source>
+</trans-unit>
+<trans-unit id="s949586df2fc249a6">
+  <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
+</trans-unit>
+<trans-unit id="s6d4ea06717ba190f">
+  <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
+</trans-unit>
+<trans-unit id="se122ec103ad3a22b">
+  <source>Asset Viewer</source>
+  <target>Visualizzatore risorse</target>
+</trans-unit>
+<trans-unit id="s502cf76d28a6568a">
+  <source>This is where assets are displayed. Opening an asset from one of your Tools will create a new tab here.</source>
+  <target>Qui vengono visualizzate le risorse. Aprendo una risorsa da uno dei tuoi strumenti verrà creata una nuova scheda qui.</target>
+</trans-unit>
+<trans-unit id="s86f9012852d0da41">
+  <source>Hide Asset Viewer</source>
+  <target>Nascondi visualizzatore risorse</target>
+</trans-unit>
+<trans-unit id="s2d226848fc48a75e">
+  <source>Show Asset Viewer</source>
+  <target>Mostra visualizzatore risorse</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

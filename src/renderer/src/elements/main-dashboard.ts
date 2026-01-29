@@ -1081,11 +1081,10 @@ export class MainDashboard extends LitElement {
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
-          Asset Viewer
+          ${msg('Asset Viewer')}
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where assets are displayed. Opening an asset from one of your Tools will create a
-          new tab here.
+          ${msg('This is where assets are displayed. Opening an asset from one of your Tools will create a new tab here.')}
         </div>
       </div>`;
     }
@@ -1696,8 +1695,8 @@ export class MainDashboard extends LitElement {
       <div class="row" style="position: fixed; top: 0; right: 0;">
         <sl-tooltip
           content="${this._assetViewerState.value.visible
-        ? 'Hide Asset Viewer'
-        : 'Show Asset Viewer'}"
+        ? msg('Hide Asset Viewer')
+        : msg('Show Asset Viewer')}"
           placement="left"
           hoist
         >
