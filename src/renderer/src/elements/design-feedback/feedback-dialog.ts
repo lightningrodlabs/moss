@@ -35,12 +35,16 @@ export class FeedbackDialog extends LitElement {
   @state()
   private _submitting = false;
 
+  /** Tracks whether we're closing due to submit/copy (don't emit cancelled) */
+  private _closingIntentionally = false;
+
   @query('sl-dialog')
   private _dialog!: SlDialog;
 
   show() {
     this._feedbackText = '';
     this._submitting = false;
+    this._closingIntentionally = false;
     this._dialog.show();
   }
 
@@ -48,8 +52,34 @@ export class FeedbackDialog extends LitElement {
     this._dialog.hide();
   }
 
+  /**
+   * Handle sl-request-close: prevent closing by clicking outside if user has typed feedback
+   */
+  private _onRequestClose(e: CustomEvent<{ source: string }>) {
+    // If user has typed feedback and tries to close by clicking overlay, prevent it
+    if (e.detail.source === 'overlay' && this._feedbackText.trim()) {
+      e.preventDefault();
+    }
+  }
+
+  /**
+   * Handle sl-hide: emit feedback-cancelled unless we're closing intentionally (submit/copy)
+   */
+  private _onDialogHide() {
+    if (!this._closingIntentionally) {
+      this.dispatchEvent(
+        new CustomEvent('feedback-cancelled', {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+    this._closingIntentionally = false;
+  }
+
   private _submit() {
     this._submitting = true;
+    this._closingIntentionally = true;
     this.dispatchEvent(
       new CustomEvent('feedback-submitted', {
         detail: {
@@ -70,6 +100,7 @@ export class FeedbackDialog extends LitElement {
     const markdown = `## Design Feedback\n\n${this._feedbackText}\n\n### Screenshot\n\n![screenshot](${this.screenshot})\n\n### Environment\n- **Moss version:** ${this.mossVersion}\n- **OS:** ${this.os}`;
     await navigator.clipboard.writeText(markdown);
     notify(msg('Copied to clipboard'));
+    this._closingIntentionally = true;
     this.dispatchEvent(
       new CustomEvent('feedback-copied', {
         detail: {
@@ -86,18 +117,18 @@ export class FeedbackDialog extends LitElement {
   }
 
   private _cancel() {
-    this.dispatchEvent(
-      new CustomEvent('feedback-cancelled', {
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    // _onDialogHide will emit feedback-cancelled
     this.hide();
   }
 
   render() {
     return html`
-      <sl-dialog label="${msg('Submit Feedback')}" style="--width: 700px;">
+      <sl-dialog
+        label="${msg('Submit Feedback')}"
+        style="--width: 700px;"
+        @sl-request-close=${this._onRequestClose}
+        @sl-hide=${this._onDialogHide}
+      >
         <div class="column" style="gap: 16px;">
           ${this.screenshot
             ? html`
