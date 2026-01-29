@@ -7,6 +7,7 @@ import {
   InstalledAppId,
   RoleNameCallZomeRequest,
   AppAuthenticationToken,
+  HoloHashMap,
 } from '@holochain/client';
 import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
@@ -18,7 +19,6 @@ import {
   readable,
   toPromise,
 } from '@holochain-open-dev/stores';
-import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
 import { FrameNotification, GroupProfile, WeaveLocation } from '@theweave/api';
@@ -97,7 +97,7 @@ export class FoyerStore {
       received: Date.now(),
     });
     for (const agent of agents) {
-      let messageList: Array<number> = this.expectations.get(agent);
+      let messageList: Array<number> = this.expectations.get(agent)!;
       if (!messageList) {
         messageList = [];
       }
@@ -145,7 +145,7 @@ export class FoyerStore {
 
       if (b64From != this.myPubKeyB64) {
         if (!mainWindowFocused) {
-          const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from));
+          const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from)!);
           const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
           const myProfile = await toPromise(this.profilesStore.myProfile);
           const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;

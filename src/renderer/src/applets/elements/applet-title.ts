@@ -42,9 +42,9 @@ export class AppletTitle extends LitElement {
     this,
     () =>
       joinAsync([
-        this._mossStore.appletStores.get(this.appletHash),
-        asyncDeriveStore(this._mossStore.groupsForApplet.get(this.appletHash), (groupsStores) =>
-          joinAsyncMap(mapValues(groupsStores, (groupStore) => groupStore.groupProfile)),
+        this._mossStore.appletStores.get(this.appletHash)!,
+        asyncDeriveStore(this._mossStore.groupsForApplet.get(this.appletHash)!, (groupsStores) =>
+          joinAsyncMap(mapValues(groupsStores, (groupStore) => groupStore!.groupProfile)),
         ),
       ]) as AsyncReadable<[AppletStore | undefined, ReadonlyMap<DnaHash, GroupProfile>]>,
     () => [this.appletHash],
@@ -52,7 +52,7 @@ export class AppletTitle extends LitElement {
 
   _logo = new StoreSubscriber(
     this,
-    () => this._mossStore.appletLogo.get(this.appletHash),
+    () => this._mossStore.appletLogo.get(this.appletHash)!,
     () => [this.appletHash],
   );
 

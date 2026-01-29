@@ -1,10 +1,10 @@
-import { pipe, sliceAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import {encodeHashToBase64, EntryHash, HoloHashMap} from '@holochain/client';
 import { hashState } from '@holochain-open-dev/elements';
+import {AsyncStatus, pipe, sliceAndJoin, StoreSubscriber} from '@holochain-open-dev/stores';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
@@ -18,6 +18,7 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
 
 enum TabsState {
   Inactive,
@@ -35,20 +36,20 @@ export class ToolsSettings extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
 
-  _groupApplets = new StoreSubscriber(
-    this,
-    () =>
-      pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
-        sliceAndJoin(this._groupStore.applets, myInstalledApplets),
-      ),
-    () => [this._groupStore, this._mossStore],
-  );
+    _groupApplets: StoreSubscriber<AsyncStatus<HoloHashMap<EntryHash, any>>> = new StoreSubscriber(
+        this,
+        () =>
+            pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
+                sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, myInstalledApplets),
+            ),
+        () => [this._groupStore, this._mossStore],
+    );
 
-  _allMyEverJoinedApplets = new StoreSubscriber(
+  _allMyEverJoinedApplets: StoreSubscriber<AsyncStatus<HoloHashMap<EntryHash, any>>> = new StoreSubscriber(
     this,
     () =>
       pipe(this._groupStore.allMyApplets, (allMyEverJoinedApplets) =>
-        sliceAndJoin(this._groupStore.applets, allMyEverJoinedApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, allMyEverJoinedApplets),
       ),
     () => [this._groupStore],
   );

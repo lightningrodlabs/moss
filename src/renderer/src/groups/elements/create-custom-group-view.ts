@@ -34,7 +34,7 @@ export class CreateCustomGroupView extends LitElement {
     this,
     () =>
       asyncDeriveAndJoin(this.groupStore.allBlocks, (allBlocks) =>
-        mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)),
+        mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)!),
       ),
     () => [this.groupStore],
   );

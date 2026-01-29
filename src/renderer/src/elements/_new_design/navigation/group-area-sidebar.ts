@@ -43,7 +43,7 @@ import {
   questionMarkInfoIcon,
 } from '../icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
-import { EntryRecord } from '@holochain-open-dev/utils';
+import {EntryRecord, GetonlyMap} from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
 import {
   localTimeFromUtcOffset,
@@ -168,7 +168,7 @@ export class GroupAppletsSidebar extends LitElement {
     () =>
       this._groupStore
         ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-          sliceAndJoin(this._mossStore.appletStores, myRunningApplets),
+          sliceAndJoin(this._mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),
         ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],

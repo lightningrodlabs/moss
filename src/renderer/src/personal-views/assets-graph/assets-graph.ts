@@ -94,7 +94,7 @@ export class AssetsGraph extends LitElement {
                 });
             }
 
-            const appletIcon = await toPromise(this.mossStore.appletLogo.get(appletHash));
+            const appletIcon = await toPromise(this.mossStore.appletLogo.get(appletHash)!);
             // console.log('GOT APPLET ICON: ', appletIcon);
             nodes.push({
               id: `applet#${appletId}`,

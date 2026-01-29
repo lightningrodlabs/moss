@@ -105,10 +105,13 @@ export class HolochainManager {
       advancedSettings['tx5Transport'] = {
         signalAllowPlainText: true,
       };
+      advancedSettings['irohTransport'] = {
+        relayAllowPlainText: true,
+      };
       conductorConfig.network.advanced = advancedSettings;
     }
 
-    console.log('Writing conductor-config.yaml...');
+    console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
 
     fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
@@ -117,12 +120,12 @@ export class HolochainManager {
         RUST_LOG: rustLog
           ? rustLog
           : 'warn,' +
-            // this thrashes on startup
-            'wasmer_compiler_cranelift=error,' +
-            // this gives a bunch of warnings about how long db accesses are taking, tmi
-            'holochain_sqlite::db::access=error,' +
-            // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
-            'kitsune_p2p::spawn::actor::discover=error',
+          // this thrashes on startup
+          'wasmer_compiler_cranelift=error,' +
+          // this gives a bunch of warnings about how long db accesses are taking, tmi
+          'holochain_sqlite::db::access=error,' +
+          // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
+          'kitsune_p2p::spawn::actor::discover=error',
         WASM_LOG: wasmLog ? wasmLog : 'warn',
         NO_COLOR: '1',
       },

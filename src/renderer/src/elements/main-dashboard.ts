@@ -269,7 +269,7 @@ export class MainDashboard extends LitElement {
   @property()
   openViews: AppOpenViews = {
     openAppletMain: async (appletHash, _wal) => {
-      const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash));
+      const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash)!);
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
         notifyError(msg('Tool not found in any of your groups.'));
@@ -392,15 +392,15 @@ export class MainDashboard extends LitElement {
 
   async getRelatedGroupsAndApplets(hrl: Hrl): Promise<[DnaHashB64[], AppletId[]]> {
     console.debug('getRelatedGroupsAndApplets', hrl);
-    const first = this._mossStore.hrlLocations.get(hrl[0]);
+    const first = this._mossStore.hrlLocations.get(hrl[0])!;
     console.debug('getRelatedGroupsAndApplets first', first);
-    const location = await toPromise(first.get(hrl[1]));
+    const location = await toPromise(first.get(hrl[1])!);
     if (!location) {
       return [[], []];
     }
     const appletContextHashes = [encodeHashToBase64(location.dnaLocation.appletHash)];
     const groupsForApplet = await toPromise(
-      this._mossStore.groupsForApplet.get(location.dnaLocation.appletHash),
+      this._mossStore.groupsForApplet.get(location.dnaLocation.appletHash)!,
     );
     const groupDnaHashes = Array.from(groupsForApplet.keys());
     const groupContextHashesB64 = groupDnaHashes.map((hash) => encodeHashToBase64(hash));

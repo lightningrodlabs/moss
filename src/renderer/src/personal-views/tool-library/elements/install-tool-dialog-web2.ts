@@ -6,7 +6,7 @@ import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
-import { slice } from '@holochain-open-dev/utils';
+import {GetonlyMap, slice} from '@holochain-open-dev/utils';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -23,6 +23,7 @@ import { MossStore } from '../../../moss-store.js';
 import { ToolAndCurationInfo } from '../../../types.js';
 import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
 import '../../../elements/_new_design/moss-dialog.js';
+import {Applet} from "@theweave/group-client";
 
 @localized()
 @customElement('install-tool-dialog-web2')
@@ -37,7 +38,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     this,
     () =>
       pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
-        joinAsyncMap(slice(this.groupStore.applets, allAppletsHashes)),
+            joinAsyncMap(slice(this.groupStore.applets as GetonlyMap<any, any>, allAppletsHashes)),
       ),
     () => [this.groupStore],
   );
@@ -192,7 +193,7 @@ export class InstallToolDialogWeb2 extends LitElement {
         </div>`;
       case 'complete':
         const allAppletsNames = Array.from(this._registeredApplets.value.value.values()).map(
-          (applet) => applet?.custom_name,
+          (applet) => (applet as Applet)?.custom_name,
         );
         return html`
           <div class="column install-form">

@@ -22,7 +22,7 @@ switch (process.platform) {
     }
     break;
   case 'win32':
-    targetEnding = 'x86_64-pc-windows-msvc.exe';
+    targetEnding = 'x86_64-pc-windows-msvc';
     break;
   case 'darwin':
     switch (process.arch) {

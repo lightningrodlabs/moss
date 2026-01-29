@@ -54,7 +54,7 @@ export class AppletSidebarButton extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this.mossStore.appletLogo.get(this.appletStore.appletHash),
+    () => this.mossStore.appletLogo.get(this.appletStore.appletHash)!,
     () => [this.appletStore],
   );
 
