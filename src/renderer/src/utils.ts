@@ -1041,7 +1041,11 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   };
   const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
-  const groupHash = (await mossStore.getGroupsForApplet(appletHash))[0];
+  const groups = await mossStore.getGroupsForApplet(appletHash);
+  if (groups.length == 0) {
+      throw new Error('No groups found for applet.');
+  }
+  const groupHash = groups[0];
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
