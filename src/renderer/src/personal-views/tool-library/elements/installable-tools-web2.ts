@@ -16,7 +16,6 @@ import '../../../groups/elements/group-context.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
-import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { ToolAndCurationInfo, UnifiedToolEntry } from '../../../types.js';
 import { getPrimaryVersionBranch, extractMajorVersion } from '../../../utils.js';
@@ -53,8 +52,6 @@ export class InstallableToolsWeb2 extends LitElement {
   toolDetails: LibraryToolDetails | undefined;
 
   async firstUpdated() { }
-
-  timeAgo = new TimeAgo('en-US');
 
   @state()
   selectedTool: UnifiedToolEntry | undefined;

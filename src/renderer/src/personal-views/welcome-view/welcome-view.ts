@@ -19,7 +19,7 @@ import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
@@ -89,7 +89,7 @@ export class WelcomeView extends LitElement {
     () => [this._mossStore],
   );
 
-  timeAgo = new TimeAgo('en-US');
+  timeAgo = getLocalizedTimeAgo();
 
   connectedCallback() {
     super.connectedCallback();

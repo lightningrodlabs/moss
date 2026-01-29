@@ -9,7 +9,6 @@ import {
   AppAuthenticationToken,
   HoloHashMap,
 } from '@holochain/client';
-import TimeAgo from 'javascript-time-ago';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   type Writable,
@@ -71,7 +70,6 @@ export class FoyerClient {
 
 export class FoyerStore {
   myPubKeyB64: AgentPubKeyB64;
-  timeAgo = new TimeAgo('en-US');
   updating = false;
   client: FoyerClient;
   streams: Writable<{ [key: string]: Stream }> = writable({});

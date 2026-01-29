@@ -6,7 +6,7 @@ import { getPrimaryVersionBranch } from '../../../utils';
 import { mossStyles } from '../../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '../../../elements/_new_design/select-group.js';
 
@@ -21,7 +21,7 @@ enum TabsState {
 @localized()
 @customElement('library-tool-details')
 export class LibraryToolDetails extends LitElement {
-  timeAgo = new TimeAgo('en-US');
+  timeAgo = getLocalizedTimeAgo();
 
   @property()
   tool: ToolAndCurationInfo | undefined; // Keep for backward compatibility

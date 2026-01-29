@@ -1,4 +1,23 @@
 import { configureLocalization } from '@lit/localize';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+import de from 'javascript-time-ago/locale/de';
+import fr from 'javascript-time-ago/locale/fr';
+import es from 'javascript-time-ago/locale/es';
+import tr from 'javascript-time-ago/locale/tr';
+import it from 'javascript-time-ago/locale/it';
+import pt from 'javascript-time-ago/locale/pt';
+import ja from 'javascript-time-ago/locale/ja';
+
+// Register all TimeAgo locales
+TimeAgo.addDefaultLocale(en);
+TimeAgo.addLocale(de);
+TimeAgo.addLocale(fr);
+TimeAgo.addLocale(es);
+TimeAgo.addLocale(tr);
+TimeAgo.addLocale(it);
+TimeAgo.addLocale(pt);
+TimeAgo.addLocale(ja);
 
 // Supported locales - must match lit-localize.json targetLocales
 export const sourceLocale = 'en';
@@ -72,3 +91,10 @@ export const LANGUAGE_NAMES: Record<SupportedLocale, string> = {
   pt: 'Português',
   ja: '日本語',
 };
+
+/**
+ * Get a TimeAgo instance configured for the current locale
+ */
+export function getLocalizedTimeAgo(): TimeAgo {
+  return new TimeAgo(getLocale());
+}

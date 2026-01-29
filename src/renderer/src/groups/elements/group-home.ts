@@ -21,7 +21,7 @@ import {
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
 import { mdiCog, mdiHomeOutline } from '@mdi/js';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { Value } from '@sinclair/typebox/value';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -150,7 +150,7 @@ export class GroupHome extends LitElement {
   _unsubscribe: Unsubscriber | undefined;
 
   // Memoization for performance
-  private _timeAgo = new TimeAgo('en-US');
+  private _timeAgo = getLocalizedTimeAgo();
   private _cachedFilteredApplets: Array<{
     appletHash: AppletHash;
     appletEntry: Applet | undefined;

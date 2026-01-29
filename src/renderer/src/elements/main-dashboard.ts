@@ -73,8 +73,6 @@ import {
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
@@ -88,8 +86,6 @@ import {
   turingBlobIconHover,
 } from './_new_design/icons.js';
 import { MossDialog } from './_new_design/moss-dialog.js';
-
-TimeAgo.addDefaultLocale(en);
 
 type OpenTab =
   | {

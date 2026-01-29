@@ -17,7 +17,6 @@ import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import TimeAgo from 'javascript-time-ago';
 import { encodeAndStringify } from '../../utils.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import { AppletNotification } from '../../types.js';
@@ -38,8 +37,6 @@ export class ActivityView extends LitElement {
     () => this._mossStore.availableToolUpdates(),
     () => [this._mossStore],
   );
-
-  timeAgo = new TimeAgo('en-US');
 
   @state()
   sortMethod1 = 'popular';
