@@ -655,11 +655,11 @@ export class GroupAppletsSidebar extends LitElement {
           >
         </div>
         <div class="row" style="align-items: center; margin-top: 20px;">
-          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
+          <span style="font-weight: bold; margin-right: 10px;">${msg('Role:')}</span>
           <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
         </div>
         <div class="row" style="align-items: center; margin-top: 15px;">
-          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
+          <span style="font-weight: bold; margin-right: 10px;">${msg('Local Time:')}</span>
           ${this._selectedAgent?.tzUtcOffset
         ? html`<span
                 >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
@@ -669,7 +669,7 @@ export class GroupAppletsSidebar extends LitElement {
         )},
                 ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
               >`
-        : html`<span>unknown</span>`}
+        : html`<span>${msg('unknown')}</span>`}
         </div>
       </div>
     `;

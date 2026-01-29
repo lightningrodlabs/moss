@@ -1690,6 +1690,14 @@
   <source>Show Asset Viewer</source>
   <target>Afficher la visionneuse d'assets</target>
 </trans-unit>
+<trans-unit id="s6b2ba4a7ab6305f9">
+  <source>Role:</source>
+  <target>Rôle :</target>
+</trans-unit>
+<trans-unit id="s264e444c900d09b1">
+  <source>Local Time:</source>
+  <target>Heure locale :</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
