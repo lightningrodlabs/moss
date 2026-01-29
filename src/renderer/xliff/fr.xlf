@@ -52,7 +52,7 @@
 </trans-unit>
 <trans-unit id="sbb588bb505779122">
   <source>Feedback</source>
-  <target>Commentaires</target>
+  <target>Feedback</target>
 </trans-unit>
 <trans-unit id="s789885786d68ef67">
   <source>Loading number of online members</source>
@@ -124,7 +124,7 @@
 </trans-unit>
 <trans-unit id="scc99769aaee688ec">
   <source>Assets Graph</source>
-  <target>Graphe des actifs</target>
+  <target>Graphe des Assets</target>
 </trans-unit>
 <trans-unit id="s3a4df362e4b10c3d">
   <source>Modifiers undefined.</source>
@@ -396,7 +396,7 @@
 </trans-unit>
 <trans-unit id="s3be68760fd7935f7">
   <source>more used by peers</source>
-  <target>autre(s) utilisé(s) par les pairs</target>
+  <target>autre(s) outil(s) utilisé(s) par les pairs</target>
 </trans-unit>
 <trans-unit id="s40ad7672a00dd569">
   <source>click to copy public key</source>
@@ -1064,7 +1064,7 @@
 </trans-unit>
 <trans-unit id="s2d13c0844c68a8ea">
   <source>Choose Asset Relation Tag:</source>
-  <target>Choisir une balise de relation d'actif :</target>
+  <target>Choisir un tag de relation d'Asset :</target>
 </trans-unit>
 <trans-unit id="s6d96b71b1a229943">
   <source>Enter new tag</source>
@@ -1168,7 +1168,7 @@
 </trans-unit>
 <trans-unit id="sa6091c63e770ecfb">
   <source>Create New Asset</source>
-  <target>Créer un nouvel actif</target>
+  <target>Créer un nouvel Asset</target>
 </trans-unit>
 <trans-unit id="s233f99bcd0cc14a1">
   <source>Tool not found in any of your groups.</source>
@@ -1472,7 +1472,7 @@
 </trans-unit>
 <trans-unit id="s1cd2116b24de503a">
   <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
-  <target>Veuillez noter que les traductions linguistiques ici ont été réalisées par l'IA. Si vous trouvez des erreurs, veuillez nous envoyer vos commentaires. Vous pouvez activer l'outil de capture d'écran/commentaires intégré dans le dialogue Commentaires accessible depuis le bouton Commentaires sur la page d'accueil.</target>
+  <target>Veuillez noter que les traductions linguistiques ici ont été réalisées par l'IA. Si vous trouvez des erreurs, veuillez nous envoyer vos commentaires. Vous pouvez activer l'outil de capture d'écran/commentaires accessible depuis le bouton Feedback sur la page d'accueil.</target>
 </trans-unit>
 <trans-unit id="s14539699e3c478c2">
   <source>to open Clipboard</source>
