@@ -49,6 +49,8 @@ import {
   localTimeFromUtcOffset,
   relativeTzOffsetString,
   UTCOffsetStringFromOffsetMinutes,
+  safeSetInterval,
+  SafeIntervalHandle,
 } from '../../../utils.js';
 import { MossDialog } from '../moss-dialog.js';
 import '../group-settings/inactive-tools-dialog.js';
@@ -73,7 +75,7 @@ export class GroupAppletsSidebar extends LitElement {
   @state()
   dragged: AppletId | null = null;
 
-  _peerStatusInterval: number | null | undefined;
+  _peerStatusInterval: SafeIntervalHandle | undefined;
 
   _peersStatus = new StoreSubscriber(
     this,
@@ -81,15 +83,30 @@ export class GroupAppletsSidebar extends LitElement {
     () => [this._groupStore],
   );
   async firstUpdated() {
-    this._peerStatusInterval = window.setInterval(async () => {
-      await this._groupStore.emitToGroupApplets({
-        type: 'peer-status-update',
-        payload: this._peersStatus.value ? this._peersStatus.value : {},
-      });
-    }, 5000);
+    // Broadcast peer status to applets periodically
+    // Uses safeSetInterval to prevent call stacking
+    this._peerStatusInterval = safeSetInterval({
+      name: 'broadcastPeerStatus',
+      fn: async () => {
+        await this._groupStore.emitToGroupApplets({
+          type: 'peer-status-update',
+          payload: this._peersStatus.value ? this._peersStatus.value : {},
+        });
+      },
+      intervalMs: 5000,
+      runImmediately: false,
+    });
 
     // const allGroupApplets = await this._groupStore.groupClient.getGroupApplets();
     await this._groupStore.groupDescription.reload();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._peerStatusInterval) {
+      this._peerStatusInterval.cancel();
+      this._peerStatusInterval = undefined;
+    }
   }
 
   @state()

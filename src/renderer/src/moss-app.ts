@@ -24,6 +24,7 @@ import { defaultIcons } from './elements/_new_design/defaultIcons.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
+import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 
 enum MossAppState {
@@ -43,7 +44,7 @@ export class MossApp extends LitElement {
   state: MossAppState = MossAppState.Loading;
 
   @state()
-  _appletUiUpdateCheckInterval: number | undefined;
+  _appletUiUpdateCheckInterval: SafeIntervalHandle | undefined;
 
   // @state()
   // previousState: State = { state: 'loading' };
@@ -117,15 +118,20 @@ export class MossApp extends LitElement {
 
     await this._mossStore.checkForUiUpdates();
     // Check once every hour or on page refresh
-    this._appletUiUpdateCheckInterval = window.setInterval(
-      async () => await this._mossStore.checkForUiUpdates(),
-      3_600_000,
-    );
+    // Uses safeSetInterval to prevent call stacking
+    this._appletUiUpdateCheckInterval = safeSetInterval({
+      name: 'checkForUiUpdates',
+      fn: async () => {
+        await this._mossStore.checkForUiUpdates();
+      },
+      intervalMs: 3_600_000,
+      runImmediately: false,
+    });
   }
 
   disconnectedCallback(): void {
     if (this._appletUiUpdateCheckInterval) {
-      window.clearInterval(this._appletUiUpdateCheckInterval);
+      this._appletUiUpdateCheckInterval.cancel();
     }
     window.removeEventListener('message', handleHappMessage);
   }

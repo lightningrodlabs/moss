@@ -57,6 +57,8 @@ import {
   dedupStringArray,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
+  safeSetInterval,
+  SafeIntervalHandle,
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
@@ -150,6 +152,11 @@ export class GroupStore {
     }
   > = {};
 
+  // Interval handles for cleanup
+  private _pingIntervalHandle: SafeIntervalHandle | undefined;
+  private _agentInfoIntervalHandle: SafeIntervalHandle | undefined;
+  private _assetRelationsIntervalHandle: SafeIntervalHandle | undefined;
+
   constructor(
     public appWebsocket: AppWebsocket,
     public authenticationToken: AppAuthenticationToken,
@@ -208,71 +215,41 @@ export class GroupStore {
       this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
     );
 
-    setTimeout(async () => {
-      await this.pingAgentsAndCleanPeerStatuses();
-    });
-
     // Note: Old agent fetching via getAgentsWithProfile removed
     // Now using agentInfo polling instead for faster and more accurate agent discovery
 
-    setInterval(async () => {
-      await this.pingAgentsAndCleanPeerStatuses();
-    }, PING_AGENTS_FREQUENCY_MS);
+    // Ping agents periodically to determine online/offline status
+    // Uses safeSetInterval to prevent call stacking if pings are slow
+    this._pingIntervalHandle = safeSetInterval({
+      name: 'pingAgents',
+      fn: async () => {
+        await this.pingAgentsAndCleanPeerStatuses();
+      },
+      intervalMs: PING_AGENTS_FREQUENCY_MS,
+      runImmediately: true,
+    });
 
     // Poll agentInfo to discover agents in network
-    setInterval(async () => {
-      await this.pollAgentInfo();
-    }, GET_AGENT_INFO_FREQUENCY_MS);
+    // Uses safeSetInterval to prevent call stacking
+    this._agentInfoIntervalHandle = safeSetInterval({
+      name: 'pollAgentInfo',
+      fn: async () => {
+        await this.pollAgentInfo();
+      },
+      intervalMs: GET_AGENT_INFO_FREQUENCY_MS,
+      runImmediately: true,
+    });
 
-    // Initial agentInfo poll
-    setTimeout(async () => {
-      await this.pollAgentInfo();
-    }, 1000);
-
-    window.setInterval(async () => {
-      const walsToPoll = Object.entries(this._assetStores)
-        .filter(([_, storeAndSubscribers]) => {
-          // We only poll for stores with active subscribers
-          return (
-            Object.values(storeAndSubscribers.subscriberCounts).reduce(
-              (acc, currentVal) => acc + currentVal,
-              0,
-            ) > 0
-          );
-        })
-        .map(([stringifiedWal, _]) => deStringifyWal(stringifiedWal));
-      const relations = await this.assetsClient.batchGetAllRelationsForWal(walsToPoll);
-      relations.forEach((relationsForWal) => {
-        const walStringified = stringifyWal(relationsForWal.wal);
-        const storeAndSubscribers = this._assetStores[walStringified];
-        if (!storeAndSubscribers) {
-          console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
-          return;
-        }
-        const linkedTo = relationsForWal.linked_to.map((v) => ({
-          wal: v.dst_wal,
-          tags: dedupStringArray(v.tags),
-          relationHash: v.relation_hash,
-          createdAt: v.created_at,
-        }));
-        const linkedFrom = relationsForWal.linked_from.map((v) => ({
-          wal: v.dst_wal,
-          tags: dedupStringArray(v.tags),
-          relationHash: v.relation_hash,
-          createdAt: v.created_at,
-        }));
-        const newValue = {
-          status: 'complete',
-          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
-        };
-        if (!isEqual(newValue, get(storeAndSubscribers.store))) {
-          storeAndSubscribers.store.set({
-            status: 'complete',
-            value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
-          });
-        }
-      });
-    }, ASSET_RELATION_POLLING_PERIOD);
+    // Poll asset relations periodically
+    // Uses safeSetInterval to prevent call stacking
+    this._assetRelationsIntervalHandle = safeSetInterval({
+      name: 'pollAssetRelations',
+      fn: async () => {
+        await this.pollAssetRelations();
+      },
+      intervalMs: ASSET_RELATION_POLLING_PERIOD,
+      runImmediately: false,
+    });
 
     // Handle group dna remote signals
     this.groupClient.onSignal((signal) => {
@@ -295,6 +272,25 @@ export class GroupStore {
     this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
 
     this.constructed = true;
+  }
+
+  /**
+   * Cleanup method to cancel all periodic polling intervals.
+   * Should be called when the GroupStore is no longer needed.
+   */
+  cleanup(): void {
+    if (this._pingIntervalHandle) {
+      this._pingIntervalHandle.cancel();
+      this._pingIntervalHandle = undefined;
+    }
+    if (this._agentInfoIntervalHandle) {
+      this._agentInfoIntervalHandle.cancel();
+      this._agentInfoIntervalHandle = undefined;
+    }
+    if (this._assetRelationsIntervalHandle) {
+      this._assetRelationsIntervalHandle.cancel();
+      this._assetRelationsIntervalHandle = undefined;
+    }
   }
 
   ignoredApplets(): Readable<AppletId[]> {
@@ -913,6 +909,58 @@ export class GroupStore {
       // Don't throw - if agentInfo fails, signaling will likely fail too
       // Just keep using the last known agent list
     }
+  }
+
+  /**
+   * Poll asset relations for all active asset stores.
+   * Only polls for stores that have active subscribers.
+   */
+  async pollAssetRelations(): Promise<void> {
+    const walsToPoll = Object.entries(this._assetStores)
+      .filter(([_, storeAndSubscribers]) => {
+        // We only poll for stores with active subscribers
+        return (
+          Object.values(storeAndSubscribers.subscriberCounts).reduce(
+            (acc, currentVal) => acc + currentVal,
+            0,
+          ) > 0
+        );
+      })
+      .map(([stringifiedWal, _]) => deStringifyWal(stringifiedWal));
+
+    if (walsToPoll.length === 0) return;
+
+    const relations = await this.assetsClient.batchGetAllRelationsForWal(walsToPoll);
+    relations.forEach((relationsForWal) => {
+      const walStringified = stringifyWal(relationsForWal.wal);
+      const storeAndSubscribers = this._assetStores[walStringified];
+      if (!storeAndSubscribers) {
+        console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
+        return;
+      }
+      const linkedTo = relationsForWal.linked_to.map((v) => ({
+        wal: v.dst_wal,
+        tags: dedupStringArray(v.tags),
+        relationHash: v.relation_hash,
+        createdAt: v.created_at,
+      }));
+      const linkedFrom = relationsForWal.linked_from.map((v) => ({
+        wal: v.dst_wal,
+        tags: dedupStringArray(v.tags),
+        relationHash: v.relation_hash,
+        createdAt: v.created_at,
+      }));
+      const newValue = {
+        status: 'complete',
+        value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
+      };
+      if (!isEqual(newValue, get(storeAndSubscribers.store))) {
+        storeAndSubscribers.store.set({
+          status: 'complete',
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
+        });
+      }
+    });
   }
 
   async pingAgentsAndCleanPeerStatuses() {
