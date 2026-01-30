@@ -64,7 +64,6 @@ export class AppletViewEl extends LitElement {
     css`
       :host {
         display: flex;
-        padding: 8px;
         border-radius: 5px 0 0 0;
       }
 

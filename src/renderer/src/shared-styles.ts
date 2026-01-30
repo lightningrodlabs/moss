@@ -52,6 +52,9 @@ export const mossStyles = [
 
       /* shoelace dialog overlay background */
       --sl-overlay-background-color: #324d4781;
+
+      /* tooltip border radius */
+      --sl-tooltip-border-radius: 8px;
     }
 
     .items-center {
@@ -80,6 +83,17 @@ export const mossStyles = [
 
     .font-bold {
       font-weight: bold;
+    }
+
+    /* Invisible scrollbars */
+
+    .invisible-scrollbars {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .invisible-scrollbars::-webkit-scrollbar {
+      display: none;
     }
 
     /* Shoelace element styling */

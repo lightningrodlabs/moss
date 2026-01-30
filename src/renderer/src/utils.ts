@@ -887,15 +887,20 @@ export function relativeTzOffsetString(offsetMinutes1: number, offsetMinutes2: n
   return 'same timezone';
 }
 
-export function localTimeFromUtcOffset(offsetMinues: number): string {
+export function localTimeFromUtcOffset(offsetMinutes: number, ampm: boolean = true): string {
   const utcNow = Date.now();
-  const localNow = utcNow - offsetMinues * 60 * 1000;
+  const localNow = utcNow - offsetMinutes * 60 * 1000;
   const localDate = new Date(localNow);
-  const hours = localDate.getUTCHours();
+  let hours = localDate.getUTCHours();
   const minutes = localDate.getUTCMinutes();
+  let pm = hours >= 12;
+
+  if (ampm && hours > 12) {
+    hours -= 12;
+  }
 
   // Format the time in HH:MM format
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${ampm ? (pm ? ' p.m.' : ' a.m.') : ''}`;
 }
 
 export async function postMessageToIframe<T>(

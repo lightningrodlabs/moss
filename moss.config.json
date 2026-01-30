@@ -1,12 +1,12 @@
 {
   "holochain": {
-    "version": "0.5.5",
+    "version": "0.5.6",
     "sha256": {
-      "x86_64-unknown-linux-gnu": "8c1e0c6e72fb5dde157973ee280ee494bbbad1926820829339dc67b84bc86b6e",
-      "aarch64-unknown-linux-gnu": "0780ad5db60f7948da041e09c4e9679977a60659b585017f42ee47b8f341143a",
-      "x86_64-pc-windows-msvc.exe": "cb62f336c1be9fbf8c4a823b4e6b0248903f8e07c881497c8590e923142bbdaf",
-      "x86_64-apple-darwin": "430bc76fa9561461cf038f9ce4939171712ba02ce6eefc4a0aa43ac3496e498c",
-      "aarch64-apple-darwin": "c7535f3ce81cb6a72397d5942da6bb4a16d9eb9afc78af7ce0b861ca237d51f7"
+      "x86_64-unknown-linux-gnu": "b2dcba7e3f4ef6bb9d8eff33859a3bcb440bbf1f426e1b151ce24b6baaf32f81",
+      "aarch64-unknown-linux-gnu": "ebbe002ea591c367b9f7e85074c2da651c3f54043820cae8bb2b42320fdb1f2f",
+      "x86_64-pc-windows-msvc.exe": "74edb29ec5f0e5edfd19a46cc5b541d6764a534b75cccbd6a8c45ee9ce85dc0b",
+      "x86_64-apple-darwin": "e7c95fb736b7d34f4aa524938c0a8a1f4c5fcba21be46033f466baa357209ac2",
+      "aarch64-apple-darwin": "2dc2ae70f3aa8732bf36fe7082a41d2871ceef1d13204002e4b9f544a5392ed8"
     }
   },
   "bootstrap": {

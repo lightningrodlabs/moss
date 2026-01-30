@@ -38,7 +38,8 @@ export class CopyHash extends LitElement {
     css`
       .copy-hash {
         font-size: 12px;
-        background: var(--moss-field-grey);
+        background: rgba(119, 131, 85, 0.2);
+        color: var(--moss-hint-green);
         border-radius: 4px;
         padding: 5px 8px 3px 8px;
         cursor: pointer;

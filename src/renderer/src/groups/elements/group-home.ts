@@ -51,7 +51,6 @@ import './edit-custom-group-view.js';
 import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/_new_design/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings.js';
 import '../../elements/_new_design/profile/moss-profile-detail.js';
 import '../../elements/_new_design/copy-hash.js';
@@ -63,18 +62,11 @@ import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
-import {
-  UTCOffsetStringFromOffsetMinutes,
-  localTimeFromUtcOffset,
-  markdownParseSafe,
-  modifiersToInviteUrl,
-  relativeTzOffsetString,
-} from '../../utils.js';
+import { markdownParseSafe } from '../../utils.js';
 import { dialogMessagebox } from '../../electron-api.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { AgentAndTzOffset } from './group-peers-status.js';
 import { appIdFromAppletHash } from '@theweave/utils';
-import { closeIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
+import { closeIcon } from '../../elements/_new_design/icons.js';
 
 type View =
   | {
@@ -93,28 +85,28 @@ export class GroupHome extends LitElement {
   mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  groupStore!: GroupStore;
+  private _groupStore!: GroupStore;
 
   permissionType = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
-    () => [this.groupStore],
+    () => this._groupStore.permissionType,
+    () => [this._groupStore],
   );
 
   _peersStatus = new StoreSubscriber(
     this,
-    () => this.groupStore.peerStatuses(),
-    () => [this.groupStore],
+    () => this._groupStore.peerStatuses(),
+    () => [this._groupStore],
   );
 
-  @query('#member-profile')
-  _memberProfileDialog!: SlDialog;
+  private _ignoredApplets = new StoreSubscriber(
+    this,
+    () => this._groupStore.ignoredApplets(),
+    () => [this._groupStore],
+  );
 
   @query('#group-settings-dialog')
   groupSettingsDialog: SlDialog | undefined;
-
-  @query('#invite-member-dialog')
-  inviteMemberDialog: SlDialog | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -138,20 +130,20 @@ export class GroupHome extends LitElement {
 
   _groupDescription = new StoreSubscriber(
     this,
-    () => this.groupStore.groupDescription,
-    () => [this.groupStore],
+    () => this._groupStore.groupDescription,
+    () => [this._groupStore],
   );
 
   _unjoinedApplets = new StoreSubscriber(
     this,
     () =>
-      pipe(this.groupStore.unjoinedApplets, async (appletsAndKeys) =>
+      pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           Array.from(appletsAndKeys.entries()).map(
             async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
               let appletEntry: Applet | undefined;
               try {
-                appletEntry = await toPromise(this.groupStore.applets.get(appletHash));
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash));
               } catch (e) {
                 console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
@@ -188,7 +180,7 @@ export class GroupHome extends LitElement {
           ),
         ),
       ),
-    () => [this.groupStore, this.mossStore],
+    () => [this._groupStore, this.mossStore],
   );
 
   @state()
@@ -199,40 +191,30 @@ export class GroupHome extends LitElement {
 
   _peerStatusInterval: number | null | undefined;
 
-  @state()
-  _selectedAgent: AgentAndTzOffset | undefined;
-
   groupProfile = new StoreSubscriber(
     this,
     () => {
       const store = joinAsync([
-        this.groupStore.groupProfile,
-        this.groupStore.modifiers,
+        this._groupStore.groupProfile,
+        this._groupStore.modifiers,
       ]) as AsyncReadable<[GroupProfile | undefined, DnaModifiers]>;
       // (window as any).groupProfileStore = store;
       return store;
     },
-    () => [this.groupStore, this.mossStore],
+    () => [this._groupStore, this.mossStore],
   );
 
   async firstUpdated() {
-    this._peerStatusInterval = window.setInterval(async () => {
-      await this.groupStore.emitToGroupApplets({
-        type: 'peer-status-update',
-        payload: this._peersStatus.value ? this._peersStatus.value : {},
-      });
-    }, 5000);
-
-    // const allGroupApplets = await this.groupStore.groupClient.getGroupApplets();
-    setTimeout(() => {
-      this._peerStatusLoading = false;
-    }, 2500);
-    await this.groupStore.groupDescription.reload();
+    await this._groupStore.groupDescription.reload();
   }
 
   disconnectedCallback(): void {
     if (this._unsubscribe) this._unsubscribe();
     if (this._peerStatusInterval) clearInterval(this._peerStatusInterval);
+  }
+
+  public selectTab(tab: 'home' | 'unjoined tools'): void {
+    this._selectedTab = tab;
   }
 
   hasStewardPermission(): boolean {
@@ -270,12 +252,12 @@ export class GroupHome extends LitElement {
   async joinNewApplet(appletHash: AppletHash) {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
-      await this.groupStore.installApplet(appletHash);
+      await this._groupStore.installApplet(appletHash);
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
           detail: {
             appletEntryHash: appletHash,
-            groupDnaHash: this.groupStore.groupDnaHash,
+            groupDnaHash: this._groupStore.groupDnaHash,
           },
           composed: true,
           bubbles: true,
@@ -289,16 +271,6 @@ export class GroupHome extends LitElement {
       console.error(e);
     }
     this._joiningNewApplet = undefined;
-  }
-
-  ignoreApplet(appletHash: AppletHash) {
-    const groupDnaHashB64 = encodeHashToBase64(this.groupStore.groupDnaHash);
-    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
-    ignoredApplets.push(encodeHashToBase64(appletHash));
-    // deduplicate ignored applets
-    ignoredApplets = Array.from(new Set(ignoredApplets));
-    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
-    this.requestUpdate();
   }
 
   toggleIgnoredApplets() {
@@ -315,9 +287,7 @@ export class GroupHome extends LitElement {
 
   newAppletsAvailable(): number {
     if (this._unjoinedApplets.value.status === 'complete') {
-      const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
-        encodeHashToBase64(this.groupStore.groupDnaHash),
-      );
+      const ignoredApplets = this._ignoredApplets.value;
       const filteredApplets = this._unjoinedApplets.value.value
         .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
         .map(([appletHash, appletEntry, agentKey, timestamp, joinedMembers]) => ({
@@ -351,7 +321,7 @@ export class GroupHome extends LitElement {
       case 'complete':
         const timeAgo = new TimeAgo('en-US');
         const ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(
-          encodeHashToBase64(this.groupStore.groupDnaHash),
+          encodeHashToBase64(this._groupStore.groupDnaHash),
         );
         const filteredApplets = this._unjoinedApplets.value.value
           .filter(
@@ -470,7 +440,7 @@ export class GroupHome extends LitElement {
                                   <sl-button
                                     style="margin-left: 5px;"
                                     variant="warning"
-                                    @click=${() => this.ignoreApplet(info.appletHash)}
+                                    @click=${() => this._groupStore.ignoreApplet(info.appletHash)}
                                     >${msg('Ignore')}</sl-button
                                   >
                                 `}
@@ -514,7 +484,7 @@ export class GroupHome extends LitElement {
                   const descriptionInput = this.shadowRoot!.getElementById(
                     'group-description-input',
                   ) as HTMLTextAreaElement;
-                  const myPermission = await toPromise(this.groupStore.permissionType);
+                  const myPermission = await toPromise(this._groupStore.permissionType);
                   if (!['Steward', 'Progenitor'].includes(myPermission.type)) {
                     this._editGroupDescription = false;
                     notifyError('No permission to edit group profile.');
@@ -522,7 +492,7 @@ export class GroupHome extends LitElement {
                   } else {
                     console.log('Saving decription...');
                     console.log('Value: ', descriptionInput.value);
-                    const result = await this.groupStore.groupClient.setGroupDescription(
+                    const result = await this._groupStore.groupClient.setGroupDescription(
                       myPermission.type === 'Steward'
                         ? myPermission.content.permission_hash
                         : undefined,
@@ -531,7 +501,7 @@ export class GroupHome extends LitElement {
 
                     console.log('decription saved: ', result.entry);
 
-                    await this.groupStore.groupDescription.reload();
+                    await this._groupStore.groupDescription.reload();
                     this._editGroupDescription = false;
                   }
                 }}
@@ -561,7 +531,7 @@ export class GroupHome extends LitElement {
                   this._editGroupDescription = true;
                 }}
               >
-                Add Description
+                + Add Description
               </button>
             </div>
           `;
@@ -575,7 +545,7 @@ export class GroupHome extends LitElement {
                     this._loadingDescription = true;
                     // Reload group description in case another Steward has edited it in the meantime
                     try {
-                      await this.groupStore.groupDescription.reload();
+                      await this._groupStore.groupDescription.reload();
                     } catch (e) {
                       console.warn('Failed to load description: ', e);
                     }
@@ -640,52 +610,9 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderMemberProfile() {
+  renderMain(groupProfile: GroupProfile) {
     return html`
-      <div class="column" style="margin-bottom: 40px;">
-        <moss-profile-detail
-          no-additional-fields
-          .agentPubKey=${this._selectedAgent?.agent}
-          style="margin-top: 40px;"
-        ></moss-profile-detail>
-        <div class="column items-center" style="margin-top: 9px;">
-          <copy-hash
-            .hash=${encodeHashToBase64(this._selectedAgent!.agent)}
-            .tooltipText=${msg('click to copy public key')}
-            shortened
-          ></copy-hash>
-        </div>
-        <div class="row" style="align-items: center; margin-top: 20px;">
-          <span style="font-weight: bold; margin-right: 10px;">Role:</span>
-          <agent-permission .agent=${this._selectedAgent?.agent}></agent-permission>
-        </div>
-        <div class="row" style="align-items: center; margin-top: 15px;">
-          <span style="font-weight: bold; margin-right: 10px;">Local Time:</span>
-          ${this._selectedAgent?.tzUtcOffset
-            ? html`<span
-                >${localTimeFromUtcOffset(this._selectedAgent.tzUtcOffset)}
-                (${relativeTzOffsetString(
-                  this.mossStore.tzUtcOffset(),
-                  this._selectedAgent.tzUtcOffset,
-                )},
-                ${UTCOffsetStringFromOffsetMinutes(this._selectedAgent.tzUtcOffset)})</span
-              >`
-            : html`<span>unknown</span>`}
-        </div>
-      </div>
-    `;
-  }
-
-  renderMain(groupProfile: GroupProfile, modifiers: DnaModifiers) {
-    const invitationUrl = modifiersToInviteUrl(modifiers);
-    return html`
-      <sl-dialog
-        class="moss-dialog"
-        no-header
-        id="group-settings-dialog"
-        no-header
-        style="--width: 1024px;"
-      >
+      <sl-dialog class="moss-dialog" id="group-settings-dialog" no-header style="--width: 1024px;">
         <div class="column" style="position: relative">
           <button
             class="moss-dialog-close-button"
@@ -701,7 +628,7 @@ export class GroupHome extends LitElement {
           ></group-settings>
         </div>
       </sl-dialog>
-      <div class="row" style="flex: 1; max-height: calc(100vh - 74px);">
+      <div class="row" style="flex: 1;">
         <div
           class="column"
           style="flex: 1; padding: 16px 16px 0 0; overflow-y: auto; position: relative;"
@@ -792,116 +719,6 @@ export class GroupHome extends LitElement {
           </div>
           <div class="column main-panel">${this.renderMainPanelContent()}</div>
         </div>
-
-        <div class="column online-status-bar">
-          <div class="flex-scrollable-parent">
-            <div class="flex-scrollable-container">
-              <div class="flex-scrollable-y">
-                ${this._peerStatusLoading
-                  ? html`<div
-                      class="column center-content"
-                      style="margin-top: 20px; font-size: 20px;"
-                    >
-                      <sl-spinner></sl-spinner>
-                    </div>`
-                  : html``}
-                <group-peers-status
-                  style="${this._peerStatusLoading ? 'display: none;' : ''}"
-                  @profile-selected=${(e) => {
-                    this._selectedAgent = e.detail;
-                    this._memberProfileDialog.show();
-                  }}
-                ></group-peers-status>
-              </div>
-            </div>
-          </div>
-
-          <sl-dialog
-            id="invite-member-dialog"
-            class="moss-dialog invite-dialog"
-            .label=${msg('Invite People')}
-            no-header
-          >
-            <div
-              class="column center-content dialog-title"
-              style="margin: 10px 0 15px 0; position: relative;"
-            >
-              <span>${msg('Invite People to')}</span>
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -22px; right: -11px;"
-                @click=${() => {
-                  this.inviteMemberDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-            </div>
-
-            <div class="column items-center">
-              <div class="row" style="align-items: center; flex: 1; margin-bottom: 22px;">
-                <img
-                  .src=${groupProfile.icon_src}
-                  style="height: 40px; width: 40px; margin-right: 16px; border-radius: 50%;"
-                  alt="${groupProfile.name}"
-                />
-                <span style="font-size: 18px; font-weight: 500;">${groupProfile.name}</span>
-              </div>
-              <div class="column" style="max-width: 440px;">
-                <span style="opacity: 0.6; font-size: 16px;"
-                  >${msg('Copy and send the link below to invite people:')}</span
-                >
-                <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
-                  <sl-input
-                    disabled
-                    value=${invitationUrl}
-                    class="moss-input copy-link-input"
-                    style="margin-right: 8px; cursor: pointer; flex: 1;"
-                    @click=${async () => {
-                      console.log('CLIKED');
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
-                  >
-                  </sl-input>
-                  <button
-                    variant="primary"
-                    class="moss-button"
-                    @click=${async () => {
-                      await navigator.clipboard.writeText(invitationUrl);
-                      notify(msg('Invite link copied to clipboard.'));
-                    }}
-                  >
-                    ${msg('Copy')}
-                  </button>
-                </div>
-
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
-                  ${msg('About invite links:')}
-                </div>
-                <div style="font-size: 12px; opacity: 0.6;">
-                  ${msg(
-                    'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
-                  )}
-                </div>
-              </div>
-            </div>
-          </sl-dialog>
-
-          <button
-            class="moss-button"
-            style="padding: 10px 0;"
-            variant="primary"
-            @click=${() => {
-              this.inviteMemberDialog?.show();
-            }}
-          >
-            <div class="row center-content items-center;">
-              <div class="column" style="color: white;">${personPlusIcon(25)}</div>
-              <div style="font-size: 16px; margin-left: 5px;">${msg('Invite Member')}</div>
-            </div>
-          </button>
-        </div>
       </div>
     `;
   }
@@ -935,10 +752,10 @@ export class GroupHome extends LitElement {
     </div>`;
   }
 
-  renderContentInner(groupProfile: GroupProfile, modifiers: DnaModifiers) {
+  renderContentInner(groupProfile: GroupProfile, _: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
-        return this.renderMain(groupProfile, modifiers);
+        return this.renderMain(groupProfile);
       case 'create-custom-view':
         return this.renderCreateCustomView();
       case 'edit-custom-view':
@@ -960,25 +777,6 @@ export class GroupHome extends LitElement {
           return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
 
         return html`
-          <sl-dialog
-            class="moss-dialog profile-detail-popup"
-            no-header
-            id="member-profile"
-            style="position: relative;"
-          >
-            <div class="column center-content" style="position: relative;">
-              <button
-                class="moss-dialog-close-button"
-                style="position: absolute; top: -12px; right: -12px;"
-                @click=${() => {
-                  this._memberProfileDialog?.hide();
-                }}
-              >
-                ${closeIcon(24)}
-              </button>
-              ${this._selectedAgent ? this.renderMemberProfile() : ``}
-            </div>
-          </sl-dialog>
           <moss-profile-prompt>
             ${this.renderContentInner(groupProfile, modifiers)}
           </moss-profile-prompt>
@@ -992,42 +790,12 @@ export class GroupHome extends LitElement {
   }
 
   render() {
-    return html`
-      <sl-dialog
-        class="moss-dialog profile-detail-popup"
-        no-header
-        id="member-profile"
-        style="position: relative;"
-      >
-        <div class="column center-content" style="position: relative;">
-          <button
-            class="moss-dialog-close-button"
-            style="position: absolute; top: -12px; right: -12px;"
-            @click=${() => {
-              this._memberProfileDialog?.hide();
-            }}
-          >
-            ${closeIcon(24)}
-          </button>
-          ${this._selectedAgent ? this.renderMemberProfile() : ``}
-        </div>
-      </sl-dialog>
-      <moss-profile-prompt> ${this.renderContent()} </moss-profile-prompt>
-    `;
+    return html` ${this.renderContent()} `;
   }
 
   static styles = [
     mossStyles,
     css`
-      :host {
-        display: flex;
-        /* background: var(--sl-color-secondary-0); */
-        /* background-color: #588121; */
-        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
-        padding: 8px;
-        border-radius: 5px;
-      }
-
       .settings-btn {
         color: white;
         cursor: pointer;
@@ -1148,27 +916,18 @@ export class GroupHome extends LitElement {
         background: #d4dfcf;
       }
 
-      .online-status-bar {
-        color: black;
-        width: 230px;
-        padding: 16px;
-        background: var(--moss-fishy-green);
-        border-radius: 5px;
-        box-shadow: 1px 1px 6px 0px var(moss-fishy-green);
-      }
-
       .indicator {
         position: absolute;
         text-align: center;
-        color: black;
+        color: white;
         font-weight: bold;
-        font-size: 1.05rem;
+        font-size: 1rem;
         top: 4px;
         right: 4px;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 10px;
-        background: #fcee2d;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: var(--moss-purple);
       }
 
       .padded {
@@ -1202,10 +961,6 @@ export class GroupHome extends LitElement {
         top: 74px;
         left: 74px;
       } */
-
-      .profile-detail-popup::part(panel) {
-        width: 360px;
-      }
 
       .group-description a {
         color: var(--moss-purple);

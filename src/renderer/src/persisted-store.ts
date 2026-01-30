@@ -15,7 +15,18 @@ export class PersistedStore {
     this.store = store ? store : new LocalStorageStore();
   }
 
-  keys;
+  /**
+   * Whether the applet sidebar is in collapsed mode or not
+   */
+  appletSidebarCollapsed: SubStore<boolean, boolean, []> = {
+    value: () => {
+      const appletSidebarCollapsed = this.store.getItem<boolean>('appletSidebarCollapsed');
+      return appletSidebarCollapsed ? appletSidebarCollapsed : false;
+    },
+    set: (value) => {
+      this.store.setItem<boolean>('appletSidebarCollapsed', value);
+    },
+  };
 
   /**
    * Array of Moss versions that have been declined

@@ -106,10 +106,12 @@ export class ProfileDetail extends LitElement {
       <div class="column">
         <div class="row" style="align-items: center; padding: 5px;">
           <agent-avatar .agentPubKey=${this.agentPubKey}></agent-avatar>
-          <span style="font-size: 16px; margin-left: 8px;">${profile.entry.nickname}</span>
+          <div class="column" style="margin-left: 8px;">
+            <span style="font-size: 16px; ">${profile.entry.nickname}</span>
 
-          <span style="flex: 1"></span>
-
+            <span style="flex: 1"></span>
+            <slot name="extra"></slot>
+          </div>
           <slot name="action"></slot>
         </div>
 
