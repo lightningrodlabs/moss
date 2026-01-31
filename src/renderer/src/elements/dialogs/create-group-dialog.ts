@@ -130,13 +130,12 @@ export class CreateGroupDialog extends LitElement {
             <sl-radio-group label="🔑${msg(' Group Type:')}" value="1">
               <sl-radio style="margin-top: 5px;" value="1"
                 ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
-                  >The group creator is the initial Steward. Only Stewards can edit the group
-                  profile, add and remove Tools and add additional Stewards.</span
+                  >${msg('The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.')}</span
                 ></sl-radio
               >
               <sl-radio style="margin-top: 5px;" value="0"
                 ><b>${msg('Unstewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
-                  >All members have full permissions.</span
+                  >${msg('All members have full permissions.')}</span
                 ></sl-radio
               >
             </sl-radio-group>

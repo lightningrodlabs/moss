@@ -19,7 +19,7 @@ import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
@@ -28,6 +28,9 @@ import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import '../../elements/_new_design/moss-dialog.js';
+import { PersistedStore } from '../../persisted-store.js';
+
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 type UpdateFeedMessageGeneric =
   | {
@@ -75,13 +78,46 @@ export class WelcomeView extends LitElement {
   @state()
   updatingTool = false;
 
+  @state()
+  _designFeedbackMode = false;
+
+  private _persistedStore = new PersistedStore();
+
   availableToolUpdates = new StoreSubscriber(
     this,
     () => this._mossStore.availableToolUpdates(),
     () => [this._mossStore],
   );
 
-  timeAgo = new TimeAgo('en-US');
+  timeAgo = getLocalizedTimeAgo();
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
+    window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+  }
+
+  private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
+    this._designFeedbackMode = e.detail;
+  };
+
+  private _enableDesignFeedbackMode() {
+    this._designFeedbackMode = true;
+    this._persistedStore.designFeedbackMode.set(true);
+    window.dispatchEvent(
+      new CustomEvent('design-feedback-mode-changed', {
+        detail: true,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this._feedbackDialog.hide();
+  }
 
   async firstUpdated() {
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
@@ -162,20 +198,43 @@ export class WelcomeView extends LitElement {
           class="row" slot="header"
         >
           ${commentHeartIconFilled(28)}
-          <span style="margin-left: 5px;">Feedback</span>
+          <span style="margin-left: 5px;">${msg('Feedback')}</span>
         </div>
         <div slot="content">
-          Moss development is in alpha stage. We highly appreciate active feedback.<br /><br />
+          ${msg('Moss development is in alpha stage. We highly appreciate active feedback.')}<br /><br />
 
-          If you are encountering a problem and are familiar with Github, you can<br /><br />
+          <!-- Design Feedback Mode Section -->
+          <div class="design-feedback-section">
+            <h3 style="margin: 0 0 8px 0;">${msg('Design Feedback Mode')}</h3>
+            <p style="margin: 0 0 12px 0; opacity: 0.9;">
+              ${msg('Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.')}
+            </p>
+            <p style="margin: 0 0 12px 0; opacity: 0.7; font-size: 14px;">
+              ${msg('You can also enable or disable this mode in Settings > Feedback.')}
+            </p>
+            <sl-button
+              variant="primary"
+              @click=${() => this._enableDesignFeedbackMode()}
+            >
+              <div class="row items-center">
+                ${commentHeartIconFilled(18)}
+                <span style="margin-left: 6px;">${msg('Enable Design Feedback Mode')}</span>
+              </div>
+            </sl-button>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(255,255,255,0.2);" />
+
+          <h3 style="margin: 0 0 8px 0;">${msg('Other Ways to Give Feedback')}</h3>
+
+          ${msg('If you are encountering a problem and are familiar with Github, you can')}<br /><br />
 
           <a href="https://github.com/lightningrodlabs/moss/issues/new"
-            >create an issue on Github</a
+            >${msg('create an issue on Github')}</a
           >
           <br />
           <br />
-          If you have more general feedback or are not familiar with Github, you can write to the
-          following email address:<br /><br />
+          ${msg('If you have more general feedback or are not familiar with Github, you can write to the following email address:')}<br /><br />
 
           <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
@@ -225,7 +284,7 @@ export class WelcomeView extends LitElement {
           <div class="row" style="align-items: center;">
             <img src="icon.png" class="moss-icon" />
             <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
-              Moss Update Available:
+              ${msg('Moss Update Available:')}
             </div>
             <div style="margin-left: 10px; font-size: 28px;">
               v${this.availableMossUpdate?.version}
@@ -241,7 +300,7 @@ export class WelcomeView extends LitElement {
             ${this.mossUpdatePercentage
         ? html`<span class="flex flex-1"></span>
                   <div class="column">
-                    <div>Installing...</div>
+                    <div>${msg('Installing...')}</div>
                     <sl-progress-bar
                       value="${this.mossUpdatePercentage}"
                       style="width: 200px; --height: 15px;"
@@ -289,21 +348,20 @@ export class WelcomeView extends LitElement {
         class="column"
         style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
       >
-        <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
+        <h1>🏄 &nbsp;&nbsp;${msg('Moss Updates')}&nbsp;&nbsp; 🚧</h1>
         <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
-          >Thank you for surfing the edge of
-          <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are relevant
-          updates for early weavers.</span
+          >${msg('Thank you for surfing the edge of')}
+          <a href="https://theweave.social" style="color: yellow;">${msg('the Weave')}</a>. ${msg('Below are relevant updates for early weavers.')}</span
         >
         ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
         ${composedFeed.length === 0
-        ? html`No big waves lately...`
+        ? html`${msg('No big waves lately...')}`
         : composedFeed.map(
           (message) => html`
                 <div class="update-feed-el">
                   <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
                   <div class="update-type">
-                    ${message.type === 'Moss' ? message.content.type : 'Tool Update'}
+                    ${message.type === 'Moss' ? message.content.type : msg('Tool Update')}
                   </div>
                   ${message.type === 'Moss'
               ? unsafeHTML(markdownParseSafe(message.content.message))
@@ -319,22 +377,26 @@ export class WelcomeView extends LitElement {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
-          <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
+          <loading-dialog id="loading-dialog" .loadingText=${msg('Updating Tool...')}></loading-dialog>
           ${this.renderFeedbackDialog()}
           <div class="flex-scrollable-parent" style="width: 870px;">
             <div class="flex-scrollable-container">
               <div class="column flex-scrollable-y">
                 <div class="column" style="align-items: center; flex: 1; overflow: auto;">
-                  <button
-                    class="feedback-btn"
-                    style="position: absolute; top: 20px; right: 10px;"
-                    @click=${() => this._feedbackDialog.show()}
-                  >
-                    <div class="row items-center" style="font-size: 26px; justify-content: center;">
-                      <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
-                      <span style="margin-left: 5px;">${msg('Feedback')}</span>
-                    </div>
-                  </button>
+                  ${!this._designFeedbackMode
+                    ? html`
+                      <button
+                        class="feedback-btn"
+                        style="position: absolute; top: 20px; right: 10px;"
+                        @click=${() => this._feedbackDialog.show()}
+                      >
+                        <div class="row items-center" style="font-size: 26px; justify-content: center;">
+                          <span style="margin-bottom: -2px;">${commentHeartIconFilled(24)}</span>
+                          <span style="margin-left: 5px;">${msg('Feedback')}</span>
+                        </div>
+                      </button>
+                    `
+                    : html``}
 
                   <!-- Moss Update Feed -->
 
@@ -427,6 +489,12 @@ export class WelcomeView extends LitElement {
 
       .feedback-btn:focus-visible {
         outline: 2px solid var(--moss-purple);
+      }
+
+      .design-feedback-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 16px;
       }
 
       .button-section {

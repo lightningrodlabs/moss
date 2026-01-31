@@ -13,7 +13,7 @@ import { GroupStore } from '../../../groups/group-store';
 import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../../shared-styles';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { Value } from '@sinclair/typebox/value';
 import {
   activateToolIcon,
@@ -137,7 +137,7 @@ export class InactiveToolsDialog extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Tool activated.');
+      notify(msg('Tool activated.'));
       // Check if there are still inactive tools, if not, close the dialog
       if (!this.hasInactiveTools()) {
         this.hide();
@@ -167,7 +167,7 @@ export class InactiveToolsDialog extends LitElement {
           <span>${this._unjoinedAppletsWithDetails.value.error}</span>
         </div>`;
       case 'complete':
-        const timeAgo = new TimeAgo('en-US');
+        const timeAgo = getLocalizedTimeAgo();
         const ignoredApplets = this._mossStore.persistedStore.ignoredApplets.value(
           encodeHashToBase64(this._groupStore.groupDnaHash),
         );

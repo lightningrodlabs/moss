@@ -1726,4 +1726,14 @@ export class MossStore {
     // Send to iframes of WAL windows
     return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
+
+  /**
+   * Broadcast locale change to all applet iframes
+   */
+  broadcastLocaleChange(locale: string) {
+    // Send to all applet iframes in main window
+    this.iframeStore.postMessageToAppletIframes({ type: 'all' }, { type: 'locale-change', locale });
+    // Also broadcast to WAL windows
+    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, []);
+  }
 }

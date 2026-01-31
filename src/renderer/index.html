@@ -83,6 +83,39 @@
       import '@fontsource/aileron';
       import '@fontsource-variable/inter';
     </script>
-    <script type="module" src="./src/moss-app.ts"></script>
+    <script type="module">
+      // Initialize locale before app loads to avoid flash of untranslated content
+      import { setLocale, isSupportedLocale, getBrowserLocale } from './src/locales/localization.ts';
+      import { destringifyAndDecode } from './src/utils.ts';
+
+      async function initializeLocale() {
+        const storedItem = window.localStorage.getItem('locale');
+        let locale = 'en';
+
+        if (storedItem) {
+          try {
+            // PersistedStore uses msgpack encoding, so we need to decode it the same way
+            const decoded = destringifyAndDecode(storedItem);
+            if (typeof decoded === 'string' && isSupportedLocale(decoded)) {
+              locale = decoded;
+            }
+          } catch {
+            locale = getBrowserLocale();
+          }
+        } else {
+          locale = getBrowserLocale();
+        }
+
+        try {
+          await setLocale(locale);
+        } catch (e) {
+          console.warn('Failed to set locale:', e);
+        }
+      }
+
+      // Wait for locale to be set before importing the app
+      await initializeLocale();
+      await import('./src/moss-app.ts');
+    </script>
   </body>
 </html>

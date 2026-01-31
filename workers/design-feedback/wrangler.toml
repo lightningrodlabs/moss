@@ -1,0 +1,14 @@
+name = "moss-design-feedback"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Set your account_id here or via CLOUDFLARE_ACCOUNT_ID env var
+# account_id = ""
+
+# Secrets (set via `wrangler secret put`):
+# - GITHUB_TOKEN: GitHub PAT with repo scope
+
+# R2 bucket for storing feedback screenshots
+[[r2_buckets]]
+binding = "FEEDBACK_BUCKET"
+bucket_name = "moss-feedback-images"

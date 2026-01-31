@@ -141,7 +141,7 @@ export class AgentPermissionButton extends LitElement {
     mossStyles,
     css`
       .container {
-        width: 200px;
+        min-width: 200px;
       }
 
       .green-btn {
@@ -151,6 +151,8 @@ export class AgentPermissionButton extends LitElement {
         color: var(--moss-hint-green);
         border-radius: 4px;
         padding: 5px 15px;
+        text-align: center;
+        white-space: nowrap;
       }
 
       .green-btn:focus-visible {

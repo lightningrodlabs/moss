@@ -100,6 +100,69 @@ yarn typecheck:node
 yarn typecheck:web
 ```
 
+### Localization (i18n)
+
+Moss uses `@lit/localize` for internationalization. UI strings are marked with `msg()` and translations are stored in XLIFF files.
+
+**Supported languages**: English (source), German (de), French (fr), Spanish (es), Turkish (tr)
+
+**Key files**:
+- `src/renderer/lit-localize.json` - Configuration for lit-localize
+- `src/renderer/src/locales/localization.ts` - Runtime locale management
+- `src/renderer/src/locales/generated/` - Generated translation modules (do not edit directly)
+- `src/renderer/xliff/` - XLIFF translation files (de.xlf, fr.xlf, es.xlf, tr.xlf)
+
+#### Adding/Changing/Deleting Strings
+
+1. **Mark strings for translation** in your component:
+   ```typescript
+   import { msg } from '@lit/localize';
+   import { localized } from '@lit/localize';
+
+   @localized()
+   @customElement('my-component')
+   export class MyComponent extends LitElement {
+     render() {
+       return html`<div>${msg('Hello World')}</div>`;
+     }
+   }
+   ```
+
+2. **Extract strings** to XLIFF files:
+   ```bash
+   cd src/renderer && npx lit-localize extract
+   ```
+   This scans all source files for `msg()` calls and updates the XLIFF files with new/changed strings.
+
+3. **Add translations** to each XLIFF file (`src/renderer/xliff/*.xlf`):
+   - Find the new `<trans-unit>` entries (they will have empty `<target>` tags)
+   - Add the translated text inside the `<target>` tag
+   - Example:
+     ```xml
+     <trans-unit id="s1234567890abcdef">
+       <source>Hello World</source>
+       <target>Hallo Welt</target>
+     </trans-unit>
+     ```
+
+4. **Build translations** to generate TypeScript modules:
+   ```bash
+   cd src/renderer && npx lit-localize build
+   ```
+   This generates/updates files in `src/renderer/src/locales/generated/`.
+
+5. **Verify** the build succeeds:
+   ```bash
+   yarn typecheck:web
+   ```
+
+#### Tips
+
+- When **deleting** a string, run `extract` then `build` - obsolete translations are automatically removed
+- When **changing** a string, it gets a new ID - add translations for the new string
+- Use `msg(str`Template ${variable}`)` for strings with dynamic content
+- For buttons/UI elements with limited space, keep translations concise or adjust component styling to handle longer text
+
 ### Library Development
 
 ```bash

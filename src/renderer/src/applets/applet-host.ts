@@ -46,6 +46,7 @@ import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { GroupStore } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
+import { getLocale } from '../locales/localization.js';
 
 export function getIframeKind(
   message: MessageEvent<AppletToParentMessage>,
@@ -121,6 +122,13 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
     mossVersion() {
       return mossStore.version;
+    },
+    getLocale() {
+      return getLocale();
+    },
+    onLocaleChange(_) {
+      // Headless clients don't need to react to locale changes
+      return () => undefined;
     },
     onPeerStatusUpdate(_) {
       return () => undefined;
@@ -325,6 +333,7 @@ export async function handleAppletIframeMessage(
           mainUiOrigin: window.location.origin,
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
           mossVersion: mossStore.conductorInfo.moss_version,
+          locale: getLocale(),
           applets,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
@@ -370,6 +379,7 @@ export async function handleAppletIframeMessage(
           appPort: mossStore.conductorInfo.app_port,
           weaveProtocolVersion: mossStore.conductorInfo.weave_protocol_version,
           mossVersion: mossStore.conductorInfo.moss_version,
+          locale: getLocale(),
           profilesLocation: {
             authenticationToken: groupStore!.groupClient.authenticationToken,
             profilesRoleName: 'group',

@@ -42,6 +42,7 @@ declare global {
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
+    __WEAVE_LOCALE__: string;
   }
 }
 
@@ -323,6 +324,17 @@ export interface WeaveServices {
    */
   mossVersion: () => string;
   /**
+   * Get the current UI locale (e.g. 'en', 'de', 'fr', 'es')
+   * @returns The current locale string
+   */
+  getLocale: () => string;
+  /**
+   * Register a callback to be called when the UI locale changes
+   * @param callback Callback that receives the new locale string
+   * @returns Unsubscribe function
+   */
+  onLocaleChange: (callback: (locale: string) => any) => UnsubscribeFunction;
+  /**
    * Event handler for peer status updates.
    *
    * @param callback Callback that gets called if a peer status update event is emitted
@@ -492,6 +504,14 @@ export class WeaveClient implements WeaveServices {
   }
 
   mossVersion = () => window.__MOSS_VERSION__;
+
+  getLocale = () => window.__WEAVE_LOCALE__ || 'en';
+
+  onLocaleChange = (callback: (locale: string) => any): UnsubscribeFunction => {
+    const listener = (e: CustomEvent<string>) => callback(e.detail);
+    window.addEventListener('locale-change', listener as EventListener);
+    return () => window.removeEventListener('locale-change', listener as EventListener);
+  };
 
   onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onPeerStatusUpdate(callback);

@@ -51,6 +51,7 @@ import './debugging-panel/debugging-panel.js';
 
 import './_new_design/moss-dialog.js';
 import './_new_design/moss-settings/moss-settings.js';
+import './design-feedback/design-feedback-controller.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -72,8 +73,6 @@ import {
 } from '../utils.js';
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
@@ -87,8 +86,6 @@ import {
   turingBlobIconHover,
 } from './_new_design/icons.js';
 import { MossDialog } from './_new_design/moss-dialog.js';
-
-TimeAgo.addDefaultLocale(en);
 
 type OpenTab =
   | {
@@ -1080,11 +1077,10 @@ export class MainDashboard extends LitElement {
     if (allOpenTabs.length === 0) {
       return html`<div class="column center-content" style="display: flex; flex: 1;">
         <div style="font-size: 40px; font-weight: bold; margin-bottom: 60px; text-align: center;">
-          Asset Viewer
+          ${msg('Asset Viewer')}
         </div>
         <div style="font-size: 20px; max-width: 800px; text-align: center;">
-          This is where assets are displayed. Opening an asset from one of your Tools will create a
-          new tab here.
+          ${msg('This is where assets are displayed. Opening an asset from one of your Tools will create a new tab here.')}
         </div>
       </div>`;
     }
@@ -1287,7 +1283,7 @@ export class MainDashboard extends LitElement {
                 .src=${wrapPathInSvg(mdiAccountLockOpen)}
                 style="height: 40px; width: 40px; margin-right: 10px;"
               ></sl-icon>
-              <span>${'Join Group'}</span>
+              <span>${msg('Join Group')}</span>
             </div>
           </button>
           <button
@@ -1330,6 +1326,7 @@ export class MainDashboard extends LitElement {
           <moss-settings></moss-settings>
         </div>
       </moss-dialog>
+      <design-feedback-controller></design-feedback-controller>
       <tag-selection-dialog
         id="tag-selection-dialog"
         @asset-relation-tag-selected=${(e) => {
@@ -1694,8 +1691,8 @@ export class MainDashboard extends LitElement {
       <div class="row" style="position: fixed; top: 0; right: 0;">
         <sl-tooltip
           content="${this._assetViewerState.value.visible
-        ? 'Hide Asset Viewer'
-        : 'Show Asset Viewer'}"
+        ? msg('Hide Asset Viewer')
+        : msg('Show Asset Viewer')}"
           placement="left"
           hoist
         >

@@ -37,6 +37,7 @@
     "vis-network": "9.1.9"
   },
   "devDependencies": {
+    "@lit/localize-tools": "^0.7.0",
     "@types/dompurify": "3.0.5",
     "@types/lodash-es": "^4.17.6"
   }

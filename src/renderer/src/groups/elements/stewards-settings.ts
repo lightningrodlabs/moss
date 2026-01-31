@@ -131,7 +131,7 @@ export class StewardsSettings extends LitElement {
     expiryInput.value = '';
     this._expirySelected = false;
     await this.groupStore.allAgentsAccountabilities.reload();
-    notify('New Steward Added.');
+    notify(msg('New Steward Added.'));
     this.requestUpdate();
   }
 

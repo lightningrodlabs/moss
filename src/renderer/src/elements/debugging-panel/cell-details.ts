@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { localized } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { CellId, encodeHashToBase64, FullStateDump, InstalledAppId } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -62,7 +62,7 @@ export class CellDetails extends LitElement {
                   html`<dht-op-detail
                     @click=${() => {
                       console.log(dhtOp);
-                      notify('DhtOp logged to console.');
+                      notify(msg('DhtOp logged to console.'));
                     }}
                     style="border: 1px solid black; border-radius: 5px; padding: 3px; cursor: pointer;"
                     .dhtOp=${dhtOp}
@@ -87,7 +87,7 @@ export class CellDetails extends LitElement {
                   html`<dht-op-detail
                     @click=${() => {
                       console.log(dhtOp);
-                      notify('DhtOp logged to console.');
+                      notify(msg('DhtOp logged to console.'));
                     }}
                     style="border: 1px solid black; border-radius: 5px; padding: 3px; cursor: pointer;"
                     .dhtOp=${dhtOp}

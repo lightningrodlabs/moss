@@ -1,0 +1,1703 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="de" source-language="en" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="saa3ad43ab0b9071e">
+  <source>Select Group</source>
+  <target>Gruppe auswählen</target>
+</trans-unit>
+<trans-unit id="s6275fe1f696960ea">
+  <source>Error fetching your groups</source>
+  <target>Fehler beim Abrufen Ihrer Gruppen</target>
+</trans-unit>
+<trans-unit id="sac4ffb6126da9502">
+  <source>Select the Group to which to add an instance of this Tool:</source>
+  <target>Wählen Sie die Gruppe aus, der eine Instanz dieses Tools hinzugefügt werden soll:</target>
+</trans-unit>
+<trans-unit id="saf29d48ad1df5d19">
+  <source>Error fetching the tool logo</source>
+  <target>Fehler beim Abrufen des Tool-Logos</target>
+</trans-unit>
+<trans-unit id="sf13543ac8f332d6a">
+  <source>Error fetching the information about the tool</source>
+  <target>Fehler beim Abrufen der Informationen über das Tool</target>
+</trans-unit>
+<trans-unit id="s498865c7bd1f3959">
+  <source>unknown</source>
+  <target>unbekannt</target>
+</trans-unit>
+<trans-unit id="s9cd17b50848c4c11">
+  <source>ERROR</source>
+  <target>FEHLER</target>
+</trans-unit>
+<trans-unit id="sfc0b466925cd2e9a">
+  <source>Tool updated.</source>
+  <target>Tool aktualisiert.</target>
+</trans-unit>
+<trans-unit id="s2610398ee33c066e">
+  <source>Failed to update Tool.</source>
+  <target>Tool-Aktualisierung fehlgeschlagen.</target>
+</trans-unit>
+<trans-unit id="sb80aa454e12cd901">
+  <source>Install Update</source>
+  <target>Update installieren</target>
+</trans-unit>
+<trans-unit id="s32322dc45e502559">
+  <source>Decline</source>
+  <target>Ablehnen</target>
+</trans-unit>
+<trans-unit id="s7ec9f93dd4d1a712">
+  <source>Install and Restart</source>
+  <target>Installieren und neu starten</target>
+</trans-unit>
+<trans-unit id="sbb588bb505779122">
+  <source>Feedback</source>
+  <target>Feedback</target>
+</trans-unit>
+<trans-unit id="s789885786d68ef67">
+  <source>Loading number of online members</source>
+  <target>Anzahl der Online-Mitglieder wird geladen</target>
+</trans-unit>
+<trans-unit id="see0b82b4bfb8b629">
+  <source>peers online</source>
+  <target>Peers online</target>
+</trans-unit>
+<trans-unit id="s98763cf06252f01e">
+  <source>Error creating the group.</source>
+  <target>Fehler beim Erstellen der Gruppe.</target>
+</trans-unit>
+<trans-unit id="sb06c7a269f3a91ec">
+  <source>Create New Group</source>
+  <target>Neue Gruppe erstellen</target>
+</trans-unit>
+<trans-unit id="s030655287e89069f">
+  <source>Group name</source>
+  <target>Gruppenname</target>
+</trans-unit>
+<trans-unit id="sd60553e70fd3d0a8">
+  <source> Group Type:</source>
+  <target> Gruppentyp:</target>
+</trans-unit>
+<trans-unit id="s06db052ab09cbad2">
+  <source>Stewarded</source>
+  <target>Verwaltet</target>
+</trans-unit>
+<trans-unit id="s5ac92050a6baecb3">
+  <source>Unstewarded</source>
+  <target>Unverwaltet</target>
+</trans-unit>
+<trans-unit id="s416a540b16275f2e">
+  <source>Create Group</source>
+  <target>Gruppe erstellen</target>
+</trans-unit>
+<trans-unit id="sb8c91273249cba0c">
+  <source>Waiting for peers...</source>
+  <target>Warte auf Peers...</target>
+</trans-unit>
+<trans-unit id="s0fa3391db68e4425">
+  <source>disabled</source>
+  <target>deaktiviert</target>
+</trans-unit>
+<trans-unit id="saebc6d4487f8ee06">
+  <source>Disabled Group</source>
+  <target>Deaktivierte Gruppe</target>
+</trans-unit>
+<trans-unit id="s9340f248c79fc576">
+  <source>Error displaying the groups</source>
+  <target>Fehler beim Anzeigen der Gruppen</target>
+</trans-unit>
+<trans-unit id="s964f6725aeb7662f">
+  <source>Add Group</source>
+  <target>Gruppe hinzufügen</target>
+</trans-unit>
+<trans-unit id="s5cc18ba855f09834">
+  <source>Error displaying the tool classes</source>
+  <target>Fehler beim Anzeigen der Tool-Klassen</target>
+</trans-unit>
+<trans-unit id="s6abb1cd87fe0114e">
+  <source>Home</source>
+  <target>Startseite</target>
+</trans-unit>
+<trans-unit id="sc58f4b3e7fe9e85c">
+  <source>Activity Stream</source>
+  <target>Aktivitatenstrom</target>
+</trans-unit>
+<trans-unit id="scc99769aaee688ec">
+  <source>Assets Graph</source>
+  <target>Assets-Graph</target>
+</trans-unit>
+<trans-unit id="s3a4df362e4b10c3d">
+  <source>Modifiers undefined.</source>
+  <target>Modifikatoren nicht definiert.</target>
+</trans-unit>
+<trans-unit id="s6924404e2d21606d">
+  <source>Error joining the group.</source>
+  <target>Fehler beim Beitreten zur Gruppe.</target>
+</trans-unit>
+<trans-unit id="sba9838a36a8a0f12">
+  <source>Join Group</source>
+  <target>Gruppe beitreten</target>
+</trans-unit>
+<trans-unit id="s417b25879ae9b5a0">
+  <source>Invite Link</source>
+  <target>Einladungslink</target>
+</trans-unit>
+<trans-unit id="sa7b4f3aab0562402">
+  <source>You have been invited to join a group.</source>
+  <target>Sie wurden eingeladen, einer Gruppe beizutreten.</target>
+</trans-unit>
+<trans-unit id="s0451ae0d0ce5c2e2">
+  <source>reloading...</source>
+  <target>wird neu geladen...</target>
+</trans-unit>
+<trans-unit id="s8dd8ab8530f97ed3">
+  <source>loading...</source>
+  <target>wird geladen...</target>
+</trans-unit>
+<trans-unit id="s06971ea804e7d673">
+  <source>Install to a group space</source>
+  <target>In einer Gruppe installieren</target>
+</trans-unit>
+<trans-unit id="s25f1d9708501730f">
+  <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
+  <target>V<x id="0" equiv-text="${version.version}"/> in einer Gruppe installieren</target>
+</trans-unit>
+<trans-unit id="s3d197283cb019b5a">
+  <source>Overview</source>
+  <target>Übersicht</target>
+</trans-unit>
+<trans-unit id="se19e2ed58cd65d6c">
+  <source>Versions</source>
+  <target>Versionen</target>
+</trans-unit>
+<trans-unit id="sb1f175f79f1ddcd2">
+  <source>No Tools available yet...</source>
+  <target>Noch keine Tools verfügbar...</target>
+</trans-unit>
+<trans-unit id="s384efdec2b99d471">
+  <source>Custom Name</source>
+  <target>Benutzerdefinierter Name</target>
+</trans-unit>
+<trans-unit id="s07a4bf5a1393494d">
+  <source>Custom Network Seed</source>
+  <target>Benutzerdefinierter Netzwerk-Seed</target>
+</trans-unit>
+<trans-unit id="s2fd07bfa38737ad6">
+  <source>Add to Group</source>
+  <target>Zur Gruppe hinzufügen</target>
+</trans-unit>
+<trans-unit id="s76d62edab6068a11">
+  <source>Installing to:</source>
+  <target>Wird installiert in:</target>
+</trans-unit>
+<trans-unit id="sdcf12775cd424249">
+  <source>Heads-up!</source>
+  <target>Achtung!</target>
+</trans-unit>
+<trans-unit id="sea831745df80be1c">
+  <source>Give this app a custom name.</source>
+  <target>Geben Sie dieser App einen benutzerdefinierten Namen.</target>
+</trans-unit>
+<trans-unit id="sf8bb1851d084043f">
+  <source>Note: </source>
+  <target>Hinweis: </target>
+</trans-unit>
+<trans-unit id="s3a5ee4be3d2b0782">
+  <source>Adding a new Tool to a group </source>
+  <target>Das Hinzufügen eines neuen Tools zu einer Gruppe </target>
+</trans-unit>
+<trans-unit id="sc7ad8e8ab04ac0c7">
+  <source>creates a new unique instance </source>
+  <target>erstellt eine neue eindeutige Instanz </target>
+</trans-unit>
+<trans-unit id="sdf60b24054c98179">
+  <source>of that Tool which other group members may join directly from the group's main page.</source>
+  <target>dieses Tools, der andere Gruppenmitglieder direkt von der Hauptseite der Gruppe beitreten können.</target>
+</trans-unit>
+<trans-unit id="s12c3249c3396ef2f">
+  <source>Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.</source>
+  <target>Jedes Mal, wenn Sie ein Tool überdie Tool-Bibliothek zu einer Gruppe hinzufügen, erstellen Sie ein neues eindeutiges Peer-to-Peer-Netzwerk speziell fürdiese Tool-Instanz. Andere Gruppenmitglieder können nur demselben Netzwerk beitreten, wenn sie es von der Gruppen-Hauptseite aus tun, wo es fürsie im Abschnitt "Beitretbare Tools" angezeigt wird. Wenn zwei Mitglieder jeweils dasselbe Tool aus der Tool-Bibliothek hinzufügen, erstellen sie zwei unabhängige Peer-to-Peer-Netzwerke. Auf diese Weise kann eine Gruppe viele unabhängige Instanzen desselben Tools haben.</target>
+</trans-unit>
+<trans-unit id="s355b21b89ce5d9c5">
+  <source>Details</source>
+  <target>Details</target>
+</trans-unit>
+<trans-unit id="se40280a068167fdf">
+  <source>all tools</source>
+  <target>alle Tools</target>
+</trans-unit>
+<trans-unit id="s5fdf96ff10989e29">
+  <source>+ Add to Group</source>
+  <target>+ Zur Gruppe hinzufügen</target>
+</trans-unit>
+<trans-unit id="s82665b2ffabc9c0a">
+  <source>Website</source>
+  <target>Webseite</target>
+</trans-unit>
+<trans-unit id="s87bae2710b2492c3">
+  <source>Contact</source>
+  <target>Kontakt</target>
+</trans-unit>
+<trans-unit id="s571a486a72782024">
+  <source>Published by:</source>
+  <target>Veröffentlicht von:</target>
+</trans-unit>
+<trans-unit id="s4bbd8057b8726b43">
+  <source>Publish A Tool</source>
+  <target>Ein Tool veröffentlichen</target>
+</trans-unit>
+<trans-unit id="s3d4ca40eab578130">
+  <source>Tool Library</source>
+  <target>Tool-Bibliothek</target>
+</trans-unit>
+<trans-unit id="s8de2ae4fdfa77943">
+  <source>Publish a tool</source>
+  <target>Ein Tool veröffentlichen</target>
+</trans-unit>
+<trans-unit id="sd05405ee1ffc6ddd">
+  <source>Add to Pocket</source>
+  <target>Zur Tasche hinzufügen</target>
+</trans-unit>
+<trans-unit id="s550b6572499ea8bd">
+  <source>URL copied to clipboard.</source>
+  <target>URL in die Zwischenablage kopiert.</target>
+</trans-unit>
+<trans-unit id="s2df075aface0dab8">
+  <source>Share</source>
+  <target>Teilen</target>
+</trans-unit>
+<trans-unit id="sd92992bbe009445c">
+  <source>Error fetching the entry</source>
+  <target>Fehler beim Abrufen des Eintrags</target>
+</trans-unit>
+<trans-unit id="s4c119cd7d224a110">
+  <source>Asset not found.</source>
+  <target>Asset nicht gefunden.</target>
+</trans-unit>
+<trans-unit id="s109251ef1bfdad31">
+  <source>Local Time</source>
+  <target>Ortszeit</target>
+</trans-unit>
+<trans-unit id="seadeb3a807d7478a">
+  <source>Online</source>
+  <target>Online</target>
+</trans-unit>
+<trans-unit id="scde3342a428aaee8">
+  <source>Offline</source>
+  <target>Offline</target>
+</trans-unit>
+<trans-unit id="s8b517f7997ac61b7">
+  <source>Headless Nodes</source>
+  <target>Headless-Knoten</target>
+</trans-unit>
+<trans-unit id="s4508d2508e2f60b0">
+  <source>Error displaying the peers of the group</source>
+  <target>Fehler beim Anzeigen der Peers der Gruppe</target>
+</trans-unit>
+<trans-unit id="s86af0278a12266f5">
+  <source>No new tools to activate.</source>
+  <target>Keine neuen Tools zum Aktivieren.</target>
+</trans-unit>
+<trans-unit id="s21866f14afd110fa">
+  <source>Tool logo</source>
+  <target>Tool-Logo</target>
+</trans-unit>
+<trans-unit id="s27976e94b05c6970">
+  <source>Activate</source>
+  <target>Aktivieren</target>
+</trans-unit>
+<trans-unit id="sbc42b2ee96abb572">
+  <source>installed this tool to the group space </source>
+  <target>hat dieses Tool in der Gruppe installiert </target>
+</trans-unit>
+<trans-unit id="s3be52ccc6f018908">
+  <source>In use by: </source>
+  <target>Verwendet von: </target>
+</trans-unit>
+<trans-unit id="sb4a967e0437350ff">
+  <source>The tool I need is not listed. Take me to the Library.</source>
+  <target>Das benotige Tool ist nicht aufgelistet. Zur Bibliothek gehen.</target>
+</trans-unit>
+<trans-unit id="sf7d93e17ec4b1219">
+  <source>...</source>
+  <target>...</target>
+</trans-unit>
+<trans-unit id="s190c18948e8b898a">
+  <source>this group</source>
+  <target>diese Gruppe</target>
+</trans-unit>
+<trans-unit id="s039176e0c5659ca1">
+  <source>Before adding a new tool to</source>
+  <target>Bevor Sie ein neues Tool hinzufügen zu</target>
+</trans-unit>
+<trans-unit id="sb2238d95ff6d0fbc">
+  <source>Check what your peers already use</source>
+  <target>Prufen Sie, was Ihre Peers bereits verwenden</target>
+</trans-unit>
+<trans-unit id="s7390f8b75a4e40d4">
+  <source>They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!</source>
+  <target>Möglicherweise verwenden sie bereits ein Tool, das Sie suchen. Sie müssen es nicht zur Gruppe hinzufügen - aktivieren Sie es einfach für sich selbst und beginnen Sie mit der Zusammenarbeit!</target>
+</trans-unit>
+<trans-unit id="s1d1484091c0237f3">
+  <source>Invite People</source>
+  <target>Personen einladen</target>
+</trans-unit>
+<trans-unit id="s21d35084661d25a6">
+  <source>Copy and send the link below to invite people:</source>
+  <target>Kopieren und senden Sie den folgenden Link, um Personen einzuladen:</target>
+</trans-unit>
+<trans-unit id="s7236264a0e8164bb">
+  <source>Invite link copied to clipboard.</source>
+  <target>Einladungslink in die Zwischenablage kopiert.</target>
+</trans-unit>
+<trans-unit id="s3687049d1af562c4">
+  <source>Copy</source>
+  <target>Kopieren</target>
+</trans-unit>
+<trans-unit id="s5ae217c0cc09e418">
+  <source>About invite links:</source>
+  <target>Uber Einladungslinks:</target>
+</trans-unit>
+<trans-unit id="s85211b812dbfebf4">
+  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
+  <target>Derzeit funktionieren Moss-Einladungen nach dem Prinzip "Hier ist meine Adresse, die Türsteht offen." Jeder mit einem Link kann der Gruppe beitreten, also seien Sie vorsichtig, wo Sie diesen Link teilen.</target>
+</trans-unit>
+<trans-unit id="s7be45b1c52747d13">
+  <source>No tools yet.</source>
+  <target>Noch keine Tools.</target>
+</trans-unit>
+<trans-unit id="scaf5d44824fbdded">
+  <source>Let's change that:</source>
+  <target>Das ändern wir:</target>
+</trans-unit>
+<trans-unit id="sfda931c0d8d794fb">
+  <source>activate tools</source>
+  <target>Tools aktivieren</target>
+</trans-unit>
+<trans-unit id="s477a2fd64cff5b47">
+  <source>add a tool</source>
+  <target>ein Tool hinzufügen</target>
+</trans-unit>
+<trans-unit id="sf753462fb5ec0f72">
+  <source>Error fetching the group profile</source>
+  <target>Fehler beim Abrufen des Gruppenprofils</target>
+</trans-unit>
+<trans-unit id="s49730f3d5751a433">
+  <source>Loading...</source>
+  <target>Wird geladen...</target>
+</trans-unit>
+<trans-unit id="s33e25cb4c896d243">
+  <source>my profile image</source>
+  <target>mein Profilbild</target>
+</trans-unit>
+<trans-unit id="s2ce9c3328e830141">
+  <source>Activate tools peers already use</source>
+  <target>Tools aktivieren, die Peers bereits verwenden</target>
+</trans-unit>
+<trans-unit id="s3be68760fd7935f7">
+  <source>more used by peers</source>
+  <target>weitere von Peers verwendet</target>
+</trans-unit>
+<trans-unit id="s40ad7672a00dd569">
+  <source>click to copy public key</source>
+  <target>Klicken zum Kopieren des öffentlichen Schlüssels</target>
+</trans-unit>
+<trans-unit id="s06d3f0cf967e308e">
+  <source>This is peer's public key. Use it to confirm the identity of the profile.</source>
+  <target>Dies ist der öffentliche Schlüssel des Peers. Verwenden Sie ihn, um die Identität des Profils zu bestätigen.</target>
+</trans-unit>
+<trans-unit id="sc7c6cffb1c2355c7">
+  <source>Your Peers</source>
+  <target>Ihre Peers</target>
+</trans-unit>
+<trans-unit id="sabf0e099159a8caa">
+  <source>online</source>
+  <target>online</target>
+</trans-unit>
+<trans-unit id="sc26501e3ade7da3c">
+  <source>Tools</source>
+  <target>Tools</target>
+</trans-unit>
+<trans-unit id="s73a44d1204f9383e">
+  <source>Add a new tool for the group</source>
+  <target>Ein neues Tool fürdie Gruppe hinzufügen</target>
+</trans-unit>
+<trans-unit id="s7293d04c5979a8ad">
+  <source>Expand sidebar</source>
+  <target>Seitenleiste erweitern</target>
+</trans-unit>
+<trans-unit id="s470c476fc184bbf2">
+  <source>Fold sidebar</source>
+  <target>Seitenleiste einklappen</target>
+</trans-unit>
+<trans-unit id="s79cff44197beb0e9">
+  <source>This group doesn't have any applets installed yet. Go to the applet library (the </source>
+  <target>Diese Gruppe hat noch keine Applets installiert. Gehen Sie zur Applet-Bibliothek (das </target>
+</trans-unit>
+<trans-unit id="sf0735ee6b2ba11d9">
+  <source> icon above) to install applets to this group.</source>
+  <target> Symbol oben), um Applets in dieser Gruppe zu installieren.</target>
+</trans-unit>
+<trans-unit id="s561c9423ea2fc327">
+  <source>Tool archived.</source>
+  <target>Tool archiviert.</target>
+</trans-unit>
+<trans-unit id="s9302f706cfbb6665">
+  <source>Failed to archive Tool (see console for details)</source>
+  <target>Tool konnte nicht archiviert werden (Details in der Konsole)</target>
+</trans-unit>
+<trans-unit id="s2897e4baafaea906">
+  <source>Tool unarchived.</source>
+  <target>Tool aus dem Archiv geholt.</target>
+</trans-unit>
+<trans-unit id="s0a4fb0b83ddada0a">
+  <source>Failed to unarchive Tool (see console for details)</source>
+  <target>Tool konnte nicht aus dem Archiv geholt werden (Details in der Konsole)</target>
+</trans-unit>
+<trans-unit id="s8b5e873468d50311">
+  <source>Disabled.</source>
+  <target>Deaktiviert.</target>
+</trans-unit>
+<trans-unit id="sc1da265dcbd54870">
+  <source>Enabled.</source>
+  <target>Aktiviert.</target>
+</trans-unit>
+<trans-unit id="s74982e57a1d8896c">
+  <source>Advanced Settings</source>
+  <target>Erweiterte Einstellungen</target>
+</trans-unit>
+<trans-unit id="s50e8f1afca10c29f">
+  <source>Always-online nodes should install this tool by default</source>
+  <target>Immer-online-Knoten sollten dieses Tool standardmassig installieren</target>
+</trans-unit>
+<trans-unit id="s1d7f1ed11d4a839c">
+  <source>Deprecating will hide tool for activation by new members</source>
+  <target>Veraltung wird das Tool fürdie Aktivierung durch neue Mitglieder ausblenden</target>
+</trans-unit>
+<trans-unit id="sa0ca791d0f13f0e5">
+  <source>Archive</source>
+  <target>Archivieren</target>
+</trans-unit>
+<trans-unit id="sd72a018193e00fb6">
+  <source>Undeprecate this Tool for it to show up again for new members</source>
+  <target>Veraltung aufheben, damit es fürneue Mitglieder wieder angezeigt wird</target>
+</trans-unit>
+<trans-unit id="sf71a90bc017f1e80">
+  <source>Unarchive</source>
+  <target>Aus Archiv holen</target>
+</trans-unit>
+<trans-unit id="s89026d7ba87704d3">
+  <source>ARCHIVED</source>
+  <target>ARCHIVIERT</target>
+</trans-unit>
+<trans-unit id="s70d885806b56289e">
+  <source>enabled</source>
+  <target>aktiviert</target>
+</trans-unit>
+<trans-unit id="s96ed4200ee683221">
+  <source>Disable the app for yourself</source>
+  <target>App fürsich selbst deaktivieren</target>
+</trans-unit>
+<trans-unit id="s9078ee819c18df6e">
+  <source>Enable</source>
+  <target>Aktivieren</target>
+</trans-unit>
+<trans-unit id="se2bb78d39ad97b71">
+  <source>Tool disabled.</source>
+  <target>Tool deaktiviert.</target>
+</trans-unit>
+<trans-unit id="s0718ed2cbd2fdad0">
+  <source>Tool enabled.</source>
+  <target>Tool aktiviert.</target>
+</trans-unit>
+<trans-unit id="sb9cdae3a069581f6">
+  <source>Hide Advanced Settings</source>
+  <target>Erweiterte Einstellungen ausblenden</target>
+</trans-unit>
+<trans-unit id="s6d7cf29525f2611f">
+  <source>Show Advanced Settings</source>
+  <target>Erweiterte Einstellungen anzeigen</target>
+</trans-unit>
+<trans-unit id="s82e64a7930881094">
+  <source>Uninstall this Tool for yourself (irreversible)</source>
+  <target>Dieses Tool fürsich selbst deinstallieren (irreversibel)</target>
+</trans-unit>
+<trans-unit id="sbc5bb5bb74d141b9">
+  <source>Uninstall</source>
+  <target>Deinstallieren</target>
+</trans-unit>
+<trans-unit id="s928362b2d36f34f7">
+  <source>Tool undeprecated.</source>
+  <target>Tool-Veraltung aufgehoben.</target>
+</trans-unit>
+<trans-unit id="sf2f0e2d57183480d">
+  <source>Failed to undeprecate Tool (see console for details)</source>
+  <target>Veraltung des Tools konnte nicht aufgehoben werden (Details in der Konsole)</target>
+</trans-unit>
+<trans-unit id="sd13c458659b1b8e7">
+  <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
+  <target>Sie haben keine Tools in dieser Gruppe installiert. Gehen Sie zur Tool-Bibliothek, um Tools in dieser Gruppe zu installieren.</target>
+</trans-unit>
+<trans-unit id="s45a179a4d2fe3729">
+  <source>No abandoned Tools.</source>
+  <target>Keine verlassenen Tools.</target>
+</trans-unit>
+<trans-unit id="s4e92d160c3305647">
+  <source>Activated Tools</source>
+  <target>Aktivierte Tools</target>
+</trans-unit>
+<trans-unit id="sa670264e8f449d1c">
+  <source>Abandoned Tools</source>
+  <target>Verlassene Tools</target>
+</trans-unit>
+<trans-unit id="s2aac2023bcfa6e62">
+  <source>Add Steward:</source>
+  <target>Verwalter hinzufügen:</target>
+</trans-unit>
+<trans-unit id="sb78ce49735cd209e">
+  <source>expiry</source>
+  <target>Ablauf</target>
+</trans-unit>
+<trans-unit id="s445ad48f4f733285">
+  <source>Error leaving the group</source>
+  <target>Fehler beim Verlassen der Gruppe</target>
+</trans-unit>
+<trans-unit id="sc0b43e6938b15b03">
+  <source>Leave Group</source>
+  <target>Gruppe verlassen</target>
+</trans-unit>
+<trans-unit id="s5bf0cb955266a68c">
+  <source>Are you sure you want to leave this group?</source>
+  <target>Sind Sie sicher, dass Sie diese Gruppe verlassen möchten?</target>
+</trans-unit>
+<trans-unit id="s62e9eba92a6d2fef">
+  <source>⚠️ This will delete all your Tools of this group and the data therein</source>
+  <target>⚠️ Dies wird alle Ihre Tools dieser Gruppe und die darin enthaltenen Daten löschen</target>
+</trans-unit>
+<trans-unit id="se869a6655b76b079">
+  <source> (unless a Tool is shared with another group of yours).</source>
+  <target> (es sei denn, ein Tool wird mit einer anderen Ihrer Gruppen geteilt).</target>
+</trans-unit>
+<trans-unit id="s2ceb11be2290bb1b">
+  <source>Cancel</source>
+  <target>Abbrechen</target>
+</trans-unit>
+<trans-unit id="s19bee21a859fbea0">
+  <source>Leave</source>
+  <target>Verlassen</target>
+</trans-unit>
+<trans-unit id="sface44df32238223">
+  <source>Your Profile</source>
+  <target>Ihr Profil</target>
+</trans-unit>
+<trans-unit id="s1faa6574a9c4fd7a">
+  <source>Looking for peers...</source>
+  <target>Suche nach Peers...</target>
+</trans-unit>
+<trans-unit id="s5e63e3491c0af038">
+  <source>No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.</source>
+  <target>Noch keine Peers gefunden, um die Metadaten der Gruppe abzurufen. Bitten Sie eines der Mitglieder dieser Gruppe, Moss zu starten, damit Sie mit der Synchronisierung beginnen können.</target>
+</trans-unit>
+<trans-unit id="sde1c98062b1c6d22">
+  <source>The group ID is: </source>
+  <target>Die Gruppen-ID lautet: </target>
+</trans-unit>
+<trans-unit id="sd6620673dc924b12">
+  <source>Failed to update group profile.</source>
+  <target>Gruppenprofil konnte nicht aktualisiert werden.</target>
+</trans-unit>
+<trans-unit id="s8b0432eecbd8b034">
+  <source>Update</source>
+  <target>Aktualisieren</target>
+</trans-unit>
+<trans-unit id="s894309352d8be05c">
+  <source>Error deleting the custom view</source>
+  <target>Fehler beim Loschen der benutzerdefinierten Ansicht</target>
+</trans-unit>
+<trans-unit id="s0ef3a153ae591dda">
+  <source>Delete Custom View</source>
+  <target>Benutzerdefinierte Ansicht löschen</target>
+</trans-unit>
+<trans-unit id="s2e314d89467fa967">
+  <source>Are you sure you want to delete this custom view?</source>
+  <target>Sind Sie sicher, dass Sie diese benutzerdefinierte Ansicht löschen möchten?</target>
+</trans-unit>
+<trans-unit id="sdc673e73b5c13aea">
+  <source>Delete</source>
+  <target>Loschen</target>
+</trans-unit>
+<trans-unit id="s64ef2a6c2dd1d3d1">
+  <source>Edit</source>
+  <target>Bearbeiten</target>
+</trans-unit>
+<trans-unit id="s2752f1c4b072e911">
+  <source>The requested custom view doesn't exist</source>
+  <target>Die angeforderte benutzerdefinierte Ansicht existiert nicht</target>
+</trans-unit>
+<trans-unit id="s846816c3fb2f8354">
+  <source>Error fetching the custom view</source>
+  <target>Fehler beim Abrufen der benutzerdefinierten Ansicht</target>
+</trans-unit>
+<trans-unit id="s2c61d603d1bbdb45">
+  <source>Error fetching the custom views</source>
+  <target>Fehler beim Abrufen der benutzerdefinierten Ansichten</target>
+</trans-unit>
+<trans-unit id="s9b21b1ade9a93f3b">
+  <source>Error creating the custom view</source>
+  <target>Fehler beim Erstellen der benutzerdefinierten Ansicht</target>
+</trans-unit>
+<trans-unit id="sad75043f72f63552">
+  <source>Custom View Name</source>
+  <target>Name der benutzerdefinierten Ansicht</target>
+</trans-unit>
+<trans-unit id="s57d1286dd70605a5">
+  <source>Create Custom View</source>
+  <target>Benutzerdefinierte Ansicht erstellen</target>
+</trans-unit>
+<trans-unit id="s55797f0c2b3b37a0">
+  <source>Error fetching the blocks for this group</source>
+  <target>Fehler beim Abrufen der Blocke fürdiese Gruppe</target>
+</trans-unit>
+<trans-unit id="s3111a346bb42ba2a">
+  <source>Error updating the custom view</source>
+  <target>Fehler beim Aktualisieren der benutzerdefinierten Ansicht</target>
+</trans-unit>
+<trans-unit id="s33f85f24c0f5f008">
+  <source>Save</source>
+  <target>Speichern</target>
+</trans-unit>
+<trans-unit id="sfa5aa53305538dbf">
+  <source>received by:</source>
+  <target>empfangen von:</target>
+</trans-unit>
+<trans-unit id="s3299c9f18ea6ef17">
+  <source>Choose Profile Picture</source>
+  <target>Profilbild auswählen</target>
+</trans-unit>
+<trans-unit id="s3f2a04e5c1b2a709">
+  <source>click to copy</source>
+  <target>Klicken zum Kopieren</target>
+</trans-unit>
+<trans-unit id="s16fbcb6c19d06e60">
+  <source>Hash copied to clipboard.</source>
+  <target>Hash in die Zwischenablage kopiert.</target>
+</trans-unit>
+<trans-unit id="se5d39037ee051a67">
+  <source>Change Group Icon</source>
+  <target>Gruppensymbol ändern</target>
+</trans-unit>
+<trans-unit id="sa5ca0ea1eea6b70b">
+  <source>Only stewards can change the group profile.</source>
+  <target>Nur Verwalter können das Gruppenprofil ändern.</target>
+</trans-unit>
+<trans-unit id="se49ae8ea6d091fe9">
+  <source>Group ID</source>
+  <target>Gruppen-ID</target>
+</trans-unit>
+<trans-unit id="se1e8fc3e4fdea935">
+  <source>Unique identifier of this group.</source>
+  <target>Eindeutige Kennung dieser Gruppe.</target>
+</trans-unit>
+<trans-unit id="s6b138c631a7d2a2c">
+  <source>Discard Changes</source>
+  <target>Anderungen verwerfen</target>
+</trans-unit>
+<trans-unit id="s031945e67717bf79">
+  <source>Save Changes</source>
+  <target>Anderungen speichern</target>
+</trans-unit>
+<trans-unit id="s0760375151ab885e">
+  <source>Tool deprecated.</source>
+  <target>Tool als veraltet markiert.</target>
+</trans-unit>
+<trans-unit id="s3e8665467b867e72">
+  <source>Failed to deprecate tool (see console for details)</source>
+  <target>Tool konnte nicht als veraltet markiert werden (Details in der Konsole)</target>
+</trans-unit>
+<trans-unit id="s4eb1d65f04b7c16d">
+  <source>Failed to undeprecate tool (see console for details)</source>
+  <target>Veraltungs-Markierung konnte nicht entfernt werden (Details in der Konsole)</target>
+</trans-unit>
+<trans-unit id="s47b949de125f96c3">
+  <source>Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.</source>
+  <target>Veraltung wird dieses Tool fürneue Mitglieder zur Aktivierung ausblenden; bestehende Mitglieder sehen es als veraltet.</target>
+</trans-unit>
+<trans-unit id="s5b3f628f0a5a62ac">
+  <source>Deprecate for Group</source>
+  <target>Fur Gruppe als veraltet markieren</target>
+</trans-unit>
+<trans-unit id="s0e53ef4364107018">
+  <source>Remove deprecation tag for this tool.</source>
+  <target>Veraltungs-Markierung fürdieses Tool entfernen.</target>
+</trans-unit>
+<trans-unit id="s872b1ad125de32b5">
+  <source>Undeprecate</source>
+  <target>Veraltung aufheben</target>
+</trans-unit>
+<trans-unit id="s58cf3830485fd5ec">
+  <source>advanced settings</source>
+  <target>erweiterte Einstellungen</target>
+</trans-unit>
+<trans-unit id="s195a1ab2540d51a4">
+  <source>Deprecated</source>
+  <target>Veraltet</target>
+</trans-unit>
+<trans-unit id="s81850fd21bd71f71">
+  <source>tool hash</source>
+  <target>Tool-Hash</target>
+</trans-unit>
+<trans-unit id="s454fef8d9887fc7b">
+  <source>Allways-online nodes should install this tool by default</source>
+  <target>Immer-online-Knoten sollten dieses Tool standardmassig installieren</target>
+</trans-unit>
+<trans-unit id="s965c503c3e42fdfe">
+  <source>Enabled</source>
+  <target>Aktiviert</target>
+</trans-unit>
+<trans-unit id="s66722bc2ea775e05">
+  <source>Disabled</source>
+  <target>Deaktiviert</target>
+</trans-unit>
+<trans-unit id="s5f6a6b76ddc59610">
+  <source>Uninstall for me</source>
+  <target>Fur mich deinstallieren</target>
+</trans-unit>
+<trans-unit id="se53f0886d793813b">
+  <source>No ignored tools.</source>
+  <target>Keine ignorierten Tools.</target>
+</trans-unit>
+<trans-unit id="s79ce03bd39ecb043">
+  <source>Activate All</source>
+  <target>Alle aktivieren</target>
+</trans-unit>
+<trans-unit id="s917734d83f35efa3">
+  <source>Ignore</source>
+  <target>Ignorieren</target>
+</trans-unit>
+<trans-unit id="sbf4310079743ede4">
+  <source>No uninstalled tools.</source>
+  <target>Keine deinstallierten Tools.</target>
+</trans-unit>
+<trans-unit id="sdf2d511781a96bad">
+  <source>To Activate</source>
+  <target>Zu aktivieren</target>
+</trans-unit>
+<trans-unit id="sa45a194b58837e4f">
+  <source>Active</source>
+  <target>Aktiv</target>
+</trans-unit>
+<trans-unit id="s0e1dc13dc6a16310">
+  <source>Uninstalled</source>
+  <target>Deinstalliert</target>
+</trans-unit>
+<trans-unit id="s637e927368a66f25">
+  <source>Ignored</source>
+  <target>Ignoriert</target>
+</trans-unit>
+<trans-unit id="s43417e56f957ff34">
+  <source>assign steward role</source>
+  <target>Verwalterrolle zuweisen</target>
+</trans-unit>
+<trans-unit id="s6e84b6d6d9819c25">
+  <source>no expiry</source>
+  <target>kein Ablauf</target>
+</trans-unit>
+<trans-unit id="sbde6a2d370f6356f">
+  <source>Extend Role</source>
+  <target>Rolle verlangern</target>
+</trans-unit>
+<trans-unit id="s4df2cd89bceba12f">
+  <source>Assign Steward role to </source>
+  <target>Verwalterrolle zuweisen an </target>
+</trans-unit>
+<trans-unit id="s043ccb66dea567af">
+  <source>until:</source>
+  <target>bis:</target>
+</trans-unit>
+<trans-unit id="sac8252732f2edb19">
+  <source>Date</source>
+  <target>Datum</target>
+</trans-unit>
+<trans-unit id="s48e186fb300e5464">
+  <source>Time</source>
+  <target>Uhrzeit</target>
+</trans-unit>
+<trans-unit id="sa7d03b23138f5267">
+  <source>forever (no expiration date)</source>
+  <target>fur immer (kein Ablaufdatum)</target>
+</trans-unit>
+<trans-unit id="s0b93f9778794737c">
+  <source>I understand that after assigning someone to the Steward role</source>
+  <target>Ich verstehe, dass nach der Zuweisung der Verwalterrolle</target>
+</trans-unit>
+<trans-unit id="s5359ae748cb89c2c">
+  <source>I cannot undo the action.</source>
+  <target>ich die Aktion nicht ruckgangig machen kann.</target>
+</trans-unit>
+<trans-unit id="sc99731a5ed9a3ccb">
+  <source>A member will stay a Steward forever or until the specified date.</source>
+  <target>Ein Mitglied bleibt fürimmer Verwalter oder bis zum angegebenen Datum.</target>
+</trans-unit>
+<trans-unit id="s443f3886c4025e94">
+  <source>Assign Steward Role</source>
+  <target>Verwalterrolle zuweisen</target>
+</trans-unit>
+<trans-unit id="safb6dffff2680544">
+  <source>name*</source>
+  <target>Name*</target>
+</trans-unit>
+<trans-unit id="s3798c0344c399eb7">
+  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
+  <target>Mind. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> Zeichen</target>
+</trans-unit>
+<trans-unit id="sc93a9aa3e5bcbf5d">
+  <source>Save Profile</source>
+  <target>Profil speichern</target>
+</trans-unit>
+<trans-unit id="s639c68c3284a2269">
+  <source>Update Profile</source>
+  <target>Profil aktualisieren</target>
+</trans-unit>
+<trans-unit id="s08b73807b55c4bbe">
+  <source>in</source>
+  <target>in</target>
+</trans-unit>
+<trans-unit id="s77997784a8b9d635">
+  <source>This will delete all your data related to this group and the Tools you joined therein from your computer.</source>
+  <target>Dies wird alle Ihre Daten zu dieser Gruppe und den darin beigetretenen Tools von Ihrem Computer löschen.</target>
+</trans-unit>
+<trans-unit id="s51a3788bbb43cf2f">
+  <source>Other members of the group can keep using the group and any Tools they joined themselves.</source>
+  <target>Andere Gruppenmitglieder können die Gruppe und alle Tools, denen sie selbst beigetreten sind, weiterhin nutzen.</target>
+</trans-unit>
+<trans-unit id="sfad30611c68ecd70">
+  <source>Disable Group</source>
+  <target>Gruppe deaktivieren</target>
+</trans-unit>
+<trans-unit id="sb1cdb5ae8fce51ce">
+  <source>Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.</source>
+  <target>Deaktiviert diese Gruppe für Sie und Sie werden aufhören, Daten mit anderen Mitgliedern dieser Gruppe zu synchronisieren. Sie können sie später wieder aktivieren.</target>
+</trans-unit>
+<trans-unit id="s399a70b452ca4dbf">
+  <source>Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.</source>
+  <target>Verlassen Sie die Gruppe fürimmer. Sie können mit dieser Moss-Instanz nicht wieder beitreten und alle Ihre Daten zu dieser Gruppe und ihren Tools werden von Ihrem Computer gelöscht. Andere Gruppenmitglieder können die Gruppe und alle beigetretenen Tools weiterhin nutzen.</target>
+</trans-unit>
+<trans-unit id="sc3ac225273c8316b">
+  <source>General</source>
+  <target>Allgemein</target>
+</trans-unit>
+<trans-unit id="se03590807dedd737">
+  <source>Group Tools</source>
+  <target>Gruppen-Tools</target>
+</trans-unit>
+<trans-unit id="s9f5a5f23312798f0">
+  <source>Members</source>
+  <target>Mitglieder</target>
+</trans-unit>
+<trans-unit id="s9669bd7587b7c11a">
+  <source>My Profile</source>
+  <target>Mein Profil</target>
+</trans-unit>
+<trans-unit id="sdaf3d13c3b1ec474">
+  <source>Danger Zone</source>
+  <target>Gefahrenzone</target>
+</trans-unit>
+<trans-unit id="s3563f6f848d5f4c7">
+  <source>Uninstalling</source>
+  <target>Deinstallation</target>
+</trans-unit>
+<trans-unit id="s318c4eefa759ada0">
+  <source>Uninstalling affects only you.</source>
+  <target>Die Deinstallation betrifft nur Sie.</target>
+</trans-unit>
+<trans-unit id="sfa6b141d95c6d21d">
+  <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
+  <target>Sie können diese App nicht mehr verwenden, aber Ihre Gruppe wird sie weiterhin nutzen, bis ein Verwalter sie füralle als veraltet markiert.</target>
+</trans-unit>
+<trans-unit id="s5e454aea488489d6">
+  <source>Do you want to uninstall it for yourself?</source>
+  <target>Mochten Sie es fürsich selbst deinstallieren?</target>
+</trans-unit>
+<trans-unit id="s55f9020091babf63">
+  <source>Uninstalling...</source>
+  <target>Wird deinstalliert...</target>
+</trans-unit>
+<trans-unit id="s4c4589bab8bdda6f">
+  <source>Yes, uninstall it</source>
+  <target>Ja, deinstallieren</target>
+</trans-unit>
+<trans-unit id="s8213840a0f7d2644">
+  <source>No, keep it</source>
+  <target>Nein, behalten</target>
+</trans-unit>
+<trans-unit id="sbe99741971f28360">
+  <source>Failed to uninstall tool instance.</source>
+  <target>Tool-Instanz konnte nicht deinstalliert werden.</target>
+</trans-unit>
+<trans-unit id="s6a5d4d5cd480dc6d">
+  <source>Show ignored Tools</source>
+  <target>Ignorierte Tools anzeigen</target>
+</trans-unit>
+<trans-unit id="sde11e4fb0760a7d5">
+  <source>No new Tools to activate.</source>
+  <target>Keine neuen Tools zum Aktivieren.</target>
+</trans-unit>
+<trans-unit id="s31e38b72638e66d0">
+  <source>added an instance of </source>
+  <target>hat eine Instanz hinzugefügt von </target>
+</trans-unit>
+<trans-unit id="s016f5be842987ba5">
+  <source>Participants </source>
+  <target>Teilnehmer </target>
+</trans-unit>
+<trans-unit id="s3c1efcb18ec4d6c9">
+  <source>Group Settings</source>
+  <target>Gruppeneinstellungen</target>
+</trans-unit>
+<trans-unit id="s9d8b8aa2b404c2c8">
+  <source>Settings</source>
+  <target>Einstellungen</target>
+</trans-unit>
+<trans-unit id="sa86c0479a1e62db6">
+  <source>Unactivated Tools</source>
+  <target>Nicht aktivierte Tools</target>
+</trans-unit>
+<trans-unit id="s231e097343f22c21">
+  <source>Error fetching the group information</source>
+  <target>Fehler beim Abrufen der Gruppeninformationen</target>
+</trans-unit>
+<trans-unit id="sb401e9c080830dc7">
+  <source>This group will see me as</source>
+  <target>Diese Gruppe wird mich sehen als</target>
+</trans-unit>
+<trans-unit id="s2e2fe8c7e1b92cb0">
+  <source>Enter the space</source>
+  <target>Bereich betreten</target>
+</trans-unit>
+<trans-unit id="s4404b38d84707655">
+  <source>Profile creation timed out. Please try again.</source>
+  <target>Zeituberschreitung bei der Profilerstellung. Bitte versuchen Sie es erneut.</target>
+</trans-unit>
+<trans-unit id="s0c24d12af180ccbf">
+  <source>There was an error creating your profile. Please try again.</source>
+  <target>Bei der Erstellung Ihres Profils ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</target>
+</trans-unit>
+<trans-unit id="s5f343a43e7ea9f91">
+  <source>Error</source>
+  <target>Fehler</target>
+</trans-unit>
+<trans-unit id="s2c8189544e3ea679">
+  <source>Retry</source>
+  <target>Erneut versuchen</target>
+</trans-unit>
+<trans-unit id="s98de281a36c50aa7">
+  <source>Failed to read your profile</source>
+  <target>Profil konnte nicht gelesen werden</target>
+</trans-unit>
+<trans-unit id="s715fe9da1b5b38c0">
+  <source>This group is disabled.</source>
+  <target>Diese Gruppe ist deaktiviert.</target>
+</trans-unit>
+<trans-unit id="sa0bcc0ad6e32e0ec">
+  <source>cell name</source>
+  <target>Zellname</target>
+</trans-unit>
+<trans-unit id="sc8b6248d1ceeee57">
+  <source>Failed to get groups.</source>
+  <target>Gruppen konnten nicht abgerufen werden.</target>
+</trans-unit>
+<trans-unit id="s45ab5e3bc8490c0e">
+  <source>Default profile saved.</source>
+  <target>Standardprofil gespeichert.</target>
+</trans-unit>
+<trans-unit id="sb743fe792217d795">
+  <source>This profile will be used as default when joining new groups.</source>
+  <target>Dieses Profil wird standardmassig beim Beitritt zu neuen Gruppen verwendet.</target>
+</trans-unit>
+<trans-unit id="s6d8f193aef66d440">
+  <source>Save Default Profile</source>
+  <target>Standardprofil speichern</target>
+</trans-unit>
+<trans-unit id="s27ac935473f90d03">
+  <source>Language changed.</source>
+  <target>Sprache geändert.</target>
+</trans-unit>
+<trans-unit id="s5e00b40d697f6d2b">
+  <source>Failed to change language.</source>
+  <target>Sprache konnte nicht geändert werden.</target>
+</trans-unit>
+<trans-unit id="sb210f3f516da46a4">
+  <source>Select your preferred language for the Moss interface.</source>
+  <target>Wählen Sie Ihre bevorzugte Sprache fürdie Moss-Oberflache.</target>
+</trans-unit>
+<trans-unit id="sefcf950b3cc4fc3b">
+  <source>Language</source>
+  <target>Sprache</target>
+</trans-unit>
+<trans-unit id="secbfe3119ef57156">
+  <source>Factory Reset</source>
+  <target>Auf Werkseinstellungen zurücksetzen</target>
+</trans-unit>
+<trans-unit id="s4a4cb96bfa2fb8bb">
+  <source>Fully reset Moss and</source>
+  <target>Moss vollständig zurücksetzen und</target>
+</trans-unit>
+<trans-unit id="s8456f5387d5d6727">
+  <source>delete all associated data</source>
+  <target>alle zugehörigen Daten löschen</target>
+</trans-unit>
+<trans-unit id="sb061ff5a347a296e">
+  <source>Profile</source>
+  <target>Profil</target>
+</trans-unit>
+<trans-unit id="s79e68c83bbbbfb92">
+  <source>No existing asset relation tags yet...</source>
+  <target>Noch keine Asset-Beziehungs-Tags vorhanden...</target>
+</trans-unit>
+<trans-unit id="sc7a932781c029939">
+  <source>No tags with this search filter</source>
+  <target>Keine Tags mit diesem Suchfilter</target>
+</trans-unit>
+<trans-unit id="scd35145816591894">
+  <source>Select existing tag:</source>
+  <target>Vorhandenes Tag auswählen:</target>
+</trans-unit>
+<trans-unit id="s2d13c0844c68a8ea">
+  <source>Choose Asset Relation Tag:</source>
+  <target>Asset-Beziehungs-Tag auswählen:</target>
+</trans-unit>
+<trans-unit id="s6d96b71b1a229943">
+  <source>Enter new tag</source>
+  <target>Neues Tag eingeben</target>
+</trans-unit>
+<trans-unit id="s7e388025be643d0d">
+  <source>Enter</source>
+  <target>Eingabe</target>
+</trans-unit>
+<trans-unit id="sef5bd6ed8fab8065">
+  <source>Copy URL</source>
+  <target>URL kopieren</target>
+</trans-unit>
+<trans-unit id="s46b40e6a61bc0208">
+  <source>URL copied.</source>
+  <target>URL kopiert.</target>
+</trans-unit>
+<trans-unit id="s8fc0228da60f2c2b">
+  <source>Remove from Pocket</source>
+  <target>Aus der Tasche entfernen</target>
+</trans-unit>
+<trans-unit id="s1da2307057f1524c">
+  <source>Cannot be selected - the associated Tool is disabled</source>
+  <target>Kann nicht ausgewahlt werden - das zugehorige Tool ist deaktiviert</target>
+</trans-unit>
+<trans-unit id="sfc63e31ac7c956ed">
+  <source>Select</source>
+  <target>Auswählen</target>
+</trans-unit>
+<trans-unit id="sc592307ea80f16b9">
+  <source>Unknown</source>
+  <target>Unbekannt</target>
+</trans-unit>
+<trans-unit id="s08b06007b5567108">
+  <source>of</source>
+  <target>von</target>
+</trans-unit>
+<trans-unit id="s220bcce27242e1e9">
+  <source>search</source>
+  <target>Suche</target>
+</trans-unit>
+<trans-unit id="sc1b8a74e113727e2">
+  <source>Search or enter weave-0.15:// URL</source>
+  <target>Suchen oder weave-0.15:// URL eingeben</target>
+</trans-unit>
+<trans-unit id="sade7d29e999d2472">
+  <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
+  <target>Geben Sie mindestens <x id="0" equiv-text="${this.minChars}"/> Zeichen ein, um die Suche zu starten.</target>
+</trans-unit>
+<trans-unit id="sa81413e2e309b882">
+  <source>No results found.</source>
+  <target>Keine Ergebnisse gefunden.</target>
+</trans-unit>
+<trans-unit id="sf46397f167ec5533">
+  <source>Searching...</source>
+  <target>Suche...</target>
+</trans-unit>
+<trans-unit id="s7abafd331dfb06bc">
+  <source>Open URL</source>
+  <target>URL öffnen</target>
+</trans-unit>
+<trans-unit id="sa1d04f065ab25208">
+  <source>Select Attachment:</source>
+  <target>Anhang auswählen:</target>
+</trans-unit>
+<trans-unit id="seead559236062e71">
+  <source>Recently created:</source>
+  <target>Kurzlich erstellt:</target>
+</trans-unit>
+<trans-unit id="s1f7698c061c208c9">
+  <source>Open</source>
+  <target>Offnen</target>
+</trans-unit>
+<trans-unit id="s007a5e0a003f5515">
+  <source>In Your Pocket:</source>
+  <target>In Ihrer Tasche:</target>
+</trans-unit>
+<trans-unit id="s00b8b5c1000437fe">
+  <source>Reload Tool</source>
+  <target>Tool neu laden</target>
+</trans-unit>
+<trans-unit id="sc851c05e0ca38177">
+  <source>No Creatables available for the selected Group.</source>
+  <target>Keine erstellbaren Elemente fürdie ausgewahlte Gruppe verfügbar.</target>
+</trans-unit>
+<trans-unit id="sc530113873b2fd9a">
+  <source>From which Tool do you want to create something?</source>
+  <target>Von welchem Tool möchten Sie etwas erstellen?</target>
+</trans-unit>
+<trans-unit id="s9a730edb8b4733e7">
+  <source>Create New</source>
+  <target>Neu erstellen</target>
+</trans-unit>
+<trans-unit id="s585eef6df9f6be7d">
+  <source>What do you want to create?</source>
+  <target>Was möchten Sie erstellen?</target>
+</trans-unit>
+<trans-unit id="seacc6f1617124704">
+  <source>No group selected.</source>
+  <target>Keine Gruppe ausgewahlt.</target>
+</trans-unit>
+<trans-unit id="sa6091c63e770ecfb">
+  <source>Create New Asset</source>
+  <target>Neues Asset erstellen</target>
+</trans-unit>
+<trans-unit id="s233f99bcd0cc14a1">
+  <source>Tool not found in any of your groups.</source>
+  <target>Tool in keiner Ihrer Gruppen gefunden.</target>
+</trans-unit>
+<trans-unit id="s16a9f872b944f5f1">
+  <source>You're already part of this group.</source>
+  <target>Sie sind bereits Mitglied dieser Gruppe.</target>
+</trans-unit>
+<trans-unit id="s4a35a3da7fbd9504">
+  <source>Error opening the link.</source>
+  <target>Fehler beim Offnen des Links.</target>
+</trans-unit>
+<trans-unit id="saa3672a331070a0c">
+  <source>Failed to disable Group.</source>
+  <target>Gruppe konnte nicht deaktiviert werden.</target>
+</trans-unit>
+<trans-unit id="seb1bdc3ff128123f">
+  <source>switch to personal view</source>
+  <target>zur personlichen Ansicht wechseln</target>
+</trans-unit>
+<trans-unit id="s95354afd524e0854">
+  <source>Added to Pocket</source>
+  <target>Zur Tasche hinzugefügt</target>
+</trans-unit>
+<trans-unit id="s1967faf9ed8d3504">
+  <source>Avatar</source>
+  <target>Avatar</target>
+</trans-unit>
+<trans-unit id="s48489dd40d0b7159">
+  <source>Choose Avatar</source>
+  <target>Avatar auswählen</target>
+</trans-unit>
+<trans-unit id="sb4f1dffbb6be6302">
+  <source>Clear</source>
+  <target>Loschen</target>
+</trans-unit>
+<trans-unit id="s0be4a2cf7dafcecb">
+  <source>random image</source>
+  <target>Zufallsbild</target>
+</trans-unit>
+<trans-unit id="s1b710daaf8c152d3">
+  <source>Failed to join the group.</source>
+  <target>Der Gruppe konnte nicht beigetreten werden.</target>
+</trans-unit>
+<trans-unit id="s9a46ff9baa276602">
+  <source>back</source>
+  <target>zurück</target>
+</trans-unit>
+<trans-unit id="s83300eac0e548879">
+  <source>My group is called</source>
+  <target>Meine Gruppe heisst</target>
+</trans-unit>
+<trans-unit id="s3299fe9aa2f7023f">
+  <source>group name</source>
+  <target>Gruppenname</target>
+</trans-unit>
+<trans-unit id="s97c954bf5d700fc4">
+  <source>Create group space</source>
+  <target>Gruppenbereich erstellen</target>
+</trans-unit>
+<trans-unit id="sd33aeb1a43a080b1">
+  <source>Choose Group Type</source>
+  <target>Gruppentyp auswählen</target>
+</trans-unit>
+<trans-unit id="s6bd57286330b17cc">
+  <source>Joining group</source>
+  <target>Gruppe beitreten</target>
+</trans-unit>
+<trans-unit id="sa5ad0d6001e29e11">
+  <source>Creating a new space</source>
+  <target>Erstelle einen neuen Bereich</target>
+</trans-unit>
+<trans-unit id="s882ccaf3aa86f663">
+  <source>in the beautiful p2p realm.</source>
+  <target>in der schonen P2P-Welt.</target>
+</trans-unit>
+<trans-unit id="s3a1a79c51ae32bba">
+  <source>may take up to 1-2 minutes</source>
+  <target>kann bis zu 1-2 Minuten dauern</target>
+</trans-unit>
+<trans-unit id="s5a5e67d875579d70">
+  <source>Welcome to Moss.</source>
+  <target>Willkommen bei Moss.</target>
+</trans-unit>
+<trans-unit id="s4dcc66195b1ddc69">
+  <source>What brought you here today?</source>
+  <target>Was hat Sie heute hierher geführt?</target>
+</trans-unit>
+<trans-unit id="sbf68658bb3dad7f1">
+  <source>I have an invite link to join a group</source>
+  <target>Ich habe einen Einladungslink, um einer Gruppe beizutreten</target>
+</trans-unit>
+<trans-unit id="s3eadd48b1fc794ca">
+  <source>An invite link looks like:</source>
+  <target>Ein Einladungslink sieht so aus:</target>
+</trans-unit>
+<trans-unit id="s9c0c49be73d09c2b">
+  <source>paste invite link here</source>
+  <target>Einladungslink hier einfugen</target>
+</trans-unit>
+<trans-unit id="sc2795100b3106520">
+  <source>invite link</source>
+  <target>Einladungslink</target>
+</trans-unit>
+<trans-unit id="s6c6bf3ea2ad3d219">
+  <source>Join</source>
+  <target>Beitreten</target>
+</trans-unit>
+<trans-unit id="sd8fc07c566540e32">
+  <source>I want to start a space for my group</source>
+  <target>Ich mochte einen Bereich fürmeine Gruppe erstellen</target>
+</trans-unit>
+<trans-unit id="s4e9e4d368feaf09a">
+  <source>Create new group space</source>
+  <target>Neuen Gruppenbereich erstellen</target>
+</trans-unit>
+<trans-unit id="s9c0f4d29e125d6d3">
+  <source>Skip Setup</source>
+  <target>Einrichtung uberspringen</target>
+</trans-unit>
+<trans-unit id="s47c33f08061ea16c">
+  <source>Holochain failed to start up and crashed :(</source>
+  <target>Holochain konnte nicht gestartet werden und ist abgesturzt :(</target>
+</trans-unit>
+<trans-unit id="scf5e435555ee676b">
+  <source>If you want to support us in finding the problem, please export the logs and send them to </source>
+  <target>Wenn Sie uns bei der Problemfindung unterstützen möchten, exportieren Sie bitte die Logs und senden Sie sie an </target>
+</trans-unit>
+<trans-unit id="s025d191d3f77cdf8">
+  <source>Open Logs</source>
+  <target>Logs öffnen</target>
+</trans-unit>
+<trans-unit id="s07e9dc65d473e7f2">
+  <source>Export Logs</source>
+  <target>Logs exportieren</target>
+</trans-unit>
+<trans-unit id="sad273202fc27c4b7">
+  <source>Choose whether you want to set up Moss with or without a password.</source>
+  <target>Wählen Sie, ob Sie Moss mit oder ohne Passwort einrichten möchten.</target>
+</trans-unit>
+<trans-unit id="sdbd1191439f543ae">
+  <source>The password will be used to encrypt your data locally on your device.</source>
+  <target>Das Passwort wird verwendet, um Ihre Daten lokal auf Ihrem Gerat zu verschlusseln.</target>
+</trans-unit>
+<trans-unit id="s441d1a59a5deb96e">
+  <source>A password cannot be added, changed or removed later.</source>
+  <target>Ein Passwort kann später nicht hinzugefügt, geändert oder entfernt werden.</target>
+</trans-unit>
+<trans-unit id="s1288a007963d95a7">
+  <source>Setup With Password</source>
+  <target>Mit Passwort einrichten</target>
+</trans-unit>
+<trans-unit id="s79cf807d7b63cbab">
+  <source>Setup Without Password</source>
+  <target>Ohne Passwort einrichten</target>
+</trans-unit>
+<trans-unit id="sff696c02c0929f45">
+  <source>Holochain failed to start up :(</source>
+  <target>Holochain konnte nicht gestartet werden :(</target>
+</trans-unit>
+<trans-unit id="sc16e00a7a8b2fde2">
+  <source>Back</source>
+  <target>Zuruck</target>
+</trans-unit>
+<trans-unit id="s111b0d2304f543bd">
+  <source>unknown...</source>
+  <target>unbekannt...</target>
+</trans-unit>
+<trans-unit id="s030b3a4396f2b7ff">
+  <source>Moss development is in alpha stage. We highly appreciate active feedback.</source>
+  <target>Moss befindet sich in der Alpha-Phase. Wir freuen uns sehr über aktives Feedback.</target>
+</trans-unit>
+<trans-unit id="s476d01fc816de04c">
+  <source>If you are encountering a problem and are familiar with Github, you can</source>
+  <target>Wenn Sie ein Problem haben und mit Github vertraut sind, können Sie</target>
+</trans-unit>
+<trans-unit id="sc17269a64b255817">
+  <source>create an issue on Github</source>
+  <target>ein Issue auf Github erstellen</target>
+</trans-unit>
+<trans-unit id="s51811537b64de77a">
+  <source>If you have more general feedback or are not familiar with Github, you can write to the following email address:</source>
+  <target>Wenn Sie allgemeineres Feedback haben oder mit Github nicht vertraut sind, können Sie an folgende E-Mail-Adresse schreiben:</target>
+</trans-unit>
+<trans-unit id="s890c46ca8389a6bb">
+  <source>Moss Update Available:</source>
+  <target>Moss-Update verfügbar:</target>
+</trans-unit>
+<trans-unit id="sb5137a7885462e4e">
+  <source>Installing...</source>
+  <target>Wird installiert...</target>
+</trans-unit>
+<trans-unit id="s419da48ed70a4441">
+  <source>Moss Updates</source>
+  <target>Moss-Neuigkeiten</target>
+</trans-unit>
+<trans-unit id="s2a9e85cf8b4290be">
+  <source>Thank you for surfing the edge of</source>
+  <target>Vielen Dank, dass Sie an der Spitze von</target>
+</trans-unit>
+<trans-unit id="sc905c0e43dffd27a">
+  <source>the Weave</source>
+  <target>the Weave</target>
+</trans-unit>
+<trans-unit id="s9cf80b52fc9a7340">
+  <source>Below are relevant updates for early weavers.</source>
+  <target>surfen. Unten finden Sie relevante Updates für frühe Weber.</target>
+</trans-unit>
+<trans-unit id="s94258cf18a3d4dd1">
+  <source>No big waves lately...</source>
+  <target>Keine großen Wellen in letzter Zeit...</target>
+</trans-unit>
+<trans-unit id="sa84f7d884e8b4074">
+  <source>Tool Update</source>
+  <target>Tool-Update</target>
+</trans-unit>
+<trans-unit id="sd3dd70be26a25f83">
+  <source>Updating Tool...</source>
+  <target>Tool wird aktualisiert...</target>
+</trans-unit>
+<trans-unit id="sbcd75c9c2a54295f">
+  <source>The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.</source>
+  <target>Der Gruppenersteller ist der erste Verwalter. Nur Verwalter können das Gruppenprofil bearbeiten, Tools hinzufügen und entfernen und weitere Verwalter hinzufügen.</target>
+</trans-unit>
+<trans-unit id="sd61c6c6ae1ff0b1e">
+  <source>All members have full permissions.</source>
+  <target>Alle Mitglieder haben volle Berechtigungen.</target>
+</trans-unit>
+<trans-unit id="s92c66a30f352bb00">
+  <source>my message</source>
+  <target>meine Nachricht</target>
+</trans-unit>
+<trans-unit id="s21f42760d50276ab">
+  <source>No group description.</source>
+  <target>Keine Gruppenbeschreibung.</target>
+</trans-unit>
+<trans-unit id="sd5fd20dba6d7320b">
+  <source>+ Add Description</source>
+  <target>+ Beschreibung hinzufügen</target>
+</trans-unit>
+<trans-unit id="sd720fd983f132077">
+  <source>Edit Description</source>
+  <target>Beschreibung bearbeiten</target>
+</trans-unit>
+<trans-unit id="sca4075a9f1d3cbaa">
+  <source>Moss Setup</source>
+  <target>Moss-Einrichtung</target>
+</trans-unit>
+<trans-unit id="sc63cfa3b53be6ac9">
+  <source>Choose Password</source>
+  <target>Passwort wählen</target>
+</trans-unit>
+<trans-unit id="s5faf8fad21294e9a">
+  <source>This password cannot be reset. Write it down or store it somewhere safe.</source>
+  <target>Dieses Passwort kann nicht zurückgesetzt werden. Schreiben Sie es auf oder speichern Sie es an einem sicheren Ort.</target>
+</trans-unit>
+<trans-unit id="sa3a2b1128ad8dca6">
+  <source>Password:</source>
+  <target>Passwort:</target>
+</trans-unit>
+<trans-unit id="s0fbf6dc6a1966408">
+  <source>Next</source>
+  <target>Weiter</target>
+</trans-unit>
+<trans-unit id="s3dab6bcbc22dc3e0">
+  <source>Confirm Password</source>
+  <target>Passwort bestätigen</target>
+</trans-unit>
+<trans-unit id="s0b6a0ca3518fcea9">
+  <source>Passwords don't match!</source>
+  <target>Passwörter stimmen nicht überein!</target>
+</trans-unit>
+<trans-unit id="s0517cbdc99386032">
+  <source>Setup and Launch</source>
+  <target>Einrichten und Starten</target>
+</trans-unit>
+<trans-unit id="s6a2222b29743d24c">
+  <source>Enter Password:</source>
+  <target>Passwort eingeben:</target>
+</trans-unit>
+<trans-unit id="s512957aa09384646">
+  <source>Launch</source>
+  <target>Starten</target>
+</trans-unit>
+<trans-unit id="s248ed9756a4bce17">
+  <source>loading</source>
+  <target>wird geladen</target>
+</trans-unit>
+<trans-unit id="s45156213b0fb2396">
+  <source>Quit</source>
+  <target>Beenden</target>
+</trans-unit>
+<trans-unit id="s5e8250fb85d64c23">
+  <source>Close</source>
+  <target>Schließen</target>
+</trans-unit>
+<trans-unit id="s823aec927799efba">
+  <source>starting Holochain...</source>
+  <target>Holochain wird gestartet...</target>
+</trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Bitte beachten Sie, dass die Sprachübersetzungen hier von KI erstellt wurden. Wenn Sie Fehler finden, senden Sie uns bitte Feedback. Sie können das In-App-Screenshot/Feedback-Tool im Feedback-Dialog aktivieren, der über die Feedback-Schaltfläche auf der Startseite erreichbar ist.</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>um Zwischenablage zu öffnen</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Nichts in Ihrer Tasche. Achten Sie auf Taschensymbole, um Dinge zu Ihrer Tasche hinzuzufügen.</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>Ablegen, um zur Tasche hinzuzufügen</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Nichts in Ihrer Tasche. Achten Sie auf Taschensymbole, um Assets zu Ihrer Tasche hinzuzufügen.</target>
+</trans-unit>
+<trans-unit id="s04b098165a8b8e1a">
+  <source>Foyer</source>
+  <target>Foyer</target>
+</trans-unit>
+<trans-unit id="sf72cde0d8fea70e1">
+  <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
+  <target>Das Foyer ist ein Bereich zum Senden von flüchtigen Nachrichten an andere Gruppenmitglieder.</target>
+</trans-unit>
+<trans-unit id="sd8ea620cc72ecf78">
+  <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
+  <target>Keine dieser Nachrichten wird jemals gespeichert, und sie werden nur an andere Mitglieder gesendet, die in der Mitgliederliste der Gruppe als online angezeigt werden.</target>
+</trans-unit>
+<trans-unit id="sa9f7f0bd2f12faa0">
+  <source>Foyer Messages:</source>
+  <target>Foyer-Nachrichten:</target>
+</trans-unit>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Sie müssen eine Gruppe erstellen oder beitreten, bevor Sie Tools installieren können.</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Fehler beim Abrufen der registrierten Tools in dieser Gruppe</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Fehler beim Anzeigen der Tools</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Fehler beim Abrufen der in dieser Gruppe installierten Tools</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Fehler beim Abrufen der laufenden Tools.</target>
+</trans-unit>
+<trans-unit id="s182d4e00e211dcca">
+  <source>Design Feedback</source>
+  <target>Design-Feedback</target>
+</trans-unit>
+<trans-unit id="s48218f1042ae9df4">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Aktivieren Sie den Design-Feedback-Modus, um eine Feedback-Schaltfläche in der oberen rechten Ecke anzuzeigen. Klicken Sie darauf, um einen Screenshot eines Bereichs aufzunehmen und Feedback zu senden.</target>
+</trans-unit>
+<trans-unit id="sd24445593cfc39de">
+  <source>Enable Design Feedback Mode</source>
+  <target>Design-Feedback-Modus aktivieren</target>
+</trans-unit>
+<trans-unit id="s1a5230a71d9285c1">
+  <source>Capture</source>
+  <target>Aufnehmen</target>
+</trans-unit>
+<trans-unit id="sb5e180cb985511ff">
+  <source>Click and drag to select an area</source>
+  <target>Klicken und ziehen, um einen Bereich auszuwählen</target>
+</trans-unit>
+<trans-unit id="s5fa1b8f452fda064">
+  <source>Submit Feedback</source>
+  <target>Feedback senden</target>
+</trans-unit>
+<trans-unit id="sb2682d714ccbac46">
+  <source>Describe your feedback</source>
+  <target>Beschreiben Sie Ihr Feedback</target>
+</trans-unit>
+<trans-unit id="s5ac24d9358320eef">
+  <source>What would you like to share about this part of the UI?</source>
+  <target>Was möchten Sie zu diesem Teil der Benutzeroberfläche mitteilen?</target>
+</trans-unit>
+<trans-unit id="sb3d4f79d9d8b71e5">
+  <source>Submit</source>
+  <target>Senden</target>
+</trans-unit>
+<trans-unit id="sd8505ee703ddcb65">
+  <source>Give Design Feedback</source>
+  <target>Design-Feedback geben</target>
+</trans-unit>
+<trans-unit id="sa832cb9d119e48f8">
+  <source>Copied to clipboard</source>
+  <target>In die Zwischenablage kopiert</target>
+</trans-unit>
+<trans-unit id="s417a0b7eadfddf0e">
+  <source>Feedback History</source>
+  <target>Feedback-Verlauf</target>
+</trans-unit>
+<trans-unit id="sf55d0809d5afeafc">
+  <source>No feedback submitted yet.</source>
+  <target>Noch kein Feedback eingereicht.</target>
+</trans-unit>
+<trans-unit id="s8b7af9c477e83543">
+  <source>View Issue</source>
+  <target>Issue ansehen</target>
+</trans-unit>
+<trans-unit id="sea97ee88ea35358e">
+  <source>Moss GitHub repo</source>
+  <target>Moss GitHub-Repository</target>
+</trans-unit>
+<trans-unit id="see302f30d4ca5691">
+  <source>Feedback submitted. GitHub issue created.</source>
+  <target>Feedback eingereicht. GitHub-Issue erstellt.</target>
+</trans-unit>
+<trans-unit id="se2841d25d173cfa5">
+  <source>Feedback saved locally. Could not create GitHub issue.</source>
+  <target>Feedback lokal gespeichert. GitHub-Issue konnte nicht erstellt werden.</target>
+</trans-unit>
+<trans-unit id="s403d86e8b3392e49">
+  <source>Feedback saved locally.</source>
+  <target>Feedback lokal gespeichert.</target>
+</trans-unit>
+<trans-unit id="sbccd620b66cf8efd">
+  <source>Feedback saved locally. Could not reach server.</source>
+  <target>Feedback lokal gespeichert. Server nicht erreichbar.</target>
+</trans-unit>
+<trans-unit id="sa001c7eb0d28aaec">
+  <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
+  <target>Dieser Screenshot und Text sowie die Moss-Version und OS-Informationen werden als öffentliches GitHub-Issue zum</target>
+</trans-unit>
+<trans-unit id="sed6fca73e1adda45">
+  <source>Design Feedback Mode</source>
+  <target>Design-Feedback-Modus</target>
+</trans-unit>
+<trans-unit id="s6b17a3076dcd1490">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Aktivieren Sie den Design-Feedback-Modus, um Screenshots aufzunehmen und visuelles Feedback direkt von überall in der App zu senden. Eine Feedback-Schaltfläche erscheint in der oberen rechten Ecke, mit der Sie einen beliebigen Bereich des Bildschirms auswählen und Ihr Feedback beschreiben können.</target>
+</trans-unit>
+<trans-unit id="sdd3888e4a6dbb0b7">
+  <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
+  <target>Sie können diesen Modus auch in Einstellungen &gt; Feedback aktivieren oder deaktivieren.</target>
+</trans-unit>
+<trans-unit id="s415e501370e4f1e4">
+  <source>Other Ways to Give Feedback</source>
+  <target>Andere Möglichkeiten, Feedback zu geben</target>
+</trans-unit>
+<trans-unit id="sd1b9a0f04718bc5d">
+  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
+  <target>Wenn Sie es privat senden möchten, klicken Sie auf "Kopieren", um das Feedback in Ihre Zwischenablage zu kopieren und per E-Mail an moss.0.15.feedback@theweave.social zu senden.</target>
+</trans-unit>
+<trans-unit id="s08a64b07b54df8d4">
+  <source>by</source>
+</trans-unit>
+<trans-unit id="s8763e7dbdf84093d">
+  <source>Installation successful</source>
+</trans-unit>
+<trans-unit id="s08a95f07b55050a7">
+  <source>me</source>
+</trans-unit>
+<trans-unit id="sf70accff890a3e36">
+  <source>Tool activated.</source>
+</trans-unit>
+<trans-unit id="s3a41d065ac965e2a">
+  <source>abandoned by:</source>
+</trans-unit>
+<trans-unit id="s6466997515d6d5b3">
+  <source>New Steward Added.</source>
+</trans-unit>
+<trans-unit id="s3d0d58199047bee5">
+  <source>Uninstalled by:</source>
+</trans-unit>
+<trans-unit id="sa60b341bc63f22e5">
+  <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
+</trans-unit>
+<trans-unit id="sb6e3761a156a287c">
+  <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
+</trans-unit>
+<trans-unit id="sef15c43dfc461396">
+  <source>Failed to activate all tools (see console for details).</source>
+</trans-unit>
+<trans-unit id="s4cbb78c19c17b7eb">
+  <source>Steward role assigned.</source>
+</trans-unit>
+<trans-unit id="s2a61c518d1e493d1">
+  <source>Profile updated.</source>
+</trans-unit>
+<trans-unit id="s365a7b194bc6e1dd">
+  <source>Tool installed.</source>
+</trans-unit>
+<trans-unit id="sb5f4daa1bf12f954">
+  <source>DhtOp logged to console.</source>
+</trans-unit>
+<trans-unit id="s949586df2fc249a6">
+  <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
+</trans-unit>
+<trans-unit id="s6d4ea06717ba190f">
+  <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
+</trans-unit>
+<trans-unit id="se122ec103ad3a22b">
+  <source>Asset Viewer</source>
+  <target>Asset-Betrachter</target>
+</trans-unit>
+<trans-unit id="s502cf76d28a6568a">
+  <source>This is where assets are displayed. Opening an asset from one of your Tools will create a new tab here.</source>
+  <target>Hier werden Assets angezeigt. Wenn Sie ein Asset aus einem Ihrer Tools öffnen, wird hier ein neuer Tab erstellt.</target>
+</trans-unit>
+<trans-unit id="s86f9012852d0da41">
+  <source>Hide Asset Viewer</source>
+  <target>Asset-Betrachter ausblenden</target>
+</trans-unit>
+<trans-unit id="s2d226848fc48a75e">
+  <source>Show Asset Viewer</source>
+  <target>Asset-Betrachter anzeigen</target>
+</trans-unit>
+<trans-unit id="s6b2ba4a7ab6305f9">
+  <source>Role:</source>
+  <target>Rolle:</target>
+</trans-unit>
+<trans-unit id="s264e444c900d09b1">
+  <source>Local Time:</source>
+  <target>Ortszeit:</target>
+</trans-unit>
+</body>
+</file>
+</xliff>

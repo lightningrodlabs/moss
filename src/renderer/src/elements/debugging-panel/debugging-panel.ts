@@ -2,7 +2,7 @@ import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import {localized, msg} from '@lit/localize';
 import {
   AppClient,
   CellId,
@@ -38,7 +38,7 @@ import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellName, groupModifiersToAppId } from '../../utils.js';
+import { getCellName, groupModifiersToAppId, safeSetInterval, SafeIntervalHandle } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
@@ -127,7 +127,7 @@ export class DebuggingPanel extends LitElement {
   );
 
   @state()
-  _refreshInterval: number | undefined;
+  _refreshInterval: SafeIntervalHandle | undefined;
 
   @state()
   _appletsWithDetails: AppletId[] = [];
@@ -161,11 +161,17 @@ export class DebuggingPanel extends LitElement {
   _transportToAgentMap: Record<InstalledAppId, Map<string, string>> = {};
 
   async firstUpdated() {
-    // TODO add interval here to reload stuff
-    this._refreshInterval = window.setInterval(() => {
-      this.requestUpdate();
-      setTimeout(() => this.pollNetworkStats());
-    }, 2000);
+    // Poll network stats periodically
+    // Uses safeSetInterval to prevent call stacking if polling is slow
+    this._refreshInterval = safeSetInterval({
+      name: 'pollNetworkStats',
+      fn: async () => {
+        await this.pollNetworkStats();
+        this.requestUpdate();
+      },
+      intervalMs: 2000,
+      runImmediately: false,
+    });
     // populate group app ids
     const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
     await Promise.all(
@@ -181,7 +187,7 @@ export class DebuggingPanel extends LitElement {
 
   disconnectedCallback(): void {
     if (this._refreshInterval) {
-      window.clearInterval(this._refreshInterval);
+      this._refreshInterval.cancel();
       this._refreshInterval = undefined;
     }
   }
@@ -961,7 +967,7 @@ export class DebuggingPanel extends LitElement {
         return html`Loading...`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Failed to get running applets.')}
+          .headline=${msg('Failed to get running Tools.')}
           tooltip
           .error=${this._applets.value.error}
         ></display-error>`;
@@ -1011,7 +1017,7 @@ export class DebuggingPanel extends LitElement {
         <sl-button
           @click=${async () => {
         await window.electronAPI.dumpNetworkStats();
-        notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
+        notify(msg('Stats saved to logs folder (Help > Open Logs)'), undefined, undefined, 7000);
       }}
           style="margin-top: 20px;"
         >

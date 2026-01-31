@@ -21,7 +21,7 @@ import {
 import { consume } from '@lit/context';
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
 import { mdiCog, mdiHomeOutline } from '@mdi/js';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { Value } from '@sinclair/typebox/value';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
@@ -150,7 +150,7 @@ export class GroupHome extends LitElement {
   _unsubscribe: Unsubscriber | undefined;
 
   // Memoization for performance
-  private _timeAgo = new TimeAgo('en-US');
+  private _timeAgo = getLocalizedTimeAgo();
   private _cachedFilteredApplets: Array<{
     appletHash: AppletHash;
     appletEntry: Applet | undefined;
@@ -411,7 +411,7 @@ export class GroupHome extends LitElement {
           bubbles: true,
         }),
       );
-      notify('Tool installed.');
+      notify(msg('Tool installed.'));
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       this._showIgnoredApplets = false;
     } catch (e) {
@@ -730,7 +730,7 @@ export class GroupHome extends LitElement {
         if (!this._groupDescription.value.value || !this._groupDescription.value.value.data?.trim()) {
           return html`
             <div class="column center-content" style="flex: 1; padding: 40px 0;">
-              No group description.
+              ${msg('No group description.')}
               <button
                 class="moss-button"
                 style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
@@ -740,14 +740,14 @@ export class GroupHome extends LitElement {
               this._editGroupDescription = true;
             }}
               >
-                + Add Description
+                ${msg('+ Add Description')}
               </button>
             </div>
           `;
         } else {
           return html`
             <div class="column" style="position: relative;">
-              <sl-tooltip content="Edit Description">
+              <sl-tooltip content=${msg('Edit Description')}>
                 <button
                   class="moss-button"
                   style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
@@ -817,7 +817,7 @@ export class GroupHome extends LitElement {
       }}
         title=${hashB64}
         class="copyable-hash"
-        >${msg(text)}: ${hashText}</span
+        >${text}: ${hashText}</span
       >
     `;
   }

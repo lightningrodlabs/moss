@@ -159,7 +159,7 @@ export class InstallToolDialogWeb2 extends LitElement {
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
       setTimeout(() => {
-        notify('Installation successful');
+        notify(msg('Installation successful'));
         this.close();
         this.dispatchEvent(
           new CustomEvent('applet-installed', {
@@ -262,7 +262,7 @@ export class InstallToolDialogWeb2 extends LitElement {
 
       case 'error':
         return html`<display-error
-          .headline=${msg('Error fetching the registered applets in this group')}
+          .headline=${msg('Error fetching the registered Tools in this group')}
           .error=${this._registeredApplets.value.error}
         ></display-error>`;
     }

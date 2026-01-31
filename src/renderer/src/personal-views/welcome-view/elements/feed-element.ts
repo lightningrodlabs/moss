@@ -17,7 +17,7 @@ import { decodeHashFromBase64 } from '@holochain/client';
 import { AppletNotification, GroupDnaHash } from '../../../types.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { stringToMessageParts } from '../../../utils.js';
 import { toPromise } from '@holochain-open-dev/stores';
@@ -55,7 +55,7 @@ export class FeedElement extends LitElement {
   }
 
   render() {
-    const timeAgo = new TimeAgo('en-US');
+    const timeAgo = getLocalizedTimeAgo();
     const messageParts = stringToMessageParts(this.notification.notification.body);
     return html`
       <div

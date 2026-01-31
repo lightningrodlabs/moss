@@ -10,6 +10,7 @@ export type MossConfig = {
   groupHapp: VersionAndSha256;
   kando: VersionAndSha256;
   binariesAppendix: string;
+  feedbackWorkerUrl?: string;
 };
 
 type VersionAndSha256 = {

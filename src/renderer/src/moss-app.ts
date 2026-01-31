@@ -24,6 +24,7 @@ import { defaultIcons } from './elements/_new_design/defaultIcons.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
+import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 
 enum MossAppState {
@@ -43,7 +44,7 @@ export class MossApp extends LitElement {
   state: MossAppState = MossAppState.Loading;
 
   @state()
-  _appletUiUpdateCheckInterval: number | undefined;
+  _appletUiUpdateCheckInterval: SafeIntervalHandle | undefined;
 
   // @state()
   // previousState: State = { state: 'loading' };
@@ -96,10 +97,13 @@ export class MossApp extends LitElement {
   // private avatar = '';
 
   @state()
-  private loadingText = 'loading...';
+  private loadingText = msg('loading...');
 
   async firstUpdated() {
-    this.loadingText = 'loading...';
+    // Note: Locale is initialized in index.html before the app loads
+    // to avoid flash of untranslated content
+
+    this.loadingText = msg('loading...');
     window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
@@ -114,15 +118,20 @@ export class MossApp extends LitElement {
 
     await this._mossStore.checkForUiUpdates();
     // Check once every hour or on page refresh
-    this._appletUiUpdateCheckInterval = window.setInterval(
-      async () => await this._mossStore.checkForUiUpdates(),
-      3_600_000,
-    );
+    // Uses safeSetInterval to prevent call stacking
+    this._appletUiUpdateCheckInterval = safeSetInterval({
+      name: 'checkForUiUpdates',
+      fn: async () => {
+        await this._mossStore.checkForUiUpdates();
+      },
+      intervalMs: 3_600_000,
+      runImmediately: false,
+    });
   }
 
   disconnectedCallback(): void {
     if (this._appletUiUpdateCheckInterval) {
-      window.clearInterval(this._appletUiUpdateCheckInterval);
+      this._appletUiUpdateCheckInterval.cancel();
     }
     window.removeEventListener('message', handleHappMessage);
   }
@@ -143,7 +152,7 @@ export class MossApp extends LitElement {
     // is being run as part of a page reload)
     if (!info) {
       try {
-        this.loadingText = 'starting Holochain...';
+        this.loadingText = msg('starting Holochain...');
         await window.electronAPI.launch();
         info = await getConductorInfo();
         if (!info) throw new Error('Failed to get conductor info after launch.');
@@ -277,7 +286,7 @@ export class MossApp extends LitElement {
           <div class="column items-center">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'My group is called'}</span
+              >${msg('My group is called')}</span
             >
 
             <sl-input
@@ -358,7 +367,7 @@ export class MossApp extends LitElement {
           <div class="column items-center flex-1" style="height: calc(100% - 28px);">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'Choose Group Type'}</span
+              >${msg('Choose Group Type')}</span
             >
 
             <sl-radio-group
@@ -481,10 +490,10 @@ export class MossApp extends LitElement {
         <div class="moss-card" style="width: 630px; height: 466px;">
           <div class="column items-center">
             <div class="card-title" style="margin-top: 30px;">
-              ${joining ? 'Joining group' : 'Creating a new space'}
+              ${joining ? msg('Joining group') : msg('Creating a new space')}
             </div>
             <div class="card-title medium-green" style="margin-bottom: 38px;">
-              ${'in the beautiful p2p realm.'}
+              ${msg('in the beautiful p2p realm.')}
             </div>
 
             <img src="loading_animation.svg" />
@@ -581,7 +590,7 @@ export class MossApp extends LitElement {
           class="skip-button"
           style="position: absolute; bottom: 10px;"
         >
-          ${'Skip Setup'}
+          ${msg('Skip Setup')}
         </button>
       </div>
     `;

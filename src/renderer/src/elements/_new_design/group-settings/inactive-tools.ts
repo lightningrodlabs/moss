@@ -5,7 +5,7 @@ import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { mossStoreContext } from '../../../context';
 import { MossStore } from '../../../moss-store';
 import { groupStoreContext } from '../../../groups/context';
@@ -13,7 +13,7 @@ import { GroupStore } from '../../../groups/group-store';
 import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../../shared-styles';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { Value } from '@sinclair/typebox/value';
 import {
   activateToolIcon,
@@ -50,7 +50,7 @@ export class InactiveTools extends LitElement {
 
       // Only show individual notification if not activating all
       if (!this._activatingAll) {
-        notify('Tool activated.');
+        notify(msg('Tool activated.'));
       }
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       //this._showIgnoredApplets = false;
@@ -144,11 +144,11 @@ export class InactiveTools extends LitElement {
     this._activatingAll = false;
 
     if (failCount === 0) {
-      notify(`Successfully activated all ${successCount} tools.`);
+      notify(msg(str`Successfully activated all ${successCount} tools.`));
     } else if (successCount > 0) {
-      notify(`Activated ${successCount} tools. ${failCount} failed (see console for details).`);
+      notify(msg(str`Activated ${successCount} tools. ${failCount} failed (see console for details).`));
     } else {
-      notifyError(`Failed to activate all tools (see console for details).`);
+      notifyError(msg(`Failed to activate all tools (see console for details).`));
     }
   }
 
@@ -166,7 +166,7 @@ export class InactiveTools extends LitElement {
           <span>${this._unjoinedApplets.value.error}</span>
         </div> `;
       case 'complete':
-        const timeAgo = new TimeAgo('en-US');
+        const timeAgo = getLocalizedTimeAgo();
         const ignoredApplets = this._mossStore.persistedStore.ignoredApplets.value(
           encodeHashToBase64(this._groupStore.groupDnaHash),
         );

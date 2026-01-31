@@ -193,7 +193,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
       case 'complete':
         return html`
           <div class="participants row">
-            <span>In use by: </span>
+            <span>${msg('In use by: ')}</span>
             ${this._joinedMembers.value.value.length === 0
             ? html`<span>Nobody activated this tool or everyone abandoned it.</span>`
             : this._joinedMembers.value.value.map(
@@ -223,7 +223,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
           <div class="row items-center" style="margin-top: 4px;">
-            <span>Uninstalled by: </span>
+            <span>${msg('Uninstalled by:')} </span>
             ${this._abandonedMembers.value.value.map(
           (appletAgent) => html`
                 <agent-avatar

@@ -83,7 +83,7 @@ export class ToolsSettings extends LitElement {
         </div>`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Error fetching the applets installed in this group')}
+          .headline=${msg('Error fetching the Tools installed in this group')}
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':

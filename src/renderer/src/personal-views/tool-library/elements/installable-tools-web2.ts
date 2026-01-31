@@ -16,7 +16,6 @@ import '../../../groups/elements/group-context.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
-import TimeAgo from 'javascript-time-ago';
 import './tool-publisher.js';
 import { ToolAndCurationInfo, UnifiedToolEntry } from '../../../types.js';
 import { getPrimaryVersionBranch, extractMajorVersion } from '../../../utils.js';
@@ -53,8 +52,6 @@ export class InstallableToolsWeb2 extends LitElement {
   toolDetails: LibraryToolDetails | undefined;
 
   async firstUpdated() { }
-
-  timeAgo = new TimeAgo('en-US');
 
   @state()
   selectedTool: UnifiedToolEntry | undefined;
@@ -124,10 +121,9 @@ export class InstallableToolsWeb2 extends LitElement {
         : ''}
             <sl-tooltip content="visit developer's website">
               <div class="tool-developer">
-                <span  style="opacity:.4">by</span>
+                <span  style="opacity:.4">${msg('by')}</span>
                 <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
-                  >${this.devCollectives[tool.toolListUrl].name}</a
-                >
+                  >${this.devCollectives[tool.toolListUrl].name}</a>
               </div>
             </sl-tooltip>
           </div>
@@ -214,7 +210,7 @@ export class InstallableToolsWeb2 extends LitElement {
 
           <sl-tooltip content="visit developer's website">
         <div class="tool-developer">
-          <span style="opacity:.4">by</span>
+          <span style="opacity:.4">${msg('by')}</span>
             <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}"
               >${this.devCollectives[this.selectedTool.toolListUrl].name}</a
             >

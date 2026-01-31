@@ -132,7 +132,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
           id="error-input"
           style="position: absolute; z-index: -1; left: 50%; top: 30px; height: 0; width: 0"
         />
-        <sl-tooltip placement="bottom" content="${msg(this.label)}">
+        <sl-tooltip placement="bottom" content="${this.label}">
           ${this.renderAvatar()}
         </sl-tooltip>
       </div>`;

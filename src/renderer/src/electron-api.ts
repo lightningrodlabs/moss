@@ -143,6 +143,36 @@ declare global {
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
+      captureScreen: () => Promise<string>;
+      getFeedbackWorkerUrl: () => Promise<string>;
+      saveFeedback: (feedback: {
+        text: string;
+        screenshot: string;
+        mossVersion: string;
+        os: string;
+        timestamp: number;
+        issueUrl?: string;
+      }) => Promise<string>;
+      listFeedback: () => Promise<
+        Array<{
+          id: string;
+          text: string;
+          mossVersion: string;
+          os: string;
+          timestamp: number;
+          issueUrl?: string;
+        }>
+      >;
+      getFeedback: (id: string) => Promise<{
+        id: string;
+        text: string;
+        screenshot: string;
+        mossVersion: string;
+        os: string;
+        timestamp: number;
+        issueUrl?: string;
+      } | null>;
+      updateFeedbackIssueUrl: (id: string, issueUrl: string) => Promise<void>;
       batchUpdateAppletUis: (
         toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,

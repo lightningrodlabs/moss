@@ -16,6 +16,32 @@ export class PersistedStore {
   }
 
   /**
+   * User's preferred locale for the UI (e.g. 'en', 'de', 'fr', 'es')
+   */
+  locale: SubStore<string, string, []> = {
+    value: () => {
+      const locale = this.store.getItem<string>('locale');
+      return locale ? locale : 'en';
+    },
+    set: (value) => {
+      this.store.setItem<string>('locale', value);
+    },
+  };
+
+  /**
+   * Whether design feedback mode is enabled (shows feedback icon overlay)
+   */
+  designFeedbackMode: SubStore<boolean, boolean, []> = {
+    value: () => {
+      const enabled = this.store.getItem<boolean>('designFeedbackMode');
+      return enabled ? enabled : false;
+    },
+    set: (value) => {
+      this.store.setItem<boolean>('designFeedbackMode', value);
+    },
+  };
+
+  /**
    * Whether the applet sidebar is in collapsed mode or not
    */
   appletSidebarCollapsed: SubStore<boolean, boolean, []> = {

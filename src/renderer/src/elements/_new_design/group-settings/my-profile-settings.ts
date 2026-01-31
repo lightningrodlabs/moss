@@ -68,7 +68,7 @@ export class MyProfileSettings extends LitElement {
           @save-profile=${async (e: CustomEvent) => {
             await this._groupStore.profilesStore.client.updateProfile(e.detail.profile);
             this.editProfileEl!.clearLoading();
-            notify('Profile updated.');
+            notify(msg('Profile updated.'));
           }}
         ></moss-edit-profile>`;
       case 'pending':

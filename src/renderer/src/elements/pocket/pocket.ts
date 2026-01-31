@@ -199,7 +199,7 @@ export class MossPocket extends LitElement {
                     style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
                     >Alt + S</span
                   >
-                  to open Clipboard
+                  ${msg('to open Clipboard')}
                 </div>`
         : html``
       }
@@ -228,7 +228,7 @@ export class MossPocket extends LitElement {
                         src="magic-wand.svg"
                         style="color: white; height: 20px; margin-right: 4px;"
                       />
-                      <div>Create New</div>
+                      <div>${msg('Create New')}</div>
                     </div>
                   </sl-button>
                 `
@@ -256,8 +256,7 @@ export class MossPocket extends LitElement {
                             ></wal-created-element>
                           `,
             )
-            : html`Nothing in your pocket. Watch out for pocket icons to add things to
-                        your pocket.`}
+            : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`}
                   </div>
                 `
         : html``
@@ -281,8 +280,7 @@ export class MossPocket extends LitElement {
                         ></wal-element>
                       `,
           )
-        : html`Nothing in your pocket. Watch out for pocket icons to add things to your
-                  pocket.`
+        : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`
       }
           </div>
       </moss-dialog>

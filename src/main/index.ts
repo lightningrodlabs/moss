@@ -29,6 +29,7 @@ import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
 import { MossFileSystem, deriveAppAssetsInfo } from './filesystem';
+import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -1076,6 +1077,63 @@ if (!RUNNING_WITH_COMMAND) {
       if (SELECT_SCREEN_OR_WINDOW_WINDOW)
         return Promise.reject('Cannot select multiple screens/windows at once.');
       return selectScreenOrWindow();
+    });
+    ipcMain.handle('capture-screen', async () => {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (!focusedWindow) {
+        throw new Error('No focused window to capture');
+      }
+      const image = await focusedWindow.capturePage();
+      return image.toDataURL();
+    });
+    ipcMain.handle('get-feedback-worker-url', () => {
+      return MOSS_CONFIG.feedbackWorkerUrl || '';
+    });
+    ipcMain.handle(
+      'save-feedback',
+      async (
+        _e,
+        feedback: {
+          text: string;
+          screenshot: string;
+          mossVersion: string;
+          os: string;
+          timestamp: number;
+          issueUrl?: string;
+        },
+      ) => {
+        const id = `${feedback.timestamp}-${Math.random().toString(36).substring(2, 8)}`;
+        const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
+        fs.writeFileSync(filePath, JSON.stringify({ id, ...feedback }, null, 2));
+        return id;
+      },
+    );
+    ipcMain.handle('list-feedback', async () => {
+      const files = fs.readdirSync(WE_FILE_SYSTEM.feedbackDir).filter((f) => f.endsWith('.json'));
+      return files
+        .map((f) => {
+          const content = JSON.parse(
+            fs.readFileSync(path.join(WE_FILE_SYSTEM.feedbackDir, f), 'utf-8'),
+          );
+          // Return without screenshot to keep payload small
+          const { screenshot: _, ...rest } = content;
+          return rest;
+        })
+        .sort(
+          (a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp,
+        );
+    });
+    ipcMain.handle('get-feedback', async (_e, id: string) => {
+      const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
+      if (!fs.existsSync(filePath)) return null;
+      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    });
+    ipcMain.handle('update-feedback-issue-url', async (_e, id: string, issueUrl: string) => {
+      const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
+      if (!fs.existsSync(filePath)) return;
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      content.issueUrl = issueUrl;
+      fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
     });
     ipcMain.handle('source-selected', (_e, id: string) =>
       WE_EMITTER.emitScreenOrWindowSelected(id),
