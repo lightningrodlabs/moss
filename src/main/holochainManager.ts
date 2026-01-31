@@ -108,8 +108,13 @@ export class HolochainManager {
       advancedSettings['irohTransport'] = {
         relayAllowPlainText: true,
       };
-      conductorConfig.network.advanced = advancedSettings;
     }
+    const advancedSettings = conductorConfig.network.advanced
+      ? conductorConfig.network.advanced
+      : {};
+    advancedSettings.coreBootstrap = { backoffMaxMs: 10000 }
+    advancedSettings.coreSpace = { reSignExpireTimeMs: 10000, reSignFreqMs: 10000 }
+    conductorConfig.network.advanced = advancedSettings;
 
     console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
 

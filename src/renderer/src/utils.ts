@@ -62,34 +62,34 @@ function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: s
   if (!prereleaseA && !prereleaseB) return 0;
   if (!prereleaseA) return 1; // No prerelease is later
   if (!prereleaseB) return -1; // No prerelease is later
-  
+
   // Extract the identifier part (e.g., "rc.1" -> "rc", "dev.3" -> "dev")
   const getIdentifier = (pr: string): string => {
     const match = pr.match(/^([a-zA-Z]+)/);
     return match ? match[1].toLowerCase() : '';
   };
-  
+
   const idA = getIdentifier(prereleaseA);
   const idB = getIdentifier(prereleaseB);
-  
+
   // "rc" is later than "dev"
   if (idA === 'rc' && idB === 'dev') return 1;
   if (idA === 'dev' && idB === 'rc') return -1;
-  
+
   // For same identifier type, compare properly handling numeric parts
   // Split by dots and compare each part
   const partsA = prereleaseA.split('.');
   const partsB = prereleaseB.split('.');
   const maxLen = Math.max(partsA.length, partsB.length);
-  
+
   for (let i = 0; i < maxLen; i++) {
     const partA = partsA[i] || '';
     const partB = partsB[i] || '';
-    
+
     // Try to parse as numbers
     const numA = parseInt(partA, 10);
     const numB = parseInt(partB, 10);
-    
+
     if (!isNaN(numA) && !isNaN(numB)) {
       // Both are numbers, compare numerically
       if (numB !== numA) return numB - numA; // Descending
@@ -99,7 +99,7 @@ function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: s
       if (cmp !== 0) return cmp;
     }
   }
-  
+
   return 0;
 }
 
@@ -112,32 +112,32 @@ function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: s
 export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
   const validVersions = versions.filter((version) => validateSemver(version.version));
   const invalidVersions = versions.filter((version) => !validateSemver(version.version));
-  
+
   const sorted = validVersions.sort((version_a, version_b) => {
     const vA = version_a.version;
     const vB = version_b.version;
-    
+
     // First compare the main version parts (without prerelease)
     const mainCompare = compareVersions(
-      vB.split('-')[0], 
+      vB.split('-')[0],
       vA.split('-')[0]
     );
-    
+
     if (mainCompare !== 0) {
       return mainCompare;
     }
-    
+
     // If main versions are equal, compare prerelease identifiers
     const prereleaseA = vA.includes('-') ? vA.split('-').slice(1).join('-') : null;
     const prereleaseB = vB.includes('-') ? vB.split('-').slice(1).join('-') : null;
-    
+
     if (!prereleaseA && !prereleaseB) return 0;
     if (!prereleaseA) return 1; // No prerelease is later than prerelease
     if (!prereleaseB) return -1; // Prerelease is earlier than no prerelease
-    
+
     return comparePreReleaseIdentifiers(prereleaseA, prereleaseB);
   });
-  
+
   // Append invalid versions at the end
   return [...sorted, ...invalidVersions];
 }
@@ -1032,10 +1032,10 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       wal,
       recordInfo: location.entryDefLocation
         ? {
-            roleName: location.dnaLocation.roleName,
-            integrityZomeName: location.entryDefLocation.integrity_zome,
-            entryType: location.entryDefLocation.entry_def,
-          }
+          roleName: location.dnaLocation.roleName,
+          integrityZomeName: location.entryDefLocation.integrity_zome,
+          entryType: location.entryDefLocation.entry_def,
+        }
         : undefined,
     },
   };
@@ -1043,7 +1043,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
   const appletHash = decodeHashFromBase64(appletId);
   const groups = await mossStore.getGroupsForApplet(appletHash);
   if (groups.length == 0) {
-      throw new Error('No groups found for applet.');
+    throw new Error('No groups found for applet.');
   }
   const groupHash = groups[0];
   if (mossStore.isAppletDev) {
@@ -1246,5 +1246,96 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
   return {
     tools,
     devCollective: devModeDeveloperCollective,
+  };
+}
+
+// ============================================================================
+// Safe Interval Utilities
+// ============================================================================
+
+export interface SafeIntervalOptions {
+  /** Human-readable name for logging purposes */
+  name: string;
+  /** The async function to call periodically */
+  fn: () => Promise<void>;
+  /** Interval in milliseconds between the END of one call and the START of the next */
+  intervalMs: number;
+  /** Optional: run immediately on start (default: false) */
+  runImmediately?: boolean;
+}
+
+export interface SafeIntervalHandle {
+  /** Cancel the interval - any in-progress call will complete but no more will be scheduled */
+  cancel: () => void;
+}
+
+/**
+ * Creates a safe interval that prevents stacking of async calls.
+ *
+ * Unlike setInterval, this uses a self-rescheduling pattern:
+ * - Waits for the current call to complete before scheduling the next
+ * - The interval is measured from the END of one call to the START of the next
+ * - This prevents call buildup when operations are slow
+ *
+ * Logs a warning if the operation takes longer than the interval.
+ *
+ * @example
+ * const handle = safeSetInterval({
+ *   name: 'pingAgents',
+ *   fn: async () => { await pingAgents(); },
+ *   intervalMs: 8000,
+ *   runImmediately: true,
+ * });
+ *
+ * // Later, to stop:
+ * handle.cancel();
+ */
+export function safeSetInterval(options: SafeIntervalOptions): SafeIntervalHandle {
+  const { name, fn, intervalMs, runImmediately = false } = options;
+
+  let isCancelled = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const executeAndSchedule = async () => {
+    if (isCancelled) return;
+
+    const startTime = Date.now();
+
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`[SafeInterval] "${name}" error:`, error);
+    } finally {
+      const duration = Date.now() - startTime;
+
+      if (duration > intervalMs) {
+        console.warn(
+          `[SafeInterval] "${name}" took ${duration / 1000}s, which is ${(duration - intervalMs) / 1000}s longer than the ${intervalMs / 1000}s interval`,
+        );
+      }
+
+      // Schedule next execution after the interval
+      if (!isCancelled) {
+        timeoutId = setTimeout(executeAndSchedule, intervalMs);
+      }
+    }
+  };
+
+  // Start the interval
+  if (runImmediately) {
+    // Use setTimeout with 0 to ensure we're not blocking the current execution
+    timeoutId = setTimeout(executeAndSchedule, 0);
+  } else {
+    timeoutId = setTimeout(executeAndSchedule, intervalMs);
+  }
+
+  return {
+    cancel: () => {
+      isCancelled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    },
   };
 }

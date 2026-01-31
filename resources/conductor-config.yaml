@@ -22,7 +22,12 @@ network:
           - '###DEFINED_AT_RUNTIME###'
   target_arc_factor: 1
   report: none
-  advanced: ~
+  advanced:
+    coreBootstrap:
+      backoffMaxMs: 10000
+    coreSpace:
+      reSignExpireTimeMs: 10000
+      reSignFreqMs: 10000
 request_timeout_s: 60
 db_sync_strategy: Resilient
 tuning_params: ~
