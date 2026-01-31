@@ -1,5 +1,6 @@
 interface Env {
   GITHUB_TOKEN: string;
+  FEEDBACK_BUCKET: R2Bucket;
 }
 
 interface FeedbackRequest {
@@ -11,6 +12,7 @@ interface FeedbackRequest {
 
 const REPO_OWNER = 'lightningrodlabs';
 const REPO_NAME = 'moss';
+const R2_PUBLIC_URL = 'https://pub-98da085c523142129bcac92fdf2b7648.r2.dev';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -44,38 +46,21 @@ export default {
       }
       const imageBase64 = base64Match[1];
 
-      // Upload screenshot to repo
+      // Convert base64 to binary
+      const imageBuffer = Uint8Array.from(atob(imageBase64), (c) => c.charCodeAt(0));
+
+      // Upload screenshot to R2
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
-      const imagePath = `.github/feedback-images/${timestamp}-${randomSuffix}.png`;
+      const imagePath = `feedback/${timestamp}-${randomSuffix}.png`;
 
-      const uploadRes = await fetch(
-        `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imagePath}`,
-        {
-          method: 'PUT',
-          headers: ghHeaders(env.GITHUB_TOKEN),
-          body: JSON.stringify({
-            message: `feedback screenshot ${timestamp}`,
-            content: imageBase64,
-            committer: {
-              name: 'Moss Feedback Bot',
-              email: 'noreply@theweave.social',
-            },
-          }),
+      await env.FEEDBACK_BUCKET.put(imagePath, imageBuffer, {
+        httpMetadata: {
+          contentType: 'image/png',
         },
-      );
+      });
 
-      if (!uploadRes.ok) {
-        const err = await uploadRes.text();
-        console.error('GitHub upload failed:', err);
-        return new Response(`Screenshot upload failed: ${uploadRes.status}`, {
-          status: 502,
-          headers: corsHeaders(),
-        });
-      }
-
-      const uploadData = (await uploadRes.json()) as { content: { download_url: string } };
-      const imageUrl = uploadData.content.download_url;
+      const imageUrl = `${R2_PUBLIC_URL}/${imagePath}`;
 
       // Create GitHub issue
       const titleText = body.text.length > 60 ? body.text.substring(0, 57) + '...' : body.text;

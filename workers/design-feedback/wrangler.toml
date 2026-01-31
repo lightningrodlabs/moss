@@ -7,4 +7,8 @@ compatibility_date = "2024-12-01"
 
 # Secrets (set via `wrangler secret put`):
 # - GITHUB_TOKEN: GitHub PAT with repo scope
-# - API_KEY: shared secret for gating requests
+
+# R2 bucket for storing feedback screenshots
+[[r2_buckets]]
+binding = "FEEDBACK_BUCKET"
+bucket_name = "moss-feedback-images"
