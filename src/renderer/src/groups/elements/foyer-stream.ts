@@ -331,12 +331,12 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="width:100%;"
-            @sl-input=${(e) => {
-        this.disabled = !e.target.value || !this._msgInput.value;
+            style="width: 100%;"
+            @sl-input=${() => {
+        this.disabled = !this._msgInput?.value;
       }}
-            @keydown=${(e) => {
-        if (e.keyCode == 13) {
+            @keydown=${(e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
           this.sendMessage();
           e.stopPropagation();
         }

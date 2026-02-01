@@ -18,8 +18,8 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { encodeAndStringify } from '../../utils.js';
-import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
-import { AppletNotification } from '../../types.js';
+import { AppletHash, stringifyWal } from '@theweave/api';
+import { MossNotification, NotificationSource } from '../../types.js';
 import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
 
 @localized()
@@ -60,21 +60,23 @@ export class ActivityView extends LitElement {
   );
 
   // function that combines notifications based on their aboutWal, if available
-  combineNotifications(notifications: Array<AppletNotification>) {
+  // Only applet notifications with aboutWal are combined (group notifications don't have WALs)
+  combineNotifications(notifications: Array<MossNotification>) {
     const combinedNotifications: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     > = {};
     for (let i = 0; i < notifications.length; i++) {
       const notification = notifications[i];
-      if (notification.notification.aboutWal) {
+      // Only applet notifications can have aboutWal
+      if (notification.notification.aboutWal && notification.source.type === 'applet') {
         const aboutWal = stringifyWal(notification.notification.aboutWal);
         if (combinedNotifications[aboutWal]) {
           combinedNotifications[aboutWal].notifications.push(notification);
         } else {
           combinedNotifications[aboutWal] = {
             notifications: [notification],
-            appletId: notification.appletId,
+            source: notification.source,
           };
         }
       }
@@ -82,7 +84,7 @@ export class ActivityView extends LitElement {
     return combinedNotifications;
   }
 
-  filterIndividualNotifications(notifications: Array<AppletNotification>) {
+  filterIndividualNotifications(notifications: Array<MossNotification>) {
     return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);
@@ -119,12 +121,12 @@ export class ActivityView extends LitElement {
   sortNotifications(
     combinedNotifications: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     >,
   ) {
     let filteredByTime: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     > = {};
     let now = Date.now();
     let lookBackInt = 0;
@@ -319,8 +321,11 @@ export class ActivityView extends LitElement {
                 `
         : sortedNotifications.map((aboutWal) => {
           const notifications = combinedNotifications[aboutWal].notifications;
+          const source = combinedNotifications[aboutWal].source;
+          // Combined notifications are only from applets (group notifications don't have WALs)
+          if (source.type !== 'applet') return html``;
           const appletHash: AppletHash = appletHashFromAppId(
-            appIdFromAppletId(combinedNotifications[aboutWal].appletId),
+            appIdFromAppletId(source.appletId),
           );
           return html`
                     <activity-asset
@@ -406,26 +411,52 @@ export class ActivityView extends LitElement {
                   </div>
                 `
         : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
-          (notification) => html`
-                    <notification-asset
-                      style="display: flex; flex: 1;"
-                      .notification=${notification.notification}
-                      .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-                      @open-applet-main=${(e) => {
-              console.log('notification clicked', e.detail);
-              this.dispatchEvent(
-                new CustomEvent('open-applet-main', {
-                  detail: { 
-                      applet: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-                      wal: e.detail.wal,
-                  },
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }}
-                    ></notification-asset>
-                  `,
+          (notification) => {
+            if (notification.source.type === 'applet') {
+              const appletHash = appletHashFromAppId(appIdFromAppletId(notification.source.appletId));
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .appletHash=${appletHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${(e) => {
+                    console.log('notification clicked', e.detail);
+                    this.dispatchEvent(
+                      new CustomEvent('open-applet-main', {
+                        detail: {
+                          applet: appletHash,
+                          wal: e.detail.wal,
+                        },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                ></notification-asset>
+              `;
+            } else {
+              // Group notification (e.g., foyer message)
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .groupDnaHash=${notification.source.groupDnaHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${() => {
+                    // Navigate to group foyer
+                    this.dispatchEvent(
+                      new CustomEvent('open-group', {
+                        detail: { groupDnaHash: notification.source.type === 'group' ? notification.source.groupDnaHash : undefined },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                ></notification-asset>
+              `;
+            }
+          },
         )}
             ${displayShowMoreButton
         ? html`<div class="row" style="justify-content: center;">

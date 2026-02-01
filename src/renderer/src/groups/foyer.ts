@@ -9,6 +9,7 @@ import {
   AppAuthenticationToken,
   HoloHashMap,
 } from '@holochain/client';
+import { msg } from '@lit/localize';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   type Writable,
@@ -20,7 +21,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
-import { FrameNotification, GroupProfile, WeaveLocation } from '@theweave/api';
+import { FrameNotification, GroupProfile } from '@theweave/api';
 import { GroupStore } from './group-store';
 
 export const time = readable(Date.now(), function start(set) {
@@ -149,9 +150,9 @@ export class FoyerStore {
           const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
 
           const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
-          const urgency = amIMentioned ? 'high' : 'medium';
+          const urgency: 'low' | 'medium' | 'high' = amIMentioned ? 'high' : 'medium';
           const notification: FrameNotification = {
-            title: `from ${senderNickname}`,
+            title: `${msg('from')} ${senderNickname}`,
             body: message.payload.text,
             notification_type: 'message',
             icon_src: undefined,
@@ -159,16 +160,18 @@ export class FoyerStore {
             fromAgent: message.from,
             timestamp: message.payload.created,
           };
-          const weaveLocation: WeaveLocation = {
-            type: 'group',
-            dnaHash: this.groupStore.groupDnaHash,
-          };
-          await window.electronAPI.notification(
-            notification,
-            true,
-            amIMentioned,
-            weaveLocation,
-            `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
+
+          // Use the unified notification handler (ephemeral - not persisted)
+          await this.groupStore.mossStore.handleNotification(
+            { type: 'group', groupDnaHash: encodeHashToBase64(this.groupStore.groupDnaHash) },
+            [notification],
+            {
+              persist: false, // foyer messages are ephemeral
+              showInFeed: true,
+              updateUnreadCount: true,
+              sendOSNotification: amIMentioned,
+              sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
+            },
           );
         }
 

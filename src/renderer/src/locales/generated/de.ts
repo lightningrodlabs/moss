@@ -220,6 +220,7 @@
 's7be45b1c52747d13': `Noch keine Tools.`,
 's7e388025be643d0d': `Eingabe`,
 's7ec9f93dd4d1a712': `Installieren und neu starten`,
+'s7f845078d7a5c0b5': `von`,
 's81850fd21bd71f71': `Tool-Hash`,
 's8213840a0f7d2644': `Nein, behalten`,
 's823aec927799efba': `Holochain wird gestartet...`,

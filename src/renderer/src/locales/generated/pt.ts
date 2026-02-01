@@ -220,6 +220,7 @@
 's7be45b1c52747d13': `Nenhum tool ainda.`,
 's7e388025be643d0d': `Confirmar`,
 's7ec9f93dd4d1a712': `Instalar e Reiniciar`,
+'s7f845078d7a5c0b5': `de`,
 's81850fd21bd71f71': `hash do tool`,
 's8213840a0f7d2644': `Não, manter`,
 's823aec927799efba': `iniciando Holochain...`,

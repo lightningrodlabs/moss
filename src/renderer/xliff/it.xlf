@@ -1698,6 +1698,10 @@
   <source>Local Time:</source>
   <target>Ora locale:</target>
 </trans-unit>
+<trans-unit id="s7f845078d7a5c0b5">
+  <source>from</source>
+  <target>da</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

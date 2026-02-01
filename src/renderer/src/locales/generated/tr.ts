@@ -220,6 +220,7 @@
 's7be45b1c52747d13': `Henüz araç yok.`,
 's7e388025be643d0d': `Giriş`,
 's7ec9f93dd4d1a712': `Yükle ve Yeniden Başlat`,
+'s7f845078d7a5c0b5': `gönderen:`,
 's81850fd21bd71f71': `araç hash'i`,
 's8213840a0f7d2644': `Hayır, kalsın`,
 's823aec927799efba': `Holochain başlatılıyor...`,

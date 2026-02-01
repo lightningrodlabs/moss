@@ -130,6 +130,17 @@ export class GroupStore {
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
+  /**
+   * Ephemeral (in-memory) tracking of unread group notifications.
+   * Used for foyer messages and other group-level notifications.
+   * Not persisted across app restarts.
+   */
+  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> = writable({
+    low: 0,
+    medium: 0,
+    high: 0,
+  });
+
   foyerStore!: FoyerStore;
 
   /**
@@ -827,6 +838,49 @@ export class GroupStore {
       };
       return newValue;
     });
+  }
+
+  /**
+   * Get the current unread group notification counts.
+   * Returns a readable store with counts by urgency level.
+   */
+  unreadGroupNotifications(): Readable<{ low: number; medium: number; high: number }> {
+    return derived(this._unreadGroupNotifications, (state) => state);
+  }
+
+  /**
+   * Get the notification state as [urgency, count] tuple for display.
+   * Returns the highest urgency level with its count.
+   */
+  getUnreadGroupNotificationState(): [string | undefined, number | undefined] {
+    const counts = get(this._unreadGroupNotifications);
+    if (counts.high > 0) {
+      return ['high', counts.high];
+    } else if (counts.medium > 0) {
+      return ['medium', counts.medium];
+    } else if (counts.low > 0) {
+      return ['low', counts.low];
+    }
+    return [undefined, undefined];
+  }
+
+  /**
+   * Increment the unread notification count for the given urgency level.
+   * Used for ephemeral notifications like foyer messages.
+   */
+  incrementUnreadGroupNotifications(urgency: 'low' | 'medium' | 'high') {
+    this._unreadGroupNotifications.update((counts) => ({
+      ...counts,
+      [urgency]: counts[urgency] + 1,
+    }));
+  }
+
+  /**
+   * Clear all unread group notifications.
+   * Called when the user views the group/foyer.
+   */
+  clearGroupNotificationStatus() {
+    this._unreadGroupNotifications.set({ low: 0, medium: 0, high: 0 });
   }
 
   /**

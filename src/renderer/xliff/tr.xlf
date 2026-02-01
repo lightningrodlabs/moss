@@ -1698,6 +1698,10 @@
   <source>Local Time:</source>
   <target>Yerel Saat:</target>
 </trans-unit>
+<trans-unit id="s7f845078d7a5c0b5">
+  <source>from</source>
+  <target>gönderen:</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
