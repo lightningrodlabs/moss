@@ -1320,7 +1320,7 @@ export class MainDashboard extends LitElement {
         src="turing-pattern-bottom-left.svg"
         style="position: fixed; bottom: 0; left: 0; height: 250px;"
       />
-      <moss-dialog id="settings-dialog" width="700px">
+      <moss-dialog id="settings-dialog" width="800px">
         <span slot="header">${msg('Settings')}</span>
         <div slot="content">
           <moss-settings></moss-settings>

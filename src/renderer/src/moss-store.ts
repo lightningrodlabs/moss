@@ -122,6 +122,7 @@ import {PersistedStore} from './persisted-store.js';
 import {MossCache} from './cache.js';
 import {compareVersions} from 'compare-versions';
 import {IframeStore} from './iframe-store.js';
+import {notificationAudio} from './services/notification-audio.js';
 
 export class LazyMap<K, V> implements GetonlyMap<K, V> {
     map = new Map<K, V>();
@@ -177,6 +178,11 @@ export class MossStore {
     this.version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
     if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
+
+    // Preload notification sounds
+    notificationAudio.preloadBuiltinSounds();
+    const soundSettings = this.persistedStore.notificationSoundSettings.value();
+    notificationAudio.preloadCustomSounds(soundSettings.customSounds);
   }
 
   /**
@@ -726,6 +732,10 @@ export class MossStore {
           weaveLocation,
           options.sourceName,
         );
+
+        // 5. Play notification sound
+        const soundSettings = this.persistedStore.notificationSoundSettings.value();
+        notificationAudio.playForUrgency(notification.urgency, soundSettings);
       }
     }
 

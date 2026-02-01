@@ -1,6 +1,6 @@
 import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
-import { AppletNotificationSettings } from './applets/types';
+import { AppletNotificationSettings, GlobalNotificationSoundSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
 import { WalInPocket } from './moss-store';
 import { Profile } from '@holochain-open-dev/profiles';
@@ -198,6 +198,36 @@ export class PersistedStore {
     },
     set: (value: AppletNotificationSettings, appletId: AppletId) =>
       this.store.setItem(`appletNotificationSettings#${appletId}`, value),
+  };
+
+  /**
+   * Global notification sound settings
+   */
+  notificationSoundSettings: SubStore<
+    GlobalNotificationSoundSettings,
+    GlobalNotificationSoundSettings,
+    []
+  > = {
+    value: () => {
+      const settings = this.store.getItem<GlobalNotificationSoundSettings>(
+        'notificationSoundSettings',
+      );
+      return (
+        settings ?? {
+          masterEnabled: true,
+          volume: 0.7,
+          perUrgency: {
+            high: { enabled: true, soundId: 'chime' },
+            medium: { enabled: true, soundId: 'bell' },
+            low: { enabled: false, soundId: 'pop' },
+          },
+          customSounds: [],
+        }
+      );
+    },
+    set: (value: GlobalNotificationSoundSettings) => {
+      this.store.setItem('notificationSoundSettings', value);
+    },
   };
 
   /**
