@@ -1600,10 +1600,10 @@
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
 
-"@holochain-open-dev/profiles@^0.601.1":
-  version "0.601.1"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.601.1.tgz#2bc465d445cf52039585fadab3e56aecb9e93725"
-  integrity sha512-IdHiECD5ABVTv8IPob0blDR+5zw8KG2D/SLFiiGfoxntQx/YNnAJLxvUuGFYJ+sp8DIJr5OusR6Ice/Ju0UYXQ==
+"@holochain-open-dev/profiles@^0.601.2":
+  version "0.601.2"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.601.2.tgz#aac7e2ce46b5c3ef0a1c8ea8ba15dbf3cfbe139e"
+  integrity sha512-nJFsOL4uDyzVd9n6/K7hQcRopkBYWzUVTc6gdtSsJlFJzndjQQLWfRdnyEoos1w9yVdhX9gXi9f6mNnguCqCFw==
   dependencies:
     "@holochain-open-dev/elements" "^0.601.0"
     "@holochain-open-dev/stores" "^0.601.0"
@@ -3180,7 +3180,7 @@
 "@theweave/api@file:libs/api":
   version "0.6.4"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.601.1"
+    "@holochain-open-dev/profiles" "^0.601.2"
     "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
@@ -3189,7 +3189,7 @@
   version "0.6.1"
   dependencies:
     "@holochain-open-dev/elements" "^0.601.0"
-    "@holochain-open-dev/profiles" "^0.601.1"
+    "@holochain-open-dev/profiles" "^0.601.2"
     "@holochain-open-dev/stores" "^0.601.0"
     "@holochain-open-dev/utils" "^0.601.0"
     "@holochain/client" "=0.20.4-rc.0"

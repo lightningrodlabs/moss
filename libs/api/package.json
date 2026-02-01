@@ -26,7 +26,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain-open-dev/profiles": "^0.601.1",
+    "@holochain-open-dev/profiles": "^0.601.2",
     "@holochain/client": "=0.20.4-rc.0",
     "@msgpack/msgpack": "^2.8.0",
     "js-base64": "^3.7.2"
