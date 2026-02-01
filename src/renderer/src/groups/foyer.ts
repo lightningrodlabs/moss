@@ -150,7 +150,32 @@ export class FoyerStore {
           const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
 
           const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
-          const urgency: 'low' | 'medium' | 'high' = amIMentioned ? 'high' : 'medium';
+
+          // Get the user's notification preference for this group's foyer
+          const notificationSetting = this.groupStore.getFoyerNotificationSettingValue();
+
+          // Determine urgency and whether to send OS notification based on setting
+          let urgency: 'low' | 'medium' | 'high';
+          let sendOSNotification: boolean;
+
+          switch (notificationSetting) {
+            case 'all':
+              // Notify for all messages
+              urgency = amIMentioned ? 'high' : 'high';
+              sendOSNotification = true;
+              break;
+            case 'mentions':
+              // Only notify when mentioned
+              urgency = amIMentioned ? 'high' : 'medium';
+              sendOSNotification = amIMentioned;
+              break;
+            case 'none':
+              // No notifications
+              urgency = 'low';
+              sendOSNotification = false;
+              break;
+          }
+
           const notification: FrameNotification = {
             title: `${msg('from')} ${senderNickname}`,
             body: message.payload.text,
@@ -168,8 +193,8 @@ export class FoyerStore {
             {
               persist: false, // foyer messages are ephemeral
               showInFeed: true,
-              updateUnreadCount: true,
-              sendOSNotification: amIMentioned,
+              updateUnreadCount: notificationSetting !== 'none',
+              sendOSNotification,
               sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
             },
           );

@@ -9,6 +9,9 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
+import '@shoelace-style/shoelace/dist/components/menu/menu.js';
+import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
@@ -19,7 +22,7 @@ import { mossStoreContext } from '../../context.js';
 import { Message, Payload, Stream } from '../stream.js';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, HoloHashMap, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
-import { mdiChat, mdiSofa } from '@mdi/js';
+import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
 import { sendIcon } from '../../elements/_new_design/icons.js';
@@ -50,6 +53,9 @@ export class FoyerStream extends LitElement {
 
   async firstUpdated() {
     console.log("this.groupStore.foyerStore", this.groupStore.foyerStore)
+    // Load notification setting
+    this._notificationSetting = this.groupStore.getFoyerNotificationSettingValue();
+
     setTimeout(() => {
       this.stream = get(this.groupStore.foyerStore.streams)['_all'];
       this._messages = new StoreSubscriber(
@@ -63,7 +69,6 @@ export class FoyerStream extends LitElement {
         () => [this.stream],
       );
     }, 100);
-
   }
 
   @state()
@@ -80,6 +85,15 @@ export class FoyerStream extends LitElement {
 
   @state()
   disabled = true;
+
+  @state()
+  _notificationSetting: 'all' | 'mentions' | 'none' = 'mentions';
+
+  handleNotificationSettingChange(e: CustomEvent) {
+    const selectedValue = e.detail.item.value as 'all' | 'mentions' | 'none';
+    this._notificationSetting = selectedValue;
+    this.groupStore.setFoyerNotificationSetting(selectedValue);
+  }
 
   getRecipients(): AgentPubKey[] {
     const agents: AgentPubKey[] = [];
@@ -300,11 +314,31 @@ export class FoyerStream extends LitElement {
               style="align-items: center; font-size: 1.5rem; cursor: help;"
             >
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
-              <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
             </div>
             <span>${msg('Foyer Messages:')} ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
-          <div style="display:flex; align-items: center"></div>
+          <div style="display:flex; align-items: center; margin-right: 8px;">
+            <sl-dropdown>
+              <sl-icon
+                slot="trigger"
+                class="info"
+                .src=${wrapPathInSvg(mdiMessageCog)}
+                style="font-size: 1.5rem; color: black; cursor: pointer;"
+                title=${msg('Notification Settings')}
+              ></sl-icon>
+              <sl-menu @sl-select=${(e: CustomEvent) => this.handleNotificationSettingChange(e)}>
+                <sl-menu-item type="checkbox" value="all" ?checked=${this._notificationSetting === 'all'}>
+                  ${msg('All messages')}
+                </sl-menu-item>
+                <sl-menu-item type="checkbox" value="mentions" ?checked=${this._notificationSetting === 'mentions'}>
+                  ${msg('Mentions only')}
+                </sl-menu-item>
+                <sl-menu-item type="checkbox" value="none" ?checked=${this._notificationSetting === 'none'}>
+                  ${msg('None')}
+                </sl-menu-item>
+              </sl-menu>
+            </sl-dropdown>
+          </div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
         <span style="display: flex; flex: 1;"></span>
@@ -375,7 +409,7 @@ export class FoyerStream extends LitElement {
         margin-top: 5px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
       }
       .stream {
         width: 100%;

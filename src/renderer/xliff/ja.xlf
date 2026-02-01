@@ -1702,6 +1702,22 @@
   <source>from</source>
   <target>送信者:</target>
 </trans-unit>
+<trans-unit id="sa67b347e72791548">
+  <source>All messages</source>
+  <target>すべてのメッセージ</target>
+</trans-unit>
+<trans-unit id="s5bd2875d95bfb460">
+  <source>Mentions only</source>
+  <target>メンションのみ</target>
+</trans-unit>
+<trans-unit id="s669b18c6d2d9c95b">
+  <source>None</source>
+  <target>なし</target>
+</trans-unit>
+<trans-unit id="s039e128122096637">
+  <source>Notification Settings</source>
+  <target>通知設定</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

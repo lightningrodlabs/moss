@@ -141,6 +141,14 @@ export class GroupStore {
     high: 0,
   });
 
+  /**
+   * Foyer notification setting for this group.
+   * - 'all': Notify for all messages (high urgency)
+   * - 'mentions': Notify only when mentioned (medium urgency, high when mentioned)
+   * - 'none': No notifications (low urgency, no OS notification)
+   */
+  private _foyerNotificationSetting: Writable<'all' | 'mentions' | 'none'> = writable('mentions');
+
   foyerStore!: FoyerStore;
 
   /**
@@ -187,6 +195,9 @@ export class GroupStore {
         // Use the instance
       },
     );
+
+    // Load persisted foyer notification setting
+    this.loadFoyerNotificationSetting();
 
     this._peerStatuses = writable(undefined);
 
@@ -881,6 +892,42 @@ export class GroupStore {
    */
   clearGroupNotificationStatus() {
     this._unreadGroupNotifications.set({ low: 0, medium: 0, high: 0 });
+  }
+
+  /**
+   * Get the foyer notification setting for this group.
+   */
+  getFoyerNotificationSetting(): Readable<'all' | 'mentions' | 'none'> {
+    return derived(this._foyerNotificationSetting, (setting) => setting);
+  }
+
+  /**
+   * Get the current foyer notification setting value.
+   */
+  getFoyerNotificationSettingValue(): 'all' | 'mentions' | 'none' {
+    return get(this._foyerNotificationSetting);
+  }
+
+  /**
+   * Set the foyer notification setting for this group.
+   * Persists to localStorage.
+   */
+  setFoyerNotificationSetting(setting: 'all' | 'mentions' | 'none') {
+    this._foyerNotificationSetting.set(setting);
+    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+    localStorage.setItem(key, setting);
+  }
+
+  /**
+   * Load the foyer notification setting from localStorage.
+   * Called during initialization.
+   */
+  loadFoyerNotificationSetting() {
+    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+    const stored = localStorage.getItem(key);
+    if (stored && (stored === 'all' || stored === 'mentions' || stored === 'none')) {
+      this._foyerNotificationSetting.set(stored);
+    }
   }
 
   /**
