@@ -84,23 +84,25 @@ function downloadHolochainBinary() {
 }
 
 function downloadLairBinary() {
-  const lairBinaryFilename = `lair-keystore-v${mossConfig.lair.version}-${mossConfig.binariesAppendix}${
+  const lairConfig = mossConfig['lair-keystore'];
+  const lairBinaryFilename = `lair-keystore-v${lairConfig.version}-${mossConfig.binariesAppendix}${
     process.platform === 'win32' ? '.exe' : ''
   }`;
   const destinationPath = path.join(binariesDir, lairBinaryFilename);
-  const lairBinaryRemoteFilename = `lair-keystore-v${mossConfig.lair.version}-${targetEnding}`;
-  const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${mossConfig.lair.version}/${lairBinaryRemoteFilename}`;
-  downloadFile(lairBinaryUrl, destinationPath, mossConfig.lair.sha256[targetEnding], true);
+  const lairBinaryRemoteFilename = `lair-keystore-v${lairConfig.version}-${targetEnding}`;
+  const lairBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/lair-binaries-${lairConfig.version}/${lairBinaryRemoteFilename}`;
+  downloadFile(lairBinaryUrl, destinationPath, lairConfig.sha256[targetEnding], true);
 }
 
 function downloadBootstrapBinary() {
-  const bootstrapBinaryFilename = `kitsune2-bootstrap-srv-v${mossConfig.bootstrap.version}-${mossConfig.binariesAppendix}${
+  const bootstrapConfig = mossConfig['kitsune2-bootstrap-srv'];
+  const bootstrapBinaryFilename = `kitsune2-bootstrap-srv-v${bootstrapConfig.version}-${mossConfig.binariesAppendix}${
     process.platform === 'win32' ? '.exe' : ''
   }`;
   const destinationPath = path.join(binariesDir, bootstrapBinaryFilename);
-  const remoteFilename = `kitsune2-bootstrap-srv-v${mossConfig.bootstrap.version}-${targetEnding}`;
-  const binaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/kitsune2-bootstrap-srv-binaries-${mossConfig.bootstrap.version}/${remoteFilename}`;
-  downloadFile(binaryUrl, destinationPath, mossConfig.bootstrap.sha256[targetEnding], true);
+  const remoteFilename = `kitsune2-bootstrap-srv-v${bootstrapConfig.version}-${targetEnding}`;
+  const binaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/kitsune2-bootstrap-srv-binaries-${bootstrapConfig.version}/${remoteFilename}`;
+  downloadFile(binaryUrl, destinationPath, bootstrapConfig.sha256[targetEnding], true);
 }
 
 downloadHolochainBinary();
