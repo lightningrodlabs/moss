@@ -3178,7 +3178,7 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.6.4"
+  version "0.6.5"
   dependencies:
     "@holochain-open-dev/profiles" "^0.601.2"
     "@holochain/client" "=0.20.4-rc.0"
@@ -3186,7 +3186,7 @@
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
-  version "0.6.1"
+  version "0.6.2"
   dependencies:
     "@holochain-open-dev/elements" "^0.601.0"
     "@holochain-open-dev/profiles" "^0.601.2"
@@ -3197,25 +3197,25 @@
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "^2.20.0"
-    "@theweave/api" "^0.6.1"
+    "@theweave/api" "^0.6.4"
     js-base64 "^3.7.5"
     lit "^3.0.2"
 
 "@theweave/group-client@file:shared/group-client":
-  version "0.5.1"
+  version "0.5.2"
   dependencies:
     "@holochain-open-dev/utils" "^0.601.0"
     "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "^0.6.1"
+    "@theweave/api" "^0.6.4"
 
 "@theweave/utils@file:shared/utils":
-  version "0.5.1"
+  version "0.5.2"
   dependencies:
     "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "^0.6.3"
-    "@theweave/moss-types" "^0.5.1"
+    "@theweave/api" "^0.6.4"
+    "@theweave/moss-types" "^0.5.2"
     compare-versions "6.1.1"
     js-base64 "^3.7.2"
     ts-md5 "1.3.1"

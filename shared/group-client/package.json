@@ -1,6 +1,6 @@
 {
   "name": "@theweave/group-client",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@holochain/client": "=0.20.4-rc.0",
     "@holochain-open-dev/utils": "^0.601.0",
-    "@theweave/api": "^0.6.1",
+    "@theweave/api": "^0.6.4",
     "@msgpack/msgpack": "^2.7.2"
   },
   "devDependencies": {
