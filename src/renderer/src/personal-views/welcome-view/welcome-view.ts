@@ -3,6 +3,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../shared-styles.js';
+import { createMockToolUpdates, createMockAppletsData, createMockGroupsData } from './mock-data.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
@@ -16,11 +17,6 @@ import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
-
-import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/progress-bar/progress-bar.js';
 
 import '../../elements/_new_design/moss-dialog.js';
 import '../../elements/dialogs/select-group-dialog.js';
@@ -76,6 +72,10 @@ export class WelcomeView extends LitElement {
   @state()
   updatingTool = false;
 
+  notificationSection: 'software-updates' | 'messages' | 'action-requests' | 'moss-news' | null = null;
+
+  isProgrammaticScroll = false;
+
   availableToolUpdates = new StoreSubscriber(
     this,
     () => this._mossStore.availableToolUpdates(),
@@ -88,9 +88,68 @@ export class WelcomeView extends LitElement {
     () => [this._mossStore],
   );
 
+  // Cache applet subscribers per tool compatibility ID
+  _appletsPerToolSubscribers: Map<string, StoreSubscriber<any>> = new Map();
+
+  // Cache group subscribers per tool compatibility ID
+  _groupsPerToolSubscribers: Map<string, StoreSubscriber<any>> = new Map();
+
   timeAgo = new TimeAgo('en-US');
 
+  // Helper to get tool updates from either mock or real data
+  getToolUpdatesSource(): Record<string, ToolInfoAndLatestVersion> {
+    return Object.keys(this._mockToolUpdates).length > 0
+      ? this._mockToolUpdates
+      : this.availableToolUpdates.value;
+  }
+
+  quotesOfTheDay = [
+    { text: "April weather, rain and sunshine both together.", source: "English country saying" },
+    { text: "The best time to plant a tree was 20 years ago. \nThe second best time is now.", source: "Chinese proverb" },
+    { text: "In the middle of difficulty lies opportunity.", source: "Albert Einstein" },
+    { text: "The only way to do great work is to \nlove what you do.", source: "Steve Jobs" },
+    { text: "Life is what happens when you're \nbusy making other plans.", source: "John Lennon" },
+    { text: "The journey of a thousand miles \nbegins with one step.", source: "Lao Tzu" },
+    { text: "Be yourself; everyone else is already taken.", source: "Oscar Wilde" },
+    { text: "To live is the rarest thing in the world. \nMost people exist, that is all.", source: "Oscar Wilde" },
+    { text: "Not all those who wander are lost.", source: "J.R.R. Tolkien" },
+    { text: "Do not go where the path may lead, \ngo instead where there is no path and leave a trail.", source: "Ralph Waldo Emerson" },
+    { text: "Happiness is not something ready made. \nIt comes from your own actions.", source: "Dalai Lama" },
+    { text: "In three words I can sum up everything \nI've learned about life: it goes on.", source: "Robert Frost" },
+    { text: "The only limit to our realization of tomorrow \nwill be our doubts of today.", source: "Franklin D. Roosevelt" },
+    { text: "The purpose of our lives is to be happy.", source: "Dalai Lama" },
+    { text: "Life is really simple, \nbut we insist on making it complicated.", source: "Confucius" },
+    { text: "You must be the change you wish to \nsee in the world.", source: "Mahatma Gandhi" },
+    { text: "Believe you can and you're halfway there.", source: "Theodore Roosevelt" },
+    { text: "Act as if what you do makes a difference. It does.", source: "William James" },
+    { text: "Success is not final, failure is not fatal: \nIt is the courage to continue that counts.", source: "Winston Churchill" },
+    { text: "What lies behind us and what lies before us \nare tiny matters compared to what lies within us.", source: "Ralph Waldo Emerson" },
+    { text: "Do what you can, with what you have, \nwhere you are.", source: "Theodore Roosevelt" },
+    { text: "You are never too old to set another \ngoal or to dream a new dream.", source: "C.S. Lewis" },
+  ];
+
+  @state()
+  currentQuoteIndex = 0;
+
+  // Mock tool updates for development
+  @state()
+  _mockToolUpdates: Record<string, ToolInfoAndLatestVersion> = {};
+
+  // Mock applets data for development
+  _mockAppletsData: Record<string, Map<any, any>> = {};
+
+  // Mock groups data for development
+  _mockGroupsData: Record<string, Map<any, any>> = {};
+
   async firstUpdated() {
+    // DEV MODE: Enable mock tool updates
+    const DEV_MODE = true; // Set to false to use real data
+    if (DEV_MODE) {
+      this._mockToolUpdates = createMockToolUpdates();
+      this._mockAppletsData = createMockAppletsData();
+      this._mockGroupsData = createMockGroupsData();
+    }
+
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
     const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
     if (availableMossUpdate && !declinedUpdates.includes(availableMossUpdate.version)) {
@@ -103,6 +162,72 @@ export class WelcomeView extends LitElement {
 
     // Load notifications once
     this._mossStore.loadNotificationFeed(30);
+
+    // Add scroll listener for opacity effects
+    const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', () => {
+        const scrollY = scrollContainer.scrollTop;
+        // Start fading only after scrolling halfway up the screen
+        const fadeStartPoint = scrollContainer.clientHeight / 3;
+        const maxScroll = scrollContainer.clientHeight * 0.4;
+        const adjustedScroll = Math.max(0, scrollY - fadeStartPoint);
+        const welcomeOpacity = Math.max(1 - (adjustedScroll / maxScroll), 0);
+        const quoteOpacity = Math.max(1.4 - (adjustedScroll / maxScroll), 0);
+
+        // Update CSS variables instead of state
+        this.style.setProperty('--welcome-opacity', welcomeOpacity.toString());
+        this.style.setProperty('--quote-opacity', quoteOpacity.toString());
+
+        // Skip section detection during programmatic scrolling
+        if (this.isProgrammaticScroll) return;
+
+        // Determine which section is in the middle of the viewport
+        const sections = this.shadowRoot?.querySelectorAll('.scroll-section');
+        const viewportMiddle = scrollContainer.clientHeight / 2 + scrollContainer.scrollTop;
+
+        let closestSection: string | null = null;
+        let closestDistance = Infinity;
+
+        sections?.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const sectionMiddle = scrollContainer.scrollTop + rect.top + rect.height / 2;
+          let distance = Math.abs(viewportMiddle - sectionMiddle);
+
+          // Give the first section a bias by reducing its effective distance
+          if (index === 0) {
+            distance = distance * 0.7; // Make it 30% easier to select
+          }
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestSection = section.id;
+          }
+        });
+
+        // Only update if scrolled significantly into a section
+        if (closestSection && closestDistance < 300) {
+          const sectionMap: Record<string, 'software-updates' | 'messages' | 'action-requests' | 'moss-news'> = {
+            'software-updates': 'software-updates',
+            'messages': 'messages',
+            'action-requests': 'action-requests',
+            'moss-news': 'moss-news',
+          };
+
+          const newSection = sectionMap[closestSection];
+          if (newSection && this.notificationSection !== newSection) {
+            this.notificationSection = newSection;
+            this.updateNavigationClasses();
+          }
+        } else if (scrollY < 200) {
+          // Clear selection when near the top
+          if (this.notificationSection !== null) {
+            this.notificationSection = null;
+            this.updateNavigationClasses();
+          }
+        }
+      });
+    }
 
     // DEV: Start on page 2
     // setTimeout(() => {
@@ -170,6 +295,89 @@ export class WelcomeView extends LitElement {
     this.view = WelcomePageView.Main;
   }
 
+  getRandomQuote() {
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * this.quotesOfTheDay.length);
+    } while (newIndex === this.currentQuoteIndex && this.quotesOfTheDay.length > 1);
+    this.currentQuoteIndex = newIndex;
+  }
+
+  getTimeOfDayGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    if (hour < 21) return 'evening';
+    return 'night';
+  }
+
+  updateNavigationClasses() {
+    const navList = this.shadowRoot?.querySelector('.update-nav-list');
+    if (navList) {
+      if (this.notificationSection) {
+        navList.classList.add('left');
+      } else {
+        navList.classList.remove('left');
+      }
+    }
+
+    const headers = this.shadowRoot?.querySelectorAll('.notification-filter-header');
+    headers?.forEach((header) => {
+      const section = header.getAttribute('data-section');
+      if (section === this.notificationSection) {
+        header.classList.add('selected');
+      } else {
+        header.classList.remove('selected');
+      }
+    });
+  }
+
+  selectNotificationSection(section: 'software-updates' | 'messages' | 'action-requests' | 'moss-news') {
+    console.log('Selecting notification section: ', section);
+    if (this.notificationSection === section) {
+      // Scroll to top
+      this.isProgrammaticScroll = true;
+      setTimeout(() => {
+        const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
+        if (scrollContainer) {
+          scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          // Clear selection and re-enable scroll listener after animation completes
+          setTimeout(() => {
+            this.notificationSection = null;
+            this.updateNavigationClasses();
+            this.isProgrammaticScroll = false;
+          }, 600);
+        }
+      }, 100);
+    } else {
+      this.notificationSection = section;
+      this.updateNavigationClasses();
+      // Scroll to the section, centered in viewport
+      this.isProgrammaticScroll = true;
+      setTimeout(() => {
+        const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
+        const sectionElement = this.shadowRoot?.getElementById(section);
+        if (sectionElement && scrollContainer) {
+          const sectionRect = sectionElement.getBoundingClientRect();
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const currentScrollTop = scrollContainer.scrollTop;
+
+          // Calculate the position to center the section in the viewport
+          const sectionTop = sectionRect.top - containerRect.top + currentScrollTop;
+          const sectionCenter = sectionTop + sectionRect.height / 2;
+          const viewportCenter = containerRect.height / 2;
+          const targetScrollTop = sectionCenter - viewportCenter;
+
+          scrollContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+          // Re-enable scroll listener after animation completes
+          setTimeout(() => {
+            this.isProgrammaticScroll = false;
+          }, 600);
+        }
+      }, 100);
+    }
+  }
+
   renderFeedbackDialog() {
     return html` <moss-dialog
       id="feedback-dialog"
@@ -201,31 +409,109 @@ export class WelcomeView extends LitElement {
     </moss-dialog>`;
   }
 
+  renderGroupsUsingTool(toolInfo: ToolInfoAndLatestVersion) {
+    const toolCompatibilityId = toolInfo.distributionInfo.type === 'web2-tool-list'
+      ? toolInfo.distributionInfo.info.toolCompatibilityId
+      : undefined;
+
+    if (!toolCompatibilityId) return html``;
+
+    // Get or create subscriber for this tool ID
+    if (!this._groupsPerToolSubscribers.has(toolCompatibilityId)) {
+      // DEV MODE: Use mock data if available
+      if (this._mockGroupsData[toolCompatibilityId]) {
+        // Create a mock subscriber with the mock data
+        const mockSubscriber: any = {
+          value: {
+            status: 'complete',
+            value: this._mockGroupsData[toolCompatibilityId],
+          },
+        };
+        this._groupsPerToolSubscribers.set(toolCompatibilityId, mockSubscriber);
+      } else {
+        // TODO: Use real store when available
+        // For now, return empty if no mock data
+        return html`<span style="color: rgba(0, 0, 0, 0.40);">N/A</span>`;
+      }
+    }
+
+    const groupsForTool = this._groupsPerToolSubscribers.get(toolCompatibilityId)!;
+
+    if (!groupsForTool.value) {
+      return html`<sl-skeleton></sl-skeleton>`;
+    }
+
+    switch (groupsForTool.value.status) {
+      case 'pending':
+        return html`<sl-skeleton></sl-skeleton>`;
+      case 'error':
+        return html`<display-error
+          .headline=${msg('Error fetching groups')}
+          .error=${groupsForTool.value.error}
+        ></display-error>`;
+      case 'complete':
+        const groups = Array.from(groupsForTool.value.value.entries()) as Array<[any, any]>;
+        if (groups.length === 0) {
+          return html`<span style="color: rgba(0, 0, 0, 0.40);">None</span>`;
+        }
+        const displayGroups = groups.slice(0, 3);
+        const remainingCount = groups.length - 3;
+        return html`
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+            ${displayGroups.map(([groupHash, groupData]) => html`
+              <sl-tooltip content="${groupData.name}" placement="top">
+                <img
+                  src="${groupData.icon}"
+                  style="width: 32px; height: 32px; border-radius: 8px;"
+                />
+              </sl-tooltip>
+            `)}
+            ${remainingCount > 0 ? html`
+              <div class="tool-update-more-groups">
+                +${remainingCount}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      default:
+        return html``;
+    }
+  }
+
   renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
     return html`
-      <div class="column">
-        <div class="row" style="align-items: center;">
-          <img
-            src=${toolInfo.toolInfo.icon}
-            style="width: 70px; height: 70px; border-radius: 14px;"
-          />
-          <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
-            ${toolInfo.toolInfo.title}
-          </div>
-          <div style="margin-left: 10px; font-size: 28px; opacity: 0.6;">
-            ${toolInfo.latestVersion.version}
-          </div>
-          <span style="display: flex; flex: 1;"></span>
+      <div class="tool-update-outer">
+        <div class="install-tool-overlay">
           <sl-button
             ?disabled=${this.updatingTool}
             ?loading=${this.updatingTool}
             @click=${() => this.updateTool(toolInfo)}
-            >${msg('Install Update')}</sl-button
+            >${msg('Update ' + toolInfo.toolInfo.title)}</sl-button
           >
         </div>
-        ${toolInfo.latestVersion.changelog
-        ? html`<div>${unsafeHTML(markdownParseSafe(toolInfo.latestVersion.changelog))}</div>`
-        : html``}
+        <div class="tool-update-left-center">
+          <div class="tool-update-left">
+            <img
+              src=${toolInfo.toolInfo.icon}
+              style="width: 70px; height: 70px; border-radius: 14px;"
+            />
+          </div>
+          <div class="tool-update-center">
+            <div class="tool-update-title">
+              ${toolInfo.toolInfo.title}
+            </div>
+            <div class="tool-update-version">
+              ${toolInfo.latestVersion.version}
+            </div>
+            <div class="tool-update-tags">
+              ${toolInfo.toolInfo.tags.slice(0, 2).map((tag) => html`<span class="tool-update-tag">${tag}</span>`)}
+            </div>
+          </div>
+        </div>
+        <div class="tool-update-right">
+          <span>Used in:</span>
+          ${this.renderGroupsUsingTool(toolInfo)}
+        </div>
       </div>
     `;
   }
@@ -283,15 +569,11 @@ export class WelcomeView extends LitElement {
     `;
   }
 
-  renderUpdateFeed() {
-    const mossFeed: UpdateFeedMessageGeneric[] = this.updateFeed.map((el) => ({
-      type: 'Moss',
-      timestamp: el.timestamp,
-      content: el,
-    }));
+  renderToolUpdateFeed() {
+    const toolUpdatesSource = this.getToolUpdatesSource();
 
     const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(
-      this.availableToolUpdates.value,
+      toolUpdatesSource,
     ).map((toolInfo) => ({
       type: 'Tool',
       timestamp: toolInfo.latestVersion.releasedAt,
@@ -300,67 +582,52 @@ export class WelcomeView extends LitElement {
       },
     }));
 
-    const composedFeed = [...mossFeed, ...toolUpdates].sort((a, b) => b.timestamp - a.timestamp);
+    const sortedToolUpdates = toolUpdates.sort((a, b) => b.timestamp - a.timestamp);
 
     return html`
-      <div
-        class="column"
-        style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
-      >
-        <h1>🏄 &nbsp;&nbsp;Moss Updates&nbsp;&nbsp; 🚧</h1>
-        <span style="margin-top: 10px; margin-bottom: 30px; font-size: 18px;"
-          >Thank you for surfing the edge of
-          <a href="https://theweave.social" style="color: yellow;">the Weave</a>. Below are relevant
-          updates for early weavers.</span
-        >
-        ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
-        ${composedFeed.length === 0
-        ? html`No big waves lately...`
-        : composedFeed.map(
+      <div class="tool-updates-container column">
+        ${sortedToolUpdates.length === 0
+        ? html`No Tool updates available.`
+        : sortedToolUpdates.map(
           (message) => html`
-                <div class="update-feed-el">
-                  <div class="update-date">${this.timeAgo.format(message.timestamp)}</div>
-                  <div class="update-type">
-                    ${message.type === 'Moss' ? message.content.type : 'Tool Update'}
-                  </div>
-                  ${message.type === 'Moss'
-              ? unsafeHTML(markdownParseSafe(message.content.message))
-              : this.renderToolUpdate(message.content.tool)}
-                </div>
-              `,
+            ${message.type === 'Tool' ? this.renderToolUpdate(message.content.tool) : html``}
+          `,
         )}
       </div>
     `;
   }
 
   renderQuoteOfTheDay() {
+    const currentQuote = this.quotesOfTheDay[this.currentQuoteIndex];
     return html`
-      <div class="quote-of-the-day-container">
+      <div class="quote-of-the-day-container" style="opacity: var(--quote-opacity, 1)">
         <div
           class="quote-of-the-day"
         >
-          <p>
-            "April weather, rain and sunshine both together."
-          </p>
+          <p>"${currentQuote.text}"</p>
           <div>
-            (English country saying)
+            (${currentQuote.source})
           </div>
         </div>
 
         <div class="quote-buttons">
-          <button variant="white" @click=${() => { }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.79912 3.0098C3.8801 2.91388 4.00719 2.85742 4.14216 2.85742H11.8604C11.9954 2.85742 12.1226 2.91396 12.2036 3.00999L14.7558 6.0373C14.8833 6.17828 14.8894 6.38044 14.7648 6.52803L8.3443 14.1336C8.26332 14.2295 8.13623 14.286 8.00127 14.286C7.8663 14.286 7.73921 14.2295 7.65823 14.1336L1.22638 6.51456C1.11204 6.37911 1.11204 6.19287 1.22638 6.05742L3.79912 3.0098ZM13.5635 5.89393L12.0147 4.05683L11.3493 5.89598L13.5635 5.89393ZM10.4482 5.89682L11.2722 3.61933H4.73038L5.55599 5.90135L10.4482 5.89682ZM5.83155 6.663L8.00127 12.6601L10.1724 6.65898L5.83155 6.663ZM4.6555 5.90218L3.98767 4.05629L2.42767 5.90425L4.6555 5.90218ZM2.42632 6.66615L6.81108 11.8603L4.93106 6.66383L2.42632 6.66615ZM9.19145 11.8603L13.5849 6.65581L11.0735 6.65814L9.19145 11.8603Z" fill="#151A11"/>
-            </svg>
-            Collect
-          </button>
-          <button variant="white" @click=${() => { }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z" fill="black"/>
-              <path d="M0.531728 9H4.46421C4.67617 9 4.79196 8.75279 4.65626 8.58995L2.69002 6.23047C2.59007 6.11053 2.40586 6.11053 2.30591 6.23047L0.339672 8.58995C0.203979 8.75279 0.319769 9 0.531728 9Z" fill="black"/>
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99797 3C6.44548 3 5.05853 3.70697 4.14065 4.81839C3.96481 5.03131 3.64966 5.06137 3.43674 4.88552C3.22382 4.70968 3.19376 4.39453 3.36961 4.18161C4.46931 2.85003 6.13459 2 7.99797 2C10.9397 2 13.386 4.1165 13.8991 6.90967C13.9046 6.9397 13.9099 6.96981 13.9149 7H12.898C12.435 4.71778 10.4166 3 7.99797 3ZM3.09789 9C3.5609 11.2822 5.57934 13 7.99797 13C9.55046 13 10.9374 12.293 11.8553 11.1816C12.0311 10.9687 12.3463 10.9386 12.5592 11.1145C12.7721 11.2903 12.8022 11.6055 12.6263 11.8184C11.5266 13.15 9.86135 14 7.99797 14C5.05626 14 2.60995 11.8835 2.09688 9.09033C2.09137 9.0603 2.08607 9.03019 2.08101 9H3.09789Z" fill="black"/>
-            </svg>
-          </button>
+          <sl-tooltip content="Collect to your pocket." placement="bottom">
+            <button variant="white" @click=${() => { }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.79912 3.0098C3.8801 2.91388 4.00719 2.85742 4.14216 2.85742H11.8604C11.9954 2.85742 12.1226 2.91396 12.2036 3.00999L14.7558 6.0373C14.8833 6.17828 14.8894 6.38044 14.7648 6.52803L8.3443 14.1336C8.26332 14.2295 8.13623 14.286 8.00127 14.286C7.8663 14.286 7.73921 14.2295 7.65823 14.1336L1.22638 6.51456C1.11204 6.37911 1.11204 6.19287 1.22638 6.05742L3.79912 3.0098ZM13.5635 5.89393L12.0147 4.05683L11.3493 5.89598L13.5635 5.89393ZM10.4482 5.89682L11.2722 3.61933H4.73038L5.55599 5.90135L10.4482 5.89682ZM5.83155 6.663L8.00127 12.6601L10.1724 6.65898L5.83155 6.663ZM4.6555 5.90218L3.98767 4.05629L2.42767 5.90425L4.6555 5.90218ZM2.42632 6.66615L6.81108 11.8603L4.93106 6.66383L2.42632 6.66615ZM9.19145 11.8603L13.5849 6.65581L11.0735 6.65814L9.19145 11.8603Z" fill="#151A11"/>
+              </svg>
+              Collect
+            </button>
+          </sl-tooltip>
+          <sl-tooltip content="More life wisdom." placement="bottom">
+            <button variant="white" @click=${() => this.getRandomQuote()}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z" fill="black"/>
+                <path d="M0.531728 9H4.46421C4.67617 9 4.79196 8.75279 4.65626 8.58995L2.69002 6.23047C2.59007 6.11053 2.40586 6.11053 2.30591 6.23047L0.339672 8.58995C0.203979 8.75279 0.319769 9 0.531728 9Z" fill="black"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99797 3C6.44548 3 5.05853 3.70697 4.14065 4.81839C3.96481 5.03131 3.64966 5.06137 3.43674 4.88552C3.22382 4.70968 3.19376 4.39453 3.36961 4.18161C4.46931 2.85003 6.13459 2 7.99797 2C10.9397 2 13.386 4.1165 13.8991 6.90967C13.9046 6.9397 13.9099 6.96981 13.9149 7H12.898C12.435 4.71778 10.4166 3 7.99797 3ZM3.09789 9C3.5609 11.2822 5.57934 13 7.99797 13C9.55046 13 10.9374 12.293 11.8553 11.1816C12.0311 10.9687 12.3463 10.9386 12.5592 11.1145C12.7721 11.2903 12.8022 11.6055 12.6263 11.8184C11.5266 13.15 9.86135 14 7.99797 14C5.05626 14 2.60995 11.8835 2.09688 9.09033C2.09137 9.0603 2.08607 9.03019 2.08101 9H3.09789Z" fill="black"/>
+              </svg>
+            </button>
+          </sl-tooltip>
         </div>
       </div>
     `;
@@ -371,14 +638,11 @@ export class WelcomeView extends LitElement {
     console.log('Rendering notifications: ', notifications);
     return html`
       <div
-        class="column"
-        style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;"
+        class="notifications-column column"
       >
-        <div class="feed" style="display: flex; flex-direction: column; align-items: center;">
         ${notifications.length === 0
         ? html`<div>No notifications yet...</div>`
         : notifications.map((notification) => this.renderNotification(notification))}
-        </div>
       </div>
     `;
   }
@@ -415,30 +679,97 @@ export class WelcomeView extends LitElement {
     `;
   }
 
+  renderEllipse() {
+    return html`
+    <svg class="ellipse" width="556" height="160" viewBox="0 0 556 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M278 160C431.535 160 556 88.3656 556 0H0C0 88.3656 124.465 160 278 160Z" fill="url(#paint0_radial_3151_9586)"/>
+      <defs>
+        <radialGradient id="paint0_radial_3151_9586" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(278 8.96593e-06) rotate(90) scale(149.565 259.87)">
+          <stop offset="0.25" stop-color="#E7EEC4"/>
+          <stop offset="0.586538" stop-color="#E1EED2" stop-opacity="0.31"/>
+          <stop offset="0.807692" stop-color="#E1EED4" stop-opacity="0.0745343"/>
+          <stop offset="0.962953" stop-color="#E0EED5" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+    </svg>
+    `;
+  }
+
   render() {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
           <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
-          ${this.renderFeedbackDialog()}
+          <div class="row" style="flex: 1; height: 100%;">
+            <div class="update-nav-list">
+              <div
+                data-section="software-updates"
+                @click=${() => { this.selectNotificationSection('software-updates'); }}
+                class="notification-filter-header">
+                <span>Software updates</span>
+                <span>${Object.keys(this.getToolUpdatesSource()).length}</span>
+              </div>
+              <div
+                data-section="messages"
+                @click=${() => { this.selectNotificationSection('messages'); }}
+                class="notification-filter-header">
+                <span>New messages</span>
+                <span>${this._notificationFeed.value.length}</span>
+              </div>
+              <div
+                data-section="action-requests"
+                @click=${() => { this.selectNotificationSection('action-requests'); }}
+                class="notification-filter-header">
+                <span>Action requests</span>
+                <span>0</span>
+              </div>
+              <div
+                data-section="moss-news"
+                @click=${() => { this.selectNotificationSection('moss-news'); }}
+                class="notification-filter-header">
+                <span>Moss news</span>
+                <span>0</span>
+              </div>
+            </div>
             <div class="flex-scrollable-container">
-              <div class="scroll-section">
+              <div class="fixed-section">
                 <div class="column" style="align-items: center;">
                   ${this.renderQuoteOfTheDay()}
-                  <div class="welcome-message-highlight">
+                  <div class="welcome-message-highlight" style="opacity: calc(var(--welcome-opacity, 1) * 0.5)">
                   </div>
-                  <div class="welcome-message">
-                    <div>Good morning,</div>
+                  <div class="welcome-message" style="opacity: var(--welcome-opacity, 1)">
+                    <div>Good ${this.getTimeOfDayGreeting()},</div>
                     <div>beautiful human!</div>
                   </div>
                 </div>
               </div>
 
-              <div class="scroll-section">
-                <!-- ${this.renderUpdateFeed()} -->
-                ${this.renderNotifications()}
+              <div class="scrollable-sections-container">
+                ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
+
+                <div class="scroll-section" id="software-updates">
+                  ${this.renderEllipse()}
+                  <div class="mini-button">Tools</div>
+                  ${this.renderToolUpdateFeed()}
+                </div>
+                <div class="scroll-section" id="messages">
+                  ${this.renderEllipse()}
+                  <div class="mini-button">Messages</div>
+                  ${this.renderNotifications()}
+                </div>
+                <div class="scroll-section" id="action-requests">
+                  <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
+                    <div>Action requests section - Coming soon</div>
+                  </div>
+                </div>
+                <div class="scroll-section" id="moss-news">
+                  <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
+                    <div>Moss news section - Coming soon</div>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
         `;
     }
   }
@@ -453,17 +784,55 @@ export class WelcomeView extends LitElement {
         /* background-color: var(--moss-dark-green); */
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
-        background: url('/placeholder.png') no-repeat center center fixed;
+        background: url('/mosshome.png') no-repeat center center fixed;
         background-size: cover;
         height: 100%;
+      }
+
+      .update-nav-list {
+        top: calc(50% - 110px);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        justify-content: center;
+        width: fit-content;
+        align-items: center;
+        z-index: 2;
+        pointer-events: none;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: left 0.16s ease, transform 0.3s ease;
+      }
+
+      .update-nav-list.left {
+        left: 19px;
+        transform: translateX(0);
+        align-items: flex-start;
+      }
+
+      .notification-filter-header {
+        display: inline-flex;
+        padding: 16px 20px;
+        width: fit-content;
+        gap: 20px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.80);
+        transition: background 0.3s ease;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      .notification-filter-header:hover, .notification-filter-header.selected {
+        background: #fff;
       }
 
       .flex-scrollable-container {
         display: flex;
         flex-direction: column;
         overflow-y: scroll;
-        scroll-snap-type: y mandatory;
-        height: 100vh;
+        /* scroll-snap-type: y mandatory; */
+        /* height: 100vh; */
         scrollbar-width: none; /* Firefox */
         -ms-overflow-style: none; /* IE/Edge */
       }
@@ -472,23 +841,216 @@ export class WelcomeView extends LitElement {
         display: none; /* Chrome, Safari, Opera */
       }
 
+      .fixed-section {
+        position: fixed;
+        width: calc(100% - 90px);
+        height: 300px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .scrollable-sections-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-top: 100vh;
+        margin-bottom: 50vh;
+        z-index: 1;
+      }
+
       .scroll-section {
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 100vh;
         flex-shrink: 0;
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
         transition: all 0.3s ease;
+        border-radius: 28px;
+        width: 556px;
+        background: rgba(255, 255, 255, 0.30);
+        backdrop-filter: blur(12px);
+      }
+      
+      .scroll-section .ellipse {
+        position: absolute;
+        fill: radial-gradient(46.74% 93.48% at 50% 0%, var(--09, #E7EEC4) 25%, rgba(225, 238, 210, 0.31) 58.65%, rgba(225, 238, 212, 0.07) 80.77%, rgba(224, 238, 213, 0.00) 96.3%);
+      }
+
+      .scroll-section .mini-button {
+        display: flex;
+        z-index: 1;
+        width: 125px;
+        padding: 8px 10px;
+        margin: 8px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tool-updates-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .notifications-column {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .tool-update-outer {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        align-items: top;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px;
+        width: 524px;
+        border-radius: 20px;
+        background: #FFF;
+      }
+
+      .install-tool-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        background: transparent;
+        z-index: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition: background 0.3s ease;
+      }
+
+      .install-tool-overlay > sl-button {
+        opacity: 0;
+        pointer-events: auto;
+        transition: opacity 0.3s ease;
+      }
+
+      .install-tool-overlay > sl-button::part(base) {
+        background: var(--moss-purple, #7461EB);
+        border-color: var(--moss-purple, #7461EB);
+        color: #FFF;
+      }
+
+      .install-tool-overlay > sl-button::part(base):hover {
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        border-color: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        color: #FFF;
+      }
+
+      .tool-update-outer:hover .install-tool-overlay {
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 40%, transparent);
+        z-index: 1;
+      }
+
+      .tool-update-outer:hover .install-tool-overlay > sl-button {
+        opacity: 1;
+      }
+
+      .tool-update-left-center {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .tool-update-left {
+        display: flex;
+      }
+
+      .tool-update-center {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .tool-update-title {
+        color: #000;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 24px; /* 150% */
+      }
+
+      .tool-update-version {
+        color: rgba(0, 0, 0, 0.40);
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 16px; /* 133.333% */
+      }
+
+      .tool-update-tags {
+        display: flex;
+        gap: 4px;
+      }
+
+      .tool-update-tags > span {
+        display: inline-flex;
+        padding: 2px 8px;
+        align-items: center;
+        gap: 4px;
+        border-radius: 3px;
+        background: rgba(194, 253, 86, 0.30);
+      }
+
+      .tool-update-tags > span:nth-child(1) {
+        background: rgba(137, 214, 188, 0.30);
+      }
+
+      .tool-update-right {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 150px;
+      }
+
+      .tool-update-right > span {
+        color: #000;
+        font-family: "Inter Variable";
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 24px; /* 150% */
+      }
+       
+      .tool-update-more-groups {
+        display: flex;
+        width: 32px;
+        padding: 8px 0px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        border-radius: 8px;
+        background: #F4FED6;
+        color: var(--13, #324D47);
+        font-size: 12px;
+        font-weight: 500;
       }
 
       .quote-of-the-day-container {
+        position: absolute;
+        top: 0;
         margin-top: 20px;
+        pointer-events: auto;
       }
 
       .quote-of-the-day {
         display: inline-flex;
+        width: 400px;
         padding: 12px 24px;
         flex-direction: column;
         align-items: center;
@@ -496,6 +1058,10 @@ export class WelcomeView extends LitElement {
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.70);
         transition: background 0.3s ease;
+      }
+
+      .quote-of-the-day > p {
+        white-space: pre-line;
       }
 
       .quote-of-the-day-container:hover > .quote-of-the-day {
@@ -511,7 +1077,7 @@ export class WelcomeView extends LitElement {
         transition: opacity 0.3s ease;
       }
 
-      .quote-buttons > button {
+      .quote-buttons > sl-tooltip > button {
         display: inline-flex;
         padding: 4px 6px;
         justify-content: center;
@@ -525,8 +1091,8 @@ export class WelcomeView extends LitElement {
         font-weight: 500;
       }
 
-      .quote-buttons > button:hover {
-        background: var(--Moss-purplr, #7461EB);
+      .quote-buttons > sl-tooltip > button:hover {
+        background: var(--moss-purple, #7461EB);
       }
 
       .quote-of-the-day-container:hover > .quote-buttons {
@@ -556,6 +1122,8 @@ export class WelcomeView extends LitElement {
       }
 
       .welcome-message-highlight {
+        position: absolute;
+        top: calc(25vh - 185px);
         width: 952px;
         height: 348px;
         border-radius: 100%;
@@ -565,7 +1133,8 @@ export class WelcomeView extends LitElement {
       }
 
       .welcome-message {
-        margin-top: -225px;
+        position: absolute;
+        top: calc(25vh - 60px);
         color: var(--Moss-dark-button, #151A11);
         text-align: center;
         font-family: Mossville-v2;

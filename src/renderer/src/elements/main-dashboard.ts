@@ -1486,7 +1486,7 @@ export class MainDashboard extends LitElement {
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
         ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
         ? `width: ${this._drawerWidth > 200 ? this._drawerWidth : 200
-        }px; display: flex; flex-grow: 0; flex-shrink: 0;`
+        }px; display: flex; flex-grow: 0; flex-shrink: 0; z-index: 1;`
         : ''}"
             @click=${(e) => {
         // Prevent propagation such hat only clicks outside of this container bubble up and we
