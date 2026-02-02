@@ -1628,51 +1628,67 @@
 </trans-unit>
 <trans-unit id="s08a64b07b54df8d4">
   <source>by</source>
+  <target>por</target>
 </trans-unit>
 <trans-unit id="s8763e7dbdf84093d">
   <source>Installation successful</source>
+  <target>Instalação bem-sucedida</target>
 </trans-unit>
 <trans-unit id="s08a95f07b55050a7">
   <source>me</source>
+  <target>eu</target>
 </trans-unit>
 <trans-unit id="sf70accff890a3e36">
   <source>Tool activated.</source>
+  <target>Ferramenta ativada.</target>
 </trans-unit>
 <trans-unit id="s3a41d065ac965e2a">
   <source>abandoned by:</source>
+  <target>abandonado por:</target>
 </trans-unit>
 <trans-unit id="s6466997515d6d5b3">
   <source>New Steward Added.</source>
+  <target>Novo Steward adicionado.</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
+  <target>Desinstalado por:</target>
 </trans-unit>
 <trans-unit id="sa60b341bc63f22e5">
   <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
+  <target>Todas as <x id="0" equiv-text="${successCount}"/> ferramentas ativadas com sucesso.</target>
 </trans-unit>
 <trans-unit id="sb6e3761a156a287c">
   <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
+  <target><x id="0" equiv-text="${successCount}"/> ferramentas ativadas. <x id="1" equiv-text="${failCount}"/> falharam (ver console para detalhes).</target>
 </trans-unit>
 <trans-unit id="sef15c43dfc461396">
   <source>Failed to activate all tools (see console for details).</source>
+  <target>Falha ao ativar todas as ferramentas (ver console para detalhes).</target>
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
+  <target>Função de Steward atribuída.</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>
+  <target>Perfil atualizado.</target>
 </trans-unit>
 <trans-unit id="s365a7b194bc6e1dd">
   <source>Tool installed.</source>
+  <target>Ferramenta instalada.</target>
 </trans-unit>
 <trans-unit id="sb5f4daa1bf12f954">
   <source>DhtOp logged to console.</source>
+  <target>DhtOp registrado no console.</target>
 </trans-unit>
 <trans-unit id="s949586df2fc249a6">
   <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
+  <target>Estatísticas salvas na pasta de logs (Ajuda &gt; Abrir Logs)</target>
 </trans-unit>
 <trans-unit id="s6d4ea06717ba190f">
   <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
+  <target>Novo <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> criado.</target>
 </trans-unit>
 <trans-unit id="se122ec103ad3a22b">
   <source>Asset Viewer</source>
