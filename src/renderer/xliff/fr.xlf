@@ -80,11 +80,11 @@
 </trans-unit>
 <trans-unit id="s06db052ab09cbad2">
   <source>Stewarded</source>
-  <target>Administré</target>
+  <target>Avec Référents</target>
 </trans-unit>
 <trans-unit id="s5ac92050a6baecb3">
   <source>Unstewarded</source>
-  <target>Non administré</target>
+  <target>Sans Référents</target>
 </trans-unit>
 <trans-unit id="s416a540b16275f2e">
   <source>Create Group</source>
@@ -552,7 +552,7 @@
 </trans-unit>
 <trans-unit id="s2aac2023bcfa6e62">
   <source>Add Steward:</source>
-  <target>Ajouter un administrateur :</target>
+  <target>Ajouter un Référent :</target>
 </trans-unit>
 <trans-unit id="sb78ce49735cd209e">
   <source>expiry</source>
@@ -688,7 +688,7 @@
 </trans-unit>
 <trans-unit id="sa5ca0ea1eea6b70b">
   <source>Only stewards can change the group profile.</source>
-  <target>Seuls les administrateurs peuvent modifier le profil du groupe.</target>
+  <target>Seuls les Référents peuvent modifier le profil du groupe.</target>
 </trans-unit>
 <trans-unit id="se49ae8ea6d091fe9">
   <source>Group ID</source>
@@ -784,7 +784,7 @@
 </trans-unit>
 <trans-unit id="sa45a194b58837e4f">
   <source>Active</source>
-  <target>Actif</target>
+  <target>Asset</target>
 </trans-unit>
 <trans-unit id="s0e1dc13dc6a16310">
   <source>Uninstalled</source>
@@ -796,7 +796,7 @@
 </trans-unit>
 <trans-unit id="s43417e56f957ff34">
   <source>assign steward role</source>
-  <target>attribuer le rôle d'administrateur</target>
+  <target>attribuer le rôle de Référent</target>
 </trans-unit>
 <trans-unit id="s6e84b6d6d9819c25">
   <source>no expiry</source>
@@ -808,7 +808,7 @@
 </trans-unit>
 <trans-unit id="s4df2cd89bceba12f">
   <source>Assign Steward role to </source>
-  <target>Attribuer le rôle d'administrateur à </target>
+  <target>Attribuer le rôle de Référent à </target>
 </trans-unit>
 <trans-unit id="s043ccb66dea567af">
   <source>until:</source>
@@ -828,7 +828,7 @@
 </trans-unit>
 <trans-unit id="s0b93f9778794737c">
   <source>I understand that after assigning someone to the Steward role</source>
-  <target>Je comprends qu'après avoir attribué le rôle d'administrateur à quelqu'un</target>
+  <target>Je comprends qu'après avoir attribué le rôle de Référent à quelqu'un</target>
 </trans-unit>
 <trans-unit id="s5359ae748cb89c2c">
   <source>I cannot undo the action.</source>
@@ -836,11 +836,11 @@
 </trans-unit>
 <trans-unit id="sc99731a5ed9a3ccb">
   <source>A member will stay a Steward forever or until the specified date.</source>
-  <target>Un membre restera administrateur pour toujours où jusqu'à la date specifiée.</target>
+  <target>Un membre restera Référent pour toujours ou jusqu'à la date spécifiée.</target>
 </trans-unit>
 <trans-unit id="s443f3886c4025e94">
   <source>Assign Steward Role</source>
-  <target>Attribuer le rôle d'administrateur</target>
+  <target>Attribuer le rôle de Référent</target>
 </trans-unit>
 <trans-unit id="safb6dffff2680544">
   <source>name*</source>
@@ -912,7 +912,7 @@
 </trans-unit>
 <trans-unit id="sfa6b141d95c6d21d">
   <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
-  <target>Vous ne pourrez plus utiliser cette Outil, mais votre groupe continuera à l'utiliser jusqu'à ce qu'un administrateur le marque obsolète pour tout le monde.</target>
+  <target>Vous ne pourrez plus utiliser cet Outil, mais votre groupe continuera à l'utiliser jusqu'à ce qu'un Référent le marque obsolète pour tout le monde.</target>
 </trans-unit>
 <trans-unit id="s5e454aea488489d6">
   <source>Do you want to uninstall it for yourself?</source>
@@ -1392,7 +1392,7 @@
 </trans-unit>
 <trans-unit id="sbcd75c9c2a54295f">
   <source>The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.</source>
-  <target>Le créateur du groupe est le premier Administrateur. Seuls les Administrateurs peuvent modifier le profil du groupe, ajouter et supprimer des Outils et ajouter des Administrateurs supplémentaires.</target>
+  <target>Le créateur du groupe est le premier Référent. Seuls les Référents peuvent modifier le profil du groupe, ajouter et supprimer des Outils et ajouter des Référents supplémentaires.</target>
 </trans-unit>
 <trans-unit id="sd61c6c6ae1ff0b1e">
   <source>All members have full permissions.</source>
@@ -1488,7 +1488,7 @@
 </trans-unit>
 <trans-unit id="sc1407b21ee25eeab">
   <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
-  <target>Rien dans votre Poche. Cherchez les icônes de Poche pour ajouter des ressources à votre Poche.</target>
+  <target>Rien dans votre Poche. Cherchez les icônes de Poche pour ajouter des assets à votre Poche.</target>
 </trans-unit>
 <trans-unit id="s04b098165a8b8e1a">
   <source>Foyer</source>
@@ -1628,51 +1628,67 @@
 </trans-unit>
 <trans-unit id="s08a64b07b54df8d4">
   <source>by</source>
+  <target>par</target>
 </trans-unit>
 <trans-unit id="s8763e7dbdf84093d">
   <source>Installation successful</source>
+  <target>Installation réussie</target>
 </trans-unit>
 <trans-unit id="s08a95f07b55050a7">
   <source>me</source>
+  <target>moi</target>
 </trans-unit>
 <trans-unit id="sf70accff890a3e36">
   <source>Tool activated.</source>
+  <target>Outil activé.</target>
 </trans-unit>
 <trans-unit id="s3a41d065ac965e2a">
   <source>abandoned by:</source>
+  <target>abandonné par :</target>
 </trans-unit>
 <trans-unit id="s6466997515d6d5b3">
   <source>New Steward Added.</source>
+  <target>Nouveau Référent ajouté.</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
+  <target>Désinstallé par :</target>
 </trans-unit>
 <trans-unit id="sa60b341bc63f22e5">
   <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
+  <target>Tous les <x id="0" equiv-text="${successCount}"/> outils ont été activés avec succès.</target>
 </trans-unit>
 <trans-unit id="sb6e3761a156a287c">
   <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
+  <target><x id="0" equiv-text="${successCount}"/> outils activés. <x id="1" equiv-text="${failCount}"/> ont échoué (voir la console pour les détails).</target>
 </trans-unit>
 <trans-unit id="sef15c43dfc461396">
   <source>Failed to activate all tools (see console for details).</source>
+  <target>Échec de l'activation de tous les outils (voir la console pour les détails).</target>
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
+  <target>Rôle de Référent attribué.</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>
+  <target>Profil mis à jour.</target>
 </trans-unit>
 <trans-unit id="s365a7b194bc6e1dd">
   <source>Tool installed.</source>
+  <target>Outil installé.</target>
 </trans-unit>
 <trans-unit id="sb5f4daa1bf12f954">
   <source>DhtOp logged to console.</source>
+  <target>DhtOp enregistré dans la console.</target>
 </trans-unit>
 <trans-unit id="s949586df2fc249a6">
   <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
+  <target>Statistiques enregistrées dans le dossier des logs (Aide &gt; Ouvrir les logs)</target>
 </trans-unit>
 <trans-unit id="s6d4ea06717ba190f">
   <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
+  <target>Nouveau <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> créé.</target>
 </trans-unit>
 <trans-unit id="se122ec103ad3a22b">
   <source>Asset Viewer</source>

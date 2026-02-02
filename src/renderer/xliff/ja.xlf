@@ -1628,51 +1628,67 @@
 </trans-unit>
 <trans-unit id="s08a64b07b54df8d4">
   <source>by</source>
+  <target>作成者:</target>
 </trans-unit>
 <trans-unit id="s8763e7dbdf84093d">
   <source>Installation successful</source>
+  <target>インストール完了</target>
 </trans-unit>
 <trans-unit id="s08a95f07b55050a7">
   <source>me</source>
+  <target>自分</target>
 </trans-unit>
 <trans-unit id="sf70accff890a3e36">
   <source>Tool activated.</source>
+  <target>ツールが有効化されました。</target>
 </trans-unit>
 <trans-unit id="s3a41d065ac965e2a">
   <source>abandoned by:</source>
+  <target>放棄者:</target>
 </trans-unit>
 <trans-unit id="s6466997515d6d5b3">
   <source>New Steward Added.</source>
+  <target>新しいStewardが追加されました。</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
+  <target>アンインストール者:</target>
 </trans-unit>
 <trans-unit id="sa60b341bc63f22e5">
   <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
+  <target>すべての<x id="0" equiv-text="${successCount}"/>ツールが正常に有効化されました。</target>
 </trans-unit>
 <trans-unit id="sb6e3761a156a287c">
   <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
+  <target><x id="0" equiv-text="${successCount}"/>ツールが有効化されました。<x id="1" equiv-text="${failCount}"/>件失敗しました（詳細はコンソールを参照）。</target>
 </trans-unit>
 <trans-unit id="sef15c43dfc461396">
   <source>Failed to activate all tools (see console for details).</source>
+  <target>すべてのツールの有効化に失敗しました（詳細はコンソールを参照）。</target>
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
+  <target>Stewardロールが割り当てられました。</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>
+  <target>プロフィールが更新されました。</target>
 </trans-unit>
 <trans-unit id="s365a7b194bc6e1dd">
   <source>Tool installed.</source>
+  <target>ツールがインストールされました。</target>
 </trans-unit>
 <trans-unit id="sb5f4daa1bf12f954">
   <source>DhtOp logged to console.</source>
+  <target>DhtOpがコンソールに記録されました。</target>
 </trans-unit>
 <trans-unit id="s949586df2fc249a6">
   <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
+  <target>統計がログフォルダに保存されました（ヘルプ &gt; ログを開く）</target>
 </trans-unit>
 <trans-unit id="s6d4ea06717ba190f">
   <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
+  <target>新しい<x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>が作成されました。</target>
 </trans-unit>
 <trans-unit id="se122ec103ad3a22b">
   <source>Asset Viewer</source>

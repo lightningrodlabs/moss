@@ -112,8 +112,8 @@ export class HolochainManager {
     const advancedSettings = conductorConfig.network.advanced
       ? conductorConfig.network.advanced
       : {};
-    advancedSettings.coreBootstrap = { backoffMaxMs: 10000 }
-    advancedSettings.coreSpace = { reSignExpireTimeMs: 10000, reSignFreqMs: 10000 }
+    advancedSettings.coreBootstrap = { backoffMaxMs: 30000 }
+    advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 }
     conductorConfig.network.advanced = advancedSettings;
 
     console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
