@@ -80,11 +80,11 @@
 </trans-unit>
 <trans-unit id="s06db052ab09cbad2">
   <source>Stewarded</source>
-  <target>Yönetilen</target>
+  <target>Rehberli</target>
 </trans-unit>
 <trans-unit id="s5ac92050a6baecb3">
   <source>Unstewarded</source>
-  <target>Yönetilmeyen</target>
+  <target>Rehbersiz</target>
 </trans-unit>
 <trans-unit id="s416a540b16275f2e">
   <source>Create Group</source>
@@ -552,7 +552,7 @@
 </trans-unit>
 <trans-unit id="s2aac2023bcfa6e62">
   <source>Add Steward:</source>
-  <target>Yönetici Ekle:</target>
+  <target>Rehber Ekle:</target>
 </trans-unit>
 <trans-unit id="sb78ce49735cd209e">
   <source>expiry</source>
@@ -688,7 +688,7 @@
 </trans-unit>
 <trans-unit id="sa5ca0ea1eea6b70b">
   <source>Only stewards can change the group profile.</source>
-  <target>Yalnızca yöneticiler grup profilini değiştirebilir.</target>
+  <target>Yalnızca Rehberler grup profilini değiştirebilir.</target>
 </trans-unit>
 <trans-unit id="se49ae8ea6d091fe9">
   <source>Group ID</source>
@@ -796,7 +796,7 @@
 </trans-unit>
 <trans-unit id="s43417e56f957ff34">
   <source>assign steward role</source>
-  <target>yönetici rolü ata</target>
+  <target>Rehber rolü ata</target>
 </trans-unit>
 <trans-unit id="s6e84b6d6d9819c25">
   <source>no expiry</source>
@@ -808,7 +808,7 @@
 </trans-unit>
 <trans-unit id="s4df2cd89bceba12f">
   <source>Assign Steward role to </source>
-  <target>Yönetici rolünü şuna ata: </target>
+  <target>Rehber rolünü şuna ata: </target>
 </trans-unit>
 <trans-unit id="s043ccb66dea567af">
   <source>until:</source>
@@ -828,7 +828,7 @@
 </trans-unit>
 <trans-unit id="s0b93f9778794737c">
   <source>I understand that after assigning someone to the Steward role</source>
-  <target>Birine Yönetici rolü atadıktan sonra</target>
+  <target>Birine Rehber rolü atadıktan sonra</target>
 </trans-unit>
 <trans-unit id="s5359ae748cb89c2c">
   <source>I cannot undo the action.</source>
@@ -836,11 +836,11 @@
 </trans-unit>
 <trans-unit id="sc99731a5ed9a3ccb">
   <source>A member will stay a Steward forever or until the specified date.</source>
-  <target>Bir üye sonsuza kadar veya belirtilen tarihe kadar Yönetici olarak kalacak.</target>
+  <target>Bir üye sonsuza kadar veya belirtilen tarihe kadar Rehber olarak kalacak.</target>
 </trans-unit>
 <trans-unit id="s443f3886c4025e94">
   <source>Assign Steward Role</source>
-  <target>Yönetici Rolü Ata</target>
+  <target>Rehber Rolü Ata</target>
 </trans-unit>
 <trans-unit id="safb6dffff2680544">
   <source>name*</source>
@@ -912,7 +912,7 @@
 </trans-unit>
 <trans-unit id="sfa6b141d95c6d21d">
   <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
-  <target>Bu uygulamayı artık kullanamazsınız, ancak bir Yönetici herkesi için kullanımdan kaldırana kadar grubunuz kullanmaya devam edecek.</target>
+  <target>Bu uygulamayı artık kullanamazsınız, ancak bir Rehber herkesi için kullanımdan kaldırana kadar grubunuz kullanmaya devam edecek.</target>
 </trans-unit>
 <trans-unit id="s5e454aea488489d6">
   <source>Do you want to uninstall it for yourself?</source>
@@ -1392,7 +1392,7 @@
 </trans-unit>
 <trans-unit id="sbcd75c9c2a54295f">
   <source>The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.</source>
-  <target>Grup oluşturucusu ilk Yöneticidir. Yalnızca Yöneticiler grup profilini düzenleyebilir, Araç ekleyip kaldırabilir ve ek Yöneticiler ekleyebilir.</target>
+  <target>Grup oluşturucusu ilk Rehberdir. Yalnızca Rehberler grup profilini düzenleyebilir, Araç ekleyip kaldırabilir ve ek Rehberler ekleyebilir.</target>
 </trans-unit>
 <trans-unit id="sd61c6c6ae1ff0b1e">
   <source>All members have full permissions.</source>
@@ -1648,7 +1648,7 @@
 </trans-unit>
 <trans-unit id="s6466997515d6d5b3">
   <source>New Steward Added.</source>
-  <target>Yeni Steward eklendi.</target>
+  <target>Yeni Rehber eklendi.</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
@@ -1668,7 +1668,7 @@
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
-  <target>Steward rolü atandı.</target>
+  <target>Rehber rolü atandı.</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>

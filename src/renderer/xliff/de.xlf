@@ -80,11 +80,11 @@
 </trans-unit>
 <trans-unit id="s06db052ab09cbad2">
   <source>Stewarded</source>
-  <target>Verwaltet</target>
+  <target>Mit Verwalter</target>
 </trans-unit>
 <trans-unit id="s5ac92050a6baecb3">
   <source>Unstewarded</source>
-  <target>Unverwaltet</target>
+  <target>Ohne Verwalter</target>
 </trans-unit>
 <trans-unit id="s416a540b16275f2e">
   <source>Create Group</source>
@@ -1648,7 +1648,7 @@
 </trans-unit>
 <trans-unit id="s6466997515d6d5b3">
   <source>New Steward Added.</source>
-  <target>Neuer Steward hinzugefügt.</target>
+  <target>Neuer Verwalter hinzugefügt.</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
@@ -1668,7 +1668,7 @@
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
-  <target>Steward-Rolle zugewiesen.</target>
+  <target>Verwalterrolle zugewiesen.</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>
