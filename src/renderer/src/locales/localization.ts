@@ -8,6 +8,7 @@ import tr from 'javascript-time-ago/locale/tr';
 import it from 'javascript-time-ago/locale/it';
 import pt from 'javascript-time-ago/locale/pt';
 import ja from 'javascript-time-ago/locale/ja';
+import nl from 'javascript-time-ago/locale/nl';
 
 // Register all TimeAgo locales
 TimeAgo.addDefaultLocale(en);
@@ -18,10 +19,11 @@ TimeAgo.addLocale(tr);
 TimeAgo.addLocale(it);
 TimeAgo.addLocale(pt);
 TimeAgo.addLocale(ja);
+TimeAgo.addLocale(nl);
 
 // Supported locales - must match lit-localize.json targetLocales
 export const sourceLocale = 'en';
-export const targetLocales = ['de', 'fr', 'es', 'tr', 'it', 'pt', 'ja'] as const;
+export const targetLocales = ['de', 'fr', 'es', 'tr', 'it', 'pt', 'ja', 'nl'] as const;
 export const allLocales = [sourceLocale, ...targetLocales] as const;
 
 export type SupportedLocale = (typeof allLocales)[number];
@@ -47,6 +49,8 @@ const localization = configureLocalization({
           return import('./generated/pt.js');
         case 'ja':
           return import('./generated/ja.js');
+        case 'nl':
+          return import('./generated/nl.js');
         default:
           // Source locale (en) doesn't need to load anything
           return { templates: {} };
@@ -90,6 +94,7 @@ export const LANGUAGE_NAMES: Record<SupportedLocale, string> = {
   it: 'Italiano',
   pt: 'Português',
   ja: '日本語',
+  nl: 'Nederlands',
 };
 
 /**
