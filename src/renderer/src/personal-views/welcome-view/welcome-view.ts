@@ -17,6 +17,8 @@ import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
+import pluralize from 'pluralize';
+import quotesData from './SnapTalkFunnies.json';
 
 import '../../elements/_new_design/moss-dialog.js';
 import '../../elements/dialogs/select-group-dialog.js';
@@ -72,7 +74,7 @@ export class WelcomeView extends LitElement {
   @state()
   updatingTool = false;
 
-  notificationSection: 'software-updates' | 'messages' | 'action-requests' | 'moss-news' | null = null;
+  notificationSection: string | null = null;
 
   isProgrammaticScroll = false;
 
@@ -103,30 +105,8 @@ export class WelcomeView extends LitElement {
       : this.availableToolUpdates.value;
   }
 
-  quotesOfTheDay = [
-    { text: "April weather, rain and sunshine both together.", source: "English country saying" },
-    { text: "The best time to plant a tree was 20 years ago. \nThe second best time is now.", source: "Chinese proverb" },
-    { text: "In the middle of difficulty lies opportunity.", source: "Albert Einstein" },
-    { text: "The only way to do great work is to \nlove what you do.", source: "Steve Jobs" },
-    { text: "Life is what happens when you're \nbusy making other plans.", source: "John Lennon" },
-    { text: "The journey of a thousand miles \nbegins with one step.", source: "Lao Tzu" },
-    { text: "Be yourself; everyone else is already taken.", source: "Oscar Wilde" },
-    { text: "To live is the rarest thing in the world. \nMost people exist, that is all.", source: "Oscar Wilde" },
-    { text: "Not all those who wander are lost.", source: "J.R.R. Tolkien" },
-    { text: "Do not go where the path may lead, \ngo instead where there is no path and leave a trail.", source: "Ralph Waldo Emerson" },
-    { text: "Happiness is not something ready made. \nIt comes from your own actions.", source: "Dalai Lama" },
-    { text: "In three words I can sum up everything \nI've learned about life: it goes on.", source: "Robert Frost" },
-    { text: "The only limit to our realization of tomorrow \nwill be our doubts of today.", source: "Franklin D. Roosevelt" },
-    { text: "The purpose of our lives is to be happy.", source: "Dalai Lama" },
-    { text: "Life is really simple, \nbut we insist on making it complicated.", source: "Confucius" },
-    { text: "You must be the change you wish to \nsee in the world.", source: "Mahatma Gandhi" },
-    { text: "Believe you can and you're halfway there.", source: "Theodore Roosevelt" },
-    { text: "Act as if what you do makes a difference. It does.", source: "William James" },
-    { text: "Success is not final, failure is not fatal: \nIt is the courage to continue that counts.", source: "Winston Churchill" },
-    { text: "What lies behind us and what lies before us \nare tiny matters compared to what lies within us.", source: "Ralph Waldo Emerson" },
-    { text: "Do what you can, with what you have, \nwhere you are.", source: "Theodore Roosevelt" },
-    { text: "You are never too old to set another \ngoal or to dream a new dream.", source: "C.S. Lewis" },
-  ];
+  @state()
+  quotesOfTheDay: Array<{ text: string; source: string }> = [];
 
   @state()
   currentQuoteIndex = 0;
@@ -141,16 +121,56 @@ export class WelcomeView extends LitElement {
   // Mock groups data for development
   _mockGroupsData: Record<string, Map<any, any>> = {};
 
+  // DEV MODE: Enable mock tool updates
+  _DEV_MODE = false; // Set to false to use real data
+
+  // Memoization cache for notificationTypes
+  private _lastNotifications: Array<any> | null = null;
+  private _cachedNotificationTypes: Record<string, number> = {};
+
+  // Reactive getter for notification types derived from _notificationFeed with memoization
+  get notificationTypes(): Record<string, number> {
+    const notifications = this._notificationFeed.value ?? [];
+
+    // Return cached result if notifications array hasn't changed
+    if (notifications === this._lastNotifications) {
+      return this._cachedNotificationTypes;
+    }
+
+    // Recalculate when notifications change
+    const types: Record<string, number> = {};
+    notifications.forEach((item) => {
+      const notificationType = item.notification.notification_type || "default";
+      if (!types[notificationType]) {
+        types[notificationType] = 1;
+      } else {
+        types[notificationType] += 1;
+      }
+    });
+
+    // Cache the result
+    this._lastNotifications = notifications;
+    this._cachedNotificationTypes = types;
+
+    return types;
+  }
+
   async firstUpdated() {
-    // DEV MODE: Enable mock tool updates
-    const DEV_MODE = true; // Set to false to use real data
-    if (DEV_MODE) {
+    // Load quotes from imported JSON
+    this.quotesOfTheDay = quotesData;
+    // Choose quote deterministically based on days since epoch
+    const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+    this.currentQuoteIndex = daysSinceEpoch % this.quotesOfTheDay.length;
+    console.log('Successfully loaded quotes:', this.quotesOfTheDay.length);
+
+    if (this._DEV_MODE) {
       this._mockToolUpdates = createMockToolUpdates();
       this._mockAppletsData = createMockAppletsData();
       this._mockGroupsData = createMockGroupsData();
     }
 
     const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
+    console.log('Available Moss update: ', availableMossUpdate);
     const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
     if (availableMossUpdate && !declinedUpdates.includes(availableMossUpdate.version)) {
       this.availableMossUpdate = availableMossUpdate;
@@ -161,7 +181,7 @@ export class WelcomeView extends LitElement {
     }
 
     // Load notifications once
-    this._mossStore.loadNotificationFeed(30);
+    await this._mossStore.loadNotificationFeed(30, 300);
 
     // Add scroll listener for opacity effects
     const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
@@ -207,16 +227,22 @@ export class WelcomeView extends LitElement {
 
         // Only update if scrolled significantly into a section
         if (closestSection && closestDistance < 300) {
-          const sectionMap: Record<string, 'software-updates' | 'messages' | 'action-requests' | 'moss-news'> = {
-            'software-updates': 'software-updates',
-            'messages': 'messages',
-            'action-requests': 'action-requests',
-            'moss-news': 'moss-news',
-          };
+          // Build dynamic section map from actual rendered sections
+          const validSections = new Set<string>();
 
-          const newSection = sectionMap[closestSection];
-          if (newSection && this.notificationSection !== newSection) {
-            this.notificationSection = newSection;
+          // Add software-updates if tool updates exist
+          if (Object.keys(this.getToolUpdatesSource()).length > 0) {
+            validSections.add('software-updates');
+          }
+
+          // Add all notification types
+          Object.keys(this.notificationTypes).forEach(type => {
+            validSections.add(type);
+          });
+
+          // Check if the closest section is a valid section
+          if (validSections.has(closestSection) && this.notificationSection !== closestSection) {
+            this.notificationSection = closestSection;
             this.updateNavigationClasses();
           }
         } else if (scrollY < 200) {
@@ -305,10 +331,17 @@ export class WelcomeView extends LitElement {
 
   getTimeOfDayGreeting(): string {
     const hour = new Date().getHours();
-    if (hour < 12) return 'morning';
-    if (hour < 17) return 'afternoon';
-    if (hour < 21) return 'evening';
-    return 'night';
+    if (hour < 5) return msg('Ah, this wonderful \nP2P world!');
+    if (hour < 8) return msg('Good morning, \nyou early-bird!');
+    if (hour < 12) return msg('Good morning,\n beautiful human!');
+    if (hour < 17) return msg('Welcome back, \nbeautiful human!');
+    if (hour < 21) return msg('The best part of the day \nstarts now');
+    return msg('Ah, this wonderful \nP2P world!');
+  }
+
+  pluralizeAndCapitalize(word: string, count: number): string {
+    const pluralized = pluralize(word, count);
+    return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
   }
 
   updateNavigationClasses() {
@@ -332,7 +365,7 @@ export class WelcomeView extends LitElement {
     });
   }
 
-  selectNotificationSection(section: 'software-updates' | 'messages' | 'action-requests' | 'moss-news') {
+  selectNotificationSection(section: string) {
     console.log('Selecting notification section: ', section);
     if (this.notificationSection === section) {
       // Scroll to top
@@ -352,7 +385,7 @@ export class WelcomeView extends LitElement {
     } else {
       this.notificationSection = section;
       this.updateNavigationClasses();
-      // Scroll to the section, centered in viewport
+      // Scroll to position the section top at or just above the middle of the screen
       this.isProgrammaticScroll = true;
       setTimeout(() => {
         const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
@@ -362,11 +395,9 @@ export class WelcomeView extends LitElement {
           const containerRect = scrollContainer.getBoundingClientRect();
           const currentScrollTop = scrollContainer.scrollTop;
 
-          // Calculate the position to center the section in the viewport
+          // Calculate the position to place section top at middle of viewport
           const sectionTop = sectionRect.top - containerRect.top + currentScrollTop;
-          const sectionCenter = sectionTop + sectionRect.height / 2;
-          const viewportCenter = containerRect.height / 2;
-          const targetScrollTop = sectionCenter - viewportCenter;
+          const targetScrollTop = sectionTop - (containerRect.height * 0.4);
 
           scrollContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
           // Re-enable scroll listener after animation completes
@@ -458,7 +489,7 @@ export class WelcomeView extends LitElement {
         const remainingCount = groups.length - 3;
         return html`
           <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-            ${displayGroups.map(([groupHash, groupData]) => html`
+            ${displayGroups.map(([_groupHash, groupData]) => html`
               <sl-tooltip content="${groupData.name}" placement="top">
                 <img
                   src="${groupData.icon}"
@@ -486,7 +517,7 @@ export class WelcomeView extends LitElement {
             ?disabled=${this.updatingTool}
             ?loading=${this.updatingTool}
             @click=${() => this.updateTool(toolInfo)}
-            >${msg('Update ' + toolInfo.toolInfo.title)}</sl-button
+            >${msg('Update') + ' ' + toolInfo.toolInfo.title}</sl-button
           >
         </div>
         <div class="tool-update-left-center">
@@ -509,7 +540,7 @@ export class WelcomeView extends LitElement {
           </div>
         </div>
         <div class="tool-update-right">
-          <span>Used in:</span>
+          <span>${msg('Used in:')}</span>
           ${this.renderGroupsUsingTool(toolInfo)}
         </div>
       </div>
@@ -518,7 +549,8 @@ export class WelcomeView extends LitElement {
 
   renderMossUpdateAvailable() {
     return html`
-      <div class="update-feed-el bg-highlighted">
+    <div class="scroll-section" id="software-updates" style="padding: 8px;">
+      <div class="moss-update-available-container">
         <div class="update-date">
           ${this.availableMossUpdate?.releaseDate
         ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
@@ -527,45 +559,51 @@ export class WelcomeView extends LitElement {
         <div class="update-type"></div>
         <div class="column">
           <div class="row" style="align-items: center;">
-            <img src="icon.png" class="moss-icon" />
-            <div style="margin-left: 10px; font-weight: bold; font-size: 28px;">
-              Moss Update Available:
-            </div>
-            <div style="margin-left: 10px; font-size: 28px;">
-              v${this.availableMossUpdate?.version}
-            </div>
-            <span style="display: flex; flex: 1;"></span>
-          </div>
-          <div>
-            ${this.availableMossUpdate?.releaseNotes
+            <img src="moss-update.png" class="moss-icon" />
+            <div class="column" style="gap: 8px; margin-left: 22px; height: 160px; justify-content: space-between;">
+              <span></span>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="moss-update-title">
+                  ${msg('New Moss Sprouted!')}
+                  <!-- <div style="margin-left: 10px; font-size: 28px;">
+                    v${this.availableMossUpdate?.version}
+                  </div> -->
+                  <!-- <span style="display: flex; flex: 1;"></span> -->
+                </div>
+                <div class="moss-update-release-notes">
+                  ${this.availableMossUpdate?.releaseNotes
         ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
-        : ''}
-          </div>
-          <div class="row center-content" style="margin-top: 15px;">
-            ${this.mossUpdatePercentage
+        : msg('A new release of Moss with exciting features and improvements.')}
+                </div>
+              </div>
+            <div class="row center-content moss-update-buttons">
+              ${this.mossUpdatePercentage
         ? html`<span class="flex flex-1"></span>
-                  <div class="column">
-                    <div>Installing...</div>
-                    <sl-progress-bar
-                      value="${this.mossUpdatePercentage}"
-                      style="width: 200px; --height: 15px;"
-                    ></sl-progress-bar>
-                  </div> `
+                    <div class="column">
+                      <div>${msg('Installing...')}</div>
+                      <sl-progress-bar
+                        value="${this.mossUpdatePercentage}"
+                        style="width: 200px; --height: 15px;"
+                      ></sl-progress-bar>
+                    </div> `
         : html`
-                  <span class="flex flex-1"></span>
-                  <sl-button
-                    variant="danger"
-                    style="margin-right: 5px;"
-                    @click=${() => this.declineMossUpdate()}
-                    >${msg('Decline')}</sl-button
-                  >
-                  <sl-button variant="primary" @click=${() => this.installMossUpdate()}
-                    >${msg('Install and Restart')}</sl-button
-                  >
-                `}
+                    <div
+                      class="install-moss-update-button"
+                      @click=${() => this.installMossUpdate()}
+                      >${msg('Update now')}</div
+                    >
+                    <div
+                      class="decline-moss-update-button"
+                      @click=${() => this.declineMossUpdate()}
+                      >${msg('Decline')}</div
+                    >
+                  `}
+            </div>
+          </div>
           </div>
         </div>
       </div>
+    </div>
     `;
   }
 
@@ -587,7 +625,7 @@ export class WelcomeView extends LitElement {
     return html`
       <div class="tool-updates-container column">
         ${sortedToolUpdates.length === 0
-        ? html`No Tool updates available.`
+        ? html`${msg('No Tool updates available.')}`
         : sortedToolUpdates.map(
           (message) => html`
             ${message.type === 'Tool' ? this.renderToolUpdate(message.content.tool) : html``}
@@ -599,27 +637,27 @@ export class WelcomeView extends LitElement {
 
   renderQuoteOfTheDay() {
     const currentQuote = this.quotesOfTheDay[this.currentQuoteIndex];
+    if (!currentQuote) return html``;
+
     return html`
       <div class="quote-of-the-day-container" style="opacity: var(--quote-opacity, 1)">
         <div
           class="quote-of-the-day"
         >
           <p>"${currentQuote.text}"</p>
-          <div>
-            (${currentQuote.source})
-          </div>
+            ${currentQuote.source != '' ? html`<div>(${currentQuote.source})</div>` : ''}
         </div>
 
         <div class="quote-buttons">
-          <sl-tooltip content="Collect to your pocket." placement="bottom">
+          <!-- <sl-tooltip content="Collect to your pocket." placement="bottom">
             <button variant="white" @click=${() => { }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3.79912 3.0098C3.8801 2.91388 4.00719 2.85742 4.14216 2.85742H11.8604C11.9954 2.85742 12.1226 2.91396 12.2036 3.00999L14.7558 6.0373C14.8833 6.17828 14.8894 6.38044 14.7648 6.52803L8.3443 14.1336C8.26332 14.2295 8.13623 14.286 8.00127 14.286C7.8663 14.286 7.73921 14.2295 7.65823 14.1336L1.22638 6.51456C1.11204 6.37911 1.11204 6.19287 1.22638 6.05742L3.79912 3.0098ZM13.5635 5.89393L12.0147 4.05683L11.3493 5.89598L13.5635 5.89393ZM10.4482 5.89682L11.2722 3.61933H4.73038L5.55599 5.90135L10.4482 5.89682ZM5.83155 6.663L8.00127 12.6601L10.1724 6.65898L5.83155 6.663ZM4.6555 5.90218L3.98767 4.05629L2.42767 5.90425L4.6555 5.90218ZM2.42632 6.66615L6.81108 11.8603L4.93106 6.66383L2.42632 6.66615ZM9.19145 11.8603L13.5849 6.65581L11.0735 6.65814L9.19145 11.8603Z" fill="#151A11"/>
               </svg>
               Collect
             </button>
-          </sl-tooltip>
-          <sl-tooltip content="More life wisdom." placement="bottom">
+          </sl-tooltip> -->
+          <sl-tooltip content=${msg('More life wisdom.')} placement="bottom">
             <button variant="white" @click=${() => this.getRandomQuote()}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z" fill="black"/>
@@ -635,13 +673,13 @@ export class WelcomeView extends LitElement {
 
   renderNotifications() {
     const notifications = this._notificationFeed.value ?? [];
-    console.log('Rendering notifications: ', notifications);
+    // console.log('Rendering notifications: ', notifications);
     return html`
       <div
         class="notifications-column column"
       >
         ${notifications.length === 0
-        ? html`<div>No notifications yet...</div>`
+        ? html`<div>${msg('No notifications yet...')}</div>`
         : notifications.map((notification) => this.renderNotification(notification))}
       </div>
     `;
@@ -699,37 +737,46 @@ export class WelcomeView extends LitElement {
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
-          <loading-dialog id="loading-dialog" loadingText="Updating Tool..."></loading-dialog>
+          <loading-dialog id="loading-dialog" loadingText=${msg("Updating Tool...")}></loading-dialog>
           <div class="row" style="flex: 1; height: 100%;">
             <div class="update-nav-list">
-              <div
-                data-section="software-updates"
-                @click=${() => { this.selectNotificationSection('software-updates'); }}
-                class="notification-filter-header">
-                <span>Software updates</span>
-                <span>${Object.keys(this.getToolUpdatesSource()).length}</span>
-              </div>
-              <div
-                data-section="messages"
-                @click=${() => { this.selectNotificationSection('messages'); }}
-                class="notification-filter-header">
-                <span>New messages</span>
-                <span>${this._notificationFeed.value.length}</span>
-              </div>
-              <div
-                data-section="action-requests"
-                @click=${() => { this.selectNotificationSection('action-requests'); }}
-                class="notification-filter-header">
-                <span>Action requests</span>
-                <span>0</span>
-              </div>
-              <div
+              ${(Object.keys(this.getToolUpdatesSource()).length > 0 || this.availableMossUpdate) ? html`
+                <div
+                  data-section="software-updates"
+                  @click=${() => { this.selectNotificationSection('software-updates'); }}
+                  class="notification-filter-header">
+                  <span>${msg('Software updates')}</span>
+                  <span>${Object.keys(this.getToolUpdatesSource()).length + (this.availableMossUpdate ? 1 : 0)}</span>
+                </div>
+              `: ''}
+              ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
+                <div
+                  data-section="${type}"
+                  @click=${() => { this.selectNotificationSection(type); }}
+                  class="notification-filter-header">
+                  <span>${(() => {
+            const pluralized = pluralize(type, this.notificationTypes[type]);
+            return msg(pluralized.charAt(0).toUpperCase() + pluralized.slice(1));
+          })()}</span>
+                  <span>${this.notificationTypes[type] || 0}</span>
+                </div>
+              ` : '')}
+              ${this.notificationTypes['default'] ? html`
+                <div
+                  data-section="default"
+                  @click=${() => { this.selectNotificationSection('default'); }}
+                  class="notification-filter-header">
+                  <span>${msg('General notifications')}</span>
+                  <span>${this.notificationTypes['default'] || 0}</span>
+                </div>
+              ` : html``}
+              <!-- <div
                 data-section="moss-news"
                 @click=${() => { this.selectNotificationSection('moss-news'); }}
                 class="notification-filter-header">
                 <span>Moss news</span>
                 <span>0</span>
-              </div>
+              </div> -->
             </div>
             <div class="flex-scrollable-container">
               <div class="fixed-section">
@@ -738,35 +785,77 @@ export class WelcomeView extends LitElement {
                   <div class="welcome-message-highlight" style="opacity: calc(var(--welcome-opacity, 1) * 0.5)">
                   </div>
                   <div class="welcome-message" style="opacity: var(--welcome-opacity, 1)">
-                    <div>Good ${this.getTimeOfDayGreeting()},</div>
-                    <div>beautiful human!</div>
+                    <div style="white-space: pre-line">${this.getTimeOfDayGreeting()}</div>
                   </div>
                 </div>
               </div>
 
               <div class="scrollable-sections-container">
-                ${this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
+                ${this._DEV_MODE || this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
 
-                <div class="scroll-section" id="software-updates">
-                  ${this.renderEllipse()}
-                  <div class="mini-button">Tools</div>
-                  ${this.renderToolUpdateFeed()}
-                </div>
-                <div class="scroll-section" id="messages">
+                ${Object.keys(this.getToolUpdatesSource()).length > 0 ? html`                
+                  <div class="scroll-section" id="software-updates">
+                    ${this.renderEllipse()}
+                    <div class="mini-button">${msg('Tools')}</div>
+                    ${this.renderToolUpdateFeed()}
+                  </div>
+                ` : html``}
+
+                ${this.notificationTypes && Object.keys(this.notificationTypes).length > 0 ? html`
+                
+                  ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
+                    <div class="scroll-section" id="${type}">
+                      ${this.renderEllipse()}
+                      <div class="mini-button">${(() => {
+              const pluralized = pluralize(type, this.notificationTypes[type]);
+              return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
+            })()}</div>
+
+                      <div class="notifications-column column">
+                        ${this._notificationFeed.value
+              ?.filter((item) => (item.notification.notification_type || "default") === type)
+              .length === 0
+              ? html`<div>${msg('No notifications yet...')}</div>`
+              : this._notificationFeed.value
+                ?.filter((item) => (item.notification.notification_type || "default") === type)
+                .map((notification) => this.renderNotification(notification))}
+                      </div>
+                    </div>
+                  ` : '')}
+
+                  ${this.notificationTypes['default'] ? html`
+                    <div class="scroll-section" id="default">
+                      ${this.renderEllipse()}
+                      <div class="mini-button">${msg('General notifications')}</div>
+                      <div class="notifications-column column">
+                        ${this._notificationFeed.value
+                ?.filter((item) => (item.notification.notification_type || "default") === "default")
+                .length === 0
+                ? html`<div>${msg('No notifications yet...')}</div>`
+                : this._notificationFeed.value
+                  ?.filter((item) => (item.notification.notification_type || "default") === "default")
+                  .map((notification) => this.renderNotification(notification))}
+                      </div>
+                    </div>
+                  ` : ''}
+                
+                ` : html``}
+
+                <!-- <div class="scroll-section" id="messages">
                   ${this.renderEllipse()}
                   <div class="mini-button">Messages</div>
                   ${this.renderNotifications()}
-                </div>
-                <div class="scroll-section" id="action-requests">
+                </div> -->
+                <!-- <div class="scroll-section" id="action-requests">
                   <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
                     <div>Action requests section - Coming soon</div>
                   </div>
-                </div>
-                <div class="scroll-section" id="moss-news">
+                </div> -->
+                <!-- <div class="scroll-section" id="moss-news">
                   <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
                     <div>Moss news section - Coming soon</div>
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -784,7 +873,7 @@ export class WelcomeView extends LitElement {
         /* background-color: var(--moss-dark-green); */
         border-radius: 5px 0 0 0;
         /* opacity: 0.8; */
-        background: url('/mosshome.png') no-repeat center center fixed;
+        background: url('/mosshome.jpg') no-repeat center center fixed;
         background-size: cover;
         height: 100%;
       }
@@ -882,12 +971,82 @@ export class WelcomeView extends LitElement {
       .scroll-section .mini-button {
         display: flex;
         z-index: 1;
-        width: 125px;
+        width: 100%;
         padding: 8px 10px;
         margin: 8px;
         justify-content: center;
         align-items: center;
         gap: 10px;
+      }
+
+      .moss-update-available-container {
+        border-radius: 20px;
+        padding: 8px;
+        width: calc(100% - 16px);
+        border: 1px solid #FFF;
+        background: linear-gradient(180deg, var(--Moss-main-green, #E0EED5) 18.05%, #F5F5F3 99.92%);
+      }
+
+      .moss-update-buttons {
+        display: flex;
+        width: 100%;
+        margin-top: 16px;
+        gap: 8px;
+      }
+
+      .install-moss-update-button {
+        display: flex;
+        width: 100%;
+        padding: 8px 10px;
+        justify-content: center;
+        border-radius: 8px;
+        background: #151A11;
+        color: #FFF;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .install-moss-update-button:hover {
+        background: color-mix(in srgb, #151A11 80%, #FFF 20%);
+      }
+
+      .decline-moss-update-button {
+        display: flex;
+        width: 100%;
+        padding: 8px 10px;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(50, 77, 71, 0.10);
+        color: var(--moss-dark-button, #151A11);
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .decline-moss-update-button:hover {
+        background: rgba(50, 77, 71, 0.20);
+      }
+
+      .moss-update-title {
+        color: #000;
+        font-size: 20px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 24px;
+        letter-spacing: -0.4px;
+      }
+
+      .moss-update-release-notes {
+        color: #000;
+        width: 330px;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        opacity: 0.6;
       }
 
       .tool-updates-container {
@@ -1147,8 +1306,8 @@ export class WelcomeView extends LitElement {
       }
 
       .moss-icon {
-        width: 58px;
-        height: 58px;
+        width: 160px;
+        height: 160px;
         border-radius: 15px;
         box-shadow: 0 0 2px 2px #0000001f;
       }

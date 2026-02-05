@@ -2,6 +2,7 @@ import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { until } from 'lit/directives/until.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { localized } from '@lit/localize';
 import type { FrameNotification } from '@theweave/api';
 import { mossStoreContext } from '../../../context.js';
@@ -154,32 +155,32 @@ export class NotificationCard extends LitElement {
     }
   }
 
-  // private extractAgentKeys(text: string): string[] {
-  //   const agentKeyRegex = /(uhCAk[A-Za-z0-9_-]{48})/g;
-  //   const agentKeys: string[] = [];
-  //   let match;
-  //   while ((match = agentKeyRegex.exec(text)) !== null) {
-  //     agentKeys.push(match[1]);
-  //   }
-  //   return agentKeys;
-  // }
+  private extractAgentKeys(text: string): string[] {
+    const agentKeyRegex = /(uhCAk[A-Za-z0-9_-]{48})/g;
+    const agentKeys: string[] = [];
+    let match;
+    while ((match = agentKeyRegex.exec(text)) !== null) {
+      agentKeys.push(match[1]);
+    }
+    return agentKeys;
+  }
 
-  // private async processBodyWithAgentNames(body: string): Promise<string> {
-  //   const agentKeys = this.extractAgentKeys(body);
-  //   if (agentKeys.length === 0) return body;
+  private async processBodyWithAgentNames(body: string): Promise<string> {
+    const agentKeys = this.extractAgentKeys(body);
+    if (agentKeys.length === 0) return body;
 
-  //   const agentNamesAndIcons = await Promise.all(agentKeys.map((key) => this.getAgentNameAndIcon(key)));
-  //   let modifiedBody = body;
-  //   agentKeys.forEach((key, index) => {
-  //     const name = agentNamesAndIcons[index]?.[0] || key;
-  //     modifiedBody = modifiedBody.replace(`${key}`, `${name}`);
-  //   });
-  //   return modifiedBody;
-  // }
+    const agentNamesAndIcons = await Promise.all(agentKeys.map((key) => this.getAgentNameAndIcon(key)));
+    let modifiedBody = body;
+    agentKeys.forEach((key, index) => {
+      const name = agentNamesAndIcons[index]?.[0] || key;
+      modifiedBody = modifiedBody.replace(`${key}`, `<b>${name}</b>`);
+    });
+    return modifiedBody;
+  }
 
   private async getAgentNameAndIcon(pubkeyB64: string): Promise<Array<string>> {
     try {
-      console.log('Looking up profile for agent key:', pubkeyB64);
+      // console.log('Looking up profile for agent key:', pubkeyB64);
       let agentPubKey: AgentPubKey;
       try {
         agentPubKey = decodeHashFromBase64(pubkeyB64);
@@ -220,15 +221,15 @@ export class NotificationCard extends LitElement {
     if (this._lastProcessedNotificationId !== notificationId) {
       this._lastProcessedNotificationId = notificationId;
       this._processedBody = undefined; // Reset while processing
-      // this.processBodyWithAgentNames(body).then((processed) => {
-      //   this._processedBody = processed;
-      // });
+      this.processBodyWithAgentNames(body).then((processed) => {
+        this._processedBody = processed;
+      });
     }
 
     const displayBody = this._processedBody ?? body;
     const fromAgentKey = this.notification?.fromAgent ? encodeHashToBase64(this.notification.fromAgent) : undefined;
     const aboutWal = this.notification?.aboutWal;
-    console.log('Rendering notification card:', this.notification);
+    // console.log('Rendering notification card:', this.notification);
 
     switch (this.appletLogo.value.status) {
       case 'pending':
@@ -250,13 +251,13 @@ export class NotificationCard extends LitElement {
         ) : html``}
           </div>
           <div class="notification-center">
-            <b>
-              ${fromAgentKey ? until(
-          this.getAgentNameAndIcon(fromAgentKey).then(([name, _icon]) => html`${name}`),
+            <span>${unsafeHTML(displayBody)}</span>
+            
+              <!-- ${fromAgentKey ? until(
+          this.getAgentNameAndIcon(fromAgentKey).then(([name, _icon]) => html`from <b>${name}</b>`),
           html`<sl-skeleton style="width: 60px;" effect="pulse"></sl-skeleton>`,
-        ) : html``}
-            </b>
-            <span>${displayBody} in</span>
+        ) : html``} -->
+            in
             <b> ${this.renderFirstGroupProfileName()} </b>
           </div>
           <div class="notification-right">
@@ -280,18 +281,18 @@ export class NotificationCard extends LitElement {
                 }),
               );
             }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z" fill="#151A11"/>
-                      <path d="M8 5.5C6.61929 5.5 5.5 6.61929 5.5 8C5.5 9.38071 6.61929 10.5 8 10.5C9.38071 10.5 10.5 9.38071 10.5 8C10.5 6.61929 9.38071 5.5 8 5.5ZM4.5 8C4.5 6.067 6.067 4.5 8 4.5C9.933 4.5 11.5 6.067 11.5 8C11.5 9.933 9.933 11.5 8 11.5C6.067 11.5 4.5 9.933 4.5 8Z" fill="#151A11"/>
-                    </svg>
-                  </button>
-                </sl-tooltip>
-              ` : html``}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z" fill="#151A11"/>
+                  <path d="M8 5.5C6.61929 5.5 5.5 6.61929 5.5 8C5.5 9.38071 6.61929 10.5 8 10.5C9.38071 10.5 10.5 9.38071 10.5 8C10.5 6.61929 9.38071 5.5 8 5.5ZM4.5 8C4.5 6.067 6.067 4.5 8 4.5C9.933 4.5 11.5 6.067 11.5 8C11.5 9.933 9.933 11.5 8 11.5C6.067 11.5 4.5 9.933 4.5 8Z" fill="#151A11"/>
+                </svg>
+              </button>
+            </sl-tooltip>
+          ` : html``}
 
-              <button
-                class="open-applet-button"
-                @click=${() => {
+          <button
+            class="open-applet-button"
+            @click=${() => {
             this.dispatchEvent(
               new CustomEvent('open-applet-main', {
                 detail: {

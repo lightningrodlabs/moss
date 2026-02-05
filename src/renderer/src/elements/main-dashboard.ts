@@ -710,7 +710,7 @@ export class MainDashboard extends LitElement {
     await window.electronAPI.requestIframeStoreSync();
 
     // Load all notifications for the last week
-    await this._mossStore.loadNotificationFeed(7);
+    // await this._mossStore.loadNotificationFeed(7);
   }
 
   openClipboard() {

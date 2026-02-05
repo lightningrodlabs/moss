@@ -570,7 +570,7 @@ export class MossStore {
    *
    * @param nDaysBack
    */
-  async loadNotificationFeed(nDaysBack: number) {
+  async loadNotificationFeed(nDaysBack: number, maxNotifications = 1000) {
     const allApplets = await toPromise(this.runningApplets);
     const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
     let allNotifications: AppletNotification[][] = [];
@@ -592,10 +592,12 @@ export class MossStore {
     }
     const allNotificationsFlattened = allNotifications.flat(1);
     this._notificationFeed.set(
-      allNotificationsFlattened.sort(
-        (appletNotification_a, appletNotification_b) =>
-          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
-      ),
+      allNotificationsFlattened
+        .sort(
+          (appletNotification_a, appletNotification_b) =>
+            appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
+        )
+        .slice(0, maxNotifications),
     );
   }
 

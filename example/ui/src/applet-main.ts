@@ -91,6 +91,9 @@ export class AppletMain extends LitElement {
   // unsubscribe: undefined | (() => void);
 
   @state()
+  notificationType: string = 'default';
+
+  @state()
   lastRemoteSignal: string | undefined;
 
   @state()
@@ -225,13 +228,13 @@ export class AppletMain extends LitElement {
     this.selectedAgent = e.detail.agentPubKey;
   }
 
-  async sendActivityNotification(delay: number, agent: AgentPubKey | undefined) {
+  async sendActivityNotification(delay: number, agent: AgentPubKey | undefined, notificationType: string = 'default') {
     const selectedWal = await this.weaveClient.assets.userSelectAsset();
     console.log('Selected WAL for activity notification:', selectedWal);
     const notification: FrameNotification = {
       title: 'Activity Notification Title',
-      body: 'mentioned you',
-      notification_type: 'default',
+      body: 'New notification from agent ' + (agent ? encodeHashToBase64(agent) : 'unknown'),
+      notification_type: notificationType,
       icon_src: 'https://static-00.iconduck.com/assets.00/duckduckgo-icon-512x512-zp12dd1l.png',
       urgency: 'low',
       timestamp: Date.now(),
@@ -359,12 +362,16 @@ export class AppletMain extends LitElement {
 
             <h2>Activity Notification</h2>
 
+            <input type="text" placeholder="Notification Type" 
+            @input=${(e: CustomEvent) => { this.notificationType = (e.target as any).value; }}
+            />
+
             <search-agent
                 @agent-selected=${this.handleAgentSelected}
             ></search-agent>
             <button @click=${() => {
         console.log(this.selectedAgent);
-        this.sendActivityNotification(0, this.selectedAgent);
+        this.sendActivityNotification(0, this.selectedAgent, this.notificationType);
       }}>
               Send Activity Notification
             </button>
