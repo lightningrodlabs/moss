@@ -204,8 +204,8 @@ export class NotificationAsset extends LitElement {
             this.dispatchEvent(
               new CustomEvent('open-applet-main', {
                 detail: {
-                    applet: this.appletHash,
-                    wal: this.notification?.aboutWal,
+                  applet: this.appletHash,
+                  wal: this.notification?.aboutWal,
                 },
                 bubbles: true,
                 composed: true,

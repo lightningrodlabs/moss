@@ -30,7 +30,7 @@ import '@holochain-open-dev/profiles/dist/elements/search-agent.js';
 import { weaveClientContext } from '@theweave/elements';
 import { decode, encode } from '@msgpack/msgpack';
 import { Accountability } from '@theweave/group-client';
-import {hrlToString} from "@holochain-open-dev/utils/dist/hrl";
+import { hrlToString } from "@holochain-open-dev/utils/dist/hrl";
 
 @localized()
 @customElement('applet-main')
@@ -91,6 +91,9 @@ export class AppletMain extends LitElement {
   // unsubscribe: undefined | (() => void);
 
   @state()
+  notificationType: string = 'default';
+
+  @state()
   lastRemoteSignal: string | undefined;
 
   @state()
@@ -118,9 +121,9 @@ export class AppletMain extends LitElement {
     if (this.weaveClient.renderInfo.type === 'applet-view') {
       console.debug("Getting toolInstaller ...", this.weaveClient.renderInfo);
       this.toolInstaller = await this.weaveClient.toolInstaller(
-          this.weaveClient.renderInfo.appletHash
-          //, this.weaveClient.renderInfo.groupHash
-          );
+        this.weaveClient.renderInfo.appletHash
+        //, this.weaveClient.renderInfo.groupHash
+      );
     }
 
     this.appletParticipants = await this.weaveClient.appletParticipants();
@@ -225,12 +228,13 @@ export class AppletMain extends LitElement {
     this.selectedAgent = e.detail.agentPubKey;
   }
 
-  async sendActivityNotification(delay: number, agent: AgentPubKey | undefined) {
+  async sendActivityNotification(delay: number, agent: AgentPubKey | undefined, notificationType: string = 'default') {
     const selectedWal = await this.weaveClient.assets.userSelectAsset();
+    console.log('Selected WAL for activity notification:', selectedWal);
     const notification: FrameNotification = {
       title: 'Activity Notification Title',
-      body: 'Message body',
-      notification_type: 'default',
+      body: 'New notification from agent ' + (agent ? encodeHashToBase64(agent) : 'unknown'),
+      notification_type: notificationType,
       icon_src: 'https://static-00.iconduck.com/assets.00/duckduckgo-icon-512x512-zp12dd1l.png',
       urgency: 'low',
       timestamp: Date.now(),
@@ -263,15 +267,15 @@ export class AppletMain extends LitElement {
       case 'complete':
         return html`
           ${Array.from(this._allProfiles.value.value.keys()).map(
-            (agent) =>
-              html`
+          (agent) =>
+            html`
                 <agent-status
                   .agent=${agent}
                   .peerStatusStore=${this.peerStatusStore}
                   style="margin-right: 3px;"
                 ></agent-status>
               `
-          )}
+        )}
         `;
     }
   }
@@ -280,15 +284,15 @@ export class AppletMain extends LitElement {
     if (!this.appletParticipants) return html`Loading group participants...`;
     return html`
       ${Array.from(this.appletParticipants).map(
-        (agent) =>
-          html`
+      (agent) =>
+        html`
             <agent-status
               .agent=${agent}
               .peerStatusStore=${this.peerStatusStore}
               style="margin-right: 3px;"
             ></agent-status>
           `
-      )}
+    )}
     `;
   }
 
@@ -301,8 +305,8 @@ export class AppletMain extends LitElement {
       .map((cell) => cell.value);
     return html`
       ${provisionedCells.map(
-        (cell) => html`<div class="cell-card">${cell.name} (provisioned)</div>`
-      )}
+      (cell) => html`<div class="cell-card">${cell.name} (provisioned)</div>`
+    )}
       ${clonedCells.map((cell) => html`<div class="cell-card">${cell.clone_id} (cloned)</div>`)}
     `;
   }
@@ -316,7 +320,7 @@ export class AppletMain extends LitElement {
         <div class="row" style="justify-content: flex-start; align-items: center;">
           <span>All Tool participants:</span>${this.renderAppletParticipants()}
         </div>
-        <div><b>Tool Installer: </b>${this.toolInstaller? encodeHashToBase64(this.toolInstaller) : "unknown"}</div>
+        <div><b>Tool Installer: </b>${this.toolInstaller ? encodeHashToBase64(this.toolInstaller) : "unknown"}</div>
         <div><b>My Group Accountabilities: </b>${JSON.stringify(this.myAccountabilitiesPerGroup)}</div>
         <div class="row">
           <div class="column">
@@ -335,18 +339,18 @@ export class AppletMain extends LitElement {
             <h2>Local Storage</h2>
 
             <button @click=${() => {
-              console.log('localstorage: ', window.localStorage);
-            }}>Log localstorage</button>
+        console.log('localstorage: ', window.localStorage);
+      }}>Log localstorage</button>
 
             <h2>Media Access</h2>
             <button @click=${async () => {
-              await navigator.mediaDevices.getUserMedia({
-                audio: {
-                  noiseSuppression: true,
-                  echoCancellation: true,
-                },
-              });
-            }}>Request Audio Access</button>
+        await navigator.mediaDevices.getUserMedia({
+          audio: {
+            noiseSuppression: true,
+            echoCancellation: true,
+          },
+        });
+      }}>Request Audio Access</button>
 
             <h2>on-before-unload behavior</h2>
 
@@ -358,13 +362,17 @@ export class AppletMain extends LitElement {
 
             <h2>Activity Notification</h2>
 
+            <input type="text" placeholder="Notification Type" 
+            @input=${(e: CustomEvent) => { this.notificationType = (e.target as any).value; }}
+            />
+
             <search-agent
                 @agent-selected=${this.handleAgentSelected}
             ></search-agent>
             <button @click=${() => {
-              console.log(this.selectedAgent);
-              this.sendActivityNotification(0, this.selectedAgent);
-            }}>
+        console.log(this.selectedAgent);
+        this.sendActivityNotification(0, this.selectedAgent, this.notificationType);
+      }}>
               Send Activity Notification
             </button>
 
@@ -392,8 +400,8 @@ export class AppletMain extends LitElement {
 
             <button
               @click=${() => {
-                navigator.clipboard.writeText('Easter Egg.');
-              }}
+        navigator.clipboard.writeText('Easter Egg.');
+      }}
             >
               Copy Something To Clipboard
             </button>
@@ -402,9 +410,9 @@ export class AppletMain extends LitElement {
               <div class="container">
                   <label for="myCombobox">Select WAL with </label>
                   <select id="myCombobox" @change=${() => {
-                      const combobox = this.shadowRoot?.getElementById("myCombobox") as any;
-                      this.userSelectWal(combobox.options[combobox.selectedIndex].text)
-                  }}>
+        const combobox = this.shadowRoot?.getElementById("myCombobox") as any;
+        this.userSelectWal(combobox.options[combobox.selectedIndex].text)
+      }}>
                       <option value="pocket">pocket</option>
                       <option value="pocket-no-create">pocket-no-create</option>
                       <option value="search">search</option>
@@ -415,8 +423,8 @@ export class AppletMain extends LitElement {
               <div style="margin:10px;">
                   <div class="wal-output-label">Selected WAL:</div>
                   ${this.selectedWal
-                          ? html`<div id="selectedWal">${hrlToString(this.selectedWal.hrl)}</div><div style="margin-top:10px;">CONTEXT: ${JSON.stringify(this.selectedWal?.context)}</div>` 
-                          : html`<div>No WAL selected yet.</div>`}
+        ? html`<div id="selectedWal">${hrlToString(this.selectedWal.hrl)}</div><div style="margin-top:10px;">CONTEXT: ${JSON.stringify(this.selectedWal?.context)}</div>`
+        : html`<div>No WAL selected yet.</div>`}
               </div>              
               
             <h2>WAL Embeds</h2>
@@ -426,18 +434,17 @@ export class AppletMain extends LitElement {
                 <input id="wal-embed-input-field" type="text" rows="4" cols="50" />
                 <button
                   @click=${() => {
-                    this.updateWalEmbedBare();
-                    this.updateWalEmbedLink();
-                  }}
+        this.updateWalEmbedBare();
+        this.updateWalEmbedLink();
+      }}
                   style="width: 100px; margin-left: 5px;"
                 >
                   Embed
                 </button>
               </div>
               <input id="wal-embed-bare-field" type="checkbox">bare embed</input>
-              ${
-                this.walEmbedLink !== ''
-                  ? html`
+              ${this.walEmbedLink !== ''
+        ? html`
                       <wal-embed
                         style="margin-top: 20px;"
                         .src=${this.walEmbedLink}
@@ -447,58 +454,56 @@ export class AppletMain extends LitElement {
                         @close=${() => console.log('Closing requested')}
                       ></wal-embed>
                     `
-                  : html``
-              }
+        : html``
+      }
             </div>
 
             <h2>Remote Signals</h2>
-            <div style="border-radius: 5px; ${
-              this.lastRemoteSignal ? 'background: lightgreen;' : ''
-            }">${
-      this.lastRemoteSignal ? this.lastRemoteSignal : 'No remote signal received yet.'
-    }</div>
+            <div style="border-radius: 5px; ${this.lastRemoteSignal ? 'background: lightgreen;' : ''
+      }">${this.lastRemoteSignal ? this.lastRemoteSignal : 'No remote signal received yet.'
+      }</div>
             <div class="row items-center">
               <input type="text" @input=${(e: CustomEvent) => {
-                this.remoteSignalPayload = (e.target as any).value;
-              }} />
+        this.remoteSignalPayload = (e.target as any).value;
+      }} />
               <button .disabled=${!this.remoteSignalPayload} @click=${async () => {
-      await this.weaveClient.sendRemoteSignal(encode(this.remoteSignalPayload));
-    }}>Send Remote Signal</button>
+        await this.weaveClient.sendRemoteSignal(encode(this.remoteSignalPayload));
+      }}>Send Remote Signal</button>
             </div>
 
             <h2>Cloned Cells</h2>
             <button @click=${async () => {
-              if (this.weaveClient.renderInfo.type !== 'applet-view') return;
-              const appletClient = this.weaveClient.renderInfo.appletClient;
-              try {
-                await appletClient.createCloneCell({
-                  role_name: 'forum',
-                  modifiers: {
-                    network_seed: 'blabla',
-                  },
-                });
-              } catch (e: any) {
-                notifyError(e.toString());
-              }
-            }}
+        if (this.weaveClient.renderInfo.type !== 'applet-view') return;
+        const appletClient = this.weaveClient.renderInfo.appletClient;
+        try {
+          await appletClient.createCloneCell({
+            role_name: 'forum',
+            modifiers: {
+              network_seed: 'blabla',
+            },
+          });
+        } catch (e: any) {
+          notifyError(e.toString());
+        }
+      }}
             style="margin-bottom: 5px;"
             >Try Creating Cloned Cell with AppletClient (should fail)</button>
             <button @click=${async () => {
-              try {
-                await this.weaveClient.createCloneCell(
-                  {
-                    role_name: 'forum',
-                    modifiers: {
-                      network_seed: Math.random().toString(),
-                    },
-                  },
-                  true
-                );
-                await this.updateCellInfos();
-              } catch (e: any) {
-                notifyError(e.toString());
-              }
-            }}
+        try {
+          await this.weaveClient.createCloneCell(
+            {
+              role_name: 'forum',
+              modifiers: {
+                network_seed: Math.random().toString(),
+              },
+            },
+            true
+          );
+          await this.updateCellInfos();
+        } catch (e: any) {
+          notifyError(e.toString());
+        }
+      }}
             style="margin-bottom: 5px;"
             >Create Cloned Cell with WeaveClient (random seed, should succeed)</button>
             <div class="column">
@@ -510,13 +515,13 @@ export class AppletMain extends LitElement {
             <all-posts
               style="margin: 16px;"
               @notification=${(e: CustomEvent) => {
-                this.dispatchEvent(
-                  new CustomEvent('notification', {
-                    detail: e.detail,
-                    bubbles: true,
-                  })
-                );
-              }}
+        this.dispatchEvent(
+          new CustomEvent('notification', {
+            detail: e.detail,
+            bubbles: true,
+          })
+        );
+      }}
             ></all-posts>
           </div>
         </div>

@@ -325,11 +325,11 @@ export class MainDashboard extends LitElement {
       if (from === 'create') {
         this._creatablePalette.show(groupDnaHash);
       } else {
-          if (from == 'pocket-no-create') {
-              this._pocket.show('select-no-create');
-          } else {
-              this._pocket.show('select');
-          }
+        if (from == 'pocket-no-create') {
+          this._pocket.show('select-no-create');
+        } else {
+          this._pocket.show('select');
+        }
       }
 
       return new Promise((resolve) => {
@@ -606,7 +606,7 @@ export class MainDashboard extends LitElement {
       const [appletIframes, crossGroupIframes] = payload;
       Object.entries(appletIframes).forEach(([appletId, iframes]) => {
         iframes.forEach(({ id, subType }) => {
-          this._mossStore.iframeStore.registerAppletIframe(appletId, {id, subType, source: 'wal-window'});
+          this._mossStore.iframeStore.registerAppletIframe(appletId, { id, subType, source: 'wal-window' });
         });
       });
       Object.entries(crossGroupIframes).forEach(([toolCompatibilityId, iframes]) => {
@@ -622,9 +622,9 @@ export class MainDashboard extends LitElement {
     window.electronAPI.onSwitchToWeaveLocation((_, weaveLocation) => {
       if (weaveLocation) {
         if (weaveLocation.type === 'applet') {
-            this.openViews.openAppletMain(weaveLocation.appletHash/*, weaveLocation.wal*/);
+          this.openViews.openAppletMain(weaveLocation.appletHash/*, weaveLocation.wal*/);
         } else if (weaveLocation.type === 'group') {
-            this.openGroup(weaveLocation.dnaHash);
+          this.openGroup(weaveLocation.dnaHash);
         }
       }
     });
@@ -708,7 +708,7 @@ export class MainDashboard extends LitElement {
     await window.electronAPI.requestIframeStoreSync();
 
     // Load all notifications for the last week
-    await this._mossStore.loadNotificationFeed(7);
+    // await this._mossStore.loadNotificationFeed(7);
   }
 
   openClipboard() {
@@ -899,6 +899,13 @@ export class MainDashboard extends LitElement {
           : ''} overflow-x: hidden;"
         @request-create-group=${() => this.createGroupDialog.open()}
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
+        @open-applet-main=${(e: CustomEvent) => {
+        this.openViews.openAppletMain(e.detail.applet, e.detail.wal);
+      }}
+      @open-wal=${async (e) => {
+        console.debug('welcome-view open-wal event: ', e);
+        await this.handleOpenWal(e.detail);
+      }}
         @applet-selected=${(e: CustomEvent) => {
         this.openViews.openAppletMain(e.detail.appletHash);
       }}
@@ -1420,7 +1427,7 @@ export class MainDashboard extends LitElement {
           class="row"
           style="flex: 1; ${this._assetViewerState.value.visible &&
         this._dashboardState.value.viewType === 'personal'
-        ? 'max-height: calc(100vh - 124px);'
+        ? 'max-height: 100vh;'
         : ''} ${this._assetViewerState.value.visible &&
           this._dashboardState.value.viewType === 'group'
           ? 'max-height: calc(100vh - 66px)'
@@ -1462,7 +1469,7 @@ export class MainDashboard extends LitElement {
             style="${this._drawerResizing ? 'pointer-events: none; user-select: none;' : ''}${this
         ._assetViewerState.value.visible && this._assetViewerState.value.position === 'side'
         ? `width: ${this._drawerWidth > 200 ? this._drawerWidth : 200
-        }px; display: flex; flex-grow: 0; flex-shrink: 0;`
+        }px; display: flex; flex-grow: 0; flex-shrink: 0; z-index: 1;`
         : ''}"
             @click=${(e) => {
         // Prevent propagation such hat only clicks outside of this container bubble up and we
@@ -1631,7 +1638,7 @@ export class MainDashboard extends LitElement {
         : html``}
 
       <!-- TOP BAR -->
-      ${this._dashboardState.value.viewType === 'personal'
+      ${false && this._dashboardState.value.viewType === 'personal'
         ? html`
             <div
               class="top-bar row personal-top-bar"
@@ -1662,7 +1669,7 @@ export class MainDashboard extends LitElement {
               >
                 <personal-view-sidebar
                   style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px;"
-                  .selectedView=${this._dashboardState.value.viewState}
+                  .selectedView=${(this._dashboardState.value as any).viewState}
                   @personal-view-selected=${async (e) => {
             console.log('@personal-view-selected: ', e);
             this._mossStore.setDashboardState({
@@ -1941,7 +1948,7 @@ export class MainDashboard extends LitElement {
         }
 
         .drawer-height-constrained {
-          max-height: calc(100vh - 142px);
+          max-height: 100vh;
         }
 
         .asset-viewer {
@@ -1967,7 +1974,7 @@ export class MainDashboard extends LitElement {
           /* display: flex; */
           flex: 1;
           position: fixed;
-          top: 80px;
+          top: 8px;
           left: 80px;
           bottom: 8px;
           right: 8px;
