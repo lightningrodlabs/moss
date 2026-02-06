@@ -151,53 +151,41 @@ export class FoyerStore {
 
           const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
 
-          // Get the user's notification preference for this group's foyer
-          const notificationSetting = this.groupStore.getFoyerNotificationSettingValue();
+          // Get the user's notification settings for this group's foyer
+          const settings = this.groupStore.getFoyerNotificationSettingsValue();
 
-          // Determine urgency and whether to send OS notification based on setting
-          let urgency: 'low' | 'medium' | 'high';
-          let sendOSNotification: boolean;
+          // Determine urgency based on whether user is mentioned
+          const messageUrgency = amIMentioned ? settings.mentions : settings.allMessages;
 
-          switch (notificationSetting) {
-            case 'all':
-              // Notify for all messages
-              urgency = amIMentioned ? 'high' : 'high';
-              sendOSNotification = true;
-              break;
-            case 'mentions':
-              // Only notify when mentioned
-              urgency = amIMentioned ? 'high' : 'medium';
-              sendOSNotification = amIMentioned;
-              break;
-            case 'none':
-              // No notifications
-              urgency = 'low';
-              sendOSNotification = false;
-              break;
+          // Skip notification entirely if urgency is 'none'
+          if (messageUrgency !== 'none') {
+            const urgency = messageUrgency;
+            // Send OS notification for high urgency only
+            const sendOSNotification = urgency === 'high';
+
+            const notification: FrameNotification = {
+              title: `${msg('from')} ${senderNickname}`,
+              body: message.payload.text,
+              notification_type: 'message',
+              icon_src: undefined,
+              urgency,
+              fromAgent: message.from,
+              timestamp: message.payload.created,
+            };
+
+            // Use the unified notification handler (ephemeral - not persisted)
+            await this.groupStore.mossStore.handleNotification(
+              { type: 'group', groupDnaHash: encodeHashToBase64(this.groupStore.groupDnaHash) },
+              [notification],
+              {
+                persist: false, // foyer messages are ephemeral
+                showInFeed: true,
+                updateUnreadCount: true,
+                sendOSNotification,
+                sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
+              },
+            );
           }
-
-          const notification: FrameNotification = {
-            title: `${msg('from')} ${senderNickname}`,
-            body: message.payload.text,
-            notification_type: 'message',
-            icon_src: undefined,
-            urgency,
-            fromAgent: message.from,
-            timestamp: message.payload.created,
-          };
-
-          // Use the unified notification handler (ephemeral - not persisted)
-          await this.groupStore.mossStore.handleNotification(
-            { type: 'group', groupDnaHash: encodeHashToBase64(this.groupStore.groupDnaHash) },
-            [notification],
-            {
-              persist: false, // foyer messages are ephemeral
-              showInFeed: true,
-              updateUnreadCount: notificationSetting !== 'none',
-              sendOSNotification,
-              sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
-            },
-          );
         }
 
         await this.client.sendMessage(streamId, { type: 'Ack', created: message.payload.created }, [

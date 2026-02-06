@@ -63,6 +63,7 @@ export class AppletMainViews extends LitElement {
           (appletHash) => {
             return html`
               <applet-main
+                .wal=${this.displayApplet(appletHash)? (this._dashboardState.value as any).wal : undefined}
                 .appletHash=${appletHash}
                 .groupHash=${this._groupStore.groupDnaHash}
                 .reloading=${this._reloadingApplets.includes(encodeHashToBase64(appletHash))}
