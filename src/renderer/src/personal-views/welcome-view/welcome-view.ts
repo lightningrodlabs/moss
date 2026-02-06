@@ -301,6 +301,11 @@ export class WelcomeView extends LitElement {
             validSections.add(type);
           });
 
+          // Add moss-news if update feed has items
+          if (this.updateFeed && this.updateFeed.length > 0) {
+            validSections.add('moss-news');
+          }
+
           // Check if the closest section is a valid section
           if (validSections.has(closestSection) && this.notificationSection !== closestSection) {
             this.notificationSection = closestSection;
@@ -1014,6 +1019,47 @@ export class WelcomeView extends LitElement {
     `;
   }
 
+  extractFirstUrl(text: string): string | null {
+    const urlRegex = /(https?:\/\/[^\s<>"')\]]+)/g;
+    const match = text.match(urlRegex);
+    return match ? match[0] : null;
+  }
+
+  renderLinkPreview(url: string) {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname;
+    const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
+    return html`
+      <a href="${url}" target="_blank" rel="noopener noreferrer" class="link-preview-card">
+        <div class="link-preview-favicon">
+          <img src="${favicon}" alt="" @error=${(e: Event) => (e.target as HTMLImageElement).style.display = 'none'} />
+        </div>
+        <div class="link-preview-content">
+          <div class="link-preview-domain">${domain}</div>
+          <div class="link-preview-url">${url}</div>
+        </div>
+      </a>
+    `;
+  }
+
+  renderMossNewsItem(newsItem: UpdateFeedMessage) {
+    const date = new Date(newsItem.timestamp);
+    const firstUrl = this.extractFirstUrl(newsItem.message);
+
+    return html`
+      <div class="moss-news-card">
+        <div class="moss-news-header">
+          <span class="moss-news-date">${this.timeAgo.format(date)} · ${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        </div>
+        <div class="moss-news-body">
+          ${unsafeHTML(markdownParseSafe(newsItem.message))}
+        </div>
+        ${firstUrl ? this.renderLinkPreview(firstUrl) : ''}
+      </div>
+    `;
+  }
+
   renderEllipse() {
     return html`
     <svg class="ellipse" width="556" height="160" viewBox="0 0 556 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1064,13 +1110,15 @@ export class WelcomeView extends LitElement {
                   <span>${this.notificationTypes['default'] || 0}</span>
                 </div>
               ` : html``}
-              <!-- <div
-                data-section="moss-news"
-                @click=${() => { this.selectNotificationSection('moss-news'); }}
-                class="notification-filter-header">
-                <span>Moss news</span>
-                <span>0</span>
-              </div> -->
+              ${this.updateFeed && this.updateFeed.length > 0 ? html`
+                <div
+                  data-section="moss-news"
+                  @click=${() => { this.selectNotificationSection('moss-news'); }}
+                  class="notification-filter-header">
+                  <span>${msg('Moss news')}</span>
+                  <span>${this.updateFeed.length}</span>
+                </div>
+              ` : html``}
             </div>
             <div class="flex-scrollable-container">
               <div class="fixed-section">
@@ -1129,24 +1177,18 @@ export class WelcomeView extends LitElement {
                       </div>
                     </div>
                   ` : ''}
-                
+
                 ` : html``}
 
-                <!-- <div class="scroll-section" id="messages">
-                  ${this.renderEllipse()}
-                  <div class="mini-button">Messages</div>
-                  ${this.renderNotifications()}
-                </div> -->
-                <!-- <div class="scroll-section" id="action-requests">
-                  <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
-                    <div>Action requests section - Coming soon</div>
+                ${this.updateFeed && this.updateFeed.length > 0 ? html`
+                  <div class="scroll-section" id="moss-news">
+                    ${this.renderEllipse()}
+                    <div class="mini-button">${msg('Moss news')}</div>
+                    <div class="moss-news-column column">
+                      ${this.updateFeed.map((newsItem) => this.renderMossNewsItem(newsItem))}
+                    </div>
                   </div>
-                </div> -->
-                <!-- <div class="scroll-section" id="moss-news">
-                  <div class="column" style="align-items: center; display:flex; flex: 1; margin-top: 80px; color: white; margin-bottom: 160px;">
-                    <div>Moss news section - Coming soon</div>
-                  </div>
-                </div> -->
+                ` : html``}
 
               </div>
             </div>
@@ -1898,6 +1940,107 @@ export class WelcomeView extends LitElement {
 
       .all-streams-button:hover {
         background: rgba(21, 26, 17, 0.70);
+      }
+
+      .moss-news-column {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .moss-news-card {
+        display: flex;
+        flex-direction: column;
+        width: 540px;
+        border-radius: 20px;
+        background: #FFF;
+        color: var(--moss-dark-button, #151A11);
+        padding: 16px;
+        gap: 12px;
+        box-sizing: border-box;
+      }
+
+      .moss-news-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .moss-news-date {
+        color: var(--moss-purple);
+        font-size: 14px;
+      }
+
+      .moss-news-body {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .moss-news-body a {
+        color: var(--moss-purple);
+        text-decoration: underline;
+      }
+
+      .moss-news-body a:hover {
+        opacity: 0.8;
+      }
+
+      .link-preview-card {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--moss-main-green, #E0EED5);
+        text-decoration: none;
+        color: var(--moss-dark-button, #151A11);
+        transition: background 0.2s ease;
+        margin-top: 8px;
+      }
+
+      .link-preview-card:hover {
+        background: color-mix(in srgb, var(--moss-main-green, #E0EED5) 80%, #000 10%);
+      }
+
+      .link-preview-favicon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+
+      .link-preview-favicon img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+      }
+
+      .link-preview-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow: hidden;
+      }
+
+      .link-preview-domain {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--moss-dark-button, #151A11);
+      }
+
+      .link-preview-url {
+        font-size: 11px;
+        color: rgba(21, 26, 17, 0.6);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .all-streams-button.fixed {
