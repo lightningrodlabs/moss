@@ -1,42 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-<file target-language="pt" source-language="en" original="lit-localize-inputs" datatype="plaintext">
+<file target-language="nl" source-language="en" original="lit-localize-inputs" datatype="plaintext">
 <body>
+<trans-unit id="s2535b903f4f0e868">
+  <source>You need to create or join a Group before you can install Tools.</source>
+  <target>Je moet een Groep aanmaken of eraan deelnemen voordat je Tools kunt installeren.</target>
+</trans-unit>
 <trans-unit id="saa3ad43ab0b9071e">
   <source>Select Group</source>
-  <target>Selecionar Grupo</target>
+  <target>Selecteer Groep</target>
 </trans-unit>
 <trans-unit id="s6275fe1f696960ea">
   <source>Error fetching your groups</source>
-  <target>Erro ao buscar seus grupos</target>
+  <target>Fout bij het ophalen van je groepen</target>
 </trans-unit>
 <trans-unit id="sac4ffb6126da9502">
   <source>Select the Group to which to add an instance of this Tool:</source>
-  <target>Selecione o Grupo ao qual adicionar uma instância deste Tool:</target>
+  <target>Selecteer de Groep waaraan je een exemplaar van deze Tool wilt toevoegen:</target>
 </trans-unit>
 <trans-unit id="saf29d48ad1df5d19">
   <source>Error fetching the tool logo</source>
-  <target>Erro ao buscar o logo do Tool</target>
+  <target>Fout bij het ophalen van het tool-logo</target>
 </trans-unit>
 <trans-unit id="sf13543ac8f332d6a">
   <source>Error fetching the information about the tool</source>
-  <target>Erro ao buscar as informações sobre o Tool</target>
+  <target>Fout bij het ophalen van de informatie over de tool</target>
 </trans-unit>
 <trans-unit id="s498865c7bd1f3959">
   <source>unknown</source>
-  <target>desconhecido</target>
+  <target>onbekend</target>
 </trans-unit>
 <trans-unit id="s9cd17b50848c4c11">
   <source>ERROR</source>
-  <target>ERRO</target>
+  <target>FOUT</target>
 </trans-unit>
 <trans-unit id="sfc0b466925cd2e9a">
   <source>Tool updated.</source>
-  <target>Tool atualizado.</target>
+  <target>Tool bijgewerkt.</target>
 </trans-unit>
 <trans-unit id="s2610398ee33c066e">
   <source>Failed to update Tool.</source>
-  <target>Falha ao atualizar o Tool.</target>
+  <target>Tool bijwerken mislukt.</target>
 </trans-unit>
 <trans-unit id="sbb588bb505779122">
   <source>Feedback</source>
@@ -44,71 +48,91 @@
 </trans-unit>
 <trans-unit id="s030b3a4396f2b7ff">
   <source>Moss development is in alpha stage. We highly appreciate active feedback.</source>
-  <target>O desenvolvimento do Moss está em fase alpha. Agradecemos muito o feedback ativo.</target>
+  <target>Moss-ontwikkeling is in alfafase. We waarderen actieve feedback zeer.</target>
+</trans-unit>
+<trans-unit id="sed6fca73e1adda45">
+  <source>Design Feedback Mode</source>
+  <target>Ontwerpfeedbackmodus</target>
+</trans-unit>
+<trans-unit id="s6b17a3076dcd1490">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Schakel de Ontwerpfeedbackmodus in om schermafbeeldingen te maken en visuele feedback rechtstreeks vanuit de app te verzenden. Er verschijnt een feedbackknop in de rechterbovenhoek waarmee je een deel van het scherm kunt selecteren en je feedback kunt beschrijven.</target>
+</trans-unit>
+<trans-unit id="sdd3888e4a6dbb0b7">
+  <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
+  <target>Je kunt deze modus ook in- of uitschakelen via Instellingen &gt; Feedback.</target>
+</trans-unit>
+<trans-unit id="sd24445593cfc39de">
+  <source>Enable Design Feedback Mode</source>
+  <target>Ontwerpfeedbackmodus inschakelen</target>
+</trans-unit>
+<trans-unit id="s415e501370e4f1e4">
+  <source>Other Ways to Give Feedback</source>
+  <target>Andere manieren om feedback te geven</target>
 </trans-unit>
 <trans-unit id="s476d01fc816de04c">
   <source>If you are encountering a problem and are familiar with Github, you can</source>
-  <target>Se você está enfrentando um problema e conhece o Github, você pode</target>
+  <target>Als je een probleem ondervindt en bekend bent met Github, kun je</target>
 </trans-unit>
 <trans-unit id="sc17269a64b255817">
   <source>create an issue on Github</source>
-  <target>criar uma issue no Github</target>
+  <target>een issue aanmaken op Github</target>
 </trans-unit>
 <trans-unit id="s51811537b64de77a">
   <source>If you have more general feedback or are not familiar with Github, you can write to the following email address:</source>
-  <target>Se você tem um feedback mais geral ou não conhece o Github, pode escrever para o seguinte endereço de e-mail:</target>
+  <target>Als je meer algemene feedback hebt of niet bekend bent met Github, kun je schrijven naar het volgende e-mailadres:</target>
 </trans-unit>
 <trans-unit id="sb80aa454e12cd901">
   <source>Install Update</source>
-  <target>Instalar Atualização</target>
+  <target>Update installeren</target>
 </trans-unit>
 <trans-unit id="s890c46ca8389a6bb">
   <source>Moss Update Available:</source>
-  <target>Atualização do Moss Disponível:</target>
+  <target>Moss-update beschikbaar:</target>
 </trans-unit>
 <trans-unit id="sb5137a7885462e4e">
   <source>Installing...</source>
-  <target>Instalando...</target>
+  <target>Installeren...</target>
 </trans-unit>
 <trans-unit id="s32322dc45e502559">
   <source>Decline</source>
-  <target>Recusar</target>
+  <target>Weigeren</target>
 </trans-unit>
 <trans-unit id="s7ec9f93dd4d1a712">
   <source>Install and Restart</source>
-  <target>Instalar e Reiniciar</target>
+  <target>Installeren en herstarten</target>
 </trans-unit>
 <trans-unit id="s419da48ed70a4441">
   <source>Moss Updates</source>
-  <target>Atualizações do Moss</target>
+  <target>Moss-updates</target>
 </trans-unit>
 <trans-unit id="s2a9e85cf8b4290be">
   <source>Thank you for surfing the edge of</source>
-  <target>Obrigado por surfar na fronteira do</target>
+  <target>Bedankt voor het surfen aan de rand van</target>
 </trans-unit>
 <trans-unit id="sc905c0e43dffd27a">
   <source>the Weave</source>
-  <target>the Weave</target>
+  <target>het Weefsel</target>
 </trans-unit>
 <trans-unit id="s9cf80b52fc9a7340">
   <source>Below are relevant updates for early weavers.</source>
-  <target>Abaixo estão atualizações relevantes para os primeiros tecelões.</target>
+  <target>Hieronder staan relevante updates voor vroege wevers.</target>
 </trans-unit>
 <trans-unit id="s94258cf18a3d4dd1">
   <source>No big waves lately...</source>
-  <target>Nenhuma grande onda ultimamente...</target>
+  <target>Geen grote golven de laatste tijd...</target>
 </trans-unit>
 <trans-unit id="sa84f7d884e8b4074">
   <source>Tool Update</source>
-  <target>Atualização do Tool</target>
+  <target>Tool-update</target>
 </trans-unit>
 <trans-unit id="sd3dd70be26a25f83">
   <source>Updating Tool...</source>
-  <target>Atualizando Tool...</target>
+  <target>Tool bijwerken...</target>
 </trans-unit>
 <trans-unit id="s789885786d68ef67">
   <source>Loading number of online members</source>
-  <target>Carregando número de membros online</target>
+  <target>Aantal online leden laden</target>
 </trans-unit>
 <trans-unit id="see0b82b4bfb8b629">
   <source>peers online</source>
@@ -116,179 +140,191 @@
 </trans-unit>
 <trans-unit id="s98763cf06252f01e">
   <source>Error creating the group.</source>
-  <target>Erro ao criar o grupo.</target>
+  <target>Fout bij het aanmaken van de groep.</target>
 </trans-unit>
 <trans-unit id="sb06c7a269f3a91ec">
   <source>Create New Group</source>
-  <target>Criar Novo Grupo</target>
+  <target>Nieuwe Groep aanmaken</target>
 </trans-unit>
 <trans-unit id="s030655287e89069f">
   <source>Group name</source>
-  <target>Nome do grupo</target>
+  <target>Groepsnaam</target>
 </trans-unit>
 <trans-unit id="sd60553e70fd3d0a8">
   <source> Group Type:</source>
-  <target> Tipo de Grupo:</target>
+  <target> Groepstype:</target>
 </trans-unit>
 <trans-unit id="s06db052ab09cbad2">
   <source>Stewarded</source>
-  <target>Com Referente</target>
+  <target>Met Verzorger</target>
 </trans-unit>
 <trans-unit id="sbcd75c9c2a54295f">
   <source>The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.</source>
-  <target>O criador do grupo é o Referente inicial. Apenas Referentes podem editar o perfil do grupo, adicionar e remover Tools e adicionar Referentes adicionais.</target>
+  <target>De groepsmaker is de eerste Verzorger. Alleen Verzorgers kunnen het groepsprofiel bewerken, Tools toevoegen en verwijderen en extra Verzorgers toevoegen.</target>
 </trans-unit>
 <trans-unit id="s5ac92050a6baecb3">
   <source>Unstewarded</source>
-  <target>Sem Referente</target>
+  <target>Zonder Verzorger</target>
 </trans-unit>
 <trans-unit id="sd61c6c6ae1ff0b1e">
   <source>All members have full permissions.</source>
-  <target>Todos os membros têm permissões completas.</target>
+  <target>Alle leden hebben volledige rechten.</target>
 </trans-unit>
 <trans-unit id="s416a540b16275f2e">
   <source>Create Group</source>
-  <target>Criar Grupo</target>
+  <target>Groep aanmaken</target>
 </trans-unit>
 <trans-unit id="sb8c91273249cba0c">
   <source>Waiting for peers...</source>
-  <target>Aguardando peers...</target>
+  <target>Wachten op peers...</target>
 </trans-unit>
 <trans-unit id="s0fa3391db68e4425">
   <source>disabled</source>
-  <target>desativado</target>
+  <target>uitgeschakeld</target>
 </trans-unit>
 <trans-unit id="saebc6d4487f8ee06">
   <source>Disabled Group</source>
-  <target>Grupo Desativado</target>
+  <target>Uitgeschakelde Groep</target>
 </trans-unit>
 <trans-unit id="s9340f248c79fc576">
   <source>Error displaying the groups</source>
-  <target>Erro ao exibir os grupos</target>
+  <target>Fout bij het weergeven van de groepen</target>
 </trans-unit>
 <trans-unit id="s964f6725aeb7662f">
   <source>Add Group</source>
-  <target>Adicionar Grupo</target>
+  <target>Groep toevoegen</target>
 </trans-unit>
 <trans-unit id="s5cc18ba855f09834">
   <source>Error displaying the tool classes</source>
-  <target>Erro ao exibir as classes de Tool</target>
+  <target>Fout bij het weergeven van de tool-klassen</target>
 </trans-unit>
 <trans-unit id="s6abb1cd87fe0114e">
   <source>Home</source>
-  <target>Início</target>
+  <target>Home</target>
 </trans-unit>
 <trans-unit id="sc58f4b3e7fe9e85c">
   <source>Activity Stream</source>
-  <target>Fluxo de Atividades</target>
+  <target>Activiteitenstroom</target>
 </trans-unit>
 <trans-unit id="scc99769aaee688ec">
   <source>Assets Graph</source>
-  <target>Grafo de Assets</target>
+  <target>Asset-grafiek</target>
 </trans-unit>
 <trans-unit id="s3a4df362e4b10c3d">
   <source>Modifiers undefined.</source>
-  <target>Modificadores indefinidos.</target>
+  <target>Modifiers niet gedefinieerd.</target>
 </trans-unit>
 <trans-unit id="s6924404e2d21606d">
   <source>Error joining the group.</source>
-  <target>Erro ao entrar no grupo.</target>
+  <target>Fout bij het toetreden tot de groep.</target>
 </trans-unit>
 <trans-unit id="sba9838a36a8a0f12">
   <source>Join Group</source>
-  <target>Entrar no Grupo</target>
+  <target>Deelnemen aan Groep</target>
 </trans-unit>
 <trans-unit id="s417b25879ae9b5a0">
   <source>Invite Link</source>
-  <target>Link de Convite</target>
+  <target>Uitnodigingslink</target>
 </trans-unit>
 <trans-unit id="sa7b4f3aab0562402">
   <source>You have been invited to join a group.</source>
-  <target>Você foi convidado a entrar em um grupo.</target>
+  <target>Je bent uitgenodigd om deel te nemen aan een groep.</target>
 </trans-unit>
 <trans-unit id="s0451ae0d0ce5c2e2">
   <source>reloading...</source>
-  <target>recarregando...</target>
+  <target>herladen...</target>
 </trans-unit>
 <trans-unit id="s8dd8ab8530f97ed3">
   <source>loading...</source>
-  <target>carregando...</target>
+  <target>laden...</target>
 </trans-unit>
 <trans-unit id="s06971ea804e7d673">
   <source>Install to a group space</source>
-  <target>Instalar em um espaço de grupo</target>
+  <target>Installeren in een groepsruimte</target>
 </trans-unit>
 <trans-unit id="s25f1d9708501730f">
   <source>Install v<x id="0" equiv-text="${version.version}"/> to a group space</source>
-  <target>Instalar v<x id="0" equiv-text="${version.version}"/> em um espaço de grupo</target>
+  <target>Installeer v<x id="0" equiv-text="${version.version}"/> in een groepsruimte</target>
 </trans-unit>
 <trans-unit id="s3d197283cb019b5a">
   <source>Overview</source>
-  <target>Visão Geral</target>
+  <target>Overzicht</target>
 </trans-unit>
 <trans-unit id="se19e2ed58cd65d6c">
   <source>Versions</source>
-  <target>Versões</target>
+  <target>Versies</target>
+</trans-unit>
+<trans-unit id="s08a64b07b54df8d4">
+  <source>by</source>
+  <target>door</target>
 </trans-unit>
 <trans-unit id="sb1f175f79f1ddcd2">
   <source>No Tools available yet...</source>
-  <target>Nenhum Tool disponível ainda...</target>
+  <target>Nog geen Tools beschikbaar...</target>
+</trans-unit>
+<trans-unit id="s8763e7dbdf84093d">
+  <source>Installation successful</source>
+  <target>Installatie geslaagd</target>
 </trans-unit>
 <trans-unit id="s384efdec2b99d471">
   <source>Custom Name</source>
-  <target>Nome Personalizado</target>
+  <target>Aangepaste naam</target>
 </trans-unit>
 <trans-unit id="s07a4bf5a1393494d">
   <source>Custom Network Seed</source>
-  <target>Network Seed Personalizado</target>
+  <target>Aangepaste netwerk-seed</target>
 </trans-unit>
 <trans-unit id="s2fd07bfa38737ad6">
   <source>Add to Group</source>
-  <target>Adicionar ao Grupo</target>
+  <target>Toevoegen aan Groep</target>
+</trans-unit>
+<trans-unit id="s16786404fd083e75">
+  <source>Error fetching the registered Tools in this group</source>
+  <target>Fout bij het ophalen van de geregistreerde Tools in deze groep</target>
 </trans-unit>
 <trans-unit id="s76d62edab6068a11">
   <source>Installing to:</source>
-  <target>Instalando em:</target>
+  <target>Installeren naar:</target>
 </trans-unit>
 <trans-unit id="sdcf12775cd424249">
   <source>Heads-up!</source>
-  <target>Atenção!</target>
+  <target>Let op!</target>
 </trans-unit>
 <trans-unit id="sea831745df80be1c">
   <source>Give this app a custom name.</source>
-  <target>Dê um nome personalizado a este app.</target>
+  <target>Geef deze app een aangepaste naam.</target>
 </trans-unit>
 <trans-unit id="sf8bb1851d084043f">
   <source>Note: </source>
-  <target>Nota: </target>
+  <target>Opmerking: </target>
 </trans-unit>
 <trans-unit id="s3a5ee4be3d2b0782">
   <source>Adding a new Tool to a group </source>
-  <target>Adicionar um novo Tool a um grupo </target>
+  <target>Een nieuwe Tool toevoegen aan een groep </target>
 </trans-unit>
 <trans-unit id="sc7ad8e8ab04ac0c7">
   <source>creates a new unique instance </source>
-  <target>cria uma nova instância única </target>
+  <target>maakt een nieuw uniek exemplaar aan </target>
 </trans-unit>
 <trans-unit id="sdf60b24054c98179">
   <source>of that Tool which other group members may join directly from the group's main page.</source>
-  <target>desse Tool, à qual outros membros do grupo podem aderir diretamente pela página principal do grupo.</target>
+  <target>van die Tool waar andere groepsleden rechtstreeks aan kunnen deelnemen vanaf de hoofdpagina van de groep.</target>
 </trans-unit>
 <trans-unit id="s12c3249c3396ef2f">
   <source>Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.</source>
-  <target>Cada vez que você adiciona um Tool a um grupo pela Tool Library, você cria uma nova rede peer-to-peer única especificamente para aquela instância do Tool. Outros membros do grupo só podem entrar na mesma rede se entrarem pela página principal do grupo, onde aparecerá para eles na seção "Tools Disponíveis". Se dois membros adicionarem o mesmo Tool pela Tool Library, eles criam duas redes peer-to-peer independentes. Dessa forma, um grupo pode ter várias instâncias independentes do mesmo Tool.</target>
+  <target>Elke keer dat je een Tool aan een groep toevoegt via de Tool Bibliotheek, maak je een nieuw uniek peer-to-peer netwerk aan specifiek voor dat exemplaar van de Tool. Andere groepsleden kunnen alleen aan hetzelfde netwerk deelnemen als ze het doen vanaf de hoofdpagina van de groep waar het voor hen verschijnt in het gedeelte "Beschikbare Tools". Als twee leden elk dezelfde Tool uit de Tool Bibliotheek toevoegen, maken ze twee onafhankelijke peer-to-peer netwerken aan. Op die manier kan een groep veel onafhankelijke exemplaren van dezelfde Tool hebben.</target>
 </trans-unit>
 <trans-unit id="s355b21b89ce5d9c5">
   <source>Details</source>
-  <target>Detalhes</target>
+  <target>Details</target>
 </trans-unit>
 <trans-unit id="se40280a068167fdf">
   <source>all tools</source>
-  <target>todos os tools</target>
+  <target>alle tools</target>
 </trans-unit>
 <trans-unit id="s5fdf96ff10989e29">
   <source>+ Add to Group</source>
-  <target>+ Adicionar ao Grupo</target>
+  <target>+ Toevoegen aan Groep</target>
 </trans-unit>
 <trans-unit id="s82665b2ffabc9c0a">
   <source>Website</source>
@@ -296,47 +332,51 @@
 </trans-unit>
 <trans-unit id="s87bae2710b2492c3">
   <source>Contact</source>
-  <target>Contato</target>
+  <target>Contact</target>
 </trans-unit>
 <trans-unit id="s571a486a72782024">
   <source>Published by:</source>
-  <target>Publicado por:</target>
+  <target>Gepubliceerd door:</target>
 </trans-unit>
 <trans-unit id="s4bbd8057b8726b43">
   <source>Publish A Tool</source>
-  <target>Publicar um Tool</target>
+  <target>Een Tool publiceren</target>
 </trans-unit>
 <trans-unit id="s3d4ca40eab578130">
   <source>Tool Library</source>
-  <target>Tool Library</target>
+  <target>Tool Bibliotheek</target>
 </trans-unit>
 <trans-unit id="s8de2ae4fdfa77943">
   <source>Publish a tool</source>
-  <target>Publicar um tool</target>
+  <target>Een tool publiceren</target>
 </trans-unit>
 <trans-unit id="sd05405ee1ffc6ddd">
   <source>Add to Pocket</source>
-  <target>Adicionar ao Pocket</target>
+  <target>Toevoegen aan Pocket</target>
 </trans-unit>
 <trans-unit id="s550b6572499ea8bd">
   <source>URL copied to clipboard.</source>
-  <target>URL copiada para a área de transferência.</target>
+  <target>URL gekopieerd naar klembord.</target>
 </trans-unit>
 <trans-unit id="s2df075aface0dab8">
   <source>Share</source>
-  <target>Compartilhar</target>
+  <target>Delen</target>
 </trans-unit>
 <trans-unit id="sd92992bbe009445c">
   <source>Error fetching the entry</source>
-  <target>Erro ao buscar a entrada</target>
+  <target>Fout bij het ophalen van het item</target>
 </trans-unit>
 <trans-unit id="s4c119cd7d224a110">
   <source>Asset not found.</source>
-  <target>Asset não encontrado.</target>
+  <target>Asset niet gevonden.</target>
 </trans-unit>
 <trans-unit id="s109251ef1bfdad31">
   <source>Local Time</source>
-  <target>Hora Local</target>
+  <target>Lokale tijd</target>
+</trans-unit>
+<trans-unit id="s08a95f07b55050a7">
+  <source>me</source>
+  <target>ik</target>
 </trans-unit>
 <trans-unit id="seadeb3a807d7478a">
   <source>Online</source>
@@ -348,35 +388,39 @@
 </trans-unit>
 <trans-unit id="s8b517f7997ac61b7">
   <source>Headless Nodes</source>
-  <target>Nós Headless</target>
+  <target>Headless nodes</target>
 </trans-unit>
 <trans-unit id="s4508d2508e2f60b0">
   <source>Error displaying the peers of the group</source>
-  <target>Erro ao exibir os peers do grupo</target>
+  <target>Fout bij het weergeven van de peers van de groep</target>
+</trans-unit>
+<trans-unit id="sf70accff890a3e36">
+  <source>Tool activated.</source>
+  <target>Tool geactiveerd.</target>
 </trans-unit>
 <trans-unit id="s86af0278a12266f5">
   <source>No new tools to activate.</source>
-  <target>Nenhum novo tool para ativar.</target>
+  <target>Geen nieuwe tools om te activeren.</target>
 </trans-unit>
 <trans-unit id="s21866f14afd110fa">
   <source>Tool logo</source>
-  <target>Logo do Tool</target>
+  <target>Tool-logo</target>
 </trans-unit>
 <trans-unit id="s27976e94b05c6970">
   <source>Activate</source>
-  <target>Ativar</target>
+  <target>Activeren</target>
 </trans-unit>
 <trans-unit id="sbc42b2ee96abb572">
   <source>installed this tool to the group space </source>
-  <target>instalou este tool no espaço do grupo </target>
+  <target>heeft deze tool geïnstalleerd in de groepsruimte </target>
 </trans-unit>
 <trans-unit id="s3be52ccc6f018908">
   <source>In use by: </source>
-  <target>Em uso por: </target>
+  <target>In gebruik door: </target>
 </trans-unit>
 <trans-unit id="sb4a967e0437350ff">
   <source>The tool I need is not listed. Take me to the Library.</source>
-  <target>O tool que preciso não está listado. Leve-me à Library.</target>
+  <target>De tool die ik nodig heb staat niet in de lijst. Breng me naar de Bibliotheek.</target>
 </trans-unit>
 <trans-unit id="sf7d93e17ec4b1219">
   <source>...</source>
@@ -384,91 +428,103 @@
 </trans-unit>
 <trans-unit id="s190c18948e8b898a">
   <source>this group</source>
-  <target>este grupo</target>
+  <target>deze groep</target>
 </trans-unit>
 <trans-unit id="s039176e0c5659ca1">
   <source>Before adding a new tool to</source>
-  <target>Antes de adicionar um novo tool a</target>
+  <target>Voordat je een nieuwe tool toevoegt aan</target>
 </trans-unit>
 <trans-unit id="sb2238d95ff6d0fbc">
   <source>Check what your peers already use</source>
-  <target>Veja o que seus peers já usam</target>
+  <target>Controleer wat je peers al gebruiken</target>
 </trans-unit>
 <trans-unit id="s7390f8b75a4e40d4">
   <source>They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!</source>
-  <target>Eles podem já estar usando um tool que você procura. Não é necessário adicioná-lo ao seu espaço de grupo - basta ativá-lo para você e começar a colaborar.</target>
+  <target>Ze gebruiken misschien al een tool die je zoekt. Je hoeft het niet aan je groepsruimte toe te voegen - activeer het gewoon voor jezelf en begin met samenwerken!</target>
 </trans-unit>
 <trans-unit id="s1d1484091c0237f3">
   <source>Invite People</source>
-  <target>Convidar Pessoas</target>
+  <target>Mensen uitnodigen</target>
 </trans-unit>
 <trans-unit id="s21d35084661d25a6">
   <source>Copy and send the link below to invite people:</source>
-  <target>Copie e envie o link abaixo para convidar pessoas:</target>
+  <target>Kopieer en verstuur de onderstaande link om mensen uit te nodigen:</target>
 </trans-unit>
 <trans-unit id="s7236264a0e8164bb">
   <source>Invite link copied to clipboard.</source>
-  <target>Link de convite copiado para a área de transferência.</target>
+  <target>Uitnodigingslink gekopieerd naar klembord.</target>
 </trans-unit>
 <trans-unit id="s3687049d1af562c4">
   <source>Copy</source>
-  <target>Copiar</target>
+  <target>Kopiëren</target>
 </trans-unit>
 <trans-unit id="s5ae217c0cc09e418">
   <source>About invite links:</source>
-  <target>Sobre links de convite:</target>
+  <target>Over uitnodigingslinks:</target>
 </trans-unit>
 <trans-unit id="s85211b812dbfebf4">
   <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
-  <target>Atualmente os convites do Moss funcionam segundo a regra "Aqui está meu endereço, a porta está aberta." Qualquer pessoa com o link pode entrar no grupo, então tenha cuidado ao compartilhar este link.</target>
+  <target>Momenteel werken Moss-uitnodigingen volgens de regel "Hier is mijn huisadres, de deur staat open." Iedereen met een link kan deelnemen aan de groep, dus wees voorzichtig waar je deze link deelt.</target>
+</trans-unit>
+<trans-unit id="sce917469a53e53a1">
+  <source>Error displaying the Tools</source>
+  <target>Fout bij het weergeven van de Tools</target>
 </trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
-  <target>Nenhum tool ainda.</target>
+  <target>Nog geen tools.</target>
 </trans-unit>
 <trans-unit id="scaf5d44824fbdded">
   <source>Let's change that:</source>
-  <target>Vamos mudar isso:</target>
+  <target>Laten we dat veranderen:</target>
 </trans-unit>
 <trans-unit id="sfda931c0d8d794fb">
   <source>activate tools</source>
-  <target>ativar tools</target>
+  <target>tools activeren</target>
 </trans-unit>
 <trans-unit id="s477a2fd64cff5b47">
   <source>add a tool</source>
-  <target>adicionar um tool</target>
+  <target>een tool toevoegen</target>
 </trans-unit>
 <trans-unit id="sf753462fb5ec0f72">
   <source>Error fetching the group profile</source>
-  <target>Erro ao buscar o perfil do grupo</target>
+  <target>Fout bij het ophalen van het groepsprofiel</target>
 </trans-unit>
 <trans-unit id="s49730f3d5751a433">
   <source>Loading...</source>
-  <target>Carregando...</target>
+  <target>Laden...</target>
 </trans-unit>
 <trans-unit id="s33e25cb4c896d243">
   <source>my profile image</source>
-  <target>minha imagem de perfil</target>
+  <target>mijn profielafbeelding</target>
 </trans-unit>
 <trans-unit id="s2ce9c3328e830141">
   <source>Activate tools peers already use</source>
-  <target>Ativar tools que os peers já usam</target>
+  <target>Activeer tools die peers al gebruiken</target>
 </trans-unit>
 <trans-unit id="s3be68760fd7935f7">
   <source>more used by peers</source>
-  <target>mais usados por peers</target>
+  <target>meer gebruikt door peers</target>
 </trans-unit>
 <trans-unit id="s40ad7672a00dd569">
   <source>click to copy public key</source>
-  <target>clique para copiar a chave pública</target>
+  <target>klik om publieke sleutel te kopiëren</target>
 </trans-unit>
 <trans-unit id="s06d3f0cf967e308e">
   <source>This is peer's public key. Use it to confirm the identity of the profile.</source>
-  <target>Esta é a chave pública do peer. Use-a para confirmar a identidade do perfil.</target>
+  <target>Dit is de publieke sleutel van de peer. Gebruik het om de identiteit van het profiel te bevestigen.</target>
+</trans-unit>
+<trans-unit id="s6b2ba4a7ab6305f9">
+  <source>Role:</source>
+  <target>Rol:</target>
+</trans-unit>
+<trans-unit id="s264e444c900d09b1">
+  <source>Local Time:</source>
+  <target>Lokale tijd:</target>
 </trans-unit>
 <trans-unit id="sc7c6cffb1c2355c7">
   <source>Your Peers</source>
-  <target>Seus Peers</target>
+  <target>Jouw Peers</target>
 </trans-unit>
 <trans-unit id="sabf0e099159a8caa">
   <source>online</source>
@@ -480,1015 +536,267 @@
 </trans-unit>
 <trans-unit id="s73a44d1204f9383e">
   <source>Add a new tool for the group</source>
-  <target>Adicionar um novo tool para o grupo</target>
+  <target>Een nieuwe tool voor de groep toevoegen</target>
 </trans-unit>
 <trans-unit id="s7293d04c5979a8ad">
   <source>Expand sidebar</source>
-  <target>Expandir barra lateral</target>
+  <target>Zijbalk uitvouwen</target>
 </trans-unit>
 <trans-unit id="s470c476fc184bbf2">
   <source>Fold sidebar</source>
-  <target>Recolher barra lateral</target>
+  <target>Zijbalk invouwen</target>
 </trans-unit>
 <trans-unit id="s79cff44197beb0e9">
   <source>This group doesn't have any applets installed yet. Go to the applet library (the </source>
-  <target>Este grupo ainda não possui applets instalados. Vá para a biblioteca de applets (o </target>
+  <target>Deze groep heeft nog geen applets geïnstalleerd. Ga naar de applet bibliotheek (het </target>
 </trans-unit>
 <trans-unit id="sf0735ee6b2ba11d9">
   <source> icon above) to install applets to this group.</source>
-  <target> ícone acima) para instalar applets neste grupo.</target>
+  <target> icoon hierboven) om applets aan deze groep te installeren.</target>
+</trans-unit>
+<trans-unit id="s60c0bc90449eacf3">
+  <source>Error fetching the Tools installed in this group</source>
+  <target>Fout bij het ophalen van de geïnstalleerde Tools in deze groep</target>
 </trans-unit>
 <trans-unit id="s561c9423ea2fc327">
   <source>Tool archived.</source>
-  <target>Tool arquivado.</target>
+  <target>Tool gearchiveerd.</target>
 </trans-unit>
 <trans-unit id="s9302f706cfbb6665">
   <source>Failed to archive Tool (see console for details)</source>
-  <target>Falha ao arquivar o Tool (veja o console para detalhes)</target>
+  <target>Tool archiveren mislukt (zie console voor details)</target>
 </trans-unit>
 <trans-unit id="s2897e4baafaea906">
   <source>Tool unarchived.</source>
-  <target>Tool desarquivado.</target>
+  <target>Tool uit archief gehaald.</target>
 </trans-unit>
 <trans-unit id="s0a4fb0b83ddada0a">
   <source>Failed to unarchive Tool (see console for details)</source>
-  <target>Falha ao desarquivar o Tool (veja o console para detalhes)</target>
+  <target>Tool uit archief halen mislukt (zie console voor details)</target>
 </trans-unit>
 <trans-unit id="s8b5e873468d50311">
   <source>Disabled.</source>
-  <target>Desativado.</target>
+  <target>Uitgeschakeld.</target>
 </trans-unit>
 <trans-unit id="sc1da265dcbd54870">
   <source>Enabled.</source>
-  <target>Ativado.</target>
+  <target>Ingeschakeld.</target>
+</trans-unit>
+<trans-unit id="s3a41d065ac965e2a">
+  <source>abandoned by:</source>
+  <target>verlaten door:</target>
 </trans-unit>
 <trans-unit id="s74982e57a1d8896c">
   <source>Advanced Settings</source>
-  <target>Configurações Avançadas</target>
+  <target>Geavanceerde instellingen</target>
 </trans-unit>
 <trans-unit id="s50e8f1afca10c29f">
   <source>Always-online nodes should install this tool by default</source>
-  <target>Nós sempre-online devem instalar este tool por padrão</target>
+  <target>Altijd-online nodes moeten deze tool standaard installeren</target>
 </trans-unit>
 <trans-unit id="s1d7f1ed11d4a839c">
   <source>Deprecating will hide tool for activation by new members</source>
-  <target>Depreciar ocultará o tool para ativação por novos membros</target>
+  <target>Afkeuren verbergt de tool voor activering door nieuwe leden</target>
 </trans-unit>
 <trans-unit id="sa0ca791d0f13f0e5">
   <source>Archive</source>
-  <target>Arquivar</target>
+  <target>Archiveren</target>
 </trans-unit>
 <trans-unit id="sd72a018193e00fb6">
   <source>Undeprecate this Tool for it to show up again for new members</source>
-  <target>Remover a depreciação deste Tool para que apareça novamente para novos membros</target>
+  <target>Keur deze Tool goed zodat deze weer verschijnt voor nieuwe leden</target>
 </trans-unit>
 <trans-unit id="sf71a90bc017f1e80">
   <source>Unarchive</source>
-  <target>Desarquivar</target>
+  <target>Uit archief halen</target>
 </trans-unit>
 <trans-unit id="s89026d7ba87704d3">
   <source>ARCHIVED</source>
-  <target>ARQUIVADO</target>
+  <target>GEARCHIVEERD</target>
 </trans-unit>
 <trans-unit id="s70d885806b56289e">
   <source>enabled</source>
-  <target>ativado</target>
+  <target>ingeschakeld</target>
 </trans-unit>
 <trans-unit id="s96ed4200ee683221">
   <source>Disable the app for yourself</source>
-  <target>Desativar o app para você</target>
+  <target>De app voor jezelf uitschakelen</target>
 </trans-unit>
 <trans-unit id="s9078ee819c18df6e">
   <source>Enable</source>
-  <target>Ativar</target>
+  <target>Inschakelen</target>
 </trans-unit>
 <trans-unit id="se2bb78d39ad97b71">
   <source>Tool disabled.</source>
-  <target>Tool desativado.</target>
+  <target>Tool uitgeschakeld.</target>
 </trans-unit>
 <trans-unit id="s0718ed2cbd2fdad0">
   <source>Tool enabled.</source>
-  <target>Tool ativado.</target>
+  <target>Tool ingeschakeld.</target>
 </trans-unit>
 <trans-unit id="sb9cdae3a069581f6">
   <source>Hide Advanced Settings</source>
-  <target>Ocultar Configurações Avançadas</target>
+  <target>Geavanceerde instellingen verbergen</target>
 </trans-unit>
 <trans-unit id="s6d7cf29525f2611f">
   <source>Show Advanced Settings</source>
-  <target>Mostrar Configurações Avançadas</target>
+  <target>Geavanceerde instellingen tonen</target>
 </trans-unit>
 <trans-unit id="s82e64a7930881094">
   <source>Uninstall this Tool for yourself (irreversible)</source>
-  <target>Desinstalar este Tool para você (irreversível)</target>
+  <target>Deze Tool voor jezelf verwijderen (onomkeerbaar)</target>
 </trans-unit>
 <trans-unit id="sbc5bb5bb74d141b9">
   <source>Uninstall</source>
-  <target>Desinstalar</target>
+  <target>Verwijderen</target>
 </trans-unit>
 <trans-unit id="s928362b2d36f34f7">
   <source>Tool undeprecated.</source>
-  <target>Depreciação do Tool removida.</target>
+  <target>Tool goedgekeurd.</target>
 </trans-unit>
 <trans-unit id="sf2f0e2d57183480d">
   <source>Failed to undeprecate Tool (see console for details)</source>
-  <target>Falha ao remover depreciação do Tool (veja o console para detalhes)</target>
+  <target>Tool goedkeuren mislukt (zie console voor details)</target>
 </trans-unit>
 <trans-unit id="sd13c458659b1b8e7">
   <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
-  <target>Você não tem nenhum Tool instalado neste grupo. Vá para a Tool Library para instalar Tools neste grupo.</target>
+  <target>Je hebt geen Tools geïnstalleerd in deze groep. Ga naar de Tool Bibliotheek om Tools aan deze groep te installeren.</target>
 </trans-unit>
 <trans-unit id="s45a179a4d2fe3729">
   <source>No abandoned Tools.</source>
-  <target>Nenhum Tool abandonado.</target>
+  <target>Geen verlaten Tools.</target>
 </trans-unit>
 <trans-unit id="s4e92d160c3305647">
   <source>Activated Tools</source>
-  <target>Tools Ativados</target>
+  <target>Geactiveerde Tools</target>
 </trans-unit>
 <trans-unit id="sa670264e8f449d1c">
   <source>Abandoned Tools</source>
-  <target>Tools Abandonados</target>
+  <target>Verlaten Tools</target>
+</trans-unit>
+<trans-unit id="s6466997515d6d5b3">
+  <source>New Steward Added.</source>
+  <target>Nieuwe Verzorger toegevoegd.</target>
 </trans-unit>
 <trans-unit id="s2aac2023bcfa6e62">
   <source>Add Steward:</source>
-  <target>Adicionar Referente:</target>
+  <target>Verzorger toevoegen:</target>
 </trans-unit>
 <trans-unit id="sb78ce49735cd209e">
   <source>expiry</source>
-  <target>expiração</target>
+  <target>vervaldatum</target>
 </trans-unit>
 <trans-unit id="s445ad48f4f733285">
   <source>Error leaving the group</source>
-  <target>Erro ao sair do grupo</target>
+  <target>Fout bij het verlaten van de groep</target>
 </trans-unit>
 <trans-unit id="sc0b43e6938b15b03">
   <source>Leave Group</source>
-  <target>Sair do Grupo</target>
+  <target>Groep verlaten</target>
 </trans-unit>
 <trans-unit id="s5bf0cb955266a68c">
   <source>Are you sure you want to leave this group?</source>
-  <target>Tem certeza de que deseja sair deste grupo?</target>
+  <target>Weet je zeker dat je deze groep wilt verlaten?</target>
 </trans-unit>
 <trans-unit id="s62e9eba92a6d2fef">
   <source>⚠️ This will delete all your Tools of this group and the data therein</source>
-  <target>⚠️ Isso excluirá todos os seus Tools deste grupo e os dados neles contidos</target>
+  <target>⚠️ Dit verwijdert al je Tools van deze groep en de gegevens daarin</target>
 </trans-unit>
 <trans-unit id="se869a6655b76b079">
   <source> (unless a Tool is shared with another group of yours).</source>
-  <target> (a menos que um Tool seja compartilhado com outro grupo seu).</target>
+  <target> (tenzij een Tool wordt gedeeld met een andere groep van jou).</target>
 </trans-unit>
 <trans-unit id="s2ceb11be2290bb1b">
   <source>Cancel</source>
-  <target>Cancelar</target>
+  <target>Annuleren</target>
 </trans-unit>
 <trans-unit id="s19bee21a859fbea0">
   <source>Leave</source>
-  <target>Sair</target>
+  <target>Verlaten</target>
 </trans-unit>
 <trans-unit id="sface44df32238223">
   <source>Your Profile</source>
-  <target>Seu Perfil</target>
+  <target>Jouw Profiel</target>
 </trans-unit>
 <trans-unit id="s1faa6574a9c4fd7a">
   <source>Looking for peers...</source>
-  <target>Procurando peers...</target>
+  <target>Op zoek naar peers...</target>
 </trans-unit>
 <trans-unit id="s5e63e3491c0af038">
   <source>No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.</source>
-  <target>Nenhum peer encontrado ainda para buscar os metadados do grupo. Peça a um dos membros deste grupo para iniciar o Moss para que você possa começar a sincronizar com eles.</target>
+  <target>Nog geen peers gevonden om de metadata van de groep op te halen. Vraag een van de leden van deze groep om Moss te starten zodat je kunt beginnen met synchroniseren.</target>
 </trans-unit>
 <trans-unit id="sde1c98062b1c6d22">
   <source>The group ID is: </source>
-  <target>O ID do grupo é: </target>
+  <target>De groeps-ID is: </target>
 </trans-unit>
 <trans-unit id="sd6620673dc924b12">
   <source>Failed to update group profile.</source>
-  <target>Falha ao atualizar o perfil do grupo.</target>
+  <target>Groepsprofiel bijwerken mislukt.</target>
 </trans-unit>
 <trans-unit id="s8b0432eecbd8b034">
   <source>Update</source>
-  <target>Atualizar</target>
+  <target>Bijwerken</target>
 </trans-unit>
 <trans-unit id="s894309352d8be05c">
   <source>Error deleting the custom view</source>
-  <target>Erro ao excluir a visualização personalizada</target>
+  <target>Fout bij het verwijderen van de aangepaste weergave</target>
 </trans-unit>
 <trans-unit id="s0ef3a153ae591dda">
   <source>Delete Custom View</source>
-  <target>Excluir Visualização Personalizada</target>
+  <target>Aangepaste weergave verwijderen</target>
 </trans-unit>
 <trans-unit id="s2e314d89467fa967">
   <source>Are you sure you want to delete this custom view?</source>
-  <target>Tem certeza de que deseja excluir esta visualização personalizada?</target>
+  <target>Weet je zeker dat je deze aangepaste weergave wilt verwijderen?</target>
 </trans-unit>
 <trans-unit id="sdc673e73b5c13aea">
   <source>Delete</source>
-  <target>Excluir</target>
+  <target>Verwijderen</target>
 </trans-unit>
 <trans-unit id="s64ef2a6c2dd1d3d1">
   <source>Edit</source>
-  <target>Editar</target>
+  <target>Bewerken</target>
 </trans-unit>
 <trans-unit id="s2752f1c4b072e911">
   <source>The requested custom view doesn't exist</source>
-  <target>A visualização personalizada solicitada não existe</target>
+  <target>De gevraagde aangepaste weergave bestaat niet</target>
 </trans-unit>
 <trans-unit id="s846816c3fb2f8354">
   <source>Error fetching the custom view</source>
-  <target>Erro ao buscar a visualização personalizada</target>
+  <target>Fout bij het ophalen van de aangepaste weergave</target>
 </trans-unit>
 <trans-unit id="s2c61d603d1bbdb45">
   <source>Error fetching the custom views</source>
-  <target>Erro ao buscar as visualizações personalizadas</target>
+  <target>Fout bij het ophalen van de aangepaste weergaven</target>
 </trans-unit>
 <trans-unit id="s9b21b1ade9a93f3b">
   <source>Error creating the custom view</source>
-  <target>Erro ao criar a visualização personalizada</target>
+  <target>Fout bij het aanmaken van de aangepaste weergave</target>
 </trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
-  <target>Nome da Visualização Personalizada</target>
+  <target>Naam aangepaste weergave</target>
 </trans-unit>
 <trans-unit id="s57d1286dd70605a5">
   <source>Create Custom View</source>
-  <target>Criar Visualização Personalizada</target>
+  <target>Aangepaste weergave aanmaken</target>
 </trans-unit>
 <trans-unit id="s55797f0c2b3b37a0">
   <source>Error fetching the blocks for this group</source>
-  <target>Erro ao buscar os blocos para este grupo</target>
+  <target>Fout bij het ophalen van de blokken voor deze groep</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
-  <target>Erro ao atualizar a visualização personalizada</target>
+  <target>Fout bij het bijwerken van de aangepaste weergave</target>
 </trans-unit>
 <trans-unit id="s33f85f24c0f5f008">
   <source>Save</source>
-  <target>Salvar</target>
+  <target>Opslaan</target>
 </trans-unit>
 <trans-unit id="sfa5aa53305538dbf">
   <source>received by:</source>
-  <target>recebido por:</target>
-</trans-unit>
-<trans-unit id="s92c66a30f352bb00">
-  <source>my message</source>
-  <target>minha mensagem</target>
-</trans-unit>
-<trans-unit id="s3299c9f18ea6ef17">
-  <source>Choose Profile Picture</source>
-  <target>Escolher Foto de Perfil</target>
-</trans-unit>
-<trans-unit id="s3f2a04e5c1b2a709">
-  <source>click to copy</source>
-  <target>clique para copiar</target>
-</trans-unit>
-<trans-unit id="s16fbcb6c19d06e60">
-  <source>Hash copied to clipboard.</source>
-  <target>Hash copiado para a área de transferência.</target>
-</trans-unit>
-<trans-unit id="se5d39037ee051a67">
-  <source>Change Group Icon</source>
-  <target>Alterar Ícone do Grupo</target>
-</trans-unit>
-<trans-unit id="sa5ca0ea1eea6b70b">
-  <source>Only stewards can change the group profile.</source>
-  <target>Apenas Referentes podem alterar o perfil do grupo.</target>
-</trans-unit>
-<trans-unit id="se49ae8ea6d091fe9">
-  <source>Group ID</source>
-  <target>ID do Grupo</target>
-</trans-unit>
-<trans-unit id="se1e8fc3e4fdea935">
-  <source>Unique identifier of this group.</source>
-  <target>Identificador único deste grupo.</target>
-</trans-unit>
-<trans-unit id="s6b138c631a7d2a2c">
-  <source>Discard Changes</source>
-  <target>Descartar Alterações</target>
-</trans-unit>
-<trans-unit id="s031945e67717bf79">
-  <source>Save Changes</source>
-  <target>Salvar Alterações</target>
-</trans-unit>
-<trans-unit id="s0760375151ab885e">
-  <source>Tool deprecated.</source>
-  <target>Tool depreciado.</target>
-</trans-unit>
-<trans-unit id="s3e8665467b867e72">
-  <source>Failed to deprecate tool (see console for details)</source>
-  <target>Falha ao depreciar o tool (veja o console para detalhes)</target>
-</trans-unit>
-<trans-unit id="s4eb1d65f04b7c16d">
-  <source>Failed to undeprecate tool (see console for details)</source>
-  <target>Falha ao remover depreciação do tool (veja o console para detalhes)</target>
-</trans-unit>
-<trans-unit id="s47b949de125f96c3">
-  <source>Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.</source>
-  <target>Depreciar ocultará este tool de novos membros para ativação; membros existentes o verão como depreciado.</target>
-</trans-unit>
-<trans-unit id="s5b3f628f0a5a62ac">
-  <source>Deprecate for Group</source>
-  <target>Depreciar para o Grupo</target>
-</trans-unit>
-<trans-unit id="s0e53ef4364107018">
-  <source>Remove deprecation tag for this tool.</source>
-  <target>Remover a marcação de depreciação deste tool.</target>
-</trans-unit>
-<trans-unit id="s872b1ad125de32b5">
-  <source>Undeprecate</source>
-  <target>Remover Depreciação</target>
-</trans-unit>
-<trans-unit id="s58cf3830485fd5ec">
-  <source>advanced settings</source>
-  <target>configurações avançadas</target>
-</trans-unit>
-<trans-unit id="s195a1ab2540d51a4">
-  <source>Deprecated</source>
-  <target>Depreciado</target>
-</trans-unit>
-<trans-unit id="s81850fd21bd71f71">
-  <source>tool hash</source>
-  <target>hash do tool</target>
-</trans-unit>
-<trans-unit id="s454fef8d9887fc7b">
-  <source>Allways-online nodes should install this tool by default</source>
-  <target>Nós sempre-online devem instalar este tool por padrão</target>
-</trans-unit>
-<trans-unit id="s965c503c3e42fdfe">
-  <source>Enabled</source>
-  <target>Ativado</target>
-</trans-unit>
-<trans-unit id="s66722bc2ea775e05">
-  <source>Disabled</source>
-  <target>Desativado</target>
-</trans-unit>
-<trans-unit id="s5f6a6b76ddc59610">
-  <source>Uninstall for me</source>
-  <target>Desinstalar para mim</target>
-</trans-unit>
-<trans-unit id="se53f0886d793813b">
-  <source>No ignored tools.</source>
-  <target>Nenhum tool ignorado.</target>
-</trans-unit>
-<trans-unit id="s79ce03bd39ecb043">
-  <source>Activate All</source>
-  <target>Ativar Todos</target>
-</trans-unit>
-<trans-unit id="s917734d83f35efa3">
-  <source>Ignore</source>
-  <target>Ignorar</target>
-</trans-unit>
-<trans-unit id="sbf4310079743ede4">
-  <source>No uninstalled tools.</source>
-  <target>Nenhum tool desinstalado.</target>
-</trans-unit>
-<trans-unit id="sdf2d511781a96bad">
-  <source>To Activate</source>
-  <target>Para Ativar</target>
-</trans-unit>
-<trans-unit id="sa45a194b58837e4f">
-  <source>Active</source>
-  <target>Ativo</target>
-</trans-unit>
-<trans-unit id="s0e1dc13dc6a16310">
-  <source>Uninstalled</source>
-  <target>Desinstalado</target>
-</trans-unit>
-<trans-unit id="s637e927368a66f25">
-  <source>Ignored</source>
-  <target>Ignorado</target>
-</trans-unit>
-<trans-unit id="s43417e56f957ff34">
-  <source>assign steward role</source>
-  <target>atribuir papel de Referente</target>
-</trans-unit>
-<trans-unit id="s6e84b6d6d9819c25">
-  <source>no expiry</source>
-  <target>sem expiração</target>
-</trans-unit>
-<trans-unit id="sbde6a2d370f6356f">
-  <source>Extend Role</source>
-  <target>Estender Papel</target>
-</trans-unit>
-<trans-unit id="s4df2cd89bceba12f">
-  <source>Assign Steward role to </source>
-  <target>Atribuir papel de Referente a </target>
-</trans-unit>
-<trans-unit id="s043ccb66dea567af">
-  <source>until:</source>
-  <target>até:</target>
-</trans-unit>
-<trans-unit id="sac8252732f2edb19">
-  <source>Date</source>
-  <target>Data</target>
-</trans-unit>
-<trans-unit id="s48e186fb300e5464">
-  <source>Time</source>
-  <target>Hora</target>
-</trans-unit>
-<trans-unit id="sa7d03b23138f5267">
-  <source>forever (no expiration date)</source>
-  <target>para sempre (sem data de expiração)</target>
-</trans-unit>
-<trans-unit id="s0b93f9778794737c">
-  <source>I understand that after assigning someone to the Steward role</source>
-  <target>Eu entendo que após atribuir alguém ao papel de Referente</target>
-</trans-unit>
-<trans-unit id="s5359ae748cb89c2c">
-  <source>I cannot undo the action.</source>
-  <target>eu não posso desfazer a ação.</target>
-</trans-unit>
-<trans-unit id="sc99731a5ed9a3ccb">
-  <source>A member will stay a Steward forever or until the specified date.</source>
-  <target>Um membro permanecerá como Referente para sempre ou até a data especificada.</target>
-</trans-unit>
-<trans-unit id="s443f3886c4025e94">
-  <source>Assign Steward Role</source>
-  <target>Atribuir Papel de Referente</target>
-</trans-unit>
-<trans-unit id="safb6dffff2680544">
-  <source>name*</source>
-  <target>nome*</target>
-</trans-unit>
-<trans-unit id="s3798c0344c399eb7">
-  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
-  <target>Mín. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> caracteres</target>
-</trans-unit>
-<trans-unit id="sc93a9aa3e5bcbf5d">
-  <source>Save Profile</source>
-  <target>Salvar Perfil</target>
-</trans-unit>
-<trans-unit id="s639c68c3284a2269">
-  <source>Update Profile</source>
-  <target>Atualizar Perfil</target>
-</trans-unit>
-<trans-unit id="s08b73807b55c4bbe">
-  <source>in</source>
-  <target>em</target>
-</trans-unit>
-<trans-unit id="s77997784a8b9d635">
-  <source>This will delete all your data related to this group and the Tools you joined therein from your computer.</source>
-  <target>Isso excluirá todos os seus dados relacionados a este grupo e os Tools aos quais você aderiu do seu computador.</target>
-</trans-unit>
-<trans-unit id="s51a3788bbb43cf2f">
-  <source>Other members of the group can keep using the group and any Tools they joined themselves.</source>
-  <target>Outros membros do grupo podem continuar usando o grupo e quaisquer Tools aos quais eles próprios aderiram.</target>
-</trans-unit>
-<trans-unit id="sfad30611c68ecd70">
-  <source>Disable Group</source>
-  <target>Desativar Grupo</target>
-</trans-unit>
-<trans-unit id="sb1cdb5ae8fce51ce">
-  <source>Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.</source>
-  <target>Desativa este grupo para você e você deixará de sincronizar dados com outros membros deste grupo. Você pode reativá-lo novamente mais tarde.</target>
-</trans-unit>
-<trans-unit id="s399a70b452ca4dbf">
-  <source>Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.</source>
-  <target>Sair do grupo para sempre. Você não pode entrar novamente com esta instância do Moss e todos os seus dados associados a este grupo e seus Tools serão excluídos do seu computador. Outros membros do grupo podem continuar usando o grupo e quaisquer Tools aos quais aderiram.</target>
-</trans-unit>
-<trans-unit id="sc3ac225273c8316b">
-  <source>General</source>
-  <target>Geral</target>
-</trans-unit>
-<trans-unit id="se03590807dedd737">
-  <source>Group Tools</source>
-  <target>Tools do Grupo</target>
-</trans-unit>
-<trans-unit id="s9f5a5f23312798f0">
-  <source>Members</source>
-  <target>Membros</target>
-</trans-unit>
-<trans-unit id="s9669bd7587b7c11a">
-  <source>My Profile</source>
-  <target>Meu Perfil</target>
-</trans-unit>
-<trans-unit id="sdaf3d13c3b1ec474">
-  <source>Danger Zone</source>
-  <target>Zona de Perigo</target>
-</trans-unit>
-<trans-unit id="s3563f6f848d5f4c7">
-  <source>Uninstalling</source>
-  <target>Desinstalando</target>
-</trans-unit>
-<trans-unit id="s318c4eefa759ada0">
-  <source>Uninstalling affects only you.</source>
-  <target>A desinstalação afeta apenas você.</target>
-</trans-unit>
-<trans-unit id="sfa6b141d95c6d21d">
-  <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
-  <target>Você não poderá mais usar este app, mas seu grupo continuará usando até que um Referente o deprecie para todos.</target>
-</trans-unit>
-<trans-unit id="s5e454aea488489d6">
-  <source>Do you want to uninstall it for yourself?</source>
-  <target>Deseja desinstalá-lo para você?</target>
-</trans-unit>
-<trans-unit id="s55f9020091babf63">
-  <source>Uninstalling...</source>
-  <target>Desinstalando...</target>
-</trans-unit>
-<trans-unit id="s4c4589bab8bdda6f">
-  <source>Yes, uninstall it</source>
-  <target>Sim, desinstalar</target>
-</trans-unit>
-<trans-unit id="s8213840a0f7d2644">
-  <source>No, keep it</source>
-  <target>Não, manter</target>
-</trans-unit>
-<trans-unit id="sbe99741971f28360">
-  <source>Failed to uninstall tool instance.</source>
-  <target>Falha ao desinstalar a instância do tool.</target>
-</trans-unit>
-<trans-unit id="s6a5d4d5cd480dc6d">
-  <source>Show ignored Tools</source>
-  <target>Mostrar Tools ignorados</target>
-</trans-unit>
-<trans-unit id="sde11e4fb0760a7d5">
-  <source>No new Tools to activate.</source>
-  <target>Nenhum novo Tool para ativar.</target>
-</trans-unit>
-<trans-unit id="s31e38b72638e66d0">
-  <source>added an instance of </source>
-  <target>adicionou uma instância de </target>
-</trans-unit>
-<trans-unit id="s016f5be842987ba5">
-  <source>Participants </source>
-  <target>Participantes </target>
-</trans-unit>
-<trans-unit id="s21f42760d50276ab">
-  <source>No group description.</source>
-  <target>Nenhuma descrição do grupo.</target>
-</trans-unit>
-<trans-unit id="sd5fd20dba6d7320b">
-  <source>+ Add Description</source>
-  <target>+ Adicionar Descrição</target>
-</trans-unit>
-<trans-unit id="sd720fd983f132077">
-  <source>Edit Description</source>
-  <target>Editar Descrição</target>
-</trans-unit>
-<trans-unit id="s3c1efcb18ec4d6c9">
-  <source>Group Settings</source>
-  <target>Configurações do Grupo</target>
-</trans-unit>
-<trans-unit id="s9d8b8aa2b404c2c8">
-  <source>Settings</source>
-  <target>Configurações</target>
-</trans-unit>
-<trans-unit id="sa86c0479a1e62db6">
-  <source>Unactivated Tools</source>
-  <target>Tools Não Ativados</target>
-</trans-unit>
-<trans-unit id="s231e097343f22c21">
-  <source>Error fetching the group information</source>
-  <target>Erro ao buscar as informações do grupo</target>
-</trans-unit>
-<trans-unit id="sb401e9c080830dc7">
-  <source>This group will see me as</source>
-  <target>Este grupo me verá como</target>
-</trans-unit>
-<trans-unit id="s2e2fe8c7e1b92cb0">
-  <source>Enter the space</source>
-  <target>Entrar no espaço</target>
-</trans-unit>
-<trans-unit id="s4404b38d84707655">
-  <source>Profile creation timed out. Please try again.</source>
-  <target>A criação do perfil expirou. Por favor, tente novamente.</target>
-</trans-unit>
-<trans-unit id="s0c24d12af180ccbf">
-  <source>There was an error creating your profile. Please try again.</source>
-  <target>Houve um erro ao criar seu perfil. Por favor, tente novamente.</target>
-</trans-unit>
-<trans-unit id="s5f343a43e7ea9f91">
-  <source>Error</source>
-  <target>Erro</target>
-</trans-unit>
-<trans-unit id="s2c8189544e3ea679">
-  <source>Retry</source>
-  <target>Tentar Novamente</target>
-</trans-unit>
-<trans-unit id="s98de281a36c50aa7">
-  <source>Failed to read your profile</source>
-  <target>Falha ao ler seu perfil</target>
-</trans-unit>
-<trans-unit id="s715fe9da1b5b38c0">
-  <source>This group is disabled.</source>
-  <target>Este grupo está desativado.</target>
-</trans-unit>
-<trans-unit id="sa0bcc0ad6e32e0ec">
-  <source>cell name</source>
-  <target>nome da célula</target>
-</trans-unit>
-<trans-unit id="sc8b6248d1ceeee57">
-  <source>Failed to get groups.</source>
-  <target>Falha ao obter grupos.</target>
-</trans-unit>
-<trans-unit id="s45ab5e3bc8490c0e">
-  <source>Default profile saved.</source>
-  <target>Perfil padrão salvo.</target>
-</trans-unit>
-<trans-unit id="sb743fe792217d795">
-  <source>This profile will be used as default when joining new groups.</source>
-  <target>Este perfil será usado como padrão ao entrar em novos grupos.</target>
-</trans-unit>
-<trans-unit id="s6d8f193aef66d440">
-  <source>Save Default Profile</source>
-  <target>Salvar Perfil Padrão</target>
-</trans-unit>
-<trans-unit id="s27ac935473f90d03">
-  <source>Language changed.</source>
-  <target>Idioma alterado.</target>
-</trans-unit>
-<trans-unit id="s5e00b40d697f6d2b">
-  <source>Failed to change language.</source>
-  <target>Falha ao alterar o idioma.</target>
-</trans-unit>
-<trans-unit id="sb210f3f516da46a4">
-  <source>Select your preferred language for the Moss interface.</source>
-  <target>Selecione seu idioma preferido para a interface do Moss.</target>
-</trans-unit>
-<trans-unit id="sefcf950b3cc4fc3b">
-  <source>Language</source>
-  <target>Idioma</target>
-</trans-unit>
-<trans-unit id="secbfe3119ef57156">
-  <source>Factory Reset</source>
-  <target>Restaurar Padrão de Fábrica</target>
-</trans-unit>
-<trans-unit id="s4a4cb96bfa2fb8bb">
-  <source>Fully reset Moss and</source>
-  <target>Restaurar completamente o Moss e</target>
-</trans-unit>
-<trans-unit id="s8456f5387d5d6727">
-  <source>delete all associated data</source>
-  <target>excluir todos os dados associados</target>
-</trans-unit>
-<trans-unit id="sb061ff5a347a296e">
-  <source>Profile</source>
-  <target>Perfil</target>
-</trans-unit>
-<trans-unit id="s79e68c83bbbbfb92">
-  <source>No existing asset relation tags yet...</source>
-  <target>Nenhuma tag de relação de asset existente ainda...</target>
-</trans-unit>
-<trans-unit id="sc7a932781c029939">
-  <source>No tags with this search filter</source>
-  <target>Nenhuma tag com este filtro de busca</target>
-</trans-unit>
-<trans-unit id="scd35145816591894">
-  <source>Select existing tag:</source>
-  <target>Selecionar tag existente:</target>
-</trans-unit>
-<trans-unit id="s2d13c0844c68a8ea">
-  <source>Choose Asset Relation Tag:</source>
-  <target>Escolher Tag de Relação de Asset:</target>
-</trans-unit>
-<trans-unit id="s6d96b71b1a229943">
-  <source>Enter new tag</source>
-  <target>Inserir nova tag</target>
-</trans-unit>
-<trans-unit id="s7e388025be643d0d">
-  <source>Enter</source>
-  <target>Confirmar</target>
-</trans-unit>
-<trans-unit id="sef5bd6ed8fab8065">
-  <source>Copy URL</source>
-  <target>Copiar URL</target>
-</trans-unit>
-<trans-unit id="s46b40e6a61bc0208">
-  <source>URL copied.</source>
-  <target>URL copiada.</target>
-</trans-unit>
-<trans-unit id="s8fc0228da60f2c2b">
-  <source>Remove from Pocket</source>
-  <target>Remover do Pocket</target>
-</trans-unit>
-<trans-unit id="s1da2307057f1524c">
-  <source>Cannot be selected - the associated Tool is disabled</source>
-  <target>Não pode ser selecionado - o Tool associado está desativado</target>
-</trans-unit>
-<trans-unit id="sfc63e31ac7c956ed">
-  <source>Select</source>
-  <target>Selecionar</target>
-</trans-unit>
-<trans-unit id="sc592307ea80f16b9">
-  <source>Unknown</source>
-  <target>Desconhecido</target>
-</trans-unit>
-<trans-unit id="s08b06007b5567108">
-  <source>of</source>
-  <target>de</target>
-</trans-unit>
-<trans-unit id="s220bcce27242e1e9">
-  <source>search</source>
-  <target>buscar</target>
-</trans-unit>
-<trans-unit id="sc1b8a74e113727e2">
-  <source>Search or enter weave-0.15:// URL</source>
-  <target>Buscar ou inserir URL weave-0.15://</target>
-</trans-unit>
-<trans-unit id="sade7d29e999d2472">
-  <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
-  <target>Digite pelo menos <x id="0" equiv-text="${this.minChars}"/> caracteres para iniciar a busca.</target>
-</trans-unit>
-<trans-unit id="sa81413e2e309b882">
-  <source>No results found.</source>
-  <target>Nenhum resultado encontrado.</target>
-</trans-unit>
-<trans-unit id="sf46397f167ec5533">
-  <source>Searching...</source>
-  <target>Buscando...</target>
-</trans-unit>
-<trans-unit id="s7abafd331dfb06bc">
-  <source>Open URL</source>
-  <target>Abrir URL</target>
-</trans-unit>
-<trans-unit id="sa1d04f065ab25208">
-  <source>Select Attachment:</source>
-  <target>Selecionar Anexo:</target>
-</trans-unit>
-<trans-unit id="seead559236062e71">
-  <source>Recently created:</source>
-  <target>Criados recentemente:</target>
-</trans-unit>
-<trans-unit id="s1f7698c061c208c9">
-  <source>Open</source>
-  <target>Abrir</target>
-</trans-unit>
-<trans-unit id="s007a5e0a003f5515">
-  <source>In Your Pocket:</source>
-  <target>No Seu Pocket:</target>
-</trans-unit>
-<trans-unit id="s00b8b5c1000437fe">
-  <source>Reload Tool</source>
-  <target>Recarregar Tool</target>
-</trans-unit>
-<trans-unit id="sc851c05e0ca38177">
-  <source>No Creatables available for the selected Group.</source>
-  <target>Nenhum item criável disponível para o Grupo selecionado.</target>
-</trans-unit>
-<trans-unit id="sc530113873b2fd9a">
-  <source>From which Tool do you want to create something?</source>
-  <target>De qual Tool você quer criar algo?</target>
-</trans-unit>
-<trans-unit id="s9a730edb8b4733e7">
-  <source>Create New</source>
-  <target>Criar Novo</target>
-</trans-unit>
-<trans-unit id="s585eef6df9f6be7d">
-  <source>What do you want to create?</source>
-  <target>O que você quer criar?</target>
-</trans-unit>
-<trans-unit id="seacc6f1617124704">
-  <source>No group selected.</source>
-  <target>Nenhum grupo selecionado.</target>
-</trans-unit>
-<trans-unit id="sa6091c63e770ecfb">
-  <source>Create New Asset</source>
-  <target>Criar Novo Asset</target>
-</trans-unit>
-<trans-unit id="s233f99bcd0cc14a1">
-  <source>Tool not found in any of your groups.</source>
-  <target>Tool não encontrado em nenhum dos seus grupos.</target>
-</trans-unit>
-<trans-unit id="s16a9f872b944f5f1">
-  <source>You're already part of this group.</source>
-  <target>Você já faz parte deste grupo.</target>
-</trans-unit>
-<trans-unit id="s4a35a3da7fbd9504">
-  <source>Error opening the link.</source>
-  <target>Erro ao abrir o link.</target>
-</trans-unit>
-<trans-unit id="saa3672a331070a0c">
-  <source>Failed to disable Group.</source>
-  <target>Falha ao desativar o Grupo.</target>
-</trans-unit>
-<trans-unit id="seb1bdc3ff128123f">
-  <source>switch to personal view</source>
-  <target>alternar para visualização pessoal</target>
-</trans-unit>
-<trans-unit id="s95354afd524e0854">
-  <source>Added to Pocket</source>
-  <target>Adicionado ao Pocket</target>
-</trans-unit>
-<trans-unit id="s1967faf9ed8d3504">
-  <source>Avatar</source>
-  <target>Avatar</target>
-</trans-unit>
-<trans-unit id="s48489dd40d0b7159">
-  <source>Choose Avatar</source>
-  <target>Escolher Avatar</target>
-</trans-unit>
-<trans-unit id="sb4f1dffbb6be6302">
-  <source>Clear</source>
-  <target>Limpar</target>
-</trans-unit>
-<trans-unit id="s0be4a2cf7dafcecb">
-  <source>random image</source>
-  <target>imagem aleatória</target>
-</trans-unit>
-<trans-unit id="s1b710daaf8c152d3">
-  <source>Failed to join the group.</source>
-  <target>Falha ao entrar no grupo.</target>
-</trans-unit>
-<trans-unit id="s9a46ff9baa276602">
-  <source>back</source>
-  <target>voltar</target>
-</trans-unit>
-<trans-unit id="s83300eac0e548879">
-  <source>My group is called</source>
-  <target>Meu grupo se chama</target>
-</trans-unit>
-<trans-unit id="s3299fe9aa2f7023f">
-  <source>group name</source>
-  <target>nome do grupo</target>
-</trans-unit>
-<trans-unit id="s97c954bf5d700fc4">
-  <source>Create group space</source>
-  <target>Criar espaço de grupo</target>
-</trans-unit>
-<trans-unit id="sd33aeb1a43a080b1">
-  <source>Choose Group Type</source>
-  <target>Escolher Tipo de Grupo</target>
-</trans-unit>
-<trans-unit id="s6bd57286330b17cc">
-  <source>Joining group</source>
-  <target>Entrando no grupo</target>
-</trans-unit>
-<trans-unit id="sa5ad0d6001e29e11">
-  <source>Creating a new space</source>
-  <target>Criando um novo espaço</target>
-</trans-unit>
-<trans-unit id="s882ccaf3aa86f663">
-  <source>in the beautiful p2p realm.</source>
-  <target>no lindo mundo p2p.</target>
-</trans-unit>
-<trans-unit id="s3a1a79c51ae32bba">
-  <source>may take up to 1-2 minutes</source>
-  <target>pode levar até 1-2 minutos</target>
-</trans-unit>
-<trans-unit id="s5a5e67d875579d70">
-  <source>Welcome to Moss.</source>
-  <target>Bem-vindo ao Moss.</target>
-</trans-unit>
-<trans-unit id="s4dcc66195b1ddc69">
-  <source>What brought you here today?</source>
-  <target>O que trouxe você aqui hoje?</target>
-</trans-unit>
-<trans-unit id="sbf68658bb3dad7f1">
-  <source>I have an invite link to join a group</source>
-  <target>Eu tenho um link de convite para entrar em um grupo</target>
-</trans-unit>
-<trans-unit id="s3eadd48b1fc794ca">
-  <source>An invite link looks like:</source>
-  <target>Um link de convite se parece com:</target>
-</trans-unit>
-<trans-unit id="s9c0c49be73d09c2b">
-  <source>paste invite link here</source>
-  <target>cole o link de convite aqui</target>
-</trans-unit>
-<trans-unit id="sc2795100b3106520">
-  <source>invite link</source>
-  <target>link de convite</target>
-</trans-unit>
-<trans-unit id="s6c6bf3ea2ad3d219">
-  <source>Join</source>
-  <target>Entrar</target>
-</trans-unit>
-<trans-unit id="sd8fc07c566540e32">
-  <source>I want to start a space for my group</source>
-  <target>Quero criar um espaço para meu grupo</target>
-</trans-unit>
-<trans-unit id="s4e9e4d368feaf09a">
-  <source>Create new group space</source>
-  <target>Criar novo espaço de grupo</target>
-</trans-unit>
-<trans-unit id="s9c0f4d29e125d6d3">
-  <source>Skip Setup</source>
-  <target>Pular Configuração</target>
-</trans-unit>
-<trans-unit id="s47c33f08061ea16c">
-  <source>Holochain failed to start up and crashed :(</source>
-  <target>Holochain falhou ao iniciar e travou :(</target>
-</trans-unit>
-<trans-unit id="scf5e435555ee676b">
-  <source>If you want to support us in finding the problem, please export the logs and send them to </source>
-  <target>Se você quiser nos ajudar a encontrar o problema, por favor exporte os logs e envie-os para </target>
-</trans-unit>
-<trans-unit id="s025d191d3f77cdf8">
-  <source>Open Logs</source>
-  <target>Abrir Logs</target>
-</trans-unit>
-<trans-unit id="s07e9dc65d473e7f2">
-  <source>Export Logs</source>
-  <target>Exportar Logs</target>
-</trans-unit>
-<trans-unit id="sca4075a9f1d3cbaa">
-  <source>Moss Setup</source>
-  <target>Configuração do Moss</target>
-</trans-unit>
-<trans-unit id="sad273202fc27c4b7">
-  <source>Choose whether you want to set up Moss with or without a password.</source>
-  <target>Escolha se você deseja configurar o Moss com ou sem senha.</target>
-</trans-unit>
-<trans-unit id="sdbd1191439f543ae">
-  <source>The password will be used to encrypt your data locally on your device.</source>
-  <target>A senha será usada para criptografar seus dados localmente no seu dispositivo.</target>
-</trans-unit>
-<trans-unit id="s441d1a59a5deb96e">
-  <source>A password cannot be added, changed or removed later.</source>
-  <target>Uma senha não pode ser adicionada, alterada ou removida posteriormente.</target>
-</trans-unit>
-<trans-unit id="s1288a007963d95a7">
-  <source>Setup With Password</source>
-  <target>Configurar Com Senha</target>
-</trans-unit>
-<trans-unit id="s79cf807d7b63cbab">
-  <source>Setup Without Password</source>
-  <target>Configurar Sem Senha</target>
-</trans-unit>
-<trans-unit id="sc63cfa3b53be6ac9">
-  <source>Choose Password</source>
-  <target>Escolher Senha</target>
-</trans-unit>
-<trans-unit id="s5faf8fad21294e9a">
-  <source>This password cannot be reset. Write it down or store it somewhere safe.</source>
-  <target>Esta senha não pode ser redefinida. Anote-a ou guarde-a em um lugar seguro.</target>
-</trans-unit>
-<trans-unit id="sa3a2b1128ad8dca6">
-  <source>Password:</source>
-  <target>Senha:</target>
-</trans-unit>
-<trans-unit id="s0fbf6dc6a1966408">
-  <source>Next</source>
-  <target>Próximo</target>
-</trans-unit>
-<trans-unit id="s3dab6bcbc22dc3e0">
-  <source>Confirm Password</source>
-  <target>Confirmar Senha</target>
-</trans-unit>
-<trans-unit id="s0b6a0ca3518fcea9">
-  <source>Passwords don't match!</source>
-  <target>As senhas não coincidem!</target>
-</trans-unit>
-<trans-unit id="s0517cbdc99386032">
-  <source>Setup and Launch</source>
-  <target>Configurar e Iniciar</target>
-</trans-unit>
-<trans-unit id="s6a2222b29743d24c">
-  <source>Enter Password:</source>
-  <target>Inserir Senha:</target>
-</trans-unit>
-<trans-unit id="s512957aa09384646">
-  <source>Launch</source>
-  <target>Iniciar</target>
-</trans-unit>
-<trans-unit id="sff696c02c0929f45">
-  <source>Holochain failed to start up :(</source>
-  <target>Holochain falhou ao iniciar :(</target>
-</trans-unit>
-<trans-unit id="s248ed9756a4bce17">
-  <source>loading</source>
-  <target>carregando</target>
-</trans-unit>
-<trans-unit id="s45156213b0fb2396">
-  <source>Quit</source>
-  <target>Sair</target>
-</trans-unit>
-<trans-unit id="s5e8250fb85d64c23">
-  <source>Close</source>
-  <target>Fechar</target>
-</trans-unit>
-<trans-unit id="sc16e00a7a8b2fde2">
-  <source>Back</source>
-  <target>Voltar</target>
-</trans-unit>
-<trans-unit id="s111b0d2304f543bd">
-  <source>unknown...</source>
-  <target>desconhecido...</target>
-</trans-unit>
-<trans-unit id="s823aec927799efba">
-  <source>starting Holochain...</source>
-  <target>iniciando Holochain...</target>
-</trans-unit>
-<trans-unit id="s1cd2116b24de503a">
-  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
-  <target>Por favor, note que as traduções de idiomas aqui foram feitas por IA. Se encontrar algum erro, envie-nos o seu feedback. Pode ativar a ferramenta de captura de ecrã/feedback na aplicação no diálogo de Feedback acessível através do botão Feedback na página inicial.</target>
-</trans-unit>
-<trans-unit id="s14539699e3c478c2">
-  <source>to open Clipboard</source>
-  <target>para abrir a área de transferência</target>
-</trans-unit>
-<trans-unit id="sbe33c7c17242705f">
-  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
-  <target>Nada no seu bolso. Procure os ícones de bolso para adicionar itens ao seu bolso.</target>
-</trans-unit>
-<trans-unit id="se2e3d764f68cee6b">
-  <source>drop to add to pocket</source>
-  <target>solte para adicionar ao bolso</target>
-</trans-unit>
-<trans-unit id="sc1407b21ee25eeab">
-  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
-  <target>Nada no seu bolso. Procure os ícones de bolso para adicionar recursos ao seu bolso.</target>
+  <target>ontvangen door:</target>
 </trans-unit>
 <trans-unit id="s04b098165a8b8e1a">
   <source>Foyer</source>
@@ -1496,315 +804,915 @@
 </trans-unit>
 <trans-unit id="sf72cde0d8fea70e1">
   <source>The Foyer is a space for sending ephemeral messages to other members of the group.</source>
-  <target>O Foyer é um espaço para enviar mensagens efêmeras a outros membros do grupo.</target>
+  <target>De Foyer is een ruimte om tijdelijke berichten te sturen naar andere leden van de groep.</target>
 </trans-unit>
 <trans-unit id="sd8ea620cc72ecf78">
   <source>None of these messages are ever stored, and they only go to other members who show as online in the group's member list.</source>
-  <target>Nenhuma dessas mensagens é armazenada, e elas só são enviadas para outros membros que aparecem online na lista de membros do grupo.</target>
+  <target>Geen van deze berichten wordt ooit opgeslagen en ze gaan alleen naar andere leden die als online verschijnen in de ledenlijst van de groep.</target>
 </trans-unit>
 <trans-unit id="sa9f7f0bd2f12faa0">
   <source>Foyer Messages:</source>
-  <target>Mensagens do Foyer:</target>
+  <target>Foyer-berichten:</target>
 </trans-unit>
-<trans-unit id="s2535b903f4f0e868">
-  <source>You need to create or join a Group before you can install Tools.</source>
-  <target>Você precisa criar ou entrar em um grupo antes de poder instalar ferramentas.</target>
+<trans-unit id="s92c66a30f352bb00">
+  <source>my message</source>
+  <target>mijn bericht</target>
 </trans-unit>
-<trans-unit id="s16786404fd083e75">
-  <source>Error fetching the registered Tools in this group</source>
-  <target>Erro ao obter as ferramentas registradas neste grupo</target>
+<trans-unit id="s3299c9f18ea6ef17">
+  <source>Choose Profile Picture</source>
+  <target>Profielfoto kiezen</target>
 </trans-unit>
-<trans-unit id="sce917469a53e53a1">
-  <source>Error displaying the Tools</source>
-  <target>Erro ao exibir as ferramentas</target>
+<trans-unit id="s3f2a04e5c1b2a709">
+  <source>click to copy</source>
+  <target>klik om te kopiëren</target>
 </trans-unit>
-<trans-unit id="s60c0bc90449eacf3">
-  <source>Error fetching the Tools installed in this group</source>
-  <target>Erro ao obter as ferramentas instaladas neste grupo</target>
+<trans-unit id="s16fbcb6c19d06e60">
+  <source>Hash copied to clipboard.</source>
+  <target>Hash gekopieerd naar klembord.</target>
 </trans-unit>
-<trans-unit id="sdf01b652401a2d8d">
-  <source>Failed to get running Tools.</source>
-  <target>Falha ao obter as ferramentas em execução.</target>
+<trans-unit id="se5d39037ee051a67">
+  <source>Change Group Icon</source>
+  <target>Groepsicoon wijzigen</target>
 </trans-unit>
-<trans-unit id="s182d4e00e211dcca">
-  <source>Design Feedback</source>
-  <target>Feedback de Design</target>
+<trans-unit id="sa5ca0ea1eea6b70b">
+  <source>Only stewards can change the group profile.</source>
+  <target>Alleen verzorgers kunnen het groepsprofiel wijzigen.</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>Ative o modo de feedback de design para mostrar um botão de feedback no canto superior direito. Clique nele para capturar uma área da tela e enviar feedback.</target>
+<trans-unit id="se49ae8ea6d091fe9">
+  <source>Group ID</source>
+  <target>Groeps-ID</target>
 </trans-unit>
-<trans-unit id="sd24445593cfc39de">
-  <source>Enable Design Feedback Mode</source>
-  <target>Ativar modo de feedback de design</target>
+<trans-unit id="se1e8fc3e4fdea935">
+  <source>Unique identifier of this group.</source>
+  <target>Unieke identificatie van deze groep.</target>
 </trans-unit>
-<trans-unit id="s1a5230a71d9285c1">
-  <source>Capture</source>
-  <target>Capturar</target>
+<trans-unit id="s6b138c631a7d2a2c">
+  <source>Discard Changes</source>
+  <target>Wijzigingen verwerpen</target>
 </trans-unit>
-<trans-unit id="sb5e180cb985511ff">
-  <source>Click and drag to select an area</source>
-  <target>Clique e arraste para selecionar uma área</target>
+<trans-unit id="s031945e67717bf79">
+  <source>Save Changes</source>
+  <target>Wijzigingen opslaan</target>
 </trans-unit>
-<trans-unit id="s5fa1b8f452fda064">
-  <source>Submit Feedback</source>
-  <target>Enviar Feedback</target>
+<trans-unit id="s0760375151ab885e">
+  <source>Tool deprecated.</source>
+  <target>Tool afgekeurd.</target>
 </trans-unit>
-<trans-unit id="sb2682d714ccbac46">
-  <source>Describe your feedback</source>
-  <target>Descreva seu feedback</target>
+<trans-unit id="s3e8665467b867e72">
+  <source>Failed to deprecate tool (see console for details)</source>
+  <target>Tool afkeuren mislukt (zie console voor details)</target>
 </trans-unit>
-<trans-unit id="s5ac24d9358320eef">
-  <source>What would you like to share about this part of the UI?</source>
-  <target>O que você gostaria de compartilhar sobre esta parte da interface?</target>
-</trans-unit>
-<trans-unit id="sb3d4f79d9d8b71e5">
-  <source>Submit</source>
-  <target>Enviar</target>
-</trans-unit>
-<trans-unit id="sd8505ee703ddcb65">
-  <source>Give Design Feedback</source>
-  <target>Dar feedback de design</target>
-</trans-unit>
-<trans-unit id="sa832cb9d119e48f8">
-  <source>Copied to clipboard</source>
-  <target>Copiado para a área de transferência</target>
-</trans-unit>
-<trans-unit id="s417a0b7eadfddf0e">
-  <source>Feedback History</source>
-  <target>Histórico de feedback</target>
-</trans-unit>
-<trans-unit id="sf55d0809d5afeafc">
-  <source>No feedback submitted yet.</source>
-  <target>Nenhum feedback enviado ainda.</target>
-</trans-unit>
-<trans-unit id="s8b7af9c477e83543">
-  <source>View Issue</source>
-  <target>Ver issue</target>
-</trans-unit>
-<trans-unit id="sea97ee88ea35358e">
-  <source>Moss GitHub repo</source>
-  <target>repositório GitHub do Moss</target>
-</trans-unit>
-<trans-unit id="see302f30d4ca5691">
-  <source>Feedback submitted. GitHub issue created.</source>
-  <target>Feedback enviado. Issue do GitHub criada.</target>
-</trans-unit>
-<trans-unit id="se2841d25d173cfa5">
-  <source>Feedback saved locally. Could not create GitHub issue.</source>
-  <target>Feedback salvo localmente. Não foi possível criar a issue do GitHub.</target>
-</trans-unit>
-<trans-unit id="s403d86e8b3392e49">
-  <source>Feedback saved locally.</source>
-  <target>Feedback salvo localmente.</target>
-</trans-unit>
-<trans-unit id="sbccd620b66cf8efd">
-  <source>Feedback saved locally. Could not reach server.</source>
-  <target>Feedback salvo localmente. Não foi possível acessar o servidor.</target>
-</trans-unit>
-<trans-unit id="sa001c7eb0d28aaec">
-  <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
-  <target>Esta captura de tela e texto, juntamente com a versão do Moss e informações do sistema operacional, serão adicionados como uma issue pública do GitHub ao</target>
-</trans-unit>
-<trans-unit id="sed6fca73e1adda45">
-  <source>Design Feedback Mode</source>
-  <target>Modo de feedback de design</target>
-</trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>Ative o modo de feedback de design para capturar telas e enviar feedback visual diretamente de qualquer lugar do aplicativo. Um botão de feedback aparecerá no canto superior direito, permitindo selecionar qualquer área da tela e descrever seu feedback.</target>
-</trans-unit>
-<trans-unit id="sdd3888e4a6dbb0b7">
-  <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
-  <target>Você também pode ativar ou desativar este modo em Configurações &gt; Feedback.</target>
-</trans-unit>
-<trans-unit id="s415e501370e4f1e4">
-  <source>Other Ways to Give Feedback</source>
-  <target>Outras formas de dar feedback</target>
-</trans-unit>
-<trans-unit id="sd1b9a0f04718bc5d">
-  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
-  <target>Se quiser enviar de forma privada, pressione "Copiar" para copiar o feedback para a área de transferência e envie por e-mail para moss.0.15.feedback@theweave.social.</target>
-</trans-unit>
-<trans-unit id="s08a64b07b54df8d4">
-  <source>by</source>
-  <target>por</target>
-</trans-unit>
-<trans-unit id="s8763e7dbdf84093d">
-  <source>Installation successful</source>
-  <target>Instalação bem-sucedida</target>
-</trans-unit>
-<trans-unit id="s08a95f07b55050a7">
-  <source>me</source>
-  <target>eu</target>
-</trans-unit>
-<trans-unit id="sf70accff890a3e36">
-  <source>Tool activated.</source>
-  <target>Ferramenta ativada.</target>
-</trans-unit>
-<trans-unit id="s3a41d065ac965e2a">
-  <source>abandoned by:</source>
-  <target>abandonado por:</target>
-</trans-unit>
-<trans-unit id="s6466997515d6d5b3">
-  <source>New Steward Added.</source>
-  <target>Novo Referente adicionado.</target>
+<trans-unit id="s4eb1d65f04b7c16d">
+  <source>Failed to undeprecate tool (see console for details)</source>
+  <target>Tool goedkeuren mislukt (zie console voor details)</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
-  <target>Desinstalado por:</target>
+  <target>Verwijderd door:</target>
+</trans-unit>
+<trans-unit id="s47b949de125f96c3">
+  <source>Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.</source>
+  <target>Afkeuren verbergt deze tool voor nieuwe leden voor activering; bestaande leden zien het als afgekeurd.</target>
+</trans-unit>
+<trans-unit id="s5b3f628f0a5a62ac">
+  <source>Deprecate for Group</source>
+  <target>Afkeuren voor Groep</target>
+</trans-unit>
+<trans-unit id="s0e53ef4364107018">
+  <source>Remove deprecation tag for this tool.</source>
+  <target>Afkeuringstag voor deze tool verwijderen.</target>
+</trans-unit>
+<trans-unit id="s872b1ad125de32b5">
+  <source>Undeprecate</source>
+  <target>Goedkeuren</target>
+</trans-unit>
+<trans-unit id="s58cf3830485fd5ec">
+  <source>advanced settings</source>
+  <target>geavanceerde instellingen</target>
+</trans-unit>
+<trans-unit id="s195a1ab2540d51a4">
+  <source>Deprecated</source>
+  <target>Afgekeurd</target>
+</trans-unit>
+<trans-unit id="s81850fd21bd71f71">
+  <source>tool hash</source>
+  <target>tool-hash</target>
+</trans-unit>
+<trans-unit id="s454fef8d9887fc7b">
+  <source>Allways-online nodes should install this tool by default</source>
+  <target>Altijd-online nodes moeten deze tool standaard installeren</target>
+</trans-unit>
+<trans-unit id="s965c503c3e42fdfe">
+  <source>Enabled</source>
+  <target>Ingeschakeld</target>
+</trans-unit>
+<trans-unit id="s66722bc2ea775e05">
+  <source>Disabled</source>
+  <target>Uitgeschakeld</target>
+</trans-unit>
+<trans-unit id="s5f6a6b76ddc59610">
+  <source>Uninstall for me</source>
+  <target>Voor mij verwijderen</target>
 </trans-unit>
 <trans-unit id="sa60b341bc63f22e5">
   <source>Successfully activated all <x id="0" equiv-text="${successCount}"/> tools.</source>
-  <target>Todas as <x id="0" equiv-text="${successCount}"/> ferramentas ativadas com sucesso.</target>
+  <target>Alle <x id="0" equiv-text="${successCount}"/> tools succesvol geactiveerd.</target>
 </trans-unit>
 <trans-unit id="sb6e3761a156a287c">
   <source>Activated <x id="0" equiv-text="${successCount}"/> tools. <x id="1" equiv-text="${failCount}"/> failed (see console for details).</source>
-  <target><x id="0" equiv-text="${successCount}"/> ferramentas ativadas. <x id="1" equiv-text="${failCount}"/> falharam (ver console para detalhes).</target>
+  <target><x id="0" equiv-text="${successCount}"/> tools geactiveerd. <x id="1" equiv-text="${failCount}"/> mislukt (zie console voor details).</target>
 </trans-unit>
 <trans-unit id="sef15c43dfc461396">
   <source>Failed to activate all tools (see console for details).</source>
-  <target>Falha ao ativar todas as ferramentas (ver console para detalhes).</target>
+  <target>Alle tools activeren mislukt (zie console voor details).</target>
+</trans-unit>
+<trans-unit id="se53f0886d793813b">
+  <source>No ignored tools.</source>
+  <target>Geen genegeerde tools.</target>
+</trans-unit>
+<trans-unit id="s79ce03bd39ecb043">
+  <source>Activate All</source>
+  <target>Alles activeren</target>
+</trans-unit>
+<trans-unit id="s917734d83f35efa3">
+  <source>Ignore</source>
+  <target>Negeren</target>
+</trans-unit>
+<trans-unit id="sbf4310079743ede4">
+  <source>No uninstalled tools.</source>
+  <target>Geen verwijderde tools.</target>
+</trans-unit>
+<trans-unit id="sdf2d511781a96bad">
+  <source>To Activate</source>
+  <target>Te activeren</target>
+</trans-unit>
+<trans-unit id="sa45a194b58837e4f">
+  <source>Active</source>
+  <target>Actief</target>
+</trans-unit>
+<trans-unit id="s0e1dc13dc6a16310">
+  <source>Uninstalled</source>
+  <target>Verwijderd</target>
+</trans-unit>
+<trans-unit id="s637e927368a66f25">
+  <source>Ignored</source>
+  <target>Genegeerd</target>
+</trans-unit>
+<trans-unit id="s43417e56f957ff34">
+  <source>assign steward role</source>
+  <target>verzorgerrol toewijzen</target>
+</trans-unit>
+<trans-unit id="s6e84b6d6d9819c25">
+  <source>no expiry</source>
+  <target>geen vervaldatum</target>
+</trans-unit>
+<trans-unit id="sbde6a2d370f6356f">
+  <source>Extend Role</source>
+  <target>Rol verlengen</target>
 </trans-unit>
 <trans-unit id="s4cbb78c19c17b7eb">
   <source>Steward role assigned.</source>
-  <target>Função de Referente atribuída.</target>
+  <target>Verzorgerrol toegewezen.</target>
+</trans-unit>
+<trans-unit id="s4df2cd89bceba12f">
+  <source>Assign Steward role to </source>
+  <target>Verzorgerrol toewijzen aan </target>
+</trans-unit>
+<trans-unit id="s043ccb66dea567af">
+  <source>until:</source>
+  <target>tot:</target>
+</trans-unit>
+<trans-unit id="sac8252732f2edb19">
+  <source>Date</source>
+  <target>Datum</target>
+</trans-unit>
+<trans-unit id="s48e186fb300e5464">
+  <source>Time</source>
+  <target>Tijd</target>
+</trans-unit>
+<trans-unit id="sa7d03b23138f5267">
+  <source>forever (no expiration date)</source>
+  <target>voor altijd (geen vervaldatum)</target>
+</trans-unit>
+<trans-unit id="s0b93f9778794737c">
+  <source>I understand that after assigning someone to the Steward role</source>
+  <target>Ik begrijp dat na het toewijzen van iemand aan de Verzorgerrol</target>
+</trans-unit>
+<trans-unit id="s5359ae748cb89c2c">
+  <source>I cannot undo the action.</source>
+  <target>ik de actie niet ongedaan kan maken.</target>
+</trans-unit>
+<trans-unit id="sc99731a5ed9a3ccb">
+  <source>A member will stay a Steward forever or until the specified date.</source>
+  <target>Een lid blijft voor altijd Verzorger of tot de opgegeven datum.</target>
+</trans-unit>
+<trans-unit id="s443f3886c4025e94">
+  <source>Assign Steward Role</source>
+  <target>Verzorgerrol toewijzen</target>
+</trans-unit>
+<trans-unit id="safb6dffff2680544">
+  <source>name*</source>
+  <target>naam*</target>
+</trans-unit>
+<trans-unit id="s3798c0344c399eb7">
+  <source>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> characters</source>
+  <target>Min. <x id="0" equiv-text="${this.store?.config?.minNicknameLength ?? 3}"/> tekens</target>
+</trans-unit>
+<trans-unit id="sc93a9aa3e5bcbf5d">
+  <source>Save Profile</source>
+  <target>Profiel opslaan</target>
+</trans-unit>
+<trans-unit id="s639c68c3284a2269">
+  <source>Update Profile</source>
+  <target>Profiel bijwerken</target>
 </trans-unit>
 <trans-unit id="s2a61c518d1e493d1">
   <source>Profile updated.</source>
-  <target>Perfil atualizado.</target>
+  <target>Profiel bijgewerkt.</target>
+</trans-unit>
+<trans-unit id="s08b73807b55c4bbe">
+  <source>in</source>
+  <target>in</target>
+</trans-unit>
+<trans-unit id="s77997784a8b9d635">
+  <source>This will delete all your data related to this group and the Tools you joined therein from your computer.</source>
+  <target>Dit verwijdert al je gegevens gerelateerd aan deze groep en de Tools waaraan je hebt deelgenomen van je computer.</target>
+</trans-unit>
+<trans-unit id="s51a3788bbb43cf2f">
+  <source>Other members of the group can keep using the group and any Tools they joined themselves.</source>
+  <target>Andere leden van de groep kunnen de groep en alle Tools waaraan ze zelf hebben deelgenomen blijven gebruiken.</target>
+</trans-unit>
+<trans-unit id="sfad30611c68ecd70">
+  <source>Disable Group</source>
+  <target>Groep uitschakelen</target>
+</trans-unit>
+<trans-unit id="sb1cdb5ae8fce51ce">
+  <source>Disables this group for yourself and you will stop synchronizing data with other members of this group. You can re-enable it again later.</source>
+  <target>Schakelt deze groep voor jezelf uit en je stopt met het synchroniseren van gegevens met andere leden van deze groep. Je kunt het later weer inschakelen.</target>
+</trans-unit>
+<trans-unit id="s399a70b452ca4dbf">
+  <source>Leave the group forever. You cannot join it again with this instance of Moss and all your data associated to this group and its Tools will be deleted from your computer. Other members of the group can keep using the group and any Tools they joined.</source>
+  <target>Verlaat de groep voor altijd. Je kunt niet opnieuw deelnemen met deze instantie van Moss en al je gegevens die bij deze groep en de Tools horen worden van je computer verwijderd. Andere leden van de groep kunnen de groep en alle Tools waaraan ze hebben deelgenomen blijven gebruiken.</target>
+</trans-unit>
+<trans-unit id="sc3ac225273c8316b">
+  <source>General</source>
+  <target>Algemeen</target>
+</trans-unit>
+<trans-unit id="se03590807dedd737">
+  <source>Group Tools</source>
+  <target>Groepstools</target>
+</trans-unit>
+<trans-unit id="s9f5a5f23312798f0">
+  <source>Members</source>
+  <target>Leden</target>
+</trans-unit>
+<trans-unit id="s9669bd7587b7c11a">
+  <source>My Profile</source>
+  <target>Mijn Profiel</target>
+</trans-unit>
+<trans-unit id="sdaf3d13c3b1ec474">
+  <source>Danger Zone</source>
+  <target>Gevarenzone</target>
+</trans-unit>
+<trans-unit id="s3563f6f848d5f4c7">
+  <source>Uninstalling</source>
+  <target>Verwijderen</target>
+</trans-unit>
+<trans-unit id="s318c4eefa759ada0">
+  <source>Uninstalling affects only you.</source>
+  <target>Verwijderen heeft alleen effect op jou.</target>
+</trans-unit>
+<trans-unit id="sfa6b141d95c6d21d">
+  <source>You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.</source>
+  <target>Je kunt deze app niet meer gebruiken, maar je groep blijft het gebruiken totdat een Verzorger het voor iedereen afkeurt.</target>
+</trans-unit>
+<trans-unit id="s5e454aea488489d6">
+  <source>Do you want to uninstall it for yourself?</source>
+  <target>Wil je het voor jezelf verwijderen?</target>
+</trans-unit>
+<trans-unit id="s55f9020091babf63">
+  <source>Uninstalling...</source>
+  <target>Verwijderen...</target>
+</trans-unit>
+<trans-unit id="s4c4589bab8bdda6f">
+  <source>Yes, uninstall it</source>
+  <target>Ja, verwijderen</target>
+</trans-unit>
+<trans-unit id="s8213840a0f7d2644">
+  <source>No, keep it</source>
+  <target>Nee, behouden</target>
+</trans-unit>
+<trans-unit id="sbe99741971f28360">
+  <source>Failed to uninstall tool instance.</source>
+  <target>Tool-exemplaar verwijderen mislukt.</target>
 </trans-unit>
 <trans-unit id="s365a7b194bc6e1dd">
   <source>Tool installed.</source>
-  <target>Ferramenta instalada.</target>
+  <target>Tool geïnstalleerd.</target>
+</trans-unit>
+<trans-unit id="s6a5d4d5cd480dc6d">
+  <source>Show ignored Tools</source>
+  <target>Genegeerde Tools tonen</target>
+</trans-unit>
+<trans-unit id="sde11e4fb0760a7d5">
+  <source>No new Tools to activate.</source>
+  <target>Geen nieuwe Tools om te activeren.</target>
+</trans-unit>
+<trans-unit id="s31e38b72638e66d0">
+  <source>added an instance of </source>
+  <target>heeft een exemplaar toegevoegd van </target>
+</trans-unit>
+<trans-unit id="s016f5be842987ba5">
+  <source>Participants </source>
+  <target>Deelnemers </target>
+</trans-unit>
+<trans-unit id="s21f42760d50276ab">
+  <source>No group description.</source>
+  <target>Geen groepsbeschrijving.</target>
+</trans-unit>
+<trans-unit id="sd5fd20dba6d7320b">
+  <source>+ Add Description</source>
+  <target>+ Beschrijving toevoegen</target>
+</trans-unit>
+<trans-unit id="sd720fd983f132077">
+  <source>Edit Description</source>
+  <target>Beschrijving bewerken</target>
+</trans-unit>
+<trans-unit id="s3c1efcb18ec4d6c9">
+  <source>Group Settings</source>
+  <target>Groepsinstellingen</target>
+</trans-unit>
+<trans-unit id="s9d8b8aa2b404c2c8">
+  <source>Settings</source>
+  <target>Instellingen</target>
+</trans-unit>
+<trans-unit id="sa86c0479a1e62db6">
+  <source>Unactivated Tools</source>
+  <target>Niet-geactiveerde Tools</target>
+</trans-unit>
+<trans-unit id="s231e097343f22c21">
+  <source>Error fetching the group information</source>
+  <target>Fout bij het ophalen van de groepsinformatie</target>
+</trans-unit>
+<trans-unit id="sb401e9c080830dc7">
+  <source>This group will see me as</source>
+  <target>Deze groep ziet mij als</target>
+</trans-unit>
+<trans-unit id="s2e2fe8c7e1b92cb0">
+  <source>Enter the space</source>
+  <target>Ruimte betreden</target>
+</trans-unit>
+<trans-unit id="s4404b38d84707655">
+  <source>Profile creation timed out. Please try again.</source>
+  <target>Profiel aanmaken is verlopen. Probeer het opnieuw.</target>
+</trans-unit>
+<trans-unit id="s0c24d12af180ccbf">
+  <source>There was an error creating your profile. Please try again.</source>
+  <target>Er is een fout opgetreden bij het aanmaken van je profiel. Probeer het opnieuw.</target>
+</trans-unit>
+<trans-unit id="s5f343a43e7ea9f91">
+  <source>Error</source>
+  <target>Fout</target>
+</trans-unit>
+<trans-unit id="s2c8189544e3ea679">
+  <source>Retry</source>
+  <target>Opnieuw proberen</target>
+</trans-unit>
+<trans-unit id="s98de281a36c50aa7">
+  <source>Failed to read your profile</source>
+  <target>Profiel lezen mislukt</target>
+</trans-unit>
+<trans-unit id="s715fe9da1b5b38c0">
+  <source>This group is disabled.</source>
+  <target>Deze groep is uitgeschakeld.</target>
 </trans-unit>
 <trans-unit id="sb5f4daa1bf12f954">
   <source>DhtOp logged to console.</source>
-  <target>DhtOp registrado no console.</target>
+  <target>DhtOp naar console gelogd.</target>
+</trans-unit>
+<trans-unit id="sa0bcc0ad6e32e0ec">
+  <source>cell name</source>
+  <target>celnaam</target>
+</trans-unit>
+<trans-unit id="sc8b6248d1ceeee57">
+  <source>Failed to get groups.</source>
+  <target>Groepen ophalen mislukt.</target>
+</trans-unit>
+<trans-unit id="sdf01b652401a2d8d">
+  <source>Failed to get running Tools.</source>
+  <target>Actieve Tools ophalen mislukt.</target>
 </trans-unit>
 <trans-unit id="s949586df2fc249a6">
   <source>Stats saved to logs folder (Help &gt; Open Logs)</source>
-  <target>Estatísticas salvas na pasta de logs (Ajuda &gt; Abrir Logs)</target>
+  <target>Statistieken opgeslagen in logmap (Help &gt; Logs openen)</target>
+</trans-unit>
+<trans-unit id="s45ab5e3bc8490c0e">
+  <source>Default profile saved.</source>
+  <target>Standaardprofiel opgeslagen.</target>
+</trans-unit>
+<trans-unit id="sb743fe792217d795">
+  <source>This profile will be used as default when joining new groups.</source>
+  <target>Dit profiel wordt als standaard gebruikt bij het toetreden tot nieuwe groepen.</target>
+</trans-unit>
+<trans-unit id="s6d8f193aef66d440">
+  <source>Save Default Profile</source>
+  <target>Standaardprofiel opslaan</target>
+</trans-unit>
+<trans-unit id="s27ac935473f90d03">
+  <source>Language changed.</source>
+  <target>Taal gewijzigd.</target>
+</trans-unit>
+<trans-unit id="s5e00b40d697f6d2b">
+  <source>Failed to change language.</source>
+  <target>Taal wijzigen mislukt.</target>
+</trans-unit>
+<trans-unit id="sb210f3f516da46a4">
+  <source>Select your preferred language for the Moss interface.</source>
+  <target>Selecteer je voorkeurstaal voor de Moss-interface.</target>
+</trans-unit>
+<trans-unit id="sefcf950b3cc4fc3b">
+  <source>Language</source>
+  <target>Taal</target>
+</trans-unit>
+<trans-unit id="s1cd2116b24de503a">
+  <source>Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.</source>
+  <target>Let op dat de taalvertalingen hier door AI zijn gemaakt. Als je fouten vindt, stuur ons dan feedback. Je kunt de in-app screenshot/feedbacktool activeren in het Feedbackvenster dat toegankelijk is via de Feedbackknop op de startpagina.</target>
+</trans-unit>
+<trans-unit id="secbfe3119ef57156">
+  <source>Factory Reset</source>
+  <target>Fabrieksinstellingen herstellen</target>
+</trans-unit>
+<trans-unit id="s4a4cb96bfa2fb8bb">
+  <source>Fully reset Moss and</source>
+  <target>Moss volledig resetten en</target>
+</trans-unit>
+<trans-unit id="s8456f5387d5d6727">
+  <source>delete all associated data</source>
+  <target>alle bijbehorende gegevens verwijderen</target>
+</trans-unit>
+<trans-unit id="sa832cb9d119e48f8">
+  <source>Copied to clipboard</source>
+  <target>Gekopieerd naar klembord</target>
+</trans-unit>
+<trans-unit id="s182d4e00e211dcca">
+  <source>Design Feedback</source>
+  <target>Ontwerpfeedback</target>
+</trans-unit>
+<trans-unit id="s48218f1042ae9df4">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Schakel de Ontwerpfeedbackmodus in om een feedbackknop in de rechterbovenhoek te tonen. Klik erop om een schermafbeelding van een gebied te maken en feedback te verzenden.</target>
+</trans-unit>
+<trans-unit id="s417a0b7eadfddf0e">
+  <source>Feedback History</source>
+  <target>Feedbackgeschiedenis</target>
+</trans-unit>
+<trans-unit id="sf55d0809d5afeafc">
+  <source>No feedback submitted yet.</source>
+  <target>Nog geen feedback verzonden.</target>
+</trans-unit>
+<trans-unit id="s8b7af9c477e83543">
+  <source>View Issue</source>
+  <target>Issue bekijken</target>
+</trans-unit>
+<trans-unit id="sb061ff5a347a296e">
+  <source>Profile</source>
+  <target>Profiel</target>
+</trans-unit>
+<trans-unit id="s1a5230a71d9285c1">
+  <source>Capture</source>
+  <target>Vastleggen</target>
+</trans-unit>
+<trans-unit id="sb5e180cb985511ff">
+  <source>Click and drag to select an area</source>
+  <target>Klik en sleep om een gebied te selecteren</target>
+</trans-unit>
+<trans-unit id="s5fa1b8f452fda064">
+  <source>Submit Feedback</source>
+  <target>Feedback verzenden</target>
+</trans-unit>
+<trans-unit id="sb2682d714ccbac46">
+  <source>Describe your feedback</source>
+  <target>Beschrijf je feedback</target>
+</trans-unit>
+<trans-unit id="s5ac24d9358320eef">
+  <source>What would you like to share about this part of the UI?</source>
+  <target>Wat wil je delen over dit deel van de interface?</target>
+</trans-unit>
+<trans-unit id="sa001c7eb0d28aaec">
+  <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
+  <target>Deze schermafbeelding en tekst, samen met Moss-versie en OS-info, worden als publieke GitHub-issue toegevoegd aan de</target>
+</trans-unit>
+<trans-unit id="sea97ee88ea35358e">
+  <source>Moss GitHub repo</source>
+  <target>Moss GitHub-repo</target>
+</trans-unit>
+<trans-unit id="sd1b9a0f04718bc5d">
+  <source>If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.</source>
+  <target>Als je het privé wilt verzenden, druk op "Kopiëren" om de feedback naar je klembord te kopiëren en mail het naar moss.0.15.feedback@theweave.social.</target>
+</trans-unit>
+<trans-unit id="sb3d4f79d9d8b71e5">
+  <source>Submit</source>
+  <target>Verzenden</target>
+</trans-unit>
+<trans-unit id="see302f30d4ca5691">
+  <source>Feedback submitted. GitHub issue created.</source>
+  <target>Feedback verzonden. GitHub-issue aangemaakt.</target>
+</trans-unit>
+<trans-unit id="se2841d25d173cfa5">
+  <source>Feedback saved locally. Could not create GitHub issue.</source>
+  <target>Feedback lokaal opgeslagen. Kon geen GitHub-issue aanmaken.</target>
+</trans-unit>
+<trans-unit id="s403d86e8b3392e49">
+  <source>Feedback saved locally.</source>
+  <target>Feedback lokaal opgeslagen.</target>
+</trans-unit>
+<trans-unit id="sbccd620b66cf8efd">
+  <source>Feedback saved locally. Could not reach server.</source>
+  <target>Feedback lokaal opgeslagen. Kon server niet bereiken.</target>
+</trans-unit>
+<trans-unit id="sd8505ee703ddcb65">
+  <source>Give Design Feedback</source>
+  <target>Ontwerpfeedback geven</target>
+</trans-unit>
+<trans-unit id="s79e68c83bbbbfb92">
+  <source>No existing asset relation tags yet...</source>
+  <target>Nog geen bestaande asset-relatietags...</target>
+</trans-unit>
+<trans-unit id="sc7a932781c029939">
+  <source>No tags with this search filter</source>
+  <target>Geen tags met dit zoekfilter</target>
+</trans-unit>
+<trans-unit id="scd35145816591894">
+  <source>Select existing tag:</source>
+  <target>Selecteer bestaande tag:</target>
+</trans-unit>
+<trans-unit id="s2d13c0844c68a8ea">
+  <source>Choose Asset Relation Tag:</source>
+  <target>Kies asset-relatietag:</target>
+</trans-unit>
+<trans-unit id="s6d96b71b1a229943">
+  <source>Enter new tag</source>
+  <target>Nieuwe tag invoeren</target>
+</trans-unit>
+<trans-unit id="s7e388025be643d0d">
+  <source>Enter</source>
+  <target>Enter</target>
+</trans-unit>
+<trans-unit id="sef5bd6ed8fab8065">
+  <source>Copy URL</source>
+  <target>URL kopiëren</target>
+</trans-unit>
+<trans-unit id="s46b40e6a61bc0208">
+  <source>URL copied.</source>
+  <target>URL gekopieerd.</target>
+</trans-unit>
+<trans-unit id="s8fc0228da60f2c2b">
+  <source>Remove from Pocket</source>
+  <target>Uit Pocket verwijderen</target>
+</trans-unit>
+<trans-unit id="s1da2307057f1524c">
+  <source>Cannot be selected - the associated Tool is disabled</source>
+  <target>Kan niet worden geselecteerd - de bijbehorende Tool is uitgeschakeld</target>
+</trans-unit>
+<trans-unit id="sfc63e31ac7c956ed">
+  <source>Select</source>
+  <target>Selecteren</target>
+</trans-unit>
+<trans-unit id="sc592307ea80f16b9">
+  <source>Unknown</source>
+  <target>Onbekend</target>
+</trans-unit>
+<trans-unit id="s08b06007b5567108">
+  <source>of</source>
+  <target>van</target>
+</trans-unit>
+<trans-unit id="s220bcce27242e1e9">
+  <source>search</source>
+  <target>zoeken</target>
+</trans-unit>
+<trans-unit id="sc1b8a74e113727e2">
+  <source>Search or enter weave-0.15:// URL</source>
+  <target>Zoek of voer weave-0.15:// URL in</target>
+</trans-unit>
+<trans-unit id="sade7d29e999d2472">
+  <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
+  <target>Voer minimaal <x id="0" equiv-text="${this.minChars}"/> tekens in om te beginnen met zoeken.</target>
+</trans-unit>
+<trans-unit id="sa81413e2e309b882">
+  <source>No results found.</source>
+  <target>Geen resultaten gevonden.</target>
+</trans-unit>
+<trans-unit id="sf46397f167ec5533">
+  <source>Searching...</source>
+  <target>Zoeken...</target>
+</trans-unit>
+<trans-unit id="s7abafd331dfb06bc">
+  <source>Open URL</source>
+  <target>URL openen</target>
+</trans-unit>
+<trans-unit id="sa1d04f065ab25208">
+  <source>Select Attachment:</source>
+  <target>Selecteer bijlage:</target>
+</trans-unit>
+<trans-unit id="s14539699e3c478c2">
+  <source>to open Clipboard</source>
+  <target>om Klembord te openen</target>
+</trans-unit>
+<trans-unit id="s9a730edb8b4733e7">
+  <source>Create New</source>
+  <target>Nieuw aanmaken</target>
+</trans-unit>
+<trans-unit id="seead559236062e71">
+  <source>Recently created:</source>
+  <target>Recent aangemaakt:</target>
+</trans-unit>
+<trans-unit id="s1f7698c061c208c9">
+  <source>Open</source>
+  <target>Openen</target>
+</trans-unit>
+<trans-unit id="sbe33c7c17242705f">
+  <source>Nothing in your pocket. Watch out for pocket icons to add things to your pocket.</source>
+  <target>Niets in je pocket. Let op pocket-iconen om dingen aan je pocket toe te voegen.</target>
+</trans-unit>
+<trans-unit id="s007a5e0a003f5515">
+  <source>In Your Pocket:</source>
+  <target>In je Pocket:</target>
+</trans-unit>
+<trans-unit id="s00b8b5c1000437fe">
+  <source>Reload Tool</source>
+  <target>Tool herladen</target>
+</trans-unit>
+<trans-unit id="sc851c05e0ca38177">
+  <source>No Creatables available for the selected Group.</source>
+  <target>Geen aanmaakbare items beschikbaar voor de geselecteerde Groep.</target>
 </trans-unit>
 <trans-unit id="s6d4ea06717ba190f">
   <source>New <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> created.</source>
-  <target>Novo <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> criado.</target>
+  <target>Nieuwe <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> aangemaakt.</target>
+</trans-unit>
+<trans-unit id="sc530113873b2fd9a">
+  <source>From which Tool do you want to create something?</source>
+  <target>Vanuit welke Tool wil je iets aanmaken?</target>
+</trans-unit>
+<trans-unit id="s585eef6df9f6be7d">
+  <source>What do you want to create?</source>
+  <target>Wat wil je aanmaken?</target>
+</trans-unit>
+<trans-unit id="seacc6f1617124704">
+  <source>No group selected.</source>
+  <target>Geen groep geselecteerd.</target>
+</trans-unit>
+<trans-unit id="sa6091c63e770ecfb">
+  <source>Create New Asset</source>
+  <target>Nieuwe Asset aanmaken</target>
+</trans-unit>
+<trans-unit id="s233f99bcd0cc14a1">
+  <source>Tool not found in any of your groups.</source>
+  <target>Tool niet gevonden in een van je groepen.</target>
+</trans-unit>
+<trans-unit id="s16a9f872b944f5f1">
+  <source>You're already part of this group.</source>
+  <target>Je bent al lid van deze groep.</target>
+</trans-unit>
+<trans-unit id="s4a35a3da7fbd9504">
+  <source>Error opening the link.</source>
+  <target>Fout bij het openen van de link.</target>
+</trans-unit>
+<trans-unit id="saa3672a331070a0c">
+  <source>Failed to disable Group.</source>
+  <target>Groep uitschakelen mislukt.</target>
 </trans-unit>
 <trans-unit id="se122ec103ad3a22b">
   <source>Asset Viewer</source>
-  <target>Visualizador de ativos</target>
+  <target>Asset Viewer</target>
 </trans-unit>
 <trans-unit id="s502cf76d28a6568a">
   <source>This is where assets are displayed. Opening an asset from one of your Tools will create a new tab here.</source>
-  <target>É aqui que os ativos são exibidos. Abrir um ativo de uma das suas ferramentas criará uma nova aba aqui.</target>
+  <target>Hier worden assets weergegeven. Het openen van een asset vanuit een van je Tools maakt hier een nieuw tabblad aan.</target>
+</trans-unit>
+<trans-unit id="seb1bdc3ff128123f">
+  <source>switch to personal view</source>
+  <target>naar persoonlijke weergave wisselen</target>
 </trans-unit>
 <trans-unit id="s86f9012852d0da41">
   <source>Hide Asset Viewer</source>
-  <target>Ocultar visualizador de ativos</target>
+  <target>Asset Viewer verbergen</target>
 </trans-unit>
 <trans-unit id="s2d226848fc48a75e">
   <source>Show Asset Viewer</source>
-  <target>Mostrar visualizador de ativos</target>
+  <target>Asset Viewer tonen</target>
 </trans-unit>
-<trans-unit id="s6b2ba4a7ab6305f9">
-  <source>Role:</source>
-  <target>Função:</target>
+<trans-unit id="s95354afd524e0854">
+  <source>Added to Pocket</source>
+  <target>Toegevoegd aan Pocket</target>
 </trans-unit>
-<trans-unit id="s264e444c900d09b1">
-  <source>Local Time:</source>
-  <target>Hora local:</target>
+<trans-unit id="s1967faf9ed8d3504">
+  <source>Avatar</source>
+  <target>Avatar</target>
 </trans-unit>
-<trans-unit id="s7f845078d7a5c0b5">
-  <source>from</source>
-  <target>de</target>
+<trans-unit id="s48489dd40d0b7159">
+  <source>Choose Avatar</source>
+  <target>Avatar kiezen</target>
 </trans-unit>
-<trans-unit id="sa67b347e72791548">
-  <source>All messages</source>
-  <target>Todas as mensagens</target>
+<trans-unit id="sb4f1dffbb6be6302">
+  <source>Clear</source>
+  <target>Wissen</target>
 </trans-unit>
-<trans-unit id="s5bd2875d95bfb460">
-  <source>Mentions only</source>
-  <target>Apenas menções</target>
+<trans-unit id="s0be4a2cf7dafcecb">
+  <source>random image</source>
+  <target>willekeurige afbeelding</target>
 </trans-unit>
-<trans-unit id="s669b18c6d2d9c95b">
-  <source>None</source>
-  <target>Nenhuma</target>
+<trans-unit id="s823aec927799efba">
+  <source>starting Holochain...</source>
+  <target>Holochain starten...</target>
 </trans-unit>
-<trans-unit id="s039e128122096637">
-  <source>Notification Settings</source>
-  <target>Configurações de notificação</target>
+<trans-unit id="s1b710daaf8c152d3">
+  <source>Failed to join the group.</source>
+  <target>Deelnemen aan groep mislukt.</target>
 </trans-unit>
-<trans-unit id="s0862df34652cf74e">
-  <source>custom</source>
-  <target>personalizado</target>
+<trans-unit id="s9a46ff9baa276602">
+  <source>back</source>
+  <target>terug</target>
 </trans-unit>
-<trans-unit id="s732fb66bd56ac444">
-  <source>Sound file must be under 500KB</source>
-  <target>O arquivo de áudio deve ter menos de 500KB</target>
+<trans-unit id="s83300eac0e548879">
+  <source>My group is called</source>
+  <target>Mijn groep heet</target>
 </trans-unit>
-<trans-unit id="s356b40f5b34b9e97">
-  <source>Custom sound added</source>
-  <target>Som personalizado adicionado</target>
+<trans-unit id="s3299fe9aa2f7023f">
+  <source>group name</source>
+  <target>groepsnaam</target>
 </trans-unit>
-<trans-unit id="s57dcf88cbea048e6">
-  <source>Cannot delete sound while it is in use. Change urgency settings first.</source>
-  <target>Não é possível excluir o som enquanto estiver em uso. Altere as configurações de urgência primeiro.</target>
+<trans-unit id="s97c954bf5d700fc4">
+  <source>Create group space</source>
+  <target>Groepsruimte aanmaken</target>
 </trans-unit>
-<trans-unit id="s53f341e0b248049c">
-  <source>Custom sound deleted</source>
-  <target>Som personalizado excluído</target>
+<trans-unit id="sd33aeb1a43a080b1">
+  <source>Choose Group Type</source>
+  <target>Kies groepstype</target>
 </trans-unit>
-<trans-unit id="se7ef3f5e89cf8015">
-  <source>High (OS notification)</source>
-  <target>Alto (notificação do sistema)</target>
+<trans-unit id="s6bd57286330b17cc">
+  <source>Joining group</source>
+  <target>Deelnemen aan groep</target>
 </trans-unit>
-<trans-unit id="s853df2344fe181eb">
-  <source>Medium (systray icon)</source>
-  <target>Médio (ícone da bandeja)</target>
+<trans-unit id="sa5ad0d6001e29e11">
+  <source>Creating a new space</source>
+  <target>Nieuwe ruimte aanmaken</target>
 </trans-unit>
-<trans-unit id="s71cd19dacc7db8a5">
-  <source>Low (activity feed only)</source>
-  <target>Baixo (apenas feed de atividade)</target>
+<trans-unit id="s882ccaf3aa86f663">
+  <source>in the beautiful p2p realm.</source>
+  <target>in het mooie p2p-rijk.</target>
 </trans-unit>
-<trans-unit id="s56656631a0a6a976">
-  <source>Custom Sounds</source>
-  <target>Sons personalizados</target>
+<trans-unit id="s3a1a79c51ae32bba">
+  <source>may take up to 1-2 minutes</source>
+  <target>kan tot 1-2 minuten duren</target>
 </trans-unit>
-<trans-unit id="s020d96334aaddfa3">
-  <source>Add Sound</source>
-  <target>Adicionar som</target>
+<trans-unit id="s5a5e67d875579d70">
+  <source>Welcome to Moss.</source>
+  <target>Welkom bij Moss.</target>
 </trans-unit>
-<trans-unit id="s353e562c69a4f7ff">
-  <source>No custom sounds added yet.</source>
-  <target>Nenhum som personalizado adicionado ainda.</target>
+<trans-unit id="s4dcc66195b1ddc69">
+  <source>What brought you here today?</source>
+  <target>Wat brengt je hier vandaag?</target>
 </trans-unit>
-<trans-unit id="s16d5bc6f67ef2122">
-  <source>Accepted formats: MP3, WAV, OGG. Maximum size: 500KB.</source>
-  <target>Formatos aceitos: MP3, WAV, OGG. Tamanho máximo: 500KB.</target>
+<trans-unit id="sbf68658bb3dad7f1">
+  <source>I have an invite link to join a group</source>
+  <target>Ik heb een uitnodigingslink om aan een groep deel te nemen</target>
 </trans-unit>
-<trans-unit id="sb20938e9fc4d395b">
-  <source>Configure sounds for notifications. Sounds only play when the window is not focused.</source>
-  <target>Configure os sons para notificações. Os sons só são reproduzidos quando a janela não está em foco.</target>
+<trans-unit id="s3eadd48b1fc794ca">
+  <source>An invite link looks like:</source>
+  <target>Een uitnodigingslink ziet er zo uit:</target>
 </trans-unit>
-<trans-unit id="s4de6b5d384d8a3db">
-  <source>Enable notification sounds</source>
-  <target>Ativar sons de notificação</target>
+<trans-unit id="s9c0c49be73d09c2b">
+  <source>paste invite link here</source>
+  <target>plak hier de uitnodigingslink</target>
 </trans-unit>
-<trans-unit id="s5b528a7f6c0c40af">
-  <source>Volume</source>
-  <target>Volume</target>
+<trans-unit id="sc2795100b3106520">
+  <source>invite link</source>
+  <target>uitnodigingslink</target>
 </trans-unit>
-<trans-unit id="s8cdc14b51d689d56">
-  <source>Sound per urgency level</source>
-  <target>Som por nível de urgência</target>
+<trans-unit id="s6c6bf3ea2ad3d219">
+  <source>Join</source>
+  <target>Deelnemen</target>
 </trans-unit>
-<trans-unit id="s5be3c6d61cd9182f">
-  <source>Notifications</source>
-  <target>Notificações</target>
+<trans-unit id="sd8fc07c566540e32">
+  <source>I want to start a space for my group</source>
+  <target>Ik wil een ruimte starten voor mijn groep</target>
 </trans-unit>
-<trans-unit id="s540ee2c491d959c0">
-  <source>Play sound</source>
-  <target>Reproduzir som</target>
+<trans-unit id="s4e9e4d368feaf09a">
+  <source>Create new group space</source>
+  <target>Nieuwe groepsruimte aanmaken</target>
+</trans-unit>
+<trans-unit id="s9c0f4d29e125d6d3">
+  <source>Skip Setup</source>
+  <target>Setup overslaan</target>
+</trans-unit>
+<trans-unit id="s47c33f08061ea16c">
+  <source>Holochain failed to start up and crashed :(</source>
+  <target>Holochain kon niet opstarten en is gecrasht :(</target>
+</trans-unit>
+<trans-unit id="scf5e435555ee676b">
+  <source>If you want to support us in finding the problem, please export the logs and send them to </source>
+  <target>Als je ons wilt helpen het probleem te vinden, exporteer dan de logs en stuur ze naar </target>
+</trans-unit>
+<trans-unit id="s025d191d3f77cdf8">
+  <source>Open Logs</source>
+  <target>Logs openen</target>
+</trans-unit>
+<trans-unit id="s07e9dc65d473e7f2">
+  <source>Export Logs</source>
+  <target>Logs exporteren</target>
+</trans-unit>
+<trans-unit id="sca4075a9f1d3cbaa">
+  <source>Moss Setup</source>
+  <target>Moss Setup</target>
+</trans-unit>
+<trans-unit id="sad273202fc27c4b7">
+  <source>Choose whether you want to set up Moss with or without a password.</source>
+  <target>Kies of je Moss wilt instellen met of zonder wachtwoord.</target>
+</trans-unit>
+<trans-unit id="sdbd1191439f543ae">
+  <source>The password will be used to encrypt your data locally on your device.</source>
+  <target>Het wachtwoord wordt gebruikt om je gegevens lokaal op je apparaat te versleutelen.</target>
+</trans-unit>
+<trans-unit id="s441d1a59a5deb96e">
+  <source>A password cannot be added, changed or removed later.</source>
+  <target>Een wachtwoord kan later niet worden toegevoegd, gewijzigd of verwijderd.</target>
+</trans-unit>
+<trans-unit id="s1288a007963d95a7">
+  <source>Setup With Password</source>
+  <target>Setup met wachtwoord</target>
+</trans-unit>
+<trans-unit id="s79cf807d7b63cbab">
+  <source>Setup Without Password</source>
+  <target>Setup zonder wachtwoord</target>
+</trans-unit>
+<trans-unit id="sc63cfa3b53be6ac9">
+  <source>Choose Password</source>
+  <target>Wachtwoord kiezen</target>
+</trans-unit>
+<trans-unit id="s5faf8fad21294e9a">
+  <source>This password cannot be reset. Write it down or store it somewhere safe.</source>
+  <target>Dit wachtwoord kan niet worden gereset. Schrijf het op of bewaar het ergens veilig.</target>
+</trans-unit>
+<trans-unit id="sa3a2b1128ad8dca6">
+  <source>Password:</source>
+  <target>Wachtwoord:</target>
+</trans-unit>
+<trans-unit id="s0fbf6dc6a1966408">
+  <source>Next</source>
+  <target>Volgende</target>
+</trans-unit>
+<trans-unit id="s3dab6bcbc22dc3e0">
+  <source>Confirm Password</source>
+  <target>Wachtwoord bevestigen</target>
+</trans-unit>
+<trans-unit id="s0b6a0ca3518fcea9">
+  <source>Passwords don't match!</source>
+  <target>Wachtwoorden komen niet overeen!</target>
+</trans-unit>
+<trans-unit id="s0517cbdc99386032">
+  <source>Setup and Launch</source>
+  <target>Setup en starten</target>
+</trans-unit>
+<trans-unit id="s6a2222b29743d24c">
+  <source>Enter Password:</source>
+  <target>Wachtwoord invoeren:</target>
+</trans-unit>
+<trans-unit id="s512957aa09384646">
+  <source>Launch</source>
+  <target>Starten</target>
+</trans-unit>
+<trans-unit id="sff696c02c0929f45">
+  <source>Holochain failed to start up :(</source>
+  <target>Holochain kon niet opstarten :(</target>
+</trans-unit>
+<trans-unit id="s248ed9756a4bce17">
+  <source>loading</source>
+  <target>laden</target>
+</trans-unit>
+<trans-unit id="s45156213b0fb2396">
+  <source>Quit</source>
+  <target>Afsluiten</target>
+</trans-unit>
+<trans-unit id="s5e8250fb85d64c23">
+  <source>Close</source>
+  <target>Sluiten</target>
+</trans-unit>
+<trans-unit id="sc16e00a7a8b2fde2">
+  <source>Back</source>
+  <target>Terug</target>
+</trans-unit>
+<trans-unit id="se2e3d764f68cee6b">
+  <source>drop to add to pocket</source>
+  <target>laat los om aan pocket toe te voegen</target>
+</trans-unit>
+<trans-unit id="sc1407b21ee25eeab">
+  <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
+  <target>Niets in je pocket. Let op pocket-iconen om assets aan je pocket toe te voegen.</target>
+</trans-unit>
+<trans-unit id="s111b0d2304f543bd">
+  <source>unknown...</source>
+  <target>onbekend...</target>
 </trans-unit>
 </body>
 </file>

@@ -166,7 +166,7 @@ export type AppletClients = {
 };
 
 export type AppletView =
-  | { type: 'main' }
+  | { type: 'main' ; wal?: WAL; }
   | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
