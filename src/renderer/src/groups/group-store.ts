@@ -130,6 +130,25 @@ export class GroupStore {
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
+  /**
+   * Ephemeral (in-memory) tracking of unread group notifications.
+   * Used for foyer messages and other group-level notifications.
+   * Not persisted across app restarts.
+   */
+  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> = writable({
+    low: 0,
+    medium: 0,
+    high: 0,
+  });
+
+  /**
+   * Foyer notification setting for this group.
+   * - 'all': Notify for all messages (high urgency)
+   * - 'mentions': Notify only when mentioned (medium urgency, high when mentioned)
+   * - 'none': No notifications (low urgency, no OS notification)
+   */
+  private _foyerNotificationSetting: Writable<'all' | 'mentions' | 'none'> = writable('mentions');
+
   foyerStore!: FoyerStore;
 
   /**
@@ -176,6 +195,9 @@ export class GroupStore {
         // Use the instance
       },
     );
+
+    // Load persisted foyer notification setting
+    this.loadFoyerNotificationSetting();
 
     this._peerStatuses = writable(undefined);
 
@@ -827,6 +849,85 @@ export class GroupStore {
       };
       return newValue;
     });
+  }
+
+  /**
+   * Get the current unread group notification counts.
+   * Returns a readable store with counts by urgency level.
+   */
+  unreadGroupNotifications(): Readable<{ low: number; medium: number; high: number }> {
+    return derived(this._unreadGroupNotifications, (state) => state);
+  }
+
+  /**
+   * Get the notification state as [urgency, count] tuple for display.
+   * Returns the highest urgency level with its count.
+   */
+  getUnreadGroupNotificationState(): [string | undefined, number | undefined] {
+    const counts = get(this._unreadGroupNotifications);
+    if (counts.high > 0) {
+      return ['high', counts.high];
+    } else if (counts.medium > 0) {
+      return ['medium', counts.medium];
+    } else if (counts.low > 0) {
+      return ['low', counts.low];
+    }
+    return [undefined, undefined];
+  }
+
+  /**
+   * Increment the unread notification count for the given urgency level.
+   * Used for ephemeral notifications like foyer messages.
+   */
+  incrementUnreadGroupNotifications(urgency: 'low' | 'medium' | 'high') {
+    this._unreadGroupNotifications.update((counts) => ({
+      ...counts,
+      [urgency]: counts[urgency] + 1,
+    }));
+  }
+
+  /**
+   * Clear all unread group notifications.
+   * Called when the user views the group/foyer.
+   */
+  clearGroupNotificationStatus() {
+    this._unreadGroupNotifications.set({ low: 0, medium: 0, high: 0 });
+  }
+
+  /**
+   * Get the foyer notification setting for this group.
+   */
+  getFoyerNotificationSetting(): Readable<'all' | 'mentions' | 'none'> {
+    return derived(this._foyerNotificationSetting, (setting) => setting);
+  }
+
+  /**
+   * Get the current foyer notification setting value.
+   */
+  getFoyerNotificationSettingValue(): 'all' | 'mentions' | 'none' {
+    return get(this._foyerNotificationSetting);
+  }
+
+  /**
+   * Set the foyer notification setting for this group.
+   * Persists to localStorage.
+   */
+  setFoyerNotificationSetting(setting: 'all' | 'mentions' | 'none') {
+    this._foyerNotificationSetting.set(setting);
+    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+    localStorage.setItem(key, setting);
+  }
+
+  /**
+   * Load the foyer notification setting from localStorage.
+   * Called during initialization.
+   */
+  loadFoyerNotificationSetting() {
+    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+    const stored = localStorage.getItem(key);
+    if (stored && (stored === 'all' || stored === 'mentions' || stored === 'none')) {
+      this._foyerNotificationSetting.set(stored);
+    }
   }
 
   /**

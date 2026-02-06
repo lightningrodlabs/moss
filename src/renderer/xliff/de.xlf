@@ -1714,6 +1714,26 @@
   <source>Local Time:</source>
   <target>Ortszeit:</target>
 </trans-unit>
+<trans-unit id="s7f845078d7a5c0b5">
+  <source>from</source>
+  <target>von</target>
+</trans-unit>
+<trans-unit id="sa67b347e72791548">
+  <source>All messages</source>
+  <target>Alle Nachrichten</target>
+</trans-unit>
+<trans-unit id="s5bd2875d95bfb460">
+  <source>Mentions only</source>
+  <target>Nur Erwähnungen</target>
+</trans-unit>
+<trans-unit id="s669b18c6d2d9c95b">
+  <source>None</source>
+  <target>Keine</target>
+</trans-unit>
+<trans-unit id="s039e128122096637">
+  <source>Notification Settings</source>
+  <target>Benachrichtigungseinstellungen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

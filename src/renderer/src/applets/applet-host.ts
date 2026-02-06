@@ -30,16 +30,11 @@ import { MossStore } from '../moss-store.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
   getAppletIdFromOrigin,
-  getAppletNotificationSettings,
-  getNotificationState,
-  getNotificationTypeSettings,
   getToolCompatibilityIdFromOrigin,
   openWalInWindow,
-  storeAppletNotifications,
   validateNotifications,
 } from '../utils.js';
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
-import { AppletNotificationSettings } from './types.js';
 import { AppletStore } from './applet-store.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
@@ -484,52 +479,22 @@ export async function handleAppletIframeMessage(
         encodeHashToBase64(dashboardMode.appletHash) === encodeHashToBase64(appletHash) &&
         mainWindowFocused;
 
-      // add notifications to unread messages and store them in the persisted notifications log
+      // Validate notifications to ensure not to corrupt localStorage
       const notifications: Array<FrameNotification> = message.notifications;
-      validateNotifications(notifications); // validate notifications to ensure not to corrupt localStorage
-      const maybeUnreadNotifications = storeAppletNotifications(
+      validateNotifications(notifications);
+
+      // Use the unified notification handler
+      await mossStore.handleNotification(
+        { type: 'applet', appletId, appletHash },
         notifications,
-        appletId,
-        !ignoreNotification ? true : false,
-        mossStore.persistedStore,
+        {
+          persist: true,
+          showInFeed: true,
+          updateUnreadCount: !ignoreNotification,
+          sendOSNotification: !mainWindowFocused,
+          sourceName: appletStore?.applet.custom_name,
+        },
       );
-
-      // update the notifications store
-      if (maybeUnreadNotifications) {
-        appletStore.setUnreadNotifications(getNotificationState(maybeUnreadNotifications));
-      }
-
-      // Update feed
-      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
-      mossStore.updateNotificationFeed(appletId, daysSinceEpoch);
-      mossStore.updateNotificationFeed(appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
-
-      // trigger OS notification if allowed by the user and notification is fresh enough (less than 5 minutes old)
-      const appletNotificationSettings: AppletNotificationSettings =
-        getAppletNotificationSettings(appletId);
-
-      if (!mainWindowFocused) {
-        await Promise.all(
-          notifications.map(async (notification) => {
-            // check whether it's actually a new event or not. Events older than 5 minutes won't trigger an OS notification
-            // because it is assumed that they are emitted by the Applet UI upon startup of We and occurred while the
-            // user was offline
-            if (Date.now() - notification.timestamp < 300000) {
-              const notificationTypeSettings = getNotificationTypeSettings(
-                notification.notification_type,
-                appletNotificationSettings,
-              );
-              await window.electronAPI.notification(
-                notification,
-                notificationTypeSettings.showInSystray,
-                notificationTypeSettings.allowOSNotification && notification.urgency === 'high',
-                appletStore ? { type: 'applet', appletHash: appletStore.appletHash } : undefined,
-                appletStore ? appletStore.applet.custom_name : undefined,
-              );
-            }
-          }),
-        );
-      }
       return;
     }
     case 'get-applet-info':

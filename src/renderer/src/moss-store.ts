@@ -26,6 +26,7 @@ import {
     AppStatusFilter,
     AppWebsocket,
     CallZomeRequest,
+    decodeHashFromBase64,
     DnaHash,
     DnaHashB64,
     DnaHashMap,
@@ -48,10 +49,12 @@ import {
     GroupProfile as GroupProfilePartial,
     IframeKind,
     NULL_HASH,
+    FrameNotification,
     ParentToAppletMessage,
     ProfilesLocation,
     stringifyWal,
     WAL,
+    WeaveLocation,
     ZomeCallLogInfo,
 } from '@theweave/api';
 import {GroupStore} from './groups/group-store.js';
@@ -71,7 +74,9 @@ import {
     devModeToolLibraryFromDevConfig,
     encodeAndStringify,
     findAppForDnaHash,
+    getNotificationState,
     sortVersionsDescending,
+    storeAppletNotifications,
     validateWal,
 } from './utils.js';
 import {AppletStore} from './applets/applet-store.js';
@@ -100,10 +105,12 @@ import {
 } from '@theweave/utils';
 import {Value} from '@sinclair/typebox/value';
 import {
-    AppletNotification,
     CallbackWithId,
     MossEvent,
     MossEventMap,
+    MossNotification,
+    NotificationOptions,
+    NotificationSource,
     ToolAndCurationInfo,
     ToolInfoAndLatestVersion,
 } from './types.js';
@@ -574,21 +581,23 @@ export class MossStore {
    * --------------------------------------------------------------------------
    */
 
-  _notificationFeed: Writable<AppletNotification[]> = writable([]);
+  _notificationFeed: Writable<MossNotification[]> = writable([]);
 
-  notificationFeed(): Readable<AppletNotification[]> {
+  notificationFeed(): Readable<MossNotification[]> {
     return derived(this._notificationFeed, (store) => store);
   }
 
   /**
    * Loads the notification feed n days back for all installed applets.
+   * Note: Only loads persisted applet notifications. Ephemeral group notifications
+   * are added to the feed in real-time via handleNotification().
    *
    * @param nDaysBack
    */
   async loadNotificationFeed(nDaysBack: number) {
     const allApplets = await toPromise(this.runningApplets);
     const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
-    let allNotifications: AppletNotification[][] = [];
+    let allNotifications: MossNotification[][] = [];
     const daysSinceEpochToday = Math.floor(Date.now() / 8.64e7);
     for (let i = 0; i < nDaysBack + 1; i++) {
       const daysSinceEpoch = daysSinceEpochToday - i;
@@ -599,7 +608,11 @@ export class MossStore {
         );
         allNotifications.push(
           notifications.map((notification) => ({
-            appletId,
+            source: {
+              type: 'applet' as const,
+              appletId,
+              appletHash: appletHashFromAppId(appletIdFromAppId(appletId)),
+            },
             notification,
           })),
         );
@@ -608,39 +621,120 @@ export class MossStore {
     const allNotificationsFlattened = allNotifications.flat(1);
     this._notificationFeed.set(
       allNotificationsFlattened.sort(
-        (appletNotification_a, appletNotification_b) =>
-          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
+        (a, b) => b.notification.timestamp - a.notification.timestamp,
       ),
     );
   }
 
   /**
-   * Updates the notification feed for the given applet Id
+   * Updates the notification feed for the given applet Id (for persisted notifications)
    *
    * @param appletId
    * @param daysSinceEpoch
    */
   updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
     this._notificationFeed.update((store) => {
-      // console.log('store: ', store);
       const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
       const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
         .value(appletId, daysSinceEpoch)
-        .map((notification) => encodeAndStringify({ appletId, notification }));
-      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
-      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
+        .map((notification) => encodeAndStringify({
+          source: {
+            type: 'applet' as const,
+            appletId,
+            appletHash: appletHashFromAppId(appletIdFromAppId(appletId)),
+          },
+          notification,
+        }));
       const updatedNotifications: string[] = [
         ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
       ];
-      // console.log('updatedNotifications: ', updatedNotifications);
       return updatedNotifications
-        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
-        .sort(
-          (appletNotification_a, appletNotification_b) =>
-            appletNotification_b.notification.timestamp -
-            appletNotification_a.notification.timestamp,
-        );
+        .map((notificationsString) => destringifyAndDecode<MossNotification>(notificationsString))
+        .sort((a, b) => b.notification.timestamp - a.notification.timestamp);
     });
+  }
+
+  /**
+   * Unified notification handler for both applet and group notifications.
+   * This is the single entry point for all notifications in the system.
+   *
+   * @param source The source of the notification (applet or group)
+   * @param notifications Array of notifications to process
+   * @param options Configuration for how to handle the notifications
+   */
+  async handleNotification(
+    source: NotificationSource,
+    notifications: FrameNotification[],
+    options: NotificationOptions,
+  ): Promise<void> {
+    const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+
+    for (const notification of notifications) {
+      // 1. Persist if requested (tools do this, foyer doesn't)
+      if (options.persist && source.type === 'applet') {
+        storeAppletNotifications([notification], source.appletId, true, this.persistedStore);
+      }
+
+      // 2. Update unread count for sidebar dot
+      if (options.updateUnreadCount) {
+        if (source.type === 'applet') {
+          const appletStoreReadable = this.appletStores.get(source.appletHash);
+          if (appletStoreReadable) {
+            try {
+              const appletStore = await toPromise(appletStoreReadable);
+              const unreadNotifications = this.persistedStore.appletNotificationsUnread.value(source.appletId);
+              appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
+            } catch (e) {
+              console.warn('Failed to update applet notification count:', e);
+            }
+          }
+        } else {
+          // Group notifications - update the group store's unread count
+          const allGroupStores = await toPromise(this.groupStores);
+          const groupStore = allGroupStores.get(decodeHashFromBase64(source.groupDnaHash));
+          if (groupStore) {
+            groupStore.incrementUnreadGroupNotifications(notification.urgency);
+          }
+        }
+      }
+
+      // 3. Add to activity feed
+      if (options.showInFeed) {
+        this._notificationFeed.update((feed) => {
+          const newNotification: MossNotification = { source, notification, sourceName: options.sourceName };
+          return [newNotification, ...feed].sort(
+            (a, b) => b.notification.timestamp - a.notification.timestamp,
+          );
+        });
+      }
+
+      // 4. Send OS notification if conditions are met
+      if (
+        options.sendOSNotification &&
+        !mainWindowFocused &&
+        Date.now() - notification.timestamp < 300000
+      ) {
+        const weaveLocation: WeaveLocation =
+          source.type === 'applet'
+            ? { type: 'applet', appletHash: source.appletHash }
+            : { type: 'group', dnaHash: decodeHashFromBase64(source.groupDnaHash) };
+
+        await window.electronAPI.notification(
+          notification,
+          true, // showInSystray
+          notification.urgency === 'high',
+          weaveLocation,
+          options.sourceName,
+        );
+      }
+    }
+
+    // Update the persisted notification feed for applet sources
+    if (options.persist && source.type === 'applet') {
+      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
+      this.updateNotificationFeed(source.appletId, daysSinceEpoch);
+      this.updateNotificationFeed(source.appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
+    }
   }
 
   /**

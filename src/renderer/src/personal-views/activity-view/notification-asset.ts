@@ -1,9 +1,9 @@
-import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { completed, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { until } from 'lit/directives/until.js';
 import { localized } from '@lit/localize';
-import type { FrameNotification } from '@theweave/api';
+import type { FrameNotification, GroupProfile } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -18,9 +18,9 @@ import { MossStore } from '../../moss-store.js';
 import { AppletHash } from '@theweave/api';
 import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
-import { AppletNotification } from '../../types.js';
+import { MossNotification } from '../../types.js';
 import { mossStyles } from '../../shared-styles.js';
-import { decodeHashFromBase64, AgentPubKey } from '@holochain/client';
+import { decodeHashFromBase64, AgentPubKey, DnaHashB64 } from '@holochain/client';
 
 @localized()
 @customElement('notification-asset')
@@ -30,44 +30,73 @@ export class NotificationAsset extends LitElement {
   _mossStore!: MossStore;
 
   @property()
-  notifications!: AppletNotification[];
+  notifications!: MossNotification[];
 
   @property()
-  appletHash!: AppletHash;
+  appletHash: AppletHash | undefined;
+
+  @property()
+  groupDnaHash: DnaHashB64 | undefined;
 
   @property()
   notification: FrameNotification | undefined;
 
+  @property()
+  sourceName: string | undefined;
+
   _groupProfiles = new StoreSubscriber(
     this,
-    () =>
-      pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
+    () => {
+      if (!this.appletHash) return completed([] as (GroupProfile | undefined)[]);
+      return pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
             toPromise(groupStore!.groupProfile),
           ),
         );
         return groupProfiles;
-      }),
+      });
+    },
     () => [this.appletHash, this._mossStore],
   );
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this._mossStore.appletLogo.get(this.appletHash)!,
+    () => {
+      if (!this.appletHash) return completed(undefined as string | undefined);
+      return this._mossStore.appletLogo.get(this.appletHash)!;
+    },
     () => [this.appletHash],
   );
 
   appletName = new StoreSubscriber(
     this,
-    () =>
-      pipe(this._mossStore.appletStores.get(this.appletHash)!, (appletStore) => {
+    () => {
+      if (!this.appletHash) return completed(undefined as string | undefined);
+      return pipe(this._mossStore.appletStores.get(this.appletHash)!, (appletStore) => {
         if (appletStore) {
           return appletStore.applet.custom_name;
         }
         return undefined;
-      }),
+      });
+    },
     () => [this.appletHash],
+  );
+
+  // For group notifications - get the group profile
+  _groupProfile = new StoreSubscriber(
+    this,
+    () => {
+      if (!this.groupDnaHash) return completed(undefined as GroupProfile | undefined);
+      return pipe(this._mossStore.groupStores, async (groupStoresMap) => {
+        const groupStore = groupStoresMap.get(decodeHashFromBase64(this.groupDnaHash!));
+        if (groupStore) {
+          return toPromise(groupStore.groupProfile);
+        }
+        return undefined;
+      });
+    },
+    () => [this.groupDnaHash, this._mossStore],
   );
 
   renderLogo(logo: string | undefined) {
@@ -84,7 +113,8 @@ export class NotificationAsset extends LitElement {
   }
 
   renderAppletLogo() {
-    switch (this.appletLogo.value.status) {
+    if (!this.appletHash) return html``;
+    switch (this.appletLogo.value?.status) {
       case 'pending':
         return html`<sl-skeleton style="height: 14px; width: 14px;" effect="pulse"></sl-skeleton> `;
       case 'complete':
@@ -96,6 +126,8 @@ export class NotificationAsset extends LitElement {
           .headline=${msg('Error fetching the tool logo')}
           .error=${this.appletLogo.value.error}
         ></display-error>`;
+      default:
+        return html``;
     }
   }
   // renderAppletLogo() {
@@ -103,33 +135,81 @@ export class NotificationAsset extends LitElement {
   // }
 
   getAppletName() {
-    switch (this.appletName.value.status) {
+    if (!this.appletHash) return '';
+    switch (this.appletName.value?.status) {
       case 'pending':
         return 'Loading...';
       case 'complete':
         return this.appletName.value.value;
       case 'error':
         return 'Failed to load applet name';
+      default:
+        return '';
     }
   }
 
+  getSourceName(): string {
+    if (this.appletHash) {
+      return this.getAppletName() || '';
+    }
+    // For group notifications, use the provided sourceName
+    if (this.sourceName) {
+      return this.sourceName;
+    }
+    // Fallback to group name if available
+    if (this.groupDnaHash && this._groupProfile.value?.status === 'complete') {
+      const profile = this._groupProfile.value.value;
+      return profile?.name || '';
+    }
+    return '';
+  }
+
   renderFirstGroupProfileIcon() {
-    switch (this._groupProfiles.value.status) {
+    // For group notifications, render the group profile icon
+    if (this.groupDnaHash) {
+      switch (this._groupProfile.value?.status) {
+        case 'pending':
+          return html`<sl-skeleton style="height: 16px; width: 16px;" effect="pulse"></sl-skeleton>`;
+        case 'complete':
+          const profile = this._groupProfile.value.value;
+          if (!profile?.icon_src) return html``;
+          return html`
+            <img
+              slot="prefix"
+              .src=${profile.icon_src}
+              alt="${profile.name}"
+              title="${this.sourceName || profile.name}"
+              style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
+            />
+          `;
+        case 'error':
+          return html``;
+        default:
+          return html``;
+      }
+    }
+
+    // For applet notifications, render the first group's icon
+    if (!this.appletHash) return html``;
+    switch (this._groupProfiles.value?.status) {
       case 'pending':
         return html`loading...`;
       case 'complete':
-        const groupProfile = this._groupProfiles.value.value[0];
+        const groupProfile = this._groupProfiles.value.value?.[0];
+        if (!groupProfile?.icon_src) return html``;
         return html`
           <img
             slot="prefix"
-            .src=${groupProfile?.icon_src}
-            alt="${groupProfile?.name}"
-            title="${groupProfile?.name}"
+            .src=${groupProfile.icon_src}
+            alt="${groupProfile.name}"
+            title="${groupProfile.name}"
             style="height: 16px; width: 16px; margin-bottom: -2px; margin-right: 3px;"
           />
         `;
       case 'error':
         return html`error`;
+      default:
+        return html``;
     }
   }
 
@@ -145,7 +225,6 @@ export class NotificationAsset extends LitElement {
 
   private async getAgentName(pubkeyB64: string): Promise<string> {
     try {
-      console.log('Looking up profile for agent key:', pubkeyB64);
       let agentPubKey: AgentPubKey;
       try {
         agentPubKey = decodeHashFromBase64(pubkeyB64);
@@ -154,7 +233,24 @@ export class NotificationAsset extends LitElement {
         return pubkeyB64.slice(0, 8) + "..."; // Fallback
       }
 
-      // Get the group stores for this applet
+      // For group notifications, use the group store directly
+      if (this.groupDnaHash && !this.appletHash) {
+        const allGroupStores = await toPromise(this._mossStore.groupStores);
+        const groupStore = allGroupStores.get(decodeHashFromBase64(this.groupDnaHash));
+        if (groupStore) {
+          const profileStore = await toPromise(groupStore.membersProfiles.get(agentPubKey)!);
+          if (profileStore && profileStore.type === 'profile') {
+            return profileStore.profile.entry.nickname || pubkeyB64.slice(0, 8);
+          }
+        }
+        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+      }
+
+      // For applet notifications, get the group stores for this applet
+      if (!this.appletHash) {
+        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+      }
+
       const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash)!);
 
       // Try to get the profile from any of the groups and use the first one
@@ -167,23 +263,18 @@ export class NotificationAsset extends LitElement {
       const profileStore = await toPromise(firstGroupStore!.membersProfiles.get(agentPubKey)!);
 
       if (profileStore && profileStore.type === 'profile') {
-        // console.log('Found profile for agent:', pubkeyB64, profileStore.profile.entry.nickname);
         return profileStore.profile.entry.nickname || pubkeyB64.slice(0, 8);
       }
 
-      // console.log('No profile found for agent:', pubkeyB64);
       return pubkeyB64.slice(0, 8) + "..."; // Fallback
     } catch (error) {
-      // console.error('Failed to get agent name:', error);
       return pubkeyB64.slice(0, 8) + "..."; // Fallback
     }
   }
 
   render() {
-    // console.log('Rendering notification:', this.notification);
     const body = this.notification?.body ?? '';
     const agentKeys = this.extractAgentKeys(body);
-    // console.log('Extracted agent keys from body:', agentKeys);
     const agentNamePromises = agentKeys.map((key) => this.getAgentName(key));
     const bodyWithNamesPromise = Promise.all(agentNamePromises).then((agentNames) => {
       let modifiedBody = body;
@@ -194,7 +285,38 @@ export class NotificationAsset extends LitElement {
       return modifiedBody;
     });
 
-    switch (this.appletLogo.value.status) {
+    // For group notifications (no appletHash), render directly
+    if (this.groupDnaHash && !this.appletHash) {
+      return html` <div
+        class="column notification-card"
+        @click=${() => {
+          this.dispatchEvent(
+            new CustomEvent('open-applet-main', {
+              detail: {
+                groupDnaHash: this.groupDnaHash,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
+      >
+        <div class="row notification-title">
+          ${this.notification?.title}
+          <span style="display: flex; flex: 1;"></span>
+          ${this.renderFirstGroupProfileIcon()}
+        </div>
+        <div>${until(bodyWithNamesPromise, body)}</div>
+        <div class="notification-date">
+          ${this.notification
+          ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
+          : 'unknown date'}
+        </div>
+      </div>`;
+    }
+
+    // For applet notifications
+    switch (this.appletLogo.value?.status) {
       case 'pending':
         return html``;
       case 'complete':
@@ -229,6 +351,8 @@ export class NotificationAsset extends LitElement {
       case 'error':
         console.error(`Failed to get applet logo: ${this.appletLogo.value.error}`);
         return html`[Unknown]`;
+      default:
+        return html``;
     }
   }
 
