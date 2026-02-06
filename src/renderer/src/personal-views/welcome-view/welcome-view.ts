@@ -431,11 +431,14 @@ export class WelcomeView extends LitElement {
 
   updateNavigationClasses() {
     const navList = this.shadowRoot?.querySelector('.update-nav-list');
+    const allStreamsBtn = this.shadowRoot?.querySelector('.all-streams-button.fixed');
     if (navList) {
       if (this.notificationSection) {
         navList.classList.add('left');
+        allStreamsBtn?.classList.add('left');
       } else {
         navList.classList.remove('left');
+        allStreamsBtn?.classList.remove('left');
       }
     }
 
@@ -1145,26 +1148,12 @@ export class WelcomeView extends LitElement {
                   </div>
                 </div> -->
 
-                ${this.notificationSection !== null ? html`
-                <div
-                  class="all-streams-button"
-                  @click=${() => {
-              this.dispatchEvent(new CustomEvent('personal-view-selected', {
-                detail: { type: 'moss', name: 'activity-view' },
-                bubbles: true,
-                composed: true,
-              }));
-            }}
-                >
-                  ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
-                </div>
-                ` : ''}
               </div>
             </div>
           </div>
-          ${this.notificationSection === null && (this._notificationFeed.value?.length ?? 0) > 0 ? html`
+          ${(this._notificationFeed.value?.length ?? 0) > 0 ? html`
           <div
-            class="all-streams-button fixed"
+            class="all-streams-button fixed ${this.notificationSection !== null ? 'left' : ''}"
             @click=${() => {
               this.dispatchEvent(new CustomEvent('personal-view-selected', {
                 detail: { type: 'moss', name: 'activity-view' },
@@ -1918,6 +1907,12 @@ export class WelcomeView extends LitElement {
         transform: translateX(-50%);
         margin-top: 0;
         z-index: 10;
+        transition: left 0.16s ease, transform 0.3s ease;
+      }
+
+      .all-streams-button.fixed.left {
+        left: 19px;
+        transform: translateX(0);
       }
 
       .experimental-anchor {

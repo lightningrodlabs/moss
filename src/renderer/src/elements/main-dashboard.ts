@@ -124,7 +124,7 @@ export type DashboardState =
     viewType: 'personal';
     viewState: PersonalViewState;
   }
-  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash; wal?: WAL};
+  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash; wal?: WAL };
 
 export type AssetViewerState = {
   position: 'side';
@@ -897,7 +897,7 @@ export class MainDashboard extends LitElement {
         ? 'display: flex; flex: 1;'
         : 'display: none;'}${this._drawerResizing
           ? 'pointer-events: none; user-select: none;'
-          : ''} overflow-x: hidden;"
+          : ''} overflow: hidden;"
         @request-create-group=${() => this.createGroupDialog.open()}
         @request-join-group=${(_e) => this.joinGroupDialog.open()}
         @open-applet-main=${(e: CustomEvent) => {
