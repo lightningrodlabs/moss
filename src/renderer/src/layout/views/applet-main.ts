@@ -5,10 +5,15 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { mossStyles } from '../../shared-styles.js';
 import './applet-view.js';
+import {WAL} from "@theweave/api";
 
 @localized()
 @customElement('applet-main')
 export class AppletMain extends LitElement {
+
+  @property()
+  wal: WAL | undefined;
+
   @property(hashProperty('applet-hash'))
   appletHash!: EntryHash;
 
@@ -20,7 +25,7 @@ export class AppletMain extends LitElement {
 
   render() {
       return html`<applet-view
-      .view=${{ type: 'main' }}
+      .view=${{ type: 'main', wal: this.wal}}
       .appletHash=${this.appletHash}
       .groupHash=${this.groupHash}
       .reloading=${this.reloading}

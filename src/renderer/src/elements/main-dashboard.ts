@@ -124,7 +124,7 @@ export type DashboardState =
     viewType: 'personal';
     viewState: PersonalViewState;
   }
-  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
+  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash; wal?: WAL};
 
 export type AssetViewerState = {
   position: 'side';
@@ -264,7 +264,7 @@ export class MainDashboard extends LitElement {
   @provide({ context: openViewsContext })
   @property()
   openViews: AppOpenViews = {
-    openAppletMain: async (appletHash, _wal) => {
+    openAppletMain: async (appletHash, wal) => {
       const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash)!);
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
@@ -284,6 +284,7 @@ export class MainDashboard extends LitElement {
         viewType: 'group',
         groupHash: groupDnaHash,
         appletHash,
+        wal,
       });
     },
     openAppletBlock: (_appletHash, _block, _context) => {
