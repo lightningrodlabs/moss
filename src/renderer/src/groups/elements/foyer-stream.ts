@@ -447,7 +447,7 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="width: 100%;"
+            style="flex: 1;"
             @sl-input=${() => {
         this.disabled = !this._msgInput?.value;
       }}
@@ -460,8 +460,7 @@ export class FoyerStream extends LitElement {
             placeholder=${msg('my message')}
           ></sl-input>
           <button
-            class="moss-button"
-            style="margin-left: 10px; padding: 0 11px; border-radius: 9px;"
+            class="moss-button send-button"
             ?disabled=${this.disabled}
             @click=${() => this.sendMessage()}
           >
@@ -485,7 +484,9 @@ export class FoyerStream extends LitElement {
         flex: 1;
         flex-direction: column;
         width: 100%;
+        min-width: 0;
         position: relative;
+        overflow: hidden;
       }
       .header {
         margin-top: 5px;
@@ -499,6 +500,7 @@ export class FoyerStream extends LitElement {
         flex: auto;
         flex-direction: column;
         overflow-y: auto;
+        overflow-x: hidden;
       }
       .msg {
         display: flex;
@@ -510,11 +512,18 @@ export class FoyerStream extends LitElement {
         flex-shrink: 1;
         align-self: flex-start;
         background-color: white;
+        max-width: calc(100% - 10px);
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .msg-content {
         display: flex;
         flex-direction: column;
         font-size: 16px;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       a {
         text-decoration: underline;
@@ -533,6 +542,13 @@ export class FoyerStream extends LitElement {
         display: flex;
         justify-content: flex-end;
         padding: 5px;
+        gap: 8px;
+      }
+
+      .send-button {
+        padding: 0 11px;
+        border-radius: 9px;
+        flex-shrink: 0;
       }
       .msg-meta {
         display: flex;
