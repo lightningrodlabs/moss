@@ -732,8 +732,10 @@ export class MossStore {
           weaveLocation,
           options.sourceName,
         );
+      }
 
-        // 5. Play notification sound
+      // 5. Play notification sound (based on urgency, independent of OS notification)
+      if (!mainWindowFocused && Date.now() - notification.timestamp < 300000) {
         const soundSettings = this.persistedStore.notificationSoundSettings.value();
         notificationAudio.playForUrgency(notification.urgency, soundSettings);
       }

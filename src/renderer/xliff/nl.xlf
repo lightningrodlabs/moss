@@ -1762,17 +1762,9 @@
   <source>Volume</source>
   <target>Volume</target>
 </trans-unit>
-<trans-unit id="s5bd2875d95bfb460">
-  <source>Mentions only</source>
-  <target>Alleen vermeldingen</target>
-</trans-unit>
 <trans-unit id="s5be3c6d61cd9182f">
   <source>Notifications</source>
   <target>Meldingen</target>
-</trans-unit>
-<trans-unit id="s669b18c6d2d9c95b">
-  <source>None</source>
-  <target>Geen</target>
 </trans-unit>
 <trans-unit id="s71cd19dacc7db8a5">
   <source>Low (activity feed only)</source>
@@ -1811,6 +1803,24 @@
 </trans-unit>
 <trans-unit id="s38442d82a192c2f6">
   <source>Failed to add custom sound</source>
+</trans-unit>
+<trans-unit id="s302cbb19bf9a174a">
+  <source>Off</source>
+</trans-unit>
+<trans-unit id="s24f3a319b88552c1">
+  <source>Low</source>
+</trans-unit>
+<trans-unit id="sac6bdc71f750ac96">
+  <source>Medium</source>
+</trans-unit>
+<trans-unit id="s9deeefd89ca8a81d">
+  <source>High</source>
+</trans-unit>
+<trans-unit id="s4880dc3125543292">
+  <source>Mentions</source>
+</trans-unit>
+<trans-unit id="se17be80819e7e8b5">
+  <source>High = OS notification, Medium = systray, Low = feed only</source>
 </trans-unit>
 </body>
 </file>

@@ -62,3 +62,24 @@ export type GlobalNotificationSoundSettings = {
   };
   customSounds: CustomSound[]; // User-added sounds
 };
+
+// ============================================
+// Foyer Notification Settings
+// ============================================
+
+/** Urgency level for foyer messages, or 'none' to disable */
+export type FoyerMessageUrgency = NotificationLevel | 'none';
+
+/** Foyer notification settings - per message type urgency */
+export type FoyerNotificationSettings = {
+  /** Urgency level when you are mentioned */
+  mentions: FoyerMessageUrgency;
+  /** Urgency level for all other messages */
+  allMessages: FoyerMessageUrgency;
+};
+
+/** Default foyer notification settings */
+export const DEFAULT_FOYER_NOTIFICATION_SETTINGS: FoyerNotificationSettings = {
+  mentions: 'high',
+  allMessages: 'medium',
+};

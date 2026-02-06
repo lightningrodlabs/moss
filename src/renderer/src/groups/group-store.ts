@@ -89,6 +89,7 @@ import {
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
 import {AppletStore} from "../applets/applet-store";
+import { FoyerNotificationSettings, DEFAULT_FOYER_NOTIFICATION_SETTINGS } from '../applets/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const PING_AGENTS_FREQUENCY_MS = 8000;
@@ -142,12 +143,10 @@ export class GroupStore {
   });
 
   /**
-   * Foyer notification setting for this group.
-   * - 'all': Notify for all messages (high urgency)
-   * - 'mentions': Notify only when mentioned (medium urgency, high when mentioned)
-   * - 'none': No notifications (low urgency, no OS notification)
+   * Foyer notification settings for this group.
+   * Allows separate urgency levels for mentions vs all other messages.
    */
-  private _foyerNotificationSetting: Writable<'all' | 'mentions' | 'none'> = writable('mentions');
+  private _foyerNotificationSettings: Writable<FoyerNotificationSettings> = writable(DEFAULT_FOYER_NOTIFICATION_SETTINGS);
 
   foyerStore!: FoyerStore;
 
@@ -196,8 +195,8 @@ export class GroupStore {
       },
     );
 
-    // Load persisted foyer notification setting
-    this.loadFoyerNotificationSetting();
+    // Load persisted foyer notification settings
+    this.loadFoyerNotificationSettings();
 
     this._peerStatuses = writable(undefined);
 
@@ -895,38 +894,72 @@ export class GroupStore {
   }
 
   /**
-   * Get the foyer notification setting for this group.
+   * Get the foyer notification settings for this group.
    */
-  getFoyerNotificationSetting(): Readable<'all' | 'mentions' | 'none'> {
-    return derived(this._foyerNotificationSetting, (setting) => setting);
+  getFoyerNotificationSettings(): Readable<FoyerNotificationSettings> {
+    return derived(this._foyerNotificationSettings, (settings) => settings);
   }
 
   /**
-   * Get the current foyer notification setting value.
+   * Get the current foyer notification settings value.
    */
-  getFoyerNotificationSettingValue(): 'all' | 'mentions' | 'none' {
-    return get(this._foyerNotificationSetting);
+  getFoyerNotificationSettingsValue(): FoyerNotificationSettings {
+    return get(this._foyerNotificationSettings);
   }
 
   /**
-   * Set the foyer notification setting for this group.
+   * Set the foyer notification settings for this group.
    * Persists to localStorage.
    */
-  setFoyerNotificationSetting(setting: 'all' | 'mentions' | 'none') {
-    this._foyerNotificationSetting.set(setting);
-    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
-    localStorage.setItem(key, setting);
+  setFoyerNotificationSettings(settings: FoyerNotificationSettings) {
+    this._foyerNotificationSettings.set(settings);
+    const key = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    localStorage.setItem(key, JSON.stringify(settings));
   }
 
   /**
-   * Load the foyer notification setting from localStorage.
-   * Called during initialization.
+   * Load the foyer notification settings from localStorage.
+   * Called during initialization. Handles migration from old format.
    */
-  loadFoyerNotificationSetting() {
-    const key = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
-    const stored = localStorage.getItem(key);
-    if (stored && (stored === 'all' || stored === 'mentions' || stored === 'none')) {
-      this._foyerNotificationSetting.set(stored);
+  loadFoyerNotificationSettings() {
+    const newKey = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    const oldKey = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+
+    // Try new format first
+    const storedNew = localStorage.getItem(newKey);
+    if (storedNew) {
+      try {
+        const parsed = JSON.parse(storedNew) as FoyerNotificationSettings;
+        if (parsed.mentions !== undefined && parsed.allMessages !== undefined) {
+          this._foyerNotificationSettings.set(parsed);
+          return;
+        }
+      } catch {
+        // Invalid JSON, fall through to migration
+      }
+    }
+
+    // Migrate from old format if present
+    const storedOld = localStorage.getItem(oldKey);
+    if (storedOld) {
+      let migratedSettings: FoyerNotificationSettings;
+      switch (storedOld) {
+        case 'all':
+          migratedSettings = { mentions: 'high', allMessages: 'high' };
+          break;
+        case 'mentions':
+          migratedSettings = { mentions: 'high', allMessages: 'none' };
+          break;
+        case 'none':
+          migratedSettings = { mentions: 'none', allMessages: 'none' };
+          break;
+        default:
+          migratedSettings = DEFAULT_FOYER_NOTIFICATION_SETTINGS;
+      }
+      this._foyerNotificationSettings.set(migratedSettings);
+      // Save in new format and remove old key
+      localStorage.setItem(newKey, JSON.stringify(migratedSettings));
+      localStorage.removeItem(oldKey);
     }
   }
 
