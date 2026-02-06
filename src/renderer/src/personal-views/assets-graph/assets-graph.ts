@@ -139,10 +139,10 @@ export class AssetsGraph extends LitElement {
 
             try {
               assetInfoSrc = await toPromise(this.mossStore.assetInfo.get(srcWalStringified));
-            } catch (e) {}
+            } catch (e) { }
             try {
               assetInfoDst = await toPromise(this.mossStore.assetInfo.get(dstWalStringified));
-            } catch (e) {}
+            } catch (e) { }
 
             // Add the src's asset node if it doesn't exist yet
             if (!nodes.find((node) => node.id === srcWalStringified)) {
@@ -316,8 +316,8 @@ export class AssetsGraph extends LitElement {
         id="graph-container"
         style="${this.loading ? 'display: none;' : ''}"
         @click=${(e) => {
-          console.log('Got click event: ', e);
-        }}
+        console.log('Got click event: ', e);
+      }}
       ></div>
       <button
         class="moss-button"
@@ -336,8 +336,10 @@ export class AssetsGraph extends LitElement {
       :host {
         display: block;
         width: calc(100vw - 74px);
-        height: calc(100vh - 138px);
+        height: calc(100vh - 17px);
         color: white;
+        background: rgb(0,0,0,.2);
+        border-radius: 10px;
         /* background: white; */
       }
       #graph-container {

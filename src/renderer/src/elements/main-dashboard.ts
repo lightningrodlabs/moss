@@ -2017,7 +2017,7 @@ export class MainDashboard extends LitElement {
         }
 
         .top-80 {
-          top: 80px;
+          top: 8px;
           border-radius: 10px;
         }
 

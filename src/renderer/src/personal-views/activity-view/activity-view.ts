@@ -422,18 +422,18 @@ export class ActivityView extends LitElement {
                   .appletHash=${appletHash}
                   .sourceName=${notification.sourceName}
                   @open-applet-main=${(e) => {
-                    console.log('notification clicked', e.detail);
-                    this.dispatchEvent(
-                      new CustomEvent('open-applet-main', {
-                        detail: {
-                          applet: appletHash,
-                          wal: e.detail.wal,
-                        },
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+                  console.log('notification clicked', e.detail);
+                  this.dispatchEvent(
+                    new CustomEvent('open-applet-main', {
+                      detail: {
+                        applet: appletHash,
+                        wal: e.detail.wal,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                }}
                 ></notification-asset>
               `;
             } else {
@@ -445,17 +445,17 @@ export class ActivityView extends LitElement {
                   .groupDnaHash=${notification.source.groupDnaHash}
                   .sourceName=${notification.sourceName}
                   @open-applet-main=${() => {
-                    // Navigate to group foyer
-                    if (notification.source.type === 'group') {
-                      this.dispatchEvent(
-                        new CustomEvent('open-group', {
-                          detail: { groupDnaHash: decodeHashFromBase64(notification.source.groupDnaHash) },
-                          bubbles: true,
-                          composed: true,
-                        }),
-                      );
-                    }
-                  }}
+                  // Navigate to group foyer
+                  if (notification.source.type === 'group') {
+                    this.dispatchEvent(
+                      new CustomEvent('open-group', {
+                        detail: { groupDnaHash: decodeHashFromBase64(notification.source.groupDnaHash) },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }
+                }}
                 ></notification-asset>
               `;
             }
@@ -482,8 +482,8 @@ export class ActivityView extends LitElement {
   static styles = [
     css`
       :host {
-        background: var(--moss-grey-green);
         border-radius: 10px;
+        background: rgb(0,0,0,.2);
       }
       .feed {
         padding: 30px;
