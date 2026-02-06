@@ -1714,6 +1714,98 @@
   <source>unknown...</source>
   <target>onbekend...</target>
 </trans-unit>
+<trans-unit id="s020d96334aaddfa3">
+  <source>Add Sound</source>
+  <target>Geluid toevoegen</target>
+</trans-unit>
+<trans-unit id="s039e128122096637">
+  <source>Notification Settings</source>
+  <target>Meldingsinstellingen</target>
+</trans-unit>
+<trans-unit id="s0862df34652cf74e">
+  <source>custom</source>
+  <target>aangepast</target>
+</trans-unit>
+<trans-unit id="s16d5bc6f67ef2122">
+  <source>Accepted formats: MP3, WAV, OGG. Maximum size: 500KB.</source>
+  <target>Toegestane formaten: MP3, WAV, OGG. Maximale grootte: 500KB.</target>
+</trans-unit>
+<trans-unit id="s353e562c69a4f7ff">
+  <source>No custom sounds added yet.</source>
+  <target>Nog geen aangepaste geluiden toegevoegd.</target>
+</trans-unit>
+<trans-unit id="s356b40f5b34b9e97">
+  <source>Custom sound added</source>
+  <target>Aangepast geluid toegevoegd</target>
+</trans-unit>
+<trans-unit id="s4de6b5d384d8a3db">
+  <source>Enable notification sounds</source>
+  <target>Meldingsgeluiden inschakelen</target>
+</trans-unit>
+<trans-unit id="s53f341e0b248049c">
+  <source>Custom sound deleted</source>
+  <target>Aangepast geluid verwijderd</target>
+</trans-unit>
+<trans-unit id="s540ee2c491d959c0">
+  <source>Play sound</source>
+  <target>Geluid afspelen</target>
+</trans-unit>
+<trans-unit id="s56656631a0a6a976">
+  <source>Custom Sounds</source>
+  <target>Aangepaste geluiden</target>
+</trans-unit>
+<trans-unit id="s57dcf88cbea048e6">
+  <source>Cannot delete sound while it is in use. Change urgency settings first.</source>
+  <target>Kan geluid niet verwijderen terwijl het in gebruik is. Wijzig eerst de urgentie-instellingen.</target>
+</trans-unit>
+<trans-unit id="s5b528a7f6c0c40af">
+  <source>Volume</source>
+  <target>Volume</target>
+</trans-unit>
+<trans-unit id="s5bd2875d95bfb460">
+  <source>Mentions only</source>
+  <target>Alleen vermeldingen</target>
+</trans-unit>
+<trans-unit id="s5be3c6d61cd9182f">
+  <source>Notifications</source>
+  <target>Meldingen</target>
+</trans-unit>
+<trans-unit id="s669b18c6d2d9c95b">
+  <source>None</source>
+  <target>Geen</target>
+</trans-unit>
+<trans-unit id="s71cd19dacc7db8a5">
+  <source>Low (activity feed only)</source>
+  <target>Laag (alleen activiteitenstroom)</target>
+</trans-unit>
+<trans-unit id="s732fb66bd56ac444">
+  <source>Sound file must be under 500KB</source>
+  <target>Geluidsbestand moet kleiner zijn dan 500KB</target>
+</trans-unit>
+<trans-unit id="s7f845078d7a5c0b5">
+  <source>from</source>
+  <target>van</target>
+</trans-unit>
+<trans-unit id="s853df2344fe181eb">
+  <source>Medium (systray icon)</source>
+  <target>Gemiddeld (systeemvak-icoon)</target>
+</trans-unit>
+<trans-unit id="s8cdc14b51d689d56">
+  <source>Sound per urgency level</source>
+  <target>Geluid per urgentieniveau</target>
+</trans-unit>
+<trans-unit id="sa67b347e72791548">
+  <source>All messages</source>
+  <target>Alle berichten</target>
+</trans-unit>
+<trans-unit id="sb20938e9fc4d395b">
+  <source>Configure sounds for notifications. Sounds only play when the window is not focused.</source>
+  <target>Configureer geluiden voor meldingen. Geluiden worden alleen afgespeeld wanneer het venster niet actief is.</target>
+</trans-unit>
+<trans-unit id="se7ef3f5e89cf8015">
+  <source>High (OS notification)</source>
+  <target>Hoog (systeemmelding)</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
