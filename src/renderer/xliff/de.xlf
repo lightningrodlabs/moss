@@ -1752,21 +1752,27 @@
 </trans-unit>
 <trans-unit id="sa43aa7dbf1251f6a">
   <source>This sound has already been added</source>
+  <target>Dieser Sound wurde bereits hinzugefügt</target>
 </trans-unit>
 <trans-unit id="s38442d82a192c2f6">
   <source>Failed to add custom sound</source>
+  <target>Benutzerdefinierter Sound konnte nicht hinzugefügt werden</target>
 </trans-unit>
 <trans-unit id="s302cbb19bf9a174a">
   <source>Off</source>
+  <target>Aus</target>
 </trans-unit>
 <trans-unit id="s24f3a319b88552c1">
   <source>Low</source>
+  <target>Niedrig</target>
 </trans-unit>
 <trans-unit id="sac6bdc71f750ac96">
   <source>Medium</source>
+  <target>Mittel</target>
 </trans-unit>
 <trans-unit id="s9deeefd89ca8a81d">
   <source>High</source>
+  <target>Hoch</target>
 </trans-unit>
 <trans-unit id="s4880dc3125543292">
   <source>Mentions</source>
@@ -1774,47 +1780,65 @@
 </trans-unit>
 <trans-unit id="se17be80819e7e8b5">
   <source>High = OS notification, Medium = systray, Low = feed only</source>
+  <target>Hoch = Systembenachrichtigung, Mittel = Taskleiste, Niedrig = nur Feed</target>
 </trans-unit>
 <trans-unit id="s81023d00acf4c745">
-  <source>Ah, this wonderful 
+  <source>Ah, this wonderful
 P2P world!</source>
+  <target>Ah, diese wunderbare
+P2P-Welt!</target>
 </trans-unit>
 <trans-unit id="sbea79f14f05cd325">
-  <source>Good morning, 
+  <source>Good morning,
 you early-bird!</source>
+  <target>Guten Morgen,
+du Frühaufsteher!</target>
 </trans-unit>
 <trans-unit id="sfe9da2e4fabe48a7">
   <source>Good morning,
  beautiful human!</source>
+  <target>Guten Morgen,
+ wunderbarer Mensch!</target>
 </trans-unit>
 <trans-unit id="s1b1be7d5b942bfd5">
-  <source>Welcome back, 
+  <source>Welcome back,
 beautiful human!</source>
+  <target>Willkommen zurück,
+wunderbarer Mensch!</target>
 </trans-unit>
 <trans-unit id="s2341b57b43fa7a22">
-  <source>The best part of the day 
+  <source>The best part of the day
 starts now</source>
+  <target>Der beste Teil des Tages
+beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="sce3d87d60ac1c569">
   <source>Error fetching groups</source>
+  <target>Fehler beim Abrufen der Gruppen</target>
 </trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
+  <target>Verwendet in:</target>
 </trans-unit>
 <trans-unit id="s5ceed5d063b51b2a">
   <source>New Moss Sprouted!</source>
+  <target>Neues Moss ist gewachsen!</target>
 </trans-unit>
 <trans-unit id="s7d2dbe7bf898856e">
   <source>A new release of Moss with exciting features and improvements.</source>
+  <target>Eine neue Version von Moss mit aufregenden Funktionen und Verbesserungen.</target>
 </trans-unit>
 <trans-unit id="s5671fb95bc3d5b04">
   <source>Update now</source>
+  <target>Jetzt aktualisieren</target>
 </trans-unit>
 <trans-unit id="s0c63ff1e35553045">
   <source>No Tool updates available.</source>
+  <target>Keine Tool-Updates verfügbar.</target>
 </trans-unit>
 <trans-unit id="sdb071f2c9c3b62a9">
   <source>More life wisdom.</source>
+  <target>Mehr Lebensweisheiten.</target>
 </trans-unit>
 <trans-unit id="sd65bfa5fe5f7127a">
   <source>No notifications yet...</source>
@@ -1862,9 +1886,15 @@ starts now</source>
 </trans-unit>
 <trans-unit id="sb718ee133c3c3fb8">
   <source>Artefacts graph</source>
+  <target>Artefakte-Graph</target>
 </trans-unit>
 <trans-unit id="s895db9f1c2bbc012">
   <source>Experimental features</source>
+  <target>Experimentelle Funktionen</target>
+</trans-unit>
+<trans-unit id="s0218af3f7efc5872">
+  <source>Moss news</source>
+  <target>Moss-Neuigkeiten</target>
 </trans-unit>
 </body>
 </file>

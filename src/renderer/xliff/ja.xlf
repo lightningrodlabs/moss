@@ -1752,21 +1752,27 @@
 </trans-unit>
 <trans-unit id="sa43aa7dbf1251f6a">
   <source>This sound has already been added</source>
+  <target>このサウンドは既に追加されています</target>
 </trans-unit>
 <trans-unit id="s38442d82a192c2f6">
   <source>Failed to add custom sound</source>
+  <target>カスタムサウンドの追加に失敗しました</target>
 </trans-unit>
 <trans-unit id="s302cbb19bf9a174a">
   <source>Off</source>
+  <target>オフ</target>
 </trans-unit>
 <trans-unit id="s24f3a319b88552c1">
   <source>Low</source>
+  <target>低</target>
 </trans-unit>
 <trans-unit id="sac6bdc71f750ac96">
   <source>Medium</source>
+  <target>中</target>
 </trans-unit>
 <trans-unit id="s9deeefd89ca8a81d">
   <source>High</source>
+  <target>高</target>
 </trans-unit>
 <trans-unit id="s4880dc3125543292">
   <source>Mentions</source>
@@ -1774,47 +1780,65 @@
 </trans-unit>
 <trans-unit id="se17be80819e7e8b5">
   <source>High = OS notification, Medium = systray, Low = feed only</source>
+  <target>高 = システム通知、中 = システムトレイ、低 = フィードのみ</target>
 </trans-unit>
 <trans-unit id="s81023d00acf4c745">
-  <source>Ah, this wonderful 
+  <source>Ah, this wonderful
 P2P world!</source>
+  <target>ああ、この素晴らしい
+P2Pの世界！</target>
 </trans-unit>
 <trans-unit id="sbea79f14f05cd325">
-  <source>Good morning, 
+  <source>Good morning,
 you early-bird!</source>
+  <target>おはよう、
+早起きさん！</target>
 </trans-unit>
 <trans-unit id="sfe9da2e4fabe48a7">
   <source>Good morning,
  beautiful human!</source>
+  <target>おはよう、
+ 素敵な人！</target>
 </trans-unit>
 <trans-unit id="s1b1be7d5b942bfd5">
-  <source>Welcome back, 
+  <source>Welcome back,
 beautiful human!</source>
+  <target>おかえりなさい、
+素敵な人！</target>
 </trans-unit>
 <trans-unit id="s2341b57b43fa7a22">
-  <source>The best part of the day 
+  <source>The best part of the day
 starts now</source>
+  <target>今日の最高の時間が
+今始まります</target>
 </trans-unit>
 <trans-unit id="sce3d87d60ac1c569">
   <source>Error fetching groups</source>
+  <target>グループの取得中にエラーが発生しました</target>
 </trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
+  <target>使用場所：</target>
 </trans-unit>
 <trans-unit id="s5ceed5d063b51b2a">
   <source>New Moss Sprouted!</source>
+  <target>新しいMossが芽吹きました！</target>
 </trans-unit>
 <trans-unit id="s7d2dbe7bf898856e">
   <source>A new release of Moss with exciting features and improvements.</source>
+  <target>ワクワクする機能と改善を備えたMossの新しいリリースです。</target>
 </trans-unit>
 <trans-unit id="s5671fb95bc3d5b04">
   <source>Update now</source>
+  <target>今すぐ更新</target>
 </trans-unit>
 <trans-unit id="s0c63ff1e35553045">
   <source>No Tool updates available.</source>
+  <target>利用可能なツールの更新はありません。</target>
 </trans-unit>
 <trans-unit id="sdb071f2c9c3b62a9">
   <source>More life wisdom.</source>
+  <target>もっと人生の知恵を。</target>
 </trans-unit>
 <trans-unit id="sd65bfa5fe5f7127a">
   <source>No notifications yet...</source>
@@ -1862,9 +1886,15 @@ starts now</source>
 </trans-unit>
 <trans-unit id="sb718ee133c3c3fb8">
   <source>Artefacts graph</source>
+  <target>アーティファクトグラフ</target>
 </trans-unit>
 <trans-unit id="s895db9f1c2bbc012">
   <source>Experimental features</source>
+  <target>実験的機能</target>
+</trans-unit>
+<trans-unit id="s0218af3f7efc5872">
+  <source>Moss news</source>
+  <target>Mossニュース</target>
 </trans-unit>
 </body>
 </file>
