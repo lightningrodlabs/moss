@@ -38,17 +38,9 @@
   <source>Failed to update Tool.</source>
   <target>Tool-Aktualisierung fehlgeschlagen.</target>
 </trans-unit>
-<trans-unit id="sb80aa454e12cd901">
-  <source>Install Update</source>
-  <target>Update installieren</target>
-</trans-unit>
 <trans-unit id="s32322dc45e502559">
   <source>Decline</source>
   <target>Ablehnen</target>
-</trans-unit>
-<trans-unit id="s7ec9f93dd4d1a712">
-  <source>Install and Restart</source>
-  <target>Installieren und neu starten</target>
 </trans-unit>
 <trans-unit id="sbb588bb505779122">
   <source>Feedback</source>
@@ -1354,37 +1346,9 @@
   <source>If you have more general feedback or are not familiar with Github, you can write to the following email address:</source>
   <target>Wenn Sie allgemeineres Feedback haben oder mit Github nicht vertraut sind, können Sie an folgende E-Mail-Adresse schreiben:</target>
 </trans-unit>
-<trans-unit id="s890c46ca8389a6bb">
-  <source>Moss Update Available:</source>
-  <target>Moss-Update verfügbar:</target>
-</trans-unit>
 <trans-unit id="sb5137a7885462e4e">
   <source>Installing...</source>
   <target>Wird installiert...</target>
-</trans-unit>
-<trans-unit id="s419da48ed70a4441">
-  <source>Moss Updates</source>
-  <target>Moss-Neuigkeiten</target>
-</trans-unit>
-<trans-unit id="s2a9e85cf8b4290be">
-  <source>Thank you for surfing the edge of</source>
-  <target>Vielen Dank, dass Sie an der Spitze von</target>
-</trans-unit>
-<trans-unit id="sc905c0e43dffd27a">
-  <source>the Weave</source>
-  <target>the Weave</target>
-</trans-unit>
-<trans-unit id="s9cf80b52fc9a7340">
-  <source>Below are relevant updates for early weavers.</source>
-  <target>surfen. Unten finden Sie relevante Updates für frühe Weber.</target>
-</trans-unit>
-<trans-unit id="s94258cf18a3d4dd1">
-  <source>No big waves lately...</source>
-  <target>Keine großen Wellen in letzter Zeit...</target>
-</trans-unit>
-<trans-unit id="sa84f7d884e8b4074">
-  <source>Tool Update</source>
-  <target>Tool-Update</target>
 </trans-unit>
 <trans-unit id="sd3dd70be26a25f83">
   <source>Updating Tool...</source>
@@ -1821,6 +1785,79 @@
 </trans-unit>
 <trans-unit id="se17be80819e7e8b5">
   <source>High = OS notification, Medium = systray, Low = feed only</source>
+</trans-unit>
+<trans-unit id="s81023d00acf4c745">
+  <source>Ah, this wonderful 
+P2P world!</source>
+</trans-unit>
+<trans-unit id="sbea79f14f05cd325">
+  <source>Good morning, 
+you early-bird!</source>
+</trans-unit>
+<trans-unit id="sfe9da2e4fabe48a7">
+  <source>Good morning,
+ beautiful human!</source>
+</trans-unit>
+<trans-unit id="s1b1be7d5b942bfd5">
+  <source>Welcome back, 
+beautiful human!</source>
+</trans-unit>
+<trans-unit id="s2341b57b43fa7a22">
+  <source>The best part of the day 
+starts now</source>
+</trans-unit>
+<trans-unit id="sce3d87d60ac1c569">
+  <source>Error fetching groups</source>
+</trans-unit>
+<trans-unit id="sb0924356e720530f">
+  <source>Used in:</source>
+</trans-unit>
+<trans-unit id="s5ceed5d063b51b2a">
+  <source>New Moss Sprouted!</source>
+</trans-unit>
+<trans-unit id="s7d2dbe7bf898856e">
+  <source>A new release of Moss with exciting features and improvements.</source>
+</trans-unit>
+<trans-unit id="s5671fb95bc3d5b04">
+  <source>Update now</source>
+</trans-unit>
+<trans-unit id="s0c63ff1e35553045">
+  <source>No Tool updates available.</source>
+</trans-unit>
+<trans-unit id="sdb071f2c9c3b62a9">
+  <source>More life wisdom.</source>
+</trans-unit>
+<trans-unit id="sd65bfa5fe5f7127a">
+  <source>No notifications yet...</source>
+  <target>Noch keine Benachrichtigungen...</target>
+</trans-unit>
+<trans-unit id="s0270a627f469fd72">
+  <source>Unknown Group</source>
+  <target>Unbekannte Gruppe</target>
+</trans-unit>
+<trans-unit id="s41142754e22041a0">
+  <source>Open asset in sidebar</source>
+  <target>Asset in Seitenleiste öffnen</target>
+</trans-unit>
+<trans-unit id="s650638ab4e014763">
+  <source>Open in <x id="0" equiv-text="${name}"/> ↗</source>
+  <target>Öffnen in <x id="0" equiv-text="${name}"/> ↗</target>
+</trans-unit>
+<trans-unit id="sdd7749b3a33b2112">
+  <source>Open in Group ↗</source>
+  <target>In Gruppe öffnen ↗</target>
+</trans-unit>
+<trans-unit id="sd4132dcfb97806e6">
+  <source>Software updates</source>
+  <target>Software-Updates</target>
+</trans-unit>
+<trans-unit id="s6b70c8c339cff1ab">
+  <source>General notifications</source>
+  <target>Allgemeine Benachrichtigungen</target>
+</trans-unit>
+<trans-unit id="sb63746081fd71985">
+  <source>All streams</source>
+  <target>Alle Streams</target>
 </trans-unit>
 </body>
 </file>

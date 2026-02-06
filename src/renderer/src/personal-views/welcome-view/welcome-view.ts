@@ -1,6 +1,6 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../shared-styles.js';
 import { createMockToolUpdates, createMockAppletsData, createMockGroupsData } from './mock-data.js';
@@ -824,15 +824,15 @@ export class WelcomeView extends LitElement {
         </div>
         <div class="notification-center">
           <span>${frameNotification.body}</span>
-          in <b>${sourceName || 'Unknown Group'}</b>
+          ${msg('in')} <b>${sourceName || msg('Unknown Group')}</b>
         </div>
         <div class="notification-right">
           <div class="notification-date">
-            ${this.timeAgo.format(new Date(frameNotification.timestamp), 'twitter')} ago
+            ${this.timeAgo.format(new Date(frameNotification.timestamp), 'twitter')}
           </div>
           <div class="notification-buttons">
             ${aboutWal ? html`
-              <sl-tooltip content="Open asset in sidebar" placement="left">
+              <sl-tooltip content=${msg('Open asset in sidebar')} placement="left">
                 <button
                   class="open-wal-button"
                   @click=${(e: Event) => {
@@ -854,7 +854,7 @@ export class WelcomeView extends LitElement {
               </sl-tooltip>
             ` : html``}
             <button class="open-group-button" @click=${openGroup}>
-              ${until(groupNamePromise.then((name) => html`Open in ${name} ↗`), html`Open in Group ↗`)}
+              ${until(groupNamePromise.then((name) => msg(str`Open in ${name} ↗`)), msg('Open in Group ↗'))}
             </button>
           </div>
         </div>
@@ -901,7 +901,7 @@ export class WelcomeView extends LitElement {
                   class="notification-filter-header">
                   <span>${(() => {
             const pluralized = pluralize(type, this.notificationTypes[type]);
-            return msg(pluralized.charAt(0).toUpperCase() + pluralized.slice(1));
+            return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
           })()}</span>
                   <span>${this.notificationTypes[type] || 0}</span>
                 </div>
