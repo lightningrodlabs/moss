@@ -1,7 +1,7 @@
-import { html, LitElement, css } from 'lit';
+import { html, LitElement, css, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
-import { notify, notifyError } from '@holochain-open-dev/elements';
+import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../shared-styles.js';
 import { createMockToolUpdates, createMockAppletsData, createMockGroupsData } from './mock-data.js';
 import { mossStoreContext } from '../../context.js';
@@ -20,17 +20,23 @@ import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import pluralize from 'pluralize';
 import quotesData from './SnapTalkFunnies.json';
+import { mdiGraph } from '@mdi/js';
+import { AppletId } from '@theweave/api';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 
 import '../../elements/_new_design/moss-dialog.js';
 import { PersistedStore } from '../../persisted-store.js';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '../../elements/dialogs/select-group-dialog.js';
 import './elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
+import '../../applets/elements/applet-logo-raw.js';
 import '../../applets/elements/applet-title.js';
 import '../../elements/dialogs/loading-dialog.js';
 import './elements/notification-card.js'
+
 
 type UpdateFeedMessageGeneric =
   | {
@@ -81,6 +87,24 @@ export class WelcomeView extends LitElement {
   @state()
   _designFeedbackMode = false;
 
+  @state()
+  _experimentalMenuOpen = false;
+
+  _appletClasses = new StoreSubscriber(
+    this,
+    () => this._mossStore.runningAppletClasses,
+    () => [this, this._mossStore],
+  );
+
+  private _clickOutsideHandler = (e: MouseEvent) => {
+    const path = e.composedPath();
+    const dropdown = this.shadowRoot?.querySelector('.experimental-dropdown');
+    const button = this.shadowRoot?.querySelector('.experimental-button');
+    if (dropdown && button && !path.includes(dropdown) && !path.includes(button)) {
+      this._experimentalMenuOpen = false;
+    }
+  };
+
   private _persistedStore = new PersistedStore();
   notificationSection: string | null = null;
 
@@ -98,11 +122,13 @@ export class WelcomeView extends LitElement {
     super.connectedCallback();
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
     window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+    document.addEventListener('click', this._clickOutsideHandler, true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+    document.removeEventListener('click', this._clickOutsideHandler, true);
   }
 
   private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
@@ -466,6 +492,105 @@ export class WelcomeView extends LitElement {
         }
       }, 100);
     }
+  }
+
+  private _selectExperimentalView(detail: { type: string; name?: string; toolCompatibilityId?: string }) {
+    this._experimentalMenuOpen = false;
+    this.dispatchEvent(
+      new CustomEvent('personal-view-selected', {
+        detail,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  renderToolMenuItems(
+    tools: Record<ToolCompatibilityId, { appletIds: AppletId[]; toolName: string }>,
+  ) {
+    return html`${Object.entries(tools).map(
+      ([toolCompatibilityId, info]) => html`
+        <button
+          class="home-menu-item"
+          @click=${() => {
+            this._selectExperimentalView({
+              type: 'tool',
+              toolCompatibilityId,
+            });
+          }}
+        >
+          <applet-logo-raw
+            .toolIdentifier=${{
+              type: 'class' as const,
+              toolCompatibilityId,
+            }}
+            style="--size: 32px; --border-radius: 6px;"
+          ></applet-logo-raw>
+          <span class="exp-menu-item-label">${info.toolName} cross-group</span>
+        </button>
+      `,
+    )}`;
+  }
+
+  renderExperimentalMenu() {
+    if (!this._experimentalMenuOpen) return nothing;
+
+    const toolItems =
+      this._appletClasses.value.status === 'complete'
+        ? this.renderToolMenuItems(this._appletClasses.value.value)
+        : nothing;
+
+    return html`
+      <div class="experimental-dropdown">
+        <button
+          class="home-menu-item"
+          @click=${() => {
+            this._selectExperimentalView({ type: 'moss', name: 'activity-view' });
+          }}
+        >
+          <img src="mountain_stream.svg" style="height: 32px; width: 32px;" />
+          <span class="exp-menu-item-label">${msg('All streams')}</span>
+        </button>
+
+        <button
+          class="home-menu-item"
+          @click=${() => {
+            this._selectExperimentalView({ type: 'moss', name: 'assets-graph' });
+          }}
+        >
+          <sl-icon
+            .src=${wrapPathInSvg(mdiGraph)}
+            style="font-size: 32px; color: white;"
+          ></sl-icon>
+          <span class="exp-menu-item-label">${msg('Artefacts graph')}</span>
+        </button>
+
+        ${toolItems}
+      </div>
+    `;
+  }
+
+  renderExperimentalButton() {
+    return html`
+      <div class="experimental-anchor ${this._experimentalMenuOpen ? 'anchor-open' : ''}">
+        <div class="experimental-glow"></div>
+        ${this.renderExperimentalMenu()}
+        <sl-tooltip .content="${msg('Experimental features')}" placement="top" hoist style="--max-width: 120px;">
+          <button
+            class="experimental-button"
+            @click=${() => {
+              this._experimentalMenuOpen = !this._experimentalMenuOpen;
+            }}
+          >
+            ${this._experimentalMenuOpen
+              ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>`
+              : html`<img src="clover.svg" style="height: 40px; width: 40px;" />`}
+          </button>
+        </sl-tooltip>
+      </div>
+    `;
   }
 
   renderFeedbackDialog() {
@@ -1051,6 +1176,7 @@ export class WelcomeView extends LitElement {
             ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
           </div>
           ` : ''}
+          ${this.renderExperimentalButton()}
         `;
     }
   }
@@ -1792,6 +1918,101 @@ export class WelcomeView extends LitElement {
         transform: translateX(-50%);
         margin-top: 0;
         z-index: 10;
+      }
+
+      .experimental-anchor {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .experimental-anchor sl-tooltip::part(body) {
+        text-align: center;
+      }
+
+      .experimental-button {
+        all: unset;
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        background: var(--moss-dark-button, #151A11);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+
+      .experimental-button:focus-visible {
+        outline: 2px solid var(--moss-purple);
+      }
+
+      .experimental-glow {
+        position: absolute;
+        bottom: -96px;
+        right: -96px;
+        width: 264px;
+        height: 264px;
+        border-radius: 264px;
+        background: radial-gradient(50% 50% at 50% 50%, #7461EB 0%, rgba(116, 97, 235, 0.00) 100%);
+        opacity: 0;
+        z-index: 1;
+        pointer-events: none;
+        transition: opacity 0.2s ease, height 0.2s ease, bottom 0.2s ease;
+      }
+
+      .experimental-anchor:hover > .experimental-glow {
+        opacity: 0.7;
+      }
+
+      .experimental-anchor.anchor-open > .experimental-glow {
+        opacity: 0.7;
+        height: calc(100% + 192px);
+        bottom: -96px;
+      }
+
+      .experimental-dropdown {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 1;
+      }
+
+      .home-menu-item {
+        all: unset;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        border-radius: 16px;
+        background: rgba(21, 26, 17, 0.50);
+        backdrop-filter: blur(10px);
+        color: white;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .home-menu-item:hover {
+        background: rgba(21, 26, 17, 0.70);
+      }
+
+      .home-menu-item:focus-visible {
+        outline: 2px solid var(--moss-purple);
+      }
+
+      .exp-menu-item-label {
+        font-family: 'Inter Variable', sans-serif;
+        font-weight: 500;
+        font-size: 18px;
+        color: white;
       }
     `,
     mossStyles,
