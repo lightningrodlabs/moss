@@ -379,6 +379,30 @@ export class WelcomeView extends LitElement {
     return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
   }
 
+  /**
+   * Get localized label for notification type.
+   * Known types (message, mention) are translated; unknown applet-defined types
+   * fall back to English pluralization.
+   *
+   * TODO: Consider using Intl.PluralRules for proper pluralization in each locale,
+   * combined with translated word stems, for better internationalization support.
+   */
+  getLocalizedNotificationTypeLabel(type: string, count: number): string {
+    // Map of known notification types to their localized singular/plural forms
+    const knownTypes: Record<string, { singular: string; plural: string }> = {
+      'message': { singular: msg('Message'), plural: msg('Messages') },
+      'mention': { singular: msg('Mention'), plural: msg('Mentions') },
+    };
+
+    if (knownTypes[type]) {
+      return count === 1 ? knownTypes[type].singular : knownTypes[type].plural;
+    }
+
+    // Fall back to English pluralization for unknown/applet-defined types
+    const pluralized = pluralize(type, count);
+    return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
+  }
+
   updateNavigationClasses() {
     const navList = this.shadowRoot?.querySelector('.update-nav-list');
     if (navList) {
@@ -899,10 +923,7 @@ export class WelcomeView extends LitElement {
                   data-section="${type}"
                   @click=${() => { this.selectNotificationSection(type); }}
                   class="notification-filter-header">
-                  <span>${(() => {
-            const pluralized = pluralize(type, this.notificationTypes[type]);
-            return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
-          })()}</span>
+                  <span>${this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type])}</span>
                   <span>${this.notificationTypes[type] || 0}</span>
                 </div>
               ` : '')}
@@ -951,10 +972,7 @@ export class WelcomeView extends LitElement {
                   ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
                     <div class="scroll-section" id="${type}">
                       ${this.renderEllipse()}
-                      <div class="mini-button">${(() => {
-              const pluralized = pluralize(type, this.notificationTypes[type]);
-              return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
-            })()}</div>
+                      <div class="mini-button">${this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type])}</div>
 
                       <div class="notifications-column column">
                         ${this._notificationFeed.value

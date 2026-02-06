@@ -1782,6 +1782,7 @@
 </trans-unit>
 <trans-unit id="s4880dc3125543292">
   <source>Mentions</source>
+  <target>Menciones</target>
 </trans-unit>
 <trans-unit id="se17be80819e7e8b5">
   <source>High = OS notification, Medium = systray, Low = feed only</source>
@@ -1858,6 +1859,18 @@ starts now</source>
 <trans-unit id="sb63746081fd71985">
   <source>All streams</source>
   <target>Todos los flujos</target>
+</trans-unit>
+<trans-unit id="s79e8cc71a5975b04">
+  <source>Message</source>
+  <target>Mensaje</target>
+</trans-unit>
+<trans-unit id="sbdeedc1c60306b35">
+  <source>Messages</source>
+  <target>Mensajes</target>
+</trans-unit>
+<trans-unit id="s22c7a36f572f4655">
+  <source>Mention</source>
+  <target>Mención</target>
 </trans-unit>
 </body>
 </file>
