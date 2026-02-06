@@ -4,6 +4,7 @@ import { AppletNotificationSettings, GlobalNotificationSoundSettings } from './a
 import { destringifyAndDecode, encodeAndStringify } from './utils';
 import { WalInPocket } from './moss-store';
 import { Profile } from '@holochain-open-dev/profiles';
+import { DEFAULT_NOTIFICATION_SOUND_SETTINGS } from './services/notification-audio';
 
 /**
  * A store that's persisted.
@@ -212,18 +213,7 @@ export class PersistedStore {
       const settings = this.store.getItem<GlobalNotificationSoundSettings>(
         'notificationSoundSettings',
       );
-      return (
-        settings ?? {
-          masterEnabled: true,
-          volume: 0.7,
-          perUrgency: {
-            high: { enabled: true, soundId: 'chime' },
-            medium: { enabled: true, soundId: 'bell' },
-            low: { enabled: false, soundId: 'pop' },
-          },
-          customSounds: [],
-        }
-      );
+      return settings ?? DEFAULT_NOTIFICATION_SOUND_SETTINGS;
     },
     set: (value: GlobalNotificationSoundSettings) => {
       this.store.setItem('notificationSoundSettings', value);

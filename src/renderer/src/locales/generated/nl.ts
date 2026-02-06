@@ -460,5 +460,7 @@
 'sfc63e31ac7c956ed': `Selecteren`,
 'sfda931c0d8d794fb': `tools activeren`,
 'sff696c02c0929f45': `Holochain kon niet opstarten :(`,
+'sa43aa7dbf1251f6a': `This sound has already been added`,
+'s38442d82a192c2f6': `Failed to add custom sound`,
     };
   

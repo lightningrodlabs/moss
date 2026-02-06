@@ -18,27 +18,22 @@ import {
   NotificationSoundId,
   CustomSound,
 } from '../../../applets/types.js';
-import { notificationAudio, NotificationAudioService } from '../../../services/notification-audio.js';
+import {
+  notificationAudio,
+  NotificationAudioService,
+  DEFAULT_NOTIFICATION_SOUND_SETTINGS,
+} from '../../../services/notification-audio.js';
 
 type UrgencyLevel = 'high' | 'medium' | 'low';
 
 @localized()
-@customElement('moss-notification-settings')
-export class MossNotificationSettings extends LitElement {
+@customElement('moss-notification-sound-settings')
+export class MossNotificationSoundSettings extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
   @state()
-  settings: GlobalNotificationSoundSettings = {
-    masterEnabled: true,
-    volume: 0.7,
-    perUrgency: {
-      high: { enabled: true, soundId: 'chime' },
-      medium: { enabled: true, soundId: 'bell' },
-      low: { enabled: false, soundId: 'pop' },
-    },
-    customSounds: [],
-  };
+  settings: GlobalNotificationSoundSettings = DEFAULT_NOTIFICATION_SOUND_SETTINGS;
 
   firstUpdated() {
     this.settings = this.mossStore.persistedStore.notificationSoundSettings.value();
@@ -112,12 +107,28 @@ export class MossNotificationSettings extends LitElement {
         return;
       }
 
-      // Convert to base64 data URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
+      try {
+        // Read file as ArrayBuffer to compute hash
+        const arrayBuffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+        // Check if this sound already exists
+        if (this.settings.customSounds.some((s) => s.id === hashHex)) {
+          notify(msg('This sound has already been added'));
+          return;
+        }
+
+        // Convert to base64 data URL
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+
         const customSound: CustomSound = {
-          id: crypto.randomUUID(),
+          id: hashHex,
           name: file.name.replace(/\.[^.]+$/, ''), // Remove extension
           dataUrl,
         };
@@ -131,8 +142,10 @@ export class MossNotificationSettings extends LitElement {
         // Preload the new sound
         notificationAudio.preloadCustomSounds([customSound]);
         notify(msg('Custom sound added'));
-      };
-      reader.readAsDataURL(file);
+      } catch (e) {
+        console.error('Failed to add custom sound:', e);
+        notify(msg('Failed to add custom sound'));
+      }
     };
 
     input.click();

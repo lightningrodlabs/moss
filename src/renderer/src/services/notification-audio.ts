@@ -5,22 +5,37 @@ import {
   CustomSound,
 } from '../applets/types.js';
 
-const BUILTIN_SOUNDS: Record<BuiltinSoundId, string | null> = {
-  none: null,
-  chime: '/sounds/chime.wav',
-  bell: '/sounds/bell.wav',
-  pop: '/sounds/pop.wav',
-  ding: '/sounds/ding.wav',
+export const BUILTIN_SOUNDS: Record<BuiltinSoundId, { path: string | null; label: string }> = {
+  none: { path: null, label: 'None' },
+  chime: { path: '/sounds/chime.wav', label: 'Chime' },
+  bell: { path: '/sounds/bell.wav', label: 'Bell' },
+  pop: { path: '/sounds/pop.wav', label: 'Pop' },
+  ding: { path: '/sounds/ding.wav', label: 'Ding' },
+};
+
+/**
+ * Default notification sound settings - single source of truth
+ */
+export const DEFAULT_NOTIFICATION_SOUND_SETTINGS: GlobalNotificationSoundSettings = {
+  masterEnabled: true,
+  volume: 0.7,
+  perUrgency: {
+    high: { enabled: true, soundId: 'chime' },
+    medium: { enabled: true, soundId: 'bell' },
+    low: { enabled: false, soundId: 'pop' },
+  },
+  customSounds: [],
 };
 
 export class NotificationAudioService {
   private audioCache: Map<string, HTMLAudioElement> = new Map();
+  private currentlyPlaying: HTMLAudioElement | null = null;
 
   /**
    * Preload all built-in sound files for faster playback
    */
   preloadBuiltinSounds(): void {
-    Object.entries(BUILTIN_SOUNDS).forEach(([id, path]) => {
+    Object.entries(BUILTIN_SOUNDS).forEach(([id, { path }]) => {
       if (path) {
         const audio = new Audio(path);
         audio.preload = 'auto';
@@ -77,12 +92,22 @@ export class NotificationAudioService {
       }
     }
 
-    if (!audio) return;
+    if (!audio) {
+      console.warn(`Notification sound not found: ${soundId}`);
+      return;
+    }
 
     try {
-      // Clone the audio element to allow overlapping plays
+      // Stop any currently playing notification sound to prevent overlap
+      if (this.currentlyPlaying) {
+        this.currentlyPlaying.pause();
+        this.currentlyPlaying.currentTime = 0;
+      }
+
+      // Clone to allow the same sound to be triggered again quickly
       const clone = audio.cloneNode() as HTMLAudioElement;
       clone.volume = Math.max(0, Math.min(1, volume));
+      this.currentlyPlaying = clone;
       await clone.play();
     } catch (e) {
       console.warn('Failed to play notification sound:', e);
@@ -90,16 +115,13 @@ export class NotificationAudioService {
   }
 
   /**
-   * Get available built-in sound options for UI
+   * Get available built-in sound options for UI (generated from BUILTIN_SOUNDS)
    */
   static getBuiltinSoundOptions(): Array<{ id: BuiltinSoundId; label: string }> {
-    return [
-      { id: 'none', label: 'None' },
-      { id: 'chime', label: 'Chime' },
-      { id: 'bell', label: 'Bell' },
-      { id: 'pop', label: 'Pop' },
-      { id: 'ding', label: 'Ding' },
-    ];
+    return Object.entries(BUILTIN_SOUNDS).map(([id, { label }]) => ({
+      id: id as BuiltinSoundId,
+      label,
+    }));
   }
 }
 

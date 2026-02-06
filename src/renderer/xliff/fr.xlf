@@ -1806,6 +1806,12 @@
   <source>Play sound</source>
   <target>Jouer le son</target>
 </trans-unit>
+<trans-unit id="sa43aa7dbf1251f6a">
+  <source>This sound has already been added</source>
+</trans-unit>
+<trans-unit id="s38442d82a192c2f6">
+  <source>Failed to add custom sound</source>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -460,5 +460,7 @@
 'sfc63e31ac7c956ed': `Seç`,
 'sfda931c0d8d794fb': `araçları etkinleştir`,
 'sff696c02c0929f45': `Holochain başlatılamadı :(`,
+'sa43aa7dbf1251f6a': `This sound has already been added`,
+'s38442d82a192c2f6': `Failed to add custom sound`,
     };
   

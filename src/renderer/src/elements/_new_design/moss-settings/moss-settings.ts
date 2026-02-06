@@ -107,7 +107,7 @@ export class MossSettings extends LitElement {
   }
 
   renderNotifications() {
-    return html`<moss-notification-settings></moss-notification-settings>`;
+    return html`<moss-notification-sound-settings></moss-notification-sound-settings>`;
   }
 
   renderFeedback() {
