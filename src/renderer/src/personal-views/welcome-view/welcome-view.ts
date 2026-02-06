@@ -795,13 +795,13 @@ export class WelcomeView extends LitElement {
     const groupIconPromise = groupProfilePromise.then((profile) => {
       if (profile?.icon_src) {
         return html`<img
-          class="group-notification-icon"
+          class="notification-group-icon"
           src=${profile.icon_src}
           alt=${profile.name || 'Group'}
           title=${profile.name || 'Group'}
         />`;
       }
-      return html`<div class="group-notification-icon-placeholder"></div>`;
+      return html`<div class="notification-group-icon-placeholder"></div>`;
     });
 
     const groupNamePromise = groupProfilePromise.then((profile) => profile?.name || 'Group');
@@ -818,33 +818,33 @@ export class WelcomeView extends LitElement {
     };
 
     return html`
-      <div class="group-notification-card" @click=${openGroup}>
-        <div class="group-notification-left">
-          ${until(groupIconPromise, html`<div class="group-notification-icon-placeholder"></div>`)}
+      <div class="notification-card" @click=${openGroup}>
+        <div class="notification-left">
+          ${until(groupIconPromise, html`<div class="notification-group-icon-placeholder"></div>`)}
         </div>
-        <div class="group-notification-content">
+        <div class="notification-center">
           <span>${frameNotification.body}</span>
-          <span class="group-notification-source">in <b>${sourceName || 'Unknown Group'}</b></span>
+          in <b>${sourceName || 'Unknown Group'}</b>
         </div>
-        <div class="group-notification-right">
-          <div class="group-notification-date">
+        <div class="notification-right">
+          <div class="notification-date">
             ${this.timeAgo.format(new Date(frameNotification.timestamp), 'twitter')} ago
           </div>
-          <div class="group-notification-buttons">
+          <div class="notification-buttons">
             ${aboutWal ? html`
               <sl-tooltip content="Open asset in sidebar" placement="left">
                 <button
                   class="open-wal-button"
                   @click=${(e: Event) => {
-                    e.stopPropagation();
-                    this.dispatchEvent(
-                      new CustomEvent('open-wal', {
-                        detail: aboutWal,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+          e.stopPropagation();
+          this.dispatchEvent(
+            new CustomEvent('open-wal', {
+              detail: aboutWal,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z" fill="#151A11"/>
@@ -1001,9 +1001,38 @@ export class WelcomeView extends LitElement {
                     <div>Moss news section - Coming soon</div>
                   </div>
                 </div> -->
+
+                ${this.notificationSection !== null ? html`
+                <div
+                  class="all-streams-button"
+                  @click=${() => {
+              this.dispatchEvent(new CustomEvent('personal-view-selected', {
+                detail: { type: 'moss', name: 'activity-view' },
+                bubbles: true,
+                composed: true,
+              }));
+            }}
+                >
+                  ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
+                </div>
+                ` : ''}
               </div>
             </div>
           </div>
+          ${this.notificationSection === null && (this._notificationFeed.value?.length ?? 0) > 0 ? html`
+          <div
+            class="all-streams-button fixed"
+            @click=${() => {
+              this.dispatchEvent(new CustomEvent('personal-view-selected', {
+                detail: { type: 'moss', name: 'activity-view' },
+                bubbles: true,
+                composed: true,
+              }));
+            }}
+          >
+            ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
+          </div>
+          ` : ''}
         `;
     }
   }
@@ -1013,6 +1042,7 @@ export class WelcomeView extends LitElement {
       :host {
         display: flex;
         flex: 1;
+        position: relative;
         /* background-color: #588121; */
         /* background-color: #224b21; */
         /* background-color: var(--moss-dark-green); */
@@ -1594,8 +1624,8 @@ export class WelcomeView extends LitElement {
         border-radius: 10px;
       }
 
-      /* Group notification card styles */
-      .group-notification-card {
+      /* Notification card styles (shared structure for applet and group notifications) */
+      .notification-card {
         display: flex;
         flex-direction: row;
         width: 540px;
@@ -1607,46 +1637,25 @@ export class WelcomeView extends LitElement {
         cursor: pointer;
       }
 
-      .group-notification-left {
+      .notification-left {
         padding: 6px;
         width: 64px;
         display: flex;
         align-items: center;
       }
 
-      .group-notification-icon {
-        height: 48px;
-        width: 48px;
-        margin-bottom: -2px;
-        margin-right: 3px;
-        border-radius: 8px;
-        object-fit: cover;
-      }
-
-      .group-notification-icon-placeholder {
-        height: 48px;
-        width: 48px;
-        margin-bottom: -2px;
-        margin-right: 3px;
-        border-radius: 8px;
-        background: var(--moss-main-green, #E0EED5);
-      }
-
-      .group-notification-content {
+      .notification-center {
         flex: 1;
-        padding: 12px 16px;
+        padding: 12px;
         max-width: 330px;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: var(--moss-dark-button, #151A11);
         font-size: 14px;
         line-height: 20px;
       }
 
-      .group-notification-source {
-        color: var(--moss-dark-button, #151A11);
-      }
-
-      .group-notification-right {
+      .notification-right {
         position: absolute;
         right: 0;
         top: 0;
@@ -1661,7 +1670,7 @@ export class WelcomeView extends LitElement {
         pointer-events: none;
       }
 
-      .group-notification-right::before {
+      .notification-right::before {
         content: '';
         position: absolute;
         inset: 0;
@@ -1670,19 +1679,19 @@ export class WelcomeView extends LitElement {
         transition: opacity 0.2s ease;
       }
 
-      .group-notification-card:hover > .group-notification-right::before {
+      .notification-card:hover > .notification-right::before {
         opacity: 1;
       }
 
-      .group-notification-date {
+      .notification-date {
         font-size: 0.9em;
         color: var(--moss-purple);
-        position: relative;
+        position: absolute;
         z-index: 1;
         transition: opacity 0.2s ease;
       }
 
-      .group-notification-buttons {
+      .notification-buttons {
         z-index: 1;
         opacity: 0;
         transition: opacity 0.2s ease;
@@ -1691,7 +1700,7 @@ export class WelcomeView extends LitElement {
         gap: 4px;
       }
 
-      .group-notification-buttons button {
+      .notification-buttons button {
         background: #fff;
         color: var(--moss-dark-button);
         cursor: pointer;
@@ -1705,22 +1714,66 @@ export class WelcomeView extends LitElement {
         transition: background 0.1s ease, color 0.1s ease;
       }
 
-      .group-notification-buttons button:hover {
+      .notification-buttons button:hover {
         background: var(--moss-dark-button);
         color: #fff;
       }
 
-      .group-notification-buttons button:hover svg path {
+      .notification-buttons button:hover svg path {
         fill: #fff;
       }
 
-      .group-notification-card:hover .group-notification-buttons {
+      .notification-card:hover .notification-buttons {
         opacity: 1;
         pointer-events: auto;
       }
 
-      .group-notification-card:hover .group-notification-date {
+      .notification-card:hover .notification-date {
         opacity: 0;
+      }
+
+      /* Group notification specific icon styles */
+      .notification-group-icon {
+        height: 48px;
+        width: 48px;
+        margin-bottom: -2px;
+        margin-right: 3px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .notification-group-icon-placeholder {
+        height: 48px;
+        width: 48px;
+        margin-bottom: -2px;
+        margin-right: 3px;
+        border-radius: 8px;
+        background: var(--moss-main-green, #E0EED5);
+      }
+
+      .all-streams-button {
+        display: inline-flex;
+        padding: 16px 20px;
+        gap: 20px;
+        border-radius: 16px;
+        background: rgba(21, 26, 17, 0.50);
+        color: white;
+        cursor: pointer;
+        font-weight: 500;
+        margin-top: 20px;
+      }
+
+      .all-streams-button:hover {
+        background: rgba(21, 26, 17, 0.70);
+      }
+
+      .all-streams-button.fixed {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-top: 0;
+        z-index: 10;
       }
     `,
     mossStyles,

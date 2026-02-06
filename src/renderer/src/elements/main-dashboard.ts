@@ -913,6 +913,12 @@ export class MainDashboard extends LitElement {
         @open-group=${(e: CustomEvent) => {
         this.openGroup(e.detail.groupDnaHash);
       }}
+        @personal-view-selected=${(e: CustomEvent) => {
+        this._mossStore.setDashboardState({
+          viewType: 'personal',
+          viewState: e.detail,
+        });
+      }}
       ></welcome-view>
 
       <assets-graph
