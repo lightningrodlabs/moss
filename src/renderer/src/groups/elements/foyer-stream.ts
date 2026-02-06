@@ -9,6 +9,9 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
+import '@shoelace-style/shoelace/dist/components/menu/menu.js';
+import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
@@ -19,10 +22,15 @@ import { mossStoreContext } from '../../context.js';
 import { Message, Payload, Stream } from '../stream.js';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, HoloHashMap, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
-import { mdiChat, mdiSofa } from '@mdi/js';
+import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
 import { sendIcon } from '../../elements/_new_design/icons.js';
+import {
+  FoyerNotificationSettings,
+  FoyerMessageUrgency,
+  DEFAULT_FOYER_NOTIFICATION_SETTINGS,
+} from '../../applets/types.js';
 
 @localized()
 @customElement('foyer-stream')
@@ -50,6 +58,9 @@ export class FoyerStream extends LitElement {
 
   async firstUpdated() {
     console.log("this.groupStore.foyerStore", this.groupStore.foyerStore)
+    // Load notification settings
+    this._notificationSettings = this.groupStore.getFoyerNotificationSettingsValue();
+
     setTimeout(() => {
       this.stream = get(this.groupStore.foyerStore.streams)['_all'];
       this._messages = new StoreSubscriber(
@@ -63,7 +74,6 @@ export class FoyerStream extends LitElement {
         () => [this.stream],
       );
     }, 100);
-
   }
 
   @state()
@@ -80,6 +90,65 @@ export class FoyerStream extends LitElement {
 
   @state()
   disabled = true;
+
+  @state()
+  _notificationSettings: FoyerNotificationSettings = DEFAULT_FOYER_NOTIFICATION_SETTINGS;
+
+  @state()
+  _showNotificationSettings = false;
+
+  private _boundCloseOnOutsideClick = this._closeOnOutsideClick.bind(this);
+
+  private _closeOnOutsideClick(e: MouseEvent) {
+    const panel = this.shadowRoot?.querySelector('.notification-settings-panel');
+    const icon = this.shadowRoot?.querySelector('.notification-settings-trigger');
+    if (panel && !panel.contains(e.target as Node) && !icon?.contains(e.target as Node)) {
+      this._showNotificationSettings = false;
+      document.removeEventListener('click', this._boundCloseOnOutsideClick);
+    }
+  }
+
+  private _toggleNotificationSettings() {
+    this._showNotificationSettings = !this._showNotificationSettings;
+    if (this._showNotificationSettings) {
+      // Delay adding listener to avoid immediate close from the same click
+      setTimeout(() => {
+        document.addEventListener('click', this._boundCloseOnOutsideClick);
+      }, 0);
+    } else {
+      document.removeEventListener('click', this._boundCloseOnOutsideClick);
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('click', this._boundCloseOnOutsideClick);
+  }
+
+  handleMentionsUrgencyChange(e: Event) {
+    const value = (e.target as HTMLSelectElement).value as FoyerMessageUrgency;
+    this._notificationSettings = { ...this._notificationSettings, mentions: value };
+    this.groupStore.setFoyerNotificationSettings(this._notificationSettings);
+  }
+
+  handleAllMessagesUrgencyChange(e: Event) {
+    const value = (e.target as HTMLSelectElement).value as FoyerMessageUrgency;
+    this._notificationSettings = { ...this._notificationSettings, allMessages: value };
+    this.groupStore.setFoyerNotificationSettings(this._notificationSettings);
+  }
+
+  getUrgencyLabel(urgency: FoyerMessageUrgency): string {
+    switch (urgency) {
+      case 'none':
+        return msg('Off');
+      case 'low':
+        return msg('Low');
+      case 'medium':
+        return msg('Medium');
+      case 'high':
+        return msg('High');
+    }
+  }
 
   getRecipients(): AgentPubKey[] {
     const agents: AgentPubKey[] = [];
@@ -300,11 +369,58 @@ export class FoyerStream extends LitElement {
               style="align-items: center; font-size: 1.5rem; cursor: help;"
             >
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
-              <sl-icon .src=${wrapPathInSvg(mdiChat)}></sl-icon>
             </div>
             <span>${msg('Foyer Messages:')} ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
-          <div style="display:flex; align-items: center"></div>
+          <div style="display:flex; align-items: center; margin-right: 8px; position: relative;">
+            <sl-icon
+              class="info notification-settings-trigger"
+              .src=${wrapPathInSvg(mdiMessageCog)}
+              style="font-size: 1.5rem; color: black; cursor: pointer;"
+              title=${msg('Notification Settings')}
+              @click=${() => this._toggleNotificationSettings()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  this._toggleNotificationSettings();
+                }
+              }}
+              tabindex="0"
+            ></sl-icon>
+            ${this._showNotificationSettings ? html`
+              <div class="notification-settings-panel">
+                <div class="notification-settings-header">${msg('Notification Settings')}</div>
+                <div class="notification-settings-row">
+                  <span class="notification-settings-label">${msg('Mentions')}</span>
+                  <select
+                    class="notification-settings-select"
+                    .value=${this._notificationSettings.mentions}
+                    @change=${this.handleMentionsUrgencyChange}
+                  >
+                    <option value="high" ?selected=${this._notificationSettings.mentions === 'high'}>${msg('High')}</option>
+                    <option value="medium" ?selected=${this._notificationSettings.mentions === 'medium'}>${msg('Medium')}</option>
+                    <option value="low" ?selected=${this._notificationSettings.mentions === 'low'}>${msg('Low')}</option>
+                    <option value="none" ?selected=${this._notificationSettings.mentions === 'none'}>${msg('Off')}</option>
+                  </select>
+                </div>
+                <div class="notification-settings-row">
+                  <span class="notification-settings-label">${msg('All messages')}</span>
+                  <select
+                    class="notification-settings-select"
+                    .value=${this._notificationSettings.allMessages}
+                    @change=${this.handleAllMessagesUrgencyChange}
+                  >
+                    <option value="high" ?selected=${this._notificationSettings.allMessages === 'high'}>${msg('High')}</option>
+                    <option value="medium" ?selected=${this._notificationSettings.allMessages === 'medium'}>${msg('Medium')}</option>
+                    <option value="low" ?selected=${this._notificationSettings.allMessages === 'low'}>${msg('Low')}</option>
+                    <option value="none" ?selected=${this._notificationSettings.allMessages === 'none'}>${msg('Off')}</option>
+                  </select>
+                </div>
+                <div class="notification-settings-hint">
+                  ${msg('High = OS notification, Medium = systray, Low = feed only')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
         <span style="display: flex; flex: 1;"></span>
@@ -331,12 +447,12 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="width:100%;"
-            @sl-input=${(e) => {
-        this.disabled = !e.target.value || !this._msgInput.value;
+            style="width: 100%;"
+            @sl-input=${() => {
+        this.disabled = !this._msgInput?.value;
       }}
-            @keydown=${(e) => {
-        if (e.keyCode == 13) {
+            @keydown=${(e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
           this.sendMessage();
           e.stopPropagation();
         }
@@ -375,7 +491,7 @@ export class FoyerStream extends LitElement {
         margin-top: 5px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
       }
       .stream {
         width: 100%;
@@ -477,6 +593,59 @@ export class FoyerStream extends LitElement {
         font-size: 10px;
         color: #08230e;
         cursor: default;
+      }
+
+      .notification-settings-panel {
+        position: absolute;
+        top: 30px;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        min-width: 220px;
+      }
+
+      .notification-settings-header {
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .notification-settings-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .notification-settings-label {
+        font-size: 13px;
+      }
+
+      .notification-settings-select {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 12px;
+        min-width: 80px;
+        cursor: pointer;
+      }
+
+      .notification-settings-select:hover {
+        border-color: #999;
+      }
+
+      .notification-settings-hint {
+        font-size: 11px;
+        color: #666;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
       }
     `,
   ];

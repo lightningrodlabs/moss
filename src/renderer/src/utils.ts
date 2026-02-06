@@ -616,7 +616,13 @@ export function renderViewToQueryString(
 
   if (renderView.view) {
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
-
+    if (renderView.type === 'applet-view' && renderView.view.type === 'main' && renderView.view.wal) {
+      base = `${base}&hrl=${stringifyHrl(renderView.view.wal.hrl)}`;
+      if (renderView.view.wal.context) {
+         const b64context = fromUint8Array(encode(renderView.view.wal.context), true);
+         base = `${base}&context=${b64context}`;
+      }
+    }
     if (renderView.view.type === 'block') {
       base = `${base}&block=${renderView.view.block}`;
     }

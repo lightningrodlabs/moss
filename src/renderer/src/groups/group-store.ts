@@ -89,6 +89,7 @@ import {
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
 import {AppletStore} from "../applets/applet-store";
+import { FoyerNotificationSettings, DEFAULT_FOYER_NOTIFICATION_SETTINGS } from '../applets/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const PING_AGENTS_FREQUENCY_MS = 8000;
@@ -129,6 +130,23 @@ export class GroupStore {
   private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
+
+  /**
+   * Ephemeral (in-memory) tracking of unread group notifications.
+   * Used for foyer messages and other group-level notifications.
+   * Not persisted across app restarts.
+   */
+  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> = writable({
+    low: 0,
+    medium: 0,
+    high: 0,
+  });
+
+  /**
+   * Foyer notification settings for this group.
+   * Allows separate urgency levels for mentions vs all other messages.
+   */
+  private _foyerNotificationSettings: Writable<FoyerNotificationSettings> = writable(DEFAULT_FOYER_NOTIFICATION_SETTINGS);
 
   foyerStore!: FoyerStore;
 
@@ -176,6 +194,9 @@ export class GroupStore {
         // Use the instance
       },
     );
+
+    // Load persisted foyer notification settings
+    this.loadFoyerNotificationSettings();
 
     this._peerStatuses = writable(undefined);
 
@@ -827,6 +848,119 @@ export class GroupStore {
       };
       return newValue;
     });
+  }
+
+  /**
+   * Get the current unread group notification counts.
+   * Returns a readable store with counts by urgency level.
+   */
+  unreadGroupNotifications(): Readable<{ low: number; medium: number; high: number }> {
+    return derived(this._unreadGroupNotifications, (state) => state);
+  }
+
+  /**
+   * Get the notification state as [urgency, count] tuple for display.
+   * Returns the highest urgency level with its count.
+   */
+  getUnreadGroupNotificationState(): [string | undefined, number | undefined] {
+    const counts = get(this._unreadGroupNotifications);
+    if (counts.high > 0) {
+      return ['high', counts.high];
+    } else if (counts.medium > 0) {
+      return ['medium', counts.medium];
+    } else if (counts.low > 0) {
+      return ['low', counts.low];
+    }
+    return [undefined, undefined];
+  }
+
+  /**
+   * Increment the unread notification count for the given urgency level.
+   * Used for ephemeral notifications like foyer messages.
+   */
+  incrementUnreadGroupNotifications(urgency: 'low' | 'medium' | 'high') {
+    this._unreadGroupNotifications.update((counts) => ({
+      ...counts,
+      [urgency]: counts[urgency] + 1,
+    }));
+  }
+
+  /**
+   * Clear all unread group notifications.
+   * Called when the user views the group/foyer.
+   */
+  clearGroupNotificationStatus() {
+    this._unreadGroupNotifications.set({ low: 0, medium: 0, high: 0 });
+  }
+
+  /**
+   * Get the foyer notification settings for this group.
+   */
+  getFoyerNotificationSettings(): Readable<FoyerNotificationSettings> {
+    return derived(this._foyerNotificationSettings, (settings) => settings);
+  }
+
+  /**
+   * Get the current foyer notification settings value.
+   */
+  getFoyerNotificationSettingsValue(): FoyerNotificationSettings {
+    return get(this._foyerNotificationSettings);
+  }
+
+  /**
+   * Set the foyer notification settings for this group.
+   * Persists to localStorage.
+   */
+  setFoyerNotificationSettings(settings: FoyerNotificationSettings) {
+    this._foyerNotificationSettings.set(settings);
+    const key = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    localStorage.setItem(key, JSON.stringify(settings));
+  }
+
+  /**
+   * Load the foyer notification settings from localStorage.
+   * Called during initialization. Handles migration from old format.
+   */
+  loadFoyerNotificationSettings() {
+    const newKey = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    const oldKey = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+
+    // Try new format first
+    const storedNew = localStorage.getItem(newKey);
+    if (storedNew) {
+      try {
+        const parsed = JSON.parse(storedNew) as FoyerNotificationSettings;
+        if (parsed.mentions !== undefined && parsed.allMessages !== undefined) {
+          this._foyerNotificationSettings.set(parsed);
+          return;
+        }
+      } catch {
+        // Invalid JSON, fall through to migration
+      }
+    }
+
+    // Migrate from old format if present
+    const storedOld = localStorage.getItem(oldKey);
+    if (storedOld) {
+      let migratedSettings: FoyerNotificationSettings;
+      switch (storedOld) {
+        case 'all':
+          migratedSettings = { mentions: 'high', allMessages: 'high' };
+          break;
+        case 'mentions':
+          migratedSettings = { mentions: 'high', allMessages: 'none' };
+          break;
+        case 'none':
+          migratedSettings = { mentions: 'none', allMessages: 'none' };
+          break;
+        default:
+          migratedSettings = DEFAULT_FOYER_NOTIFICATION_SETTINGS;
+      }
+      this._foyerNotificationSettings.set(migratedSettings);
+      // Save in new format and remove old key
+      localStorage.setItem(newKey, JSON.stringify(migratedSettings));
+      localStorage.removeItem(oldKey);
+    }
   }
 
   /**

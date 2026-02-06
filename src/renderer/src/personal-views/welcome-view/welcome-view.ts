@@ -7,16 +7,17 @@ import { createMockToolUpdates, createMockAppletsData, createMockGroupsData } fr
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { decodeHashFromBase64 } from '@holochain/client';
+import { until } from 'lit/directives/until.js';
 import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
-import { ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
+import { MossNotification, ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
 import pluralize from 'pluralize';
 import quotesData from './SnapTalkFunnies.json';
 
@@ -742,35 +743,122 @@ export class WelcomeView extends LitElement {
     `;
   }
 
-  renderNotification(notification: { appletId: string; notification: any }) {
+  renderNotification(notification: MossNotification) {
+    if (notification.source.type === 'applet') {
+      const appletHash = notification.source.appletHash;
+      return html`
+        <notification-card
+          style="display: flex; flex: 1;"
+          .notification=${notification.notification}
+          .appletHash=${appletHash}
+          @open-applet-main=${(e: CustomEvent) => {
+          console.log('notification clicked', e.detail);
+          this.dispatchEvent(
+            new CustomEvent('open-applet-main', {
+              detail: {
+                applet: appletHash,
+                wal: e.detail.wal,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
+        @open-wal=${async (e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('open-wal', {
+              detail: e.detail,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
+        ></notification-card>
+      `;
+    }
+
+    // Render group notifications
+    const { notification: frameNotification, sourceName } = notification;
+    const groupDnaHashB64 = notification.source.groupDnaHash;
+    const aboutWal = frameNotification.aboutWal;
+    const groupDnaHash = decodeHashFromBase64(groupDnaHashB64);
+
+    // Get the group profile from the live store (not persisted storage)
+    const groupProfilePromise = (async () => {
+      const groupStore = await this._mossStore.groupStore(groupDnaHash);
+      if (groupStore) {
+        return toPromise(groupStore.groupProfile);
+      }
+      return undefined;
+    })();
+
+    const groupIconPromise = groupProfilePromise.then((profile) => {
+      if (profile?.icon_src) {
+        return html`<img
+          class="group-notification-icon"
+          src=${profile.icon_src}
+          alt=${profile.name || 'Group'}
+          title=${profile.name || 'Group'}
+        />`;
+      }
+      return html`<div class="group-notification-icon-placeholder"></div>`;
+    });
+
+    const groupNamePromise = groupProfilePromise.then((profile) => profile?.name || 'Group');
+
+    const openGroup = (e: Event) => {
+      e.stopPropagation();
+      this.dispatchEvent(
+        new CustomEvent('open-group', {
+          detail: { groupDnaHash },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    };
+
     return html`
-      <notification-card
-        style="display: flex; flex: 1;"
-        .notification=${notification.notification}
-        .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-        @open-applet-main=${(e) => {
-        console.log('notification clicked', e.detail);
-        this.dispatchEvent(
-          new CustomEvent('open-applet-main', {
-            detail: {
-              applet: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-              wal: e.detail.wal,
-            },
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }}
-      @open-wal=${async (e) => {
-        this.dispatchEvent(
-          new CustomEvent('open-wal', {
-            detail: e.detail,
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }}
-      ></notification-card>
+      <div class="group-notification-card" @click=${openGroup}>
+        <div class="group-notification-left">
+          ${until(groupIconPromise, html`<div class="group-notification-icon-placeholder"></div>`)}
+        </div>
+        <div class="group-notification-content">
+          <span>${frameNotification.body}</span>
+          <span class="group-notification-source">in <b>${sourceName || 'Unknown Group'}</b></span>
+        </div>
+        <div class="group-notification-right">
+          <div class="group-notification-date">
+            ${this.timeAgo.format(new Date(frameNotification.timestamp), 'twitter')} ago
+          </div>
+          <div class="group-notification-buttons">
+            ${aboutWal ? html`
+              <sl-tooltip content="Open asset in sidebar" placement="left">
+                <button
+                  class="open-wal-button"
+                  @click=${(e: Event) => {
+                    e.stopPropagation();
+                    this.dispatchEvent(
+                      new CustomEvent('open-wal', {
+                        detail: aboutWal,
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z" fill="#151A11"/>
+                    <path d="M8 5.5C6.61929 5.5 5.5 6.61929 5.5 8C5.5 9.38071 6.61929 10.5 8 10.5C9.38071 10.5 10.5 9.38071 10.5 8C10.5 6.61929 9.38071 5.5 8 5.5ZM4.5 8C4.5 6.067 6.067 4.5 8 4.5C9.933 4.5 11.5 6.067 11.5 8C11.5 9.933 9.933 11.5 8 11.5C6.067 11.5 4.5 9.933 4.5 8Z" fill="#151A11"/>
+                  </svg>
+                </button>
+              </sl-tooltip>
+            ` : html``}
+            <button class="open-group-button" @click=${openGroup}>
+              ${until(groupNamePromise.then((name) => html`Open in ${name} ↗`), html`Open in Group ↗`)}
+            </button>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -1504,6 +1592,135 @@ export class WelcomeView extends LitElement {
       .feed::-webkit-scrollbar-thumb {
         background: rgba(84, 109, 69, 1);
         border-radius: 10px;
+      }
+
+      /* Group notification card styles */
+      .group-notification-card {
+        display: flex;
+        flex-direction: row;
+        width: 540px;
+        min-height: 64px;
+        border-radius: 20px;
+        background: #FFF;
+        color: var(--moss-dark-button, #151A11);
+        position: relative;
+        cursor: pointer;
+      }
+
+      .group-notification-left {
+        padding: 6px;
+        width: 64px;
+        display: flex;
+        align-items: center;
+      }
+
+      .group-notification-icon {
+        height: 48px;
+        width: 48px;
+        margin-bottom: -2px;
+        margin-right: 3px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .group-notification-icon-placeholder {
+        height: 48px;
+        width: 48px;
+        margin-bottom: -2px;
+        margin-right: 3px;
+        border-radius: 8px;
+        background: var(--moss-main-green, #E0EED5);
+      }
+
+      .group-notification-content {
+        flex: 1;
+        padding: 12px 16px;
+        max-width: 330px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 14px;
+        line-height: 20px;
+      }
+
+      .group-notification-source {
+        color: var(--moss-dark-button, #151A11);
+      }
+
+      .group-notification-right {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 320px;
+        border-radius: 20px;
+        padding: 24px;
+        padding-right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        pointer-events: none;
+      }
+
+      .group-notification-right::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.00) 0%, var(--moss-main-green, #E0EED5) 46.63%);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .group-notification-card:hover > .group-notification-right::before {
+        opacity: 1;
+      }
+
+      .group-notification-date {
+        font-size: 0.9em;
+        color: var(--moss-purple);
+        position: relative;
+        z-index: 1;
+        transition: opacity 0.2s ease;
+      }
+
+      .group-notification-buttons {
+        z-index: 1;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        display: flex;
+        gap: 4px;
+      }
+
+      .group-notification-buttons button {
+        background: #fff;
+        color: var(--moss-dark-button);
+        cursor: pointer;
+        display: flex;
+        padding: 8px 10px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        border-radius: 8px;
+        border: none;
+        transition: background 0.1s ease, color 0.1s ease;
+      }
+
+      .group-notification-buttons button:hover {
+        background: var(--moss-dark-button);
+        color: #fff;
+      }
+
+      .group-notification-buttons button:hover svg path {
+        fill: #fff;
+      }
+
+      .group-notification-card:hover .group-notification-buttons {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .group-notification-card:hover .group-notification-date {
+        opacity: 0;
       }
     `,
     mossStyles,

@@ -7,11 +7,11 @@ import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
 import './elements/all-posts.js';
 import './elements/create-post.js';
 import {
-  type WAL,
-  type FrameNotification,
-  WeaveClient,
-  ReadonlyPeerStatusStore,
-  UnsubscribeFunction, MossAccountability
+    type WAL,
+    type FrameNotification,
+    WeaveClient,
+    ReadonlyPeerStatusStore,
+    UnsubscribeFunction, MossAccountability, stringifyHrl
 } from '@theweave/api';
 import {
   AgentPubKey,
@@ -33,8 +33,12 @@ import { Accountability } from '@theweave/group-client';
 import { hrlToString } from "@holochain-open-dev/utils/dist/hrl";
 
 @localized()
-@customElement('applet-main')
+@customElement('example-applet-main')
 export class AppletMain extends LitElement {
+
+  @property()
+  wal?: WAL;
+
   @property()
   client!: AppClient;
 
@@ -100,6 +104,9 @@ export class AppletMain extends LitElement {
   remoteSignalPayload = '';
 
   @state()
+  locale = 'en';
+
+  @state()
   cells: CellInfo[] = [];
 
   @query('#failUnbeforeUnloadCheckmark')
@@ -132,6 +139,13 @@ export class AppletMain extends LitElement {
       this.lastRemoteSignal = decode(payload) as string;
     });
 
+    this.weaveClient.onLocaleChange((payload) => {
+        console.log("<example-applet-main> Locale changed: ", payload);
+        this.locale = payload;
+        this.requestUpdate();
+    });
+
+    this.locale = this.weaveClient.getLocale();
     await this.updateCellInfos();
   }
 
@@ -322,6 +336,11 @@ export class AppletMain extends LitElement {
         </div>
         <div><b>Tool Installer: </b>${this.toolInstaller ? encodeHashToBase64(this.toolInstaller) : "unknown"}</div>
         <div><b>My Group Accountabilities: </b>${JSON.stringify(this.myAccountabilitiesPerGroup)}</div>
+        <div><b>Locale: </b>${this.locale}</div>
+        <div><b>Requested WAL: </b>${this.wal
+                ? html`${stringifyHrl(this.wal.hrl)} | context: ${JSON.stringify(this.wal.context)}` 
+                : html`none`
+        }</div>
         <div class="row">
           <div class="column">
             <create-post style="margin: 16px;"></create-post>

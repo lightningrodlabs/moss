@@ -124,7 +124,7 @@ export type DashboardState =
     viewType: 'personal';
     viewState: PersonalViewState;
   }
-  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash };
+  | { viewType: 'group'; groupHash: DnaHash; appletHash?: AppletHash; wal?: WAL};
 
 export type AssetViewerState = {
   position: 'side';
@@ -264,7 +264,7 @@ export class MainDashboard extends LitElement {
   @provide({ context: openViewsContext })
   @property()
   openViews: AppOpenViews = {
-    openAppletMain: async (appletHash, _wal) => {
+    openAppletMain: async (appletHash, wal) => {
       const groupsForApplet = await toPromise(this._mossStore.groupsForApplet.get(appletHash)!);
       const groupDnaHashes = Array.from(groupsForApplet.keys());
       if (groupDnaHashes.length === 0) {
@@ -284,6 +284,7 @@ export class MainDashboard extends LitElement {
         viewType: 'group',
         groupHash: groupDnaHash,
         appletHash,
+        wal,
       });
     },
     openAppletBlock: (_appletHash, _block, _context) => {
@@ -909,6 +910,9 @@ export class MainDashboard extends LitElement {
         @applet-selected=${(e: CustomEvent) => {
         this.openViews.openAppletMain(e.detail.appletHash);
       }}
+        @open-group=${(e: CustomEvent) => {
+        this.openGroup(e.detail.groupDnaHash);
+      }}
       ></welcome-view>
 
       <assets-graph
@@ -926,6 +930,9 @@ export class MainDashboard extends LitElement {
       }}
         @open-applet-main=${(e: CustomEvent) => {
         this.openViews.openAppletMain(e.detail.applet, e.detail.wal);
+      }}
+        @open-group=${(e: CustomEvent) => {
+        this.openGroup(e.detail.groupDnaHash);
       }}
         style="${this.displayMossView('activity-view')
         ? 'display: flex; flex: 1;'
@@ -1327,7 +1334,7 @@ export class MainDashboard extends LitElement {
         src="turing-pattern-bottom-left.svg"
         style="position: fixed; bottom: 0; left: 0; height: 250px;"
       />
-      <moss-dialog id="settings-dialog" width="700px">
+      <moss-dialog id="settings-dialog" width="800px">
         <span slot="header">${msg('Settings')}</span>
         <div slot="content">
           <moss-settings></moss-settings>
