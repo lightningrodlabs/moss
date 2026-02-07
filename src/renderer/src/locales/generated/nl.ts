@@ -485,5 +485,10 @@ vroege vogel!`,
 'sfe9da2e4fabe48a7': `Goedemorgen,
  prachtig mens!`,
 'sff696c02c0929f45': `Holochain kon niet opstarten :(`,
+'s4ce6531fbfddd605': `read`,
+'sb5d1c3e0fa747687': `Mark as unread`,
+'s086799ff5eb061eb': `Mark section as read`,
+'s951a80954fdc37c7': `Hide previously read`,
+'s8f9c23bfdd2e396e': `Show previously read`,
     };
   

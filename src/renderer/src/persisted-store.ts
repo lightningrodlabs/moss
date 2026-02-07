@@ -221,6 +221,20 @@ export class PersistedStore {
   };
 
   /**
+   * Section read states for notification sections.
+   * Tracks when each section was last viewed and how many items it had at that time.
+   */
+  sectionReadStates: SubStore<SectionReadStates, SectionReadStates, []> = {
+    value: () => {
+      const states = this.store.getItem<SectionReadStates>('sectionReadStates');
+      return states ?? {};
+    },
+    set: (value: SectionReadStates) => {
+      this.store.setItem('sectionReadStates', value);
+    },
+  };
+
+  /**
    * When disabling all applets of a group the applets that were already disabled
    * get stored here in order to not re-enable them again if the groups gets
    * re-enabled
@@ -290,3 +304,17 @@ export function getLocalStorageItem<T>(key: string): T | undefined {
 export function setLocalStorageItem<T>(key: string, value: T): void {
   window.localStorage.setItem(key, encodeAndStringify(value));
 }
+
+/**
+ * Per-section state: when viewed and count at that time
+ */
+export type SectionReadState = {
+  section: string;
+  lastViewedCount: number;
+  lastViewedAt: number;
+};
+
+/**
+ * Section read states stored in localStorage
+ */
+export type SectionReadStates = Record<string, SectionReadState>;

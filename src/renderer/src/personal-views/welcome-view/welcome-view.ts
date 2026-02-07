@@ -123,12 +123,36 @@ export class WelcomeView extends LitElement {
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
     window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
     document.addEventListener('click', this._clickOutsideHandler, true);
+
+    // Initialize collapsed sections based on read state
+    this._initializeCollapsedSections();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
     document.removeEventListener('click', this._clickOutsideHandler, true);
+
+    // Record current section view on unmount if viewing a section
+    if (this.notificationSection) {
+      const count = this.getSectionCount(this.notificationSection);
+      this._mossStore.recordSectionViewed(this.notificationSection, count);
+    }
+  }
+
+  private _initializeCollapsedSections() {
+    // Get read states and determine which sections should be collapsed
+    const readStates = this._persistedStore.sectionReadStates.value();
+    const collapsed = new Set<string>();
+
+    Object.keys(readStates).forEach((section) => {
+      const currentCount = this.notificationTypes[section] ?? 0;
+      if (currentCount <= readStates[section].lastViewedCount) {
+        collapsed.add(section);
+      }
+    });
+
+    this._collapsedSections = collapsed;
   }
 
   private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
@@ -152,6 +176,18 @@ export class WelcomeView extends LitElement {
     () => this._mossStore.notificationFeed(),
     () => [this._mossStore],
   );
+
+  _sectionReadStates = new StoreSubscriber(
+    this,
+    () => this._mossStore.sectionReadStates(),
+    () => [this._mossStore],
+  );
+
+  @state()
+  private _collapsedSections: Set<string> = new Set();
+
+  @state()
+  private _showAllItemsSections: Set<string> = new Set();
 
   // Cache applet subscribers per tool compatibility ID
   _appletsPerToolSubscribers: Map<string, StoreSubscriber<any>> = new Map();
@@ -330,6 +366,29 @@ export class WelcomeView extends LitElement {
     // }, 0);
   }
 
+  /**
+   * Sync _collapsedSections with actual notification counts.
+   * When new notifications arrive, remove sections from _collapsedSections
+   * if they should no longer be collapsed (count > lastViewedCount).
+   */
+  updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+
+    // Check if any collapsed sections should be expanded due to new notifications
+    const sectionsToExpand: string[] = [];
+    this._collapsedSections.forEach((section) => {
+      if (!this.isSectionCollapsed(section)) {
+        sectionsToExpand.push(section);
+      }
+    });
+
+    if (sectionsToExpand.length > 0) {
+      this._collapsedSections = new Set(
+        [...this._collapsedSections].filter((s) => !sectionsToExpand.includes(s))
+      );
+    }
+  }
+
   async declineMossUpdate() {
     if (this.availableMossUpdate) {
       const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
@@ -434,6 +493,256 @@ export class WelcomeView extends LitElement {
     return pluralized.charAt(0).toUpperCase() + pluralized.slice(1);
   }
 
+  /**
+   * Check if a section should be collapsed based on read state.
+   * Returns true only if section was marked as read AND no new items have arrived.
+   * Also handles ephemeral messages: if count dropped below lastViewedCount,
+   * we can't reliably compare, so treat as not collapsed.
+   */
+  isSectionCollapsed(section: string): boolean {
+    const readStates = this._sectionReadStates.value ?? {};
+    const readState = readStates[section];
+    if (!readState) {
+      return false;
+    }
+
+    const currentCount = this.getSectionCount(section);
+
+    // If current count is less than lastViewedCount, messages were lost
+    // (e.g., ephemeral foyer messages expired). In this case, we can't
+    // reliably determine read state, so show as expanded.
+    if (currentCount < readState.lastViewedCount) {
+      return false;
+    }
+
+    // Collapse only if count equals lastViewedCount (no new items)
+    return currentCount === readState.lastViewedCount;
+  }
+
+  /**
+   * Determines if a section should be displayed as collapsed.
+   * Prioritizes actual notification count over UI state.
+   * This ensures new notifications always cause sections to expand.
+   */
+  shouldSectionBeCollapsed(section: string): boolean {
+    // Always check the actual state first - if new items arrived, never collapse
+    const shouldBeCollapsedByState = this.isSectionCollapsed(section);
+    if (!shouldBeCollapsedByState) {
+      return false;
+    }
+    // If state says it should be collapsed, also check local UI state for immediate feedback
+    return this._collapsedSections.has(section) || shouldBeCollapsedByState;
+  }
+
+  /**
+   * Expand a collapsed section (just removes from collapsed set)
+   */
+  expandSection(section: string) {
+    this._collapsedSections = new Set(
+      [...this._collapsedSections].filter(s => s !== section)
+    );
+  }
+
+  /**
+   * Mark a section as read with current count
+   */
+  markSectionAsRead(section: string) {
+    const count = this.getSectionCount(section);
+    this._mossStore.recordSectionViewed(section, count);
+    this._collapsedSections = new Set([...this._collapsedSections, section]);
+  }
+
+  /**
+   * Mark a section as unread (clears read state)
+   */
+  markSectionAsUnread(section: string) {
+    this._mossStore.markSectionAsUnread(section);
+    this._collapsedSections = new Set(
+      [...this._collapsedSections].filter(s => s !== section)
+    );
+    // Select this section so the nav list moves to the left
+    this.notificationSection = section;
+    this.updateNavigationClasses();
+  }
+
+  /**
+   * Render collapsed section header
+   */
+  renderCollapsedSectionHeader(section: string, count: number) {
+    let label: string;
+    if (section === 'software-updates') {
+      label = msg('Tools');
+    } else if (section === 'moss-news') {
+      label = msg('Moss news');
+    } else if (section === 'default') {
+      label = msg('General notifications');
+    } else {
+      label = this.getLocalizedNotificationTypeLabel(section, count);
+    }
+
+    return html`
+      <div class="collapsed-section-header" @click=${() => this.expandSection(section)}>
+        <div class="collapsed-section-info">
+          <span class="collapsed-section-label">${label}</span>
+          <span class="collapsed-section-count">${count} ${msg('read')}</span>
+        </div>
+        <button
+          class="mark-unread-button"
+          @click=${(e: Event) => {
+            e.stopPropagation();
+            this.markSectionAsUnread(section);
+          }}
+        >
+          ${msg('Mark as unread')}
+        </button>
+      </div>
+    `;
+  }
+
+  /**
+   * Render section header with label and mark-as-read button
+   */
+  renderSectionHeader(section: string, label: string) {
+    return html`
+      <div class="section-header">
+        <div class="mini-button">${label}</div>
+        <sl-tooltip content="${msg('Mark section as read')}" placement="right">
+          <button
+            class="mark-read-button"
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              this.markSectionAsRead(section);
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM11.7071 6.70711L7.70711 10.7071C7.31658 11.0976 6.68342 11.0976 6.29289 10.7071L4.29289 8.70711C3.90237 8.31658 3.90237 7.68342 4.29289 7.29289C4.68342 6.90237 5.31658 6.90237 5.70711 7.29289L7 8.58579L10.2929 5.29289C10.6834 4.90237 11.3166 4.90237 11.7071 5.29289C12.0976 5.68342 12.0976 6.31658 11.7071 6.70711Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </sl-tooltip>
+      </div>
+    `;
+  }
+
+  /**
+   * Get section count for any section type
+   */
+  getSectionCount(section: string): number {
+    if (section === 'software-updates') {
+      return Object.keys(this.getToolUpdatesSource()).length + (this.availableMossUpdate ? 1 : 0);
+    } else if (section === 'moss-news') {
+      return this.updateFeed?.length ?? 0;
+    } else {
+      return this.notificationTypes[section] ?? 0;
+    }
+  }
+
+  /**
+   * Get the number of UNREAD items in a section.
+   * This is the count of new items since the section was last marked as read.
+   */
+  getUnreadCount(section: string): number {
+    const totalCount = this.getSectionCount(section);
+    const readStates = this._sectionReadStates.value ?? {};
+    const readState = readStates[section];
+
+    if (!readState) {
+      // Never marked as read - all items are unread
+      return totalCount;
+    }
+
+    // If messages were lost (ephemeral), show total as unread
+    if (totalCount < readState.lastViewedCount) {
+      return totalCount;
+    }
+
+    // Return only new items since last view
+    return Math.max(0, totalCount - readState.lastViewedCount);
+  }
+
+  /**
+   * Get the number of previously READ items in a section.
+   */
+  getReadCount(section: string): number {
+    const totalCount = this.getSectionCount(section);
+    const unreadCount = this.getUnreadCount(section);
+    return Math.max(0, totalCount - unreadCount);
+  }
+
+  /**
+   * Check if a notification is "read" based on when the section was last viewed.
+   * Uses timestamp comparison: if notification arrived before lastViewedAt, it's read.
+   */
+  isNotificationRead(notification: MossNotification, section: string): boolean {
+    const readStates = this._sectionReadStates.value ?? {};
+    const readState = readStates[section];
+
+    if (!readState) {
+      // Section was never marked as read - all notifications are unread
+      return false;
+    }
+
+    // A notification is read if it arrived before the section was last viewed
+    return notification.notification.timestamp <= readState.lastViewedAt;
+  }
+
+  /**
+   * Toggle showing all items (including previously read) in a section.
+   */
+  toggleShowAllItems(section: string) {
+    if (this._showAllItemsSections.has(section)) {
+      this._showAllItemsSections = new Set(
+        [...this._showAllItemsSections].filter(s => s !== section)
+      );
+    } else {
+      this._showAllItemsSections = new Set([...this._showAllItemsSections, section]);
+    }
+  }
+
+  /**
+   * Check if a section is showing all items (including read).
+   */
+  isShowingAllItems(section: string): boolean {
+    return this._showAllItemsSections.has(section);
+  }
+
+  /**
+   * Render notifications for a section, filtering by read/unread status.
+   * Shows unread notifications first, then optionally shows read ones with a toggle.
+   */
+  renderSectionNotifications(section: string) {
+    const allNotifications = this._notificationFeed.value
+      ?.filter((item) => (item.notification.notification_type || "default") === section) ?? [];
+
+    if (allNotifications.length === 0) {
+      return html`<div>${msg('No notifications yet...')}</div>`;
+    }
+
+    const unreadNotifications = allNotifications.filter(n => !this.isNotificationRead(n, section));
+    const readNotifications = allNotifications.filter(n => this.isNotificationRead(n, section));
+    const readCount = readNotifications.length;
+    const showingAll = this.isShowingAllItems(section);
+
+    return html`
+      ${unreadNotifications.length > 0
+        ? unreadNotifications.map((notification) => this.renderNotification(notification))
+        : readCount === 0 ? html`<div>${msg('No notifications yet...')}</div>` : ''
+      }
+      ${readCount > 0 ? html`
+        <button
+          class="show-read-button"
+          @click=${() => this.toggleShowAllItems(section)}
+        >
+          ${showingAll ? msg('Hide previously read') : msg('Show previously read')} (${readCount})
+        </button>
+        <div class="read-notifications-wrapper ${showingAll ? 'expanded' : 'collapsed'}">
+          <div class="read-notifications-content">
+            ${readNotifications.map((notification) => this.renderNotification(notification))}
+          </div>
+        </div>
+      ` : ''}
+    `;
+  }
+
   updateNavigationClasses() {
     const navList = this.shadowRoot?.querySelector('.update-nav-list');
     const allStreamsBtn = this.shadowRoot?.querySelector('.all-streams-button.fixed');
@@ -476,10 +785,16 @@ export class WelcomeView extends LitElement {
         }
       }, 100);
     } else {
+      // Expand section if it's collapsed so we can scroll to it
+      if (this.shouldSectionBeCollapsed(section)) {
+        this.expandSection(section);
+      }
+
       this.notificationSection = section;
       this.updateNavigationClasses();
       // Scroll to position the section top at or just above the middle of the screen
       this.isProgrammaticScroll = true;
+      // Use slightly longer timeout to allow for DOM update after expanding
       setTimeout(() => {
         const scrollContainer = this.shadowRoot?.querySelector('.flex-scrollable-container');
         const sectionElement = this.shadowRoot?.getElementById(section);
@@ -1083,40 +1398,45 @@ export class WelcomeView extends LitElement {
           <loading-dialog id="loading-dialog" loadingText=${msg("Updating Tool...")}></loading-dialog>
           <div class="row" style="flex: 1; height: 100%;">
             <div class="update-nav-list">
-              ${(Object.keys(this.getToolUpdatesSource()).length > 0 || this.availableMossUpdate) ? html`
+              ${(Object.keys(this.getToolUpdatesSource()).length > 0 || this.availableMossUpdate) &&
+                !this.shouldSectionBeCollapsed('software-updates') ? html`
                 <div
                   data-section="software-updates"
                   @click=${() => { this.selectNotificationSection('software-updates'); }}
                   class="notification-filter-header">
                   <span>${msg('Software updates')}</span>
-                  <span>${Object.keys(this.getToolUpdatesSource()).length + (this.availableMossUpdate ? 1 : 0)}</span>
+                  <span>${this.getUnreadCount('software-updates')}</span>
                 </div>
               `: ''}
               ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
-                <div
-                  data-section="${type}"
-                  @click=${() => { this.selectNotificationSection(type); }}
-                  class="notification-filter-header">
-                  <span>${this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type])}</span>
-                  <span>${this.notificationTypes[type] || 0}</span>
-                </div>
+                ${!this.shouldSectionBeCollapsed(type) ? html`
+                  <div
+                    data-section="${type}"
+                    @click=${() => { this.selectNotificationSection(type); }}
+                    class="notification-filter-header">
+                    <span>${this.getLocalizedNotificationTypeLabel(type, this.getUnreadCount(type))}</span>
+                    <span>${this.getUnreadCount(type)}</span>
+                  </div>
+                ` : ''}
               ` : '')}
-              ${this.notificationTypes['default'] ? html`
+              ${this.notificationTypes['default'] &&
+                !this.shouldSectionBeCollapsed('default') ? html`
                 <div
                   data-section="default"
                   @click=${() => { this.selectNotificationSection('default'); }}
                   class="notification-filter-header">
                   <span>${msg('General notifications')}</span>
-                  <span>${this.notificationTypes['default'] || 0}</span>
+                  <span>${this.getUnreadCount('default')}</span>
                 </div>
               ` : html``}
-              ${this.updateFeed && this.updateFeed.length > 0 ? html`
+              ${this.updateFeed && this.updateFeed.length > 0 &&
+                !this.shouldSectionBeCollapsed('moss-news') ? html`
                 <div
                   data-section="moss-news"
                   @click=${() => { this.selectNotificationSection('moss-news'); }}
                   class="notification-filter-header">
                   <span>${msg('Moss news')}</span>
-                  <span>${this.updateFeed.length}</span>
+                  <span>${this.getUnreadCount('moss-news')}</span>
                 </div>
               ` : html``}
             </div>
@@ -1135,59 +1455,63 @@ export class WelcomeView extends LitElement {
               <div class="scrollable-sections-container">
                 ${this._DEV_MODE || this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
 
-                ${Object.keys(this.getToolUpdatesSource()).length > 0 ? html`                
-                  <div class="scroll-section" id="software-updates">
-                    ${this.renderEllipse()}
-                    <div class="mini-button">${msg('Tools')}</div>
-                    ${this.renderToolUpdateFeed()}
-                  </div>
+                ${Object.keys(this.getToolUpdatesSource()).length > 0 ? html`
+                  ${this.shouldSectionBeCollapsed('software-updates')
+                    ? this.renderCollapsedSectionHeader('software-updates', this.getSectionCount('software-updates'))
+                    : html`
+                      <div class="scroll-section" id="software-updates">
+                        ${this.renderEllipse()}
+                        ${this.renderSectionHeader('software-updates', msg('Tools'))}
+                        ${this.renderToolUpdateFeed()}
+                      </div>
+                    `}
                 ` : html``}
 
                 ${this.notificationTypes && Object.keys(this.notificationTypes).length > 0 ? html`
-                
-                  ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
-                    <div class="scroll-section" id="${type}">
-                      ${this.renderEllipse()}
-                      <div class="mini-button">${this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type])}</div>
 
-                      <div class="notifications-column column">
-                        ${this._notificationFeed.value
-              ?.filter((item) => (item.notification.notification_type || "default") === type)
-              .length === 0
-              ? html`<div>${msg('No notifications yet...')}</div>`
-              : this._notificationFeed.value
-                ?.filter((item) => (item.notification.notification_type || "default") === type)
-                .map((notification) => this.renderNotification(notification))}
-                      </div>
-                    </div>
+                  ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
+                    ${this.shouldSectionBeCollapsed(type)
+                      ? this.renderCollapsedSectionHeader(type, this.notificationTypes[type])
+                      : html`
+                        <div class="scroll-section" id="${type}">
+                          ${this.renderEllipse()}
+                          ${this.renderSectionHeader(type, this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type]))}
+
+                          <div class="notifications-column column">
+                            ${this.renderSectionNotifications(type)}
+                          </div>
+                        </div>
+                      `}
                   ` : '')}
 
                   ${this.notificationTypes['default'] ? html`
-                    <div class="scroll-section" id="default">
-                      ${this.renderEllipse()}
-                      <div class="mini-button">${msg('General notifications')}</div>
-                      <div class="notifications-column column">
-                        ${this._notificationFeed.value
-                ?.filter((item) => (item.notification.notification_type || "default") === "default")
-                .length === 0
-                ? html`<div>${msg('No notifications yet...')}</div>`
-                : this._notificationFeed.value
-                  ?.filter((item) => (item.notification.notification_type || "default") === "default")
-                  .map((notification) => this.renderNotification(notification))}
-                      </div>
-                    </div>
+                    ${this.shouldSectionBeCollapsed('default')
+                      ? this.renderCollapsedSectionHeader('default', this.notificationTypes['default'])
+                      : html`
+                        <div class="scroll-section" id="default">
+                          ${this.renderEllipse()}
+                          ${this.renderSectionHeader('default', msg('General notifications'))}
+                          <div class="notifications-column column">
+                            ${this.renderSectionNotifications('default')}
+                          </div>
+                        </div>
+                      `}
                   ` : ''}
 
                 ` : html``}
 
                 ${this.updateFeed && this.updateFeed.length > 0 ? html`
-                  <div class="scroll-section" id="moss-news">
-                    ${this.renderEllipse()}
-                    <div class="mini-button">${msg('Moss news')}</div>
-                    <div class="moss-news-column column">
-                      ${this.updateFeed.map((newsItem) => this.renderMossNewsItem(newsItem))}
-                    </div>
-                  </div>
+                  ${this.shouldSectionBeCollapsed('moss-news')
+                    ? this.renderCollapsedSectionHeader('moss-news', this.getSectionCount('moss-news'))
+                    : html`
+                      <div class="scroll-section" id="moss-news">
+                        ${this.renderEllipse()}
+                        ${this.renderSectionHeader('moss-news', msg('Moss news'))}
+                        <div class="moss-news-column column">
+                          ${this.updateFeed.map((newsItem) => this.renderMossNewsItem(newsItem))}
+                        </div>
+                      </div>
+                    `}
                 ` : html``}
 
               </div>
@@ -1264,6 +1588,144 @@ export class WelcomeView extends LitElement {
 
       .notification-filter-header:hover, .notification-filter-header.selected {
         background: #fff;
+      }
+
+      .collapsed-section-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.50);
+        cursor: pointer;
+        transition: background 0.2s ease;
+        width: 540px;
+        margin: 4px 0;
+        z-index: 2;
+        position: relative;
+      }
+
+      .collapsed-section-header:hover {
+        background: rgba(255, 255, 255, 0.80);
+      }
+
+      .collapsed-section-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .collapsed-section-label {
+        font-weight: 500;
+        color: var(--moss-dark-button);
+      }
+
+      .collapsed-section-count {
+        font-size: 12px;
+        color: rgba(21, 26, 17, 0.6);
+      }
+
+      .mark-unread-button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(21, 26, 17, 0.10);
+        color: var(--moss-dark-button);
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s ease;
+        pointer-events: auto;
+        z-index: 3;
+      }
+
+      .mark-unread-button:hover {
+        background: rgba(21, 26, 17, 0.20);
+      }
+
+      .section-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        position: relative;
+        z-index: 2;
+      }
+
+      .section-header .mark-read-button {
+        position: absolute;
+        right: 16px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: rgba(21, 26, 17, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+        opacity: 0;
+        z-index: 3;
+        pointer-events: auto;
+      }
+
+      .scroll-section:hover .section-header .mark-read-button {
+        opacity: 1;
+      }
+
+      .section-header .mark-read-button:hover {
+        background: rgba(21, 26, 17, 0.1);
+        color: var(--moss-dark-button);
+      }
+
+      .show-read-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        margin: 8px 0;
+        border: 1px dashed rgba(21, 26, 17, 0.3);
+        border-radius: 12px;
+        background: transparent;
+        color: rgba(21, 26, 17, 0.6);
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        width: 100%;
+        position: relative;
+        z-index: 5;
+      }
+
+      .show-read-button:hover {
+        background: rgba(21, 26, 17, 0.05);
+        border-color: rgba(21, 26, 17, 0.5);
+        color: rgba(21, 26, 17, 0.8);
+      }
+
+      .read-notifications-wrapper {
+        display: grid;
+        transition: grid-template-rows 0.3s ease-out, opacity 0.3s ease-out;
+      }
+
+      .read-notifications-wrapper.collapsed {
+        grid-template-rows: 0fr;
+        opacity: 0;
+      }
+
+      .read-notifications-wrapper.expanded {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+
+      .read-notifications-content {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
       .flex-scrollable-container {

@@ -1783,13 +1783,13 @@
   <target>高 = システム通知、中 = システムトレイ、低 = フィードのみ</target>
 </trans-unit>
 <trans-unit id="s81023d00acf4c745">
-  <source>Ah, this wonderful
+  <source>Ah, this wonderful 
 P2P world!</source>
   <target>ああ、この素晴らしい
 P2Pの世界！</target>
 </trans-unit>
 <trans-unit id="sbea79f14f05cd325">
-  <source>Good morning,
+  <source>Good morning, 
 you early-bird!</source>
   <target>おはよう、
 早起きさん！</target>
@@ -1801,13 +1801,13 @@ you early-bird!</source>
  素敵な人！</target>
 </trans-unit>
 <trans-unit id="s1b1be7d5b942bfd5">
-  <source>Welcome back,
+  <source>Welcome back, 
 beautiful human!</source>
   <target>おかえりなさい、
 素敵な人！</target>
 </trans-unit>
 <trans-unit id="s2341b57b43fa7a22">
-  <source>The best part of the day
+  <source>The best part of the day 
 starts now</source>
   <target>今日の最高の時間が
 今始まります</target>
@@ -1895,6 +1895,21 @@ starts now</source>
 <trans-unit id="s0218af3f7efc5872">
   <source>Moss news</source>
   <target>Mossニュース</target>
+</trans-unit>
+<trans-unit id="s086799ff5eb061eb">
+  <source>Mark section as read</source>
+</trans-unit>
+<trans-unit id="s4ce6531fbfddd605">
+  <source>read</source>
+</trans-unit>
+<trans-unit id="sb5d1c3e0fa747687">
+  <source>Mark as unread</source>
+</trans-unit>
+<trans-unit id="s951a80954fdc37c7">
+  <source>Hide previously read</source>
+</trans-unit>
+<trans-unit id="s8f9c23bfdd2e396e">
+  <source>Show previously read</source>
 </trans-unit>
 </body>
 </file>

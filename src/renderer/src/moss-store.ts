@@ -118,7 +118,7 @@ import { Applet, AssetsClient, GroupClient, GroupProfile } from '@theweave/group
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
-import { PersistedStore } from './persisted-store.js';
+import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
 import { IframeStore } from './iframe-store.js';
@@ -356,6 +356,54 @@ export class MossStore {
   setAppletSidebarCollapsed(value: boolean): void {
     this.persistedStore.appletSidebarCollapsed.set(value);
     this._appletSidebarCollapsed.set(value);
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Notification Section Read States
+   * --------------------------------------------------------------------------
+   */
+
+  private _sectionReadStates: Writable<SectionReadStates | null> = writable(null);
+
+  sectionReadStates(): Readable<SectionReadStates> {
+    return readable<SectionReadStates>({}, (set) => {
+      if (get(this._sectionReadStates) === null) {
+        this._sectionReadStates.set(this.persistedStore.sectionReadStates.value());
+      }
+      const unsubscribe = this._sectionReadStates.subscribe((states) => {
+        set(states ?? {});
+      });
+      return unsubscribe;
+    });
+  }
+
+  /**
+   * Records that a section was viewed with the given count
+   */
+  recordSectionViewed(section: string, count: number): void {
+    const states = get(this._sectionReadStates) ?? {};
+    const newStates: SectionReadStates = {
+      ...states,
+      [section]: {
+        section,
+        lastViewedCount: count,
+        lastViewedAt: Date.now(),
+      },
+    };
+    this.persistedStore.sectionReadStates.set(newStates);
+    this._sectionReadStates.set(newStates);
+  }
+
+  /**
+   * Clears the read state for a section (marks as unread)
+   */
+  markSectionAsUnread(section: string): void {
+    const states = get(this._sectionReadStates) ?? {};
+    const newStates = { ...states };
+    delete newStates[section];
+    this.persistedStore.sectionReadStates.set(newStates);
+    this._sectionReadStates.set(newStates);
   }
 
   /**
