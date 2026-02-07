@@ -1478,10 +1478,6 @@
   <source>Design Feedback</source>
   <target>Tasarım Geri Bildirimi</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>Sağ üst köşede bir geri bildirim düğmesi göstermek için Tasarım Geri Bildirim Modunu etkinleştirin. Bir alanın ekran görüntüsünü almak ve geri bildirim göndermek için tıklayın.</target>
-</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
   <target>Tasarım Geri Bildirim Modunu Etkinleştir</target>
@@ -1557,10 +1553,6 @@
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
   <target>Tasarım Geri Bildirim Modu</target>
-</trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>Ekran görüntüleri almak ve uygulamanın herhangi bir yerinden doğrudan görsel geri bildirim göndermek için Tasarım Geri Bildirim Modunu etkinleştirin. Sağ üst köşede bir geri bildirim düğmesi görünecek ve ekranın herhangi bir alanını seçerek geri bildiriminizi açıklamanıza olanak tanıyacaktır.</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
@@ -1919,6 +1911,14 @@ starts now</source>
 <trans-unit id="s2381cae9270b356a">
   <source>What's new in</source>
   <target>Yenilikler:</target>
+</trans-unit>
+<trans-unit id="s1d5e60e7f0a4c151">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Ekran görüntüleri yakalamak ve uygulama içinde herhangi bir yerden doğrudan görsel geri bildirim göndermek için Tasarım Geri Bildirim Modunu etkinleştirin. Sol üst köşede bir geri bildirim düğmesi görünecek ve ekranın herhangi bir alanını seçerek geri bildiriminizi tanımlamanıza olanak tanıyacaktır.</target>
+</trans-unit>
+<trans-unit id="s67531f2cb14d3843">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Sol üst köşede bir geri bildirim düğmesi göstermek için Tasarım Geri Bildirim Modunu etkinleştirin. Herhangi bir alanın ekran görüntüsünü yakalamak ve geri bildirim göndermek için tıklayın.</target>
 </trans-unit>
 </body>
 </file>

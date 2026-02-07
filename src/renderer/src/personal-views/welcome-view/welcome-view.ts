@@ -949,7 +949,7 @@ Changes:
           <div class="design-feedback-section">
             <h3 style="margin: 0 0 8px 0;">${msg('Design Feedback Mode')}</h3>
             <p style="margin: 0 0 12px 0; opacity: 0.9;">
-              ${msg('Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.')}
+              ${msg('Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.')}
             </p>
             <p style="margin: 0 0 12px 0; opacity: 0.7; font-size: 14px;">
               ${msg('You can also enable or disable this mode in Settings > Feedback.')}
@@ -1544,6 +1544,18 @@ Changes:
           </div>
           ` : ''}
           ${this.renderExperimentalButton()}
+          ${!this._designFeedbackMode ? html`
+            <button
+              class="feedback-btn"
+              @click=${() => this._feedbackDialog.show()}
+            >
+              <div class="row items-center" style="font-size: 20px; justify-content: center;">
+                <span style="margin-bottom: -2px;">${commentHeartIconFilled(20)}</span>
+                <span style="margin-left: 5px;">${msg('Feedback')}</span>
+              </div>
+            </button>
+          ` : nothing}
+          ${this.renderFeedbackDialog()}
           <moss-dialog
             id="changelog-dialog"
             width="600px"
@@ -2217,21 +2229,23 @@ Changes:
 
       .feedback-btn {
         all: unset;
-        /* background: linear-gradient(180deg, #1c251e 0%, #2c3a1c 69.5%, #4c461b 95%); */
-        background: #ffffff5c;
-        border-radius: 16px;
-        padding: 16px 20px;
-        font-size: 18px;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 14px;
         font-weight: 500;
         line-height: 20px;
         color: white;
         cursor: pointer;
         text-align: center;
-        --sl-color-neutral-0: black;
-        --sl-color-primary-50: #455b36;
+        transition: background 0.2s;
       }
       .feedback-btn:hover {
-        background: linear-gradient(#912f2f, #983441);
+        background: rgba(0, 0, 0, 0.8);
       }
       .feedback-btn:disabled {
         opacity: 0.4;

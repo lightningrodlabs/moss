@@ -54,10 +54,6 @@
   <source>Design Feedback Mode</source>
   <target>Ontwerpfeedbackmodus</target>
 </trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>Schakel de Ontwerpfeedbackmodus in om schermafbeeldingen te maken en visuele feedback rechtstreeks vanuit de app te verzenden. Er verschijnt een feedbackknop in de rechterbovenhoek waarmee je een deel van het scherm kunt selecteren en je feedback kunt beschrijven.</target>
-</trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
   <target>Je kunt deze modus ook in- of uitschakelen via Instellingen &gt; Feedback.</target>
@@ -1206,10 +1202,6 @@
   <source>Design Feedback</source>
   <target>Ontwerpfeedback</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>Schakel de Ontwerpfeedbackmodus in om een feedbackknop in de rechterbovenhoek te tonen. Klik erop om een schermafbeelding van een gebied te maken en feedback te verzenden.</target>
-</trans-unit>
 <trans-unit id="s417a0b7eadfddf0e">
   <source>Feedback History</source>
   <target>Feedbackgeschiedenis</target>
@@ -1919,6 +1911,14 @@ begint nu</target>
 <trans-unit id="s2381cae9270b356a">
   <source>What's new in</source>
   <target>Wat is nieuw in</target>
+</trans-unit>
+<trans-unit id="s1d5e60e7f0a4c151">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Schakel de Ontwerp Feedback Modus in om screenshots te maken en visuele feedback direct vanuit elke plek in de app te versturen. Een feedbackknop verschijnt in de linkerbovenhoek, waarmee je elk gebied van het scherm kunt selecteren en je feedback kunt beschrijven.</target>
+</trans-unit>
+<trans-unit id="s67531f2cb14d3843">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Schakel de Ontwerp Feedback Modus in om een feedbackknop in de linkerbovenhoek te tonen. Klik erop om een screenshot van elk gebied te maken en feedback te versturen.</target>
 </trans-unit>
 </body>
 </file>

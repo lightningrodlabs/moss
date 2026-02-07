@@ -1478,10 +1478,6 @@
   <source>Design Feedback</source>
   <target>Design-Feedback</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>Aktivieren Sie den Design-Feedback-Modus, um eine Feedback-Schaltfläche in der oberen rechten Ecke anzuzeigen. Klicken Sie darauf, um einen Screenshot eines Bereichs aufzunehmen und Feedback zu senden.</target>
-</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
   <target>Design-Feedback-Modus aktivieren</target>
@@ -1557,10 +1553,6 @@
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
   <target>Design-Feedback-Modus</target>
-</trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>Aktivieren Sie den Design-Feedback-Modus, um Screenshots aufzunehmen und visuelles Feedback direkt von überall in der App zu senden. Eine Feedback-Schaltfläche erscheint in der oberen rechten Ecke, mit der Sie einen beliebigen Bereich des Bildschirms auswählen und Ihr Feedback beschreiben können.</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
@@ -1919,6 +1911,14 @@ beginnt jetzt</target>
 <trans-unit id="s2381cae9270b356a">
   <source>What's new in</source>
   <target>Was ist neu in</target>
+</trans-unit>
+<trans-unit id="s1d5e60e7f0a4c151">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Aktiviere den Design-Feedback-Modus, um Screenshots aufzunehmen und visuelles Feedback direkt von überall in der App zu senden. Ein Feedback-Button erscheint in der oberen linken Ecke, mit dem du einen beliebigen Bereich des Bildschirms auswählen und dein Feedback beschreiben kannst.</target>
+</trans-unit>
+<trans-unit id="s67531f2cb14d3843">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Aktiviere den Design-Feedback-Modus, um einen Feedback-Button in der oberen linken Ecke anzuzeigen. Klicke darauf, um einen Screenshot eines beliebigen Bereichs aufzunehmen und Feedback zu senden.</target>
 </trans-unit>
 </body>
 </file>

@@ -1478,10 +1478,6 @@
   <source>Design Feedback</source>
   <target>Comentarios de diseño</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>Active el modo de comentarios de diseño para mostrar un botón de comentarios en la esquina superior derecha. Haga clic en él para capturar una zona de la pantalla y enviar comentarios.</target>
-</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
   <target>Activar modo de comentarios de diseño</target>
@@ -1557,10 +1553,6 @@
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
   <target>Modo de comentarios de diseño</target>
-</trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>Active el modo de comentarios de diseño para capturar pantallas y enviar comentarios visuales directamente desde cualquier lugar de la aplicación. Un botón de comentarios aparecerá en la esquina superior derecha, permitiéndole seleccionar cualquier área de la pantalla y describir sus comentarios.</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
@@ -1919,6 +1911,14 @@ comienza ahora</target>
 <trans-unit id="s2381cae9270b356a">
   <source>What's new in</source>
   <target>Qué hay de nuevo en</target>
+</trans-unit>
+<trans-unit id="s1d5e60e7f0a4c151">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>Habilita el Modo de Retroalimentación de Diseño para capturar capturas de pantalla y enviar comentarios visuales directamente desde cualquier lugar de la aplicación. Un botón de retroalimentación aparecerá en la esquina superior izquierda, permitiéndote seleccionar cualquier área de la pantalla y describir tu retroalimentación.</target>
+</trans-unit>
+<trans-unit id="s67531f2cb14d3843">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>Habilita el Modo de Retroalimentación de Diseño para mostrar un botón de retroalimentación en la esquina superior izquierda. Haz clic en él para capturar una captura de pantalla de cualquier área y enviar retroalimentación.</target>
 </trans-unit>
 </body>
 </file>

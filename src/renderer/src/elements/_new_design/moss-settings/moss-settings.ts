@@ -115,7 +115,7 @@ export class MossSettings extends LitElement {
       <div class="column" style="padding: 0 20px; gap: 16px;">
         <h3 style="margin: 0;">${msg('Design Feedback')}</h3>
         <p style="margin: 0; opacity: 0.8;">
-          ${msg('Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.')}
+          ${msg('Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.')}
         </p>
         <sl-switch
           ?checked=${this._designFeedbackMode}

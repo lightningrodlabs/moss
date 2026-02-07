@@ -249,8 +249,8 @@ export class DesignFeedbackController extends LitElement {
 
     .feedback-trigger {
       position: fixed;
-      top: 8px;
-      right: 44px;
+      top: 15px;
+      left: 90px;
       z-index: 9999;
       width: 32px;
       height: 32px;

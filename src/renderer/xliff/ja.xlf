@@ -1478,10 +1478,6 @@
   <source>Design Feedback</source>
   <target>デザインフィードバック</target>
 </trans-unit>
-<trans-unit id="s48218f1042ae9df4">
-  <source>Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.</source>
-  <target>デザインフィードバックモードを有効にすると、右上にフィードバックボタンが表示されます。クリックして画面の任意の領域をキャプチャし、フィードバックを送信できます。</target>
-</trans-unit>
 <trans-unit id="sd24445593cfc39de">
   <source>Enable Design Feedback Mode</source>
   <target>デザインフィードバックモードを有効にする</target>
@@ -1557,10 +1553,6 @@
 <trans-unit id="sed6fca73e1adda45">
   <source>Design Feedback Mode</source>
   <target>デザインフィードバックモード</target>
-</trans-unit>
-<trans-unit id="s6b17a3076dcd1490">
-  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-right corner, allowing you to select any area of the screen and describe your feedback.</source>
-  <target>デザインフィードバックモードを有効にすると、アプリ内のどこからでもスクリーンショットをキャプチャし、ビジュアルフィードバックを直接送信できます。右上にフィードバックボタンが表示され、画面の任意の領域を選択してフィードバックを記述できます。</target>
 </trans-unit>
 <trans-unit id="sdd3888e4a6dbb0b7">
   <source>You can also enable or disable this mode in Settings &gt; Feedback.</source>
@@ -1919,6 +1911,14 @@ starts now</source>
 <trans-unit id="s2381cae9270b356a">
   <source>What's new in</source>
   <target>新着情報：</target>
+</trans-unit>
+<trans-unit id="s1d5e60e7f0a4c151">
+  <source>Enable Design Feedback Mode to capture screenshots and submit visual feedback directly from anywhere in the app. A feedback button will appear in the top-left corner, allowing you to select any area of the screen and describe your feedback.</source>
+  <target>デザインフィードバックモードを有効にすると、アプリ内のどこからでもスクリーンショットをキャプチャし、視覚的なフィードバックを直接送信できます。フィードバックボタンが左上隅に表示され、画面の任意の領域を選択してフィードバックを記述できます。</target>
+</trans-unit>
+<trans-unit id="s67531f2cb14d3843">
+  <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
+  <target>デザインフィードバックモードを有効にすると、左上隅にフィードバックボタンが表示されます。クリックすると任意の領域のスクリーンショットをキャプチャしてフィードバックを送信できます。</target>
 </trans-unit>
 </body>
 </file>
