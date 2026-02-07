@@ -147,7 +147,16 @@ export class GroupHome extends LitElement {
   @state()
   _showingInactiveTools = false;
 
+  @state()
+  _foyerWidth: number = 320;
+
+  @state()
+  _isResizingFoyer = false;
+
   _unsubscribe: Unsubscriber | undefined;
+
+  private _boundHandleMouseMove = this._handleFoyerResize.bind(this);
+  private _boundHandleMouseUp = this._stopFoyerResize.bind(this);
 
   // Memoization for performance
   private _timeAgo = getLocalizedTimeAgo();
@@ -244,13 +253,67 @@ export class GroupHome extends LitElement {
     () => [this._groupStore, this.mossStore],
   );
 
+  private _lastGroupDnaHash: string | null = null;
+
   async firstUpdated() {
     await this._groupStore.groupDescription.reload();
+    this._loadFoyerWidth();
+  }
+
+  private _loadFoyerWidth() {
+    const groupDnaHashB64 = encodeHashToBase64(this._groupStore.groupDnaHash);
+    if (this._lastGroupDnaHash !== groupDnaHashB64) {
+      this._lastGroupDnaHash = groupDnaHashB64;
+      this._foyerWidth = this.mossStore.persistedStore.foyerWidth.value(groupDnaHashB64);
+    }
+  }
+
+  willUpdate(_changedProperties: Map<string, unknown>) {
+    // Reload foyer width when group changes
+    if (this._groupStore && this.mossStore) {
+      this._loadFoyerWidth();
+    }
+  }
+
+  private _startFoyerResize(e: MouseEvent) {
+    e.preventDefault();
+    this._isResizingFoyer = true;
+    document.addEventListener('mousemove', this._boundHandleMouseMove);
+    document.addEventListener('mouseup', this._boundHandleMouseUp);
+  }
+
+  private _handleFoyerResize(e: MouseEvent) {
+    if (!this._isResizingFoyer) return;
+
+    const container = this.shadowRoot?.querySelector('.main-panel-content') as HTMLElement;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const newWidth = containerRect.right - e.clientX;
+
+    // Constrain width between 310px and 600px
+    const constrainedWidth = Math.max(310, Math.min(600, newWidth));
+    this._foyerWidth = constrainedWidth;
+  }
+
+  private _stopFoyerResize() {
+    if (!this._isResizingFoyer) return;
+
+    this._isResizingFoyer = false;
+    document.removeEventListener('mousemove', this._boundHandleMouseMove);
+    document.removeEventListener('mouseup', this._boundHandleMouseUp);
+
+    // Persist the width
+    const groupDnaHashB64 = encodeHashToBase64(this._groupStore.groupDnaHash);
+    this.mossStore.persistedStore.foyerWidth.set(this._foyerWidth, groupDnaHashB64);
   }
 
   disconnectedCallback(): void {
     if (this._unsubscribe) this._unsubscribe();
     if (this._peerStatusInterval) clearInterval(this._peerStatusInterval);
+    // Clean up resize listeners
+    document.removeEventListener('mousemove', this._boundHandleMouseMove);
+    document.removeEventListener('mouseup', this._boundHandleMouseUp);
   }
 
   public selectTab(tab: 'home' | 'unjoined tools'): void {
@@ -680,8 +743,8 @@ export class GroupHome extends LitElement {
                   class="moss-button"
                   style="margin-right: 8px; padding: 8px; border-radius: 6px;"
                   @click=${() => {
-                this._editGroupDescription = false;
-              }}
+              this._editGroupDescription = false;
+            }}
                 >
                   <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
                 </button>
@@ -691,28 +754,28 @@ export class GroupHome extends LitElement {
                   class="moss-button"
                   style="padding: 8px; border-radius: 6px;"
                   @click=${async () => {
-                const descriptionInput = this.shadowRoot!.getElementById(
-                  'group-description-input',
-                ) as HTMLTextAreaElement;
-                // TODO: use MossPrivilege instead
-                if (!this.amIPrivileged()) {
-                  this._editGroupDescription = false;
-                  notifyError('No permission to edit group profile.');
-                  return;
-                } else {
-                  console.log('Saving description...');
-                  console.log('Value: ', descriptionInput.value);
-                  const result = await this._groupStore.groupClient.setGroupDescription(
-                    this.getMyPermissionHash(),
-                    descriptionInput.value,
-                  );
+              const descriptionInput = this.shadowRoot!.getElementById(
+                'group-description-input',
+              ) as HTMLTextAreaElement;
+              // TODO: use MossPrivilege instead
+              if (!this.amIPrivileged()) {
+                this._editGroupDescription = false;
+                notifyError('No permission to edit group profile.');
+                return;
+              } else {
+                console.log('Saving description...');
+                console.log('Value: ', descriptionInput.value);
+                const result = await this._groupStore.groupClient.setGroupDescription(
+                  this.getMyPermissionHash(),
+                  descriptionInput.value,
+                );
 
-                  console.log('description saved: ', result.entry);
+                console.log('description saved: ', result.entry);
 
-                  await this._groupStore.groupDescription.reload();
-                  this._editGroupDescription = false;
-                }
-              }}
+                await this._groupStore.groupDescription.reload();
+                this._editGroupDescription = false;
+              }
+            }}
                 >
                   <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
                 </button>
@@ -752,16 +815,16 @@ export class GroupHome extends LitElement {
                   class="moss-button"
                   style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
                   @click=${async () => {
-                this._loadingDescription = true;
-                // Reload group description in case another Steward has edited it in the meantime
-                try {
-                  await this._groupStore.groupDescription.reload();
-                } catch (e) {
-                  console.warn('Failed to load description: ', e);
-                }
-                this._loadingDescription = false;
-                this._editGroupDescription = true;
-              }}
+              this._loadingDescription = true;
+              // Reload group description in case another Steward has edited it in the meantime
+              try {
+                await this._groupStore.groupDescription.reload();
+              } catch (e) {
+                console.warn('Failed to load description: ', e);
+              }
+              this._loadingDescription = false;
+              this._editGroupDescription = true;
+            }}
                   ?disabled=${this._loadingDescription}
                 >
                   <div class="column center-content" style="padding-top: 2px;">
@@ -790,15 +853,19 @@ export class GroupHome extends LitElement {
     switch (this._selectedTab) {
       case 'home':
         return html`
-          <div style="display:flex; flex: 1; overflow-y: hidden;">
-            <div class="flex-scrollable-parent" style="flex:3">
+          <div class="main-panel-content" style="display:flex; flex: 1; overflow-y: hidden;">
+            <div class="flex-scrollable-parent" style="flex: 1; min-width: 0;">
               <div class="flex-scrollable-container">
                 <div class="flex-scrollable-y">
                   <div class="home-panel">${this.renderHomeContent()}</div>
                 </div>
               </div>
             </div>
-            <div style="display: flex; flex: 1">${this.renderFoyer()}</div>
+            <div
+              class="foyer-resize-handle ${this._isResizingFoyer ? 'resizing' : ''}"
+              @mousedown=${(e: MouseEvent) => this._startFoyerResize(e)}
+            ></div>
+            <div style="display: flex; width: ${this._foyerWidth}px; flex-shrink: 0;">${this.renderFoyer()}</div>
           </div>
         `;
       case 'unjoined tools':
@@ -831,9 +898,9 @@ export class GroupHome extends LitElement {
 
       <moss-dialog id="group-settings-dialog"
         @sl-after-hide=${() => {
-          this._settingsDialogOpen = false;
-          this._showingInactiveTools = false;
-        }}
+        this._settingsDialogOpen = false;
+        this._showingInactiveTools = false;
+      }}
       >
         <span slot="header"> ${msg('Group Settings')}</span>
         <group-settings slot="content"
@@ -872,13 +939,13 @@ export class GroupHome extends LitElement {
 
             <div class="row items-center" style="gap: 8px;">
               ${this.amIPrivileged()
-                ? html`
+        ? html`
                     <button
                       class="moss-button"
                       style="padding: 10px 16px;"
                       @click=${() => {
-                    this.inviteMemberDialog?.show();
-                  }}
+            this.inviteMemberDialog?.show();
+          }}
                     >
                       <div class="row center-content items-center;">
                         <div class="column" style="color: white;">${personPlusIcon(20)}</div>
@@ -886,14 +953,14 @@ export class GroupHome extends LitElement {
                       </div>
                     </button>
                   `
-                : html``}
+        : html``}
               <button
                 class="moss-button"
                 style="padding: 10px 16px;"
                 @click=${() => {
-              this._settingsDialogOpen = true;
-              this.groupSettingsDialog?.show();
-            }}
+        this._settingsDialogOpen = true;
+        this.groupSettingsDialog?.show();
+      }}
               >
                 <div class="row center-content items-center;">
                   <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 20px; color: white;"></sl-icon>
@@ -1158,6 +1225,19 @@ export class GroupHome extends LitElement {
 
       .group-description a:hover {
         color: var(--moss-purple-semi-transparent);
+      }
+
+      .foyer-resize-handle {
+        width: 6px;
+        cursor: col-resize;
+        background: transparent;
+        transition: background 0.15s ease;
+        flex-shrink: 0;
+      }
+
+      .foyer-resize-handle:hover,
+      .foyer-resize-handle.resizing {
+        background: var(--moss-main-green);
       }
     `,
   ];
