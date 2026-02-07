@@ -72,6 +72,9 @@ export class WelcomeView extends LitElement {
   @query('#feedback-dialog')
   _feedbackDialog!: MossDialog;
 
+  @query('#changelog-dialog')
+  _changelogDialog!: MossDialog;
+
   @property()
   updateFeed!: Array<UpdateFeedMessage>;
 
@@ -219,7 +222,7 @@ export class WelcomeView extends LitElement {
   _mockGroupsData: Record<string, Map<any, any>> = {};
 
   // DEV MODE: Enable mock tool updates
-  _DEV_MODE = false; // Set to false to use real data
+  _DEV_MODE = false; // Set to true to test UI with mock data
 
   // Memoization cache for notificationTypes
   private _lastNotifications: Array<any> | null = null;
@@ -264,17 +267,29 @@ export class WelcomeView extends LitElement {
       this._mockToolUpdates = createMockToolUpdates();
       this._mockAppletsData = createMockAppletsData();
       this._mockGroupsData = createMockGroupsData();
-    }
+      // Mock Moss update for UI testing
+      this.availableMossUpdate = {
+        version: '0.15.5',
+        releaseDate: new Date().toISOString(),
+        releaseNotes: `Test update to version 0.15.5
 
-    const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
-    console.log('Available Moss update: ', availableMossUpdate);
-    const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
-    if (availableMossUpdate && !declinedUpdates.includes(availableMossUpdate.version)) {
-      this.availableMossUpdate = availableMossUpdate;
-      window.electronAPI.onMossUpdateProgress((_, progressInfo) => {
-        this.mossUpdatePercentage = progressInfo.percent;
-        console.log('Download progress: ', progressInfo);
-      });
+This is a mock update for UI development.
+
+Changes:
+- New feature A
+- Bug fix B
+- Improvement C`,
+      };
+    } else {
+      const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
+      console.log('Available Moss update: ', availableMossUpdate);
+      if (availableMossUpdate) {
+        this.availableMossUpdate = availableMossUpdate;
+        window.electronAPI.onMossUpdateProgress((_, progressInfo) => {
+          this.mossUpdatePercentage = progressInfo.percent;
+          console.log('Download progress: ', progressInfo);
+        });
+      }
     }
 
     // Load notifications once
@@ -389,13 +404,12 @@ export class WelcomeView extends LitElement {
     }
   }
 
-  async declineMossUpdate() {
-    if (this.availableMossUpdate) {
-      const declinedUpdates = this._mossStore.persistedStore.declinedMossUpdates.value();
-      declinedUpdates.push(this.availableMossUpdate.version);
-      this._mossStore.persistedStore.declinedMossUpdates.set(declinedUpdates);
-    }
-    this.availableMossUpdate = undefined;
+  showChangelog() {
+    this._changelogDialog.show();
+  }
+
+  dismissMossUpdate() {
+    this.markSectionAsRead('software-updates');
   }
 
   async installMossUpdate() {
@@ -571,7 +585,7 @@ export class WelcomeView extends LitElement {
   renderCollapsedSectionHeader(section: string, count: number) {
     let label: string;
     if (section === 'software-updates') {
-      label = msg('Tools');
+      label = msg('Software updates');
     } else if (section === 'moss-news') {
       label = msg('Moss news');
     } else if (section === 'default') {
@@ -1077,63 +1091,60 @@ export class WelcomeView extends LitElement {
     `;
   }
 
-  renderMossUpdateAvailable() {
+  getFirstLineOfReleaseNotes(): string {
+    if (!this.availableMossUpdate?.releaseNotes) {
+      return msg('A new release of Moss with exciting features and improvements.');
+    }
+    // Get first non-empty line
+    const lines = this.availableMossUpdate.releaseNotes.split('\n').filter(line => line.trim());
+    return lines[0] || msg('A new release of Moss with exciting features and improvements.');
+  }
+
+  renderMossUpdateCard() {
     return html`
-    <div class="scroll-section" id="software-updates" style="padding: 8px;">
       <div class="moss-update-available-container">
-        <div class="update-date">
-          ${this.availableMossUpdate?.releaseDate
-        ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
-        : ''}
-        </div>
-        <div class="update-type"></div>
-        <div class="column">
-          <div class="row" style="align-items: center;">
-            <img src="moss-update.png" class="moss-icon" />
-            <div class="column" style="gap: 8px; margin-left: 22px; height: 160px; justify-content: space-between;">
-              <span></span>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="moss-update-title">
-                  ${msg('New Moss Sprouted!')}
-                  <!-- <div style="margin-left: 10px; font-size: 28px;">
-                    v${this.availableMossUpdate?.version}
-                  </div> -->
-                  <!-- <span style="display: flex; flex: 1;"></span> -->
-                </div>
-                <div class="moss-update-release-notes">
-                  ${this.availableMossUpdate?.releaseNotes
-        ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
-        : msg('A new release of Moss with exciting features and improvements.')}
-                </div>
+        <div class="moss-update-header">
+          <img src="moss-update.png" class="moss-icon" />
+          <div class="moss-update-content">
+            <div class="moss-update-title-row">
+              <div class="moss-update-title">
+                ${msg('New Moss Sprouted!')}
               </div>
-            <div class="row center-content moss-update-buttons">
+              <div class="update-date">
+                ${this.availableMossUpdate?.releaseDate
+                  ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
+                  : ''}
+              </div>
+            </div>
+            <div class="moss-update-release-notes">
+              ${this.getFirstLineOfReleaseNotes()}
+            </div>
+            <div class="moss-update-buttons">
               ${this.mossUpdatePercentage
-        ? html`<span class="flex flex-1"></span>
-                    <div class="column">
+                ? html`
+                    <div class="column" style="align-items: center;">
                       <div>${msg('Installing...')}</div>
                       <sl-progress-bar
                         value="${this.mossUpdatePercentage}"
                         style="width: 200px; --height: 15px;"
                       ></sl-progress-bar>
-                    </div> `
-        : html`
+                    </div>`
+                : html`
                     <div
                       class="install-moss-update-button"
                       @click=${() => this.installMossUpdate()}
                       >${msg('Update now')}</div
                     >
                     <div
-                      class="decline-moss-update-button"
-                      @click=${() => this.declineMossUpdate()}
-                      >${msg('Decline')}</div
+                      class="whats-new-button"
+                      @click=${() => this.showChangelog()}
+                      >${msg("What's new?")}</div
                     >
                   `}
             </div>
           </div>
-          </div>
         </div>
       </div>
-    </div>
     `;
   }
 
@@ -1453,16 +1464,17 @@ export class WelcomeView extends LitElement {
               </div>
 
               <div class="scrollable-sections-container">
-                ${this._DEV_MODE || this.availableMossUpdate ? this.renderMossUpdateAvailable() : html``}
-
-                ${Object.keys(this.getToolUpdatesSource()).length > 0 ? html`
+                ${(this._DEV_MODE || this.availableMossUpdate || Object.keys(this.getToolUpdatesSource()).length > 0) ? html`
                   ${this.shouldSectionBeCollapsed('software-updates')
                     ? this.renderCollapsedSectionHeader('software-updates', this.getSectionCount('software-updates'))
                     : html`
                       <div class="scroll-section" id="software-updates">
                         ${this.renderEllipse()}
-                        ${this.renderSectionHeader('software-updates', msg('Tools'))}
-                        ${this.renderToolUpdateFeed()}
+                        ${this.renderSectionHeader('software-updates', msg('Software updates'))}
+                        <div class="software-updates-content">
+                          ${this.availableMossUpdate ? this.renderMossUpdateCard() : html``}
+                          ${Object.keys(this.getToolUpdatesSource()).length > 0 ? this.renderToolUpdateFeed() : html``}
+                        </div>
                       </div>
                     `}
                 ` : html``}
@@ -1532,6 +1544,19 @@ export class WelcomeView extends LitElement {
           </div>
           ` : ''}
           ${this.renderExperimentalButton()}
+          <moss-dialog
+            id="changelog-dialog"
+            width="600px"
+          >
+            <div class="row" slot="header">
+              <span>${msg("What's new in")} V${this.availableMossUpdate?.version}</span>
+            </div>
+            <div slot="content" class="changelog-content">
+              ${this.availableMossUpdate?.releaseNotes
+                ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+                : msg('A new release of Moss with exciting features and improvements.')}
+            </div>
+          </moss-dialog>
         `;
     }
   }
@@ -1791,18 +1816,50 @@ export class WelcomeView extends LitElement {
         gap: 10px;
       }
 
+      .software-updates-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+      }
+
       .moss-update-available-container {
         border-radius: 20px;
-        padding: 8px;
-        width: calc(100% - 16px);
+        padding: 16px;
+        width: 540px;
+        box-sizing: border-box;
         border: 1px solid #FFF;
         background: linear-gradient(180deg, var(--Moss-main-green, #E0EED5) 18.05%, #F5F5F3 99.92%);
+      }
+
+      .moss-update-header {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .moss-update-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+        justify-content: space-between;
+      }
+
+      .moss-update-title-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
       }
 
       .moss-update-buttons {
         display: flex;
         width: 100%;
-        margin-top: 16px;
+        margin-top: 8px;
         gap: 8px;
       }
 
@@ -1824,7 +1881,7 @@ export class WelcomeView extends LitElement {
         background: color-mix(in srgb, #151A11 80%, #FFF 20%);
       }
 
-      .decline-moss-update-button {
+      .whats-new-button {
         display: flex;
         width: 100%;
         padding: 8px 10px;
@@ -1838,7 +1895,7 @@ export class WelcomeView extends LitElement {
         cursor: pointer;
       }
 
-      .decline-moss-update-button:hover {
+      .whats-new-button:hover {
         background: rgba(50, 77, 71, 0.20);
       }
 
@@ -1853,7 +1910,6 @@ export class WelcomeView extends LitElement {
 
       .moss-update-release-notes {
         color: #000;
-        width: 330px;
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
@@ -2193,6 +2249,47 @@ export class WelcomeView extends LitElement {
         padding: 16px;
       }
 
+      .changelog-content {
+        font-size: 14px;
+        line-height: 1.6;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .changelog-content h1,
+      .changelog-content h2,
+      .changelog-content h3 {
+        margin-top: 16px;
+        margin-bottom: 8px;
+      }
+
+      .changelog-content h1:first-child,
+      .changelog-content h2:first-child,
+      .changelog-content h3:first-child {
+        margin-top: 0;
+      }
+
+      .changelog-content ul,
+      .changelog-content ol {
+        padding-left: 20px;
+        margin: 8px 0;
+      }
+
+      .changelog-content li {
+        margin: 4px 0;
+      }
+
+      .changelog-content p {
+        margin: 8px 0;
+      }
+
+      .changelog-content code {
+        background: rgba(0, 0, 0, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+      }
+
       .button-section {
         align-items: center;
         color: white;
@@ -2232,11 +2329,9 @@ export class WelcomeView extends LitElement {
       }
 
       .update-date {
-        position: absolute;
         font-size: 14px;
-        top: 12px;
-        left: 20px;
         opacity: 0.6;
+        white-space: nowrap;
       }
 
       .update-type {

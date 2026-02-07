@@ -86,10 +86,6 @@
   <source>Installing...</source>
   <target>Installeren...</target>
 </trans-unit>
-<trans-unit id="s32322dc45e502559">
-  <source>Decline</source>
-  <target>Weigeren</target>
-</trans-unit>
 <trans-unit id="sd3dd70be26a25f83">
   <source>Updating Tool...</source>
   <target>Tool bijwerken...</target>
@@ -1898,18 +1894,31 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="s086799ff5eb061eb">
   <source>Mark section as read</source>
+  <target>Sectie als gelezen markeren</target>
 </trans-unit>
 <trans-unit id="s4ce6531fbfddd605">
   <source>read</source>
+  <target>gelezen</target>
 </trans-unit>
 <trans-unit id="sb5d1c3e0fa747687">
   <source>Mark as unread</source>
+  <target>Als ongelezen markeren</target>
 </trans-unit>
 <trans-unit id="s951a80954fdc37c7">
   <source>Hide previously read</source>
+  <target>Eerder gelezen verbergen</target>
 </trans-unit>
 <trans-unit id="s8f9c23bfdd2e396e">
   <source>Show previously read</source>
+  <target>Eerder gelezen tonen</target>
+</trans-unit>
+<trans-unit id="s2c2d7d80ea446b04">
+  <source>What's new?</source>
+  <target>Wat is nieuw?</target>
+</trans-unit>
+<trans-unit id="s2381cae9270b356a">
+  <source>What's new in</source>
+  <target>Wat is nieuw in</target>
 </trans-unit>
 </body>
 </file>

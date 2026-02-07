@@ -38,10 +38,6 @@
   <source>Failed to update Tool.</source>
   <target>Araç güncellenemedi.</target>
 </trans-unit>
-<trans-unit id="s32322dc45e502559">
-  <source>Decline</source>
-  <target>Reddet</target>
-</trans-unit>
 <trans-unit id="sbb588bb505779122">
   <source>Feedback</source>
   <target>Geri Bildirim</target>
@@ -1910,9 +1906,19 @@ starts now</source>
 </trans-unit>
 <trans-unit id="s951a80954fdc37c7">
   <source>Hide previously read</source>
+  <target>Önceden okunanları gizle</target>
 </trans-unit>
 <trans-unit id="s8f9c23bfdd2e396e">
   <source>Show previously read</source>
+  <target>Önceden okunanları göster</target>
+</trans-unit>
+<trans-unit id="s2c2d7d80ea446b04">
+  <source>What's new?</source>
+  <target>Yenilikler neler?</target>
+</trans-unit>
+<trans-unit id="s2381cae9270b356a">
+  <source>What's new in</source>
+  <target>Yenilikler:</target>
 </trans-unit>
 </body>
 </file>

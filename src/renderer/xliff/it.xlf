@@ -62,10 +62,6 @@
   <source>Installing...</source>
   <target>Installazione in corso...</target>
 </trans-unit>
-<trans-unit id="s32322dc45e502559">
-  <source>Decline</source>
-  <target>Rifiuta</target>
-</trans-unit>
 <trans-unit id="sd3dd70be26a25f83">
   <source>Updating Tool...</source>
   <target>Aggiornamento Tool in corso...</target>
@@ -1898,18 +1894,31 @@ inizia ora</target>
 </trans-unit>
 <trans-unit id="s086799ff5eb061eb">
   <source>Mark section as read</source>
+  <target>Segna sezione come letta</target>
 </trans-unit>
 <trans-unit id="s4ce6531fbfddd605">
   <source>read</source>
+  <target>letti</target>
 </trans-unit>
 <trans-unit id="sb5d1c3e0fa747687">
   <source>Mark as unread</source>
+  <target>Segna come non letto</target>
 </trans-unit>
 <trans-unit id="s951a80954fdc37c7">
   <source>Hide previously read</source>
+  <target>Nascondi già letti</target>
 </trans-unit>
 <trans-unit id="s8f9c23bfdd2e396e">
   <source>Show previously read</source>
+  <target>Mostra già letti</target>
+</trans-unit>
+<trans-unit id="s2c2d7d80ea446b04">
+  <source>What's new?</source>
+  <target>Cosa c'è di nuovo?</target>
+</trans-unit>
+<trans-unit id="s2381cae9270b356a">
+  <source>What's new in</source>
+  <target>Cosa c'è di nuovo in</target>
 </trans-unit>
 </body>
 </file>
