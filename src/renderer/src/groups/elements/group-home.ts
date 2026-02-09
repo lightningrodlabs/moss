@@ -291,8 +291,8 @@ export class GroupHome extends LitElement {
     const containerRect = container.getBoundingClientRect();
     const newWidth = containerRect.right - e.clientX;
 
-    // Constrain width between 310px and 600px
-    const constrainedWidth = Math.max(310, Math.min(600, newWidth));
+    // Constrain width between 330px and 600px
+    const constrainedWidth = Math.max(330, Math.min(600, newWidth));
     this._foyerWidth = constrainedWidth;
   }
 
@@ -865,7 +865,11 @@ export class GroupHome extends LitElement {
               class="foyer-resize-handle ${this._isResizingFoyer ? 'resizing' : ''}"
               @mousedown=${(e: MouseEvent) => this._startFoyerResize(e)}
             ></div>
-            <div style="display: flex; width: ${this._foyerWidth}px; flex-shrink: 0;">${this.renderFoyer()}</div>
+            <div style="position: relative; width: ${this._foyerWidth}px; flex-shrink: 0;">
+              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex;">
+                ${this.renderFoyer()}
+              </div>
+            </div>
           </div>
         `;
       case 'unjoined tools':
