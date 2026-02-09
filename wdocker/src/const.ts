@@ -10,28 +10,20 @@ const __dirname = path.dirname(__filename);
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap.moss.social',
   'https://dev-test-bootstrap2.holochain.org',
-  'https://bootstrap.holo.host',
-  'https://bootstrap-2.infra.holochain.org',
-  'https://bootstrap-1.infra.holochain.org',
-  'https://bootstrap-0.infra.holochain.org',
 ];
 // The first one will be picked by default. But all production signaling servers should be listed
 // here since there is a check to prevent accidental use of a production signaling server in development
 // mode
 export const PRODUCTION_SIGNALING_URLS = [
+  'wss://bootstrap.moss.social',
   'wss://dev-test-bootstrap2.holochain.org',
-  'wss://sbd.holo.host',
-  'wss://sbd-0.main.infra.holo.host',
-  'wss://signal-2.infra.holochain.org',
-  'wss://signal-1.infra.holochain.org',
-  'wss://signal-0.infra.holochain.org',
-  'wss://signal.holo.host',
 ];
 
 // The first one will be picked by default.
 export const PRODUCTION_RELAY_URLS = [
-    "https://use1-1.relay.n0.iroh-canary.iroh.link./",
+  "https://use1-1.relay.n0.iroh-canary.iroh.link./",
 ];
 
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
