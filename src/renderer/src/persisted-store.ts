@@ -235,6 +235,19 @@ export class PersistedStore {
   };
 
   /**
+   * Foyer panel width per group (in pixels). Default is 320.
+   */
+  foyerWidth: SubStore<number, number, [DnaHashB64]> = {
+    value: (groupDnaHashB64: DnaHashB64) => {
+      const width = this.store.getItem<number>(`foyerWidth#${groupDnaHashB64}`);
+      return width ?? 320;
+    },
+    set: (value: number, groupDnaHashB64: DnaHashB64) => {
+      this.store.setItem(`foyerWidth#${groupDnaHashB64}`, value);
+    },
+  };
+
+  /**
    * When disabling all applets of a group the applets that were already disabled
    * get stored here in order to not re-enable them again if the groups gets
    * re-enabled
