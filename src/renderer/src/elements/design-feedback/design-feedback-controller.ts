@@ -250,13 +250,13 @@ export class DesignFeedbackController extends LitElement {
     .feedback-trigger {
       position: fixed;
       top: 15px;
-      left: 90px;
+      left: 48px;
       z-index: 9999;
       width: 32px;
       height: 32px;
       border-radius: 6px;
       border: none;
-      background: rgba(0, 0, 0, 0.6);
+      background: transparent;
       color: white;
       cursor: pointer;
       display: flex;
