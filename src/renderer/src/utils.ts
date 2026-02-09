@@ -476,12 +476,15 @@ export function storeAppletNotifications(
   notifications.forEach((notification) => {
     const timestamp = notification.timestamp;
     const daysSinceEpoch = Math.floor(timestamp / 8.64e7);
-    let notificationsOfSameDate = persistedStore.appletNotifications.value(
+    const notificationsOfSameDate = persistedStore.appletNotifications.value(
       appletId,
       daysSinceEpoch,
     );
-    notificationsOfSameDate = [...new Set([...notificationsOfSameDate, notification])];
-    persistedStore.appletNotifications.set(notificationsOfSameDate, appletId, daysSinceEpoch);
+    const existingStrings = notificationsOfSameDate.map((n) => encodeAndStringify(n));
+    const newString = encodeAndStringify(notification);
+    const dedupedStrings = [...new Set([...existingStrings, newString])];
+    const dedupedNotifications = dedupedStrings.map((s) => destringifyAndDecode<FrameNotification>(s));
+    persistedStore.appletNotifications.set(dedupedNotifications, appletId, daysSinceEpoch);
   });
 
   return unreadNotifications;

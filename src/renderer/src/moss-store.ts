@@ -70,9 +70,7 @@ import {
   storeGroupProfile,
 } from './electron-api.js';
 import {
-  destringifyAndDecode,
   devModeToolLibraryFromDevConfig,
-  encodeAndStringify,
   findAppForDnaHash,
   getNotificationState,
   sortVersionsDescending,
@@ -684,34 +682,6 @@ export class MossStore {
   }
 
   /**
-   * Updates the notification feed for the given applet Id (for persisted notifications)
-   *
-   * @param appletId
-   * @param daysSinceEpoch
-   */
-  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
-    this._notificationFeed.update((store) => {
-      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
-      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
-        .value(appletId, daysSinceEpoch)
-        .map((notification) => encodeAndStringify({
-          source: {
-            type: 'applet' as const,
-            appletId,
-            appletHash: appletHashFromAppId(appletIdFromAppId(appletId)),
-          },
-          notification,
-        }));
-      const updatedNotifications: string[] = [
-        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
-      ];
-      return updatedNotifications
-        .map((notificationsString) => destringifyAndDecode<MossNotification>(notificationsString))
-        .sort((a, b) => b.notification.timestamp - a.notification.timestamp);
-    });
-  }
-
-  /**
    * Unified notification handler for both applet and group notifications.
    * This is the single entry point for all notifications in the system.
    *
@@ -792,12 +762,6 @@ export class MossStore {
       }
     }
 
-    // Update the persisted notification feed for applet sources
-    if (options.persist && source.type === 'applet') {
-      const daysSinceEpoch = Math.floor(Date.now() / 8.64e7);
-      this.updateNotificationFeed(source.appletId, daysSinceEpoch);
-      this.updateNotificationFeed(source.appletId, daysSinceEpoch - 1); // in case it's just around midnight UTC
-    }
   }
 
   /**
