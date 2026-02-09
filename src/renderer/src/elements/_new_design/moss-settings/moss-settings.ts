@@ -10,6 +10,7 @@ import { mossStyles } from '../../../shared-styles.js';
 import { PersistedStore } from '../../../persisted-store.js';
 import './profile-settings.js';
 import './language-settings.js';
+import './notification-settings.js';
 import './danger-zone-settings.js';
 
 type FeedbackRecord = {
@@ -24,6 +25,7 @@ type FeedbackRecord = {
 enum TabsState {
   Profile,
   Language,
+  Notifications,
   Feedback,
   DangerZone,
 }
@@ -97,16 +99,20 @@ export class MossSettings extends LitElement {
   }
 
   renderProfile() {
-    return html`<moss-profile-settings style="margin-top: 45px;"></moss-profile-settings>`;
+    return html`<moss-profile-settings></moss-profile-settings>`;
   }
 
   renderLanguage() {
-    return html`<moss-language-settings style="margin-top: 45px;"></moss-language-settings>`;
+    return html`<moss-language-settings></moss-language-settings>`;
+  }
+
+  renderNotifications() {
+    return html`<moss-notification-sound-settings></moss-notification-sound-settings>`;
   }
 
   renderFeedback() {
     return html`
-      <div class="column" style="margin-top: 45px; padding: 0 20px; gap: 16px;">
+      <div class="column" style="padding: 0 20px; gap: 16px;">
         <h3 style="margin: 0;">${msg('Design Feedback')}</h3>
         <p style="margin: 0; opacity: 0.8;">
           ${msg('Enable Design Feedback Mode to show a feedback button in the top-right corner. Click it to capture a screenshot of any area and submit feedback.')}
@@ -180,6 +186,8 @@ export class MossSettings extends LitElement {
         return this.renderProfile();
       case TabsState.Language:
         return this.renderLanguage();
+      case TabsState.Notifications:
+        return this.renderNotifications();
       case TabsState.Feedback:
         return this.renderFeedback();
       case TabsState.DangerZone:
@@ -207,6 +215,14 @@ export class MossSettings extends LitElement {
           ${msg('Language')}
         </button>
         <button
+          class="tab ${this.tabsState === TabsState.Notifications ? 'tab-selected' : ''}"
+          @click=${() => {
+            this.tabsState = TabsState.Notifications;
+          }}
+        >
+          ${msg('Notifications')}
+        </button>
+        <button
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"
           @click=${() => {
             this.tabsState = TabsState.Feedback;
@@ -225,7 +241,7 @@ export class MossSettings extends LitElement {
           ${msg('Danger Zone')}
         </button>
       </div>
-      <div class="column" style="margin-top: 0px; min-height: 380px; overflow-y: auto;">
+      <div class="column" style="margin-top: 20px; min-height: 380px; overflow-y: auto;">
         ${this.renderContent()}
       </div>
     `;

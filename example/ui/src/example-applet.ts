@@ -75,9 +75,10 @@ export class ExampleApplet extends LitElement {
             return html`
               <posts-context .store=${this.postsStore}>
                 <profiles-context .store=${profilesStore}>
-                  <applet-main
+                  <example-applet-main
                     .client=${this.weaveClient.renderInfo.appletClient}
                     .weaveClient=${this.weaveClient}
+                    .wal=${this.weaveClient.renderInfo.view.wal}
                     .groupHash=${this.weaveClient.renderInfo.groupHash}
                     .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
@@ -98,7 +99,7 @@ export class ExampleApplet extends LitElement {
                         hrl: [dnaHash, e.detail],
                       });
                     }}
-                  ></applet-main>
+                  ></example-applet-main>
                 </profiles-context>
               </posts-context>
             `;
