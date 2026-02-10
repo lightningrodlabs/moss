@@ -1,6 +1,6 @@
 {
   "name": "@theweave/utils",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -18,8 +18,8 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "=0.20.4-rc.0",
-    "@theweave/api": "^0.6.4",
-    "@theweave/moss-types": "^0.5.2",
+    "@theweave/api": "^0.6.6",
+    "@theweave/moss-types": "^0.5.3",
     "@msgpack/msgpack": "^2.7.2",
     "compare-versions": "6.1.1",
     "js-base64": "^3.7.2",
