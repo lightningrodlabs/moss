@@ -90,7 +90,6 @@ jobs:
         run: |
           yarn build:mac-x64
           ls dist
-          cat latest-mac.yml
 
       - name: Install FUSE
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
