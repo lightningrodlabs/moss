@@ -20,11 +20,11 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 
 ## Update to a new version of Holochain
 
-1. Update the holochain version in `moss.config.json`
+1. Go to https://github.com/holochain/holochain/releases and select the holochain release you want to use.
+ 
+2. Update the holochain version in `moss.config.json`
 
-2. Go to https://github.com/matthme/holochain-binaries/releases and select the holochain release that you want to use.
-
-3. Copy the sha256 hashes of the holochain binaries for the respective platforms and paste them into the `moss.config.json` file.
+3. Run `yarn update-hc-checksums` locally to automatically update the checksums in `holochain-checksums.json`.
 
 4. Run `yarn fetch:binaries` locally to fetch the new binaries.
 
