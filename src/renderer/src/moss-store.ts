@@ -663,7 +663,7 @@ export class MossStore {
             source: {
               type: 'applet' as const,
               appletId,
-              appletHash: appletHashFromAppId(appletIdFromAppId(appletId)),
+              appletHash: decodeHashFromBase64(appletId),
             },
             notification,
           })),
