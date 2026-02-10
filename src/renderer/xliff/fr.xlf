@@ -1924,7 +1924,7 @@ commence maintenant</target>
   <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
           this works, look at the initial curation repository of Lightningrod Labs
           <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
-  <target>Pour publier un outil Moss, il doit être ajouté à une liste d'outils &amp; de curation hébergée à une URL web2. Pour un exemple de fonctionnement, consultez le dépôt de curation initial de Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>ici<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
+  <target>Pour publier un Outil Moss, il doit être ajouté dans une liste de curation accessible en ligne via une URL web2. Pour voir un exemple, consultez la liste de curation de Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>ici<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
 </trans-unit>
 <trans-unit id="ha299b6e88ba10399">
   <source>If you would like to publish a Tool, please contact us at
