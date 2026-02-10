@@ -58,7 +58,7 @@ export class GroupPeersStatus extends LitElement {
             ><div style="opacity: 0.5;">${localTimeFromUtcOffset(tzUtcOffset)}</div></sl-tooltip
           >`
         : ''}
-      ${isMe ? html`<div slot="action">&nbsp;${msg('me')}</div>` : ''}
+      ${isMe ? html`<div slot="action">&nbsp;(${msg('me')})</div>` : ''}
     </profile-detail-moss>`;
   }
 
