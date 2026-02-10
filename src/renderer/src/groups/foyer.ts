@@ -191,6 +191,7 @@ export class FoyerStore {
               showInFeed: true,
               updateUnreadCount: !foyerVisible,
               sendOSNotification: sendOSNotification && !mainWindowFocused,
+              playSound: !foyerVisible,
               sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
             },
           );

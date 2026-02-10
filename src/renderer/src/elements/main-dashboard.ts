@@ -820,6 +820,14 @@ export class MainDashboard extends LitElement {
       viewType: 'group',
       groupHash: groupDnaHash,
     });
+    // Clear foyer unread count since group home (with foyer) is now visible
+    try {
+      const allGroupStores = await toPromise(this._mossStore.groupStores);
+      const groupStore = allGroupStores.get(groupDnaHash);
+      groupStore?.clearGroupNotificationStatus();
+    } catch (e) {
+      console.warn('Failed to clear group notification status:', e);
+    }
     // this.dynamicLayout.openTab({
     //   id: `group-home-${encodeHashToBase64(groupDnaHash)}`,
     //   type: "component",

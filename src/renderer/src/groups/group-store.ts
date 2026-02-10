@@ -1482,17 +1482,30 @@ export class GroupStore {
     this.activeAppletStores,
     (allAppletStores) =>
       derived(
-        joinMap(mapValues(allAppletStores, (store) => store.unreadNotifications())),
-        (map) =>
-          ({ status: 'complete', value: map }) as AsyncStatus<
-            ReadonlyMap<Uint8Array, [string | undefined, number | undefined]>
-          >,
+        [
+          joinMap(mapValues(allAppletStores, (store) => store.unreadNotifications())),
+          this._unreadGroupNotifications,
+        ] as const,
+        ([map, groupCounts]) =>
+          ({
+            status: 'complete',
+            value: { appletNotifications: map, groupCounts },
+          }) as AsyncStatus<{
+            appletNotifications: ReadonlyMap<Uint8Array, [string | undefined, number | undefined]>;
+            groupCounts: { low: number; medium: number; high: number };
+          }>,
       ),
-    (notificationsMap) => {
+    ({ appletNotifications, groupCounts }) => {
+      // Aggregate applet notification counts
       const notificationCounts = { low: 0, medium: 0, high: 0 };
-      Array.from(notificationsMap.values()).forEach(([urgency, count]) => {
+      Array.from(appletNotifications.values()).forEach(([urgency, count]) => {
         if (urgency) notificationCounts[urgency] += count;
       });
+
+      // Merge in foyer/group-level notification counts
+      notificationCounts.low += groupCounts.low;
+      notificationCounts.medium += groupCounts.medium;
+      notificationCounts.high += groupCounts.high;
 
       if (notificationCounts.high) {
         return completed(['high', notificationCounts.high] as [

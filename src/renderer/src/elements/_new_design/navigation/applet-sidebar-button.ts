@@ -123,11 +123,11 @@ export class AppletSidebarButton extends LitElement {
         ? html``
         : html`
               <div
-                class="row center-content notification-dot ${this.collapsed ? 'notification-dot-collapsed' : ''} ${this.notificationUrgency() === 'high'
+                class="row center-content notification-dot ${this.collapsed ? 'notification-dot-collapsed' : ''} ${this.notificationUrgency() === 'high' || (this.notificationUrgency() === 'medium' && this.notificationCount())
             ? 'urgent'
             : ''}"
               >
-                ${this.notificationCount() && this.notificationUrgency() === 'high'
+                ${this.notificationCount() && (this.notificationUrgency() === 'high' || this.notificationUrgency() === 'medium')
             ? this.notificationCount()
             : ''}
               </div>

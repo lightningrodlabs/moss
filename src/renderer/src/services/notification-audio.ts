@@ -20,7 +20,7 @@ export const DEFAULT_NOTIFICATION_SOUND_SETTINGS: GlobalNotificationSoundSetting
   masterEnabled: true,
   volume: 0.7,
   perUrgency: {
-    high: { enabled: true, soundId: 'chime' },
+    high: { enabled: true, soundId: 'ding' },
     medium: { enabled: true, soundId: 'bell' },
     low: { enabled: false, soundId: 'pop' },
   },

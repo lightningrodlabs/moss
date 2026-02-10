@@ -179,6 +179,13 @@ export class GroupAppletsSidebar extends LitElement {
       () => [this._groupStore],
     );
 
+  // Foyer/group-level unread notification counts
+  private _groupNotifications = new StoreSubscriber(
+    this,
+    () => this._groupStore.unreadGroupNotifications(),
+    () => [this._groupStore],
+  );
+
   // All the Applets that are running and part of this Group
   private _groupApplets = new StoreSubscriber(
     this,
@@ -438,6 +445,32 @@ export class GroupAppletsSidebar extends LitElement {
             </div>`
           : this.renderAppletButtons(this._groupApplets.value.value);
     }
+  }
+
+  renderHomeNotificationBadge() {
+    const counts = this._groupNotifications.value;
+    if (!counts) return html``;
+
+    let urgency: string | undefined;
+    let count: number | undefined;
+    if (counts.high > 0) {
+      urgency = 'high';
+      count = counts.high;
+    } else if (counts.medium > 0) {
+      urgency = 'medium';
+      count = counts.medium;
+    } else if (counts.low > 0) {
+      urgency = 'low';
+      count = counts.low;
+    }
+
+    if (!urgency || urgency === 'low' || !count) return html``;
+
+    return html`
+      <div
+        class="row center-content home-notification-dot ${this.collapsed ? 'home-notification-dot-collapsed' : ''}"
+      >${count}</div>
+    `;
   }
 
   renderGroupLogo() {
@@ -760,7 +793,9 @@ export class GroupAppletsSidebar extends LitElement {
         <sl-tooltip content="${this.groupName()}" placement="right" hoist>
           <button
             class="btn ${!this.selectedAppletHash ? 'selected' : ''}"
+            style="position: relative;"
             @click=${() => {
+        this._groupStore.clearGroupNotificationStatus();
         this.dispatchEvent(
           new CustomEvent('group-home-selected', {
             bubbles: false,
@@ -777,6 +812,7 @@ export class GroupAppletsSidebar extends LitElement {
                     ${this.groupName()}
                   </div>`}
             </div>
+            ${this.renderHomeNotificationBadge()}
           </button>
         </sl-tooltip>
 
@@ -1047,6 +1083,26 @@ export class GroupAppletsSidebar extends LitElement {
 
       .menu-fold-toggle:hover {
         opacity: 1;
+      }
+
+      .home-notification-dot {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        font-weight: bold;
+        background: var(--moss-purple);
+        border-radius: 4px;
+        height: 16px;
+        min-width: 10px;
+        color: white;
+        font-size: 12px;
+        padding: 0 3px;
+        z-index: 1;
+      }
+
+      .home-notification-dot-collapsed {
+        top: -3px;
+        right: -4px;
       }
 
       .dropzone {

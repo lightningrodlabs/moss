@@ -62,8 +62,8 @@ export class SidebarButton extends LitElement {
         <div class="column center-content">
           <div
             class="row center-content notification-dot
-            ${this.notificationUrgency === 'high' ? 'urgent' : ''}
-            ${this.notificationUrgency === 'high' &&
+            ${this.notificationUrgency === 'high' || (this.notificationUrgency === 'medium' && this.notificationCount) ? 'urgent' : ''}
+            ${(this.notificationUrgency === 'high' || this.notificationUrgency === 'medium') &&
             this.notificationCount &&
             this.notificationCount > 9
               ? 'padded'
@@ -73,7 +73,7 @@ export class SidebarButton extends LitElement {
               ? 'display: none'
               : ''}"
           >
-            ${this.notificationCount && this.notificationUrgency === 'high'
+            ${this.notificationCount && (this.notificationUrgency === 'high' || this.notificationUrgency === 'medium')
               ? this.notificationCount
               : undefined}
           </div>

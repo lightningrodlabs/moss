@@ -492,6 +492,7 @@ export async function handleAppletIframeMessage(
           showInFeed: true,
           updateUnreadCount: !ignoreNotification,
           sendOSNotification: !mainWindowFocused,
+          playSound: !ignoreNotification,
           sourceName: appletStore?.applet.custom_name,
         },
       );

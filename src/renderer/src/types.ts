@@ -48,6 +48,8 @@ export type NotificationOptions = {
   updateUnreadCount: boolean;
   /** Whether to trigger an OS notification */
   sendOSNotification: boolean;
+  /** Whether to play a notification sound */
+  playSound: boolean;
   /** Display name of the source (e.g., "Forum" or "My Group foyer") */
   sourceName?: string;
 };
