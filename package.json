@@ -35,7 +35,7 @@
     "build:applet-iframe": "yarn workspace applet-iframe build",
     "build:happ-iframe": "yarn workspace happ-iframe build",
     "build:iframes": "yarn build:applet-iframe && yarn build:happ-iframe",
-    "build:cli": "rimraf ./cli/dist && cp -r ./out ./cli && mv ./cli/out ./cli/dist && cp moss.config.json ./cli/dist/main && cp -r ./resources ./cli/dist/main/resources && rimraf ./cli/dist/main/resources/bins && tsc -p tsconfig.defineConfig.json",
+    "build:cli": "rimraf ./cli/dist && cp -r ./out ./cli && mv ./cli/out ./cli/dist && cp moss.config.json ./cli/dist/main && cp holochain-checksums.json ./cli/dist/main && cp -r ./resources ./cli/dist/main/resources && rimraf ./cli/dist/main/resources/bins && tsc -p tsconfig.defineConfig.json",
     "link:libs": "cd libs/api && yarn link && cd ../utils && yarn link && yarn link @theweave/api && cd ../elements && yarn link && yarn link @theweave/api && cd ../../example/ui && yarn link @theweave/api && yarn link @theweave/elements && cd ../../src/renderer && yarn link @theweave/api && yarn link @theweave/utils && cd ../../utils/applet-iframe && yarn link @theweave/api",
     "build:gc": "yarn workspace @theweave/group-client build",
     "build:tc": "yarn workspace @theweave/tool-library-client build",

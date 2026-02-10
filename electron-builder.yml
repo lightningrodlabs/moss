@@ -6,6 +6,7 @@ files:
   - resources
   - out
   - moss.config.json
+  - holochain-checksums.json
 asarUnpack:
   - resources/**
 afterSign: scripts/notarize.js

@@ -13,7 +13,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc && cp ../moss.config.json ./dist && cp ../resources/conductor-config.yaml ./dist"
+    "build": "tsc && cp ../moss.config.json ./dist && cp ../holochain-checksums.json ./dist && cp ../resources/conductor-config.yaml ./dist"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
