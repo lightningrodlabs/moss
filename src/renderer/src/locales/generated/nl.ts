@@ -2,14 +2,16 @@
     // Do not modify this file by hand!
     // Re-generate this file by running lit-localize
 
-    
+    import {html} from 'lit';
     import {str} from '@lit/localize';
 
     /* eslint-disable no-irregular-whitespace */
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      's007a5e0a003f5515': `In je Pocket:`,
+      'ha299b6e88ba10399': html`Als u een tool wilt publiceren, neem dan contact met ons op via <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a> of <a href="https://github.com/lightningrodlabs/moss/issues/new">maak een issue aan op Github</a> zodat we u kunnen helpen uw tool aan onze curatielijst toe te voegen. Toekomstige versies van Moss zullen het toevoegen van aangepaste curatielijsten bevatten.`,
+'hd4a02aa009e99701': html`Om een Moss-tool te publiceren, moet deze worden toegevoegd aan een Tool &amp; Curation-lijst die op een web2-URL wordt gehost. Voor een voorbeeld van hoe dit werkt, bekijk de initiële curatieopslag van Lightningrod Labs <a href="https://github.com/lightningrodlabs/weave-tool-curation">hier</a>.`,
+'s007a5e0a003f5515': `In je Pocket:`,
 's00b8b5c1000437fe': `Tool herladen`,
 's016f5be842987ba5': `Deelnemers `,
 's020d96334aaddfa3': `Geluid toevoegen`,
@@ -44,6 +46,7 @@
 's0be4a2cf7dafcecb': `willekeurige afbeelding`,
 's0c24d12af180ccbf': `Er is een fout opgetreden bij het aanmaken van je profiel. Probeer het opnieuw.`,
 's0c63ff1e35553045': `Geen tool-updates beschikbaar.`,
+'s0d5068c705840404': `Leuk, maar kan haperen!`,
 's0e1dc13dc6a16310': `Verwijderd`,
 's0e53ef4364107018': `Afkeuringstag voor deze tool verwijderen.`,
 's0ef3a153ae591dda': `Aangepaste weergave verwijderen`,
@@ -139,6 +142,8 @@ begint nu`,
 's3e8665467b867e72': `Tool afkeuren mislukt (zie console voor details)`,
 's3eadd48b1fc794ca': `Een uitnodigingslink ziet er zo uit:`,
 's3f2a04e5c1b2a709': `klik om te kopiëren`,
+'s3f63b56db2890a16': `stabiel`,
+'s3fda3900b698c27f': `experimenteel`,
 's403d86e8b3392e49': `Feedback lokaal opgeslagen.`,
 's40ad7672a00dd569': `klik om publieke sleutel te kopiëren`,
 's41142754e22041a0': `Asset openen in zijbalk`,
@@ -358,6 +363,7 @@ P2P-wereld!`,
 'sb210f3f516da46a4': `Selecteer je voorkeurstaal voor de Moss-interface.`,
 'sb2238d95ff6d0fbc': `Controleer wat je peers al gebruiken`,
 'sb2682d714ccbac46': `Beschrijf je feedback`,
+'sb2edfc16609b1d38': `Geteste en geliefde tools.`,
 'sb3d4f79d9d8b71e5': `Verzenden`,
 'sb401e9c080830dc7': `Deze groep ziet mij als`,
 'sb4a967e0437350ff': `De tool die ik nodig heb staat niet in de lijst. Breng me naar de Bibliotheek.`,

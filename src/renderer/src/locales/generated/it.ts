@@ -2,14 +2,16 @@
     // Do not modify this file by hand!
     // Re-generate this file by running lit-localize
 
-    
+    import {html} from 'lit';
     import {str} from '@lit/localize';
 
     /* eslint-disable no-irregular-whitespace */
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      's007a5e0a003f5515': `Nella tua Tasca:`,
+      'ha299b6e88ba10399': html`Se desideri pubblicare uno strumento, contattaci all'indirizzo <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a> o <a href="https://github.com/lightningrodlabs/moss/issues/new">crea un issue su Github</a> in modo che possiamo aiutarti ad aggiungere il tuo strumento alla nostra lista di curazione. Le versioni future di Moss includeranno la possibilità di aggiungere liste di curazione personalizzate.`,
+'hd4a02aa009e99701': html`Per pubblicare uno strumento Moss, deve essere aggiunto a un elenco di strumenti &amp; curazione ospitato su un URL web2. Per un esempio di come funziona, consulta il repository di curazione iniziale di Lightningrod Labs <a href="https://github.com/lightningrodlabs/weave-tool-curation">qui</a>.`,
+'s007a5e0a003f5515': `Nella tua Tasca:`,
 's00b8b5c1000437fe': `Ricarica Tool`,
 's016f5be842987ba5': `Partecipanti `,
 's020d96334aaddfa3': `Aggiungi suono`,
@@ -44,6 +46,7 @@
 's0be4a2cf7dafcecb': `immagine casuale`,
 's0c24d12af180ccbf': `Si è verificato un errore nella creazione del tuo profilo. Per favore riprova.`,
 's0c63ff1e35553045': `Nessun aggiornamento strumenti disponibile.`,
+'s0d5068c705840404': `Divertenti, ma potrebbero avere problemi!`,
 's0e1dc13dc6a16310': `Disinstallato`,
 's0e53ef4364107018': `Rimuovi il tag di deprecazione per questo tool.`,
 's0ef3a153ae591dda': `Elimina vista personalizzata`,
@@ -139,6 +142,8 @@ inizia ora`,
 's3e8665467b867e72': `Deprecazione del tool non riuscita (vedi la console per i dettagli)`,
 's3eadd48b1fc794ca': `Un link di invito appare così:`,
 's3f2a04e5c1b2a709': `clicca per copiare`,
+'s3f63b56db2890a16': `stabile`,
+'s3fda3900b698c27f': `sperimentale`,
 's403d86e8b3392e49': `Feedback salvato localmente.`,
 's40ad7672a00dd569': `clicca per copiare la chiave pubblica`,
 's41142754e22041a0': `Apri asset nella barra laterale`,
@@ -358,6 +363,7 @@ mondo P2P!`,
 'sb210f3f516da46a4': `Seleziona la tua lingua preferita per l'interfaccia di Moss.`,
 'sb2238d95ff6d0fbc': `Controlla cosa usano già i tuoi peer`,
 'sb2682d714ccbac46': `Descrivi il tuo feedback`,
+'sb2edfc16609b1d38': `Strumenti testati e apprezzati.`,
 'sb3d4f79d9d8b71e5': `Invia`,
 'sb401e9c080830dc7': `Questo gruppo mi vedrà come`,
 'sb4a967e0437350ff': `Il tool di cui ho bisogno non è elencato. Portami alla Libreria.`,

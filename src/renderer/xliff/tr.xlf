@@ -1920,6 +1920,37 @@ starts now</source>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>Sol üst köşede bir geri bildirim düğmesi göstermek için Tasarım Geri Bildirim Modunu etkinleştirin. Herhangi bir alanın ekran görüntüsünü yakalamak ve geri bildirim göndermek için tıklayın.</target>
 </trans-unit>
+<trans-unit id="hd4a02aa009e99701">
+  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
+          this works, look at the initial curation repository of Lightningrod Labs
+          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
+  <target>Bir Moss Aracı yayınlamak için, web2 URL'sinde barındırılan bir Araç &amp; Kürasyon listesine eklenmesi gerekir. Bunun nasıl çalıştığına dair bir örnek için Lightningrod Labs'ın ilk kürasyon deposuna <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>buradan<x id="1" equiv-text="&lt;/a&gt;"/> bakabilirsiniz.</target>
+</trans-unit>
+<trans-unit id="ha299b6e88ba10399">
+  <source>If you would like to publish a Tool, please contact us at
+          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
+          or
+          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
+          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
+          curation lists.</source>
+  <target>Bir Araç yayınlamak isterseniz, lütfen <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/> adresinden bizimle iletişime geçin veya <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>Github'da bir issue oluşturun<x id="3" equiv-text="&lt;/a&gt;"/>, böylece aracınızı kürasyon listemize eklemenize yardımcı olalım. Moss'un gelecek sürümleri özel kürasyon listeleri eklemeyi içerecektir.</target>
+</trans-unit>
+<trans-unit id="sb2edfc16609b1d38">
+  <source>Tested and loved tools.</source>
+  <target>Test edilmiş ve sevilen araçlar.</target>
+</trans-unit>
+<trans-unit id="s3f63b56db2890a16">
+  <source>stable</source>
+  <target>kararlı</target>
+</trans-unit>
+<trans-unit id="s0d5068c705840404">
+  <source>Fun, but may glitch!</source>
+  <target>Eğlenceli, ama hata yapabilir!</target>
+</trans-unit>
+<trans-unit id="s3fda3900b698c27f">
+  <source>experimental</source>
+  <target>deneysel</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

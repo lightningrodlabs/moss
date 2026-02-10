@@ -1920,6 +1920,37 @@ comienza ahora</target>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>Habilita el Modo de Retroalimentación de Diseño para mostrar un botón de retroalimentación en la esquina superior izquierda. Haz clic en él para capturar una captura de pantalla de cualquier área y enviar retroalimentación.</target>
 </trans-unit>
+<trans-unit id="hd4a02aa009e99701">
+  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
+          this works, look at the initial curation repository of Lightningrod Labs
+          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
+  <target>Para publicar una herramienta Moss, debe añadirse a una lista de herramientas &amp; curación alojada en una URL web2. Para ver un ejemplo de cómo funciona, consulta el repositorio de curación inicial de Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>aquí<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
+</trans-unit>
+<trans-unit id="ha299b6e88ba10399">
+  <source>If you would like to publish a Tool, please contact us at
+          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
+          or
+          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
+          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
+          curation lists.</source>
+  <target>Si deseas publicar una herramienta, contáctanos en <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/> o <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>crea un issue en Github<x id="3" equiv-text="&lt;/a&gt;"/> para que podamos ayudarte a añadir tu herramienta a nuestra lista de curación. Las futuras versiones de Moss incluirán la posibilidad de añadir listas de curación personalizadas.</target>
+</trans-unit>
+<trans-unit id="sb2edfc16609b1d38">
+  <source>Tested and loved tools.</source>
+  <target>Herramientas probadas y queridas.</target>
+</trans-unit>
+<trans-unit id="s3f63b56db2890a16">
+  <source>stable</source>
+  <target>estable</target>
+</trans-unit>
+<trans-unit id="s0d5068c705840404">
+  <source>Fun, but may glitch!</source>
+  <target>Divertidas, pero pueden fallar.</target>
+</trans-unit>
+<trans-unit id="s3fda3900b698c27f">
+  <source>experimental</source>
+  <target>experimental</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
