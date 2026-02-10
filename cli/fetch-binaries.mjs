@@ -48,7 +48,7 @@ function downloadFile(binaryName) {
   const chmod = true;
   const expectedSha256Hex = HOLOCHAIN_CHECKSUMS[binaryName][targetEnding];
 
-  const binaryFilename = `${binaryName}-v${mossConfig.holochain}-${mossConfig.binariesAppendix}${
+  const binaryFilename = `${binaryName}-v${mossConfig.holochain}${
     process.platform === 'win32' ? '.exe' : ''
   }`;
   const targetPath = path.join(binariesDir, binaryFilename);
