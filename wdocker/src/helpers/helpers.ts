@@ -1,6 +1,6 @@
 import fs from 'fs';
 import crypto from 'crypto';
-import path from 'path';
+//import path from 'path';
 import rustUtils from '@lightningrodlabs/we-rust-utils';
 import Table from 'cli-table';
 
@@ -18,7 +18,7 @@ import {
 import { password as passwordInput } from '@inquirer/prompts';
 
 import { WDockerFilesystem } from '../filesystem.js';
-import { GROUP_HAPP_URL, MOSS_CONFIG, TOOLS_LIBRARY_URL } from '../const.js';
+import { GROUP_HAPP_URL, MOSS_CONFIG } from '../const.js';
 import { downloadFile, signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
 
