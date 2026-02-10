@@ -129,12 +129,13 @@ export class NotificationCard extends LitElement {
         return html`loading...`;
       case 'complete':
         const groupProfile = this._groupProfiles.value.value[0];
+        if (!groupProfile?.icon_src) return html``;
         return html`
           <img
             slot="prefix"
-            .src=${groupProfile?.icon_src}
-            alt="${groupProfile?.name}"
-            title="${groupProfile?.name}"
+            .src=${groupProfile.icon_src}
+            alt="${groupProfile.name}"
+            title="${groupProfile.name}"
             style="height: 48px; width: 48px; margin-bottom: -2px; margin-right: 3px;"
           />
         `;

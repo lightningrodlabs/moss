@@ -1920,6 +1920,37 @@ begint nu</target>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>Schakel de Ontwerp Feedback Modus in om een feedbackknop in de linkerbovenhoek te tonen. Klik erop om een screenshot van elk gebied te maken en feedback te versturen.</target>
 </trans-unit>
+<trans-unit id="hd4a02aa009e99701">
+  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
+          this works, look at the initial curation repository of Lightningrod Labs
+          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
+  <target>Om een Moss-tool te publiceren, moet deze worden toegevoegd aan een Tool &amp; Curation-lijst die op een web2-URL wordt gehost. Voor een voorbeeld van hoe dit werkt, bekijk de initiële curatieopslag van Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>hier<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
+</trans-unit>
+<trans-unit id="ha299b6e88ba10399">
+  <source>If you would like to publish a Tool, please contact us at
+          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
+          or
+          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
+          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
+          curation lists.</source>
+  <target>Als u een tool wilt publiceren, neem dan contact met ons op via <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/> of <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>maak een issue aan op Github<x id="3" equiv-text="&lt;/a&gt;"/> zodat we u kunnen helpen uw tool aan onze curatielijst toe te voegen. Toekomstige versies van Moss zullen het toevoegen van aangepaste curatielijsten bevatten.</target>
+</trans-unit>
+<trans-unit id="sb2edfc16609b1d38">
+  <source>Tested and loved tools.</source>
+  <target>Geteste en geliefde tools.</target>
+</trans-unit>
+<trans-unit id="s3f63b56db2890a16">
+  <source>stable</source>
+  <target>stabiel</target>
+</trans-unit>
+<trans-unit id="s0d5068c705840404">
+  <source>Fun, but may glitch!</source>
+  <target>Leuk, maar kan haperen!</target>
+</trans-unit>
+<trans-unit id="s3fda3900b698c27f">
+  <source>experimental</source>
+  <target>experimenteel</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

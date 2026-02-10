@@ -267,7 +267,7 @@ export class ToolLibraryWeb2 extends LitElement {
             >
               ${appStoreIcon(16)} <span style="margin-left:5px">${msg('all tools')}</span>
             </button>
-            <sl-tooltip content="Tested and loved tools.">
+            <sl-tooltip .content=${msg('Tested and loved tools.')}>
               <button
                 class="classification-button classification-button-stable ${this.classification ===
         'stable'
@@ -277,10 +277,10 @@ export class ToolLibraryWeb2 extends LitElement {
         this.classification = 'stable';
       }}
               >
-                ${stableToolIcon(16)} stable
+                ${stableToolIcon(16)} ${msg('stable')}
               </button></sl-tooltip
             >
-            <sl-tooltip content="Fun, but may glitch!">
+            <sl-tooltip .content=${msg('Fun, but may glitch!')}>
               <button
                 class="classification-button classification-button-experimental ${this
         .classification === 'experimental'
@@ -290,7 +290,7 @@ export class ToolLibraryWeb2 extends LitElement {
         this.classification = 'experimental';
       }}
               >
-                ${experimentalToolIcon(16)} experimental
+                ${experimentalToolIcon(16)} ${msg('experimental')}
               </button></sl-tooltip
             >
           </div>
@@ -450,17 +450,16 @@ export class ToolLibraryWeb2 extends LitElement {
           <span slot="header">${msg('Publish A Tool')}</span>
         
         <div slot="content">
-          To publish a Moss Tool it needs to be added to a Tool list hosted at a web2 URL. There is
-          currently no detailed documentation about this process. You can check out the Tool list
-          repository of Lightningrod Labs
-          <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>. <br /><br />
-          If you would like to publish a Tool, please contact us at
+          ${msg(html`To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
+          this works, look at the initial curation repository of Lightningrod Labs
+          <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>.`)}
+          <br /><br />
+          ${msg(html`If you would like to publish a Tool, please contact us at
           <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
           or
-          <a href="https://github.com/lightningrodlabs/moss/issues/new"
-            >create an issue on Github</a
-          >
-          so that we can assist you in setting up your own tool list.<br /><br />
+          <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
+          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
+          curation lists.`)}
         </div>
     </moss-dialog>`;
   }

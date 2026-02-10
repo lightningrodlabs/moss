@@ -186,6 +186,8 @@ export class FoyerStream extends LitElement {
     console.log('SENDING TO', hashes, this.groupStore.foyerStore);
     await this.groupStore.foyerStore.sendMessage('_all', payload, hashes);
     this._msgInput.value = '';
+    this.disabled = true;
+    this._msgInput.focus();
   };
 
   getAckCount = (acks: { [key: number]: HoloHashMap<Uint8Array, boolean> }, msgId): number => {
@@ -423,7 +425,6 @@ export class FoyerStream extends LitElement {
           </div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
-        <span style="display: flex; flex: 1;"></span>
         ${this._messages && this.newMessages
         ? html`<div
               tabindex="0"
@@ -497,10 +498,22 @@ export class FoyerStream extends LitElement {
       .stream {
         width: 100%;
         display: flex;
-        flex: auto;
+        flex: 1;
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
+        min-height: 0;
+        scrollbar-width: thin;
+      }
+      .stream::-webkit-scrollbar {
+        width: 6px;
+      }
+      .stream::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .stream::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
       }
       .msg {
         display: flex;
