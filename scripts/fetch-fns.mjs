@@ -3,8 +3,8 @@ import * as path from 'path';
 import {exec} from 'child_process';
 import crypto from 'crypto';
 
-const mossConfigJSON = fs.readFileSync('moss.config.json');
-const mossConfig = JSON.parse(mossConfigJSON);
+const configJSON = fs.readFileSync('holochain-checksums.json');
+const HOLOCHAIN_CHECKSUMS = JSON.parse(configJSON);
 
 const binariesDir = path.join('resources', 'bins');
 fs.mkdirSync(binariesDir, {recursive: true});
@@ -42,7 +42,7 @@ switch (process.platform) {
 
 
 export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
-  console.log('Downloading from ', url);
+  console.log('Downloading from', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
     console.log(stdout);
     console.log(stderr);
@@ -71,13 +71,13 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 
 export function downloadHolochainBinary(filename, withVersion = true) {
   let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
-  let binaryFilenameWithVersion = `${filename}-v${mossConfig[filename].version}${process.platform === 'win32' ? '.exe' : ''}`
+  let binaryFilenameWithVersion = `${filename}-v${HOLOCHAIN_CHECKSUMS.version}${process.platform === 'win32' ? '.exe' : ''}`
   const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}${process.platform === 'win32' ? '.exe' : ''}`);
-  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain.version}/${completeBinaryFilename}`;
+  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${HOLOCHAIN_CHECKSUMS.version}/${completeBinaryFilename}`;
   downloadFile(
     holochainBinaryUrl,
     targetPath,
-    mossConfig[filename].sha256[targetEnding],
+    HOLOCHAIN_CHECKSUMS[filename][targetEnding],
     true,
   );
 }

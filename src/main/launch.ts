@@ -67,7 +67,7 @@ export async function launch(
     throw new Error(`Failed to launch lair keystore: ${e}`);
   }
 
-  const holochainVersion = MOSS_CONFIG.holochain.version;
+  const holochainVersion = MOSS_CONFIG.holochain;
 
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(

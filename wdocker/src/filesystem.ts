@@ -237,9 +237,9 @@ export class WDockerFilesystem {
     return path.join(this.happsDir, `${MOSS_CONFIG.groupHapp.sha256}.happ`);
   }
 
-  get toolsLibraryHappPath() {
-    return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
-  }
+  // get toolsLibraryHappPath() {
+  //   return path.join(this.happsDir, `${MOSS_CONFIG.toolsLibrary.sha256}.happ`);
+  // }
 
   /**
    *

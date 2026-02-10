@@ -24,6 +24,7 @@ import { MOSS_CONFIG } from '../const.js';
 import { downloadFile } from '../utils.js';
 import psList from 'ps-list';
 import path from 'path';
+import {HOLOCHAIN_CHECKSUMS} from "../../../src/main/mossConfig";
 
 const { combine, timestamp } = format;
 
@@ -293,12 +294,12 @@ export async function fetchHolochainBinary(dstPath: string): Promise<void> {
       throw new Error(`Got unexpected OS platform: ${process.platform}`);
   }
 
-  const holochainBinaryRemoteFilename = `holochain-v${MOSS_CONFIG.holochain.version}-${targetEnding}`;
-  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${MOSS_CONFIG.holochain.version}/${holochainBinaryRemoteFilename}`;
+  const holochainBinaryRemoteFilename = `holochain-v${MOSS_CONFIG.holochain}-${targetEnding}`;
+  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${MOSS_CONFIG.holochain}/${holochainBinaryRemoteFilename}`;
   return downloadFile(
     holochainBinaryUrl,
     dstPath,
-    MOSS_CONFIG.holochain.sha256[targetEnding],
+    HOLOCHAIN_CHECKSUMS.holochain[targetEnding],
     true,
   );
 }
@@ -321,7 +322,7 @@ function setupHolochainLogger(wDockerFs: WDockerFilesystem, prefix?: string): wi
       format.printf(({ level, message, timestamp }) => {
         return JSON.stringify({
           timestamp,
-          label: `${prefix ? `${prefix} ` : ''}HOLOCHAIN ${MOSS_CONFIG.holochain.version}`,
+          label: `${prefix ? `${prefix} ` : ''}HOLOCHAIN ${MOSS_CONFIG.holochain}`,
           level,
           message,
         });

@@ -1,0 +1,31 @@
+{
+  "version": "0.6.1-rc.1",
+  "hc": {
+    "aarch64-apple-darwin": "7a623193f6f03923bc99393b8df80fc213a6462001aba6d99384328f9db17637",
+    "aarch64-unknown-linux-gnu": "764d48d7359a45457696d83fc1846c9d248e63eba981d8e2d47352d4430eaf8a",
+    "x86_64-apple-darwin": "64fc728f3bba7cf3bca262e2a0e770981fe81c3e06c0a9f512145bae2a58e895",
+    "x86_64-pc-windows-msvc.exe": "836e905cb3a0c7b5e01927d5a0ec034166c8ea46f06cb2644353c91bfc2a3083",
+    "x86_64-unknown-linux-gnu": "616ecac89ead7e42bc25f15403744642c4b2af9f383a6c562183dd376ef650c6"
+  },
+  "holochain": {
+    "aarch64-apple-darwin": "561875eb819dd1da52b25d185ba6abfb6a57f24e0b47a97168cbf4e45631ae90",
+    "aarch64-unknown-linux-gnu": "eb8e1333bf59e39e1bf8209de2ccf381b9a0c9e5c53a066b8de53f79ca7c415b",
+    "x86_64-apple-darwin": "4508e403821222569ec3b5ca6d20d9171968f0b28b66e4659e6f6350bbaa9097",
+    "x86_64-pc-windows-msvc.exe": "e0a01b145a9f069eb669d48fc11b4d83383bd1a23e480a3747e818e147dae080",
+    "x86_64-unknown-linux-gnu": "cf91967160652835c07abcb98a561b0c8c5d88589ad7c16c5b3c30ccf5455577"
+  },
+  "kitsune2-bootstrap-srv": {
+    "aarch64-apple-darwin": "6d43ee87f93508200565afd88f91877c4572ab65153b1be3d0c62800c15dd9bd",
+    "aarch64-unknown-linux-gnu": "28389fc2dc1b32b770ea73aa8391383ee5e280140f1437f4b444215f287dd072",
+    "x86_64-apple-darwin": "9ef06f96b65af03a74143d98f6d3374a5f3713dc9e55bf3495f4101f0dee0e66",
+    "x86_64-pc-windows-msvc.exe": "a11ebdbd5f9cbc8816c43c170c47f0459da7759b15850735105d457c280cb79b",
+    "x86_64-unknown-linux-gnu": "fd9d03b2cdf5a99cde589c9647bb2aefef217fa5ac6c7d44693eb46d5e931b7e"
+  },
+  "lair-keystore": {
+    "aarch64-apple-darwin": "af136c9d2e2ec0dbc6a9e858c7162f46ecdedef6d1bde7125f5147c0aca33711",
+    "aarch64-unknown-linux-gnu": "47f2ec5db90ba5681149f7a3f80f1a29faa98c235314f7d08d0e2ed125bb6bc9",
+    "x86_64-apple-darwin": "6c58b038a4d6acfc88abc1d8eab1a3db5b513b3eda9c7dad8989831b2a31be74",
+    "x86_64-pc-windows-msvc.exe": "7794982c951a1d0273507f57e7bdcc0ecb232233e0bc2a41a7448443dd3b7988",
+    "x86_64-unknown-linux-gnu": "cf9aa2b9833f9d77cfc1c1fbd3825eb6be49d439da2bd5bbccc2996505c0fd1b"
+  }
+}

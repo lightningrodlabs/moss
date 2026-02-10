@@ -42,7 +42,7 @@ const conductorConfigTemplateString = fs.readFileSync(
 );
 export const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
 
-export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
+export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
 
 export const GROUP_HAPP_URL = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${MOSS_CONFIG.groupHapp.version}/group.happ`;
 // export const TOOLS_LIBRARY_URL = `https://github.com/lightningrodlabs/tools-library/releases/download/v${MOSS_CONFIG.toolsLibrary.version}/tools-library.happ`;

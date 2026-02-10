@@ -68,7 +68,8 @@
     "i18n:build": "cd src/renderer && npx lit-localize build",
     "test": "yarn workspace tests test",
     "update-server": "node scripts/update-server.mjs",
-    "gen-update-meta": "node scripts/generate-update-yml.mjs"
+    "gen-update-meta": "node scripts/generate-update-yml.mjs",
+    "update-hc-checksums": "node scripts/get-hc-checksum.mjs holochain/holochain"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",

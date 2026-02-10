@@ -11,14 +11,14 @@ const RESOURCES_DIRECTORY = app.isPackaged
 const BINARIES_DIRECTORY = path.join(RESOURCES_DIRECTORY, 'bins');
 
 const HOLOCHAIN_BINARIES: Record<string, string> = {};
-HOLOCHAIN_BINARIES[MOSS_CONFIG.holochain.version] = path.join(
+HOLOCHAIN_BINARIES[MOSS_CONFIG.holochain] = path.join(
     BINARIES_DIRECTORY,
-    `holochain-v${MOSS_CONFIG.holochain.version}${process.platform === 'win32' ? '.exe' : ''}`,
+    `holochain-v${MOSS_CONFIG.holochain}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 const LAIR_BINARY = path.join(
     BINARIES_DIRECTORY,
-    `lair-keystore-v${MOSS_CONFIG["lair-keystore"].version}${process.platform === 'win32' ? '.exe' : ''}`,
+    `lair-keystore-v${MOSS_CONFIG.holochain}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 /**
@@ -26,7 +26,7 @@ const LAIR_BINARY = path.join(
  */
 const KITSUNE2_BOOTSTRAP_SRV_BINARY = path.join(
     BINARIES_DIRECTORY,
-    `kitsune2-bootstrap-srv-v${MOSS_CONFIG["kitsune2-bootstrap-srv"].version}${process.platform === 'win32' ? '.exe' : ''}`,
+    `kitsune2-bootstrap-srv-v${MOSS_CONFIG.holochain}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 const conductorConfigTemplateString = fs.readFileSync(
