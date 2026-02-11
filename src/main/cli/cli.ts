@@ -317,9 +317,9 @@ function readAndValidateDevConfig(
 
   const allGroupNetworkSeeds = groups.map((group) => group.networkSeed);
   const uniqueGroupNetworkSeeds = new Set(allGroupNetworkSeeds);
-  if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length)
-    throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
-
+  if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length) {
+      throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
+  }
   // validate applets
   applets.forEach((applet) => {
     if (!applet.name || typeof applet.name !== 'string')
@@ -386,6 +386,10 @@ function readAndValidateDevConfig(
           );
     }
   });
+
+  if (configObject && !configObject.toolCurations) {
+      configObject.toolCurations = [];
+  }
 
   const allAppletNames = applets.map((applet) => applet.name);
   const uniqueAppletNames = new Set(allAppletNames);
