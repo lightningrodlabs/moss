@@ -69,7 +69,8 @@
     "test": "yarn workspace tests test",
     "update-server": "node scripts/update-server.mjs",
     "gen-update-meta": "node scripts/generate-update-yml.mjs",
-    "update-hc-checksums": "node scripts/get-hc-checksum.mjs holochain/holochain"
+    "update-hc-checksums": "node scripts/get-hc-checksum.mjs holochain/holochain",
+    "hash": "node scripts/sha512.mjs dist/org.lightningrodlabs.moss-0.15-0.15.3-x64.dmg"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",

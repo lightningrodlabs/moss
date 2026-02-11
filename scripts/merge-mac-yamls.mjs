@@ -120,9 +120,9 @@ const getPlatformFromLatestMacYml = (content) => {
       name: `latest-mac-${localPlatform}.yml`,
       data: localAssetStream,
     });
-    console.log(`[remote] latest-mac-${localPlatform}.yml uploaded`);
+    console.log(`[remote] latest-mac-${localPlatform}.yml uploaded.`);
   } catch (e) {
-    console.log(`[remote] error uploading latest-mac-${localPlatform}.yml. Skipping merge`);
+    console.log(`[remote] error uploading latest-mac-${localPlatform}.yml. Skipping merge.`);
     console.log(e);
     return;
   }
@@ -198,7 +198,7 @@ const getPlatformFromLatestMacYml = (content) => {
     });
     console.log(`[remote] uploaded merged ${FILE_NAME}`);
   } catch (e) {
-    console.log(`[remote] error uploading merged ${FILE_NAME}. Skipping merge`);
+    console.log(`[remote] error uploading merged ${FILE_NAME}. Skipping merge.`);
     console.log(e);
     return;
   }

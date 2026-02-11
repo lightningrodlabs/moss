@@ -1992,13 +1992,17 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('install-moss-update', async () => {
       if (!UPDATE_AVAILABLE) throw new Error('No update available.');
       // downloading means that with the next start of the application it's automatically going to be installed
-      autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
+      autoUpdater.on('update-downloaded', () => {
+          console.log('Update downloaded');
+          autoUpdater.quitAndInstall();
+      });
       autoUpdater.on('download-progress', (progressInfo) => {
         if (MAIN_WINDOW) {
           emitToWindow(MAIN_WINDOW, 'moss-update-progress', progressInfo);
         }
       });
-      await autoUpdater.downloadUpdate();
+      const paths = await autoUpdater.downloadUpdate();
+      console.log('Update downloaded at:', paths);
     });
   }
 
