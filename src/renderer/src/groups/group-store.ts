@@ -175,6 +175,11 @@ export class GroupStore {
   private _agentInfoIntervalHandle: SafeIntervalHandle | undefined;
   private _assetRelationsIntervalHandle: SafeIntervalHandle | undefined;
 
+  // Signal handler unsubscribers for cleanup
+  private _peerStatusSignalUnsub: (() => void) | undefined;
+  private _groupSignalUnsub: (() => void) | undefined;
+  private _assetsSignalUnsub: (() => void) | undefined;
+
   constructor(
     public appWebsocket: AppWebsocket,
     public authenticationToken: AppAuthenticationToken,
@@ -202,7 +207,7 @@ export class GroupStore {
 
     this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
-    this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
+    this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Pong') {
         this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
       }
@@ -273,7 +278,7 @@ export class GroupStore {
     });
 
     // Handle group dna remote signals
-    this.groupClient.onSignal((signal) => {
+    this._groupSignalUnsub = this.groupClient.onSignal((signal) => {
       if (signal.type === 'Arbitrary') {
         const signalContent = decode(signal.content) as GroupRemoteSignal;
         if (signalContent.type === 'assets-signal') {
@@ -290,7 +295,7 @@ export class GroupStore {
       }
     });
 
-    this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
+    this._assetsSignalUnsub = this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
 
     this.constructed = true;
   }
@@ -311,6 +316,18 @@ export class GroupStore {
     if (this._assetRelationsIntervalHandle) {
       this._assetRelationsIntervalHandle.cancel();
       this._assetRelationsIntervalHandle = undefined;
+    }
+    if (this._peerStatusSignalUnsub) {
+      this._peerStatusSignalUnsub();
+      this._peerStatusSignalUnsub = undefined;
+    }
+    if (this._groupSignalUnsub) {
+      this._groupSignalUnsub();
+      this._groupSignalUnsub = undefined;
+    }
+    if (this._assetsSignalUnsub) {
+      this._assetsSignalUnsub();
+      this._assetsSignalUnsub = undefined;
     }
   }
 

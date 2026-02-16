@@ -1054,6 +1054,7 @@ export class MossStore {
     await this.adminWebsocket.uninstallApp({
       installed_app_id: appToLeave.installed_app_id,
     });
+    await this.closeAppClient(appToLeave.installed_app_id);
 
     await Promise.all(
       applets.map(async (appletHash) => {
@@ -1064,10 +1065,12 @@ export class MossStore {
         // console.warn(`@leaveGroup: found groups for applet ${encodeHashToBase64(appletHash)}: ${groupsForApplet.map(hash => encodeHashToBase64(hash))}`);
 
         if (groupsForApplet.length === 0) {
+          const appletAppId = appIdFromAppletHash(appletHash);
           // console.warn("@leaveGroup: Uninstalling applet with app id: ", encodeHashToBase64(appletHash));
           await this.adminWebsocket.uninstallApp({
-            installed_app_id: appIdFromAppletHash(appletHash),
+            installed_app_id: appletAppId,
           });
+          await this.closeAppClient(appletAppId);
           const backgroundIframe = document.getElementById(encodeHashToBase64(appletHash)) as
             | HTMLIFrameElement
             | undefined;
@@ -1182,7 +1185,16 @@ export class MossStore {
 
   /** -- Stores -- */
 
+  private _previousGroupStores: DnaHashMap<GroupStore> | undefined;
+
   groupStores = manualReloadStore(async () => {
+    // Clean up old GroupStore instances (intervals + signal handlers) before creating new ones
+    if (this._previousGroupStores) {
+      for (const [, store] of this._previousGroupStores.entries()) {
+        store.cleanup();
+      }
+    }
+
     const groupStores = new DnaHashMap<GroupStore>();
     const apps = await this.adminWebsocket.listApps({});
     const runningGroupsApps = apps
@@ -1200,6 +1212,7 @@ export class MossStore {
         );
       }),
     );
+    this._previousGroupStores = groupStores;
     return groupStores;
   });
 
@@ -1380,6 +1393,7 @@ export class MossStore {
     // console.warn("@we-store: Uninstalling applet.");
     const appId = appIdFromAppletHash(appletHash);
     await window.electronAPI.uninstallAppletBundle(appId);
+    await this.closeAppClient(appId);
     const iframe = document.getElementById(encodeHashToBase64(appletHash)) as
       | HTMLIFrameElement
       | undefined;
@@ -1794,6 +1808,19 @@ export class MossStore {
     }
     this._appClients[appId] = [appWs, token];
     return [appWs, token];
+  }
+
+  async closeAppClient(appId: InstalledAppId): Promise<void> {
+    const client = this._appClients[appId];
+    if (client) {
+      try {
+        await client[0].client.close();
+      } catch (e) {
+        console.warn(`Failed to close WebSocket for ${appId}:`, e);
+      }
+      delete this._appClients[appId];
+      delete this._authenticationTokens[appId];
+    }
   }
 
   zomeCallLogs: Record<InstalledAppId, ZomeCallCounts> = {};

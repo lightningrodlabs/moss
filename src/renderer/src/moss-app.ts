@@ -99,6 +99,8 @@ export class MossApp extends LitElement {
   @state()
   private loadingText = msg('loading...');
 
+  private _happMessageListener: ((event: MessageEvent) => void) | undefined;
+
   async firstUpdated() {
     // Note: Locale is initialized in index.html before the app loads
     // to avoid flash of untranslated content
@@ -114,7 +116,8 @@ export class MossApp extends LitElement {
       console.error(e);
     }
 
-    window.addEventListener('message', async (message) => handleHappMessage(message));
+    this._happMessageListener = async (message: MessageEvent) => handleHappMessage(message);
+    window.addEventListener('message', this._happMessageListener);
 
     await this._mossStore.checkForUiUpdates();
     // Check once every hour or on page refresh
@@ -133,7 +136,10 @@ export class MossApp extends LitElement {
     if (this._appletUiUpdateCheckInterval) {
       this._appletUiUpdateCheckInterval.cancel();
     }
-    window.removeEventListener('message', handleHappMessage);
+    if (this._happMessageListener) {
+      window.removeEventListener('message', this._happMessageListener);
+      this._happMessageListener = undefined;
+    }
   }
 
   async connect() {

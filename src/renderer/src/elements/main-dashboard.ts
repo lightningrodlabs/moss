@@ -259,7 +259,10 @@ export class MainDashboard extends LitElement {
 
   _reloadingApplets: Array<AppletId> = [];
 
-  // _unlisten: UnlistenFn | undefined;
+  // Listener references for cleanup in disconnectedCallback
+  private _appletMessageListener: ((event: MessageEvent) => void) | undefined;
+  private _keydownListener: ((event: KeyboardEvent) => void) | undefined;
+  private _openAssetUnsub: (() => void) | undefined;
 
   @provide({ context: openViewsContext })
   @property()
@@ -589,7 +592,8 @@ export class MainDashboard extends LitElement {
       window.addEventListener('beforeunload', this.beforeUnloadListener);
     }, 10000);
 
-    window.addEventListener('message', appletMessageHandler(this._mossStore, this.openViews));
+    this._appletMessageListener = appletMessageHandler(this._mossStore, this.openViews);
+    window.addEventListener('message', this._appletMessageListener);
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
@@ -666,7 +670,7 @@ export class MainDashboard extends LitElement {
     });
 
     // add eventlistener for pocket
-    window.addEventListener('keydown', (zEvent) => {
+    this._keydownListener = (zEvent: KeyboardEvent) => {
       if (zEvent.altKey && zEvent.key === 's') {
         // case sensitive
         switch (this.showClipboard) {
@@ -680,9 +684,10 @@ export class MainDashboard extends LitElement {
             break;
         }
       }
-    });
+    };
+    window.addEventListener('keydown', this._keydownListener);
 
-    this._mossStore.on('open-asset', (wal) => {
+    this._openAssetUnsub = this._mossStore.on('open-asset', (wal) => {
       this.handleOpenWal(wal);
     });
 
@@ -767,9 +772,22 @@ export class MainDashboard extends LitElement {
     this._drawerResizing = false;
   }
 
-  // disconnectedCallback(): void {
-  //   if (this._unlisten) this._unlisten();
-  // }
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._appletMessageListener) {
+      window.removeEventListener('message', this._appletMessageListener);
+      this._appletMessageListener = undefined;
+    }
+    if (this._keydownListener) {
+      window.removeEventListener('keydown', this._keydownListener);
+      this._keydownListener = undefined;
+    }
+    if (this._openAssetUnsub) {
+      this._openAssetUnsub();
+      this._openAssetUnsub = undefined;
+    }
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+  }
 
   displayMossView(name: string) {
     return (

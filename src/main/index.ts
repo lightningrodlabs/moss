@@ -580,17 +580,21 @@ if (!RUNNING_WITH_COMMAND) {
       );
     }
     return new Promise((resolve, reject) => {
-      WE_EMITTER.on(SCREEN_OR_WINDOW_SELECTED, (id) => {
+      const onSelected = (id: any) => {
+        SELECT_SCREEN_OR_WINDOW_WINDOW?.removeListener('closed', onClosed);
         if (SELECT_SCREEN_OR_WINDOW_WINDOW) {
           SELECT_SCREEN_OR_WINDOW_WINDOW.close();
           SELECT_SCREEN_OR_WINDOW_WINDOW = null;
         }
         return resolve(id as string);
-      });
-      SELECT_SCREEN_OR_WINDOW_WINDOW!.on('closed', () => {
+      };
+      const onClosed = () => {
+        WE_EMITTER.off(SCREEN_OR_WINDOW_SELECTED, onSelected);
         SELECT_SCREEN_OR_WINDOW_WINDOW = null;
         return reject('Selection canceled by user.');
-      });
+      };
+      WE_EMITTER.once(SCREEN_OR_WINDOW_SELECTED, onSelected);
+      SELECT_SCREEN_OR_WINDOW_WINDOW!.on('closed', onClosed);
     });
   };
 
@@ -1019,13 +1023,15 @@ if (!RUNNING_WITH_COMMAND) {
       });
       return new Promise((resolve, reject) => {
         const timeoutMs = 60000;
-        const timeout = setTimeout(() => {
-          return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
-        }, timeoutMs);
-        WE_EMITTER.on(messageId, (response) => {
+        const onResponse = (response: any) => {
           clearTimeout(timeout);
           return resolve(response);
-        });
+        };
+        const timeout = setTimeout(() => {
+          WE_EMITTER.off(messageId, onResponse);
+          return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
+        }, timeoutMs);
+        WE_EMITTER.once(messageId, onResponse);
       });
     });
     ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
@@ -1713,6 +1719,9 @@ if (!RUNNING_WITH_COMMAND) {
       const stats = await HOLOCHAIN_MANAGER!.adminWebsocket.dumpNetworkStats();
       const filePath = path.join(WE_FILE_SYSTEM.profileLogsDir, 'network_stats.json');
       fs.writeFileSync(filePath, JSON.stringify(stats, undefined, 2), 'utf-8');
+    });
+    ipcMain.handle('get-main-process-memory', () => {
+      return process.memoryUsage();
     });
     ipcMain.handle(
       'install-applet-bundle',

@@ -981,9 +981,17 @@ export class AppletHost {
     return new Promise<T>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
 
+      const timeoutMs = 60000;
+      const timeout = setTimeout(() => {
+        port1.close();
+        reject(new Error(`postMessage to applet timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
       this.iframe.contentWindow!.postMessage(message, '*', [port2]);
 
       port1.onmessage = (m) => {
+        clearTimeout(timeout);
+        port1.close();
         if (m.data.type === 'success') {
           resolve(m.data.result);
         } else if (m.data.type === 'error') {

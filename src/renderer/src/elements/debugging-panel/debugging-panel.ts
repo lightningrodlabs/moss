@@ -9,6 +9,7 @@ import {
   decodeHashFromBase64,
   DnaHash,
   DnaHashB64,
+  DnaStorageInfo,
   DumpNetworkMetricsResponse,
   DumpNetworkStatsResponse,
   encodeHashToBase64,
@@ -32,6 +33,7 @@ import '../reusable/groups-for-applet.js';
 import './state-dump.js';
 import './cell-details.js';
 import './app-debugging-details.js';
+import './memory-chart.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore, ZomeCallCounts } from '../../moss-store.js';
@@ -42,6 +44,13 @@ import { getCellName, groupModifiersToAppId, safeSetInterval, SafeIntervalHandle
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
 
 const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
   if (!metrics) {
@@ -160,6 +169,56 @@ export class DebuggingPanel extends LitElement {
   @state()
   _transportToAgentMap: Record<InstalledAppId, Map<string, string>> = {};
 
+  // Memory monitoring state
+  @state()
+  _memoryPolling = false;
+
+  @state()
+  _memoryPollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _rendererMemory: { residentSetKB: number; privateKB: number; sharedKB: number } | null = null;
+
+  @state()
+  _mainProcessMemory: { rss: number; heapTotal: number; heapUsed: number; external: number; arrayBuffers: number } | null = null;
+
+  @state()
+  _storagePolling = false;
+
+  @state()
+  _storagePollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _storageByAppId: Record<InstalledAppId, (DnaStorageInfo & { dnaName?: string })[]> = {};
+
+  // History arrays for charts (rolling window, values in bytes)
+  @state()
+  _rendererRssHistory: number[] = [];
+
+  @state()
+  _rendererPrivateHistory: number[] = [];
+
+  @state()
+  _rendererSharedHistory: number[] = [];
+
+  @state()
+  _mainRssHistory: number[] = [];
+
+  @state()
+  _mainHeapHistory: number[] = [];
+
+  @state()
+  _mainExternalHistory: number[] = [];
+
+  @state()
+  _mainArrayBuffersHistory: number[] = [];
+
+  @state()
+  _storageHistory: Record<InstalledAppId, number[]> = {};
+
+  // Cache: DnaHashB64 -> cell/role name (resolved from appInfo)
+  private _dnaNameCache: Record<DnaHashB64, string> = {};
+
   async firstUpdated() {
     // Poll network stats periodically
     // Uses safeSetInterval to prevent call stacking if polling is slow
@@ -190,6 +249,262 @@ export class DebuggingPanel extends LitElement {
       this._refreshInterval.cancel();
       this._refreshInterval = undefined;
     }
+    if (this._memoryPollInterval) {
+      this._memoryPollInterval.cancel();
+      this._memoryPollInterval = undefined;
+    }
+    if (this._storagePollInterval) {
+      this._storagePollInterval.cancel();
+      this._storagePollInterval = undefined;
+    }
+  }
+
+  async pollMemory() {
+    try {
+      this._rendererMemory = await window.electronAPI.getRendererProcessMemory();
+      this._rendererRssHistory = [
+        ...this._rendererRssHistory.slice(-59),
+        this._rendererMemory.residentSetKB * 1024,
+      ];
+      this._rendererPrivateHistory = [
+        ...this._rendererPrivateHistory.slice(-59),
+        this._rendererMemory.privateKB * 1024,
+      ];
+      this._rendererSharedHistory = [
+        ...this._rendererSharedHistory.slice(-59),
+        this._rendererMemory.sharedKB * 1024,
+      ];
+    } catch (e) {
+      console.error('Failed to get renderer process memory:', e);
+    }
+    try {
+      this._mainProcessMemory = await window.electronAPI.getMainProcessMemory();
+      this._mainRssHistory = [
+        ...this._mainRssHistory.slice(-59),
+        this._mainProcessMemory.rss,
+      ];
+      this._mainHeapHistory = [
+        ...this._mainHeapHistory.slice(-59),
+        this._mainProcessMemory.heapUsed,
+      ];
+      this._mainExternalHistory = [
+        ...this._mainExternalHistory.slice(-59),
+        this._mainProcessMemory.external,
+      ];
+      this._mainArrayBuffersHistory = [
+        ...this._mainArrayBuffersHistory.slice(-59),
+        this._mainProcessMemory.arrayBuffers,
+      ];
+    } catch (e) {
+      console.error('Failed to get main process memory:', e);
+    }
+  }
+
+  toggleMemoryPolling() {
+    if (this._memoryPolling) {
+      this._memoryPollInterval?.cancel();
+      this._memoryPollInterval = undefined;
+      this._memoryPolling = false;
+      this._rendererRssHistory = [];
+      this._rendererPrivateHistory = [];
+      this._rendererSharedHistory = [];
+      this._mainRssHistory = [];
+      this._mainHeapHistory = [];
+      this._mainExternalHistory = [];
+      this._mainArrayBuffersHistory = [];
+    } else {
+      this._memoryPolling = true;
+      this._memoryPollInterval = safeSetInterval({
+        name: 'pollMemory',
+        fn: async () => {
+          await this.pollMemory();
+        },
+        intervalMs: 2000,
+        runImmediately: true,
+      });
+    }
+  }
+
+  private async resolveDnaNames(appIds: InstalledAppId[]) {
+    for (const appId of appIds) {
+      try {
+        const [appClient] = await this._mossStore.getAppClient(appId);
+        const appInfo = await appClient.appInfo();
+        if (!appInfo) continue;
+        const cellInfos = Object.values(appInfo.cell_info).flat();
+        for (const cellInfo of cellInfos) {
+          const cellName = getCellName(cellInfo);
+          const cellId = getCellId(cellInfo);
+          if (cellName && cellId) {
+            this._dnaNameCache[encodeHashToBase64(cellId[0])] = cellName;
+          }
+        }
+      } catch (_e) {
+        // App may not be running
+      }
+    }
+  }
+
+  async pollStorageInfo() {
+    try {
+      const storageInfo = await this._mossStore.adminWebsocket.storageInfo();
+      const byAppId: Record<InstalledAppId, (DnaStorageInfo & { dnaName?: string })[]> = {};
+      // Collect appIds that need name resolution
+      const unresolvedAppIds: InstalledAppId[] = [];
+      for (const blob of storageInfo.blobs) {
+        for (const appId of blob.value.used_by) {
+          if (!byAppId[appId]) byAppId[appId] = [];
+          // dna_hash exists in the Holochain response but is missing from the TS type
+          const dnaHash = (blob.value as DnaStorageInfo & { dna_hash?: Uint8Array }).dna_hash;
+          const dnaHashB64 = dnaHash ? encodeHashToBase64(dnaHash) : undefined;
+          const dnaName = dnaHashB64 ? this._dnaNameCache[dnaHashB64] : undefined;
+          if (dnaHashB64 && !dnaName && !unresolvedAppIds.includes(appId)) {
+            unresolvedAppIds.push(appId);
+          }
+          byAppId[appId].push({ ...blob.value, dnaName });
+        }
+      }
+      // Resolve any missing DNA names, then re-apply
+      if (unresolvedAppIds.length > 0) {
+        await this.resolveDnaNames(unresolvedAppIds);
+        for (const dnas of Object.values(byAppId)) {
+          for (const dna of dnas) {
+            if (!dna.dnaName) {
+              const hash = (dna as DnaStorageInfo & { dna_hash?: Uint8Array }).dna_hash;
+              if (hash) {
+                dna.dnaName = this._dnaNameCache[encodeHashToBase64(hash)];
+              }
+            }
+          }
+        }
+      }
+      this._storageByAppId = byAppId;
+
+      // Accumulate per-app total storage history
+      const newHistory = { ...this._storageHistory };
+      for (const [appId, dnas] of Object.entries(byAppId)) {
+        const total = dnas.reduce(
+          (sum, d) => sum + d.authored_data_size + d.dht_data_size + d.cache_data_size,
+          0,
+        );
+        if (!newHistory[appId]) newHistory[appId] = [];
+        newHistory[appId] = [...newHistory[appId].slice(-59), total];
+      }
+      this._storageHistory = newHistory;
+    } catch (e) {
+      console.error('Failed to fetch storage info:', e);
+    }
+  }
+
+  toggleStoragePolling() {
+    if (this._storagePolling && this._storagePollInterval) {
+      this._storagePollInterval.cancel();
+      this._storagePollInterval = undefined;
+      this._storagePolling = false;
+      this._storageByAppId = {};
+      this._storageHistory = {};
+      this._dnaNameCache = {};
+    } else {
+      this._storagePolling = true;
+      this.pollStorageInfo();
+      this._storagePollInterval = safeSetInterval({
+        name: 'pollStorageInfo',
+        fn: () => this.pollStorageInfo(),
+        intervalMs: 5000,
+      });
+    }
+  }
+
+  renderStorageForApp(appId: InstalledAppId) {
+    const dnas = this._storageByAppId[appId];
+    if (!dnas || dnas.length === 0) return html``;
+    const historyData = this._storageHistory[appId] || [];
+    return html`
+      <div style="margin-left: 60px; margin-bottom: 4px; font-size: 12px; color: #555;">
+        ${dnas.map((dna) => html`
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            ${dna.dnaName ? html`<span style="font-weight: bold; min-width: 80px;">${dna.dnaName}</span>` : html``}
+            <span>Authored: ${formatBytes(dna.authored_data_size)} (disk: ${formatBytes(dna.authored_data_size_on_disk)})</span>
+            <span>DHT: ${formatBytes(dna.dht_data_size)} (disk: ${formatBytes(dna.dht_data_size_on_disk)})</span>
+            <span>Cache: ${formatBytes(dna.cache_data_size)} (disk: ${formatBytes(dna.cache_data_size_on_disk)})</span>
+          </div>
+        `)}
+        ${historyData.length > 1 ? html`
+          <memory-chart
+            title="Total Storage"
+            .series=${[{ label: 'Total', color: '#9C27B0', data: historyData }]}
+            .height=${100}
+            .width=${300}
+            style="margin-top: 4px;"
+          ></memory-chart>
+        ` : html``}
+      </div>
+    `;
+  }
+
+  renderMemorySection() {
+    return html`
+      <div class="column" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="row items-center" style="margin-bottom: 10px;">
+          <h3 style="margin: 0;">Memory</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleMemoryPolling()}
+          >${this._memoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+        </div>
+
+        ${this._rendererMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <b>Renderer Process</b>
+            <div>RSS: ${formatBytes(this._rendererMemory.residentSetKB * 1024)}</div>
+            <div>Private: ${formatBytes(this._rendererMemory.privateKB * 1024)}</div>
+            <div>Shared: ${formatBytes(this._rendererMemory.sharedKB * 1024)}</div>
+          </div>
+        ` : html``}
+
+        ${this._mainProcessMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <b>Main Process</b>
+            <div>RSS: ${formatBytes(this._mainProcessMemory.rss)}</div>
+            <div>Heap: ${formatBytes(this._mainProcessMemory.heapUsed)} / ${formatBytes(this._mainProcessMemory.heapTotal)}</div>
+            <div>External: ${formatBytes(this._mainProcessMemory.external)}</div>
+            <div>ArrayBuffers: ${formatBytes(this._mainProcessMemory.arrayBuffers)}</div>
+          </div>
+        ` : html``}
+
+        ${this._rendererRssHistory.length > 1 || this._mainRssHistory.length > 1 ? html`
+          <memory-chart
+            title="RSS Comparison"
+            .series=${[
+              { label: 'Renderer', color: '#2196F3', data: this._rendererRssHistory },
+              { label: 'Main', color: '#FF9800', data: this._mainRssHistory },
+            ]}
+          ></memory-chart>
+          <memory-chart
+            title="Main Process Breakdown"
+            .series=${[
+              { label: 'Heap', color: '#4CAF50', data: this._mainHeapHistory },
+              { label: 'External', color: '#FF5722', data: this._mainExternalHistory },
+              { label: 'ArrayBuf', color: '#9C27B0', data: this._mainArrayBuffersHistory },
+            ]}
+            style="margin-top: 8px;"
+          ></memory-chart>
+          <memory-chart
+            title="Renderer Breakdown"
+            .series=${[
+              { label: 'Private', color: '#E91E63', data: this._rendererPrivateHistory },
+              { label: 'Shared', color: '#00BCD4', data: this._rendererSharedHistory },
+            ]}
+            style="margin-top: 8px;"
+          ></memory-chart>
+        ` : html``}
+
+        ${!this._memoryPolling && !this._rendererMemory ? html`
+          <div style="color: #666;">Click "Start Polling" to begin memory monitoring.</div>
+        ` : html``}
+      </div>
+    `;
   }
 
   async getCellIds(appClient: AppClient): Promise<CellId[]> {
@@ -801,6 +1116,7 @@ export class DebuggingPanel extends LitElement {
                   </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                ${this._storagePolling ? this.renderStorageForApp(groupAppId) : html``}
               </div>
               ${showDebug
               ? html`
@@ -917,6 +1233,7 @@ export class DebuggingPanel extends LitElement {
                   </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                ${this._storagePolling ? this.renderStorageForApp(appId) : html``}
               </div>
               ${showDebug
               ? html`
@@ -1011,6 +1328,15 @@ export class DebuggingPanel extends LitElement {
             Total number of cross-group iframes:
             <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
           </div>
+        </div>
+        ${this.renderMemorySection()}
+        <div class="row items-center" style="margin-bottom: 10px;">
+          <h3 style="margin: 0;">DNA Storage Polling</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleStoragePolling()}
+          >${this._storagePolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
         </div>
         <h2 style="text-align: center;">Global Apps</h2>
         <div class="center-content" style="text-align: center;">No global apps installed.</div>

@@ -182,6 +182,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   uninstallApplet: (appId: string) => ipcRenderer.invoke('uninstall-applet', appId),
   dumpNetworkStats: () => ipcRenderer.invoke('dump-network-stats'),
+  getRendererProcessMemory: async () => {
+    const memInfo = await process.getProcessMemoryInfo();
+    return {
+      residentSetKB: memInfo.residentSet,
+      privateKB: memInfo.private,
+      sharedKB: memInfo.shared,
+    };
+  },
+  getMainProcessMemory: () => ipcRenderer.invoke('get-main-process-memory'),
   fetchAndValidateHappOrWebhapp: (url: string) =>
     ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),

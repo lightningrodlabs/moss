@@ -191,6 +191,18 @@ declare global {
       ) => Promise<void>;
       uninstallApplet: (appId: string) => Promise<void>;
       dumpNetworkStats: () => Promise<void>;
+      getRendererProcessMemory: () => Promise<{
+        residentSetKB: number;
+        privateKB: number;
+        sharedKB: number;
+      }>;
+      getMainProcessMemory: () => Promise<{
+        rss: number;
+        heapTotal: number;
+        heapUsed: number;
+        external: number;
+        arrayBuffers: number;
+      }>;
       fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
     };
