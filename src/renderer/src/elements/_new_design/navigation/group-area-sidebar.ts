@@ -401,7 +401,7 @@ export class GroupAppletsSidebar extends LitElement {
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amIPrivileged()
+        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amIPrivileged() && this.groupProfileIsKnown()
           ? html`<div
               class="column items-center"
               style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
@@ -501,6 +501,13 @@ export class GroupAppletsSidebar extends LitElement {
           .error=${this._groupProfile.value.error}
         ></display-error>`;
     }
+  }
+
+  groupProfileIsKnown(): boolean {
+    return (
+      this._groupProfile.value.status === 'complete' &&
+      !!this._groupProfile.value.value[0]?.name
+    );
   }
 
   groupName() {
