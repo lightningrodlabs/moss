@@ -1,21 +1,21 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { Readable } from '@holochain-open-dev/stores';
 import {
-  AppClient,
-  ActionHash,
-  EntryHash,
-  DnaHash,
-  EntryHashB64,
-  ActionHashB64,
-  DnaHashB64,
-  CallZomeRequest,
-  AppAuthenticationToken,
-  AgentPubKeyB64,
-  AgentPubKey,
-  CreateCloneCellRequest,
-  DisableCloneCellRequest,
-  EnableCloneCellRequest,
-  InstalledAppId,
+    AppClient,
+    ActionHash,
+    EntryHash,
+    DnaHash,
+    EntryHashB64,
+    ActionHashB64,
+    DnaHashB64,
+    CallZomeRequest,
+    AppAuthenticationToken,
+    AgentPubKeyB64,
+    AgentPubKey,
+    CreateCloneCellRequest,
+    DisableCloneCellRequest,
+    EnableCloneCellRequest,
+    InstalledAppId, TransportStats,
 } from '@holochain/client';
 import {Type} from "@sinclair/typebox";
 
@@ -294,6 +294,10 @@ export type ParentToAppletMessage =
       type: 'peer-status-update';
       payload: PeerStatusUpdate;
     }
+  | {
+    type: 'network-stats-update';
+    payload: TransportStats;
+  }
   | {
       type: 'on-before-unload';
     }

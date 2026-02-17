@@ -1,22 +1,22 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { parseHrl } from '@holochain-open-dev/utils';
 import {
-  AgentPubKey,
-  AgentPubKeyB64,
-  AppAuthenticationToken,
-  AppClient,
-  AppWebsocket,
-  CallZomeRequest,
-  CallZomeRequestSigned,
-  CreateCloneCellRequest,
-  DisableCloneCellRequest,
-  EnableCloneCellRequest,
-  EntryHash,
-  EntryHashMap,
-  HoloHashMap,
-  RoleNameCallZomeRequest,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    AgentPubKey,
+    AgentPubKeyB64,
+    AppAuthenticationToken,
+    AppClient,
+    AppWebsocket,
+    CallZomeRequest,
+    CallZomeRequestSigned,
+    CreateCloneCellRequest,
+    DisableCloneCellRequest,
+    EnableCloneCellRequest,
+    EntryHash,
+    EntryHashMap,
+    HoloHashMap,
+    RoleNameCallZomeRequest,
+    decodeHashFromBase64,
+    encodeHashToBase64, TransportStats,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -69,6 +69,7 @@ declare global {
 
   interface WindowEventMap {
     'peer-status-update': CustomEvent<PeerStatusUpdate>;
+    'network-stats-update': CustomEvent<TransportStats>;
     'asset-store-update': CustomEvent<{
       type: 'asset-store-update';
       walStringified: string;
@@ -209,6 +210,12 @@ const weaveApi: WeaveServices = {
     const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
     window.addEventListener('peer-status-update', listener);
     return () => window.removeEventListener('peer-status-update', listener);
+  },
+
+  onNetworkStatsUpdate: (callback: (payload: TransportStats) => any) => {
+      const listener = (e: CustomEvent<TransportStats>) => callback(e.detail);
+      window.addEventListener('network-stats-update', listener);
+      return () => window.removeEventListener('network-stats-update', listener);
   },
 
   onBeforeUnload: (callback: () => void) => {
@@ -615,6 +622,13 @@ const handleParentMessageGeneral = async (
         }),
       );
       break;
+      case 'network-stats-update':
+          window.dispatchEvent(
+              new CustomEvent('network-stats-update', {
+                  detail: message.payload,
+              }),
+          );
+          break;
     case 'asset-store-update':
       window.dispatchEvent(
         new CustomEvent('asset-store-update', {

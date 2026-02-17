@@ -128,6 +128,9 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     onPeerStatusUpdate(_) {
       return () => undefined;
     },
+    onNetworkStatsUpdate(_) {
+        return () => undefined;
+    },
     onBeforeUnload(_) {
       return () => undefined;
     },

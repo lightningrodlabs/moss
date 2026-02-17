@@ -1,14 +1,14 @@
 import {
-  AgentPubKey,
-  AppClient,
-  CreateCloneCellRequest,
-  CreateCloneCellResponse,
-  DisableCloneCellRequest,
-  DnaHash,
-  EnableCloneCellRequest,
-  EntryHash,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    AgentPubKey,
+    AppClient,
+    CreateCloneCellRequest,
+    CreateCloneCellResponse,
+    DisableCloneCellRequest,
+    DnaHash,
+    EnableCloneCellRequest,
+    EntryHash,
+    decodeHashFromBase64,
+    encodeHashToBase64, TransportStats,
 } from '@holochain/client';
 import {
   BlockType,
@@ -342,6 +342,13 @@ export interface WeaveServices {
    */
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
   /**
+   * Event handler for network stats updates.
+   *
+   * @param callback Callback that gets called when a new network stats update is available.
+   * @returns
+   */
+  onNetworkStatsUpdate: (callback: (payload: TransportStats) => any) => UnsubscribeFunction;
+  /**
    * Event listener allowing to register a callback that will get executed before the
    * applet gets reloaded, for example to save intermediate user input (e.g. commit
    * the most recent changes of a document to the source chain).
@@ -515,6 +522,9 @@ export class WeaveClient implements WeaveServices {
 
   onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onPeerStatusUpdate(callback);
+
+  onNetworkStatsUpdate = (callback: (payload: TransportStats) => any): UnsubscribeFunction =>
+        window.__WEAVE_API__.onNetworkStatsUpdate(callback);
 
   onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onBeforeUnload(callback);

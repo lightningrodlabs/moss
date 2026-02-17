@@ -711,13 +711,27 @@ export class DebuggingPanel extends LitElement {
   }
 
   async pollNetworkStats() {
-    if (this._appsToPollNetworkStats.length > 0) {
-      // Fetch admin stats (includes blocked message counts)
-      try {
-        this._adminNetworkStats = await this._mossStore.adminWebsocket.dumpNetworkStats();
-      } catch (e) {
-        console.error('Failed to fetch admin network stats:', e);
+    // Fetch admin stats (includes blocked message counts)
+    try {
+      this._adminNetworkStats = await this._mossStore.adminWebsocket.dumpNetworkStats();
+      // Send network stats to applets
+      if (this._adminNetworkStats) {
+          //console.debug('Fetched admin network stats:', this._adminNetworkStats);
+          const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
+          await Promise.all(
+              groupDnaHashes.map(async (groupDnaHash) => {
+                  const groupStore = await this._mossStore.groupStore(groupDnaHash);
+                  if (!groupStore) return;
+                  //console.debug('Emitting network stats update for group:', groupDnaHash);
+                  await groupStore.emitToGroupApplets({
+                      type: 'network-stats-update',
+                      payload: this._adminNetworkStats!.transport_stats,
+                  });
+              })
+          );
       }
+    } catch (e) {
+      console.error('Failed to fetch admin network stats:', e);
     }
     await Promise.all(
       this._appsToPollNetworkStats.map(async (appId) => {

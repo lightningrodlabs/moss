@@ -715,6 +715,11 @@ export class MainDashboard extends LitElement {
 
     // Load all notifications for the last week
     // await this._mossStore.loadNotificationFeed(7);
+
+    // Load Debug Panel for network stats polling
+    // TODO: Have Network stats polling done somewhere else than debug-panel
+    this.openZomeCallPanel();
+    this._mossStore.setAssetViewerState({ position: 'side', visible: false });
   }
 
   openClipboard() {
