@@ -52,6 +52,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
+
 const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
   if (!metrics) {
     return {};
@@ -1135,7 +1136,7 @@ export class DebuggingPanel extends LitElement {
               ${showDebug
               ? html`
                     <div class="column">
-                      <app-debugging-details .appId=${groupAppId}></app-debugging-details>
+                      <app-debugging-details .appId=${groupAppId} .networkMetrics=${this._networkStats[groupAppId]?.[1] ?? null}></app-debugging-details>
                       <sl-button
                         @click=${() => {
                   if (this._appsToPollNetworkStats.includes(groupAppId)) {
@@ -1252,7 +1253,7 @@ export class DebuggingPanel extends LitElement {
               ${showDebug
               ? html`
                     <div class="column">
-                      <app-debugging-details .appId=${appId}></app-debugging-details>
+                      <app-debugging-details .appId=${appId} .networkMetrics=${this._networkStats[appId]?.[1] ?? null}></app-debugging-details>
                       <sl-button
                         @click=${() => {
                   if (this._appsToPollNetworkStats.includes(appId)) {
@@ -1329,6 +1330,20 @@ export class DebuggingPanel extends LitElement {
           window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
         }
         window.location.reload();
+      }}
+            ></sl-switch>
+          </div>
+          <div class="row items-center" style="margin-top: 8px;">
+            <div>Online status debug logging</div>
+            <sl-switch
+              style="margin-bottom: 5px; margin-left: 12px;"
+              .checked=${!!window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')}
+              @sl-change=${() => {
+        if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
+          window.sessionStorage.removeItem('__ONLINE_DEBUG_LOGGING__');
+        } else {
+          window.sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true');
+        }
       }}
             ></sl-switch>
           </div>

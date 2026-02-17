@@ -1348,3 +1348,14 @@ export function safeSetInterval(options: SafeIntervalOptions): SafeIntervalHandl
     },
   };
 }
+
+/**
+ * Log a message only when online-debug logging is enabled via sessionStorage.
+ * Toggle from the debugging panel or manually:
+ *   sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true')
+ */
+export function onlineDebugLog(...args: unknown[]): void {
+  if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
+    console.log(...args);
+  }
+}

@@ -76,6 +76,7 @@ import {
   sortVersionsDescending,
   storeAppletNotifications,
   validateWal,
+  onlineDebugLog,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import {
@@ -1190,9 +1191,14 @@ export class MossStore {
   groupStores = manualReloadStore(async () => {
     // Clean up old GroupStore instances (intervals + signal handlers) before creating new ones
     if (this._previousGroupStores) {
-      for (const [, store] of this._previousGroupStores.entries()) {
+      const oldCount = Array.from(this._previousGroupStores.entries()).length;
+      console.log(`[OnlineDebug] groupStores.reload(): cleaning up ${oldCount} old GroupStore instances`);
+      for (const [hash, store] of this._previousGroupStores.entries()) {
+        console.log(`[OnlineDebug]   - cleanup group ${encodeHashToBase64(hash).slice(0, 8)} (instance=${store._instanceId})`);
         store.cleanup();
       }
+    } else {
+      onlineDebugLog('[OnlineDebug] groupStores.reload(): initial load (no previous stores)');
     }
 
     const groupStores = new DnaHashMap<GroupStore>();
@@ -1212,6 +1218,7 @@ export class MossStore {
         );
       }),
     );
+    console.log(`[OnlineDebug] groupStores.reload(): created ${Array.from(groupStores.entries()).length} new GroupStore instances`);
     this._previousGroupStores = groupStores;
     return groupStores;
   });
@@ -1855,6 +1862,7 @@ export class MossStore {
    */
 
   async reloadManualStores() {
+    onlineDebugLog('[OnlineDebug] reloadManualStores() called', new Error().stack?.split('\n').slice(1, 4).join(' <- '));
     await this.disabledGroups.reload();
     await this.groupStores.reload();
     // const groupStores = await toPromise(this.groupStores);

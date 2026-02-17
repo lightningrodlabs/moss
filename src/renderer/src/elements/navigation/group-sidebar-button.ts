@@ -2,6 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
+import { encodeHashToBase64 } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../../groups/context.js';
@@ -11,6 +12,7 @@ import { mossStoreContext } from '../../context.js';
 import './sidebar-button.js';
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
+import { onlineDebugLog } from '../../utils.js';
 
 @customElement('group-sidebar-button')
 export class GroupSidebarButton extends LitElement {
@@ -54,16 +56,41 @@ export class GroupSidebarButton extends LitElement {
 
   _unsubscribe: Unsubscriber | undefined;
 
+  // Track which GroupStore the manual subscription was created for
+  private _manualSubGroupStoreId: string | undefined;
+  private _manualSubStoreRef: unknown | undefined;
+
   disconnectedCallback(): void {
     if (this._unsubscribe) this._unsubscribe();
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+    onlineDebugLog(`[OnlineDebug][${groupId}] group-sidebar-button disconnected`);
   }
 
-  firstUpdated() {
+  private _setupManualSubscription() {
+    if (this._unsubscribe) this._unsubscribe();
+
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+    this._manualSubGroupStoreId = groupId;
+    this._manualSubStoreRef = this._onlinePeersCount.store;
+
+    onlineDebugLog(`[OnlineDebug][${groupId}] Setting up manual subscription, store ref exists: ${!!this._onlinePeersCount.store}`);
+
+    if (!this._onlinePeersCount.store) return;
+
     this._unsubscribe = this._onlinePeersCount.store.subscribe((count) => {
+      const currentGroupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+      const storeRefMatch = this._onlinePeersCount.store === this._manualSubStoreRef;
+
       const numOnlineAgents = count ?? 0;
       if (numOnlineAgents > 0) {
         if (this._previousOnlineAgents === 0) {
-          console.log('NEW AGENTS ONLINE.');
+          onlineDebugLog(
+            `[OnlineDebug][${currentGroupId}] NEW AGENTS ONLINE. ` +
+            `manualSub count=${numOnlineAgents}, ` +
+            `subscriberValue=${this._onlinePeersCount.value}, ` +
+            `manualSubCreatedFor=${this._manualSubGroupStoreId}, ` +
+            `storeRefStillMatches=${storeRefMatch}`
+          );
           this.dispatchEvent(
             new CustomEvent('agents-online', {
               detail: this._groupStore.groupDnaHash,
@@ -75,6 +102,10 @@ export class GroupSidebarButton extends LitElement {
       }
       this._previousOnlineAgents = numOnlineAgents;
     });
+  }
+
+  firstUpdated() {
+    this._setupManualSubscription();
   }
 
   @property()
@@ -107,6 +138,16 @@ export class GroupSidebarButton extends LitElement {
   renderOnlineCount() {
     const totalPeers = this.totalMembers() - 1;
     const onlineAgentCount = this._onlinePeersCount.value;
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+
+    // Log when count is 0 but we previously had agents (potential bug indicator)
+    if (onlineAgentCount === 0 && this._previousOnlineAgents > 0) {
+      onlineDebugLog(
+        `[OnlineDebug][${groupId}] Rendering count=0 but _previousOnlineAgents=${this._previousOnlineAgents}, ` +
+        `storeSubscriber has active sub: ${!!this._onlinePeersCount['_unsubscribe']}, ` +
+        `manualSubCreatedFor=${this._manualSubGroupStoreId}`
+      );
+    }
 
     return html`
       <div

@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { CellId, encodeHashToBase64, FullStateDump, InstalledAppId } from '@holochain/client';
+import { CellId, FullStateDump, InstalledAppId } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
@@ -113,10 +113,6 @@ export class CellDetails extends LitElement {
     return html`
       <div class="debug-data">
         <div style="padding: 5px;">
-          <div class="column" style="margin-bottom: 10px;">
-            <div><b>Dna Hash:</b> ${encodeHashToBase64(this.cellId[0])}</div>
-            <div><b>Public key:</b> ${encodeHashToBase64(this.cellId[1])}</div>
-          </div>
           <div class="column">
             <div style="display: flex; align-items: center; flex: 1;">
               <span class="debug-title">State Dump</span>

@@ -59,6 +59,7 @@ import {
   reloadableLazyLoadAndPollUntil,
   safeSetInterval,
   SafeIntervalHandle,
+  onlineDebugLog,
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
@@ -159,6 +160,9 @@ export class GroupStore {
 
   private constructed: boolean;
 
+  _groupIdShort: string = '';
+  _instanceId: string = '';
+
   _myPubkeySum: number;
 
   _assetStores: Record<
@@ -207,11 +211,28 @@ export class GroupStore {
 
     this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
+    const groupIdShort = encodeHashToBase64(this.groupDnaHash).slice(0, 8);
+    this._groupIdShort = groupIdShort;
+    this._instanceId = Math.random().toString(36).slice(2, 6);
+
+    onlineDebugLog(`[OnlineDebug][${groupIdShort}] GroupStore created (instance=${this._instanceId})`);
+
+    // Track per-agent previous status to only log transitions
+    const _prevAgentStatus: Record<string, string> = {};
+
     this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Pong') {
+        const agentB64 = encodeHashToBase64(signal.from_agent);
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
+        _prevAgentStatus[agentB64] = signal.status;
         this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
       }
       if (signal.type == 'Ping') {
+        const agentB64 = encodeHashToBase64(signal.from_agent);
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
+        _prevAgentStatus[agentB64] = signal.status;
         const now = Date.now();
         const status =
           now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
@@ -225,16 +246,30 @@ export class GroupStore {
     });
 
     // Centralized reactive store for online peer count
+    let _prevOnlineCount: number | undefined = undefined;
     this.onlinePeersCount = derived(this._peerStatuses, (peerStatuses) => {
       if (!peerStatuses) return undefined;
 
       const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
 
       // Count agents with status 'online' or 'inactive', excluding self
-      return Object.entries(peerStatuses).filter(
+      const count = Object.entries(peerStatuses).filter(
         ([pubkeyB64, status]) =>
           pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
       ).length;
+
+      // Only log when the count actually changes
+      if (count !== _prevOnlineCount) {
+        const totalEntries = Object.keys(peerStatuses).length;
+        const statuses = Object.entries(peerStatuses)
+          .filter(([k]) => k !== myPubKeyB64)
+          .map(([k, v]) => `${k.slice(0, 8)}:${v.status}`)
+          .join(', ');
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] onlinePeersCount: ${_prevOnlineCount} -> ${count}, totalEntries=${totalEntries}, statuses=[${statuses}] (instance=${this._instanceId})`);
+        _prevOnlineCount = count;
+      }
+
+      return count;
     });
 
     this._ignoredApplets.set(
@@ -305,6 +340,7 @@ export class GroupStore {
    * Should be called when the GroupStore is no longer needed.
    */
   cleanup(): void {
+    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] GroupStore cleanup called (instance=${this._instanceId})`);
     if (this._pingIntervalHandle) {
       this._pingIntervalHandle.cancel();
       this._pingIntervalHandle = undefined;
@@ -1054,9 +1090,12 @@ export class GroupStore {
         }
       }
 
+      const prevSize = get(this._knownAgents).size;
       this._knownAgents.set(knownAgents);
+      const currentOnlineCount = get(this.onlinePeersCount);
+      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pollAgentInfo: knownAgents ${prevSize} -> ${knownAgents.size}, onlineCount=${currentOnlineCount} (instance=${this._instanceId})`);
     } catch (error) {
-      console.warn('[AgentInfo] Failed to poll agent info:', error);
+      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] Failed to poll agent info (instance=${this._instanceId}):`, error);
       // Don't throw - if agentInfo fails, signaling will likely fail too
       // Just keep using the last known agent list
     }
@@ -1116,6 +1155,7 @@ export class GroupStore {
 
   async pingAgentsAndCleanPeerStatuses() {
     const now = Date.now();
+    let markedOfflineCount = 0;
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
       // Create a new object to ensure derived stores detect the change
@@ -1123,6 +1163,9 @@ export class GroupStore {
 
       Object.keys(newStatuses).forEach((agent) => {
         if (now - newStatuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+          if (newStatuses[agent].status !== 'offline') {
+            markedOfflineCount++;
+          }
           newStatuses[agent] = {
             lastSeen: newStatuses[agent].lastSeen,
             status: 'offline',
@@ -1132,6 +1175,8 @@ export class GroupStore {
       // Don't add self to peer statuses - peer statuses should only track other agents
       return newStatuses;
     });
+    const knownAgentsCount = get(this._knownAgents).size;
+    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pingClean: markedOffline=${markedOfflineCount}, pinging ${knownAgentsCount} known agents (instance=${this._instanceId})`);
     await this.pingAgents();
   }
 
