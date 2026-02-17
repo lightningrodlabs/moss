@@ -1951,6 +1951,22 @@ inizia ora</target>
   <source>experimental</source>
   <target>sperimentale</target>
 </trans-unit>
+<trans-unit id="s8df459c51892e843">
+  <source>That tool has already been added to the group.</source>
+  <target>Questo strumento è già stato aggiunto al gruppo.</target>
+</trans-unit>
+<trans-unit id="s740294f161364e7c">
+  <source>Are you sure you want to create another instance of that tool?</source>
+  <target>Sei sicuro di voler creare un'altra istanza di questo strumento?</target>
+</trans-unit>
+<trans-unit id="s48b4b2ca38970735">
+  <source>Activate Existing</source>
+  <target>Attiva esistente</target>
+</trans-unit>
+<trans-unit id="saf5fa57a62fc35ed">
+  <source>Tool already exists</source>
+  <target>Lo strumento esiste già</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -1951,6 +1951,22 @@ begint nu</target>
   <source>experimental</source>
   <target>experimenteel</target>
 </trans-unit>
+<trans-unit id="s8df459c51892e843">
+  <source>That tool has already been added to the group.</source>
+  <target>Dit hulpmiddel is al aan de groep toegevoegd.</target>
+</trans-unit>
+<trans-unit id="s740294f161364e7c">
+  <source>Are you sure you want to create another instance of that tool?</source>
+  <target>Weet je zeker dat je een nieuw exemplaar van dit hulpmiddel wilt aanmaken?</target>
+</trans-unit>
+<trans-unit id="s48b4b2ca38970735">
+  <source>Activate Existing</source>
+  <target>Bestaande activeren</target>
+</trans-unit>
+<trans-unit id="saf5fa57a62fc35ed">
+  <source>Tool already exists</source>
+  <target>Hulpmiddel bestaat al</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
