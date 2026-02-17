@@ -334,9 +334,10 @@ export class GroupHome extends LitElement {
     if (this._settingsDialogOpen && this.groupSettingsDialog) {
       this.groupSettingsDialog.show();
 
-      // Restore tab state if we were showing inactive tools
+      // Restore tab state if we were showing inactive tools (only once)
       if (this._showingInactiveTools && this.groupSettings) {
         this.groupSettings.showInactiveTools();
+        this._showingInactiveTools = false;
       }
     }
   }
