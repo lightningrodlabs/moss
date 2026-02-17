@@ -746,31 +746,30 @@ export class MainDashboard extends LitElement {
   }
 
   resizeMouseDownHandler(e: MouseEvent) {
+    e.preventDefault();
     document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     this._drawerResizing = true;
     this._resizeDrawerX = e.clientX;
-    this.addEventListener('mousemove', this.resizeMouseMoveHandler);
-    this.addEventListener('mouseup', this.resizeMouseUpHandler);
-    // console.log('this._resizeDrawerX: ', this._resizeDrawerX);
+    document.addEventListener('mousemove', this.resizeMouseMoveHandler);
+    document.addEventListener('mouseup', this.resizeMouseUpHandler);
   }
 
-  resizeMouseMoveHandler(e: MouseEvent) {
-    // console.log('mousemove event: ', e);
-    // console.log('@mousemove: this._drawerWidth: ', this._drawerWidth);
+  resizeMouseMoveHandler = (e: MouseEvent) => {
     if (this._resizeDrawerX) {
       const deltaX = this._resizeDrawerX - e.clientX;
       this._drawerWidth = this._drawerWidth + deltaX;
-      // console.log('New drawer width: ', this._drawerWidth);
     }
     this._resizeDrawerX = e.clientX;
-  }
+  };
 
-  resizeMouseUpHandler(_e: MouseEvent) {
+  resizeMouseUpHandler = (_e: MouseEvent) => {
     document.body.style.removeProperty('cursor');
-    this.removeEventListener('mousemove', this.resizeMouseMoveHandler);
-    this.removeEventListener('mouseup', this.resizeMouseUpHandler);
+    document.body.style.removeProperty('user-select');
+    document.removeEventListener('mousemove', this.resizeMouseMoveHandler);
+    document.removeEventListener('mouseup', this.resizeMouseUpHandler);
     this._drawerResizing = false;
-  }
+  };
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
