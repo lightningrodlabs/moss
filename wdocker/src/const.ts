@@ -44,6 +44,10 @@ export const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString
 
 export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
 
+const holochainChecksumsPath = path.join(__dirname, 'holochain-checksums.json');
+const holochainChecksumsJSON = fs.readFileSync(holochainChecksumsPath, 'utf-8');
+export const HOLOCHAIN_CHECKSUMS: any = JSON.parse(holochainChecksumsJSON);
+
 export const GROUP_HAPP_URL = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${MOSS_CONFIG.groupHapp.version}/group.happ`;
 // export const TOOLS_LIBRARY_URL = `https://github.com/lightningrodlabs/tools-library/releases/download/v${MOSS_CONFIG.toolsLibrary.version}/tools-library.happ`;
 export const TOOLS_LIBRARY_URL = 'NOT_IN_USE';

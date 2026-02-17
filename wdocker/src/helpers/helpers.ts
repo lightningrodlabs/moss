@@ -1,6 +1,5 @@
 import fs from 'fs';
 import crypto from 'crypto';
-//import path from 'path';
 import rustUtils from '@lightningrodlabs/we-rust-utils';
 import Table from 'cli-table';
 
