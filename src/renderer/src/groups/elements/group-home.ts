@@ -283,6 +283,8 @@ export class GroupHome extends LitElement {
 
   private _startFoyerResize(e: MouseEvent) {
     e.preventDefault();
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     this._isResizingFoyer = true;
     document.addEventListener('mousemove', this._boundHandleMouseMove);
     document.addEventListener('mouseup', this._boundHandleMouseUp);
@@ -305,6 +307,8 @@ export class GroupHome extends LitElement {
   private _stopFoyerResize() {
     if (!this._isResizingFoyer) return;
 
+    document.body.style.removeProperty('cursor');
+    document.body.style.removeProperty('user-select');
     this._isResizingFoyer = false;
     document.removeEventListener('mousemove', this._boundHandleMouseMove);
     document.removeEventListener('mouseup', this._boundHandleMouseUp);
