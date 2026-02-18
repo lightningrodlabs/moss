@@ -51,7 +51,7 @@ export class InactiveToolsDialog extends LitElement {
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           Array.from(appletsAndKeys.entries()).map(
-            async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
+            async ([appletHash, [agentKey, timestamp]]) => {
               let appletEntry: Applet | undefined;
               try {
                 appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
@@ -71,6 +71,12 @@ export class InactiveToolsDialog extends LitElement {
                     distributionInfo.info.versionBranch,
                   );
                 }
+              }
+              let joinedMembers: AppletAgent[] = [];
+              try {
+                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+              } catch (e) {
+                console.warn('@inactive-tools-dialog: Failed to get joined members: ', e);
               }
               return [
                 appletHash,

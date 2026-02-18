@@ -38,16 +38,10 @@ export abstract class BaseAppletSettingsCard extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   groupStore!: GroupStore;
 
-  // Store subscribers - identical in both components
   _joinedMembers = new StoreSubscriber(
     this,
-    () =>
-      lazyLoadAndPoll(
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
-        20000,
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
-      ),
-    () => [this.groupStore],
+    () => this.groupStore.joinedAppletAgents.get(this.appletHash)!,
+    () => [this.groupStore, this.appletHash],
   );
 
   _abandonedMembers = new StoreSubscriber(

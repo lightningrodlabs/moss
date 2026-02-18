@@ -68,12 +68,12 @@ export class InactiveTools extends LitElement {
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           Array.from(appletsAndKeys.entries()).map(
-            async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
+            async ([appletHash, [agentKey, timestamp]]) => {
               let appletEntry: Applet | undefined;
               try {
                 appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
               } catch (e) {
-                console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
+                console.warn('@inactive-tools @unjoined-applets: Failed to get appletEntry: ', e);
               }
               let toolInfoAndVersions: ToolInfoAndVersions | undefined;
               if (appletEntry) {
@@ -88,6 +88,12 @@ export class InactiveTools extends LitElement {
                     distributionInfo.info.versionBranch,
                   );
                 }
+              }
+              let joinedMembers: AppletAgent[] = [];
+              try {
+                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+              } catch (e) {
+                console.warn('@inactive-tools: Failed to get joined members: ', e);
               }
               return [
                 appletHash,

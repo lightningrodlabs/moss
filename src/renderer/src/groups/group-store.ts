@@ -1402,6 +1402,17 @@ export class GroupStore {
     lazyLoad(async () => this.groupClient.getApplet(appletHash)),
   );
 
+  // Shared polling store for joined applet agents, keyed by applet hash.
+  // All UI components subscribe to this instead of creating their own polls.
+  joinedAppletAgents: LazyHoloHashMap<AppletHash, AsyncReadable<AppletAgent[]>> =
+    new LazyHoloHashMap((appletHash: EntryHash) =>
+      lazyLoadAndPoll(
+        () => this.groupClient.getJoinedAppletAgents(appletHash),
+        20000,
+        () => this.groupClient.getJoinedAppletAgents(appletHash, true),
+      ),
+    );
+
   // need to change this. allApplets needs to come from the conductor
   // Currently unused
   // allGroupApplets = lazyLoadAndPoll(async () => this.groupClient.getGroupApplets(), APPLETS_POLLING_FREQUENCY);
@@ -1491,26 +1502,11 @@ export class GroupStore {
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
     const unjoinedApplets = await this.groupClient.getUnjoinedApplets(true);
-    const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AppletAgent[]]> =
-      new EntryHashMap();
-    try {
-      await Promise.all(
-        unjoinedApplets.map(async ([appletHash, addingAgent, timestamp]) => {
-          const joinedMembers = await this.groupClient.getJoinedAppletAgents(appletHash);
-          unjoinedAppletsWithGroupMembers.set(appletHash, [addingAgent, timestamp, joinedMembers]);
-        }),
-      );
-    } catch (e) {
-      console.warn('Failed to get members for unactivated applets: ', e);
-      const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
-        [AgentPubKey, number, AppletAgent[]]
-      > = new EntryHashMap();
-      unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
-        unjoinedAppletsWithGroupMembersFallback.set(appletHash, [addingAgent, timestamp, []]);
-      });
-      return unjoinedAppletsWithGroupMembersFallback;
-    }
-    return unjoinedAppletsWithGroupMembers;
+    const result: EntryHashMap<[AgentPubKey, number]> = new EntryHashMap();
+    unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
+      result.set(appletHash, [addingAgent, timestamp]);
+    });
+    return result;
   }, NEW_APPLETS_POLLING_FREQUENCY);
 
   // Currently unused

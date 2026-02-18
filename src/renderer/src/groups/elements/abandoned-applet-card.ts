@@ -32,13 +32,8 @@ export class AbandonedAppletCard extends LitElement {
 
   _joinedMembers = new StoreSubscriber(
     this,
-    () =>
-      lazyLoadAndPoll(
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
-        20000,
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
-      ),
-    () => [this.groupStore],
+    () => this.groupStore.joinedAppletAgents.get(this.appletHash)!,
+    () => [this.groupStore, this.appletHash],
   );
 
   _abandonedMembers = new StoreSubscriber(

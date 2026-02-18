@@ -178,7 +178,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       );
       const targetCompatibilityId = this._tool.toolCompatibilityId;
 
-      for (const [appletHash, [agentKey, timestamp, joinedMembers]] of unjoinedApplets.entries()) {
+      for (const [appletHash, [agentKey, timestamp]] of unjoinedApplets.entries()) {
         const hashB64 = encodeHashToBase64(appletHash);
         if (ignoredApplets && ignoredApplets.includes(hashB64)) continue;
 
@@ -203,6 +203,12 @@ export class InstallToolDialogWeb2 extends LitElement {
               }
             } catch (e) {
               console.warn('Failed to fetch tool info for inactive tool:', e);
+            }
+            let joinedMembers: AppletAgent[] = [];
+            try {
+              joinedMembers = await toPromise(this.groupStore.joinedAppletAgents.get(appletHash)!);
+            } catch (e) {
+              console.warn('Failed to get joined members for inactive tool:', e);
             }
             return {
               toolHash: appletHash,
