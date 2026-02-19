@@ -157,6 +157,10 @@ export class MossFileSystem {
     return path.join(this.appMetaDataDir(installedAppId), 'info.json.previous');
   }
 
+  appOriginalAssetInfoPath(installedAppId: InstalledAppId): string {
+    return path.join(this.appMetaDataDir(installedAppId), 'info.json.original');
+  }
+
   /**
    * Stores information about happ and (optionally) UI of an installed app
    *
@@ -209,6 +213,52 @@ export class MossFileSystem {
       fs.copyFileSync(fileToBackup, backupPath);
     } catch (e) {
       throw new Error(`Failed to backup app assets info for app Id '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * Backs up the current info.json to info.json.original, but only if
+   * info.json.original doesn't already exist (preserves the true production original).
+   */
+  backupOriginalAppAssetsInfo(installedAppId: InstalledAppId) {
+    const originalPath = this.appOriginalAssetInfoPath(installedAppId);
+    if (fs.existsSync(originalPath)) return; // Already have the original backed up
+    const currentPath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.copyFileSync(currentPath, originalPath);
+    } catch (e) {
+      throw new Error(`Failed to backup original app assets info for app Id '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * Restores info.json.original back to info.json, removing the original backup.
+   */
+  restoreOriginalAppAssetsInfo(installedAppId: InstalledAppId) {
+    const originalPath = this.appOriginalAssetInfoPath(installedAppId);
+    const currentPath = this.appAssetInfoPath(installedAppId);
+    try {
+      fs.copyFileSync(originalPath, currentPath);
+      fs.rmSync(originalPath);
+    } catch (e) {
+      throw new Error(`Failed to restore original app assets info for app Id '${installedAppId}': ${e}`);
+    }
+  }
+
+  /**
+   * Checks whether the given app has a dev UI override active,
+   * indicated by the UI location sha256 ending with '-dev'.
+   */
+  hasDevUiOverride(installedAppId: InstalledAppId): boolean {
+    try {
+      const info = this.readAppAssetsInfo(installedAppId);
+      return (
+        info.type === 'webhapp' &&
+        info.ui.location.type === 'filesystem' &&
+        info.ui.location.sha256.endsWith('-dev')
+      );
+    } catch {
+      return false;
     }
   }
 

@@ -194,6 +194,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchAndValidateHappOrWebhapp: (url: string) =>
     ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
+  // Dev UI Override
+  selectDevUiWebhapp: () => ipcRenderer.invoke('select-dev-ui-webhapp'),
+  setDevUiOverride: (appId: string, webhappPath: string) =>
+    ipcRenderer.invoke('set-dev-ui-override', appId, webhappPath),
+  clearDevUiOverride: (appId: string) => ipcRenderer.invoke('clear-dev-ui-override', appId),
+  getDevUiOverride: (appId: string) => ipcRenderer.invoke('get-dev-ui-override', appId),
 });
 
 declare global {
