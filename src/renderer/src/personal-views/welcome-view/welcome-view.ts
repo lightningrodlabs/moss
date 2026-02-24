@@ -1451,6 +1451,20 @@ Changes:
                 </div>
               ` : html``}
             </div>
+            ${(this._notificationFeed.value?.length ?? 0) > 0 ? html`
+              <div
+                class="all-streams-button fixed ${this.notificationSection !== null ? 'left' : ''}"
+                @click=${() => {
+                  this.dispatchEvent(new CustomEvent('personal-view-selected', {
+                    detail: { type: 'moss', name: 'activity-view' },
+                    bubbles: true,
+                    composed: true,
+                  }));
+                }}
+              >
+                ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
+              </div>
+            ` : ''}
             <div class="flex-scrollable-container">
               <div class="fixed-section">
                 <div class="column" style="align-items: center;">
@@ -1529,20 +1543,6 @@ Changes:
               </div>
             </div>
           </div>
-          ${(this._notificationFeed.value?.length ?? 0) > 0 ? html`
-          <div
-            class="all-streams-button fixed ${this.notificationSection !== null ? 'left' : ''}"
-            @click=${() => {
-              this.dispatchEvent(new CustomEvent('personal-view-selected', {
-                detail: { type: 'moss', name: 'activity-view' },
-                bubbles: true,
-                composed: true,
-              }));
-            }}
-          >
-            ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
-          </div>
-          ` : ''}
           ${this.renderExperimentalButton()}
           ${!this._designFeedbackMode ? html`
             <button
@@ -1637,7 +1637,7 @@ Changes:
         background: rgba(255, 255, 255, 0.50);
         cursor: pointer;
         transition: background 0.2s ease;
-        width: 540px;
+        width: 510px;
         margin: 4px 0;
         z-index: 2;
         position: relative;
@@ -1773,6 +1773,7 @@ Changes:
         /* height: 100vh; */
         scrollbar-width: none; /* Firefox */
         -ms-overflow-style: none; /* IE/Edge */
+        z-index: 1;
       }
 
       .flex-scrollable-container::-webkit-scrollbar {

@@ -110,8 +110,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
     ipcRenderer.invoke('join-group', networkSeed, progenitor),
-  installGroupHapp: (useProgenitor: boolean) =>
-    ipcRenderer.invoke('install-group-happ', useProgenitor),
+  installGroupHapp: (useProgenitor: boolean, customGroupSeed: string | undefined = undefined) =>
+    ipcRenderer.invoke('install-group-happ', useProgenitor, customGroupSeed),
+  exportGroupsData: () => ipcRenderer.invoke('export-groups-data'),
+  importGroupsData: () => ipcRenderer.invoke('import-groups-data'),
+  onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: unknown) => void) =>
+    ipcRenderer.on('import-groups-progress', callback),
   notification: (
     notification: FrameNotification,
     showInSystray: boolean,

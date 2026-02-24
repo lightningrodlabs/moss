@@ -132,6 +132,9 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
       installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
+      exportGroupsData: () => Promise<void>;
+      importGroupsData: () => Promise<GroupImportResult>;
+      onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void) => void;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
@@ -239,6 +242,33 @@ export async function joinGroup(
 
 export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo> {
   return window.electronAPI.installGroupHapp(useProgenitor);
+}
+
+export async function exportGroupsData(): Promise<void> {
+  return window.electronAPI.exportGroupsData();
+}
+
+export type ImportGroupsProgress = {
+  current: number;
+  total: number;
+  groupName: string | undefined;
+  step: 'installing' | 'waiting-for-sync' | 'setting-profile' | 'installing-tool' | 'done';
+  secondsLeft?: number;
+  status?: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+  toolName?: string;
+  toolIndex?: number;
+  toolTotal?: number;
+};
+
+export type GroupImportResult = Array<{
+  groupName: string | undefined;
+  status: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+}>;
+
+export async function importGroupsData(): Promise<GroupImportResult> {
+  return window.electronAPI.importGroupsData();
 }
 
 export async function dialogMessagebox(
