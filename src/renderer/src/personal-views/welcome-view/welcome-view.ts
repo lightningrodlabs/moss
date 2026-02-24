@@ -3,7 +3,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../shared-styles.js';
-import { createMockToolUpdates, createMockAppletsData, createMockGroupsData } from './mock-data.js';
+import { createMockToolUpdates, createMockAppletsData, WELCOME_DEV_MODE } from './mock-data.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
@@ -36,6 +36,7 @@ import '../../applets/elements/applet-logo-raw.js';
 import '../../applets/elements/applet-title.js';
 import '../../elements/dialogs/loading-dialog.js';
 import './elements/notification-card.js'
+import '../../elements/reusable/groups-for-tool.js';
 
 
 type UpdateFeedMessageGeneric =
@@ -218,11 +219,7 @@ export class WelcomeView extends LitElement {
   // Mock applets data for development
   _mockAppletsData: Record<string, Map<any, any>> = {};
 
-  // Mock groups data for development
-  _mockGroupsData: Record<string, Map<any, any>> = {};
 
-  // DEV MODE: Enable mock tool updates
-  _DEV_MODE = false; // Set to true to test UI with mock data
 
   // Memoization cache for notificationTypes
   private _lastNotifications: Array<any> | null = null;
@@ -263,10 +260,9 @@ export class WelcomeView extends LitElement {
     this.currentQuoteIndex = daysSinceEpoch % this.quotesOfTheDay.length;
     console.log('Successfully loaded quotes:', this.quotesOfTheDay.length);
 
-    if (this._DEV_MODE) {
+    if (WELCOME_DEV_MODE) {
       this._mockToolUpdates = createMockToolUpdates();
       this._mockAppletsData = createMockAppletsData();
-      this._mockGroupsData = createMockGroupsData();
       // Mock Moss update for UI testing
       this.availableMossUpdate = {
         version: '0.15.5',
@@ -603,9 +599,9 @@ Changes:
         <button
           class="mark-unread-button"
           @click=${(e: Event) => {
-            e.stopPropagation();
-            this.markSectionAsUnread(section);
-          }}
+        e.stopPropagation();
+        this.markSectionAsUnread(section);
+      }}
         >
           ${msg('Mark as unread')}
         </button>
@@ -624,9 +620,9 @@ Changes:
           <button
             class="mark-read-button"
             @click=${(e: Event) => {
-              e.stopPropagation();
-              this.markSectionAsRead(section);
-            }}
+        e.stopPropagation();
+        this.markSectionAsRead(section);
+      }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM11.7071 6.70711L7.70711 10.7071C7.31658 11.0976 6.68342 11.0976 6.29289 10.7071L4.29289 8.70711C3.90237 8.31658 3.90237 7.68342 4.29289 7.29289C4.68342 6.90237 5.31658 6.90237 5.70711 7.29289L7 8.58579L10.2929 5.29289C10.6834 4.90237 11.3166 4.90237 11.7071 5.29289C12.0976 5.68342 12.0976 6.31658 11.7071 6.70711Z" fill="currentColor"/>
@@ -850,17 +846,17 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({
-              type: 'tool',
-              toolCompatibilityId,
-            });
-          }}
+          this._selectExperimentalView({
+            type: 'tool',
+            toolCompatibilityId,
+          });
+        }}
         >
           <applet-logo-raw
             .toolIdentifier=${{
-              type: 'class' as const,
-              toolCompatibilityId,
-            }}
+          type: 'class' as const,
+          toolCompatibilityId,
+        }}
             style="--size: 32px; --border-radius: 6px;"
           ></applet-logo-raw>
           <span class="exp-menu-item-label">${info.toolName} cross-group</span>
@@ -882,8 +878,8 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({ type: 'moss', name: 'activity-view' });
-          }}
+        this._selectExperimentalView({ type: 'moss', name: 'activity-view' });
+      }}
         >
           <img src="mountain_stream.svg" style="height: 32px; width: 32px;" />
           <span class="exp-menu-item-label">${msg('All streams')}</span>
@@ -892,8 +888,8 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({ type: 'moss', name: 'assets-graph' });
-          }}
+        this._selectExperimentalView({ type: 'moss', name: 'assets-graph' });
+      }}
         >
           <sl-icon
             .src=${wrapPathInSvg(mdiGraph)}
@@ -916,14 +912,14 @@ Changes:
           <button
             class="experimental-button"
             @click=${() => {
-              this._experimentalMenuOpen = !this._experimentalMenuOpen;
-            }}
+        this._experimentalMenuOpen = !this._experimentalMenuOpen;
+      }}
           >
             ${this._experimentalMenuOpen
-              ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>`
-              : html`<img src="clover.svg" style="height: 40px; width: 40px;" />`}
+        : html`<img src="clover.svg" style="height: 40px; width: 40px;" />`}
           </button>
         </sl-tooltip>
       </div>
@@ -991,66 +987,11 @@ Changes:
 
     if (!toolCompatibilityId) return html``;
 
-    // Get or create subscriber for this tool ID
-    if (!this._groupsPerToolSubscribers.has(toolCompatibilityId)) {
-      // DEV MODE: Use mock data if available
-      if (this._mockGroupsData[toolCompatibilityId]) {
-        // Create a mock subscriber with the mock data
-        const mockSubscriber: any = {
-          value: {
-            status: 'complete',
-            value: this._mockGroupsData[toolCompatibilityId],
-          },
-        };
-        this._groupsPerToolSubscribers.set(toolCompatibilityId, mockSubscriber);
-      } else {
-        // TODO: Use real store when available
-        // For now, return empty if no mock data
-        return html`<span style="color: rgba(0, 0, 0, 0.40);">N/A</span>`;
-      }
-    }
-
-    const groupsForTool = this._groupsPerToolSubscribers.get(toolCompatibilityId)!;
-
-    if (!groupsForTool.value) {
-      return html`<sl-skeleton></sl-skeleton>`;
-    }
-
-    switch (groupsForTool.value.status) {
-      case 'pending':
-        return html`<sl-skeleton></sl-skeleton>`;
-      case 'error':
-        return html`<display-error
-          .headline=${msg('Error fetching groups')}
-          .error=${groupsForTool.value.error}
-        ></display-error>`;
-      case 'complete':
-        const groups = Array.from(groupsForTool.value.value.entries()) as Array<[any, any]>;
-        if (groups.length === 0) {
-          return html`<span style="color: rgba(0, 0, 0, 0.40);">None</span>`;
-        }
-        const displayGroups = groups.slice(0, 3);
-        const remainingCount = groups.length - 3;
-        return html`
-          <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-            ${displayGroups.map(([_groupHash, groupData]) => html`
-              <sl-tooltip content="${groupData.name}" placement="top">
-                <img
-                  src="${groupData.icon}"
-                  style="width: 32px; height: 32px; border-radius: 8px;"
-                />
-              </sl-tooltip>
-            `)}
-            ${remainingCount > 0 ? html`
-              <div class="tool-update-more-groups">
-                +${remainingCount}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      default:
-        return html``;
-    }
+    return html`<groups-for-tool
+      .toolCompatibilityId=${toolCompatibilityId}
+      .size=${32}
+      .maxGroups=${3}
+    ></groups-for-tool>`;
   }
 
   renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
@@ -1112,8 +1053,8 @@ Changes:
               </div>
               <div class="update-date">
                 ${this.availableMossUpdate?.releaseDate
-                  ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
-                  : ''}
+        ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
+        : ''}
               </div>
             </div>
             <div class="moss-update-release-notes">
@@ -1121,7 +1062,7 @@ Changes:
             </div>
             <div class="moss-update-buttons">
               ${this.mossUpdatePercentage
-                ? html`
+        ? html`
                     <div class="column" style="align-items: center;">
                       <div>${msg('Installing...')}</div>
                       <sl-progress-bar
@@ -1129,7 +1070,7 @@ Changes:
                         style="width: 200px; --height: 15px;"
                       ></sl-progress-bar>
                     </div>`
-                : html`
+        : html`
                     <div
                       class="install-moss-update-button"
                       @click=${() => this.installMossUpdate()}
@@ -1410,7 +1351,7 @@ Changes:
           <div class="row" style="flex: 1; height: 100%;">
             <div class="update-nav-list">
               ${(Object.keys(this.getToolUpdatesSource()).length > 0 || this.availableMossUpdate) &&
-                !this.shouldSectionBeCollapsed('software-updates') ? html`
+            !this.shouldSectionBeCollapsed('software-updates') ? html`
                 <div
                   data-section="software-updates"
                   @click=${() => { this.selectNotificationSection('software-updates'); }}
@@ -1431,7 +1372,7 @@ Changes:
                 ` : ''}
               ` : '')}
               ${this.notificationTypes['default'] &&
-                !this.shouldSectionBeCollapsed('default') ? html`
+            !this.shouldSectionBeCollapsed('default') ? html`
                 <div
                   data-section="default"
                   @click=${() => { this.selectNotificationSection('default'); }}
@@ -1441,7 +1382,7 @@ Changes:
                 </div>
               ` : html``}
               ${this.updateFeed && this.updateFeed.length > 0 &&
-                !this.shouldSectionBeCollapsed('moss-news') ? html`
+            !this.shouldSectionBeCollapsed('moss-news') ? html`
                 <div
                   data-section="moss-news"
                   @click=${() => { this.selectNotificationSection('moss-news'); }}
@@ -1464,10 +1405,10 @@ Changes:
               </div>
 
               <div class="scrollable-sections-container">
-                ${(this._DEV_MODE || this.availableMossUpdate || Object.keys(this.getToolUpdatesSource()).length > 0) ? html`
+                ${(WELCOME_DEV_MODE || this.availableMossUpdate || Object.keys(this.getToolUpdatesSource()).length > 0) ? html`
                   ${this.shouldSectionBeCollapsed('software-updates')
-                    ? this.renderCollapsedSectionHeader('software-updates', this.getSectionCount('software-updates'))
-                    : html`
+              ? this.renderCollapsedSectionHeader('software-updates', this.getSectionCount('software-updates'))
+              : html`
                       <div class="scroll-section" id="software-updates">
                         ${this.renderEllipse()}
                         ${this.renderSectionHeader('software-updates', msg('Software updates'))}
@@ -1483,8 +1424,8 @@ Changes:
 
                   ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
                     ${this.shouldSectionBeCollapsed(type)
-                      ? this.renderCollapsedSectionHeader(type, this.notificationTypes[type])
-                      : html`
+                  ? this.renderCollapsedSectionHeader(type, this.notificationTypes[type])
+                  : html`
                         <div class="scroll-section" id="${type}">
                           ${this.renderEllipse()}
                           ${this.renderSectionHeader(type, this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type]))}
@@ -1498,8 +1439,8 @@ Changes:
 
                   ${this.notificationTypes['default'] ? html`
                     ${this.shouldSectionBeCollapsed('default')
-                      ? this.renderCollapsedSectionHeader('default', this.notificationTypes['default'])
-                      : html`
+                ? this.renderCollapsedSectionHeader('default', this.notificationTypes['default'])
+                : html`
                         <div class="scroll-section" id="default">
                           ${this.renderEllipse()}
                           ${this.renderSectionHeader('default', msg('General notifications'))}
@@ -1514,8 +1455,8 @@ Changes:
 
                 ${this.updateFeed && this.updateFeed.length > 0 ? html`
                   ${this.shouldSectionBeCollapsed('moss-news')
-                    ? this.renderCollapsedSectionHeader('moss-news', this.getSectionCount('moss-news'))
-                    : html`
+              ? this.renderCollapsedSectionHeader('moss-news', this.getSectionCount('moss-news'))
+              : html`
                       <div class="scroll-section" id="moss-news">
                         ${this.renderEllipse()}
                         ${this.renderSectionHeader('moss-news', msg('Moss news'))}
@@ -1565,8 +1506,8 @@ Changes:
             </div>
             <div slot="content" class="changelog-content">
               ${this.availableMossUpdate?.releaseNotes
-                ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
-                : msg('A new release of Moss with exciting features and improvements.')}
+            ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+            : msg('A new release of Moss with exciting features and improvements.')}
             </div>
           </moss-dialog>
         `;
