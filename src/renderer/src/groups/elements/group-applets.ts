@@ -5,14 +5,15 @@ import {
   sliceAndJoin,
   StoreSubscriber,
 } from '@holochain-open-dev/stores';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { ActionHash, EntryHash } from '@holochain/client';
-import {EntryRecord, GetonlyMap} from '@holochain-open-dev/utils';
+import { ActionHash, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { EntryRecord, GetonlyMap } from '@holochain-open-dev/utils';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiToyBrickPlus } from '@mdi/js';
+import { appIdFromAppletHash } from '@theweave/utils';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -27,6 +28,7 @@ import { CustomView } from '../../custom-views/types.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { AppletStore } from '../../applets/applet-store.js';
+import { getDevUiOverride } from '../../electron-api.js';
 
 @localized()
 @customElement('group-applets')
@@ -53,10 +55,36 @@ export class GroupApplets extends LitElement {
     () => [this._groupStore],
   );
 
+  @state()
+  _devOverrides: Record<string, boolean> = {};
+
+  @state()
+  _devOverridesLoaded = false;
+
+  private async loadDevOverrides(applets: ReadonlyMap<EntryHash, AppletStore>) {
+    if (this._devOverridesLoaded) return;
+    this._devOverridesLoaded = true;
+    const overrides: Record<string, boolean> = {};
+    for (const [appletHash] of applets) {
+      const appId = appIdFromAppletHash(appletHash);
+      try {
+        const result = await getDevUiOverride(appId);
+        if (result.active) {
+          overrides[encodeHashToBase64(appletHash)] = true;
+        }
+      } catch (e) {
+        console.warn(`Failed to check dev override for ${appId}:`, e);
+      }
+    }
+    this._devOverrides = overrides;
+  }
+
   renderInstalledApplets(
     customViews: ReadonlyMap<ActionHash, EntryRecord<CustomView>>,
     applets: ReadonlyMap<EntryHash, AppletStore>,
   ) {
+    this.loadDevOverrides(applets);
+
     if (customViews.size === 0 && applets.size === 0)
       return html`
         <div class="column" style="flex: 1; align-items: center">
@@ -109,7 +137,7 @@ export class GroupApplets extends LitElement {
             ([appletHash, applet]) => html`
               <div
                 class="column"
-                style="margin-right: 25px; align-items: center; cursor: pointer"
+                style="margin-right: 25px; align-items: center; cursor: pointer; position: relative;"
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('applet-selected', {
@@ -128,6 +156,9 @@ export class GroupApplets extends LitElement {
                   class="applet-icon"
                   style="--size: 120px;"
                 ></applet-logo>
+                ${this._devOverrides[encodeHashToBase64(appletHash)]
+                  ? html`<span class="dev-badge">DEV</span>`
+                  : ''}
                 <span style="margin-top: 8px; font-size: 16px;">${applet.applet.custom_name}</span>
               </div>
             `,
@@ -176,6 +207,19 @@ export class GroupApplets extends LitElement {
       .applet-icon:hover {
         box-shadow: 0 0 10px #525252;
         border-radius: 20px;
+      }
+
+      .dev-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #e65100;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        pointer-events: none;
       }
     `,
   ];

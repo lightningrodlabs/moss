@@ -28,6 +28,12 @@ import {
 } from '../../../utils.js';
 import { chevronSingleDownIcon, chevronSingleUpIcon } from '../icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
+import {
+  selectDevUiWebhapp,
+  setDevUiOverride,
+  clearDevUiOverride,
+  getDevUiOverride,
+} from '../../../electron-api.js';
 
 @localized()
 @customElement('applet-settings-card')
@@ -41,12 +47,58 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
   @state()
   appInfo: AppInfo | undefined | null;
 
+  @state()
+  _hasDevOverride = false;
+
+  @state()
+  _devOverrideLoading = false;
 
   protected async onAfterFirstUpdated(): Promise<void> {
-    const [appletClient, _] = await this.mossStore.getAppClient(
-      appIdFromAppletHash(this.appletHash),
-    );
+    const appId = appIdFromAppletHash(this.appletHash);
+    const [appletClient, _] = await this.mossStore.getAppClient(appId);
     this.appInfo = await appletClient.appInfo();
+    try {
+      const result = await getDevUiOverride(appId);
+      this._hasDevOverride = result.active;
+    } catch (e) {
+      console.warn('Failed to check dev UI override:', e);
+    }
+  }
+
+  async applyDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const webhappPath = await selectDevUiWebhapp();
+      if (!webhappPath) {
+        this._devOverrideLoading = false;
+        return;
+      }
+      const appId = appIdFromAppletHash(this.appletHash);
+      const result = await setDevUiOverride(appId, webhappPath);
+      if (!result.happHashMatch) {
+        notify(msg('Warning: DNA hash mismatch. The UI may not work correctly with the current data.'));
+      }
+      this._hasDevOverride = true;
+      notify(msg('Dev UI override applied. Reload the tool to see the new UI.'));
+    } catch (e) {
+      notify(msg('Failed to apply dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
+  }
+
+  async removeDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const appId = appIdFromAppletHash(this.appletHash);
+      await clearDevUiOverride(appId);
+      this._hasDevOverride = false;
+      notify(msg('Dev UI override removed. Reload the tool to see the production UI.'));
+    } catch (e) {
+      notify(msg('Failed to clear dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
   }
 
   async uninstallApplet() {
@@ -166,6 +218,39 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
                   <span>${msg('Allways-online nodes should install this tool by default')}</span>
                 `}
           </div>
+
+          ${isSteward ? html`
+            <div class="row items-center" style="margin-top: 8px;">
+              <span>${msg('Dev UI Override')}</span>
+              <span style="flex: 1;"></span>
+              ${this._devOverrideLoading
+                ? html`<sl-spinner style="margin-right: 8px;"></sl-spinner>`
+                : this._hasDevOverride
+                  ? html`
+                      <span class="dev-override-badge">${msg('DEV')}</span>
+                      <sl-button
+                        variant="warning"
+                        size="small"
+                        style="margin-left: 8px;"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.applyDevUiOverride(); }}
+                      >${msg('Replace')}</sl-button>
+                      <sl-button
+                        variant="neutral"
+                        size="small"
+                        style="margin-left: 8px;"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.removeDevUiOverride(); }}
+                      >${msg('Clear Override')}</sl-button>
+                    `
+                  : html`
+                      <sl-button
+                        variant="neutral"
+                        size="small"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.applyDevUiOverride(); }}
+                      >${msg('Override from .webhapp')}</sl-button>
+                    `
+              }
+            </div>
+          ` : html``}
       </div>
     `;
   }
@@ -280,6 +365,15 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
         padding: 8px 12px;
         margin-top: 5px;
         box-shadow: 0 0 5px 0 black;
+      }
+
+      .dev-override-badge {
+        background: #e65100;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 4px;
       }
     `,
   ];

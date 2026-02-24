@@ -183,7 +183,7 @@ export class GroupHome extends LitElement {
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
           Array.from(appletsAndKeys.entries()).map(
-            async ([appletHash, [agentKey, timestamp, joinedMembers]]) => {
+            async ([appletHash, [agentKey, timestamp]]) => {
               let appletEntry: Applet | undefined;
               try {
                 appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
@@ -203,6 +203,12 @@ export class GroupHome extends LitElement {
                     distributionInfo.info.versionBranch,
                   );
                 }
+              }
+              let joinedMembers: AppletAgent[] = [];
+              try {
+                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+              } catch (e) {
+                console.warn('@group-home: Failed to get joined members: ', e);
               }
               return [
                 appletHash,
@@ -277,6 +283,8 @@ export class GroupHome extends LitElement {
 
   private _startFoyerResize(e: MouseEvent) {
     e.preventDefault();
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     this._isResizingFoyer = true;
     document.addEventListener('mousemove', this._boundHandleMouseMove);
     document.addEventListener('mouseup', this._boundHandleMouseUp);
@@ -299,6 +307,8 @@ export class GroupHome extends LitElement {
   private _stopFoyerResize() {
     if (!this._isResizingFoyer) return;
 
+    document.body.style.removeProperty('cursor');
+    document.body.style.removeProperty('user-select');
     this._isResizingFoyer = false;
     document.removeEventListener('mousemove', this._boundHandleMouseMove);
     document.removeEventListener('mouseup', this._boundHandleMouseUp);

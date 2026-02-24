@@ -208,6 +208,16 @@ declare global {
       }>;
       fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
+      // Dev UI Override
+      selectDevUiWebhapp: () => Promise<string | undefined>;
+      setDevUiOverride: (
+        appId: string,
+        webhappPath: string,
+      ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
+      clearDevUiOverride: (appId: string) => Promise<void>;
+      getDevUiOverride: (
+        appId: string,
+      ) => Promise<{ active: boolean; uiSha256?: string }>;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
@@ -358,3 +368,26 @@ export async function validateHappOrWebhapp(bytes: number[]) {
 export const signZomeCallApplet = async (request: CallZomeRequest) => {
   return window.electronAPI.signZomeCallApplet(request);
 };
+
+// Dev UI Override
+
+export async function selectDevUiWebhapp(): Promise<string | undefined> {
+  return window.electronAPI.selectDevUiWebhapp();
+}
+
+export async function setDevUiOverride(
+  appId: string,
+  webhappPath: string,
+): Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }> {
+  return window.electronAPI.setDevUiOverride(appId, webhappPath);
+}
+
+export async function clearDevUiOverride(appId: string): Promise<void> {
+  return window.electronAPI.clearDevUiOverride(appId);
+}
+
+export async function getDevUiOverride(
+  appId: string,
+): Promise<{ active: boolean; uiSha256?: string }> {
+  return window.electronAPI.getDevUiOverride(appId);
+}

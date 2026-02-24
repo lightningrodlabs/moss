@@ -28,6 +28,12 @@ import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
 import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
+import {
+  selectDevUiWebhapp,
+  setDevUiOverride,
+  clearDevUiOverride,
+  getDevUiOverride,
+} from '../../electron-api.js';
 
 @localized()
 @customElement('applet-detail-card')
@@ -40,13 +46,8 @@ export class AppletDetailCard extends LitElement {
 
   _joinedMembers = new StoreSubscriber(
     this,
-    () =>
-      lazyLoadAndPoll(
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
-        20000,
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
-      ),
-    () => [this.groupStore],
+    () => this.groupStore.joinedAppletAgents.get(this.appletHash)!,
+    () => [this.groupStore, this.appletHash],
   );
 
   _abandonedMembers = new StoreSubscriber(
@@ -98,6 +99,12 @@ export class AppletDetailCard extends LitElement {
 
   @state()
   showAdvanced = false;
+
+  @state()
+  _hasDevOverride = false;
+
+  @state()
+  _devOverrideLoading = false;
 
   // TODO: Use MossPrivilege instead
   amIPrivileged() {
@@ -155,14 +162,58 @@ export class AppletDetailCard extends LitElement {
   }
 
   async firstUpdated() {
-    const [appletClient, _] = await this.mossStore.getAppClient(
-      appIdFromAppletHash(this.appletHash),
-    );
+    const appId = appIdFromAppletHash(this.appletHash);
+    const [appletClient, _] = await this.mossStore.getAppClient(appId);
     this.appInfo = await appletClient.appInfo();
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
     if (appletRecord) {
       this.addedBy = appletRecord.action.author;
     }
+    try {
+      const result = await getDevUiOverride(appId);
+      this._hasDevOverride = result.active;
+    } catch (e) {
+      console.warn('Failed to check dev UI override:', e);
+    }
+  }
+
+  async applyDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const webhappPath = await selectDevUiWebhapp();
+      if (!webhappPath) {
+        this._devOverrideLoading = false;
+        return;
+      }
+
+      const appId = appIdFromAppletHash(this.appletHash);
+      const result = await setDevUiOverride(appId, webhappPath);
+
+      if (!result.happHashMatch) {
+        notify(msg('Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.'));
+      }
+
+      this._hasDevOverride = true;
+      notify(msg('Dev UI override applied. Reload the tool to see the new UI.'));
+    } catch (e) {
+      notifyError(msg('Failed to apply dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
+  }
+
+  async removeDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const appId = appIdFromAppletHash(this.appletHash);
+      await clearDevUiOverride(appId);
+      this._hasDevOverride = false;
+      notify(msg('Dev UI override removed. Reload the tool to see the production UI.'));
+    } catch (e) {
+      notifyError(msg('Failed to clear dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
   }
 
   async uninstallApplet() {
@@ -309,6 +360,42 @@ export class AppletDetailCard extends LitElement {
     }
   }
 
+  renderDevUiOverride() {
+    if (!this.amIPrivileged()) return html``;
+    return html`
+      <div class="row items-center" style="margin-top: 8px;">
+        <span>${msg('Dev UI Override')}</span>
+        <span class="flex flex-1"></span>
+        ${this._devOverrideLoading
+          ? html`<sl-spinner style="margin-right: 8px;"></sl-spinner>`
+          : this._hasDevOverride
+            ? html`
+                <span class="dev-override-badge">${msg('DEV')}</span>
+                <sl-button
+                  variant="warning"
+                  size="small"
+                  style="margin-left: 8px;"
+                  @click=${() => this.applyDevUiOverride()}
+                >${msg('Replace')}</sl-button>
+                <sl-button
+                  variant="neutral"
+                  size="small"
+                  style="margin-left: 8px;"
+                  @click=${() => this.removeDevUiOverride()}
+                >${msg('Clear Override')}</sl-button>
+              `
+            : html`
+                <sl-button
+                  variant="neutral"
+                  size="small"
+                  @click=${() => this.applyDevUiOverride()}
+                >${msg('Override from .webhapp')}</sl-button>
+              `
+        }
+      </div>
+    `;
+  }
+
   renderMetaSettings() {
     if (this.groupAppletsMetaData.value.status === 'error') {
       console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
@@ -328,6 +415,7 @@ export class AppletDetailCard extends LitElement {
           >
           </sl-switch>
         </div>
+        ${this.renderDevUiOverride()}
       </div>
     `;
   }
@@ -558,6 +646,14 @@ export class AppletDetailCard extends LitElement {
         border-radius: 10px;
         padding: 5px 10px;
         margin: 15px 0 10px 0;
+      }
+      .dev-override-badge {
+        background: #e65100;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 4px;
       }
     `,
   ];

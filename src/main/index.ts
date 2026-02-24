@@ -1749,7 +1749,7 @@ if (!RUNNING_WITH_COMMAND) {
             }
             importGroupStatus = 'created';
           } else {
-            // Wait up to 60s for group profile to sync from the network
+            // Wait up to 20s for group profile to sync from the network
             let profileSynced = false;
             const deadline = Date.now() + 20000;
             while (Date.now() < deadline) {
@@ -2079,6 +2079,106 @@ if (!RUNNING_WITH_COMMAND) {
         };
       }
     });
+
+    // --- Dev UI Override handlers ---
+
+    ipcMain.handle('select-dev-ui-webhapp', async (): Promise<string | undefined> => {
+      const result = await dialog.showOpenDialog(MAIN_WINDOW!, {
+        properties: ['openFile'],
+        filters: [{ name: 'Webhapp', extensions: ['webhapp'] }],
+      });
+      if (result.canceled || result.filePaths.length === 0) return undefined;
+      return result.filePaths[0];
+    });
+
+    ipcMain.handle(
+      'set-dev-ui-override',
+      async (
+        _e,
+        appId: string,
+        webhappPath: string,
+      ): Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }> => {
+        const currentInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+        if (currentInfo.type !== 'webhapp') {
+          throw new Error('Dev UI override is only supported for webhapp-type applets.');
+        }
+
+        // Back up the original info.json (only if not already backed up)
+        WE_FILE_SYSTEM.backupOriginalAppAssetsInfo(appId);
+
+        // Extract the .webhapp UI assets into uis/<sha256>/assets/
+        const uisDir = WE_FILE_SYSTEM.uisDir;
+        const happsDir = WE_FILE_SYSTEM.happsDir;
+        const { happSha256, uiSha256 } = await rustUtils.saveHappOrWebhapp(
+          webhappPath,
+          happsDir,
+          uisDir,
+        );
+
+        if (!uiSha256) {
+          throw new Error('The selected file does not contain UI assets.');
+        }
+
+        // Rename the extracted UI dir to have the -dev suffix
+        const devUiSha256 = `${uiSha256}-dev`;
+        const originalUiDir = path.join(uisDir, uiSha256);
+        const devUiDir = path.join(uisDir, devUiSha256);
+
+        // Remove any existing -dev dir for this sha256
+        if (fs.existsSync(devUiDir)) {
+          fs.rmSync(devUiDir, { recursive: true });
+        }
+        fs.renameSync(originalUiDir, devUiDir);
+
+        // Check if happ hashes match
+        const happHashMatch = currentInfo.happ.sha256 === happSha256;
+
+        // Update AppAssetsInfo to point at the dev UI
+        const updatedInfo = { ...currentInfo };
+        updatedInfo.ui = {
+          location: { type: 'filesystem' as const, sha256: devUiSha256 },
+        };
+        WE_FILE_SYSTEM.storeAppAssetsInfo(appId, updatedInfo);
+
+        return { uiSha256: devUiSha256, happSha256, happHashMatch };
+      },
+    );
+
+    ipcMain.handle('clear-dev-ui-override', async (_e, appId: string): Promise<void> => {
+      const currentInfo = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+
+      // Clean up the -dev UI directory
+      if (
+        currentInfo.type === 'webhapp' &&
+        currentInfo.ui.location.type === 'filesystem' &&
+        currentInfo.ui.location.sha256.endsWith('-dev')
+      ) {
+        const devUiDir = path.join(WE_FILE_SYSTEM.uisDir, currentInfo.ui.location.sha256);
+        try {
+          fs.rmSync(devUiDir, { recursive: true });
+        } catch (e) {
+          console.warn(`Failed to clean up dev UI directory: ${e}`);
+        }
+      }
+
+      // Restore the original info.json
+      WE_FILE_SYSTEM.restoreOriginalAppAssetsInfo(appId);
+    });
+
+    ipcMain.handle(
+      'get-dev-ui-override',
+      async (_e, appId: string): Promise<{ active: boolean; uiSha256?: string }> => {
+        const active = WE_FILE_SYSTEM.hasDevUiOverride(appId);
+        if (!active) return { active: false };
+        const info = WE_FILE_SYSTEM.readAppAssetsInfo(appId);
+        if (info.type === 'webhapp' && info.ui.location.type === 'filesystem') {
+          return { active: true, uiSha256: info.ui.location.sha256 };
+        }
+        return { active: false };
+      },
+    );
+
+    // --- End Dev UI Override handlers ---
 
     ipcMain.handle(
       'batch-update-applet-uis',
