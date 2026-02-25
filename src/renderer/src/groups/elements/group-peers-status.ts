@@ -1,10 +1,10 @@
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { AgentPubKey, DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AgentPubKeyB64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -48,6 +48,62 @@ export class GroupPeersStatus extends LitElement {
     () => [this._groupStore],
   );
 
+  _hiddenAgents = new StoreSubscriber(
+    this,
+    () => this._groupStore.hiddenAgents(),
+    () => [this._groupStore],
+  );
+
+  @state()
+  _showHiddenAgents = false;
+
+  @state()
+  _contextMenuAgent: AgentPubKey | undefined;
+
+  @state()
+  _contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+
+  handleContextMenu(e: MouseEvent, agent: AgentPubKey) {
+    e.preventDefault();
+    this._contextMenuAgent = agent;
+    this._contextMenuPosition = { x: e.clientX, y: e.clientY };
+
+    const closeHandler = () => {
+      this._contextMenuAgent = undefined;
+      window.removeEventListener('click', closeHandler);
+    };
+    // Close on next click anywhere
+    setTimeout(() => window.addEventListener('click', closeHandler), 0);
+  }
+
+  renderContextMenu() {
+    if (!this._contextMenuAgent) return html``;
+    const agentB64 = encodeHashToBase64(this._contextMenuAgent);
+    const isHidden = this._groupStore.isAgentHidden(agentB64);
+    const agent = this._contextMenuAgent;
+    return html`
+      <div
+        class="context-menu"
+        style="position: fixed; left: ${this._contextMenuPosition.x}px; top: ${this
+          ._contextMenuPosition.y}px; z-index: 10000;"
+      >
+        <button
+          class="context-menu-item"
+          @click=${() => {
+            if (isHidden) {
+              this._groupStore.unhideAgent(agent);
+            } else {
+              this._groupStore.hideAgent(agent);
+            }
+            this._contextMenuAgent = undefined;
+          }}
+        >
+          ${isHidden ? msg('Unhide agent') : msg('Hide agent')}
+        </button>
+      </div>
+    `;
+  }
+
   renderAgentInfo(agentPubKey, isOnline, tzUtcOffset?, isMe?) {
     return html` <profile-detail-moss
       style="color: black; ${isOnline ? '' : 'opacity: 0.5'}"
@@ -63,6 +119,9 @@ export class GroupPeersStatus extends LitElement {
   }
 
   renderPeersStatus(members: ReadonlyMap<Uint8Array, MaybeProfile>) {
+    const hiddenAgentsList: AgentPubKeyB64[] = this._hiddenAgents.value ?? [];
+    const hiddenSet = new Set(hiddenAgentsList);
+
     const headlessNodes = Array.from(members.entries()).filter(
       ([_pubKey, maybeProfile]) =>
         maybeProfile.type === 'profile' && !!maybeProfile.profile.entry.fields.wdockerNode,
@@ -74,11 +133,16 @@ export class GroupPeersStatus extends LitElement {
     if (!this._peerStatuses.value) return html``;
     const now = Date.now();
     const myPubKey = this._groupStore.groupClient.myPubKey;
+    const myPubKeyB64 = encodeHashToBase64(myPubKey);
     const myStatus =
       now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-    normalMembers = normalMembers.filter(
-      ([agent, _]) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey),
+    normalMembers = normalMembers.filter(([agent, _]) => encodeHashToBase64(agent) !== myPubKeyB64);
+
+    // Separate hidden agents from visible ones
+    const hiddenMembers = normalMembers.filter(([agent, _]) =>
+      hiddenSet.has(encodeHashToBase64(agent)),
     );
+    normalMembers = normalMembers.filter(([agent, _]) => !hiddenSet.has(encodeHashToBase64(agent)));
 
     const headlessAgents = headlessNodes.map(([agent, _]) => {
       const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
@@ -165,6 +229,7 @@ export class GroupPeersStatus extends LitElement {
                 class="row profile"
                 style="position: relative;"
                 tabindex="0"
+                @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agentInfo.agent)}
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('profile-selected', {
@@ -206,6 +271,7 @@ export class GroupPeersStatus extends LitElement {
                     <div
                       class="row profile"
                       style="position: relative;"
+                      @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agentInfo.agent)}
                       @click=${() => {
                         this.dispatchEvent(
                           new CustomEvent('profile-selected', {
@@ -273,6 +339,61 @@ export class GroupPeersStatus extends LitElement {
                 )}
               </div>`
           : html``}
+        ${hiddenMembers.length > 0
+          ? html`
+              <div
+                style="margin-top: 24px; cursor: pointer; user-select: none;"
+                class="status-text row"
+                tabindex="0"
+                @click=${() => (this._showHiddenAgents = !this._showHiddenAgents)}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ')
+                    this._showHiddenAgents = !this._showHiddenAgents;
+                }}
+              >
+                <span>${msg('Hidden')} (${hiddenMembers.length})</span>
+                <span style="margin-left: 4px;">${this._showHiddenAgents ? '▼' : '▶'}</span>
+              </div>
+              ${this._showHiddenAgents
+                ? html`
+                    <div class="column">
+                      ${hiddenMembers.map(
+                        ([agent, _]) => html`
+                          <div
+                            class="row profile"
+                            style="position: relative; align-items: center;"
+                            tabindex="0"
+                            @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agent)}
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new CustomEvent('profile-selected', {
+                                  detail: { agent, tzUtcOffset: undefined },
+                                  bubbles: true,
+                                  composed: true,
+                                }),
+                              );
+                            }}
+                            @keypress=${(e: KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                this.dispatchEvent(
+                                  new CustomEvent('profile-selected', {
+                                    detail: { agent, tzUtcOffset: undefined },
+                                    bubbles: true,
+                                    composed: true,
+                                  }),
+                                );
+                              }
+                            }}
+                          >
+                            ${this.renderAgentInfo(agent, false)}
+                          </div>
+                        `,
+                      )}
+                    </div>
+                  `
+                : html``}
+            `
+          : html``}
       </div>
     `;
   }
@@ -284,7 +405,9 @@ export class GroupPeersStatus extends LitElement {
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderPeersStatus(this._groupMemberWithProfiles.value.value);
+        return html`${this.renderPeersStatus(
+          this._groupMemberWithProfiles.value.value,
+        )}${this.renderContextMenu()}`;
       case 'error':
         return html`<display-error
           .headline=${msg('Error displaying the peers of the group')}
@@ -352,6 +475,30 @@ export class GroupPeersStatus extends LitElement {
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
+      }
+
+      .context-menu {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        padding: 4px 0;
+      }
+
+      .context-menu-item {
+        display: block;
+        width: 100%;
+        padding: 6px 16px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .context-menu-item:hover {
+        background: #eff7ea;
       }
     `,
   ];
