@@ -398,11 +398,14 @@ export class GroupStore {
   }
 
   hideAgent(agent: AgentPubKey) {
-    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
     const agentB64 = encodeHashToBase64(agent);
-    let hiddenAgents = this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64);
-    hiddenAgents.push(agentB64);
-    hiddenAgents = Array.from(new Set(hiddenAgents));
+    if (this.isAgentHidden(agentB64)) return;
+
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    const hiddenAgents = [
+      ...this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64),
+      agentB64,
+    ];
     this.mossStore.persistedStore.hiddenAgents.set(hiddenAgents, groupDnaHashB64);
     this._hiddenAgents.set(hiddenAgents);
 

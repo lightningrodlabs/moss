@@ -122,12 +122,18 @@ export class GroupPeersStatus extends LitElement {
     const hiddenAgentsList: AgentPubKeyB64[] = this._hiddenAgents.value ?? [];
     const hiddenSet = new Set(hiddenAgentsList);
 
-    const headlessNodes = Array.from(members.entries()).filter(
-      ([_pubKey, maybeProfile]) =>
+    // Convert all members to B64 once upfront to avoid repeated encoding
+    type MemberEntry = [Uint8Array, AgentPubKeyB64, MaybeProfile];
+    const allMembers: MemberEntry[] = Array.from(members.entries()).map(
+      ([pubKey, profile]) => [pubKey, encodeHashToBase64(pubKey), profile],
+    );
+
+    const headlessNodes = allMembers.filter(
+      ([, , maybeProfile]) =>
         maybeProfile.type === 'profile' && !!maybeProfile.profile.entry.fields.wdockerNode,
     );
-    let normalMembers = Array.from(members.entries()).filter(
-      ([_pubKey, maybeProfile]) =>
+    let normalMembers = allMembers.filter(
+      ([, , maybeProfile]) =>
         maybeProfile.type === 'unknown' || !maybeProfile.profile.entry.fields.wdockerNode,
     );
     if (!this._peerStatuses.value) return html``;
@@ -136,16 +142,14 @@ export class GroupPeersStatus extends LitElement {
     const myPubKeyB64 = encodeHashToBase64(myPubKey);
     const myStatus =
       now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-    normalMembers = normalMembers.filter(([agent, _]) => encodeHashToBase64(agent) !== myPubKeyB64);
+    normalMembers = normalMembers.filter(([, agentB64]) => agentB64 !== myPubKeyB64);
 
     // Separate hidden agents from visible ones
-    const hiddenMembers = normalMembers.filter(([agent, _]) =>
-      hiddenSet.has(encodeHashToBase64(agent)),
-    );
-    normalMembers = normalMembers.filter(([agent, _]) => !hiddenSet.has(encodeHashToBase64(agent)));
+    const hiddenMembers = normalMembers.filter(([, agentB64]) => hiddenSet.has(agentB64));
+    normalMembers = normalMembers.filter(([, agentB64]) => !hiddenSet.has(agentB64));
 
-    const headlessAgents = headlessNodes.map(([agent, _]) => {
-      const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+    const headlessAgents = headlessNodes.map(([agent, agentB64]) => {
+      const statusInfo = this._peerStatuses.value![agentB64];
       const online = !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
       return {
         agent,
@@ -155,12 +159,12 @@ export class GroupPeersStatus extends LitElement {
     });
 
     const onlineAgents = normalMembers
-      .filter(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .filter(([, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
       })
-      .map(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .map(([agent, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return {
           agent,
           tzUtcOffset: statusInfo.tzUtcOffset,
@@ -169,11 +173,11 @@ export class GroupPeersStatus extends LitElement {
       });
 
     const offlineAgents: AgentAndTzOffset[] = normalMembers
-      .filter(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .filter(([, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return !statusInfo || now - statusInfo.lastSeen > OFFLINE_THRESHOLD;
       })
-      .map(([agent, _]) => {
+      .map(([agent]) => {
         return {
           agent,
           tzUtcOffset: undefined,
