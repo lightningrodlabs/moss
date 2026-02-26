@@ -689,7 +689,30 @@ export class GroupAppletsSidebar extends LitElement {
 
   renderMemberProfile() {
     return html`
-      <div class="column" style="margin-bottom: 40px;">
+      <div class="column" style="margin-bottom: 40px; position: relative;">
+        <div style="position: absolute; top: 10px; right: 10px;">
+          ${this._groupStore.isAgentHidden(encodeHashToBase64(this._selectedAgent!.agent))
+            ? html`<button
+                class="moss-button-secondary"
+                style="padding: 4px 10px; font-size: 12px; border-radius: 8px;"
+                @click=${() => {
+                  this._groupStore.unhideAgent(this._selectedAgent!.agent);
+                  this._memberProfileDialog.hide();
+                }}
+              >
+                ${msg('Unhide')}
+              </button>`
+            : html`<button
+                class="moss-button-secondary"
+                style="padding: 4px 10px; font-size: 12px; border-radius: 8px;"
+                @click=${() => {
+                  this._groupStore.hideAgent(this._selectedAgent!.agent);
+                  this._memberProfileDialog.hide();
+                }}
+              >
+                ${msg('Hide')}
+              </button>`}
+        </div>
         <moss-profile-detail
           no-additional-fields
           .agentPubKey=${this._selectedAgent?.agent}
