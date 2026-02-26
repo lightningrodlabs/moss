@@ -1022,10 +1022,6 @@
   <source>This group is disabled.</source>
   <target>このグループは無効化されています。</target>
 </trans-unit>
-<trans-unit id="sa0bcc0ad6e32e0ec">
-  <source>cell name</source>
-  <target>セル名</target>
-</trans-unit>
 <trans-unit id="sc8b6248d1ceeee57">
   <source>Failed to get groups.</source>
   <target>グループの取得に失敗しました。</target>
@@ -1800,10 +1796,6 @@ starts now</source>
   <target>今日の最高の時間が
 今始まります</target>
 </trans-unit>
-<trans-unit id="sce3d87d60ac1c569">
-  <source>Error fetching groups</source>
-  <target>グループの取得中にエラーが発生しました</target>
-</trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
   <target>使用場所：</target>
@@ -1966,6 +1958,70 @@ starts now</source>
 <trans-unit id="saf5fa57a62fc35ed">
   <source>Tool already exists</source>
   <target>ツールは既に存在します</target>
+</trans-unit>
+<trans-unit id="s58b647646001054b">
+  <source>Unhide agent</source>
+  <target>エージェントを表示</target>
+</trans-unit>
+<trans-unit id="s1981f783b23969bc">
+  <source>Hide agent</source>
+  <target>エージェントを非表示</target>
+</trans-unit>
+<trans-unit id="s886897f2fd4edb99">
+  <source>Hidden</source>
+  <target>非表示</target>
+</trans-unit>
+<trans-unit id="sa3443b99ecf186ea">
+  <source>Unhide</source>
+  <target>表示</target>
+</trans-unit>
+<trans-unit id="s9df212d89cab196d">
+  <source>Hide</source>
+  <target>非表示</target>
+</trans-unit>
+<trans-unit id="sac45a18d253c80c8">
+  <source>Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.</source>
+  <target>警告：この.webhappのDNAはインストール済みバージョンと異なります。UIが正しく動作しない可能性があります。</target>
+</trans-unit>
+<trans-unit id="s23f3130f1a529386">
+  <source>Dev UI override applied. Reload the tool to see the new UI.</source>
+  <target>開発UIオーバーライドが適用されました。新しいUIを表示するにはツールをリロードしてください。</target>
+</trans-unit>
+<trans-unit id="sd6843a4242885cbe">
+  <source>Failed to apply dev UI override (see console for details)</source>
+  <target>開発UIオーバーライドの適用に失敗しました（詳細はコンソールを参照）</target>
+</trans-unit>
+<trans-unit id="sc7ab163c03e26f24">
+  <source>Dev UI override removed. Reload the tool to see the production UI.</source>
+  <target>開発UIオーバーライドが削除されました。本番UIを表示するにはツールをリロードしてください。</target>
+</trans-unit>
+<trans-unit id="se9816b358bc5b0f7">
+  <source>Failed to clear dev UI override (see console for details)</source>
+  <target>開発UIオーバーライドのクリアに失敗しました（詳細はコンソールを参照）</target>
+</trans-unit>
+<trans-unit id="s4e6f26d0215c5982">
+  <source>Dev UI Override</source>
+  <target>開発UIオーバーライド</target>
+</trans-unit>
+<trans-unit id="se0366a1991be70dc">
+  <source>DEV</source>
+  <target>DEV</target>
+</trans-unit>
+<trans-unit id="s2a8434b16dc214a3">
+  <source>Replace</source>
+  <target>置換</target>
+</trans-unit>
+<trans-unit id="sec75915c1ada3386">
+  <source>Clear Override</source>
+  <target>オーバーライドをクリア</target>
+</trans-unit>
+<trans-unit id="s975b0da3d1c42d76">
+  <source>Override from .webhapp</source>
+  <target>.webhappからオーバーライド</target>
+</trans-unit>
+<trans-unit id="s43bda70697c53bfb">
+  <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
+  <target>警告：DNAハッシュが一致しません。現在のデータでUIが正しく動作しない可能性があります。</target>
 </trans-unit>
 </body>
 </file>
