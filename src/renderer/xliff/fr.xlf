@@ -974,10 +974,6 @@
   <source>This group is disabled.</source>
   <target>Ce groupe est désactivé.</target>
 </trans-unit>
-<trans-unit id="sa0bcc0ad6e32e0ec">
-  <source>cell name</source>
-  <target>nom de la cellule</target>
-</trans-unit>
 <trans-unit id="sc8b6248d1ceeee57">
   <source>Failed to get groups.</source>
   <target>Échec de la récuperation des groupes.</target>
@@ -1800,10 +1796,6 @@ starts now</source>
   <target>La meilleure partie de la journée
 commence maintenant</target>
 </trans-unit>
-<trans-unit id="sce3d87d60ac1c569">
-  <source>Error fetching groups</source>
-  <target>Erreur lors de la récupération des groupes</target>
-</trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
   <target>Utilisé dans :</target>
@@ -1966,6 +1958,59 @@ commence maintenant</target>
 <trans-unit id="saf5fa57a62fc35ed">
   <source>Tool already exists</source>
   <target>L'outil existe déjà</target>
+</trans-unit>
+<trans-unit id="s58b647646001054b">
+  <source>Unhide agent</source>
+  <target>Réafficher l'agent</target>
+</trans-unit>
+<trans-unit id="s1981f783b23969bc">
+  <source>Hide agent</source>
+  <target>Masquer l'agent</target>
+</trans-unit>
+<trans-unit id="s886897f2fd4edb99">
+  <source>Hidden</source>
+  <target>Masqués</target>
+</trans-unit>
+<trans-unit id="sa3443b99ecf186ea">
+  <source>Unhide</source>
+  <target>Réafficher</target>
+</trans-unit>
+<trans-unit id="s9df212d89cab196d">
+  <source>Hide</source>
+  <target>Masquer</target>
+</trans-unit>
+<trans-unit id="sac45a18d253c80c8">
+  <source>Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.</source>
+</trans-unit>
+<trans-unit id="s23f3130f1a529386">
+  <source>Dev UI override applied. Reload the tool to see the new UI.</source>
+</trans-unit>
+<trans-unit id="sd6843a4242885cbe">
+  <source>Failed to apply dev UI override (see console for details)</source>
+</trans-unit>
+<trans-unit id="sc7ab163c03e26f24">
+  <source>Dev UI override removed. Reload the tool to see the production UI.</source>
+</trans-unit>
+<trans-unit id="se9816b358bc5b0f7">
+  <source>Failed to clear dev UI override (see console for details)</source>
+</trans-unit>
+<trans-unit id="s4e6f26d0215c5982">
+  <source>Dev UI Override</source>
+</trans-unit>
+<trans-unit id="se0366a1991be70dc">
+  <source>DEV</source>
+</trans-unit>
+<trans-unit id="s2a8434b16dc214a3">
+  <source>Replace</source>
+</trans-unit>
+<trans-unit id="sec75915c1ada3386">
+  <source>Clear Override</source>
+</trans-unit>
+<trans-unit id="s975b0da3d1c42d76">
+  <source>Override from .webhapp</source>
+</trans-unit>
+<trans-unit id="s43bda70697c53bfb">
+  <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
 </trans-unit>
 </body>
 </file>
