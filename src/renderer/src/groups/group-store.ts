@@ -132,6 +132,8 @@ export class GroupStore {
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
+  private _hiddenAgents: Writable<AgentPubKeyB64[]> = writable([]);
+
   /**
    * Ephemeral (in-memory) tracking of unread group notifications.
    * Used for foyer messages and other group-level notifications.
@@ -221,15 +223,21 @@ export class GroupStore {
     const _prevAgentStatus: Record<string, string> = {};
 
     this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
+      const agentB64 = encodeHashToBase64(signal.from_agent);
+
+      // Ignore signals from hidden agents entirely
+      if (this.isAgentHidden(agentB64)) {
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ignoring ${signal.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`);
+        return;
+      }
+
       if (signal.type == 'Pong') {
-        const agentB64 = encodeHashToBase64(signal.from_agent);
         const prev = _prevAgentStatus[agentB64];
         onlineDebugLog(`[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
         _prevAgentStatus[agentB64] = signal.status;
         this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
       }
       if (signal.type == 'Ping') {
-        const agentB64 = encodeHashToBase64(signal.from_agent);
         const prev = _prevAgentStatus[agentB64];
         onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
         _prevAgentStatus[agentB64] = signal.status;
@@ -274,6 +282,10 @@ export class GroupStore {
 
     this._ignoredApplets.set(
       this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
+    );
+
+    this._hiddenAgents.set(
+      this.mossStore.persistedStore.hiddenAgents.value(encodeHashToBase64(groupDnaHash)),
     );
 
     // Note: Old agent fetching via getAgentsWithProfile removed
@@ -379,6 +391,49 @@ export class GroupStore {
     ignoredApplets = Array.from(new Set(ignoredApplets));
     this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
     this._ignoredApplets.set(ignoredApplets);
+  }
+
+  hiddenAgents(): Readable<AgentPubKeyB64[]> {
+    return derived(this._hiddenAgents, (a) => a);
+  }
+
+  hideAgent(agent: AgentPubKey) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    const agentB64 = encodeHashToBase64(agent);
+    let hiddenAgents = this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64);
+    hiddenAgents.push(agentB64);
+    hiddenAgents = Array.from(new Set(hiddenAgents));
+    this.mossStore.persistedStore.hiddenAgents.set(hiddenAgents, groupDnaHashB64);
+    this._hiddenAgents.set(hiddenAgents);
+
+    // Remove from peer statuses so online count updates immediately
+    this._peerStatuses.update((statuses) => {
+      if (!statuses || !(agentB64 in statuses)) return statuses;
+      const newStatuses = { ...statuses };
+      delete newStatuses[agentB64];
+      return newStatuses;
+    });
+
+    // Remove from known agents so we stop pinging immediately
+    this._knownAgents.update((known) => {
+      if (!known.has(agentB64)) return known;
+      const newKnown = new Set(known);
+      newKnown.delete(agentB64);
+      return newKnown;
+    });
+  }
+
+  unhideAgent(agent: AgentPubKey) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    const agentB64 = encodeHashToBase64(agent);
+    let hiddenAgents = this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64);
+    hiddenAgents = hiddenAgents.filter((a) => a !== agentB64);
+    this.mossStore.persistedStore.hiddenAgents.set(hiddenAgents, groupDnaHashB64);
+    this._hiddenAgents.set(hiddenAgents);
+  }
+
+  isAgentHidden(agentB64: AgentPubKeyB64): boolean {
+    return get(this._hiddenAgents).includes(agentB64);
   }
 
   async assetSignalHandler(signal: SignalPayloadAssets, sendRemote: boolean): Promise<void> {
@@ -1081,8 +1136,8 @@ export class GroupStore {
           const fullAgentKey = this.getFullAgentId(partialAgentId);
           const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
 
-          // Exclude self
-          if (fullAgentKeyB64 !== myPubKeyB64) {
+          // Exclude self and hidden agents
+          if (fullAgentKeyB64 !== myPubKeyB64 && !this.isAgentHidden(fullAgentKeyB64)) {
             knownAgents.add(fullAgentKeyB64);
           }
         } catch (error) {
