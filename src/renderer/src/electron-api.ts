@@ -31,6 +31,15 @@ import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
+export interface LegacyProfileInfo {
+  appName: string;
+  versionString: string;
+  profileName: string;
+  keystorePath: string;
+  /** Lair binary version (e.g. 'lair_keystore 0.6.3') that created this keystore, if recorded */
+  lairVersion: string | undefined;
+}
+
 declare global {
   interface Window {
     __HC_ZOME_CALL_SIGNER__: {
@@ -47,6 +56,9 @@ declare global {
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       lairSetupRequired: () => Promise<boolean>;
+      findLegacyProfiles: () => Promise<LegacyProfileInfo[]>;
+      getLairBinaryVersion: () => Promise<string>;
+      copyLegacyProfile: (keystorePath: string) => Promise<void>;
       launch: () => Promise<boolean>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;

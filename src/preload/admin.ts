@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
+  findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
+  getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
+  copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('copy-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),

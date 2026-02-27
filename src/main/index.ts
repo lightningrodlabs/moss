@@ -28,7 +28,8 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
-import { MossFileSystem, deriveAppAssetsInfo } from './filesystem';
+import { MossFileSystem, deriveAppAssetsInfo, findLegacyProfiles, copyLegacyProfileData, LegacyProfileInfo } from './filesystem';
+import { LAIR_BINARY } from './const';
 import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
@@ -73,6 +74,8 @@ import {
   CellType,
   DnaHashB64,
   InstalledAppId,
+  AgentPubKey,
+  decodeHashFromBase64,
   encodeHashToBase64,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
@@ -1374,12 +1377,35 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('lair-setup-required', (): boolean => {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });
+    ipcMain.handle('find-legacy-profiles', (): LegacyProfileInfo[] => {
+      return findLegacyProfiles(app);
+    });
+    ipcMain.handle('get-lair-binary-version', (): string => {
+      const result = childProcess.spawnSync(LAIR_BINARY, ['--version']);
+      return result.stdout ? result.stdout.toString().trim() : 'unknown';
+    });
+    ipcMain.handle('copy-legacy-profile', (_e, keystorePath: string): void => {
+      copyLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
+    });
+
+    // Helper: return the primary agent pubkey, preferring one imported from a legacy
+    // profile over generating a fresh one. Clears the preferred-key signal file on use.
+    const getOrCreateAgentPubKey = async (): Promise<AgentPubKey> => {
+      const preferredB64 = WE_FILE_SYSTEM.readAndClearPreferredAgentPubKey();
+      if (preferredB64) {
+        console.log(`Using preferred agent pubkey from legacy import: ${preferredB64}`);
+        return decodeHashFromBase64(preferredB64);
+      }
+      return HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+    };
+
     ipcMain.handle('install-group-happ', async (_e, withProgenitor: boolean, customGroupSeed: string | undefined = undefined): Promise<AppInfo> => {
       const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let agentPubKey = globalPubKeyFromListAppsResponse(apps);
       if (!agentPubKey) {
-        agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+        agentPubKey = await getOrCreateAgentPubKey();
       }
+      WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
 
       // generate random network seed
       const networkSeed = customGroupSeed || uuidv4();
@@ -1663,7 +1689,8 @@ if (!RUNNING_WITH_COMMAND) {
 
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let myPubKey = globalPubKeyFromListAppsResponse(allApps);
-      if (!myPubKey) myPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+      if (!myPubKey) myPubKey = await getOrCreateAgentPubKey();
+      WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(myPubKey));
       const myPubKeyB64 = encodeHashToBase64(myPubKey);
       const appPort = HOLOCHAIN_MANAGER!.appPort;
       const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
@@ -1990,8 +2017,9 @@ if (!RUNNING_WITH_COMMAND) {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         let agentPubKey = globalPubKeyFromListAppsResponse(apps);
         if (!agentPubKey) {
-          agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+          agentPubKey = await getOrCreateAgentPubKey();
         }
+        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
         const hash = createHash('sha256');
         hash.update(networkSeed);
         const hashedSeed = hash.digest('base64');
@@ -2464,8 +2492,9 @@ if (!RUNNING_WITH_COMMAND) {
 
         let agentPubKey = globalPubKeyFromListAppsResponse(apps);
         if (!agentPubKey) {
-          agentPubKey = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+          agentPubKey = await getOrCreateAgentPubKey();
         }
+        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
 
         // Check if .happ and ui assets are already stored on the filesystem and don't need to get fetched from the source
         let happAlreadyStoredPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
@@ -2628,6 +2657,13 @@ if (!RUNNING_WITH_COMMAND) {
         password,
         RUN_OPTIONS,
       );
+      // Persist the primary agent pubkey so future cross-version imports can find it.
+      // This also covers existing users upgrading from a build without this feature.
+      const postLaunchApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+      const existingKey = globalPubKeyFromListAppsResponse(postLaunchApps);
+      if (existingKey) {
+        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(existingKey));
+      }
       console.log(CACHED_DEEP_LINK);
       return isFirstLaunch;
 

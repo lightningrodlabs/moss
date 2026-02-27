@@ -35,6 +35,14 @@ export async function launch(
     console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
   }
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
+  const currentLairVersion = lairHandleTemp.stdout.toString().trim();
+
+  // Record the lair version that initializes/uses this keystore so that future
+  // versions of Moss can detect compatibility before attempting an import.
+  const lairVersionFile = path.join(mossFileSystem.keystoreDir, 'moss-lair-version.txt');
+  if (!fs.existsSync(lairVersionFile)) {
+    fs.writeFileSync(lairVersionFile, currentLairVersion, 'utf-8');
+  }
   if (!mossFileSystem.keystoreInitialized()) {
     if (splashscreenWindow)
       splashscreenWindow.webContents.send(

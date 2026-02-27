@@ -1,7 +1,7 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
 import { AdminWebsocket, DnaHash, ProvisionedCell } from '@holochain/client';
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, nothing } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -15,6 +15,7 @@ import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo } from './electron-api.js';
+import { LegacyProfileInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
@@ -29,6 +30,7 @@ import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/r
 
 enum MossAppState {
   Loading,
+  LegacyKeystoreImport,
   InitialSetup,
   CreateGroupStep1,
   CreateGroupStep2,
@@ -101,6 +103,16 @@ export class MossApp extends LitElement {
 
   private _happMessageListener: ((event: MessageEvent) => void) | undefined;
 
+  private _legacyKeystoreResolve: (() => void) | undefined;
+
+  @state()
+  private _legacyProfiles: LegacyProfileInfo[] = [];
+
+  private _currentLairVersion: string | undefined;
+
+  @state()
+  private _selectedLegacyProfile: LegacyProfileInfo | undefined;
+
   async firstUpdated() {
     // Note: Locale is initialized in index.html before the app loads
     // to avoid flash of untranslated content
@@ -150,6 +162,23 @@ export class MossApp extends LitElement {
       // screen will stay on the initial setup screen or that reloading
       // Moss will remain on the first screen
       window.localStorage.setItem('isFirstLaunch', 'true');
+    }
+
+    if (isFirstLaunch) {
+      const [legacyProfiles, currentLairVersion] = await Promise.all([
+        window.electronAPI.findLegacyProfiles(),
+        window.electronAPI.getLairBinaryVersion(),
+      ]);
+      this._currentLairVersion = currentLairVersion;
+      if (legacyProfiles.length > 0) {
+        this._legacyProfiles = legacyProfiles;
+        this._selectedLegacyProfile = legacyProfiles[0];
+        await new Promise<void>((resolve) => {
+          this._legacyKeystoreResolve = resolve;
+          this.state = MossAppState.LegacyKeystoreImport;
+        });
+        this.state = MossAppState.Loading;
+      }
     }
 
     let info = await getConductorInfo();
@@ -517,6 +546,77 @@ export class MossApp extends LitElement {
     `;
   }
 
+  renderLegacyKeystoreImport() {
+    return html`
+      <div class="column center-content flex-1 launch-bg">
+        <div class="moss-card column items-center" style="width: 630px; padding: 48px;">
+          <div class="dialog-title" style="margin-bottom: 16px;">
+            ${msg('Import existing identity?')}
+          </div>
+          <div style="text-align: center; color: var(--moss-hint-green); margin-bottom: 32px; max-width: 440px;">
+            ${msg(
+              'A Moss identity from a previous version was found. You can import it to keep your existing agent key, or start fresh with a new identity.',
+            )}
+          </div>
+          <div class="column" style="width: 100%; margin-bottom: 24px; gap: 8px; max-height: calc(100vh - 400px); overflow-x: scroll;">
+            ${this._legacyProfiles.map((p) => {
+                const readableAppName = p.appName.replace("org.lightningrodlabs.moss-", "Moss ");
+                const versionMismatch =
+                  p.lairVersion !== undefined &&
+                  this._currentLairVersion !== undefined &&
+                  p.lairVersion !== this._currentLairVersion;
+                return html`
+                <button
+                  class="moss-button"
+                  style=${
+                    this._selectedLegacyProfile === p
+                      ? 'justify-content: flex-start; padding: 10px 16px; background: var(--moss-medium-green);'
+                      : 'justify-content: flex-start; padding: 10px 16px; background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);'
+                  }
+                  @click=${() => {
+                    this._selectedLegacyProfile = p;
+                  }}
+                >
+                  <span style="flex: 1; text-align: left;">
+                    ${readableAppName} ${p.versionString} &mdash; ${p.profileName}
+                    ${p.lairVersion ? html`<span style="opacity: 0.7; font-size: 0.85em;"> (lair: ${p.lairVersion})</span>` : nothing}
+                  </span>
+                  ${versionMismatch
+                    ? html`<span style="color: #f5a623; font-size: 0.8em; margin-left: 8px;">&#9888; version mismatch</span>`
+                    : nothing}
+                </button>
+              `;
+              })}
+          </div>
+          <div class="row" style="gap: 16px;">
+            <button
+              class="moss-button"
+              ?disabled=${!this._selectedLegacyProfile}
+              @click=${async () => {
+                await window.electronAPI.copyLegacyProfile(
+                  this._selectedLegacyProfile!.keystorePath,
+                );
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Import identity')}
+            </button>
+            <button
+              class="moss-button"
+              style="background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);"
+              @click=${() => {
+                this._selectedLegacyProfile = undefined;
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Start fresh')}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderInitialSetup() {
     return html`
       <div class="column center-content flex-1 launch-bg">
@@ -650,6 +750,8 @@ export class MossApp extends LitElement {
           <img src="loading_animation.svg" />
           <div>${this.loadingText}</div>
         </div>`;
+      case MossAppState.LegacyKeystoreImport:
+        return this.renderLegacyKeystoreImport();
       case MossAppState.InitialSetup:
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:
