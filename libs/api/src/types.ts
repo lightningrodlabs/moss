@@ -317,6 +317,10 @@ export type ParentToAppletMessage =
   | {
       type: 'locale-change';
       locale: string;
+    }
+  | {
+      type: 'semtree-data';
+      data: SemTreeDataEvent;
     };
 
 export type IframeKind =
@@ -509,6 +513,27 @@ export type AppletToParentRequest =
   | {
       type: 'unsubscribe-from-asset-store';
       wal: WAL;
+    }
+  /**
+   * Semantic tree requests
+   */
+  | {
+      type: 'semtree-register-definitions';
+      defs: SemTableDefsJSON;
+    }
+  | {
+      type: 'semtree-publish';
+      tree: import('ceptr-js').SemNodeJSON;
+      topic?: string;
+    }
+  | {
+      type: 'semtree-subscribe';
+      patternStr: string;
+      topic?: string;
+    }
+  | {
+      type: 'semtree-unsubscribe';
+      subscriptionId: string;
     };
 
 export type OpenViewRequest =
@@ -678,3 +703,26 @@ export type AsyncStatus<T> =
     };
 
 export type AssetStore = Readable<AsyncStatus<AssetStoreContent>>;
+
+/**
+ *
+ * Semantic Tree types
+ *
+ */
+
+export type { SemNodeJSON } from 'ceptr-js';
+
+/** Serializable form of SemTable definitions for cross-iframe transport. */
+export interface SemTableDefsJSON {
+  symbols: Array<{ label: string; structureLabel: string }>;
+  structures: Array<{ label: string; partLabels: string[] }>;
+}
+
+/** Event delivered to a subscriber when a published tree matches their semtrex pattern. */
+export interface SemTreeDataEvent {
+  subscriptionId: string;
+  tree: import('ceptr-js').SemNodeJSON;
+  defs: SemTableDefsJSON;
+  sourceAppletId: string;
+  topic?: string;
+}

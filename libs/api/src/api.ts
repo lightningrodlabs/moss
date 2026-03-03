@@ -30,7 +30,10 @@ import {
   UnsubscribeFunction,
   AssetStore,
   MossAccountability,
+  SemTableDefsJSON,
+  SemTreeDataEvent,
 } from './types';
+import type { SemNodeJSON } from 'ceptr-js';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
@@ -316,8 +319,22 @@ export interface AssetServices {
   assetStore: (wal: WAL) => AssetStore;
 }
 
+export interface SemTreeServices {
+  /** Register symbols and structures into the shared vocabulary. Idempotent by label. */
+  registerDefinitions: (defs: SemTableDefsJSON) => Promise<void>;
+  /** Publish a semantic tree. Matched against active subscriptions. */
+  publishTree: (tree: SemNodeJSON, topic?: string) => Promise<void>;
+  /** Subscribe to trees matching a semtrex pattern. Returns subscription ID. */
+  subscribeByPattern: (patternStr: string, topic?: string) => Promise<string>;
+  /** Unsubscribe from a previous subscription. */
+  unsubscribe: (subscriptionId: string) => Promise<void>;
+  /** Listen for incoming tree data matching subscriptions. */
+  onSemTreeData: (callback: (data: SemTreeDataEvent) => void) => UnsubscribeFunction;
+}
+
 export interface WeaveServices {
   assets: AssetServices;
+  semTrees: SemTreeServices;
   /**
    *
    * @returns Version of Moss within which this method is being called in
@@ -566,6 +583,19 @@ export class WeaveClient implements WeaveServices {
     getAllAssetRelationTags: (crossGroup?: boolean) =>
       window.__WEAVE_API__.assets.getAllAssetRelationTags(crossGroup),
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
+  };
+
+  semTrees: SemTreeServices = {
+    registerDefinitions: (defs: SemTableDefsJSON) =>
+      window.__WEAVE_API__.semTrees.registerDefinitions(defs),
+    publishTree: (tree: SemNodeJSON, topic?: string) =>
+      window.__WEAVE_API__.semTrees.publishTree(tree, topic),
+    subscribeByPattern: (patternStr: string, topic?: string) =>
+      window.__WEAVE_API__.semTrees.subscribeByPattern(patternStr, topic),
+    unsubscribe: (subscriptionId: string) =>
+      window.__WEAVE_API__.semTrees.unsubscribe(subscriptionId),
+    onSemTreeData: (callback: (data: SemTreeDataEvent) => void) =>
+      window.__WEAVE_API__.semTrees.onSemTreeData(callback),
   };
 
   toolInstaller = (appletHash: AppletHash, groupHash?: DnaHash) => {

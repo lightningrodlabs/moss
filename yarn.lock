@@ -3183,6 +3183,7 @@
     "@holochain-open-dev/profiles" "^0.601.2"
     "@holochain/client" "=0.20.4-rc.0"
     "@msgpack/msgpack" "^2.8.0"
+    ceptr-js "file:../../../../.cache/yarn/v6/npm-@theweave-api-0.6.6-7eadd437-2d69-41de-b08c-764b4184629e-1771816910428/ceptr-js"
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
@@ -5358,6 +5359,9 @@ ccount@^2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/ccount/-/ccount-2.0.1.tgz"
   integrity sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==
+
+"ceptr-js@file:../ceptr-js":
+  version "0.1.0"
 
 chai@^4.3.7:
   version "4.5.0"

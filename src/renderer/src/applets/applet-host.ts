@@ -289,6 +289,23 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     disableCloneCell(_) {
       throw new Error('disableCloneCell is not supported in headless WeaveServices.');
     },
+    semTrees: {
+      registerDefinitions: () => {
+        throw new Error('semTrees is not supported in headless WeaveServices.');
+      },
+      publishTree: () => {
+        throw new Error('semTrees is not supported in headless WeaveServices.');
+      },
+      subscribeByPattern: () => {
+        throw new Error('semTrees is not supported in headless WeaveServices.');
+      },
+      unsubscribe: () => {
+        throw new Error('semTrees is not supported in headless WeaveServices.');
+      },
+      onSemTreeData: () => {
+        throw new Error('semTrees is not supported in headless WeaveServices.');
+      },
+    },
   };
 }
 
@@ -935,6 +952,32 @@ export async function handleAppletIframeMessage(
         );
       }
       groupStore.unsubscribeFromAssetStore(message.wal, encodeHashToBase64(source.appletHash));
+      return;
+    }
+    case 'semtree-register-definitions': {
+      if (source.type === 'cross-group') {
+        throw new Error('Semantic tree registration from cross-group view is not supported.');
+      }
+      mossStore.semTreeStore.registerDefinitions(message.defs);
+      return;
+    }
+    case 'semtree-publish': {
+      if (source.type === 'cross-group') {
+        throw new Error('Semantic tree publishing from cross-group view is not supported.');
+      }
+      const appletId = encodeHashToBase64(source.appletHash);
+      mossStore.semTreeStore.publish(appletId, message.tree, message.topic);
+      return;
+    }
+    case 'semtree-subscribe': {
+      if (source.type === 'cross-group') {
+        throw new Error('Semantic tree subscription from cross-group view is not supported.');
+      }
+      const appletId = encodeHashToBase64(source.appletHash);
+      return mossStore.semTreeStore.subscribe(appletId, message.patternStr, message.topic);
+    }
+    case 'semtree-unsubscribe': {
+      mossStore.semTreeStore.unsubscribe(message.subscriptionId);
       return;
     }
     default:

@@ -45,7 +45,10 @@ import {
   AssetStoreContent,
   stringifyWal,
   IframeKind,
+  SemTreeDataEvent,
+  SemTableDefsJSON,
 } from '@theweave/api';
+import type { SemNodeJSON } from 'ceptr-js';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { toOriginalCaseB64 } from '@theweave/utils';
 
@@ -77,6 +80,7 @@ declare global {
     }>;
     'remote-signal-received': CustomEvent<Uint8Array>;
     'locale-change': CustomEvent<string>;
+    'semtree-data': CustomEvent<SemTreeDataEvent>;
   }
 }
 
@@ -148,7 +152,7 @@ const weaveApi: WeaveServices = {
         type: 'get-all-asset-relation-tags',
         crossGroup,
       }),
-    assetStore: (wal) => {
+    assetStore: (wal: WAL) => {
       const readableStore = readable<AsyncStatus<AssetStoreContent>>(
         { status: 'pending' },
         (set) => {
@@ -189,6 +193,22 @@ const weaveApi: WeaveServices = {
         });
       });
       return readableStore;
+    },
+  },
+
+  semTrees: {
+    registerDefinitions: (defs: SemTableDefsJSON) =>
+      postMessage({ type: 'semtree-register-definitions', defs }),
+    publishTree: (tree: SemNodeJSON, topic?: string) =>
+      postMessage({ type: 'semtree-publish', tree, topic }),
+    subscribeByPattern: (patternStr: string, topic?: string) =>
+      postMessage({ type: 'semtree-subscribe', patternStr, topic }),
+    unsubscribe: (subscriptionId: string) =>
+      postMessage({ type: 'semtree-unsubscribe', subscriptionId }),
+    onSemTreeData: (callback: (data: SemTreeDataEvent) => void) => {
+      const handler = (e: CustomEvent<SemTreeDataEvent>) => callback(e.detail);
+      window.addEventListener('semtree-data', handler);
+      return () => window.removeEventListener('semtree-data', handler);
     },
   },
 
@@ -642,6 +662,15 @@ const handleParentMessageGeneral = async (
           detail: message.payload,
         }),
       );
+      break;
+    }
+    case 'semtree-data': {
+      window.dispatchEvent(
+        new CustomEvent('semtree-data', {
+          detail: message.data,
+        }),
+      );
+      break;
     }
     case 'on-before-unload': {
       // This case is handled in handleParentMessageAppletView

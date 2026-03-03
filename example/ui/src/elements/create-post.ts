@@ -61,6 +61,7 @@ export class CreatePost extends LitElement {
           bubbles: true,
           detail: {
             postHash: record.actionHash,
+            post,
           },
         })
       );

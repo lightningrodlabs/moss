@@ -6,6 +6,7 @@ import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
 
 import './elements/all-posts.js';
 import './elements/create-post.js';
+import './elements/received-posts.js';
 import {
     type WAL,
     type FrameNotification,
@@ -31,6 +32,9 @@ import { weaveClientContext } from '@theweave/elements';
 import { decode, encode } from '@msgpack/msgpack';
 import { Accountability } from '@theweave/group-client';
 import { hrlToString } from "@holochain-open-dev/utils/dist/hrl";
+import { POST_DEFS, POST_PATTERN, buildPostTree } from './sem-tree-posts.js';
+import type { ReceivedPosts } from './elements/received-posts.js';
+import type { Post } from './types.js';
 
 @localized()
 @customElement('example-applet-main')
@@ -113,8 +117,24 @@ export class AppletMain extends LitElement {
   failUnbeforeUnloadCheckmark!: HTMLInputElement;
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
+  semTreeUnsubscribe: UnsubscribeFunction | undefined;
+
+  @query('received-posts')
+  receivedPostsEl!: ReceivedPosts;
 
   async firstUpdated() {
+    // Register semantic tree definitions and subscribe for posts from other tools
+    try {
+      await this.weaveClient.semTrees.registerDefinitions(POST_DEFS);
+      await this.weaveClient.semTrees.subscribeByPattern(POST_PATTERN, 'posts');
+      this.semTreeUnsubscribe = this.weaveClient.semTrees.onSemTreeData((event) => {
+        console.log('[SemTree] Received post tree:', event);
+        this.receivedPostsEl?.addTreeEvent(event);
+      });
+    } catch (e) {
+      console.error('[SemTree] Failed to set up post subscription:', e);
+    }
+
     this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(() => {
       if (this.failUnbeforeUnloadCheckmark.checked)
         throw new Error(
@@ -151,6 +171,7 @@ export class AppletMain extends LitElement {
 
   disconnectedCallback(): void {
     if (this.onBeforeUnloadUnsubscribe) this.onBeforeUnloadUnsubscribe();
+    if (this.semTreeUnsubscribe) this.semTreeUnsubscribe();
   }
 
   async updateCellInfos() {
@@ -343,7 +364,15 @@ export class AppletMain extends LitElement {
         }</div>
         <div class="row">
           <div class="column">
-            <create-post style="margin: 16px;"></create-post>
+            <create-post style="margin: 16px;" @post-created=${(e: CustomEvent) => {
+              const post = e.detail.post as Post;
+              if (post) {
+                const tree = buildPostTree(post.title, post.content);
+                this.weaveClient.semTrees.publishTree(tree, 'posts').catch((err: unknown) =>
+                  console.error('[SemTree] Failed to publish post tree:', err)
+                );
+              }
+            }}></create-post>
             <h2>Notifications</h2>
             <button @click=${() => this.sendLowNotification(5000)}>
               Send Low Urgency Notification with 5 seconds delay
@@ -543,6 +572,8 @@ export class AppletMain extends LitElement {
       }}
             ></all-posts>
           </div>
+          <h2>Received Posts (via Semantic Tree Pub/Sub)</h2>
+          <received-posts style="margin: 16px; max-width: 600px;"></received-posts>
         </div>
       </div>
     `;

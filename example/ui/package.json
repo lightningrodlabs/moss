@@ -21,6 +21,7 @@
     "@holochain/client": "=0.20.4-rc.0",
     "@theweave/api": "file:../../libs/api",
     "@theweave/elements": "file:../../libs/elements",
+    "ceptr-js": "file:../../../ceptr-js",
     "@lit/context": "^1.0.1",
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.0",

@@ -18,6 +18,7 @@
     "@theweave/elements": "^0.6.3",
     "@theweave/utils": "^0.5.3",
     "@theweave/group-client": "^0.5.3",
+    "ceptr-js": "file:../../../ceptr-js",
     "@lit/context": "^1.0.1",
     "@lit-labs/task": "^1.1.2",
     "@lit/localize": "^0.12.0",

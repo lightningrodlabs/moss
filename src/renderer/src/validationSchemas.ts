@@ -515,4 +515,50 @@ export const AppletToParentRequest = Type.Union([
     },
     { additionalProperties: false },
   ),
+  /**
+   * Semantic tree requests
+   */
+  Type.Object(
+    {
+      type: Type.Literal('semtree-register-definitions'),
+      defs: Type.Object({
+        symbols: Type.Array(
+          Type.Object({
+            label: Type.String(),
+            structureLabel: Type.String(),
+          }),
+        ),
+        structures: Type.Array(
+          Type.Object({
+            label: Type.String(),
+            partLabels: Type.Array(Type.String()),
+          }),
+        ),
+      }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('semtree-publish'),
+      tree: Type.Any(),
+      topic: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('semtree-subscribe'),
+      patternStr: Type.String(),
+      topic: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('semtree-unsubscribe'),
+      subscriptionId: Type.String(),
+    },
+    { additionalProperties: false },
+  ),
 ]);

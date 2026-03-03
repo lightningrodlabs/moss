@@ -121,6 +121,7 @@ import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
 import { IframeStore } from './iframe-store.js';
+import { SemTreeStore } from './semtree-store.js';
 import { notificationAudio } from './services/notification-audio.js';
 
 export class LazyMap<K, V> implements GetonlyMap<K, V> {
@@ -238,6 +239,8 @@ export class MossStore {
    */
 
   iframeStore = new IframeStore();
+
+  semTreeStore = new SemTreeStore(this.iframeStore);
 
   /**
    * --------------------------------------------------------------------------

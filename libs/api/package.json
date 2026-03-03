@@ -29,6 +29,7 @@
     "@holochain-open-dev/profiles": "^0.601.2",
     "@holochain/client": "=0.20.4-rc.0",
     "@msgpack/msgpack": "^2.8.0",
+    "ceptr-js": "file:../../../ceptr-js",
     "js-base64": "^3.7.2"
   },
   "devDependencies": {
