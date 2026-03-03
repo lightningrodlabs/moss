@@ -268,8 +268,8 @@ export class DangerTone extends LitElement {
                     this._cloneUseProgenitor = (e.target as HTMLInputElement).value === 'stewarded';
                   }}
                 >
-                  <sl-radio value="stewarded">${msg('Stewarded (with steward)')}</sl-radio>
-                  <sl-radio value="unstewarded">${msg('Unstewarded (open)')}</sl-radio>
+                  <sl-radio value="stewarded">${msg('Stewarded')}</sl-radio>
+                  <sl-radio value="unstewarded">${msg('Unstewarded')}</sl-radio>
                 </sl-radio-group>
               `
             : html``}

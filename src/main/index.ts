@@ -1407,7 +1407,7 @@ if (!RUNNING_WITH_COMMAND) {
     // Helper: return the primary agent pubkey, preferring one imported from a legacy
     // profile over generating a fresh one. Clears the preferred-key signal file on use.
     const getOrCreateAgentPubKey = async (): Promise<AgentPubKey> => {
-      const preferredB64 = WE_FILE_SYSTEM.readAndClearPreferredAgentPubKey();
+      const preferredB64 = WE_FILE_SYSTEM.readPreferredAgentPubKey();
       if (preferredB64) {
         console.log(`Using preferred agent pubkey from legacy import: ${preferredB64}`);
         return decodeHashFromBase64(preferredB64);
@@ -2028,7 +2028,7 @@ if (!RUNNING_WITH_COMMAND) {
       return runGroupsImport(groups);
     });
     ipcMain.handle('consume-pending-groups-import', async (_e) => {
-      const pending = WE_FILE_SYSTEM.readAndClearPendingGroupsImport();
+      const pending = WE_FILE_SYSTEM.readPendingGroupsImport();
       if (!pending) return null;
       return runGroupsImport(pending as GroupExportEntry[]);
     });
@@ -2077,9 +2077,7 @@ if (!RUNNING_WITH_COMMAND) {
           },
         });
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        // Pre-authorize the new group cell now so that when autoSaveGroupsExport runs
-        // later, collectGroupsData finds it already in authorizedCells and writes nothing
-        // to the source chain — eliminating any race with the renderer's setup calls.
+        // Pre-authorize the new group cell.
         const newGroupCells = appInfo.cell_info['group'];
         if (newGroupCells) {
           for (const cell of newGroupCells) {

@@ -557,15 +557,13 @@ export class MossFileSystem {
   }
 
   /**
-   * Read the preferred agent pubkey written by copyLegacyProfileData and
-   * immediately delete the file so it is only consumed once.
+   * Read the preferred agent pubkey written by copyLegacyProfileData.
    * Returns undefined if no preferred key was set.
    */
-  readAndClearPreferredAgentPubKey(): string | undefined {
+  readPreferredAgentPubKey(): string | undefined {
     const src = path.join(this.profileDataDir, 'moss-preferred-agent-pubkey.txt');
     if (!fs.existsSync(src)) return undefined;
     const keyB64 = fs.readFileSync(src, 'utf-8').trim();
-    fs.rmSync(src);
     return keyB64;
   }
 
@@ -578,15 +576,13 @@ export class MossFileSystem {
   }
 
   /**
-   * Read the auto-imported groups export copied from a legacy profile and
-   * immediately delete the file so it is only consumed once.
+   * Read the auto-imported groups export copied from a legacy profile.
    * Returns undefined if no pending import exists.
    */
-  readAndClearPendingGroupsImport(): unknown[] | undefined {
+  readPendingGroupsImport(): unknown[] | undefined {
     const src = path.join(this.profileDataDir, 'moss-pending-groups-import.json');
     if (!fs.existsSync(src)) return undefined;
     const data = JSON.parse(fs.readFileSync(src, 'utf-8'));
-    fs.rmSync(src);
     return data;
   }
 
@@ -746,8 +742,7 @@ export function copyLegacyProfileData(
   // Copy the password file. The lair keystore is encrypted with a random password
   // stored at <profileDataDir>/.pw. Without copying it the new profile cannot decrypt
   // the imported keystore and lair will crash on startup.
-  // If .pw is absent (e.g. very old profiles pre-0.13) we skip the keystore copy
-  // entirely so the user gets a fresh identity instead of a broken one.
+  // If .pw is absent, skip the keystore copy.
   const legacyPwPath = path.join(legacyDataDir, '.pw');
   if (fs.existsSync(legacyPwPath)) {
     fs.copyFileSync(legacyPwPath, path.join(mossFileSystem.profileDataDir, '.pw'));
@@ -831,7 +826,7 @@ export function copyLegacyProfileData(
 }
 
 export interface LegacyProfileInfo {
-  /** Human-readable app name, e.g. "We" or "Weave" */
+  /** App name */
   appName: string;
   /** Breaking version string, e.g. "0.13.x" */
   versionString: string;
@@ -844,7 +839,7 @@ export interface LegacyProfileInfo {
 }
 
 /**
- * Searches sibling app-data directories for Moss/We/Weave profiles that have an
+ * Searches sibling app-data directories for Moss profiles that have an
  * initialized lair keystore. Returns all found candidates so the UI can offer
  * an import prompt.
  *
