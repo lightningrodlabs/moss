@@ -569,6 +569,27 @@ export class MossFileSystem {
     return keyB64;
   }
 
+  /**
+   * Path where the auto-saved groups export JSON is written on every group/tool change.
+   * Future Moss versions use this to auto-import groups after a keystore migration.
+   */
+  get groupsExportPath(): string {
+    return path.join(this.profileDataDir, 'moss-groups-export.json');
+  }
+
+  /**
+   * Read the auto-imported groups export copied from a legacy profile and
+   * immediately delete the file so it is only consumed once.
+   * Returns undefined if no pending import exists.
+   */
+  readAndClearPendingGroupsImport(): unknown[] | undefined {
+    const src = path.join(this.profileDataDir, 'moss-pending-groups-import.json');
+    if (!fs.existsSync(src)) return undefined;
+    const data = JSON.parse(fs.readFileSync(src, 'utf-8'));
+    fs.rmSync(src);
+    return data;
+  }
+
   async openLogs() {
     try {
       await shell.openPath(this.profileLogsDir);
@@ -723,73 +744,89 @@ export function copyLegacyProfileData(
   };
 
   // Copy the password file. The lair keystore is encrypted with a random password
-  // stored at <profileDataDir>/.pw. Without copying it, the new profile would generate
-  // a fresh password and fail to decrypt the imported keystore.
+  // stored at <profileDataDir>/.pw. Without copying it the new profile cannot decrypt
+  // the imported keystore and lair will crash on startup.
+  // If .pw is absent (e.g. very old profiles pre-0.13) we skip the keystore copy
+  // entirely so the user gets a fresh identity instead of a broken one.
   const legacyPwPath = path.join(legacyDataDir, '.pw');
   if (fs.existsSync(legacyPwPath)) {
     fs.copyFileSync(legacyPwPath, path.join(mossFileSystem.profileDataDir, '.pw'));
     console.log(`Copied legacy password file from ${legacyPwPath}`);
-  } else {
-    console.warn(`No .pw file found in legacy profile at ${legacyPwPath}; keystore may fail to decrypt`);
-  }
 
-  // Replace empty keystore dir created by constructor with legacy contents
-  if (fs.existsSync(mossFileSystem.keystoreDir)) {
-    fs.rmSync(mossFileSystem.keystoreDir, { recursive: true });
-  }
-  fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, { recursive: true, filter: skipSockets });
-  console.log(`Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`);
-
-  // Fix the copied lair-keystore-config.yaml:
-  // 1. Rewrite pidFile/storeFile to point to the new keystore location.
-  // 2. Normalize connectionUrl onto a single line.
-  //    Lair's YAML serializer sometimes wraps the long connectionUrl value across two
-  //    physical lines (a plain-scalar continuation). When launchLairKeystore() later
-  //    reads the file, it splits on '\n' and only sees the first fragment of the key,
-  //    producing a truncated URL that lair rejects with an "internal" error.
-  const lairConfigPath = path.join(mossFileSystem.keystoreDir, 'lair-keystore-config.yaml');
-  if (fs.existsSync(lairConfigPath)) {
-    const rawLines = fs.readFileSync(lairConfigPath, 'utf-8').split('\n');
-    const normalized: string[] = [];
-    for (let i = 0; i < rawLines.length; i++) {
-      const line = rawLines[i];
-      if (line.startsWith('connectionUrl:')) {
-        // Collect any continuation lines: lines that are not empty, not a comment,
-        // and not a YAML key (pattern: word characters followed by ':').
-        let fullLine = line;
-        while (i + 1 < rawLines.length) {
-          const next = rawLines[i + 1];
-          if (next === '' || next.startsWith('#') || /^\w[\w-]*:/.test(next)) {
-            break;
-          }
-          // Join without space — lair wraps URLs at a character boundary mid-token.
-          fullLine += next;
-          i++;
-        }
-        normalized.push(fullLine);
-      } else if (line.startsWith('pidFile:')) {
-        normalized.push(`pidFile: ${path.join(mossFileSystem.keystoreDir, 'pid_file')}`);
-      } else if (line.startsWith('storeFile:')) {
-        normalized.push(`storeFile: ${path.join(mossFileSystem.keystoreDir, 'store_file')}`);
-      } else {
-        normalized.push(line);
-      }
+    // Replace empty keystore dir created by constructor with legacy contents
+    if (fs.existsSync(mossFileSystem.keystoreDir)) {
+      fs.rmSync(mossFileSystem.keystoreDir, { recursive: true });
     }
-    fs.writeFileSync(lairConfigPath, normalized.join('\n'), 'utf-8');
-    console.log(`Updated lair config paths in ${lairConfigPath}`);
+    fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, { recursive: true, filter: skipSockets });
+    console.log(`Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`);
+
+    // Fix the copied lair-keystore-config.yaml:
+    // 1. Rewrite pidFile/storeFile to point to the new keystore location.
+    // 2. Normalize connectionUrl onto a single line.
+    //    Lair's YAML serializer sometimes wraps the long connectionUrl value across two
+    //    physical lines (a plain-scalar continuation). When launchLairKeystore() later
+    //    reads the file, it splits on '\n' and only sees the first fragment of the key,
+    //    producing a truncated URL that lair rejects with an "internal" error.
+    const lairConfigPath = path.join(mossFileSystem.keystoreDir, 'lair-keystore-config.yaml');
+    if (fs.existsSync(lairConfigPath)) {
+      const rawLines = fs.readFileSync(lairConfigPath, 'utf-8').split('\n');
+      const normalized: string[] = [];
+      for (let i = 0; i < rawLines.length; i++) {
+        const line = rawLines[i];
+        if (line.startsWith('connectionUrl:')) {
+          // Collect any continuation lines: lines that are not empty, not a comment,
+          // and not a YAML key (pattern: word characters followed by ':').
+          let fullLine = line;
+          while (i + 1 < rawLines.length) {
+            const next = rawLines[i + 1];
+            if (next === '' || next.startsWith('#') || /^\w[\w-]*:/.test(next)) {
+              break;
+            }
+            // Join without space — lair wraps URLs at a character boundary mid-token.
+            fullLine += next;
+            i++;
+          }
+          normalized.push(fullLine);
+        } else if (line.startsWith('pidFile:')) {
+          normalized.push(`pidFile: ${path.join(mossFileSystem.keystoreDir, 'pid_file')}`);
+        } else if (line.startsWith('storeFile:')) {
+          normalized.push(`storeFile: ${path.join(mossFileSystem.keystoreDir, 'store_file')}`);
+        } else {
+          normalized.push(line);
+        }
+      }
+      fs.writeFileSync(lairConfigPath, normalized.join('\n'), 'utf-8');
+      console.log(`Updated lair config paths in ${lairConfigPath}`);
+    }
+
+    // If the copied keystore includes a recorded primary agent pubkey, write it as
+    // the preferred-key signal file so Holochain uses the same identity on first run.
+    const agentPubKeyFile = path.join(mossFileSystem.keystoreDir, 'moss-agent-pubkey.txt');
+    if (fs.existsSync(agentPubKeyFile)) {
+      const keyB64 = fs.readFileSync(agentPubKeyFile, 'utf-8').trim();
+      fs.writeFileSync(
+        path.join(mossFileSystem.profileDataDir, 'moss-preferred-agent-pubkey.txt'),
+        keyB64,
+        'utf-8',
+      );
+      console.log(`Set preferred agent pubkey from legacy profile: ${keyB64}`);
+    }
+  } else {
+    console.warn(
+      `No .pw file found in legacy profile at ${legacyPwPath}; skipping keystore copy.` +
+      ` A fresh agent identity will be generated. Groups data will still be imported if available.`,
+    );
   }
 
-  // If the copied keystore includes a recorded primary agent pubkey, write it as
-  // the preferred-key signal file so Holochain uses the same identity on first run.
-  const agentPubKeyFile = path.join(mossFileSystem.keystoreDir, 'moss-agent-pubkey.txt');
-  if (fs.existsSync(agentPubKeyFile)) {
-    const keyB64 = fs.readFileSync(agentPubKeyFile, 'utf-8').trim();
-    fs.writeFileSync(
-      path.join(mossFileSystem.profileDataDir, 'moss-preferred-agent-pubkey.txt'),
-      keyB64,
-      'utf-8',
+  // Copy a groups export snapshot if one was saved by the source profile.
+  // It will be auto-imported on first launch as a moss-pending-groups-import.json.
+  const legacyGroupsExport = path.join(legacyDataDir, 'moss-groups-export.json');
+  if (fs.existsSync(legacyGroupsExport)) {
+    fs.copyFileSync(
+      legacyGroupsExport,
+      path.join(mossFileSystem.profileDataDir, 'moss-pending-groups-import.json'),
     );
-    console.log(`Set preferred agent pubkey from legacy profile: ${keyB64}`);
+    console.log(`Copied legacy groups export for auto-import on first launch`);
   }
 }
 
@@ -892,7 +929,8 @@ export function findLegacyProfiles(app: Electron.App): LegacyProfileInfo[] {
         }
         const keystorePath = path.join(versionDir, profileName, 'data', 'keystore');
         const lairConfig = path.join(keystorePath, 'lair-keystore-config.yaml');
-        if (fs.existsSync(lairConfig)) {
+        const pwFile = path.join(versionDir, profileName, 'data', 'keystore', 'moss-agent-pubkey.txt');
+        if (fs.existsSync(lairConfig) && fs.existsSync(pwFile)) {
           const lairVersionFile = path.join(keystorePath, 'moss-lair-version.txt');
           const lairVersion = fs.existsSync(lairVersionFile)
             ? fs.readFileSync(lairVersionFile, 'utf-8').trim()

@@ -115,8 +115,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('join-group', networkSeed, progenitor),
   installGroupHapp: (useProgenitor: boolean, customGroupSeed: string | undefined = undefined) =>
     ipcRenderer.invoke('install-group-happ', useProgenitor, customGroupSeed),
+  silentExportGroupsData: () => ipcRenderer.invoke('silent-export-groups-data'),
   exportGroupsData: () => ipcRenderer.invoke('export-groups-data'),
   importGroupsData: () => ipcRenderer.invoke('import-groups-data'),
+  consumePendingGroupsImport: () => ipcRenderer.invoke('consume-pending-groups-import'),
   onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: unknown) => void) =>
     ipcRenderer.on('import-groups-progress', callback),
   notification: (

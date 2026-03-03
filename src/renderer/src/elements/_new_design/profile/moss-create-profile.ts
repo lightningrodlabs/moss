@@ -67,6 +67,9 @@ export class MossCreateProfile extends LitElement {
       // to pre-populate the profile next time a new profile needs to
       // be created
       this.mossStore.persistedStore.personas.set([profile]);
+      window.electronAPI
+        .silentExportGroupsData()
+        .catch((e) => console.warn('Auto-export after createProfile failed:', e));
       this.dispatchEvent(
         new CustomEvent('profile-created', {
           detail: {

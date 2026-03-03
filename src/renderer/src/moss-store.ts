@@ -67,6 +67,7 @@ import {
   getToolIcon,
   installGroupHapp,
   joinGroup,
+  silentExportGroupsData,
   storeGroupProfile,
 } from './electron-api.js';
 import {
@@ -1002,6 +1003,7 @@ export class MossStore {
     }
 
     await this.reloadManualStores();
+    silentExportGroupsData().catch((e) => console.warn('Auto-export after createGroup failed:', e));
     return appInfo;
   }
 
@@ -1009,6 +1011,7 @@ export class MossStore {
     try {
       const appInfo = await joinGroup(networkSeed, progenitor);
       await this.reloadManualStores();
+      silentExportGroupsData().catch((e) => console.warn('Auto-export after joinGroup failed:', e));
       return appInfo;
     } catch (e) {
       console.error('Error installing group app: ', e);

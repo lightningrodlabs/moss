@@ -1340,6 +1340,15 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('get-profile', (): string | undefined => RUN_OPTIONS.profile);
     ipcMain.handle('get-version', (): string => app.getVersion());
     ipcMain.handle('get-conductor-info', (): ConductorInfo | undefined => {
+      // Forward any deep link that arrived before launch completed, now that the
+      // renderer is ready to listen for it.
+      if (CACHED_DEEP_LINK && MAIN_WINDOW) {
+        const link = CACHED_DEEP_LINK;
+        CACHED_DEEP_LINK = undefined;
+        setTimeout(() => {
+          if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'deep-link-received', link);
+        }, 5000);
+      }
       return HOLOCHAIN_MANAGER
         ? {
           app_port: HOLOCHAIN_MANAGER.appPort,
@@ -1387,6 +1396,13 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('copy-legacy-profile', (_e, keystorePath: string): void => {
       copyLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
     });
+
+    // Tracks cells that have had authorizeSigningCredentials called this session.
+    // Populated at startup for all existing group cells, and immediately when a new
+    // group cell is installed. collectGroupsData never calls authorizeSigningCredentials
+    // itself — doing so would write a cap grant to the source chain and could race with
+    // concurrent renderer operations (e.g. register_and_join_applet bundles).
+    const authorizedCells = new Set<string>();
 
     // Helper: return the primary agent pubkey, preferring one imported from a legacy
     // profile over generating a fresh one. Clears the preferred-key signal file on use.
@@ -1470,47 +1486,69 @@ if (!RUNNING_WITH_COMMAND) {
         });
       }
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+      // Pre-authorize the new group cell
+      const newGroupCells = appInfo.cell_info['group'];
+      if (newGroupCells) {
+        for (const cell of newGroupCells) {
+          if (cell.type === CellType.Provisioned) {
+            const cellId = cell.value.cell_id;
+            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
+            if (!authorizedCells.has(cellKey)) {
+              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+              authorizedCells.add(cellKey);
+            }
+            break;
+          }
+        }
+      }
+      setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-group-happ failed:', e)), 2000);
       return appInfo;
     });
-    ipcMain.handle('export-groups-data', async (_e) => {
+    // ── Shared types for groups data export / import ──────────────────────────────
+    type ToolExportEntry = {
+      custom_name: string;
+      network_seed: string | undefined;
+      toolId: string;
+      toolName?: string;
+      toolListUrl: string;
+      versionBranch: string;
+    };
+    type GroupExportEntry = {
+      appId: string;
+      networkSeed: string | undefined;
+      progenitor: AgentPubKeyB64 | null;
+      groupProfile: { name: string; icon_src: string } | undefined;
+      agentProfile: { nickname: string; avatar?: string } | undefined;
+      description?: string;
+      tools?: ToolExportEntry[];
+    };
+    type ImportStatus = 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+    type ImportResult = { groupName: string | undefined; status: ImportStatus; error?: string };
+
+    // Collect all groups data via zome calls (without writing to disk).
+    const collectGroupsData = async (): Promise<GroupExportEntry[]> => {
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       const groupApps = allApps.filter((a) => a.installed_app_id.startsWith('group#'));
       const appPort = HOLOCHAIN_MANAGER!.appPort;
 
       const groupsData = await Promise.all(groupApps.map(async (groupApp) => {
         const appId = groupApp.installed_app_id;
-        // appId format: group#${hashedSeed}#${progenitor | null}
         const parts = appId.split('#');
         const progenitor = parts[2] !== 'null' ? parts[2] : null;
 
-        // TEMPORARY: skip groups with a progenitor since the agent key will change
-        if (progenitor) {
-          console.warn(`Skipping export of group ${appId} since it has a progenitor and the exported data would not be reusable due to the agent key changing on import.`);
-          return {
-            appId,
-            networkSeed: undefined,
-            progenitor,
-            groupProfile: undefined,
-            agentProfile: undefined,
-          };
-        }
-
         let networkSeed: string | undefined;
         let dnaHashB64: DnaHashB64 | undefined;
-        let cellId: [Uint8Array, Uint8Array] | undefined;
         const groupCells = groupApp.cell_info['group'];
         if (groupCells) {
           for (const cell of groupCells) {
             if (cell.type === CellType.Provisioned) {
               networkSeed = cell.value.dna_modifiers.network_seed;
               dnaHashB64 = encodeHashToBase64(cell.value.cell_id[0]);
-              cellId = cell.value.cell_id;
               break;
             }
           }
         }
 
-        // Fetch group profile and agent profile via zome calls
         let groupProfile: { name: string; icon_src: string } | undefined;
         let groupDescription: string | undefined;
         let agentProfile: { nickname: string; avatar?: string } | undefined;
@@ -1529,11 +1567,6 @@ if (!RUNNING_WITH_COMMAND) {
             wsClientOptions: { origin: 'moss-admin' },
             token,
           });
-          if (cellId) {
-            await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-          }
-
-          // Fetch group profile
           const groupProfileRecord = await appWs.callZome({
             role_name: 'group',
             zome_name: 'group',
@@ -1544,14 +1577,10 @@ if (!RUNNING_WITH_COMMAND) {
             const entryBytes = (groupProfileRecord as any).entry?.Present?.entry;
             if (entryBytes) {
               const profileEntry = decode(entryBytes) as { name: string; icon_src: string };
-              groupProfile = {
-                name: profileEntry.name,
-                icon_src: profileEntry.icon_src,
-              };
+              groupProfile = { name: profileEntry.name, icon_src: profileEntry.icon_src };
             }
           }
 
-          // Fetch group description
           try {
             const descRecord = await appWs.callZome({
               role_name: 'group',
@@ -1568,7 +1597,6 @@ if (!RUNNING_WITH_COMMAND) {
             }
           } catch (_) {}
 
-          // Fetch agent's own profile within this group
           const agentProfileRecord = await appWs.callZome({
             role_name: 'group',
             zome_name: 'profiles',
@@ -1579,14 +1607,10 @@ if (!RUNNING_WITH_COMMAND) {
             const entryBytes = (agentProfileRecord as any).entry?.Present?.entry;
             if (entryBytes) {
               const profileEntry = decode(entryBytes) as { nickname: string; fields: Record<string, string> };
-              agentProfile = {
-                nickname: profileEntry.nickname,
-                avatar: profileEntry.fields?.avatar,
-              };
+              agentProfile = { nickname: profileEntry.nickname, avatar: profileEntry.fields?.avatar };
             }
           }
 
-          // Fetch list of joined applets in this group
           try {
             const myJoinedApplets: Array<{ public_entry_hash: Uint8Array; applet: any; applet_pubkey: Uint8Array }> | null =
               await appWs.callZome({
@@ -1628,65 +1652,28 @@ if (!RUNNING_WITH_COMMAND) {
           }
         } catch (e) {
           console.warn(`Failed to get profiles for group ${appId}:`, e);
-          // Fall back to cached group profile on disk if zome call failed
           groupProfile = dnaHashB64 ? WE_FILE_SYSTEM.readGroupProfile(dnaHashB64) : undefined;
         }
 
-        return {
-          appId,
-          networkSeed,
-          progenitor,
-          groupProfile,
-          agentProfile,
-          description: groupDescription,
-          tools,
-        };
+        return { appId, networkSeed, progenitor, groupProfile, agentProfile, description: groupDescription, tools };
       }));
 
-      // Don't include gropus without a network seed
-      const groupsDataFiltered = groupsData.filter((g) => g.networkSeed);
+      return groupsData.filter((g) => g.networkSeed);
+    };
 
-      const saveResult = await dialog.showSaveDialog(MAIN_WINDOW!, {
-        title: 'Export Groups Data',
-        defaultPath: path.join(app.getPath('downloads'), 'moss-groups-export.json'),
-        filters: [{ name: 'JSON', extensions: ['json'] }],
-      });
+    // Save a fresh groups snapshot to the profile dir. Fire-and-forget safe.
+    const autoSaveGroupsExport = async (): Promise<void> => {
+      try {
+        const data = await collectGroupsData();
+        fs.writeFileSync(WE_FILE_SYSTEM.groupsExportPath, JSON.stringify(data, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Auto-save groups export failed:', e);
+      }
+    };
 
-      if (saveResult.canceled || !saveResult.filePath) return;
-
-      fs.writeFileSync(saveResult.filePath, JSON.stringify(groupsDataFiltered, null, 2), 'utf-8');
-    });
-    ipcMain.handle('import-groups-data', async (_e) => {
-      const openResult = await dialog.showOpenDialog(MAIN_WINDOW!, {
-        title: 'Import Groups Data',
-        filters: [{ name: 'JSON', extensions: ['json'] }],
-        properties: ['openFile'],
-      });
-      if (openResult.canceled || !openResult.filePaths[0]) return [];
-
-      type ToolExportEntry = {
-        custom_name: string;
-        network_seed: string | undefined;
-        toolId: string;
-        toolName?: string;
-        toolListUrl: string;
-        versionBranch: string;
-      };
-      type GroupExportEntry = {
-        appId: string;
-        networkSeed: string | undefined;
-        progenitor: AgentPubKeyB64 | null;
-        groupProfile: { name: string; icon_src: string } | undefined;
-        agentProfile: { nickname: string; avatar?: string } | undefined;
-        description?: string;
-        tools?: ToolExportEntry[];
-      };
-      type ImportStatus = 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
-      type ImportResult = { groupName: string | undefined; status: ImportStatus; error?: string };
-
-      const raw = fs.readFileSync(openResult.filePaths[0], 'utf-8');
-      const groups = JSON.parse(raw) as GroupExportEntry[];
-
+    // Execute a groups import from a parsed array. Used by both dialog-based and
+    // auto-import (pending) flows.
+    const runGroupsImport = async (groups: GroupExportEntry[]): Promise<ImportResult[]> => {
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let myPubKey = globalPubKeyFromListAppsResponse(allApps);
       if (!myPubKey) myPubKey = await getOrCreateAgentPubKey();
@@ -1702,7 +1689,7 @@ if (!RUNNING_WITH_COMMAND) {
       for (let gi = 0; gi < groups.length; gi++) {
         const group = groups[gi];
         const current = gi + 1;
-        const { networkSeed, progenitor, groupProfile, description } = group;
+        const { networkSeed, progenitor, groupProfile, agentProfile, description } = group;
 
         if (!networkSeed) {
           results.push({ groupName: groupProfile?.name, status: 'error', error: 'Missing network seed' });
@@ -1752,7 +1739,11 @@ if (!RUNNING_WITH_COMMAND) {
             }
           }
           if (cellId) {
-            await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
+            if (!authorizedCells.has(cellKey)) {
+              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+              authorizedCells.add(cellKey);
+            }
           }
 
           let importGroupStatus: ImportStatus;
@@ -1776,7 +1767,6 @@ if (!RUNNING_WITH_COMMAND) {
             }
             importGroupStatus = 'created';
           } else {
-            // Wait up to 20s for group profile to sync from the network
             let profileSynced = false;
             const deadline = Date.now() + 20000;
             while (Date.now() < deadline) {
@@ -1799,7 +1789,6 @@ if (!RUNNING_WITH_COMMAND) {
             if (profileSynced) {
               importGroupStatus = 'joined';
             } else if (!progenitor) {
-              // Unstewarded group — we can set the profile ourselves
               if (groupProfile) {
                 emitProgress(current, groupProfile?.name, 'setting-profile');
                 await appWs.callZome({
@@ -1819,12 +1808,28 @@ if (!RUNNING_WITH_COMMAND) {
               }
               importGroupStatus = 'created';
             } else {
-              // Progenitor exists but is not us — leave as joined, profile may sync later
               importGroupStatus = 'joined-no-profile';
             }
           }
 
-          // Install tools for this group
+          // Set the agent's own profile in this group if we have one from the export.
+          if (agentProfile) {
+            try {
+              emitProgress(current, groupProfile?.name, 'setting-profile');
+              await appWs.callZome({
+                role_name: 'group',
+                zome_name: 'profiles',
+                fn_name: 'create_profile',
+                payload: {
+                  nickname: agentProfile.nickname,
+                  fields: agentProfile.avatar ? { avatar: agentProfile.avatar } : {},
+                },
+              });
+            } catch (profileErr) {
+              console.warn(`Failed to set agent profile for group ${appId}:`, profileErr);
+            }
+          }
+
           if (group.tools && group.tools.length > 0) {
             for (let ti = 0; ti < group.tools.length; ti++) {
               const tool = group.tools[ti];
@@ -1835,8 +1840,6 @@ if (!RUNNING_WITH_COMMAND) {
               });
               try {
                 const { toolId, toolListUrl, versionBranch } = tool;
-
-                // Fetch tool list and find the tool by id — if not present, skip
                 const toolListResp = await net.fetch(toolListUrl, { cache: 'no-cache' });
                 const toolList: DeveloperCollectiveToolList = await toolListResp.json();
                 const toolInfoEntry = toolList.tools.find(
@@ -1847,7 +1850,6 @@ if (!RUNNING_WITH_COMMAND) {
                   continue;
                 }
 
-                // Use the latest available webhapp version
                 const sortedVersions = sortVersionsDescending([...toolInfoEntry.versions]);
                 const versionToInstall = sortedVersions.find((v) => !!v.hashes.webhappSha256);
                 if (!versionToInstall) {
@@ -1857,7 +1859,6 @@ if (!RUNNING_WITH_COMMAND) {
 
                 const developerCollectiveId = new URL(toolListUrl).hostname;
                 const toolCompatibilityId = deriveToolCompatibilityId({ toolListUrl, toolId, versionBranch });
-
                 const newDistributionInfo: DistributionInfo = {
                   type: 'web2-tool-list',
                   info: {
@@ -1887,7 +1888,6 @@ if (!RUNNING_WITH_COMMAND) {
                   properties: {},
                 };
 
-                // Compute app ID — mirrors appIdFromAppletHash(await groupClient.hashApplet(applet))
                 const appletHash: Uint8Array = await appWs.callZome({
                   role_name: 'group',
                   zome_name: 'group',
@@ -1896,7 +1896,6 @@ if (!RUNNING_WITH_COMMAND) {
                 });
                 const appletAppId = `applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`;
 
-                // Fetch and store icon — mirrors install-applet-bundle
                 if (!WE_FILE_SYSTEM.readToolIcon(toolCompatibilityId)) {
                   try {
                     const iconUrl = new URL(toolInfoEntry.icon);
@@ -1915,7 +1914,6 @@ if (!RUNNING_WITH_COMMAND) {
                   }
                 }
 
-                // Check if already installed in conductor
                 const currentApps2 = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
                 const existingAppletEntry = currentApps2.find((a) => a.installed_app_id === appletAppId);
                 let appletAgentPubKey: Uint8Array;
@@ -1923,13 +1921,11 @@ if (!RUNNING_WITH_COMMAND) {
                 if (existingAppletEntry) {
                   appletAgentPubKey = existingAppletEntry.agent_pub_key;
                 } else {
-                  // Download and store webhapp — mirrors install-applet-bundle
                   const uisDir = WE_FILE_SYSTEM.uisDir;
                   const happsDir = WE_FILE_SYSTEM.happsDir;
                   const happAlreadyStoredPath = path.join(happsDir, `${sha256Happ}.happ`);
                   const happAlreadyStored = fs.existsSync(happAlreadyStoredPath);
                   const uiAlreadyStored = fs.existsSync(path.join(uisDir, sha256Ui, 'assets'));
-
                   let happToBeInstalledPath = happAlreadyStoredPath;
 
                   if (!happAlreadyStored || !uiAlreadyStored) {
@@ -1944,14 +1940,13 @@ if (!RUNNING_WITH_COMMAND) {
                       throw new Error(`webhapp hash mismatch: expected ${sha256Webhapp}, got ${gotWebhappSha256}`);
                     if (sha256Ui && gotUiSha256 && gotUiSha256 !== sha256Ui)
                       throw new Error(`ui hash mismatch: expected ${sha256Ui}, got ${gotUiSha256}`);
-
-                    const tmpDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
-                    fs.mkdirSync(tmpDir, { recursive: true });
-                    const webHappPath = path.join(tmpDir, 'applet_to_install.webhapp');
+                    const tmpImportDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
+                    fs.mkdirSync(tmpImportDir, { recursive: true });
+                    const webHappPath = path.join(tmpImportDir, 'applet_to_install.webhapp');
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
                     const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
                     happToBeInstalledPath = happPath;
-                    try { fs.rmSync(tmpDir, { recursive: true }); } catch (_) {}
+                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) {}
                   }
 
                   const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
@@ -1980,22 +1975,18 @@ if (!RUNNING_WITH_COMMAND) {
                       }
                     }
                   }
-
                   appletAgentPubKey = appletAppInfo.agent_pub_key;
                 }
 
-                // Register and join applet in the group DNA — mirrors registerAndJoinApplet()
                 await appWs.callZome({
                   role_name: 'group',
                   zome_name: 'group',
                   fn_name: 'register_and_join_applet',
                   payload: { applet, joining_pubkey: appletAgentPubKey },
                 });
-
                 console.log(`Imported tool "${tool.custom_name}" (${appletAppId}) into group ${appId}`);
               } catch (toolErr) {
                 console.error(`Failed to import tool "${tool.custom_name || tool.toolId}":`, toolErr);
-                // Continue with next tool; don't fail the whole group import
               }
             }
           }
@@ -2010,6 +2001,36 @@ if (!RUNNING_WITH_COMMAND) {
       }
 
       return results;
+    };
+
+    ipcMain.handle('silent-export-groups-data', async (_e) => {
+      await autoSaveGroupsExport();
+    });
+    ipcMain.handle('export-groups-data', async (_e) => {
+      await autoSaveGroupsExport();
+      const saveResult = await dialog.showSaveDialog(MAIN_WINDOW!, {
+        title: 'Export Groups Data',
+        defaultPath: path.join(app.getPath('downloads'), 'moss-groups-export.json'),
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (saveResult.canceled || !saveResult.filePath) return;
+      fs.copyFileSync(WE_FILE_SYSTEM.groupsExportPath, saveResult.filePath);
+    });
+    ipcMain.handle('import-groups-data', async (_e) => {
+      const openResult = await dialog.showOpenDialog(MAIN_WINDOW!, {
+        title: 'Import Groups Data',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        properties: ['openFile'],
+      });
+      if (openResult.canceled || !openResult.filePaths[0]) return [];
+      const raw = fs.readFileSync(openResult.filePaths[0], 'utf-8');
+      const groups = JSON.parse(raw) as GroupExportEntry[];
+      return runGroupsImport(groups);
+    });
+    ipcMain.handle('consume-pending-groups-import', async (_e) => {
+      const pending = WE_FILE_SYSTEM.readAndClearPendingGroupsImport();
+      if (!pending) return null;
+      return runGroupsImport(pending as GroupExportEntry[]);
     });
     ipcMain.handle(
       'join-group',
@@ -2056,6 +2077,24 @@ if (!RUNNING_WITH_COMMAND) {
           },
         });
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        // Pre-authorize the new group cell now so that when autoSaveGroupsExport runs
+        // later, collectGroupsData finds it already in authorizedCells and writes nothing
+        // to the source chain — eliminating any race with the renderer's setup calls.
+        const newGroupCells = appInfo.cell_info['group'];
+        if (newGroupCells) {
+          for (const cell of newGroupCells) {
+            if (cell.type === CellType.Provisioned) {
+              const cellId = cell.value.cell_id;
+              const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
+              if (!authorizedCells.has(cellKey)) {
+                await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+                authorizedCells.add(cellKey);
+              }
+              break;
+            }
+          }
+        }
+        setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after join-group failed:', e)), 2000);
         return appInfo;
       },
     );
@@ -2638,6 +2677,9 @@ if (!RUNNING_WITH_COMMAND) {
         // remove temp dir again
         if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
 
+        // The tool snapshot is taken after the handler returns so the renderer can call
+        // register_and_join_applet first.
+        setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-applet-bundle failed:', e)), 2000);
         return appInfo;
       },
     );
@@ -2664,17 +2706,24 @@ if (!RUNNING_WITH_COMMAND) {
       if (existingKey) {
         WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(existingKey));
       }
-      console.log(CACHED_DEEP_LINK);
+      // Pre-authorize all existing group cells
+      for (const appInfo of postLaunchApps) {
+        if (!appInfo.installed_app_id.startsWith('group#')) continue;
+        const groupCells = appInfo.cell_info['group'];
+        if (!groupCells) continue;
+        for (const cell of groupCells) {
+          if (cell.type === CellType.Provisioned) {
+            const cellId = cell.value.cell_id;
+            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
+            if (!authorizedCells.has(cellKey)) {
+              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+              authorizedCells.add(cellKey);
+            }
+            break;
+          }
+        }
+      }
       return isFirstLaunch;
-
-      // // Send cached deep link to main window after a timeout to make sure the event listener is ready
-      // if (CACHED_DEEP_LINK) {
-      //   setTimeout(() => {
-      //     if (MAIN_WINDOW) {
-      //       emitToWindow(MAIN_WINDOW, 'deep-link-received', CACHED_DEEP_LINK);
-      //     }
-      //   }, 8000);
-      // }
     });
     ipcMain.handle('moss-update-available', () => UPDATE_AVAILABLE);
     ipcMain.handle('install-moss-update', async () => {

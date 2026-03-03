@@ -144,8 +144,10 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
       installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
+      silentExportGroupsData: () => Promise<void>;
       exportGroupsData: () => Promise<void>;
       importGroupsData: () => Promise<GroupImportResult>;
+      consumePendingGroupsImport: () => Promise<GroupImportResult | null>;
       onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void) => void;
       notification: (
         notification: FrameNotification,
@@ -266,6 +268,10 @@ export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo>
   return window.electronAPI.installGroupHapp(useProgenitor);
 }
 
+export async function silentExportGroupsData(): Promise<void> {
+  return window.electronAPI.silentExportGroupsData();
+}
+
 export async function exportGroupsData(): Promise<void> {
   return window.electronAPI.exportGroupsData();
 }
@@ -291,6 +297,10 @@ export type GroupImportResult = Array<{
 
 export async function importGroupsData(): Promise<GroupImportResult> {
   return window.electronAPI.importGroupsData();
+}
+
+export async function consumePendingGroupsImport(): Promise<GroupImportResult | null> {
+  return window.electronAPI.consumePendingGroupsImport();
 }
 
 export async function dialogMessagebox(
