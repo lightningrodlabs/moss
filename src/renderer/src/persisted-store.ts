@@ -1,4 +1,4 @@
-import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKeyB64, DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
 import { AppletNotificationSettings, GlobalNotificationSoundSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
@@ -121,6 +121,15 @@ export class PersistedStore {
     },
     set: (value, groupDnaHashB64: DnaHashB64) =>
       this.store.setItem(`ignoredApplets#${groupDnaHashB64}`, value),
+  };
+
+  hiddenAgents: SubStore<AgentPubKeyB64[], AgentPubKeyB64[], [DnaHashB64]> = {
+    value: (groupDnaHashB64: DnaHashB64) => {
+      const hidden = this.store.getItem<AgentPubKeyB64[]>(`hiddenAgents#${groupDnaHashB64}`);
+      return hidden ? hidden : [];
+    },
+    set: (value: AgentPubKeyB64[], groupDnaHashB64: DnaHashB64) =>
+      this.store.setItem(`hiddenAgents#${groupDnaHashB64}`, value),
   };
 
   // We don't need this anymore currently

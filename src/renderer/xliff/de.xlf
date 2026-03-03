@@ -974,10 +974,6 @@
   <source>This group is disabled.</source>
   <target>Diese Gruppe ist deaktiviert.</target>
 </trans-unit>
-<trans-unit id="sa0bcc0ad6e32e0ec">
-  <source>cell name</source>
-  <target>Zellname</target>
-</trans-unit>
 <trans-unit id="sc8b6248d1ceeee57">
   <source>Failed to get groups.</source>
   <target>Gruppen konnten nicht abgerufen werden.</target>
@@ -1800,10 +1796,6 @@ starts now</source>
   <target>Der beste Teil des Tages
 beginnt jetzt</target>
 </trans-unit>
-<trans-unit id="sce3d87d60ac1c569">
-  <source>Error fetching groups</source>
-  <target>Fehler beim Abrufen der Gruppen</target>
-</trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
   <target>Verwendet in:</target>
@@ -1966,6 +1958,70 @@ beginnt jetzt</target>
 <trans-unit id="saf5fa57a62fc35ed">
   <source>Tool already exists</source>
   <target>Tool existiert bereits</target>
+</trans-unit>
+<trans-unit id="s58b647646001054b">
+  <source>Unhide agent</source>
+  <target>Agent einblenden</target>
+</trans-unit>
+<trans-unit id="s1981f783b23969bc">
+  <source>Hide agent</source>
+  <target>Agent ausblenden</target>
+</trans-unit>
+<trans-unit id="s886897f2fd4edb99">
+  <source>Hidden</source>
+  <target>Ausgeblendet</target>
+</trans-unit>
+<trans-unit id="sa3443b99ecf186ea">
+  <source>Unhide</source>
+  <target>Einblenden</target>
+</trans-unit>
+<trans-unit id="s9df212d89cab196d">
+  <source>Hide</source>
+  <target>Ausblenden</target>
+</trans-unit>
+<trans-unit id="sac45a18d253c80c8">
+  <source>Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.</source>
+  <target>Warnung: Die DNA in dieser .webhapp unterscheidet sich von der installierten Version. Die Benutzeroberfläche funktioniert möglicherweise nicht korrekt.</target>
+</trans-unit>
+<trans-unit id="s23f3130f1a529386">
+  <source>Dev UI override applied. Reload the tool to see the new UI.</source>
+  <target>Dev-UI-Überschreibung angewendet. Laden Sie das Tool neu, um die neue Benutzeroberfläche zu sehen.</target>
+</trans-unit>
+<trans-unit id="sd6843a4242885cbe">
+  <source>Failed to apply dev UI override (see console for details)</source>
+  <target>Dev-UI-Überschreibung konnte nicht angewendet werden (siehe Konsole für Details)</target>
+</trans-unit>
+<trans-unit id="sc7ab163c03e26f24">
+  <source>Dev UI override removed. Reload the tool to see the production UI.</source>
+  <target>Dev-UI-Überschreibung entfernt. Laden Sie das Tool neu, um die Produktions-UI zu sehen.</target>
+</trans-unit>
+<trans-unit id="se9816b358bc5b0f7">
+  <source>Failed to clear dev UI override (see console for details)</source>
+  <target>Dev-UI-Überschreibung konnte nicht gelöscht werden (siehe Konsole für Details)</target>
+</trans-unit>
+<trans-unit id="s4e6f26d0215c5982">
+  <source>Dev UI Override</source>
+  <target>Dev-UI-Überschreibung</target>
+</trans-unit>
+<trans-unit id="se0366a1991be70dc">
+  <source>DEV</source>
+  <target>DEV</target>
+</trans-unit>
+<trans-unit id="s2a8434b16dc214a3">
+  <source>Replace</source>
+  <target>Ersetzen</target>
+</trans-unit>
+<trans-unit id="sec75915c1ada3386">
+  <source>Clear Override</source>
+  <target>Überschreibung löschen</target>
+</trans-unit>
+<trans-unit id="s975b0da3d1c42d76">
+  <source>Override from .webhapp</source>
+  <target>Aus .webhapp überschreiben</target>
+</trans-unit>
+<trans-unit id="s43bda70697c53bfb">
+  <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
+  <target>Warnung: DNA-Hash stimmt nicht überein. Die Benutzeroberfläche funktioniert möglicherweise nicht korrekt mit den aktuellen Daten.</target>
 </trans-unit>
 </body>
 </file>

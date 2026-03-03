@@ -974,10 +974,6 @@
   <source>This group is disabled.</source>
   <target>Bu grup devre dışı.</target>
 </trans-unit>
-<trans-unit id="sa0bcc0ad6e32e0ec">
-  <source>cell name</source>
-  <target>hücre adı</target>
-</trans-unit>
 <trans-unit id="sc8b6248d1ceeee57">
   <source>Failed to get groups.</source>
   <target>Gruplar alınamadı.</target>
@@ -1800,10 +1796,6 @@ starts now</source>
   <target>Günün en güzel kısmı
 şimdi başlıyor</target>
 </trans-unit>
-<trans-unit id="sce3d87d60ac1c569">
-  <source>Error fetching groups</source>
-  <target>Gruplar alınırken hata oluştu</target>
-</trans-unit>
 <trans-unit id="sb0924356e720530f">
   <source>Used in:</source>
   <target>Kullanıldığı yer:</target>
@@ -1966,6 +1958,70 @@ starts now</source>
 <trans-unit id="saf5fa57a62fc35ed">
   <source>Tool already exists</source>
   <target>Araç zaten mevcut</target>
+</trans-unit>
+<trans-unit id="s58b647646001054b">
+  <source>Unhide agent</source>
+  <target>Ajanı göster</target>
+</trans-unit>
+<trans-unit id="s1981f783b23969bc">
+  <source>Hide agent</source>
+  <target>Ajanı gizle</target>
+</trans-unit>
+<trans-unit id="s886897f2fd4edb99">
+  <source>Hidden</source>
+  <target>Gizli</target>
+</trans-unit>
+<trans-unit id="sa3443b99ecf186ea">
+  <source>Unhide</source>
+  <target>Göster</target>
+</trans-unit>
+<trans-unit id="s9df212d89cab196d">
+  <source>Hide</source>
+  <target>Gizle</target>
+</trans-unit>
+<trans-unit id="sac45a18d253c80c8">
+  <source>Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.</source>
+  <target>Uyarı: Bu .webhapp'teki DNA, yüklü sürümden farklıdır. Arayüz doğru çalışmayabilir.</target>
+</trans-unit>
+<trans-unit id="s23f3130f1a529386">
+  <source>Dev UI override applied. Reload the tool to see the new UI.</source>
+  <target>Geliştirici arayüz değişikliği uygulandı. Yeni arayüzü görmek için aracı yeniden yükleyin.</target>
+</trans-unit>
+<trans-unit id="sd6843a4242885cbe">
+  <source>Failed to apply dev UI override (see console for details)</source>
+  <target>Geliştirici arayüz değişikliği uygulanamadı (ayrıntılar için konsola bakın)</target>
+</trans-unit>
+<trans-unit id="sc7ab163c03e26f24">
+  <source>Dev UI override removed. Reload the tool to see the production UI.</source>
+  <target>Geliştirici arayüz değişikliği kaldırıldı. Üretim arayüzünü görmek için aracı yeniden yükleyin.</target>
+</trans-unit>
+<trans-unit id="se9816b358bc5b0f7">
+  <source>Failed to clear dev UI override (see console for details)</source>
+  <target>Geliştirici arayüz değişikliği temizlenemedi (ayrıntılar için konsola bakın)</target>
+</trans-unit>
+<trans-unit id="s4e6f26d0215c5982">
+  <source>Dev UI Override</source>
+  <target>Geliştirici Arayüz Değişikliği</target>
+</trans-unit>
+<trans-unit id="se0366a1991be70dc">
+  <source>DEV</source>
+  <target>DEV</target>
+</trans-unit>
+<trans-unit id="s2a8434b16dc214a3">
+  <source>Replace</source>
+  <target>Değiştir</target>
+</trans-unit>
+<trans-unit id="sec75915c1ada3386">
+  <source>Clear Override</source>
+  <target>Değişikliği temizle</target>
+</trans-unit>
+<trans-unit id="s975b0da3d1c42d76">
+  <source>Override from .webhapp</source>
+  <target>.webhapp'ten değiştir</target>
+</trans-unit>
+<trans-unit id="s43bda70697c53bfb">
+  <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
+  <target>Uyarı: DNA hash uyuşmazlığı. Arayüz mevcut verilerle doğru çalışmayabilir.</target>
 </trans-unit>
 </body>
 </file>

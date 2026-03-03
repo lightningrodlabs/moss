@@ -1,4 +1,19 @@
+import { GroupProfile } from '@theweave/api';
+import { ToolCompatibilityId } from '@theweave/moss-types';
 import { ToolInfoAndLatestVersion } from '../../types.js';
+
+// Set to true to test welcome-view UI with mock data
+export const WELCOME_DEV_MODE = false;
+
+export function getMockGroupProfiles(toolCompatibilityId: ToolCompatibilityId): GroupProfile[] {
+    const groupsData = createMockGroupsData();
+    const groups = groupsData[toolCompatibilityId];
+    if (!groups) return [];
+    return Array.from(groups.values()).map((g) => ({
+        name: g.name,
+        icon_src: g.icon,
+    }));
+}
 
 export function createMockToolUpdates(): Record<string, ToolInfoAndLatestVersion> {
     const now = Date.now();
