@@ -557,7 +557,7 @@ export class MossFileSystem {
   }
 
   /**
-   * Read the preferred agent pubkey written by copyLegacyProfileData.
+   * Read the preferred agent pubkey written by importLegacyProfileData.
    * Returns undefined if no preferred key was set.
    */
   readPreferredAgentPubKey(): string | undefined {
@@ -724,7 +724,7 @@ export function breakingAppVersion(app: Electron.App): string {
  * @param mossFileSystem - the current (new) profile's filesystem
  * @param legacyKeystorePath - keystorePath from LegacyProfileInfo
  */
-export function copyLegacyProfileData(
+export function importLegacyProfileData(
   mossFileSystem: MossFileSystem,
   legacyKeystorePath: string,
 ): void {
@@ -755,44 +755,8 @@ export function copyLegacyProfileData(
     fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, { recursive: true, filter: skipSockets });
     console.log(`Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`);
 
-    // Fix the copied lair-keystore-config.yaml:
-    // 1. Rewrite pidFile/storeFile to point to the new keystore location.
-    // 2. Normalize connectionUrl onto a single line.
-    //    Lair's YAML serializer sometimes wraps the long connectionUrl value across two
-    //    physical lines (a plain-scalar continuation). When launchLairKeystore() later
-    //    reads the file, it splits on '\n' and only sees the first fragment of the key,
-    //    producing a truncated URL that lair rejects with an "internal" error.
-    const lairConfigPath = path.join(mossFileSystem.keystoreDir, 'lair-keystore-config.yaml');
-    if (fs.existsSync(lairConfigPath)) {
-      const rawLines = fs.readFileSync(lairConfigPath, 'utf-8').split('\n');
-      const normalized: string[] = [];
-      for (let i = 0; i < rawLines.length; i++) {
-        const line = rawLines[i];
-        if (line.startsWith('connectionUrl:')) {
-          // Collect any continuation lines: lines that are not empty, not a comment,
-          // and not a YAML key (pattern: word characters followed by ':').
-          let fullLine = line;
-          while (i + 1 < rawLines.length) {
-            const next = rawLines[i + 1];
-            if (next === '' || next.startsWith('#') || /^\w[\w-]*:/.test(next)) {
-              break;
-            }
-            // Join without space — lair wraps URLs at a character boundary mid-token.
-            fullLine += next;
-            i++;
-          }
-          normalized.push(fullLine);
-        } else if (line.startsWith('pidFile:')) {
-          normalized.push(`pidFile: ${path.join(mossFileSystem.keystoreDir, 'pid_file')}`);
-        } else if (line.startsWith('storeFile:')) {
-          normalized.push(`storeFile: ${path.join(mossFileSystem.keystoreDir, 'store_file')}`);
-        } else {
-          normalized.push(line);
-        }
-      }
-      fs.writeFileSync(lairConfigPath, normalized.join('\n'), 'utf-8');
-      console.log(`Updated lair config paths in ${lairConfigPath}`);
-    }
+    // Fix the copied lair-keystore-config.yaml paths and normalize line continuations.
+    normalizeLairKeystoreConfig(mossFileSystem.keystoreDir);
 
     // If the copied keystore includes a recorded primary agent pubkey, write it as
     // the preferred-key signal file so Holochain uses the same identity on first run.
@@ -825,6 +789,49 @@ export function copyLegacyProfileData(
   }
 }
 
+/**
+ * Rewrites the lair-keystore-config.yaml inside `keystoreDir` so that:
+ * 1. `pidFile` and `storeFile` point to the new keystore location.
+ * 2. `connectionUrl` is collapsed onto a single line.
+ *    Lair's YAML serializer sometimes wraps the long connectionUrl value across two
+ *    physical lines (a plain-scalar continuation). When launchLairKeystore() later
+ *    reads the file, it splits on '\n' and only sees the first fragment of the key,
+ *    producing a truncated URL that lair rejects with an "internal" error.
+ */
+export function normalizeLairKeystoreConfig(keystoreDir: string): void {
+  const lairConfigPath = path.join(keystoreDir, 'lair-keystore-config.yaml');
+  if (!fs.existsSync(lairConfigPath)) return;
+
+  const rawLines = fs.readFileSync(lairConfigPath, 'utf-8').split('\n');
+  const normalized: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    if (line.startsWith('connectionUrl:')) {
+      // Collect any continuation lines: lines that are not empty, not a comment,
+      // and not a YAML key (pattern: word characters followed by ':').
+      let fullLine = line;
+      while (i + 1 < rawLines.length) {
+        const next = rawLines[i + 1];
+        if (next === '' || next.startsWith('#') || /^\w[\w-]*:/.test(next)) {
+          break;
+        }
+        // Join without space — lair wraps URLs at a character boundary mid-token.
+        fullLine += next;
+        i++;
+      }
+      normalized.push(fullLine);
+    } else if (line.startsWith('pidFile:')) {
+      normalized.push(`pidFile: ${path.join(keystoreDir, 'pid_file')}`);
+    } else if (line.startsWith('storeFile:')) {
+      normalized.push(`storeFile: ${path.join(keystoreDir, 'store_file')}`);
+    } else {
+      normalized.push(line);
+    }
+  }
+  fs.writeFileSync(lairConfigPath, normalized.join('\n'), 'utf-8');
+  console.log(`Updated lair config paths in ${lairConfigPath}`);
+}
+
 export interface LegacyProfileInfo {
   /** App name */
   appName: string;
@@ -852,7 +859,6 @@ export interface LegacyProfileInfo {
  * @param currentVersionString - the breaking version of the running app (to exclude self)
  */
 export function findLegacyProfiles(app: Electron.App): LegacyProfileInfo[] {
-  // After connect(), userData = <rootDir>/<appFolder>/<version>/<profile>
   const currentProfileDir = app.getPath('userData');
   const currentVersionDir = path.dirname(currentProfileDir);
   const currentAppDir = path.dirname(currentVersionDir);

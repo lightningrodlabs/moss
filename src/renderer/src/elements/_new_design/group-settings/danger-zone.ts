@@ -108,7 +108,9 @@ export class DangerTone extends LitElement {
     try {
       const rec = await this._groupStore.groupClient.getGroupProfile(false);
       if (rec) defaultGroupName = rec.entry.name;
-    } catch (_) {}
+    } catch (e) {
+      console.warn('Failed to read group profile for clone dialog:', e);
+    }
     try {
       const installedApps = await this._mossStore.adminWebsocket.listApps({});
       const myGroupDnaHashB64 = encodeHashToBase64(this._groupStore.groupDnaHash);
@@ -124,7 +126,11 @@ export class DangerTone extends LitElement {
         const progenitor = progenitorFromProperties(groupCell.value.dna_modifiers.properties);
         sourceHasProgenitor = !!progenitor;
       }
-    } catch (_) {}
+    } catch (e) {
+      console.error('Failed to detect progenitor for clone dialog:', e);
+      this.cloneError = String(e);
+      return;
+    }
 
     const result = await this._requestCloneOptions(defaultGroupName, sourceHasProgenitor);
     if (result === null) return;
@@ -225,7 +231,7 @@ export class DangerTone extends LitElement {
         <span slot="header">${msg('Clone Group')}</span>
         <div slot="content">
           <div style="margin-bottom: 16px;">
-            ${msg('Enter a name for the new group. It will be created with the same tools but fresh (empty) data.')}
+            ${msg('Enter a name for the new group. It will be created with the same tools but the data will not be copied over.')}
           </div>
           <sl-input
             autofocus
@@ -259,7 +265,7 @@ export class DangerTone extends LitElement {
                 </div>
                 <div style="font-size: 13px; opacity: 0.7; margin-bottom: 10px;">
                   ${msg(
-                    'The group you are cloning is stewarded. Would you like the new group to be stewarded? You will be set as the steward, but can add others later.',
+                    'The group you are cloning is stewarded. Would you like the new group to be stewarded as well? You will be set as the initial steward. More stewards can be added later.',
                   )}
                 </div>
                 <sl-radio-group
@@ -413,7 +419,7 @@ export class DangerTone extends LitElement {
           </button>
           <div style="margin-left: 40px;">
             ${msg(
-              'Clone the group. This will create a new group with the same Tools as this one, but with a different group DNA. You can then choose to leave the original group and keep using the cloned one.',
+              'Clone the group. This will create a separate group with the same Tools as this one. You can then choose to leave the original group and keep using the cloned one.',
             )}
           </div>
         </div>

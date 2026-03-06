@@ -28,7 +28,7 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
-import { MossFileSystem, deriveAppAssetsInfo, findLegacyProfiles, copyLegacyProfileData, LegacyProfileInfo } from './filesystem';
+import { MossFileSystem, deriveAppAssetsInfo, findLegacyProfiles, importLegacyProfileData, LegacyProfileInfo } from './filesystem';
 import { LAIR_BINARY } from './const';
 import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
@@ -103,6 +103,7 @@ import {
   toOriginalCaseB64,
 } from '@theweave/utils';
 import { sortVersionsDescending } from './utils';
+import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { Jimp } from 'jimp';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -1393,8 +1394,8 @@ if (!RUNNING_WITH_COMMAND) {
       const result = childProcess.spawnSync(LAIR_BINARY, ['--version']);
       return result.stdout ? result.stdout.toString().trim() : 'unknown';
     });
-    ipcMain.handle('copy-legacy-profile', (_e, keystorePath: string): void => {
-      copyLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
+    ipcMain.handle('import-legacy-profile', (_e, keystorePath: string): void => {
+      importLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
     });
 
     // Tracks cells that have had authorizeSigningCredentials called this session.
@@ -1410,9 +1411,13 @@ if (!RUNNING_WITH_COMMAND) {
       const preferredB64 = WE_FILE_SYSTEM.readPreferredAgentPubKey();
       if (preferredB64) {
         console.log(`Using preferred agent pubkey from legacy import: ${preferredB64}`);
-        return decodeHashFromBase64(preferredB64);
+        const key = decodeHashFromBase64(preferredB64);
+        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(preferredB64);
+        return key;
       }
-      return HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+      const key = await HOLOCHAIN_MANAGER!.adminWebsocket.generateAgentPubKey();
+      WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(key));
+      return key;
     };
 
     ipcMain.handle('install-group-happ', async (_e, withProgenitor: boolean, customGroupSeed: string | undefined = undefined): Promise<AppInfo> => {
@@ -1421,7 +1426,6 @@ if (!RUNNING_WITH_COMMAND) {
       if (!agentPubKey) {
         agentPubKey = await getOrCreateAgentPubKey();
       }
-      WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
 
       // generate random network seed
       const networkSeed = customGroupSeed || uuidv4();
@@ -1518,7 +1522,7 @@ if (!RUNNING_WITH_COMMAND) {
       networkSeed: string | undefined;
       progenitor: AgentPubKeyB64 | null;
       groupProfile: { name: string; icon_src: string } | undefined;
-      agentProfile: { nickname: string; avatar?: string } | undefined;
+      agentProfile: AgentProfile | undefined;
       description?: string;
       tools?: ToolExportEntry[];
     };
@@ -1551,7 +1555,7 @@ if (!RUNNING_WITH_COMMAND) {
 
         let groupProfile: { name: string; icon_src: string } | undefined;
         let groupDescription: string | undefined;
-        let agentProfile: { nickname: string; avatar?: string } | undefined;
+        let agentProfile: AgentProfile | undefined;
         let tools: Array<{
           custom_name: string;
           network_seed: string | undefined;
@@ -1595,7 +1599,9 @@ if (!RUNNING_WITH_COMMAND) {
                 groupDescription = descEntry.data;
               }
             }
-          } catch (_) {}
+          } catch (e) {
+            console.warn(`Failed to get group description for group ${appId}:`, e);
+          }
 
           const agentProfileRecord = await appWs.callZome({
             role_name: 'group',
@@ -1606,8 +1612,8 @@ if (!RUNNING_WITH_COMMAND) {
           if (agentProfileRecord) {
             const entryBytes = (agentProfileRecord as any).entry?.Present?.entry;
             if (entryBytes) {
-              const profileEntry = decode(entryBytes) as { nickname: string; fields: Record<string, string> };
-              agentProfile = { nickname: profileEntry.nickname, avatar: profileEntry.fields?.avatar };
+              const profileEntry = decode(entryBytes) as AgentProfile;
+              agentProfile = { nickname: profileEntry.nickname, fields: profileEntry.fields ?? {} };
             }
           }
 
@@ -1634,7 +1640,9 @@ if (!RUNNING_WITH_COMMAND) {
                     toolListUrl = distInfo.info.toolListUrl;
                     versionBranch = distInfo.info.versionBranch;
                   }
-                } catch (_) {}
+                } catch (e) {
+                  console.warn(`Failed to parse distribution_info for applet "${applet.custom_name}":`, e);
+                }
                 if (toolId && toolListUrl && versionBranch) {
                   tools.push({
                     custom_name: applet.custom_name,
@@ -1677,7 +1685,6 @@ if (!RUNNING_WITH_COMMAND) {
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let myPubKey = globalPubKeyFromListAppsResponse(allApps);
       if (!myPubKey) myPubKey = await getOrCreateAgentPubKey();
-      WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(myPubKey));
       const myPubKeyB64 = encodeHashToBase64(myPubKey);
       const appPort = HOLOCHAIN_MANAGER!.appPort;
       const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
@@ -1822,7 +1829,7 @@ if (!RUNNING_WITH_COMMAND) {
                 fn_name: 'create_profile',
                 payload: {
                   nickname: agentProfile.nickname,
-                  fields: agentProfile.avatar ? { avatar: agentProfile.avatar } : {},
+                  fields: agentProfile.fields,
                 },
               });
             } catch (profileErr) {
@@ -2040,7 +2047,6 @@ if (!RUNNING_WITH_COMMAND) {
         if (!agentPubKey) {
           agentPubKey = await getOrCreateAgentPubKey();
         }
-        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
         const hash = createHash('sha256');
         hash.update(networkSeed);
         const hashedSeed = hash.digest('base64');
@@ -2531,7 +2537,6 @@ if (!RUNNING_WITH_COMMAND) {
         if (!agentPubKey) {
           agentPubKey = await getOrCreateAgentPubKey();
         }
-        WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(agentPubKey));
 
         // Check if .happ and ui assets are already stored on the filesystem and don't need to get fetched from the source
         let happAlreadyStoredPath = path.join(WE_FILE_SYSTEM.happsDir, `${sha256Happ}.happ`);
@@ -2677,6 +2682,7 @@ if (!RUNNING_WITH_COMMAND) {
 
         // The tool snapshot is taken after the handler returns so the renderer can call
         // register_and_join_applet first.
+        // timeout allows time for group to setup and processes to calm down
         setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-applet-bundle failed:', e)), 2000);
         return appInfo;
       },

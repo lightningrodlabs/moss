@@ -567,11 +567,11 @@ export class MossApp extends LitElement {
       <div class="column center-content flex-1 launch-bg">
         <div class="moss-card column items-center" style="width: 630px; padding: 48px;">
           <div class="dialog-title" style="margin-bottom: 16px;">
-            ${msg('Import existing identity?')}
+            ${msg('Import existing data?')}
           </div>
           <div style="text-align: center; color: var(--moss-hint-green); margin-bottom: 32px; max-width: 440px;">
             ${msg(
-              'One or more Moss identities from a previous version were found. You can import to keep your existing agent key, or start fresh with a new identity.',
+              'Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.',
             )}
           </div>
           <div class="column" style="width: 100%; margin-bottom: 24px; gap: 8px; max-height: calc(100vh - 400px); overflow-x: scroll;">
@@ -610,15 +610,15 @@ export class MossApp extends LitElement {
               ?disabled=${!this._selectedLegacyProfile}
               @click=${async () => {
                 this._didImportLegacyProfile = true;
-                // Clear isFirstLaunch so subsequent startups don't show the group setup screen
-                window.localStorage.removeItem('isFirstLaunch');
                 await window.electronAPI.copyLegacyProfile(
                   this._selectedLegacyProfile!.keystorePath,
                 );
+                // Clear isFirstLaunch so subsequent startups don't show the group setup screen
+                window.localStorage.removeItem('isFirstLaunch');
                 this._legacyKeystoreResolve?.();
               }}
             >
-              ${msg('Import identity')}
+              ${msg('Import data')}
             </button>
             <button
               class="moss-button"
