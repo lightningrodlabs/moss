@@ -31,6 +31,15 @@ import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
+export interface LegacyProfileInfo {
+  appName: string;
+  versionString: string;
+  profileName: string;
+  keystorePath: string;
+  /** Lair binary version (e.g. 'lair_keystore 0.6.3') that created this keystore, if recorded */
+  lairVersion: string | undefined;
+}
+
 declare global {
   interface Window {
     __HC_ZOME_CALL_SIGNER__: {
@@ -47,6 +56,9 @@ declare global {
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       lairSetupRequired: () => Promise<boolean>;
+      findLegacyProfiles: () => Promise<LegacyProfileInfo[]>;
+      getLairBinaryVersion: () => Promise<string>;
+      copyLegacyProfile: (keystorePath: string) => Promise<void>;
       launch: () => Promise<boolean>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
@@ -132,6 +144,11 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
       installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
+      silentExportGroupsData: () => Promise<void>;
+      exportGroupsData: () => Promise<void>;
+      importGroupsData: () => Promise<GroupImportResult>;
+      consumePendingGroupsImport: () => Promise<GroupImportResult | null>;
+      onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void) => void;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
@@ -249,6 +266,41 @@ export async function joinGroup(
 
 export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo> {
   return window.electronAPI.installGroupHapp(useProgenitor);
+}
+
+export async function silentExportGroupsData(): Promise<void> {
+  return window.electronAPI.silentExportGroupsData();
+}
+
+export async function exportGroupsData(): Promise<void> {
+  return window.electronAPI.exportGroupsData();
+}
+
+export type ImportGroupsProgress = {
+  current: number;
+  total: number;
+  groupName: string | undefined;
+  step: 'installing' | 'waiting-for-sync' | 'setting-profile' | 'installing-tool' | 'done';
+  secondsLeft?: number;
+  status?: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+  toolName?: string;
+  toolIndex?: number;
+  toolTotal?: number;
+};
+
+export type GroupImportResult = Array<{
+  groupName: string | undefined;
+  status: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+}>;
+
+export async function importGroupsData(): Promise<GroupImportResult> {
+  return window.electronAPI.importGroupsData();
+}
+
+export async function consumePendingGroupsImport(): Promise<GroupImportResult | null> {
+  return window.electronAPI.consumePendingGroupsImport();
 }
 
 export async function dialogMessagebox(

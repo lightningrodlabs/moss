@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
+  findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
+  getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
+  copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
@@ -110,8 +113,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
     ipcRenderer.invoke('join-group', networkSeed, progenitor),
-  installGroupHapp: (useProgenitor: boolean) =>
-    ipcRenderer.invoke('install-group-happ', useProgenitor),
+  installGroupHapp: (useProgenitor: boolean, customGroupSeed: string | undefined = undefined) =>
+    ipcRenderer.invoke('install-group-happ', useProgenitor, customGroupSeed),
+  silentExportGroupsData: () => ipcRenderer.invoke('silent-export-groups-data'),
+  exportGroupsData: () => ipcRenderer.invoke('export-groups-data'),
+  importGroupsData: () => ipcRenderer.invoke('import-groups-data'),
+  consumePendingGroupsImport: () => ipcRenderer.invoke('consume-pending-groups-import'),
+  onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: unknown) => void) =>
+    ipcRenderer.on('import-groups-progress', callback),
   notification: (
     notification: FrameNotification,
     showInSystray: boolean,

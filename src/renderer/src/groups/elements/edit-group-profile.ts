@@ -60,6 +60,9 @@ export class EditGroupProfile extends LitElement {
     }
     this.committing = false;
     await this._mossStore.reloadManualStores();
+    window.electronAPI
+      .silentExportGroupsData()
+      .catch((e) => console.warn('Auto-export after updateGroupProfile failed:', e));
   }
 
   render() {

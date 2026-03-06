@@ -418,6 +418,7 @@ export const mossStyles = [
       cursor: pointer;
       margin-bottom: -2px;
       border-bottom: 2px solid transparent;
+      white-space: nowrap;
     }
 
     .tab:focus-visible {

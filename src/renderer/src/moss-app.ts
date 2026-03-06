@@ -1,7 +1,7 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
 import { AdminWebsocket, DnaHash, ProvisionedCell } from '@holochain/client';
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, nothing } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -14,7 +14,8 @@ import './elements/main-dashboard.js';
 import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
-import { appletDevConfig, getConductorInfo } from './electron-api.js';
+import { appletDevConfig, getConductorInfo, ImportGroupsProgress } from './electron-api.js';
+import { LegacyProfileInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
@@ -29,6 +30,7 @@ import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/r
 
 enum MossAppState {
   Loading,
+  LegacyKeystoreImport,
   InitialSetup,
   CreateGroupStep1,
   CreateGroupStep2,
@@ -101,6 +103,21 @@ export class MossApp extends LitElement {
 
   private _happMessageListener: ((event: MessageEvent) => void) | undefined;
 
+  private _legacyKeystoreResolve: (() => void) | undefined;
+
+  @state()
+  private _legacyProfiles: LegacyProfileInfo[] = [];
+
+  private _currentLairVersion: string | undefined;
+
+  @state()
+  private _selectedLegacyProfile: LegacyProfileInfo | undefined;
+
+  @state()
+  private _importGroupsProgress: ImportGroupsProgress | undefined = undefined;
+
+  private _didImportLegacyProfile = false;
+
   async firstUpdated() {
     // Note: Locale is initialized in index.html before the app loads
     // to avoid flash of untranslated content
@@ -152,6 +169,23 @@ export class MossApp extends LitElement {
       window.localStorage.setItem('isFirstLaunch', 'true');
     }
 
+    if (isFirstLaunch) {
+      const [legacyProfiles, currentLairVersion] = await Promise.all([
+        window.electronAPI.findLegacyProfiles(),
+        window.electronAPI.getLairBinaryVersion(),
+      ]);
+      this._currentLairVersion = currentLairVersion;
+      if (legacyProfiles.length > 0) {
+        this._legacyProfiles = legacyProfiles;
+        this._selectedLegacyProfile = legacyProfiles[0];
+        await new Promise<void>((resolve) => {
+          this._legacyKeystoreResolve = resolve;
+          this.state = MossAppState.LegacyKeystoreImport;
+        });
+        this.state = MossAppState.Loading;
+      }
+    }
+
     let info = await getConductorInfo();
     // If the conductor is not running yet, start it
     // (it may for example already be running if the connect() function
@@ -162,6 +196,17 @@ export class MossApp extends LitElement {
         await window.electronAPI.launch();
         info = await getConductorInfo();
         if (!info) throw new Error('Failed to get conductor info after launch.');
+        // Auto-import groups from a legacy profile if the user selected one to import
+        if (isFirstLaunch) {
+          this.loadingText = msg('Importing groups...');
+          window.electronAPI.onImportGroupsProgress((_e, payload) => {
+            this._importGroupsProgress = payload;
+          });
+          await window.electronAPI.consumePendingGroupsImport().catch((e) =>
+            console.warn('Auto-import of groups from legacy profile failed:', e),
+          );
+          this._importGroupsProgress = undefined;
+        }
       } catch (e) {
         this.state = MossAppState.Error;
         return;
@@ -193,9 +238,6 @@ export class MossApp extends LitElement {
     isFirstLaunch = !!window.localStorage.getItem('isFirstLaunch');
     const isDev = await window.electronAPI.isDevModeEnabled();
     console.debug("isDevModeEnabled", isDev);
-    if (isFirstLaunch && !isDev) {
-      this.state = MossAppState.InitialSetup;
-    }
 
     // Listen for general activity to set the latest activity timestamp
     document.addEventListener('mousemove', () => {
@@ -214,7 +256,10 @@ export class MossApp extends LitElement {
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);
 
-    if (!isFirstLaunch || isDev) {
+    const hasGroups = allApps.some((app) => app.installed_app_id.startsWith('group#'));
+    if (isFirstLaunch && !isDev && !this._didImportLegacyProfile && !hasGroups) {
+      this.state = MossAppState.InitialSetup;
+    } else {
       this.state = MossAppState.Running;
     }
   }
@@ -517,6 +562,80 @@ export class MossApp extends LitElement {
     `;
   }
 
+  renderLegacyKeystoreImport() {
+    return html`
+      <div class="column center-content flex-1 launch-bg">
+        <div class="moss-card column items-center" style="width: 630px; padding: 48px;">
+          <div class="dialog-title" style="margin-bottom: 16px;">
+            ${msg('Import existing data?')}
+          </div>
+          <div style="text-align: center; color: var(--moss-hint-green); margin-bottom: 32px; max-width: 440px;">
+            ${msg(
+              'Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.',
+            )}
+          </div>
+          <div class="column" style="width: 100%; margin-bottom: 24px; gap: 8px; max-height: calc(100vh - 400px); overflow-x: scroll;">
+            ${this._legacyProfiles.map((p) => {
+                const readableAppName = p.appName.replace("org.lightningrodlabs.moss-", "Moss ");
+                const versionMismatch =
+                  p.lairVersion !== undefined &&
+                  this._currentLairVersion !== undefined &&
+                  p.lairVersion !== this._currentLairVersion;
+                return html`
+                <button
+                  class="moss-button"
+                  style=${
+                    this._selectedLegacyProfile === p
+                      ? 'justify-content: flex-start; padding: 10px 16px; background: var(--moss-medium-green);'
+                      : 'justify-content: flex-start; padding: 10px 16px; background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);'
+                  }
+                  @click=${() => {
+                    this._selectedLegacyProfile = p;
+                  }}
+                >
+                  <span style="flex: 1; text-align: left;">
+                    ${readableAppName} ${p.versionString} &mdash; ${p.profileName}
+                    ${p.lairVersion ? html`<span style="opacity: 0.7; font-size: 0.85em;"> (lair: ${p.lairVersion})</span>` : nothing}
+                  </span>
+                  ${versionMismatch
+                    ? html`<span style="color: #f5a623; font-size: 0.8em; margin-left: 8px;">&#9888; version mismatch</span>`
+                    : nothing}
+                </button>
+              `;
+              })}
+          </div>
+          <div class="row" style="gap: 16px;">
+            <button
+              class="moss-button"
+              ?disabled=${!this._selectedLegacyProfile}
+              @click=${async () => {
+                this._didImportLegacyProfile = true;
+                await window.electronAPI.copyLegacyProfile(
+                  this._selectedLegacyProfile!.keystorePath,
+                );
+                // Clear isFirstLaunch so subsequent startups don't show the group setup screen
+                window.localStorage.removeItem('isFirstLaunch');
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Import data')}
+            </button>
+            <button
+              class="moss-button"
+              style="background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);"
+              @click=${() => {
+                this._selectedLegacyProfile = undefined;
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Start fresh')}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderInitialSetup() {
     return html`
       <div class="column center-content flex-1 launch-bg">
@@ -649,7 +768,24 @@ export class MossApp extends LitElement {
         return html`<div class="column center-content launch-bg" style="flex: 1;">
           <img src="loading_animation.svg" />
           <div>${this.loadingText}</div>
+          ${this._importGroupsProgress ? html`
+            <div style="margin-top: 16px; font-size: 13px; color: var(--moss-hint-green); text-align: center; max-width: 400px;">
+              <div style="margin-bottom: 4px;">
+                ${msg('Group')} ${this._importGroupsProgress.current} / ${this._importGroupsProgress.total}:
+                <b>${this._importGroupsProgress.groupName ?? ''}</b>
+              </div>
+              <div>
+                ${this._importGroupsProgress.step === 'installing' ? msg('Installing group...') :
+                  this._importGroupsProgress.step === 'waiting-for-sync' ? html`${msg('Waiting for peers...')} (${this._importGroupsProgress.secondsLeft}s)` :
+                  this._importGroupsProgress.step === 'setting-profile' ? msg('Setting group profile...') :
+                  this._importGroupsProgress.step === 'installing-tool' ? html`${msg('Installing tool')} "${this._importGroupsProgress.toolName}" (${this._importGroupsProgress.toolIndex}/${this._importGroupsProgress.toolTotal})` :
+                  this._importGroupsProgress.step === 'done' ? msg('Done.') : ''}
+              </div>
+            </div>
+          ` : nothing}
         </div>`;
+      case MossAppState.LegacyKeystoreImport:
+        return this.renderLegacyKeystoreImport();
       case MossAppState.InitialSetup:
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:

@@ -544,6 +544,48 @@ export class MossFileSystem {
     return fs.existsSync(pwPath);
   }
 
+  /**
+   * Persist the primary agent pubkey to the keystore dir.
+   * Only writes if the file doesn't already exist so the original key is preserved.
+   * Stored as a base64 string so future Moss versions can read it via findLegacyProfiles.
+   */
+  persistAgentPubKeyIfMissing(keyB64: string): void {
+    const dest = path.join(this.keystoreDir, 'moss-agent-pubkey.txt');
+    if (!fs.existsSync(dest)) {
+      fs.writeFileSync(dest, keyB64, 'utf-8');
+    }
+  }
+
+  /**
+   * Read the preferred agent pubkey written by importLegacyProfileData.
+   * Returns undefined if no preferred key was set.
+   */
+  readPreferredAgentPubKey(): string | undefined {
+    const src = path.join(this.profileDataDir, 'moss-preferred-agent-pubkey.txt');
+    if (!fs.existsSync(src)) return undefined;
+    const keyB64 = fs.readFileSync(src, 'utf-8').trim();
+    return keyB64;
+  }
+
+  /**
+   * Path where the auto-saved groups export JSON is written on every group/tool change.
+   * Future Moss versions use this to auto-import groups after a keystore migration.
+   */
+  get groupsExportPath(): string {
+    return path.join(this.profileDataDir, 'moss-groups-export.json');
+  }
+
+  /**
+   * Read the auto-imported groups export copied from a legacy profile.
+   * Returns undefined if no pending import exists.
+   */
+  readPendingGroupsImport(): unknown[] | undefined {
+    const src = path.join(this.profileDataDir, 'moss-pending-groups-import.json');
+    if (!fs.existsSync(src)) return undefined;
+    const data = JSON.parse(fs.readFileSync(src, 'utf-8'));
+    return data;
+  }
+
   async openLogs() {
     try {
       await shell.openPath(this.profileLogsDir);
@@ -670,6 +712,237 @@ export function breakingAppVersion(app: Electron.App): string {
     default:
       return `${semver.major(version)}.x.x`;
   }
+}
+
+/**
+ * Copies the keystore and conductor directories from a legacy profile into
+ * the current profile's data directories. Must be called before lair starts.
+ *
+ * The MossFileSystem constructor creates empty keystore/conductor dirs - this
+ * method replaces them with the full contents from the legacy profile.
+ *
+ * @param mossFileSystem - the current (new) profile's filesystem
+ * @param legacyKeystorePath - keystorePath from LegacyProfileInfo
+ */
+export function importLegacyProfileData(
+  mossFileSystem: MossFileSystem,
+  legacyKeystorePath: string,
+): void {
+  const legacyDataDir = path.dirname(legacyKeystorePath);
+
+  // Skip socket files left behind by a previous lair/conductor run
+  const skipSockets = (src: string) => {
+    try {
+      return !fs.statSync(src).isSocket();
+    } catch {
+      return true;
+    }
+  };
+
+  // Copy the password file. The lair keystore is encrypted with a random password
+  // stored at <profileDataDir>/.pw. Without copying it the new profile cannot decrypt
+  // the imported keystore and lair will crash on startup.
+  // If .pw is absent, skip the keystore copy.
+  const legacyPwPath = path.join(legacyDataDir, '.pw');
+  if (fs.existsSync(legacyPwPath)) {
+    fs.copyFileSync(legacyPwPath, path.join(mossFileSystem.profileDataDir, '.pw'));
+    console.log(`Copied legacy password file from ${legacyPwPath}`);
+
+    // Replace empty keystore dir created by constructor with legacy contents
+    if (fs.existsSync(mossFileSystem.keystoreDir)) {
+      fs.rmSync(mossFileSystem.keystoreDir, { recursive: true });
+    }
+    fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, { recursive: true, filter: skipSockets });
+    console.log(`Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`);
+
+    // Fix the copied lair-keystore-config.yaml paths and normalize line continuations.
+    normalizeLairKeystoreConfig(mossFileSystem.keystoreDir);
+
+    // If the copied keystore includes a recorded primary agent pubkey, write it as
+    // the preferred-key signal file so Holochain uses the same identity on first run.
+    const agentPubKeyFile = path.join(mossFileSystem.keystoreDir, 'moss-agent-pubkey.txt');
+    if (fs.existsSync(agentPubKeyFile)) {
+      const keyB64 = fs.readFileSync(agentPubKeyFile, 'utf-8').trim();
+      fs.writeFileSync(
+        path.join(mossFileSystem.profileDataDir, 'moss-preferred-agent-pubkey.txt'),
+        keyB64,
+        'utf-8',
+      );
+      console.log(`Set preferred agent pubkey from legacy profile: ${keyB64}`);
+    }
+  } else {
+    console.warn(
+      `No .pw file found in legacy profile at ${legacyPwPath}; skipping keystore copy.` +
+      ` A fresh agent identity will be generated. Groups data will still be imported if available.`,
+    );
+  }
+
+  // Copy a groups export snapshot if one was saved by the source profile.
+  // It will be auto-imported on first launch as a moss-pending-groups-import.json.
+  const legacyGroupsExport = path.join(legacyDataDir, 'moss-groups-export.json');
+  if (fs.existsSync(legacyGroupsExport)) {
+    fs.copyFileSync(
+      legacyGroupsExport,
+      path.join(mossFileSystem.profileDataDir, 'moss-pending-groups-import.json'),
+    );
+    console.log(`Copied legacy groups export for auto-import on first launch`);
+  }
+}
+
+/**
+ * Rewrites the lair-keystore-config.yaml inside `keystoreDir` so that:
+ * 1. `pidFile` and `storeFile` point to the new keystore location.
+ * 2. `connectionUrl` is collapsed onto a single line.
+ *    Lair's YAML serializer sometimes wraps the long connectionUrl value across two
+ *    physical lines (a plain-scalar continuation). When launchLairKeystore() later
+ *    reads the file, it splits on '\n' and only sees the first fragment of the key,
+ *    producing a truncated URL that lair rejects with an "internal" error.
+ */
+export function normalizeLairKeystoreConfig(keystoreDir: string): void {
+  const lairConfigPath = path.join(keystoreDir, 'lair-keystore-config.yaml');
+  if (!fs.existsSync(lairConfigPath)) return;
+
+  const rawLines = fs.readFileSync(lairConfigPath, 'utf-8').split('\n');
+  const normalized: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    if (line.startsWith('connectionUrl:')) {
+      // Collect any continuation lines: lines that are not empty, not a comment,
+      // and not a YAML key (pattern: word characters followed by ':').
+      let fullLine = line;
+      while (i + 1 < rawLines.length) {
+        const next = rawLines[i + 1];
+        if (next === '' || next.startsWith('#') || /^\w[\w-]*:/.test(next)) {
+          break;
+        }
+        // Join without space — lair wraps URLs at a character boundary mid-token.
+        fullLine += next;
+        i++;
+      }
+      normalized.push(fullLine);
+    } else if (line.startsWith('pidFile:')) {
+      normalized.push(`pidFile: ${path.join(keystoreDir, 'pid_file')}`);
+    } else if (line.startsWith('storeFile:')) {
+      normalized.push(`storeFile: ${path.join(keystoreDir, 'store_file')}`);
+    } else {
+      normalized.push(line);
+    }
+  }
+  fs.writeFileSync(lairConfigPath, normalized.join('\n'), 'utf-8');
+  console.log(`Updated lair config paths in ${lairConfigPath}`);
+}
+
+export interface LegacyProfileInfo {
+  /** App name */
+  appName: string;
+  /** Breaking version string, e.g. "0.13.x" */
+  versionString: string;
+  /** Profile name, e.g. "default" */
+  profileName: string;
+  /** Absolute path to the legacy keystore directory */
+  keystorePath: string;
+  /** Lair binary version that created this keystore, if recorded */
+  lairVersion: string | undefined;
+}
+
+/**
+ * Searches sibling app-data directories for Moss profiles that have an
+ * initialized lair keystore. Returns all found candidates so the UI can offer
+ * an import prompt.
+ *
+ * The Electron userData path after MossFileSystem.connect() is:
+ *   <rootDir>/<appFolderName>/<versionString>/<profile>
+ * so we walk three levels up to reach <rootDir> and then inspect known legacy
+ * app folder names.
+ *
+ * @param app - Electron app (after MossFileSystem.connect() has been called)
+ * @param currentVersionString - the breaking version of the running app (to exclude self)
+ */
+export function findLegacyProfiles(app: Electron.App): LegacyProfileInfo[] {
+  const currentProfileDir = app.getPath('userData');
+  const currentVersionDir = path.dirname(currentProfileDir);
+  const currentAppDir = path.dirname(currentVersionDir);
+  const rootDir = path.dirname(currentAppDir);
+
+  const currentAppFolderName = path.basename(currentAppDir);
+  const currentVersionString = path.basename(currentVersionDir);
+  const currentProfileName = path.basename(currentProfileDir);
+
+  // Scan rootDir for any app folder matching the Moss naming pattern.
+  let legacyAppFolderNames: string[];
+  try {
+    legacyAppFolderNames = fs.readdirSync(rootDir).filter((name) => {
+      if (!name.startsWith('org.lightningrodlabs.moss-')) return false;
+      try {
+        return fs.statSync(path.join(rootDir, name)).isDirectory();
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    legacyAppFolderNames = [];
+  }
+
+  const results: LegacyProfileInfo[] = [];
+
+  for (const appFolderName of legacyAppFolderNames) {
+    const appDir = path.join(rootDir, appFolderName);
+    if (!fs.existsSync(appDir)) {
+      continue;
+    }
+
+    let versionDirs: string[];
+    try {
+      versionDirs = fs.readdirSync(appDir).filter((name) => {
+        try {
+          return fs.statSync(path.join(appDir, name)).isDirectory();
+        } catch {
+          return false;
+        }
+      });
+    } catch {
+      continue;
+    }
+
+    for (const versionString of versionDirs) {
+      const versionDir = path.join(appDir, versionString);
+      let profileDirs: string[];
+      try {
+        profileDirs = fs.readdirSync(versionDir).filter((name) => {
+          try {
+            return fs.statSync(path.join(versionDir, name)).isDirectory();
+          } catch {
+            return false;
+          }
+        });
+      } catch {
+        continue;
+      }
+
+      for (const profileName of profileDirs) {
+        // Exclude only the exact profile currently running — not all profiles of this app
+        if (
+          appFolderName === currentAppFolderName &&
+          versionString === currentVersionString &&
+          profileName === currentProfileName
+        ) {
+          continue;
+        }
+        const keystorePath = path.join(versionDir, profileName, 'data', 'keystore');
+        const lairConfig = path.join(keystorePath, 'lair-keystore-config.yaml');
+        const pwFile = path.join(versionDir, profileName, 'data', 'keystore', 'moss-agent-pubkey.txt');
+        if (fs.existsSync(lairConfig) && fs.existsSync(pwFile)) {
+          const lairVersionFile = path.join(keystorePath, 'moss-lair-version.txt');
+          const lairVersion = fs.existsSync(lairVersionFile)
+            ? fs.readFileSync(lairVersionFile, 'utf-8').trim()
+            : undefined;
+          results.push({ appName: appFolderName, versionString, profileName, keystorePath, lairVersion });
+        }
+      }
+    }
+  }
+
+  return results;
 }
 
 /**
