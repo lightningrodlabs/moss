@@ -394,6 +394,10 @@ export type AppletToParentRequest =
     appletHash: AppletHash;
     groupHash: DnaHash | undefined;
   }
+    | {
+    type: 'get-bootstrap-urls';
+    groupHash: DnaHash | undefined;
+  }
   | {
       type: 'get-group-profile';
       groupHash: DnaHash;

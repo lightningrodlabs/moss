@@ -409,6 +409,11 @@ export interface WeaveServices {
    */
   groupProfile: (groupHash: DnaHash) => Promise<any>;
   /**
+   * @param groupHash - The group hash. If not provided, uses the groupHash from the current applet instance's renderInfo
+   * @returns the bootstrap urls in use for a group
+   */
+  bootstrapUrls: (groupHash?: DnaHash) => string[];
+  /**
    * Returns Applet info of the specified Applet
    * @param appletHash
    * @returns
@@ -580,6 +585,9 @@ export class WeaveClient implements WeaveServices {
     }
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };
+
+
+  bootstrapUrls = (groupHash?: DnaHash) => window.__WEAVE_API__.bootstrapUrls(groupHash);
 
   groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
