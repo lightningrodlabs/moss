@@ -46,7 +46,7 @@ import {
   signZomeCall,
 } from './utils';
 import { createWalWindow } from './windows';
-import { ConductorInfo, ToolWeaveConfig } from './sharedTypes';
+import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
@@ -448,6 +448,29 @@ if (!RUNNING_WITH_COMMAND) {
     return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
 
+  /**
+   * Determine the URLs for the network services
+   * In production return run options or hardcoded production urls
+   * In dev return run options or local services urls
+   * @returns [bootstrapUrl[], signalingUrl[], relayUrl[]]
+   */
+  const getNetworkUrls = (): NetworkInfo => {
+    // Production
+    if (!RUN_OPTIONS.devInfo) {
+      return {
+        bootstrap_urls: RUN_OPTIONS.bootstrapUrl ? [RUN_OPTIONS.bootstrapUrl] : PRODUCTION_BOOTSTRAP_URLS,
+        signal_urls: RUN_OPTIONS.signalingUrl ? [RUN_OPTIONS.signalingUrl] : PRODUCTION_SIGNALING_URLS,
+        relay_urls: RUN_OPTIONS.relayUrl ? [RUN_OPTIONS.relayUrl] : PRODUCTION_RELAY_URLS
+      };
+    }
+    const [bootstrapUrl, signalingUrl, relayUrl] = readLocalServices();
+    return {
+      bootstrap_urls: [RUN_OPTIONS.bootstrapUrl ?? bootstrapUrl],
+      signal_urls: [RUN_OPTIONS.signalingUrl ?? signalingUrl],
+      relay_urls: [RUN_OPTIONS.relayUrl ?? relayUrl],
+    }
+  }
+
   const createOrShowMainWindow = (): BrowserWindow => {
     if (MAIN_WINDOW) {
       MAIN_WINDOW.show();
@@ -675,7 +698,7 @@ if (!RUNNING_WITH_COMMAND) {
             console.log('@permissionRequestHandler: GOT TOOLID for cross-group iframe: ', toolId);
           }
 
-          // On macOS, OS level permission for camera/microhone access needs to be given
+          // On macOS, OS level permission for camera/microphone access needs to be given
           if (process.platform === 'darwin') {
             if (audioRequested) {
               const audioAccess = systemPreferences.getMediaAccessStatus('microphone');
@@ -848,7 +871,7 @@ if (!RUNNING_WITH_COMMAND) {
         const [bootstrapUrl, signalingUrl, relayUrl, localServicesHandle] =
           RUN_OPTIONS.devInfo.agentIdx === 1
             ? await startLocalServices()
-            : await readLocalServices();
+            : readLocalServices();
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
           : bootstrapUrl;
@@ -888,7 +911,7 @@ if (!RUNNING_WITH_COMMAND) {
       });
 
       // Check for dev update config (for local testing)
-      // Set DEV_UPDATE_CONFIG env var to path of dev-app-update.yml
+      // Set DEV_UPDATE_CONFIG env var to the path of dev-app-update.yml
       const devUpdateConfigPath = process.env.DEV_UPDATE_CONFIG;
       if (devUpdateConfigPath && fs.existsSync(devUpdateConfigPath)) {
         try {
@@ -1350,12 +1373,19 @@ if (!RUNNING_WITH_COMMAND) {
           if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'deep-link-received', link);
         }, 5000);
       }
+      /** Grab Network Urls */
+      let network_info: NetworkInfo = { bootstrap_urls: [], signal_urls: [], relay_urls: [] };
+      try {
+        network_info = getNetworkUrls();
+      } catch (e) {console.error('Failed to get network urls', e)}
+      /** */
       return HOLOCHAIN_MANAGER
         ? {
           app_port: HOLOCHAIN_MANAGER.appPort,
           admin_port: HOLOCHAIN_MANAGER.adminPort,
           moss_version: app.getVersion(),
           weave_protocol_version: '0.15',
+          network_info,
         }
         : undefined;
     });

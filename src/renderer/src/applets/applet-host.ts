@@ -137,6 +137,10 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     onRemoteSignal(_) {
       return () => undefined;
     },
+    /** TODO: groupHash argument is not used yet as Holochain does not allow different bootstrap URLs for the moment */
+    bootstrapUrls(_groupHash?: DnaHash) {
+      return mossStore.conductorInfo.network_info.bootstrap_urls;
+    },
     assets: {
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
         const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
@@ -503,6 +507,9 @@ export async function handleAppletIframeMessage(
     }
     case 'get-applet-info':
       return weaveServices.appletInfo(message.appletHash);
+    case 'get-bootstrap-urls': {
+      return weaveServices.bootstrapUrls(message.groupHash);
+    }
     case 'get-tool-installer': {
       if (source.type === 'cross-group') {
         throw new Error('Tool installer not defined for cross-group views.');

@@ -45,6 +45,32 @@ import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
 
+async function pingServer(url: string, timeoutMs = 5000): Promise<{
+  online: boolean;
+  latencyMs?: number;
+  status?: number;
+}> {
+  console.log('pinging server', url);
+  const start = Date.now();
+  try {
+    const response = await fetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    console.log('pinging server response', response);
+
+    return {
+      online: response.ok,
+      latencyMs: Date.now() - start,
+      status: response.status,
+    };
+  } catch (error) {
+    console.log('pinging server error', error);
+
+    return { online: false };
+  }
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
@@ -1358,6 +1384,60 @@ export class DebuggingPanel extends LitElement {
             <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
           </div>
         </div>
+        <div class="row" style="margin-bottom: 10px; display: flex; flex-direction: column; gap:2px;">
+          <h3 style="margin-bottom: 5px;">Network</h3>
+            <dl class="kv-list">
+                <dt>Bootstrap</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.bootstrap_urls.length
+                    ? this._mossStore.conductorInfo.network_info.bootstrap_urls[0]
+                    : "None"}
+                    <sl-button size="small" 
+                               @click=${async (_e) => {
+                      const res = await pingServer(  'https://google.com');
+                      const elem = this.shadowRoot?.getElementById("bootstrap-result") as HTMLElement;
+                      if (!elem) return;
+                      elem.style.display = "inline";
+                      elem.style.color = res.online ? "green" : "red";
+                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                      this.requestUpdate();
+                    }}>Ping</sl-button>
+                    <div id="bootstrap-result" style="display:none; margin-left:5px;"></div>
+                </dd>
+                <dt>Signal</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.signal_urls.length
+                    ? this._mossStore.conductorInfo.network_info.signal_urls[0]
+                    : "None"}
+                  <sl-button size="small" @click=${async (_e) => {
+                      const res = await pingServer(this._mossStore.conductorInfo.network_info.signal_urls[0]);
+                      const elem = this.shadowRoot?.getElementById("signal-result") as HTMLElement;
+                      if (!elem) return;
+                      elem.style.display = "inline";
+                      elem.style.color = res.online ? "green" : "red";
+                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                      this.requestUpdate();
+                  }}>Ping</sl-button>
+                  <div id="signal-result" style="display:none; margin-left:5px;"></div>               
+                </dd>
+                <dt>Relay</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.relay_urls.length
+                    ? this._mossStore.conductorInfo.network_info.relay_urls[0]
+                    : "None"}
+                    <sl-button size="small" @click=${async (_e) => {
+                        const res = await pingServer(this._mossStore.conductorInfo.network_info.relay_urls[0]);
+                        const elem = this.shadowRoot?.getElementById("relay-result") as HTMLElement;
+                        if (!elem) return;
+                        elem.style.display = "inline";
+                        elem.style.color = res.online ? "green" : "red";
+                        elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                        this.requestUpdate();
+                      }}>Ping</sl-button>
+                    <div id="relay-result" style="display:none; margin-left:5px;"></div>
+                </dd>
+            </dl>
+        </div>
         ${this.renderMemorySection()}
         <div class="row items-center" style="margin-bottom: 10px;">
           <h3 style="margin: 0;">DNA Storage Polling</h3>
@@ -1437,6 +1517,28 @@ export class DebuggingPanel extends LitElement {
         width: 90px;
       }
 
+        .kv-list {
+            margin-top: 5px;
+            display: grid;
+            grid-template-columns: max-content auto;
+            gap: 4px 0;
+        }
+        .kv-list dt {
+            text-align: right;
+            height: 30px;
+            align-content: center;
+        }
+        .kv-list dd {
+            margin-left: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap:5px;
+        }
+        .kv-list dt::after {
+            content: ":";
+            margin-right: 1px;
+        }
     `,
   ];
 }

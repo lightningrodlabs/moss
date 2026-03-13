@@ -1,22 +1,22 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { parseHrl } from '@holochain-open-dev/utils';
 import {
-    AgentPubKey,
-    AgentPubKeyB64,
-    AppAuthenticationToken,
-    AppClient,
-    AppWebsocket,
-    CallZomeRequest,
-    CallZomeRequestSigned,
-    CreateCloneCellRequest,
-    DisableCloneCellRequest,
-    EnableCloneCellRequest,
-    EntryHash,
-    EntryHashMap,
-    HoloHashMap,
-    RoleNameCallZomeRequest,
-    decodeHashFromBase64,
-    encodeHashToBase64, TransportStats,
+  AgentPubKey,
+  AgentPubKeyB64,
+  AppAuthenticationToken,
+  AppClient,
+  AppWebsocket,
+  CallZomeRequest,
+  CallZomeRequestSigned,
+  CreateCloneCellRequest,
+  DisableCloneCellRequest,
+  EnableCloneCellRequest,
+  EntryHash,
+  EntryHashMap,
+  HoloHashMap,
+  RoleNameCallZomeRequest,
+  decodeHashFromBase64,
+  encodeHashToBase64, TransportStats, DnaHash,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -82,6 +82,10 @@ declare global {
 
 /** All weaveApi functions shoot an event to parent */
 const weaveApi: WeaveServices = {
+  bootstrapUrls: (groupHash?: DnaHash) => postMessage({
+    type: 'get-bootstrap-urls',
+    groupHash,
+  }),
   assets: {
     assetInfo: (wal: WAL) =>
       postMessage({

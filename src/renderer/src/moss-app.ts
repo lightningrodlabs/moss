@@ -27,6 +27,7 @@ import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
 import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
+import {PartialModifiers} from "@theweave/moss-types";
 
 enum MossAppState {
   Loading,
@@ -188,8 +189,7 @@ export class MossApp extends LitElement {
 
     let info = await getConductorInfo();
     // If the conductor is not running yet, start it
-    // (it may for example already be running if the connect() function
-    // is being run as part of a page reload)
+    // (it may, for example, already be running if the connect() function is being run as part of a page reload)
     if (!info) {
       try {
         this.loadingText = msg('starting Holochain...');
@@ -282,7 +282,7 @@ export class MossApp extends LitElement {
 
   async joinGroupAndHeadToMain(): Promise<void> {
     this.creatingGroup = true;
-    let modifiers;
+    let modifiers: PartialModifiers;
     try {
       modifiers = partialModifiersFromInviteLink(this.inviteLink);
     } catch (e) {

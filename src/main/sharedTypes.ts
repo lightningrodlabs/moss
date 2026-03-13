@@ -25,11 +25,18 @@ export type DeveloperCollective = {
 };
 
 // CHANGE ALSO IN src/renderer/src/electron-api.ts
+export interface NetworkInfo {
+  bootstrap_urls: string[];
+  signal_urls: string[];
+  relay_urls: string[];
+}
+// CHANGE ALSO IN src/renderer/src/electron-api.ts
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
   moss_version: string;
   weave_protocol_version: string;
+  network_info: NetworkInfo;
 }
 
 export type ToolWeaveConfig = {
