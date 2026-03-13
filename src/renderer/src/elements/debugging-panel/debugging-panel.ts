@@ -44,6 +44,28 @@ import { getCellName, groupModifiersToAppId, safeSetInterval, SafeIntervalHandle
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
+import {fromUint8Array, toUint8Array} from "js-base64";
+
+
+/** Call bootstrap server and get the list of known peers */
+export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64): Promise<any> {
+  const bootstrap = bootstrapUrl.replace(/\/$/, '');
+  /* Convert dnaHash to K2 space hash */
+  console.log(`getBootstrapPeers() calling ${bootstrap} for dna`, dnaB64);
+  const trimmed = dnaB64.substring(1);
+  const rawBytes = toUint8Array(trimmed);
+  const slicedBytes = rawBytes.slice(3, 35);
+  const k2 = fromUint8Array(slicedBytes, true); // 'true' enables URL-safe mode
+  //console.log(`getBootstrapPeers() k2`, k2);
+  /* Query the boostrap server */
+  const response = await fetch(bootstrap + "/bootstrap/" + k2);
+  console.log(`getBootstrapPeers() response`, response);
+  if (!response.ok) {
+    return Promise.reject(`HTTP error: ${response.status}`);
+  }
+  return response.json();
+}
+
 
 async function pingServer(url: string, timeoutMs = 5000): Promise<{
   online: boolean;
@@ -55,12 +77,13 @@ async function pingServer(url: string, timeoutMs = 5000): Promise<{
   try {
     const response = await fetch(url, {
       method: 'HEAD',
+      mode: 'no-cors', // Won't throw on CORS, but response is opaque
       signal: AbortSignal.timeout(timeoutMs),
     });
     console.log('pinging server response', response);
 
     return {
-      online: response.ok,
+      online: true,
       latencyMs: Date.now() - start,
       status: response.status,
     };
@@ -1115,9 +1138,7 @@ export class DebuggingPanel extends LitElement {
                 <div class="row" style="align-items: center; flex: 1;">
                   <div class="row item-title" >
                     <sl-icon-button
-                      @click=${async () => {
-              this.toggleDebug(groupAppId);
-            }}
+                      @click=${async () => this.toggleDebug(groupAppId)}
                       .src=${wrapPathInSvg(mdiBug)}
                     >
                     </sl-icon-button>
@@ -1125,8 +1146,22 @@ export class DebuggingPanel extends LitElement {
                       <group-logo
                         .groupDnaHash=${groupDnaHash}
                         style="margin-right: 8px; --size: 40px"
-                      ></group-logo
-                    ></group-context>
+                      ></group-logo>
+                    </group-context>
+                    <div style="display:flex; flex-direction:row; gap:3px; align-items:center;">
+                      peers:
+                      <span id="peer-count-${groupId}">unknown</span>
+                      <sl-button size="small"  @click=${async () => {
+                          const elem = this.shadowRoot?.getElementById(`peer-count-${groupId}`) as HTMLElement;
+                          if (!elem) return;
+                        try {
+                            const peers = await getBootstrapPeers(this._mossStore.conductorInfo.network_info.bootstrap_urls[0], encodeHashToBase64(groupDnaHash));
+                            elem.innerText = `${peers.length}`;
+                        } catch(e) {
+                            elem.innerText = "error";
+
+                        }
+                        }}>Query</sl-button>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
                   <div class="item-count">
@@ -1394,7 +1429,7 @@ export class DebuggingPanel extends LitElement {
                     : "None"}
                     <sl-button size="small" 
                                @click=${async (_e) => {
-                      const res = await pingServer(  'https://google.com');
+                      const res = await pingServer(  this._mossStore.conductorInfo.network_info.bootstrap_urls[0]);
                       const elem = this.shadowRoot?.getElementById("bootstrap-result") as HTMLElement;
                       if (!elem) return;
                       elem.style.display = "inline";
