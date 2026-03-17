@@ -44,7 +44,7 @@ import { readIcon } from '../utils';
 import { AppletHash } from '@theweave/api';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export async function readLocalServices(): Promise<[string, string, string]> {
+export function readLocalServices(): [string, string, string] {
   if (!fs.existsSync('.kitsune2_bootstrap_srv')) {
     throw new Error(
       'No .kitsune2_bootstrap_srv file found. Make sure agent with agentIdx 1 is running before you start additional agents.',

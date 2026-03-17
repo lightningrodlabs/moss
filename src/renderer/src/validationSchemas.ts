@@ -307,6 +307,13 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('get-bootstrap-urls'),
+      groupHash: Type.Optional(DnaHash),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('get-group-profile'),
       groupHash: DnaHash,
     },
