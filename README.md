@@ -66,7 +66,8 @@ The Rust add-ons used in the main process are maintained in a [separate reposito
 yarn build:win
 
 # For macOS
-yarn build:mac
+yarn build:mac-x64
+yarn build:mac-arm64
 
 # For Linux
 yarn build:linux
