@@ -200,6 +200,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
   getMainProcessMemory: () => ipcRenderer.invoke('get-main-process-memory'),
+  getConductorProcessMemory: () => ipcRenderer.invoke('get-conductor-process-memory'),
   fetchAndValidateHappOrWebhapp: (url: string) =>
     ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),

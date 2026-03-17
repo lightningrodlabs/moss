@@ -120,20 +120,34 @@ export class HolochainManager {
 
     fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
+    const conductorEnv: Record<string, string> = {
+      RUST_LOG: rustLog
+        ? rustLog
+        : 'warn,' +
+        // this thrashes on startup
+        'wasmer_compiler_cranelift=error,' +
+        // this gives a bunch of warnings about how long db accesses are taking, tmi
+        'holochain_sqlite::db::access=error,' +
+        // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
+        'kitsune_p2p::spawn::actor::discover=error',
+      WASM_LOG: wasmLog ? wasmLog : 'warn',
+      NO_COLOR: '1',
+    };
+    // Forward essential env vars for subprocess functionality
+    if (process.env.HOME) {
+      conductorEnv.HOME = process.env.HOME;
+    }
+    if (process.env.PATH) {
+      conductorEnv.PATH = process.env.PATH;
+    }
+    // Forward jemalloc profiling config from parent environment.
+    // tikv-jemallocator uses _RJEM_ prefix for jemalloc symbols,
+    // so the env var is _RJEM_MALLOC_CONF (not MALLOC_CONF).
+    if (process.env._RJEM_MALLOC_CONF) {
+      conductorEnv._RJEM_MALLOC_CONF = process.env._RJEM_MALLOC_CONF;
+    }
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
-      env: {
-        RUST_LOG: rustLog
-          ? rustLog
-          : 'warn,' +
-          // this thrashes on startup
-          'wasmer_compiler_cranelift=error,' +
-          // this gives a bunch of warnings about how long db accesses are taking, tmi
-          'holochain_sqlite::db::access=error,' +
-          // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
-          'kitsune_p2p::spawn::actor::discover=error',
-        WASM_LOG: wasmLog ? wasmLog : 'warn',
-        NO_COLOR: '1',
-      },
+      env: conductorEnv,
     });
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();

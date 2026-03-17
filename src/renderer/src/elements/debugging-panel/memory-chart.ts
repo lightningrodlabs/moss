@@ -22,6 +22,14 @@ export class MemoryChart extends LitElement {
   @property({ type: Number })
   maxPoints = 60;
 
+  /** Seconds between samples — used to compute X-axis time labels. */
+  @property({ type: Number })
+  intervalSecs = 2;
+
+  /** When true, data fills the full chart width (maxPoints = data.length). */
+  @property({ type: Boolean })
+  fillWidth = false;
+
   @property({ type: Array })
   series: ChartSeries[] = [];
 
@@ -124,20 +132,48 @@ export class MemoryChart extends LitElement {
       ctx.fillText(formatBytes(val), padding.left - 4, y);
     }
 
-    // Draw X axis labels
+    // Effective maxPoints: in fillWidth mode, use data length so the chart is fully occupied.
+    const maxDataLen = Math.max(...this.series.map((s) => s.data.length), 1);
+    const effectiveMax = this.fillWidth ? maxDataLen : this.maxPoints;
+
+    // For fixed windows the left label shows the full window span;
+    // for fillWidth ("all") it shows the actual elapsed time.
+    const windowSecs = this.fillWidth
+      ? maxDataLen * this.intervalSecs
+      : effectiveMax * this.intervalSecs;
+
+    const formatTime = (secs: number): string => {
+      if (secs >= 3600) return `${(secs / 3600).toFixed(1)}h`;
+      if (secs >= 60) return `${Math.round(secs / 60)}m`;
+      return `${secs}s`;
+    };
+
+    // Draw vertical grid lines with time tick labels
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#999';
-    const maxDataLen = Math.max(...this.series.map((s) => s.data.length), 1);
-    const seconds = maxDataLen * 2; // 2s polling interval
-    ctx.fillText(
-      seconds >= 60 ? `${Math.round(seconds / 60)}m ago` : `${seconds}s ago`,
-      padding.left,
-      padding.top + chartH + 4,
-    );
-    ctx.fillText('now', padding.left + chartW, padding.top + chartH + 4);
+    const xGridLines = 4;
+    for (let i = 0; i <= xGridLines; i++) {
+      const x = padding.left + (i / xGridLines) * chartW;
+      // faint vertical grid (skip left edge, already has Y axis)
+      if (i > 0 && i < xGridLines) {
+        ctx.strokeStyle = '#282840';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, padding.top);
+        ctx.lineTo(x, padding.top + chartH);
+        ctx.stroke();
+      }
+      const tickSecs = windowSecs * (1 - i / xGridLines);
+      const label = i === xGridLines ? 'now' : `${formatTime(tickSecs)} ago`;
+      ctx.fillText(label, x, padding.top + chartH + 4);
+    }
 
-    // Draw data lines
+    // Draw data lines.
+    // Points are right-aligned: the newest point (last in array) is always at the
+    // right edge of the chart.  Empty space appears on the left while the buffer
+    // is still filling up (fixed windows only; fillWidth always fills).
+    const spacing = effectiveMax > 1 ? chartW / (effectiveMax - 1) : 0;
     for (const s of this.series) {
       if (s.data.length < 2) continue;
 
@@ -145,15 +181,18 @@ export class MemoryChart extends LitElement {
       ctx.lineWidth = 1.5;
       ctx.beginPath();
 
-      const pointCount = Math.min(s.data.length, this.maxPoints);
+      const pointCount = Math.min(s.data.length, effectiveMax);
       const startIdx = s.data.length - pointCount;
+      let started = false;
 
       for (let i = 0; i < pointCount; i++) {
-        const x = padding.left + (i / (this.maxPoints - 1)) * chartW;
+        // i=0 is oldest visible, i=pointCount-1 is newest (right edge)
+        const x = padding.left + chartW - (pointCount - 1 - i) * spacing;
         const y = padding.top + chartH - (s.data[startIdx + i] / maxVal) * chartH;
 
-        if (i === 0) {
+        if (!started) {
           ctx.moveTo(x, y);
+          started = true;
         } else {
           ctx.lineTo(x, y);
         }
