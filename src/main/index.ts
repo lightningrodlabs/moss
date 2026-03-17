@@ -2467,6 +2467,27 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('get-main-process-memory', () => {
       return process.memoryUsage();
     });
+    ipcMain.handle('get-conductor-process-memory', (): {
+      rssBytes: number;
+      vmSizeBytes: number;
+      pid: number;
+    } | null => {
+      const pid = HOLOCHAIN_MANAGER?.processHandle?.pid;
+      if (!pid) return null;
+      try {
+        const status = fs.readFileSync(`/proc/${pid}/status`, 'utf-8');
+        const vmRss = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+        const vmSize = status.match(/^VmSize:\s+(\d+)\s+kB$/m);
+        return {
+          rssBytes: vmRss ? parseInt(vmRss[1], 10) * 1024 : 0,
+          vmSizeBytes: vmSize ? parseInt(vmSize[1], 10) * 1024 : 0,
+          pid,
+        };
+      } catch (_e) {
+        // Process may have exited or /proc not available (non-Linux)
+        return null;
+      }
+    });
     ipcMain.handle(
       'install-applet-bundle',
       async (

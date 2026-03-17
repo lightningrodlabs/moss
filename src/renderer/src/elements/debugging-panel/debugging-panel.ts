@@ -101,6 +101,82 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
+// Lookback window options for memory charts
+type LookbackWindow = 2 | 10 | 30 | 60 | 'all';
+
+// Rolling points per tier
+const HIGH_RES_POINTS = 300;  // 300 × 2s  = 10 min
+const MED_RES_POINTS  =  60;  //  60 × 60s  =  1 h
+const LOW_RES_POINTS  = 144;  // 144 × 600s = 24 h
+
+interface ChartWindow {
+  data: number[];
+  intervalSecs: number;
+  maxPoints: number;
+  /** When true the chart fills the full width using data.length as maxPoints. */
+  fillWidth?: boolean;
+}
+
+/**
+ * Three-tier rolling history for memory metrics.
+ * High-res (2 s), medium-res (60 s), low-res (600 s).
+ * Call push() every 2 s; downsampling happens automatically.
+ */
+class TieredHistory {
+  readonly high: number[] = [];
+  readonly med: number[]  = [];
+  readonly low: number[]  = [];
+
+  private _highAccum: number[] = [];
+  private _medAccum: number[]  = [];
+
+  push(value: number): void {
+    this.high.push(value);
+    if (this.high.length > HIGH_RES_POINTS) this.high.shift();
+
+    this._highAccum.push(value);
+    if (this._highAccum.length >= 30) {
+      const avg = this._highAccum.reduce((a, b) => a + b, 0) / this._highAccum.length;
+      this._highAccum = [];
+      this.med.push(avg);
+      if (this.med.length > MED_RES_POINTS) this.med.shift();
+
+      this._medAccum.push(avg);
+      if (this._medAccum.length >= 10) {
+        const avg2 = this._medAccum.reduce((a, b) => a + b, 0) / this._medAccum.length;
+        this._medAccum = [];
+        this.low.push(avg2);
+        if (this.low.length > LOW_RES_POINTS) this.low.shift();
+      }
+    }
+  }
+
+  forWindow(w: LookbackWindow): ChartWindow {
+    switch (w) {
+      case 2:     return { data: this.high.slice(-60),  intervalSecs: 2,   maxPoints: 60  };
+      case 10:    return { data: [...this.high],         intervalSecs: 2,   maxPoints: 300 };
+      case 30:    return { data: this.med.slice(-30),    intervalSecs: 60,  maxPoints: 30  };
+      case 60:    return { data: [...this.med],          intervalSecs: 60,  maxPoints: 60  };
+      case 'all': {
+        // "All" uses the highest-resolution data available and fills the full width.
+        const data = [...this.high];
+        return { data, intervalSecs: 2, maxPoints: Math.max(data.length, 2), fillWidth: true };
+      }
+    }
+  }
+
+  get hasData(): boolean {
+    return this.high.length > 1;
+  }
+
+  clear(): void {
+    this.high.length = 0;
+    this.med.length  = 0;
+    this.low.length  = 0;
+    this._highAccum  = [];
+    this._medAccum   = [];
+  }
+}
 
 const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
   if (!metrics) {
@@ -241,30 +317,46 @@ export class DebuggingPanel extends LitElement {
   @state()
   _storageByAppId: Record<InstalledAppId, (DnaStorageInfo & { dnaName?: string })[]> = {};
 
-  // History arrays for charts (rolling window, values in bytes)
+  // Lookback window for all memory charts.
   @state()
-  _rendererRssHistory: number[] = [];
+  _lookback: LookbackWindow = 10;
+
+  // Tiered history for memory metrics (non-reactive; re-render triggered by ticks below).
+  private _rendererRss     = new TieredHistory();
+  private _rendererPrivate = new TieredHistory();
+  private _rendererShared  = new TieredHistory();
+  private _mainRss         = new TieredHistory();
+  private _mainHeap        = new TieredHistory();
+  private _mainExternal    = new TieredHistory();
+  private _mainArrayBufs   = new TieredHistory();
+  private _conductorRss    = new TieredHistory();
+  private _conductorVmSize = new TieredHistory();
+
+  // Bumped after each memory poll to trigger Lit re-render.
+  @state()
+  private _memoryTick = 0;
 
   @state()
-  _rendererPrivateHistory: number[] = [];
-
-  @state()
-  _rendererSharedHistory: number[] = [];
-
-  @state()
-  _mainRssHistory: number[] = [];
-
-  @state()
-  _mainHeapHistory: number[] = [];
-
-  @state()
-  _mainExternalHistory: number[] = [];
-
-  @state()
-  _mainArrayBuffersHistory: number[] = [];
+  private _conductorMemoryTick = 0;
 
   @state()
   _storageHistory: Record<InstalledAppId, number[]> = {};
+
+  // Conductor (Holochain subprocess) memory monitoring - independent toggle
+  @state()
+  _conductorMemoryPolling = false;
+
+  @state()
+  _conductorMemoryPollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _conductorMemory: { rssBytes: number; vmSizeBytes: number; pid: number } | null = null;
+
+  @state()
+  _conductorRssHistory: number[] = [];
+
+  @state()
+  _conductorVmSizeHistory: number[] = [];
 
   // Cache: DnaHashB64 -> cell/role name (resolved from appInfo)
   private _dnaNameCache: Record<DnaHashB64, string> = {};
@@ -307,46 +399,65 @@ export class DebuggingPanel extends LitElement {
       this._storagePollInterval.cancel();
       this._storagePollInterval = undefined;
     }
+    if (this._conductorMemoryPollInterval) {
+      this._conductorMemoryPollInterval.cancel();
+      this._conductorMemoryPollInterval = undefined;
+    }
   }
 
   async pollMemory() {
     try {
       this._rendererMemory = await window.electronAPI.getRendererProcessMemory();
-      this._rendererRssHistory = [
-        ...this._rendererRssHistory.slice(-59),
-        this._rendererMemory.residentSetKB * 1024,
-      ];
-      this._rendererPrivateHistory = [
-        ...this._rendererPrivateHistory.slice(-59),
-        this._rendererMemory.privateKB * 1024,
-      ];
-      this._rendererSharedHistory = [
-        ...this._rendererSharedHistory.slice(-59),
-        this._rendererMemory.sharedKB * 1024,
-      ];
+      this._rendererRss.push(this._rendererMemory.residentSetKB * 1024);
+      this._rendererPrivate.push(this._rendererMemory.privateKB * 1024);
+      this._rendererShared.push(this._rendererMemory.sharedKB * 1024);
     } catch (e) {
       console.error('Failed to get renderer process memory:', e);
     }
     try {
       this._mainProcessMemory = await window.electronAPI.getMainProcessMemory();
-      this._mainRssHistory = [
-        ...this._mainRssHistory.slice(-59),
-        this._mainProcessMemory.rss,
-      ];
-      this._mainHeapHistory = [
-        ...this._mainHeapHistory.slice(-59),
-        this._mainProcessMemory.heapUsed,
-      ];
-      this._mainExternalHistory = [
-        ...this._mainExternalHistory.slice(-59),
-        this._mainProcessMemory.external,
-      ];
-      this._mainArrayBuffersHistory = [
-        ...this._mainArrayBuffersHistory.slice(-59),
-        this._mainProcessMemory.arrayBuffers,
-      ];
+      this._mainRss.push(this._mainProcessMemory.rss);
+      this._mainHeap.push(this._mainProcessMemory.heapUsed);
+      this._mainExternal.push(this._mainProcessMemory.external);
+      this._mainArrayBufs.push(this._mainProcessMemory.arrayBuffers);
     } catch (e) {
       console.error('Failed to get main process memory:', e);
+    }
+    this._memoryTick++;
+  }
+
+  async pollConductorMemory() {
+    try {
+      const mem = await window.electronAPI.getConductorProcessMemory();
+      if (mem) {
+        this._conductorMemory = mem;
+        this._conductorRss.push(mem.rssBytes);
+        this._conductorVmSize.push(mem.vmSizeBytes);
+      }
+    } catch (e) {
+      console.error('Failed to get conductor process memory:', e);
+    }
+    this._conductorMemoryTick++;
+  }
+
+  toggleConductorMemoryPolling() {
+    if (this._conductorMemoryPolling) {
+      this._conductorMemoryPollInterval?.cancel();
+      this._conductorMemoryPollInterval = undefined;
+      this._conductorMemoryPolling = false;
+      this._conductorRss.clear();
+      this._conductorVmSize.clear();
+      this._conductorMemory = null;
+    } else {
+      this._conductorMemoryPolling = true;
+      this._conductorMemoryPollInterval = safeSetInterval({
+        name: 'pollConductorMemory',
+        fn: async () => {
+          await this.pollConductorMemory();
+        },
+        intervalMs: 2000,
+        runImmediately: true,
+      });
     }
   }
 
@@ -355,13 +466,13 @@ export class DebuggingPanel extends LitElement {
       this._memoryPollInterval?.cancel();
       this._memoryPollInterval = undefined;
       this._memoryPolling = false;
-      this._rendererRssHistory = [];
-      this._rendererPrivateHistory = [];
-      this._rendererSharedHistory = [];
-      this._mainRssHistory = [];
-      this._mainHeapHistory = [];
-      this._mainExternalHistory = [];
-      this._mainArrayBuffersHistory = [];
+      this._rendererRss.clear();
+      this._rendererPrivate.clear();
+      this._rendererShared.clear();
+      this._mainRss.clear();
+      this._mainHeap.clear();
+      this._mainExternal.clear();
+      this._mainArrayBufs.clear();
     } else {
       this._memoryPolling = true;
       this._memoryPollInterval = safeSetInterval({
@@ -492,11 +603,26 @@ export class DebuggingPanel extends LitElement {
     `;
   }
 
+  renderLookbackSelector() {
+    const options: [LookbackWindow, string][] = [[2, '2m'], [10, '10m'], [30, '30m'], [60, '1h'], ['all', 'all']];
+    return html`
+      <div class="row" style="gap: 4px; margin-left: 12px;">
+        ${options.map(([w, label]) => html`
+          <sl-button
+            size="small"
+            variant=${this._lookback === w ? 'primary' : 'default'}
+            @click=${() => { this._lookback = w; }}
+          >${label}</sl-button>
+        `)}
+      </div>
+    `;
+  }
+
   renderMemorySection() {
     return html`
       <div class="column" style="margin-top: 10px; margin-bottom: 20px;">
-        <div class="row items-center" style="margin-bottom: 10px;">
-          <h3 style="margin: 0;">Memory</h3>
+        <div class="row items-center" style="margin-bottom: 10px; gap: 8px;">
+          <h3 style="margin: 0;">Memory: Moss UI</h3>
           <sl-button
             size="small"
             style="margin-left: 12px;"
@@ -523,36 +649,154 @@ export class DebuggingPanel extends LitElement {
           </div>
         ` : html``}
 
-        ${this._rendererRssHistory.length > 1 || this._mainRssHistory.length > 1 ? html`
-          <memory-chart
-            title="RSS Comparison"
-            .series=${[
-              { label: 'Renderer', color: '#2196F3', data: this._rendererRssHistory },
-              { label: 'Main', color: '#FF9800', data: this._mainRssHistory },
-            ]}
-          ></memory-chart>
-          <memory-chart
-            title="Main Process Breakdown"
-            .series=${[
-              { label: 'Heap', color: '#4CAF50', data: this._mainHeapHistory },
-              { label: 'External', color: '#FF5722', data: this._mainExternalHistory },
-              { label: 'ArrayBuf', color: '#9C27B0', data: this._mainArrayBuffersHistory },
-            ]}
-            style="margin-top: 8px;"
-          ></memory-chart>
-          <memory-chart
-            title="Renderer Breakdown"
-            .series=${[
-              { label: 'Private', color: '#E91E63', data: this._rendererPrivateHistory },
-              { label: 'Shared', color: '#00BCD4', data: this._rendererSharedHistory },
-            ]}
-            style="margin-top: 8px;"
-          ></memory-chart>
-        ` : html``}
+        ${this._memoryPolling ? this.renderLookbackSelector() : html``}
+
+        ${this._rendererRss.hasData || this._mainRss.hasData ? html`${(() => {
+          const rssWin      = this._rendererRss.forWindow(this._lookback);
+          const mainRssWin  = this._mainRss.forWindow(this._lookback);
+          const heapWin     = this._mainHeap.forWindow(this._lookback);
+          const extWin      = this._mainExternal.forWindow(this._lookback);
+          const abWin       = this._mainArrayBufs.forWindow(this._lookback);
+          const privWin     = this._rendererPrivate.forWindow(this._lookback);
+          const sharedWin   = this._rendererShared.forWindow(this._lookback);
+          const fw = !!rssWin.fillWidth;
+          return html`
+            <memory-chart
+              title="RSS Comparison"
+              .series=${[
+                { label: 'Renderer', color: '#2196F3', data: rssWin.data },
+                { label: 'Main', color: '#FF9800', data: mainRssWin.data },
+              ]}
+              .maxPoints=${rssWin.maxPoints}
+              .intervalSecs=${rssWin.intervalSecs}
+              .fillWidth=${fw}
+            ></memory-chart>
+            <memory-chart
+              title="Main Process Breakdown"
+              .series=${[
+                { label: 'Heap', color: '#4CAF50', data: heapWin.data },
+                { label: 'External', color: '#FF5722', data: extWin.data },
+                { label: 'ArrayBuf', color: '#9C27B0', data: abWin.data },
+              ]}
+              .maxPoints=${heapWin.maxPoints}
+              .intervalSecs=${heapWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+            <memory-chart
+              title="Renderer Breakdown"
+              .series=${[
+                { label: 'Private', color: '#E91E63', data: privWin.data },
+                { label: 'Shared', color: '#00BCD4', data: sharedWin.data },
+              ]}
+              .maxPoints=${privWin.maxPoints}
+              .intervalSecs=${privWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+          `;
+        })()} ` : html``}
 
         ${!this._memoryPolling && !this._rendererMemory ? html`
           <div style="color: #666;">Click "Start Polling" to begin memory monitoring.</div>
         ` : html``}
+      </div>
+    `;
+  }
+
+  renderConductorMemorySection() {
+    return html`
+      <div class="column" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="row items-center" style="margin-bottom: 10px; gap: 8px;">
+          <h3 style="margin: 0;">Memory: Holochain Conductor</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleConductorMemoryPolling()}
+          >${this._conductorMemoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+        </div>
+
+        ${this._conductorMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <div>PID: ${this._conductorMemory.pid}</div>
+            <div>RSS: ${formatBytes(this._conductorMemory.rssBytes)}</div>
+            <div>Virtual: ${formatBytes(this._conductorMemory.vmSizeBytes)}</div>
+          </div>
+        ` : html``}
+
+        ${this._conductorMemoryPolling ? this.renderLookbackSelector() : html``}
+
+        ${this._conductorRss.hasData ? html`${(() => {
+          const rssWin = this._conductorRss.forWindow(this._lookback);
+          const vmWin  = this._conductorVmSize.forWindow(this._lookback);
+          const fw = !!rssWin.fillWidth;
+          return html`
+            <memory-chart
+              title="Conductor RSS"
+              .series=${[{ label: 'RSS', color: '#F44336', data: rssWin.data }]}
+              .maxPoints=${rssWin.maxPoints}
+              .intervalSecs=${rssWin.intervalSecs}
+              .fillWidth=${fw}
+            ></memory-chart>
+            <memory-chart
+              title="Conductor Virtual"
+              .series=${[{ label: 'Virtual', color: '#FF9800', data: vmWin.data }]}
+              .maxPoints=${vmWin.maxPoints}
+              .intervalSecs=${vmWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+          `;
+        })()} ` : html``}
+
+        ${!this._conductorMemoryPolling && !this._conductorMemory ? html`
+          <div style="color: #666;">Click "Start Polling" to monitor the Holochain conductor subprocess memory (Linux only).</div>
+        ` : html``}
+      </div>
+    `;
+  }
+
+  getZomeCallSummary(): { totalCalls: number; avgCallsPerMin: number; firstCall: number } | null {
+    const logs = this._mossStore.zomeCallLogs;
+    const appIds = Object.keys(logs);
+    if (appIds.length === 0) return null;
+
+    let totalCalls = 0;
+    let earliestFirstCall = Infinity;
+
+    for (const appId of appIds) {
+      const entry = logs[appId];
+      totalCalls += entry.totalCounts;
+      if (entry.firstCall < earliestFirstCall) {
+        earliestFirstCall = entry.firstCall;
+      }
+    }
+
+    const elapsedMin = (Date.now() - earliestFirstCall) / (1000 * 60);
+    const avgCallsPerMin = elapsedMin > 0 ? Math.round(totalCalls / elapsedMin) : 0;
+
+    return { totalCalls, avgCallsPerMin, firstCall: earliestFirstCall };
+  }
+
+  renderZomeCallSummary() {
+    const summary = this.getZomeCallSummary();
+    if (!summary) return html``;
+
+    const elapsedMin = (Date.now() - summary.firstCall) / (1000 * 60);
+    const elapsedStr = elapsedMin < 1
+      ? `${Math.round(elapsedMin * 60)}s`
+      : elapsedMin < 60
+        ? `${Math.round(elapsedMin)}m`
+        : `${Math.floor(elapsedMin / 60)}h ${Math.round(elapsedMin % 60)}m`;
+
+    return html`
+      <div style="margin-bottom: 12px; padding: 8px; background: #9fb0ff; border: 2px solid #03004c; border-radius: 4px;">
+        <b>Zome Call Summary</b> (tracking for ${elapsedStr})
+        <div style="margin-top: 4px;">
+          Total calls: <b>${summary.totalCalls}</b>
+          &nbsp;&bull;&nbsp;
+          Avg: <b>${summary.avgCallsPerMin}</b> calls/min
+        </div>
       </div>
     `;
   }
@@ -1474,6 +1718,7 @@ export class DebuggingPanel extends LitElement {
             </dl>
         </div>
         ${this.renderMemorySection()}
+        ${this.renderConductorMemorySection()}
         <div class="row items-center" style="margin-bottom: 10px;">
           <h3 style="margin: 0;">DNA Storage Polling</h3>
           <sl-button
@@ -1493,6 +1738,7 @@ export class DebuggingPanel extends LitElement {
         >
           Dump Network Stats
         </sl-button>
+        ${this.renderZomeCallSummary()}
         <h2 style="text-align: center;">Groups DNAs</h2>
         <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
           ${this.renderGroupsLoading()}

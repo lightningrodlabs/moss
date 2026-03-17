@@ -220,6 +220,11 @@ declare global {
         external: number;
         arrayBuffers: number;
       }>;
+      getConductorProcessMemory: () => Promise<{
+        rssBytes: number;
+        vmSizeBytes: number;
+        pid: number;
+      } | null>;
       fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
