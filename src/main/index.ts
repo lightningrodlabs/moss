@@ -364,6 +364,10 @@ if (!RUNNING_WITH_COMMAND) {
     RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
   );
 
+  // Set the display name after filesystem paths are established so the storage directory
+  // continues to derive from package.json's `name` field rather than the display name.
+  app.setName(process.env.NODE_ENV === 'development' ? 'Moss-dev' : 'Moss');
+
   const APPLET_IFRAME_SCRIPT = fs.readFileSync(
     path.resolve(__dirname, '../applet-iframe/index.mjs'),
     'utf-8',

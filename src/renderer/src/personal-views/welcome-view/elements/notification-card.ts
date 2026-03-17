@@ -265,7 +265,7 @@ export class NotificationCard extends LitElement {
             <div class="notification-date">
               ${this.notification
             ? this.timeAgo.format(new Date(this.notification.timestamp), 'twitter')
-            : 'unknown date'} ago
+            : 'unknown date'}
             </div>
             <div class="notification-buttons">
               ${aboutWal ? html`
