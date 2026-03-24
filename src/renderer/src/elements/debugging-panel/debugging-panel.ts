@@ -61,7 +61,7 @@ export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64
   const response = await fetch(bootstrap + "/bootstrap/" + k2);
   console.log(`getBootstrapPeers() response`, response);
   if (!response.ok) {
-    return Promise.reject(`HTTP error: ${response.status}`);
+    return Promise.reject(`HTTP error during getBootstrapPeers(): ${response.status}`);
   }
   return response.json();
 }
@@ -89,7 +89,6 @@ async function pingServer(url: string, timeoutMs = 5000): Promise<{
     };
   } catch (error) {
     console.log('pinging server error', error);
-
     return { online: false };
   }
 }
@@ -1403,7 +1402,6 @@ export class DebuggingPanel extends LitElement {
                             elem.innerText = `${peers.length}`;
                         } catch(e) {
                             elem.innerText = "error";
-
                         }
                         }}>Query</sl-button>
                   </div>
