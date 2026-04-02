@@ -8,8 +8,8 @@ import { GroupProfile } from '@theweave/api';
 import { consume } from '@lit/context';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
-import { DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { toPromise } from '@holochain-open-dev/stores';
+import { encodeHashToBase64 } from '@holochain/client';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { appletHashFromAppId, toolCompatibilityIdFromDistInfo } from '@theweave/utils';
 import { WELCOME_DEV_MODE, getMockGroupProfiles } from '../../personal-views/welcome-view/mock-data.js';
@@ -29,95 +29,135 @@ export class GroupsForTool extends LitElement {
   maxGroups = 3;
 
   @state()
-  _mockProfiles: GroupProfile[] | undefined;
+  _status: 'pending' | 'complete' | 'error' = 'pending';
 
-  // Initialized in firstUpdated when not in DEV_MODE
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _groupProfiles: any;
+  @state()
+  _profiles: GroupProfile[] = [];
 
   firstUpdated() {
     if (WELCOME_DEV_MODE) {
-      this._mockProfiles = getMockGroupProfiles(this.toolCompatibilityId);
+      this._profiles = getMockGroupProfiles(this.toolCompatibilityId);
+      this._status = 'complete';
     } else {
-      this._groupProfiles = new StoreSubscriber(
-        this,
-        () =>
-          pipe(
-            this._mossStore.allAppAssetInfos,
-            (assetInfos) => {
-              const appletHashes = Object.entries(assetInfos)
-                .filter(([appId, [info]]) => {
-                  if (!appId.startsWith('applet#')) return false;
-                  if (info.distributionInfo.type !== 'web2-tool-list') return false;
-                  return (
-                    toolCompatibilityIdFromDistInfo(info.distributionInfo) ===
-                    this.toolCompatibilityId
-                  );
-                })
-                .map(([appId]) => appletHashFromAppId(appId));
-
-              return appletHashes;
-            },
-            async (appletHashes) => {
-              const seenGroupHashes = new Set<string>();
-              const groupProfiles: Array<GroupProfile | undefined> = [];
-
-              for (const appletHash of appletHashes) {
-                const groupStoreMap = await toPromise(
-                  this._mossStore.groupsForApplet.get(appletHash)!,
-                );
-                for (const [groupDnaHash, groupStore] of groupStoreMap.entries()) {
-                  const hashB64 = encodeHashToBase64(groupDnaHash as DnaHash);
-                  if (!seenGroupHashes.has(hashB64)) {
-                    seenGroupHashes.add(hashB64);
-                    const profile = await toPromise(groupStore!.groupProfile);
-                    groupProfiles.push(profile);
-                  }
-                }
-              }
-
-              return groupProfiles;
-            },
-          ),
-        () => [this.toolCompatibilityId, this._mossStore],
-      );
+      this._loadProfiles();
     }
   }
 
-  private _getProfiles(): { status: 'pending' | 'complete' | 'error'; profiles: GroupProfile[] } {
-    if (WELCOME_DEV_MODE) {
-      return { status: 'complete', profiles: this._mockProfiles ?? [] };
-    }
+  private async _loadProfiles() {
+    try {
+      // 1. Get all app asset infos to find applets for this tool
+      const assetInfos = await toPromise(this._mossStore.allAppAssetInfos);
+      const appletHashes = Object.entries(assetInfos)
+        .filter(([appId, [info]]) => {
+          if (!appId.startsWith('applet#')) return false;
+          if (info.distributionInfo.type !== 'web2-tool-list') return false;
+          return (
+            toolCompatibilityIdFromDistInfo(info.distributionInfo) ===
+            this.toolCompatibilityId
+          );
+        })
+        .map(([appId]) => appletHashFromAppId(appId));
 
-    const value = this._groupProfiles?.value;
-    if (!value || value.status === 'pending') {
-      return { status: 'pending', profiles: [] };
+      if (appletHashes.length === 0) {
+        this._status = 'complete';
+        return;
+      }
+
+      // 2. Find groups for each applet using direct admin API calls
+      //    (bypasses reactive store chain that can block on slow groups)
+      const seenGroupHashes = new Set<string>();
+      const groupDnaHashes: Array<Uint8Array> = [];
+
+      for (const appletHash of appletHashes) {
+        const hashes = await this._mossStore.getGroupsForApplet(appletHash);
+        for (const hash of hashes) {
+          const b64 = encodeHashToBase64(hash);
+          if (!seenGroupHashes.has(b64)) {
+            seenGroupHashes.add(b64);
+            groupDnaHashes.push(hash);
+          }
+        }
+      }
+
+      if (groupDnaHashes.length === 0) {
+        this._status = 'complete';
+        return;
+      }
+
+      // 3. Get group profiles
+      const groupStoresMap = await toPromise(this._mossStore.groupStores);
+      const profiles: GroupProfile[] = [];
+
+      for (const hash of groupDnaHashes) {
+        const groupStore = groupStoresMap.get(hash);
+        if (groupStore) {
+          try {
+            const profile = await this._awaitGroupProfile(groupStore);
+            if (profile) {
+              profiles.push(profile);
+            }
+          } catch (e) {
+            console.warn('Failed to get group profile:', e);
+          }
+        }
+      }
+
+      this._profiles = profiles;
+      this._status = 'complete';
+    } catch (e) {
+      console.error('Failed to load groups for tool:', e);
+      this._status = 'error';
     }
-    if (value.status === 'error') {
-      console.error('Failed to get groups for tool: ', value.error);
-      return { status: 'error', profiles: [] };
-    }
-    return {
-      status: 'complete',
-      profiles: value.value.filter((p): p is GroupProfile => !!p),
-    };
+  }
+
+  /**
+   * Wait for a non-undefined group profile with a timeout.
+   * The groupProfile store may initially resolve with undefined (local cache miss)
+   * before polling fetches the real profile from the network.
+   */
+  private _awaitGroupProfile(
+    groupStore: { groupProfile: { subscribe: (fn: (value: { status: string; value?: GroupProfile }) => void) => () => void } },
+  ): Promise<GroupProfile | undefined> {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        unsubscribe();
+        resolve(undefined);
+      }, 10000);
+
+      const unsubscribe = groupStore.groupProfile.subscribe(
+        (value: { status: string; value?: GroupProfile }) => {
+          if (value.status === 'complete' && value.value !== undefined) {
+            clearTimeout(timeout);
+            // Defer unsubscribe to avoid unsubscribing inside the callback
+            setTimeout(() => {
+              unsubscribe();
+              resolve(value.value);
+            });
+          } else if (value.status === 'error') {
+            clearTimeout(timeout);
+            setTimeout(() => {
+              unsubscribe();
+              resolve(undefined);
+            });
+          }
+        },
+      );
+    });
   }
 
   render() {
-    const { status, profiles } = this._getProfiles();
-
-    switch (status) {
+    switch (this._status) {
       case 'pending':
         return html`<sl-skeleton
           style="height: ${this.size}px; width: ${this.size}px;"
           effect="pulse"
         ></sl-skeleton>`;
       case 'complete': {
-        if (profiles.length === 0) {
+        if (this._profiles.length === 0) {
           return html`<span style="color: rgba(0, 0, 0, 0.40);">None</span>`;
         }
-        const displayProfiles = profiles.slice(0, this.maxGroups);
-        const remainingCount = profiles.length - this.maxGroups;
+        const displayProfiles = this._profiles.slice(0, this.maxGroups);
+        const remainingCount = this._profiles.length - this.maxGroups;
         return html`
           <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
             ${displayProfiles.map(
