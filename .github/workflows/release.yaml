@@ -146,19 +146,26 @@ jobs:
           # Retry 5 times on Windows due to weird flaky issue
           yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
 
-      - name: sign and upload the app (Windows)
+      - name: sign the app (Windows)
+        if: matrix.platform == 'windows-2022'
+        uses: azure/trusted-signing-action@v0.5.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          files-folder: dist
+          files-folder-filter: exe
+
+      - name: upload the app (Windows)
         shell: bash
         if: matrix.platform == 'windows-2022'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |          
+        run: |
           ls dist
-
-          # Sign the .exe file
-          dotnet tool install --global --version 4.0.1 AzureSignTool
-          echo "sha512 before code signing"
-          CertUtil -hashfile "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
-          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe"
           echo "sha512 after code signing"
           CertUtil -hashfile "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" SHA512
 
