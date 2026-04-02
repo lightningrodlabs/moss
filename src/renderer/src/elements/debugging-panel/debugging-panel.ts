@@ -157,9 +157,16 @@ class TieredHistory {
       case 30:    return { data: this.med.slice(-30),    intervalSecs: 60,  maxPoints: 30  };
       case 60:    return { data: [...this.med],          intervalSecs: 60,  maxPoints: 60  };
       case 'all': {
-        // "All" uses the highest-resolution data available and fills the full width.
-        const data = [...this.high];
-        return { data, intervalSecs: 2, maxPoints: Math.max(data.length, 2), fillWidth: true };
+        // Stitch tiers together: low (oldest) → med → high (newest).
+        // Each tier covers a time range not yet downsampled into the next,
+        // so concatenation gives a continuous timeline at mixed resolution.
+        const data = [...this.low, ...this.med, ...this.high];
+        // Weighted average interval: approximate since tiers have different rates,
+        // but for the X-axis label we just need total elapsed seconds.
+        const totalSecs =
+          this.low.length * 600 + this.med.length * 60 + this.high.length * 2;
+        const avgInterval = data.length > 0 ? totalSecs / data.length : 2;
+        return { data, intervalSecs: avgInterval, maxPoints: Math.max(data.length, 2), fillWidth: true };
       }
     }
   }
