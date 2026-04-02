@@ -241,6 +241,14 @@ export class WalWindow extends LitElement {
                     source: message.source,
                   }
                 );
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'cross-group',
+                    toolCompatibilityId: iframeKind.toolCompatibilityId,
+                    subType: request.source.subType,
+                  },
+                });
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
                 this.iframeStore.registerAppletIframe(
@@ -249,8 +257,17 @@ export class WalWindow extends LitElement {
                   subType: request.request.subType,
                   source: message.source,}
                 );
+                // Use the child iframe's applet identity, not the parent window's
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'applet',
+                    appletHash: iframeKind.appletHash,
+                    groupHash: iframeKind.groupHash ?? this.groupHash!,
+                    subType: request.source.subType,
+                  },
+                });
               }
-              return handleDefault();
             }
             case 'unregister-iframe': {
               if (this.isAppletDev === undefined) return;
@@ -261,11 +278,27 @@ export class WalWindow extends LitElement {
                   iframeKind.toolCompatibilityId,
                   request.request.id,
                 );
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'cross-group',
+                    toolCompatibilityId: iframeKind.toolCompatibilityId,
+                    subType: request.source.subType,
+                  },
+                });
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
                 this.iframeStore.unregisterAppletIframe(appletId, request.request.id);
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'applet',
+                    appletHash: iframeKind.appletHash,
+                    groupHash: iframeKind.groupHash ?? this.groupHash!,
+                    subType: request.source.subType,
+                  },
+                });
               }
-              return handleDefault();
             }
 
             default:
