@@ -76,6 +76,10 @@ export class HolochainManager {
     // Read
     try {
       conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+      // Remove fields from older holochain versions that are no longer recognized
+      delete conductorConfig.device_seed_lair_tag;
+      delete conductorConfig.danger_generate_throwaway_device_seed;
+      delete conductorConfig.dpki;
     } catch (e) {
       console.warn(
         'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
@@ -151,65 +155,66 @@ export class HolochainManager {
     });
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
-    conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      weEmitter.emitHolochainLog({
-        version,
-        data: line,
-      });
-    });
-    conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
-      weEmitter.emitHolochainError({
-        version,
-        data: line,
-      });
-    });
 
     return new Promise((resolve, reject) => {
-      conductorHandle.stderr.pipe(split()).on('data', async (line: string) => {
-        if (line.includes('holochain had a problem and crashed')) {
-          reject(
-            `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
-          );
-        }
-      });
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
+        weEmitter.emitHolochainLog({
+          version,
+          data: line,
+        });
         if (line.includes('could not be parsed, because it is not valid YAML')) {
           reject(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
         if (line.includes('Conductor ready.')) {
-          const adminWebsocket = await AdminWebsocket.connect({
-            url: new URL(`ws://127.0.0.1:${adminPort}`),
-            wsClientOptions: {
-              origin: 'moss://admin.main',
-            },
-          });
-          console.log('Connected to admin websocket.');
-          const installedApps = await adminWebsocket.listApps({});
-          const appInterfaces = await adminWebsocket.listAppInterfaces();
-          console.log('Got appInterfaces: ', appInterfaces);
-          let appPort;
-          if (appInterfaces.length > 0) {
-            appPort = appInterfaces[0].port;
-          } else {
-            const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
-              allowed_origins: '*',
+          console.log(`[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`);
+          try {
+            const adminWebsocket = await AdminWebsocket.connect({
+              url: new URL(`ws://127.0.0.1:${adminPort}`),
+              wsClientOptions: {
+                origin: 'moss://admin.main',
+              },
             });
-            console.log('Attached app interface port: ', attachAppInterfaceResponse);
-            appPort = attachAppInterfaceResponse.port;
+            console.log('Connected to admin websocket.');
+            const installedApps = await adminWebsocket.listApps({});
+            const appInterfaces = await adminWebsocket.listAppInterfaces();
+            console.log('Got appInterfaces: ', appInterfaces);
+            let appPort;
+            if (appInterfaces.length > 0) {
+              appPort = appInterfaces[0].port;
+            } else {
+              const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
+                allowed_origins: '*',
+              });
+              console.log('Attached app interface port: ', attachAppInterfaceResponse);
+              appPort = attachAppInterfaceResponse.port;
+            }
+            resolve(
+              new HolochainManager(
+                conductorHandle,
+                weEmitter,
+                mossFileSystem,
+                adminPort,
+                appPort,
+                adminWebsocket,
+                installedApps,
+                version,
+              ),
+            );
+          } catch (e) {
+            reject(`Holochain conductor ready but failed to connect: ${e}`);
           }
-          resolve(
-            new HolochainManager(
-              conductorHandle,
-              weEmitter,
-              mossFileSystem,
-              adminPort,
-              appPort,
-              adminWebsocket,
-              installedApps,
-              version,
-            ),
+        }
+      });
+      conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
+        weEmitter.emitHolochainError({
+          version,
+          data: line,
+        });
+        if (line.includes('holochain had a problem and crashed')) {
+          reject(
+            `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
       });

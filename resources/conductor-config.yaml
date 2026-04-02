@@ -11,8 +11,6 @@ admin_interfaces:
       danger_bind_addr: ~
       allowed_origins: '###DEFINED_AT_RUNTIME###'
 network:
-  type: NetworkConfig
-  base64_auth_material: ~
   bootstrap_url: '###DEFINED_AT_RUNTIME###'
   signal_url: '###DEFINED_AT_RUNTIME###'
   relay_url: '###DEFINED_AT_RUNTIME###'
@@ -28,7 +26,7 @@ network:
     coreSpace:
       reSignExpireTimeMs: 10000
       reSignFreqMs: 10000
-request_timeout_s: 60
+  request_timeout_s: 60
 db_sync_strategy: Resilient
 tuning_params: ~
 tracing_scope: ~

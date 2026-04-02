@@ -2775,8 +2775,12 @@ if (!RUNNING_WITH_COMMAND) {
             const cellId = cell.value.cell_id;
             const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
             if (!authorizedCells.has(cellKey)) {
-              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-              authorizedCells.add(cellKey);
+              try {
+                await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
+                authorizedCells.add(cellKey);
+              } catch (e) {
+                console.warn(`[MOSS] Skipping signing credentials for ${appInfo.installed_app_id} (cell may be disabled): ${e}`);
+              }
             }
             break;
           }
