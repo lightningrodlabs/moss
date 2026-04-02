@@ -161,6 +161,10 @@ export async function startConductor(
   // Read
   try {
     conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+    // Remove fields from older holochain versions that are no longer recognized
+    delete conductorConfig.device_seed_lair_tag;
+    delete conductorConfig.danger_generate_throwaway_device_seed;
+    delete conductorConfig.dpki;
   } catch (e) {
     console.warn(
       'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',

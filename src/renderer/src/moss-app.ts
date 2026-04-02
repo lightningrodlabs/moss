@@ -137,17 +137,19 @@ export class MossApp extends LitElement {
     this._happMessageListener = async (message: MessageEvent) => handleHappMessage(message);
     window.addEventListener('message', this._happMessageListener);
 
-    await this._mossStore.checkForUiUpdates();
-    // Check once every hour or on page refresh
-    // Uses safeSetInterval to prevent call stacking
-    this._appletUiUpdateCheckInterval = safeSetInterval({
-      name: 'checkForUiUpdates',
-      fn: async () => {
-        await this._mossStore.checkForUiUpdates();
-      },
-      intervalMs: 3_600_000,
-      runImmediately: false,
-    });
+    if (this._mossStore) {
+      await this._mossStore.checkForUiUpdates();
+      // Check once every hour or on page refresh
+      // Uses safeSetInterval to prevent call stacking
+      this._appletUiUpdateCheckInterval = safeSetInterval({
+        name: 'checkForUiUpdates',
+        fn: async () => {
+          await this._mossStore.checkForUiUpdates();
+        },
+        intervalMs: 3_600_000,
+        runImmediately: false,
+      });
+    }
   }
 
   disconnectedCallback(): void {
