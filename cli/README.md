@@ -24,6 +24,7 @@ Options:
   --lair-rust-log <string>       RUST_LOG value to pass to the lair keystore binary
   -b, --bootstrap-url <url>      URL of the bootstrap server to use (not persisted across restarts).
   -s, --signaling-url <url>      URL of the signaling server to use (not persisted across restarts).
+  -r, --relay-url <url>          URL of the relay server to use (not persisted across restarts).
   --ice-urls <string>            Comma separated string of ICE server URLs to use. Is ignored if an external holochain binary is
                                  being used (not persisted across restarts).
   --force-production-urls        Explicitly allow using the production URLs of bootstrap and/or singaling server during applet
