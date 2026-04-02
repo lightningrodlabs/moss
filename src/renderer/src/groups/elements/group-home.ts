@@ -428,12 +428,15 @@ export class GroupHome extends LitElement {
       console.warn('Failed to parse distribution info for version:', e);
     }
 
-    // Set state and show dialog
+    // Set state and show dialog. The dialog element is only rendered when
+    // _appletToUninstall is set, so we must wait for LitElement to update
+    // the DOM before the @query selector can find it.
     this._appletToUninstall = {
       hash: appletHash,
       name: appletName,
       version: appletVersion,
     };
+    await this.updateComplete;
 
     this._uninstallDialog.show();
   }
@@ -446,17 +449,35 @@ export class GroupHome extends LitElement {
     try {
       const appletHash = this._appletToUninstall.hash;
       const appId = appIdFromAppletHash(appletHash);
-      await window.electronAPI.uninstallApplet(appId);
-      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash)!);
-      await Promise.all(
-        Array.from(groupsForApplet.values()).map((groupStore) =>
-          groupStore!.groupClient.abandonApplet(appletHash),
-        ),
-      );
-      await this.mossStore.reloadManualStores();
 
-      this._uninstallDialog.hide();
+      // Resolve groups for the applet BEFORE uninstalling, since the reactive
+      // store depends on the applet's cells still being present.
+      const groupsForApplet = await toPromise(this.mossStore.groupsForApplet.get(appletHash)!);
+
+      await window.electronAPI.uninstallApplet(appId);
+
+      // Abandon and reload are best-effort after a successful uninstall
+      try {
+        await Promise.all(
+          Array.from(groupsForApplet.values()).map((groupStore) =>
+            groupStore!.groupClient.abandonApplet(appletHash),
+          ),
+        );
+      } catch (e) {
+        console.warn(`Failed to abandon applet in group after uninstall: ${e}`);
+      }
+
+      // Clear state first — this removes the dialog from the template, so
+      // we don't need to call .hide(). reloadManualStores() below may also
+      // trigger a re-render that destroys the dialog element.
       this._appletToUninstall = undefined;
+      this._uninstalling = false;
+
+      try {
+        await this.mossStore.reloadManualStores();
+      } catch (e) {
+        console.warn(`Failed to reload stores after uninstall: ${e}`);
+      }
     } catch (e) {
       console.error(`Failed to uninstall tool instance: ${e}`);
       notifyError(msg('Failed to uninstall tool instance.'));
@@ -466,7 +487,6 @@ export class GroupHome extends LitElement {
   }
 
   cancelUninstall() {
-    this._uninstallDialog.hide();
     this._appletToUninstall = undefined;
   }
 
