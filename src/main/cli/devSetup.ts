@@ -83,15 +83,13 @@ export async function startLocalServices()
     let signalRunning = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
-      if (line.includes('Internal iroh relay server started at')) {
-        // Match IP:port pattern
-        const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
-        relayUrl = match ? "http://" + match[1] : undefined;
-      }
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
         bootstrapUrl = `http://${hostAndPort}`;
         signalingUrl = `ws://${hostAndPort}`;
+        // As of kitsune2_bootstrap_srv 0.4.0-dev.7, the relay is served
+        // at the /relay route of the bootstrap server itself.
+        relayUrl = `http://${hostAndPort}/relay`;
       }
       if (line.includes('#kitsune2_bootstrap_srv#running#')) {
         bootstrapRunning = true;
