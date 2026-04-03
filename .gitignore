@@ -34,3 +34,5 @@ libs/*/docs/**
 libs/*/markdown/**
 
 .claude
+
+deploy
