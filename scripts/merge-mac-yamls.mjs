@@ -177,10 +177,21 @@ const getPlatformFromLatestMacYml = (content) => {
     return;
   }
 
-  const mergedContent =
+  let mergedContent =
     remotePlatform === 'intel'
       ? mergeFiles(remoteLatestMacYmlContent, localLatestMacYmlContent)
       : mergeFiles(localLatestMacYmlContent, remoteLatestMacYmlContent);
+
+  // Inject release notes from the GitHub release body
+  if (!currentRelease.body || !currentRelease.body.trim()) {
+    console.error('ERROR: Release notes are empty for this release.');
+    console.error('Add release notes to the GitHub release before running the build.');
+    process.exit(1);
+  }
+  const mergedObject = yaml.load(mergedContent);
+  mergedObject.releaseNotes = currentRelease.body;
+  mergedContent = yaml.dump(mergedObject, { lineWidth: -1 });
+  console.log('Injected release notes into merged latest-mac.yml');
 
   const assetStream = new Readable();
   assetStream.push(mergedContent);

@@ -112,6 +112,7 @@ jobs:
           echo "v${{ steps.version.outputs.APP_VERSION }}" 
           # Modify the linux files before uploading
           node ./scripts/update-linux-latest-yaml.mjs
+          node ./scripts/inject-release-notes.mjs latest-linux.yml
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux.yml" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-amd64.deb" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-x86_64.AppImage" --clobber
@@ -131,7 +132,7 @@ jobs:
 
           # Modify the linux files before uploading
           node ./scripts/update-linux-latest-yaml.mjs
-          
+          node ./scripts/inject-release-notes.mjs latest-linux-arm64.yml
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest-linux-arm64.yml" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-arm64.deb" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-arm64.AppImage" --clobber
@@ -170,6 +171,7 @@ jobs:
 
           # Overwrite the latest.yml one with one containing the sha512 of the code signed .exe file
           node ./scripts/latest-yaml.js
+          node ./scripts/inject-release-notes.mjs latest.yml
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "latest.yml" --clobber
           gh release upload "v${{ steps.version.outputs.APP_VERSION }}" "dist/${{ steps.name.outputs.APP_NAME }}-${{ steps.version.outputs.APP_VERSION }}-setup.exe" --clobber
 
