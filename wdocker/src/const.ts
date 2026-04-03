@@ -23,6 +23,7 @@ export const PRODUCTION_SIGNALING_URLS = [
 
 // The first one will be picked by default.
 export const PRODUCTION_RELAY_URLS = [
+  "https://iroh-relay.moss.social./",
   "https://use1-1.relay.n0.iroh-canary.iroh.link./",
 ];
 

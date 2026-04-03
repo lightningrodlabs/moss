@@ -24,6 +24,7 @@ export const PRODUCTION_SIGNALING_URLS = [
 ];
 // The first one will be picked by default.
 export const PRODUCTION_RELAY_URLS = [
+  "https://iroh-relay.moss.social./",
   "https://use1-1.relay.n0.iroh-canary.iroh.link./",
 ];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
