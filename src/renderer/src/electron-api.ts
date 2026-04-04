@@ -64,6 +64,9 @@ declare global {
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       factoryReset: () => Promise<void>;
+      getNetworkOverrides: () => Promise<NetworkOverridesInfo>;
+      setNetworkOverrides: (overrides: NetworkOverrides) => Promise<void>;
+      clearNetworkOverrides: () => Promise<void>;
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
@@ -259,6 +262,17 @@ export interface NetworkInfo {
   bootstrap_urls: string[];
   signal_urls: string[];
   relay_urls: string[];
+}
+
+export interface NetworkOverrides {
+  bootstrapUrl?: string;
+  relayUrl?: string;
+}
+
+export interface NetworkOverridesInfo {
+  overrides: NetworkOverrides;
+  defaults: { bootstrapUrl: string; relayUrl: string };
+  current: { bootstrapUrl: string; relayUrl: string };
 }
 
 export interface ConductorInfo {

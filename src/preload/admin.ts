@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
+  getNetworkOverrides: () => ipcRenderer.invoke('get-network-overrides'),
+  setNetworkOverrides: (overrides: { bootstrapUrl?: string; relayUrl?: string }) =>
+    ipcRenderer.invoke('set-network-overrides', overrides),
+  clearNetworkOverrides: () => ipcRenderer.invoke('clear-network-overrides'),
   openLogs: () => ipcRenderer.invoke('open-logs'),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>

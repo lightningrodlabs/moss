@@ -628,6 +628,40 @@ export class MossFileSystem {
     deleteRecursively(this.profileDataDir);
     deleteRecursively(this.profileLogsDir);
   }
+
+  private get networkOverridesPath(): string {
+    return path.join(this.profileConfigDir, 'network-overrides.json');
+  }
+
+  getNetworkOverrides(): { bootstrapUrl?: string; relayUrl?: string } {
+    try {
+      if (!fs.existsSync(this.networkOverridesPath)) return {};
+      const raw = fs.readFileSync(this.networkOverridesPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return {
+        bootstrapUrl: typeof parsed.bootstrapUrl === 'string' ? parsed.bootstrapUrl : undefined,
+        relayUrl: typeof parsed.relayUrl === 'string' ? parsed.relayUrl : undefined,
+      };
+    } catch (e) {
+      console.warn('Failed to read network overrides:', e);
+      return {};
+    }
+  }
+
+  setNetworkOverrides(overrides: { bootstrapUrl?: string; relayUrl?: string }): void {
+    createDirIfNotExists(this.profileConfigDir);
+    fs.writeFileSync(this.networkOverridesPath, JSON.stringify(overrides, null, 2), 'utf-8');
+  }
+
+  clearNetworkOverrides(): void {
+    try {
+      if (fs.existsSync(this.networkOverridesPath)) {
+        fs.unlinkSync(this.networkOverridesPath);
+      }
+    } catch (e) {
+      console.warn('Failed to clear network overrides:', e);
+    }
+  }
 }
 
 function createDirIfNotExists(path: fs.PathLike) {

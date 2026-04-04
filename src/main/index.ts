@@ -891,15 +891,16 @@ if (!RUNNING_WITH_COMMAND) {
           : relayUrl;
         LOCAL_SERVICES_HANDLE = localServicesHandle;
       } else {
+        const networkOverrides = WE_FILE_SYSTEM.getNetworkOverrides();
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
-          : PRODUCTION_BOOTSTRAP_URLS[0];
+          : networkOverrides.bootstrapUrl ?? PRODUCTION_BOOTSTRAP_URLS[0];
         RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
           ? RUN_OPTIONS.signalingUrl
           : PRODUCTION_SIGNALING_URLS[0];
         RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
           ? RUN_OPTIONS.relayUrl
-          : PRODUCTION_RELAY_URLS[0];
+          : networkOverrides.relayUrl ?? PRODUCTION_RELAY_URLS[0];
       }
     }
 
@@ -1009,6 +1010,57 @@ if (!RUNNING_WITH_COMMAND) {
         app.quit();
       }
     }),
+    ipcMain.handle('get-network-overrides', () => {
+      const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
+      const networkUrls = getNetworkUrls();
+      return {
+        overrides,
+        defaults: {
+          bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
+          relayUrl: PRODUCTION_RELAY_URLS[0],
+        },
+        current: {
+          bootstrapUrl: networkUrls.bootstrap_urls[0],
+          relayUrl: networkUrls.relay_urls[0],
+        },
+      };
+    });
+    ipcMain.handle('set-network-overrides', async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
+      WE_FILE_SYSTEM.setNetworkOverrides(overrides);
+      // Relaunch Moss
+      if (MAIN_WINDOW) MAIN_WINDOW.close();
+      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+      for (const window of Object.values(WAL_WINDOWS)) {
+        window.window.close();
+      }
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      const options: Electron.RelaunchOptions = { args: process.argv };
+      if (process.env.APPIMAGE) {
+        options.args!.unshift('--appimage-extract-and-run');
+        options.execPath = process.env.APPIMAGE;
+      }
+      app.relaunch(options);
+      app.quit();
+    });
+    ipcMain.handle('clear-network-overrides', async () => {
+      WE_FILE_SYSTEM.clearNetworkOverrides();
+      // Relaunch Moss
+      if (MAIN_WINDOW) MAIN_WINDOW.close();
+      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+      for (const window of Object.values(WAL_WINDOWS)) {
+        window.window.close();
+      }
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      const options: Electron.RelaunchOptions = { args: process.argv };
+      if (process.env.APPIMAGE) {
+        options.args!.unshift('--appimage-extract-and-run');
+        options.execPath = process.env.APPIMAGE;
+      }
+      app.relaunch(options);
+      app.quit();
+    });
       ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
     ipcMain.handle(
       'notification',
