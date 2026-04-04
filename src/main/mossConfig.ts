@@ -4,7 +4,8 @@ import { app } from 'electron';
 
 export type MossConfig = {
   groupHapp: VersionAndSha256;
-  holochain: string,
+  holochain: string;
+  kitsune2BootstrapSrv?: string;
   binariesAppendix: string;
   feedbackWorkerUrl?: string;
 };

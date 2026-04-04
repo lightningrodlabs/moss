@@ -127,11 +127,23 @@ async function main() {
   const mossConfigJSON = readFileSync('moss.config.json');
   const mossConfig = JSON.parse(mossConfigJSON);
   const tag = 'holochain-' + mossConfig.holochain;
+  const bootstrapSrvVersion = mossConfig.kitsune2BootstrapSrv;
+  const bootstrapSrvTag = bootstrapSrvVersion ? 'holochain-' + bootstrapSrvVersion : null;
 
   const release = await fetchRelease(repoArg, tag);
 
   const version = release.tagName.replace(/^holochain-/, '');
-  const assets = release.assets;
+  let assets = release.assets;
+
+  // If kitsune2-bootstrap-srv needs to come from a different release, fetch those assets too
+  if (bootstrapSrvTag && bootstrapSrvTag !== tag) {
+    console.log(`\nFetching kitsune2-bootstrap-srv from separate release: ${bootstrapSrvTag}`);
+    const bootstrapRelease = await fetchRelease(repoArg, bootstrapSrvTag);
+    const bootstrapAssets = bootstrapRelease.assets.filter(asset =>
+      asset.name.startsWith('kitsune2-bootstrap-srv-')
+    );
+    assets = assets.concat(bootstrapAssets);
+  }
 
   const allChecksums = new Map();
   const binaryAssets = assets.filter(asset => {

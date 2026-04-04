@@ -265,9 +265,9 @@ export class WelcomeView extends LitElement {
       this._mockAppletsData = createMockAppletsData();
       // Mock Moss update for UI testing
       this.availableMossUpdate = {
-        version: '0.15.5',
+        version: '0.15.6',
         releaseDate: new Date().toISOString(),
-        releaseNotes: `Test update to version 0.15.5
+        releaseNotes: `Test update to version 0.15.6
 
 This is a mock update for UI development.
 

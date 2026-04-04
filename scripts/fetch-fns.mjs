@@ -69,11 +69,12 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 }
 
 
-export function downloadHolochainBinary(filename, withVersion = true) {
+export function downloadHolochainBinary(filename, withVersion = true, versionOverride = null) {
+  const version = versionOverride ?? HOLOCHAIN_CHECKSUMS.version;
   let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
-  let binaryFilenameWithVersion = `${filename}-v${HOLOCHAIN_CHECKSUMS.version}${process.platform === 'win32' ? '.exe' : ''}`
+  let binaryFilenameWithVersion = `${filename}-v${version}${process.platform === 'win32' ? '.exe' : ''}`
   const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}${process.platform === 'win32' ? '.exe' : ''}`);
-  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${HOLOCHAIN_CHECKSUMS.version}/${completeBinaryFilename}`;
+  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${completeBinaryFilename}`;
   downloadFile(
     holochainBinaryUrl,
     targetPath,

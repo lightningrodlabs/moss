@@ -24,9 +24,10 @@ const LAIR_BINARY = path.join(
 /**
  * Only used to run agents in dev mode using the dev CLI - should not be shipped in the actual distributables for Moss
  */
+const kitsune2BootstrapSrvVersion = MOSS_CONFIG.kitsune2BootstrapSrv ?? MOSS_CONFIG.holochain;
 const KITSUNE2_BOOTSTRAP_SRV_BINARY = path.join(
     BINARIES_DIRECTORY,
-    `kitsune2-bootstrap-srv-v${MOSS_CONFIG.holochain}${process.platform === 'win32' ? '.exe' : ''}`,
+    `kitsune2-bootstrap-srv-v${kitsune2BootstrapSrvVersion}${process.platform === 'win32' ? '.exe' : ''}`,
 );
 
 const conductorConfigTemplateString = fs.readFileSync(

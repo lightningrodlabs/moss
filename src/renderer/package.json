@@ -1,6 +1,6 @@
 {
   "name": "moss-alpha",
-  "version": "0.15.3",
+  "version": "0.15.6",
   "scripts": {
     "start": "vite --force --clearScreen false --port 1420",
     "build": "vite build",

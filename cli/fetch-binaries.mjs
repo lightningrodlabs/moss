@@ -44,16 +44,17 @@ switch (process.platform) {
 }
 
 
-function downloadFile(binaryName) {
+function downloadFile(binaryName, versionOverride = null) {
   const chmod = true;
   const expectedSha256Hex = HOLOCHAIN_CHECKSUMS[binaryName][targetEnding];
+  const version = versionOverride ?? mossConfig.holochain;
 
-  const binaryFilename = `${binaryName}-v${mossConfig.holochain}${
+  const binaryFilename = `${binaryName}-v${version}${
     process.platform === 'win32' ? '.exe' : ''
   }`;
   const targetPath = path.join(binariesDir, binaryFilename);
   const binaryRemoteFilename = `${binaryName}-${targetEnding}`;
-  const url = `https://github.com/holochain/holochain/releases/download/holochain-${mossConfig.holochain}/${binaryRemoteFilename}`;
+  const url = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${binaryRemoteFilename}`;
 
   console.log('Downloading from ', url);
 
@@ -83,5 +84,5 @@ function downloadFile(binaryName) {
 }
 
 downloadFile('holochain');
-downloadFile('kitsune2-bootstrap-srv');
+downloadFile('kitsune2-bootstrap-srv', mossConfig.kitsune2BootstrapSrv ?? null);
 downloadFile('lair-keystore');
