@@ -124,7 +124,7 @@ export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
 export async function signZomeCall(
   request: CallZomeRequest,
   handler: WeRustHandler,
-  weEmitter: WeEmitter,
+  weEmitter?: WeEmitter,
 ): Promise<CallZomeRequestSigned> {
   if (!request.provenance)
     return Promise.reject(
@@ -148,7 +148,7 @@ export async function signZomeCall(
   try {
     signature = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
   } catch (e) {
-    weEmitter.emitMossError(`Failed to sign zome call: ${e}`);
+    weEmitter?.emitMossError(`Failed to sign zome call: ${e}`);
     throw new Error(`Failed to sign zome call: ${e}`);
   }
 
