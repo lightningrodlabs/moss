@@ -231,7 +231,7 @@ export async function launch(
       }),
     );
   } else {
-    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false);
+    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false, weRustHandler);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

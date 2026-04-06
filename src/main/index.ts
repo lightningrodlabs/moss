@@ -71,6 +71,7 @@ import {
   AppInfo,
   AppWebsocket,
   CallZomeRequest,
+  CallZomeTransform,
   CellType,
   DnaHashB64,
   InstalledAppId,
@@ -455,6 +456,18 @@ if (!RUNNING_WITH_COMMAND) {
     if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
     return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
+
+  // Transform that signs zome calls directly with the agent's own keypair via
+  // the lair-backed WeRustHandler. Using this on AppWebsocket.connect avoids
+  // the capability-grant flow (authorizeSigningCredentials), which would
+  // otherwise write a CapGrant entry to the source chain on every new cell.
+  const mossCallZomeTransform = (): CallZomeTransform => ({
+    input: (req) => {
+      if (!WE_RUST_HANDLER) throw Error('Rust handler is not ready');
+      return signZomeCall(req as CallZomeRequest, WE_RUST_HANDLER, WE_EMITTER);
+    },
+    output: (o) => decode(o as any),
+  });
 
   /**
    * Determine the URLs for the network services
@@ -1488,13 +1501,6 @@ if (!RUNNING_WITH_COMMAND) {
       importLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
     });
 
-    // Tracks cells that have had authorizeSigningCredentials called this session.
-    // Populated at startup for all existing group cells, and immediately when a new
-    // group cell is installed. collectGroupsData never calls authorizeSigningCredentials
-    // itself — doing so would write a cap grant to the source chain and could race with
-    // concurrent renderer operations (e.g. register_and_join_applet bundles).
-    const authorizedCells = new Set<string>();
-
     // Helper: return the primary agent pubkey, preferring one imported from a legacy
     // profile over generating a fresh one. Clears the preferred-key signal file on use.
     const getOrCreateAgentPubKey = async (): Promise<AgentPubKey> => {
@@ -1580,21 +1586,6 @@ if (!RUNNING_WITH_COMMAND) {
         });
       }
       await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-      // Pre-authorize the new group cell
-      const newGroupCells = appInfo.cell_info['group'];
-      if (newGroupCells) {
-        for (const cell of newGroupCells) {
-          if (cell.type === CellType.Provisioned) {
-            const cellId = cell.value.cell_id;
-            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
-            if (!authorizedCells.has(cellKey)) {
-              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-              authorizedCells.add(cellKey);
-            }
-            break;
-          }
-        }
-      }
       setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-group-happ failed:', e)), 2000);
       return appInfo;
     });
@@ -1660,6 +1651,7 @@ if (!RUNNING_WITH_COMMAND) {
             url: new URL(`ws://127.0.0.1:${appPort}`),
             wsClientOptions: { origin: 'moss-admin' },
             token,
+            callZomeTransform: mossCallZomeTransform(),
           });
           const groupProfileRecord = await appWs.callZome({
             role_name: 'group',
@@ -1810,7 +1802,7 @@ if (!RUNNING_WITH_COMMAND) {
         emitProgress(current, groupProfile?.name, 'installing');
         try {
           const properties = amProgenitor ? { progenitor: myPubKeyB64 } : { progenitor };
-          const appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+          await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
             source: { type: 'path', value: groupHappPath },
             installed_app_id: appId,
             agent_key: myPubKey,
@@ -1826,22 +1818,8 @@ if (!RUNNING_WITH_COMMAND) {
             url: new URL(`ws://127.0.0.1:${appPort}`),
             wsClientOptions: { origin: 'moss-admin' },
             token,
+            callZomeTransform: mossCallZomeTransform(),
           });
-
-          const groupCells = appInfo.cell_info['group'];
-          let cellId: [Uint8Array, Uint8Array] | undefined;
-          if (groupCells) {
-            for (const cell of groupCells) {
-              if (cell.type === CellType.Provisioned) { cellId = cell.value.cell_id; break; }
-            }
-          }
-          if (cellId) {
-            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
-            if (!authorizedCells.has(cellKey)) {
-              await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-              authorizedCells.add(cellKey);
-            }
-          }
 
           let importGroupStatus: ImportStatus;
           if (amProgenitor) {
@@ -2063,15 +2041,6 @@ if (!RUNNING_WITH_COMMAND) {
                   });
                   await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appletAppId });
 
-                  for (const cellInfos of Object.values(appletAppInfo.cell_info)) {
-                    for (const cellInfo of cellInfos) {
-                      if (cellInfo.type === CellType.Provisioned) {
-                        await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(
-                          cellInfo.value.cell_id, { type: 'all' },
-                        );
-                      }
-                    }
-                  }
                   appletAgentPubKey = appletAppInfo.agent_pub_key;
                 }
 
@@ -2173,21 +2142,6 @@ if (!RUNNING_WITH_COMMAND) {
           },
         });
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        // Pre-authorize the new group cell.
-        const newGroupCells = appInfo.cell_info['group'];
-        if (newGroupCells) {
-          for (const cell of newGroupCells) {
-            if (cell.type === CellType.Provisioned) {
-              const cellId = cell.value.cell_id;
-              const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
-              if (!authorizedCells.has(cellKey)) {
-                await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-                authorizedCells.add(cellKey);
-              }
-              break;
-            }
-          }
-        }
         setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after join-group failed:', e)), 2000);
         return appInfo;
       },
@@ -2820,27 +2774,6 @@ if (!RUNNING_WITH_COMMAND) {
       const existingKey = globalPubKeyFromListAppsResponse(postLaunchApps);
       if (existingKey) {
         WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(existingKey));
-      }
-      // Pre-authorize all existing group cells
-      for (const appInfo of postLaunchApps) {
-        if (!appInfo.installed_app_id.startsWith('group#')) continue;
-        const groupCells = appInfo.cell_info['group'];
-        if (!groupCells) continue;
-        for (const cell of groupCells) {
-          if (cell.type === CellType.Provisioned) {
-            const cellId = cell.value.cell_id;
-            const cellKey = `${encodeHashToBase64(cellId[0])}-${encodeHashToBase64(cellId[1])}`;
-            if (!authorizedCells.has(cellKey)) {
-              try {
-                await HOLOCHAIN_MANAGER!.adminWebsocket.authorizeSigningCredentials(cellId, { type: 'all' });
-                authorizedCells.add(cellKey);
-              } catch (e) {
-                console.warn(`[MOSS] Skipping signing credentials for ${appInfo.installed_app_id} (cell may be disabled): ${e}`);
-              }
-            }
-            break;
-          }
-        }
       }
       return isFirstLaunch;
     });

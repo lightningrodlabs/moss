@@ -18,14 +18,18 @@ import {
   AgentPubKey,
   AppWebsocket,
   AppInfo,
+  CallZomeRequest,
+  CallZomeTransform,
   DnaHashB64,
   EntryHash,
   Link,
   encodeHashToBase64,
   Record as HolochainRecord,
-  CellType,
   ProvisionedCell,
 } from '@holochain/client';
+import { decode } from '@msgpack/msgpack';
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { signZomeCall } from '../utils';
 import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
@@ -111,7 +115,15 @@ export async function devSetup(
   holochainManager: HolochainManager,
   mossFileSystem: MossFileSystem,
   useToolLibrary: boolean,
+  weRustHandler: WeRustHandler,
 ): Promise<void> {
+  // Transform that signs zome calls with the agent's own keypair via lair,
+  // avoiding the cap-grant flow (authorizeSigningCredentials) that would
+  // otherwise write a CapGrant entry to the source chain on every new cell.
+  const callZomeTransform: CallZomeTransform = {
+    input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
+    output: (o) => decode(o as any),
+  };
   const logDevSetup = (msg) => console.log(`[weave-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, EntryRecord<Tool>> = {};
@@ -155,13 +167,10 @@ export async function devSetup(
       },
       token: toolsLibraryAuthenticationResponse.token,
       defaultTimeout: 4000,
+      callZomeTransform,
     });
     const toolsLibraryCells = await toolsLibraryClient.appInfo();
     for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
-      if (cell.type === CellType.Provisioned)
-        await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
-          type: 'all',
-        });
       toolsLibraryDnaHash = encodeHashToBase64((cell.value as ProvisionedCell).cell_id[0]);
     }
 
@@ -183,7 +192,7 @@ export async function devSetup(
 
     if (agentProfile) {
       logDevSetup(`Installing group '${group.name}'...`);
-      const groupWebsocket = await joinGroup(holochainManager, group, agentProfile);
+      const groupWebsocket = await joinGroup(holochainManager, group, agentProfile, callZomeTransform);
       if (isCreatingAgent) {
         logDevSetup(`Creating group profile for group '${group.name}'...`);
         const icon_src = await readIcon(group.icon);
@@ -450,6 +459,7 @@ async function joinGroup(
   holochainManager: HolochainManager,
   group: GroupConfig,
   agentProfile: AgentProfile,
+  callZomeTransform: CallZomeTransform,
   progenitor?: AgentPubKey,
 ): Promise<AppWebsocket> {
   // Create the group
@@ -469,14 +479,8 @@ async function joinGroup(
       origin: 'moss-admin',
     },
     token: groupAuthenticationTokenResponse.token,
+    callZomeTransform,
   });
-  const groupCells = await groupWebsocket.appInfo();
-  for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-    if (cell.type === CellType.Provisioned)
-      await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
-        type: 'all',
-      });
-  }
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   console.log('Creating profile....');
 
