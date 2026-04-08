@@ -954,14 +954,12 @@ export class DebuggingPanel extends LitElement {
    * AgentInfo returns both the kitsune agent ID and the peer URL, allowing us to
    * map the transport key (from URL) to the actual AgentPubKey.
    */
-  async buildTransportToAgentMap(appId: InstalledAppId): Promise<Map<string, string>> {
+  async buildTransportToAgentMap(appId: InstalledAppId, networkMetrics: DumpNetworkMetricsResponse): Promise<Map<string, string>> {
     const map = new Map<string, string>();
     try {
       const client = await this._mossStore.getAppClient(appId);
       const appClient = client[0];
 
-      // Get app's DNA hashes from network metrics
-      const networkMetrics = await appClient.dumpNetworkMetrics({ include_dht_summary: false });
       const dnaHashes = Object.keys(networkMetrics).map((b64) => decodeHashFromBase64(b64));
 
       if (dnaHashes.length === 0) return map;
@@ -1043,7 +1041,7 @@ export class DebuggingPanel extends LitElement {
         this._networkStats[appId] = [networkStats, networkMetrics];
 
         // Build transport to agent map from agentInfo
-        const transportMap = await this.buildTransportToAgentMap(appId);
+        const transportMap = await this.buildTransportToAgentMap(appId, networkMetrics);
         this._transportToAgentMap[appId] = transportMap;
       }),
     );
