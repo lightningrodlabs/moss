@@ -24,9 +24,9 @@ const tag = `v${version}`;
 
 let releaseNotes;
 try {
-  releaseNotes = child_process
-    .execSync(`gh release view ${tag} --json body --jq '.body'`, { encoding: 'utf-8' })
-    .trim();
+  const releaseJson = child_process
+    .execSync(`gh release view ${tag} --json body`, { encoding: 'utf-8' });
+  releaseNotes = JSON.parse(releaseJson).body.trim();
 } catch (e) {
   console.error(`ERROR: Could not fetch release notes for ${tag}: ${e.message}`);
   console.error('Make sure the GitHub release exists and has a body before running the build.');
