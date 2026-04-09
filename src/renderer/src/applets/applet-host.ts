@@ -505,8 +505,39 @@ export async function handleAppletIframeMessage(
       );
       return;
     }
-    case 'get-applet-info':
-      return weaveServices.appletInfo(message.appletHash);
+    case 'get-applet-info': {
+      const result = await weaveServices.appletInfo(message.appletHash);
+      if (!result) {
+        let callerDesc: string;
+        if (source.type === 'applet') {
+          let callerName = encodeHashToBase64(source.appletHash);
+          try {
+            const callerStore = await toPromise(mossStore.appletStores.get(source.appletHash)!);
+            callerName = `"${callerStore.applet.custom_name}" (${callerName})`;
+          } catch (_) { /* use hash only */ }
+          callerDesc = callerName;
+        } else {
+          let toolName = source.toolCompatibilityId;
+          try {
+            const assetInfos = await window.electronAPI.getAllAppAssetsInfos();
+            for (const [, [info]] of Object.entries(assetInfos)) {
+              if (
+                info.distributionInfo.type === 'web2-tool-list' &&
+                info.distributionInfo.info.toolCompatibilityId === source.toolCompatibilityId
+              ) {
+                toolName = `"${info.distributionInfo.info.toolName}" (${source.toolCompatibilityId})`;
+                break;
+              }
+            }
+          } catch (_) { /* use id only */ }
+          callerDesc = `cross-group view ${toolName}`;
+        }
+        console.warn(
+          `get-applet-info: no info for ${encodeHashToBase64(message.appletHash)}, requested by ${callerDesc}`,
+        );
+      }
+      return result;
+    }
     case 'get-bootstrap-urls': {
       return weaveServices.bootstrapUrls(message.groupHash);
     }
