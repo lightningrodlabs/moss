@@ -374,6 +374,7 @@ export const mossStyles = [
       font-size: 14px;
       line-height: 16px;
       padding: 8px 10px;
+      cursor: pointer;
     }
 
     .moss-mini-button-secondary {
@@ -399,6 +400,7 @@ export const mossStyles = [
     .moss-mini-button-disabled {
       opacity: 0.4;
       pointer-events: none;
+      cursor: 'not-allowed';
     }
 
     .tab-bar {
