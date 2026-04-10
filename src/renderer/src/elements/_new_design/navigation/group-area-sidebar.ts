@@ -457,7 +457,7 @@ export class GroupAppletsSidebar extends LitElement {
                 >
                   <div style="text-align: center; margin-bottom: 10px;">
                     ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? html`
-                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() === 1 ? msg('tool available') : msg('tools available.')}
+                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() === 1 ? msg('tool available.') : msg('tools available.')}
                     ` : html`
                         ${msg('No tools yet.')}
                     `}
