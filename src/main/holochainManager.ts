@@ -80,6 +80,11 @@ export class HolochainManager {
       delete conductorConfig.device_seed_lair_tag;
       delete conductorConfig.danger_generate_throwaway_device_seed;
       delete conductorConfig.dpki;
+      delete conductorConfig.request_timeout_s;
+      if (conductorConfig.network) {
+        delete conductorConfig.network.type;
+        delete conductorConfig.network.base64_auth_material;
+      }
     } catch (e) {
       console.warn(
         'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
