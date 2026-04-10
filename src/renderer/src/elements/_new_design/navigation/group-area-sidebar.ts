@@ -404,7 +404,6 @@ export class GroupAppletsSidebar extends LitElement {
         return this._groupApplets.value.value.size === 0 && this.groupProfileIsKnown()
           ? html`
           <div 
-            style="cursor: pointer;"
             @click=${() => {
               // If there are unactivated tools, open inactive tools dialog
               // Otherwise, open tool library
@@ -431,7 +430,7 @@ export class GroupAppletsSidebar extends LitElement {
               }
             }}>
               ${this.collapsed
-              ? !this.numUnjoinedTools || this.numUnjoinedTools() == 0 ? "" : html`
+              ? !this.numUnjoinedTools() || this.numUnjoinedTools() === 0 ? "" : html`
                 <sl-tooltip
                   content="${msg('Activate tools peers already use')}"
                   placement="right"
@@ -458,7 +457,7 @@ export class GroupAppletsSidebar extends LitElement {
                 >
                   <div style="text-align: center; margin-bottom: 10px;">
                     ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? html`
-                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() == 1 ? msg('tool available') : msg('tools available.')}
+                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() === 1 ? msg('tool available') : msg('tools available.')}
                     ` : html`
                         ${msg('No tools yet.')}
                     `}

@@ -36,8 +36,7 @@ export class MossMiniButton extends LitElement {
     return html`<button
       style="${this.color ? `color:${this.color};border-color:${this.color};` : ''} ${this.loading
         ? 'pointer-events: none'
-        : ''}
-        cursor: ${this.disabled ? 'not-allowed' : 'pointer'};"
+        : ''}"
       class="moss-mini-button-${this.variant} ${this.disabled ? 'moss-mini-button-disabled' : ''}"
       @click=${(e) => {
         e.stopPropagation();
